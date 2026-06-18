@@ -1,0 +1,59 @@
+---
+description: TypeScript strictness, naming, and module conventions
+globs: **/*.{ts,tsx}
+alwaysApply: false
+---
+
+# TypeScript Standards
+
+## Strict mode
+
+- `strict: true` everywhere; no `any` without justification
+- Prefer `interface` for object shapes; `type` for unions/intersections
+- Export types from `packages/shared-types`; avoid duplicate DTO definitions
+
+## moduleResolution by package
+
+| Location | `moduleResolution` | Import extensions |
+|----------|-------------------|-------------------|
+| `apps/*` | `bundler` (from base) | **No** `.js` suffix |
+| `packages/ui` | `bundler` | **No** `.js` suffix |
+| `packages/api` | `NodeNext` (local override) | **Required** `.js` suffix |
+| `packages/shared-types` | `NodeNext` | **Required** `.js` suffix |
+
+```typescript
+// ✅ apps/h5, apps/web, packages/ui
+import { Button } from "@ryx/ui/components/ui/button";
+
+// ✅ packages/api only
+import { ApiError } from "./errors.js";
+```
+
+Never add `.js` extensions in app or UI code — Vite will fail to resolve them.
+
+## Naming
+
+| Kind | Convention | Example |
+|------|------------|---------|
+| Components | PascalCase | `HomePage`, `WebShell` |
+| Hooks | camelCase, `use` prefix | `useAuth` |
+| API factories | `create*Api` | `createAuthApi` |
+| Constants | `as const` objects | `BREAKPOINTS`, `SITE` |
+| Source files | kebab-case or match export | `site.ts`, `HomePage.tsx` |
+| Test files | colocated `*.test.ts` | `client.test.ts` next to `client.ts` |
+
+## Imports
+
+```typescript
+// Order: external → workspace → alias → relative
+import { useState } from "react";
+import { Button } from "@ryx/ui/components/ui/button";
+import { getApi } from "@/lib/api";
+import { BREAKPOINTS } from "@/config/site";
+```
+
+## Env vars
+
+- Read `import.meta.env.VITE_*` only in `apps/*/src/lib/env.ts`
+- Extend `ImportMetaEnv` in `src/vite-env.d.ts` when adding vars
+- Never commit `.env`; update `.env.example`

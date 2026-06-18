@@ -1,0 +1,37 @@
+---
+description: RongYiXing monorepo core conventions — scope, language, and where code belongs
+alwaysApply: true
+---
+
+# Core Project Conventions
+
+## Monorepo placement
+
+| Change type | Location |
+|-------------|----------|
+| Mobile H5 UI / routes | `apps/h5` |
+| Pad + PC UI / routes | `apps/web` |
+| Shared UI components | `packages/ui` (`shadcn add` targets ui package) |
+| HTTP client & endpoints | `packages/api` |
+| Request/response DTOs | `packages/shared-types` |
+| App env & API bootstrap | `apps/*/src/lib/env.ts`, `apps/*/src/lib/api.ts` |
+
+Never duplicate API calls or DTOs across apps. UI differs; data layer is shared.
+
+## Language
+
+- Code, comments, and developer-facing errors: **English**
+- Git commits: **English**, conventional commits (`feat(scope): subject`)
+- End-user UI copy may be Chinese when product requires it
+
+## Commands
+
+```bash
+pnpm dev:h5    # :5173
+pnpm dev:web   # :5174
+pnpm build && pnpm test && pnpm typecheck && pnpm audit
+```
+
+## Security
+
+Run `pnpm audit` before merging. Resolve critical/high vulnerabilities.

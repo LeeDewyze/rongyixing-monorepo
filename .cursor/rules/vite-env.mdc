@@ -1,0 +1,39 @@
+---
+description: Vite env vars, static assets, and app bootstrap conventions
+globs: apps/**/*
+alwaysApply: false
+---
+
+# Vite Conventions (apps)
+
+## Environment variables
+
+- Prefix: `VITE_*` only (exposed to client)
+- Read in `src/lib/env.ts`; never `import.meta.env` scattered in components
+- Declare in `src/vite-env.d.ts`:
+
+```typescript
+interface ImportMetaEnv {
+  readonly VITE_APP_NAME: string;
+  readonly VITE_API_BASE_URL: string;
+}
+```
+
+- Document every var in `.env.example`
+
+## Static assets
+
+| Location | Use for |
+|----------|---------|
+| `public/` | `robots.txt`, favicon, files needing fixed URL (`/logo.png`) |
+| `src/assets/` | Imported assets (hashed by Vite: `import logo from "@/assets/logo.svg"`) |
+
+## Dev servers
+
+- H5: port **5173** (`apps/h5/vite.config.ts`)
+- Web: port **5174** (`apps/web/vite.config.ts`)
+
+## API bootstrap
+
+- `src/lib/api.ts` creates singleton via `createApi()` from `@ryx/api`
+- Pages import `getApi()` — not `createApi` directly

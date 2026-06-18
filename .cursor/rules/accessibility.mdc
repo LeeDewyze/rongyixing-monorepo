@@ -1,0 +1,43 @@
+---
+description: Accessibility for H5, Pad touch, and keyboard users
+globs: apps/**/*.tsx,packages/ui/**/*.tsx
+alwaysApply: false
+---
+
+# Accessibility Conventions
+
+## Semantic HTML first
+
+```tsx
+// ❌ BAD
+<div onClick={handleClick}>Submit</div>
+
+// ✅ GOOD
+<button type="button" onClick={handleClick}>Submit</button>
+```
+
+Use `<nav>`, `<main>`, `<header>`, `<section>` for page structure.
+
+## Touch & keyboard (H5 + Pad)
+
+- Min target 44×44px (`min-h-11 min-w-11`) — see `responsive-layout.mdc`
+- Visible focus: rely on shadcn `focus-visible:` rings; don't remove outlines
+- Interactive elements must be reachable via Tab
+
+## ARIA
+
+- Icon-only buttons: `aria-label="Close"`
+- Form fields: associate `<label>` or `aria-labelledby`
+- Live regions for toasts/async feedback: `aria-live="polite"`
+- Don't add redundant `aria-*` on semantic elements
+
+## Modals & dialogs (shadcn Dialog)
+
+- Use `@ryx/ui` Dialog/Sheet when available
+- Trap focus inside open modal; restore focus on close
+- Close on Escape; backdrop click if product allows
+
+## Images
+
+- Meaningful images: descriptive `alt`
+- Decorative images: `alt=""`

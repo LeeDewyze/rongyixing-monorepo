@@ -1,0 +1,46 @@
+---
+description: Git commit message format and pre-commit quality checks
+alwaysApply: true
+---
+
+# Git & Commit Conventions
+
+## Commit messages — English only
+
+Format: `<type>(<scope>): <subject>`
+
+| Type | Use for |
+|------|---------|
+| `feat` | New feature |
+| `fix` | Bug fix |
+| `refactor` | Code change, no behavior change |
+| `test` | Tests only |
+| `docs` | Documentation |
+| `chore` | Tooling, deps |
+| `perf` | Performance |
+| `ci` | CI/CD |
+
+Examples:
+
+```
+feat(web): add pad sidebar layout
+fix(api): handle 401 in auth client
+test(h5): add login form smoke test
+```
+
+- Subject: imperative mood, ≤50 chars, no period at end
+- Scope: `h5`, `web`, `ui`, `api`, `shared-types`, or omit
+
+## Before commit
+
+```bash
+pnpm lint && pnpm typecheck && pnpm test && pnpm audit
+```
+
+Fix critical/high audit findings before merging.
+
+## Do not
+
+- Chinese commit messages
+- Vague messages: `fix bug`, `update`, `wip`
+- Commit `.env`, secrets, or `dist/` artifacts

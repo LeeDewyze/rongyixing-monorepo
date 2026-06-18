@@ -1,0 +1,39 @@
+---
+description: API client, DTOs, and data-fetching conventions
+globs: packages/api/**/*,packages/shared-types/**/*,apps/**/lib/api.ts
+alwaysApply: false
+---
+
+# API Layer Conventions
+
+## Layering
+
+1. **DTO** → `packages/shared-types` (`LoginRequest`, `UserDto`, …)
+2. **Endpoint module** → `packages/api/src/apis/<domain>.ts`
+3. **App bootstrap** → `apps/*/src/lib/api.ts` calls `createApi({ baseUrl, getAccessToken })`
+4. **UI** → calls `getApi().auth.login()` etc.; no raw `fetch` in pages
+
+## Adding an endpoint
+
+```typescript
+// 1. shared-types — add DTO
+export interface FooResponse { id: string }
+
+// 2. packages/api/src/apis/foo.ts
+export function createFooApi(client: ApiClient) {
+  return { getFoo: () => client.get<FooResponse>("/foo") };
+}
+
+// 3. packages/api/src/index.ts — mount on createApi()
+```
+
+## Error handling
+
+- Throw `ApiError` from client; catch in UI/hooks
+- Use `onUnauthorized` in app bootstrap for token cleanup
+- Do not swallow errors silently
+
+## Testing
+
+- Mock `fetchImpl` in `createApiClient` for unit tests
+- No real network calls in package tests
