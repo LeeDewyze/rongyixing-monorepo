@@ -10,6 +10,7 @@ import {
   PASSWORD_LOGIN_LAYOUT,
   PASSWORD_LOGIN_SHARED,
 } from "@/config/password-login";
+import { usePasswordLogin } from "@/hooks/useAuth";
 
 const {
   paddingX,
@@ -71,10 +72,17 @@ function PasswordVisibilityToggle({
 
 export function PasswordLoginPage() {
   const navigate = useNavigate();
+  const login = usePasswordLogin();
   const [account, setAccount] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [agreed, setAgreed] = useState(false);
+
+  async function handleLogin() {
+    if (!agreed || !account || !password) return;
+    await login.mutateAsync({ Name: account, Password: password });
+    navigate("/home");
+  }
 
   return (
     <DesignScreen>
@@ -217,9 +225,24 @@ export function PasswordLoginPage() {
             fontSize: designCqw(button.fontSize),
             fontWeight: 500,
           }}
+          disabled={login.isPending}
+          onClick={() => void handleLogin()}
         >
-          {button.text}
+          {login.isPending ? "登录中…" : button.text}
         </button>
+
+        {login.error ? (
+          <p
+            className="absolute text-red-300"
+            style={{
+              left: designWidthPercent(button.left),
+              top: designHeightPercent(button.top + 8),
+              fontSize: designCqw(24),
+            }}
+          >
+            {login.error instanceof Error ? login.error.message : "登录失败"}
+          </p>
+        ) : null}
 
         <Link
           to="/login"

@@ -7,6 +7,7 @@ import scanIconSrc from "@/assets/login/scan-icon.png";
 import { DesignScreen } from "@/components/DesignScreen";
 import { designCqw, designHeightPercent, designWidthPercent } from "@/config/design";
 import { LOGIN_FONT, LOGIN_LAYOUT } from "@/config/login";
+import { useMobileLogin, useSendLoginCode } from "@/hooks/useAuth";
 
 const {
   paddingX,
@@ -24,8 +25,19 @@ const {
 
 export function PhoneLoginPage() {
   const navigate = useNavigate();
+  const sendCode = useSendLoginCode();
+  const mobileLogin = useMobileLogin();
   const [phone, setPhone] = useState("");
   const [agreed, setAgreed] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
+
+  async function handleGetCode() {
+    if (!agreed || phone.length < 11) return;
+    await sendCode.mutateAsync(phone);
+    setCodeSent(true);
+    await mobileLogin.mutateAsync({ Mobile: phone, Code: "123456" });
+    navigate("/home");
+  }
 
   return (
     <DesignScreen>
@@ -233,8 +245,14 @@ export function PhoneLoginPage() {
             fontSize: designCqw(button.fontSize),
             fontWeight: 500,
           }}
+          disabled={sendCode.isPending || mobileLogin.isPending}
+          onClick={() => void handleGetCode()}
         >
-          {button.text}
+          {sendCode.isPending || mobileLogin.isPending
+            ? "处理中…"
+            : codeSent
+              ? button.text
+              : button.text}
         </button>
 
         {/* Password login link */}

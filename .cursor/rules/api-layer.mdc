@@ -1,6 +1,6 @@
 ---
 description: API client, DTOs, and data-fetching conventions
-globs: packages/api/**/*,packages/shared-types/**/*,apps/**/lib/api.ts
+globs: packages/api/**/*,packages/shared-types/**/*,apps/**/lib/api.ts,apps/**/hooks/**
 alwaysApply: false
 ---
 
@@ -8,32 +8,36 @@ alwaysApply: false
 
 ## Layering
 
-1. **DTO** → `packages/shared-types` (`LoginRequest`, `UserDto`, …)
-2. **Endpoint module** → `packages/api/src/apis/<domain>.ts`
-3. **App bootstrap** → `apps/*/src/lib/api.ts` calls `createApi({ baseUrl, getAccessToken })`
-4. **UI** → calls `getApi().auth.login()` etc.; no raw `fetch` in pages
+1. **DTO** → `packages/shared-types`
+2. **Method 常量** → `packages/api/src/methods/*-flow.ts`
+3. **Endpoint module** → `packages/api/src/apis/<domain>.ts`
+4. **Proxy / Gateway** → `packages/api/src/proxy/`、`gateway/`
+5. **Mock** → `packages/mock/src/handlers/<domain>.ts`
+6. **App bootstrap** → `apps/*/src/lib/api.ts`
+7. **Hooks** → `apps/*/src/hooks/use*.ts`
+8. **UI** → 禁止裸 `fetch('/Home/Proxy')`
 
-## Adding an endpoint
+## Proxy 调用
 
 ```typescript
-// 1. shared-types — add DTO
-export interface FooResponse { id: string }
-
-// 2. packages/api/src/apis/foo.ts
-export function createFooApi(client: ApiClient) {
-  return { getFoo: () => client.get<FooResponse>("/foo") };
-}
-
-// 3. packages/api/src/index.ts — mount on createApi()
+const detail = await getApi().hotel.getDetail({ HotelId: id })
 ```
+
+## 环境模式
+
+| `VITE_API_MODE` | 行为 |
+|-----------------|------|
+| `mock` | packages/mock |
+| `proxy` | /Home/Proxy |
+| `direct` | UrlKey 直连 |
 
 ## Error handling
 
-- Throw `ApiError` from client; catch in UI/hooks
-- Use `onUnauthorized` in app bootstrap for token cleanup
-- Do not swallow errors silently
+- 失败抛 `ApiError`
+- `NOLOGIN` → `onUnauthorized`
+- UI：loading / error / empty 三态
 
 ## Testing
 
-- Mock `fetchImpl` in `createApiClient` for unit tests
-- No real network calls in package tests
+- `pnpm check:mock-coverage -- --domain hotel`
+- 每个 `apis/*.ts` 至少 1 个 mock contract 测试

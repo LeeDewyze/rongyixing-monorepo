@@ -1,0 +1,14 @@
+import { ORDER_METHODS } from "./order.js";
+
+/** Curated S3 order / pay flow Methods. */
+export const ORDER_FLOW_METHODS = {
+  LIST: ORDER_METHODS.ORDER_LIST_36,
+  DETAIL: ORDER_METHODS.ORDER_DETAIL_27,
+  CANCEL_HOTEL: ORDER_METHODS.ORDER_CANCELORDERHOTEL,
+  GET_ORDER_PAYS: ORDER_METHODS.ORDER_GETORDERPAYS,
+  PAY_CREATE: "TmcApiOrderUrl-Pay-Create",
+  PAY_PROCESS: "TmcApiOrderUrl-Pay-Process",
+} as const;
+
+export type OrderFlowMethod =
+  (typeof ORDER_FLOW_METHODS)[keyof typeof ORDER_FLOW_METHODS];

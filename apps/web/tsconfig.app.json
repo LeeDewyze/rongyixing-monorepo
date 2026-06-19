@@ -8,21 +8,10 @@
     "paths": {
       "@/*": [
         "./src/*"
-      ],
-      "@ryx/ui/*": [
-        "../../packages/ui/src/*"
       ]
     }
   },
   "include": [
     "src"
-  ],
-  "references": [
-    {
-      "path": "../../packages/ui"
-    },
-    {
-      "path": "../../packages/api"
-    }
   ]
 }

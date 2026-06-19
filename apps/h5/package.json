@@ -7,12 +7,14 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc -b --noEmit",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
     "@ryx/shared-types": "workspace:*",
     "@ryx/ui": "workspace:*",
+    "@tanstack/react-query": "^5.80.7",
+    "@ryx/mock": "workspace:*",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.6.2",

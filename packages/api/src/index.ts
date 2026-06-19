@@ -1,21 +1,112 @@
+import type { ApiMode } from "@ryx/shared-types";
+
+import {
+  createAuthProxyApi,
+  createIdentityApi,
+  type AuthProxyApi,
+  type IdentityApi,
+} from "./apis/auth-proxy.js";
 import { createAuthApi } from "./apis/auth.js";
+import { createHotelApi, type HotelApi } from "./apis/hotel.js";
+import { createMemberApi, type MemberApi } from "./apis/member.js";
+import { createOrderApi, type OrderApi } from "./apis/order.js";
+import { createPayApi, type PayApi } from "./apis/pay.js";
+import { createTravelApi, type TravelApi } from "./apis/travel.js";
 import { createApiClient, type ApiClient, type ApiClientConfig } from "./client.js";
+import { createGatewayClient, type GatewayClient } from "./gateway/gateway.js";
+import {
+  createProxyClient,
+  type MockHandler,
+  type ProxyClient,
+  type ProxyClientConfig,
+} from "./proxy/index.js";
 
 export { ApiError } from "./errors.js";
 export { createApiClient, type ApiClient, type ApiClientConfig } from "./client.js";
 export { createAuthApi, type AuthApi } from "./apis/auth.js";
+export {
+  createAuthProxyApi,
+  createIdentityApi,
+  type AuthProxyApi,
+  type IdentityApi,
+} from "./apis/auth-proxy.js";
+export { createHotelApi, type HotelApi } from "./apis/hotel.js";
+export { createOrderApi, type OrderApi } from "./apis/order.js";
+export { createPayApi, type PayApi } from "./apis/pay.js";
+export { createMemberApi, type MemberApi } from "./apis/member.js";
+export { createTravelApi, type TravelApi } from "./apis/travel.js";
+export * from "./methods/auth-flow.js";
+export * from "./methods/hotel-flow.js";
+export * from "./methods/order-flow.js";
+export * from "./methods/member-flow.js";
+export * from "./methods/travel-flow.js";
+export * from "./methods/index.js";
+export * from "./proxy/index.js";
+export { createGatewayClient, GATEWAY_PATHS, type GatewayClient } from "./gateway/gateway.js";
+export { uploadFile } from "./gateway/upload.js";
+
+export interface CreateApiConfig extends ApiClientConfig {
+  mode?: ApiMode;
+  appId?: string;
+  mockDelay?: number;
+  mockHandler?: MockHandler;
+  getTicket?: () => string | null;
+  getDomain?: () => string | null;
+  getLanguage?: () => string;
+  onNoAuthorize?: () => void;
+  onSystemError?: (message: string) => void;
+}
 
 export interface Api {
   client: ApiClient;
+  proxy: ProxyClient;
+  gateway: GatewayClient;
   auth: ReturnType<typeof createAuthApi>;
+  authProxy: AuthProxyApi;
+  identity: IdentityApi;
+  hotel: HotelApi;
+  order: OrderApi;
+  pay: PayApi;
+  member: MemberApi;
+  travel: TravelApi;
 }
 
 /** Create a shared API surface for all client apps. */
-export function createApi(config: ApiClientConfig): Api {
+export function createApi(config: CreateApiConfig): Api {
   const client = createApiClient(config);
+
+  const proxyConfig: ProxyClientConfig = {
+    baseUrl: config.baseUrl,
+    mode: config.mode ?? "proxy",
+    appId: config.appId,
+    fetchImpl: config.fetchImpl,
+    getTicket: config.getTicket,
+    getDomain: config.getDomain,
+    getLanguage: config.getLanguage,
+    mockDelay: config.mockDelay,
+    mockHandler: config.mockHandler,
+    onUnauthorized: config.onUnauthorized,
+    onNoAuthorize: config.onNoAuthorize,
+    onSystemError: config.onSystemError,
+  };
+
+  const proxy = createProxyClient(proxyConfig);
+  const gateway = createGatewayClient({
+    baseUrl: config.baseUrl,
+    fetchImpl: config.fetchImpl,
+  });
 
   return {
     client,
+    proxy,
+    gateway,
     auth: createAuthApi(client),
+    authProxy: createAuthProxyApi(proxy),
+    identity: createIdentityApi(proxy),
+    hotel: createHotelApi(proxy),
+    order: createOrderApi(proxy),
+    pay: createPayApi(proxy),
+    member: createMemberApi(proxy),
+    travel: createTravelApi(proxy),
   };
 }

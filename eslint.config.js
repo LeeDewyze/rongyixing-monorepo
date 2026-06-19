@@ -23,6 +23,14 @@ export default tseslint.config(
         "warn",
         { allowConstantExport: true },
       ],
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "CallExpression[callee.name='fetch'] Literal[value=/\\/Home\\/Proxy/]",
+          message: "Use getApi() instead of fetch('/Home/Proxy').",
+        },
+      ],
     },
   },
 );
