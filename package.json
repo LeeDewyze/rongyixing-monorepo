@@ -6,8 +6,9 @@
     "node": ">=20"
   },
   "scripts": {
-    "dev:h5": "pnpm --filter @ryx/h5 dev",
-    "dev:h5:mock": "VITE_API_MODE=mock pnpm --filter @ryx/h5 dev",
+    "build:workspace": "pnpm --filter @ryx/shared-types build && pnpm --filter @ryx/api build && pnpm --filter @ryx/mock build",
+    "dev:h5": "pnpm build:workspace && pnpm --filter @ryx/h5 dev",
+    "dev:h5:mock": "pnpm build:workspace && VITE_API_MODE=mock pnpm --filter @ryx/h5 dev",
     "dev:h5:test": "pnpm --filter @ryx/h5 dev --mode staging",
     "dev:web": "pnpm --filter @ryx/web dev",
     "build": "pnpm -r build",
