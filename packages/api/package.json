@@ -14,10 +14,14 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "extract-methods": "node scripts/extract-methods.mjs",
+    "diff-jyx-methods": "node scripts/diff-jyx-methods.mjs",
+    "check-mock-coverage": "node scripts/check-mock-coverage.mjs"
   },
   "dependencies": {
-    "@ryx/shared-types": "workspace:*"
+    "@ryx/shared-types": "workspace:*",
+    "js-md5": "^0.8.3"
   },
   "devDependencies": {
     "typescript": "^5.8.3",

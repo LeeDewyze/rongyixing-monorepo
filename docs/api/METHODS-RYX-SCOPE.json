@@ -1,0 +1,190 @@
+{
+  "generatedAt": "2026-06-19T11:47:19.132Z",
+  "summary": {
+    "methodsJsonTotal": 364,
+    "ryxReferencedInJson": 358,
+    "ryxOnlyInJson": 61,
+    "sharedRyxJyxInJson": 297,
+    "ryxAppStaticScan": 354,
+    "ryxScanExcludingOutOfMainline": 210,
+    "ryxScanOutOfMainlineOnly": 144,
+    "ryxScanCoreTmcTabs": 159,
+    "ryxMainlineEstimate": 199,
+    "ryxOutOfMainlineEstimate": 146,
+    "missedByExtractCount": 0
+  },
+  "countBuckets": {
+    "1": 27,
+    "2-5": 320,
+    "6+": 11
+  },
+  "moduleStats": [
+    {
+      "mod": "tmc",
+      "count": 123
+    },
+    {
+      "mod": "public",
+      "count": 79
+    },
+    {
+      "mod": "bpm",
+      "count": 35
+    },
+    {
+      "mod": "mms",
+      "count": 35
+    },
+    {
+      "mod": "account",
+      "count": 27
+    },
+    {
+      "mod": "crm",
+      "count": 18
+    },
+    {
+      "mod": "member",
+      "count": 18
+    },
+    {
+      "mod": "services",
+      "count": 17
+    },
+    {
+      "mod": "hr",
+      "count": 13
+    },
+    {
+      "mod": "message",
+      "count": 5
+    },
+    {
+      "mod": "tabs",
+      "count": 4
+    },
+    {
+      "mod": "login",
+      "count": 3
+    },
+    {
+      "mod": "registration",
+      "count": 3
+    },
+    {
+      "mod": "workflow",
+      "count": 3
+    },
+    {
+      "mod": "bank-card",
+      "count": 2
+    },
+    {
+      "mod": "components",
+      "count": 2
+    },
+    {
+      "mod": "password",
+      "count": 2
+    },
+    {
+      "mod": "cordovaPushPluginHelper.ts",
+      "count": 1
+    },
+    {
+      "mod": "wechatHelper.ts",
+      "count": 1
+    }
+  ],
+  "urlKeyTop": [
+    {
+      "urlKey": "ApiPasswordUrl",
+      "count": 30
+    },
+    {
+      "urlKey": "TmcApiHomeUrl",
+      "count": 30
+    },
+    {
+      "urlKey": "TmcApiOrderUrl",
+      "count": 30
+    },
+    {
+      "urlKey": "TmcApiBookUrl",
+      "count": 29
+    },
+    {
+      "urlKey": "TmcTouristBookUrl",
+      "count": 20
+    },
+    {
+      "urlKey": "BpmApiHomeUrl",
+      "count": 18
+    },
+    {
+      "urlKey": "CrmApiUrl",
+      "count": 18
+    },
+    {
+      "urlKey": "TmcTouristOrderUrl",
+      "count": 18
+    },
+    {
+      "urlKey": "HrApiUrl",
+      "count": 15
+    },
+    {
+      "urlKey": "ApiMemberUrl",
+      "count": 13
+    },
+    {
+      "urlKey": "ApiAccountUrl",
+      "count": 11
+    },
+    {
+      "urlKey": "BpmApiOrderUrl",
+      "count": 10
+    },
+    {
+      "urlKey": "MmsApiOrderUrl",
+      "count": 8
+    },
+    {
+      "urlKey": "ApiHomeUrl",
+      "count": 7
+    },
+    {
+      "urlKey": "BpmApiExpenseUrl",
+      "count": 7
+    }
+  ],
+  "outOfMainlineUrlKeys": [
+    "BpmApiExpenseUrl",
+    "BpmApiHomeUrl",
+    "BpmApiOrderUrl",
+    "CrmApiUrl",
+    "MmsApiBuyUrl",
+    "MmsApiHomeUrl",
+    "MmsApiMemberUrl",
+    "MmsApiOrderUrl",
+    "MmsApiProductUrl",
+    "MmsApiShopcartUrl",
+    "MmsApiStoreUrl",
+    "TmcTouristBookUrl",
+    "TmcTouristBookUrl-",
+    "TmcTouristCarUrl",
+    "TmcTouristFlightUrl",
+    "TmcTouristHotelUrl",
+    "TmcTouristOrderUrl",
+    "TmcTouristTrainUrl",
+    "WorkflowApiUrl"
+  ],
+  "missedByExtract": [],
+  "migrationGuidance": {
+    "inventory364": "core+ryx+jyx 全库登记 — 仅 dictionary，非迁移目标",
+    "ryxStatic354": "ryx/src/app 文本扫描上界 — 整库拷贝自 jyx 共用代码，大量非 /rl/ 主线",
+    "outOfMainline144": "CRM(18)+MMS(33)+BPM/Workflow(38)+Tourist(55) — 建议 Out of Scope",
+    "realisticReplaceRl": "ryxScanCoreTmcTabs ≈ 主 Tab TMC+登录会员出差 — 实际迁移预算",
+    "alreadyWrapped": 25
+  }
+}

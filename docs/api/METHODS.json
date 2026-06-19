@@ -1,0 +1,4460 @@
+{
+  "generatedAt": "2026-06-19T07:42:48.327Z",
+  "sourceRoot": "/Users/jiangjiankang/work/self/rongyixing/beeantmobile-main",
+  "total": 364,
+  "byDomain": {
+    "member": 25,
+    "other": 32,
+    "auth": 32,
+    "bpm": 28,
+    "order": 67,
+    "travel": 20,
+    "mms": 24,
+    "book": 50,
+    "car": 5,
+    "flight": 18,
+    "tmc": 30,
+    "hotel": 22,
+    "train": 11
+  },
+  "methods": [
+    {
+      "method": "ApiAccountUrl-AccountCard-List",
+      "urlKey": "ApiAccountUrl",
+      "controller": "AccountCard",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bank-card/bank-card.service.ts",
+        "projects/jyx/src/app/bank-card/bank-card.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiAccountUrl-AccountCard-Remove",
+      "urlKey": "ApiAccountUrl",
+      "controller": "AccountCard",
+      "action": "Remove",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bank-card/bank-card.service.ts",
+        "projects/jyx/src/app/bank-card/bank-card.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiAccountUrl-Home-Get",
+      "urlKey": "ApiAccountUrl",
+      "controller": "Home",
+      "action": "Get",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/account/account-security/account-security.base.page.ts",
+        "projects/ryx/src/app/account/account-security-en/account-security-en.page.ts",
+        "projects/ryx/src/app/account/account-security_ryx/account-security_ryx.page.ts",
+        "projects/ryx/src/app/account/account.service.ts",
+        "projects/ryx/src/app/public/public-car/public-car.service.ts",
+        "projects/ryx/src/app/tmc/tmc-car/tmc-car.service.ts",
+        "projects/jyx/src/app/account/account-security/account-security.base.page.ts",
+        "projects/jyx/src/app/account/account.service.ts",
+        "projects/jyx/src/app/public/public-car/public-car.service.ts",
+        "projects/jyx/src/app/tmc/tmc-car/tmc-car.service.ts"
+      ],
+      "count": 10
+    },
+    {
+      "method": "ApiAccountUrl-Home-GetBalance",
+      "urlKey": "ApiAccountUrl",
+      "controller": "Home",
+      "action": "GetBalance",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/account/account.service.ts",
+        "projects/jyx/src/app/account/account.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiAccountUrl-Home-GetItems",
+      "urlKey": "ApiAccountUrl",
+      "controller": "Home",
+      "action": "GetItems",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/account/account.service.ts",
+        "projects/jyx/src/app/account/account.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiAccountUrl-Home-Logout",
+      "urlKey": "ApiAccountUrl",
+      "controller": "Home",
+      "action": "Logout",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/account/account.service.ts",
+        "projects/jyx/src/app/account/account.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiAccountUrl-Message-GetCount",
+      "urlKey": "ApiAccountUrl",
+      "controller": "Message",
+      "action": "GetCount",
+      "dynamic": false,
+      "sources": [
+        "projects/core/src/services/api/core-api.service.ts",
+        "projects/ryx/src/app/message/message.service.ts",
+        "projects/ryx/src/app/services/api/core-api.service.ts",
+        "projects/jyx/src/app/message/message.service.ts"
+      ],
+      "count": 4
+    },
+    {
+      "method": "ApiAccountUrl-Message-Pop",
+      "urlKey": "ApiAccountUrl",
+      "controller": "Message",
+      "action": "Pop",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/message/message.service.ts",
+        "projects/jyx/src/app/message/message.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiAccountUrl-Message-Read",
+      "urlKey": "ApiAccountUrl",
+      "controller": "Message",
+      "action": "Read",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/message/message.service.ts",
+        "projects/jyx/src/app/message/message.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiAccountUrl-Message-Remove",
+      "urlKey": "ApiAccountUrl",
+      "controller": "Message",
+      "action": "Remove",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/message/message.service.ts",
+        "projects/jyx/src/app/message/message.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiAccountUrl-Message-Show",
+      "urlKey": "ApiAccountUrl",
+      "controller": "Message",
+      "action": "Show",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/message/message.service.ts",
+        "projects/jyx/src/app/message/message.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiHomeUrl-District-List",
+      "urlKey": "ApiHomeUrl",
+      "controller": "District",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/member/member.service.ts",
+        "projects/ryx/src/app/mms/mms-address/mms-address.service.ts",
+        "projects/jyx/src/app/member/member.service.ts",
+        "projects/jyx/src/app/mms/mms-address/mms-address.service.ts"
+      ],
+      "count": 4
+    },
+    {
+      "method": "ApiHomeUrl-Home-GetCalendar",
+      "urlKey": "ApiHomeUrl",
+      "controller": "Home",
+      "action": "GetCalendar",
+      "dynamic": false,
+      "sources": [
+        "projects/core/src/services/calendar.service.ts",
+        "projects/ryx/src/app/tmc/calendar.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiHomeUrl-Home-GetImageRecoverAddress",
+      "urlKey": "ApiHomeUrl",
+      "controller": "Home",
+      "action": "GetImageRecoverAddress",
+      "dynamic": false,
+      "sources": [
+        "projects/core/src/services/imageRecover/imageRecover.service.ts",
+        "projects/ryx/src/app/services/imageRecover/imageRecover.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiHomeUrl-Home-GetValidateRule",
+      "urlKey": "ApiHomeUrl",
+      "controller": "Home",
+      "action": "GetValidateRule",
+      "dynamic": false,
+      "sources": [
+        "projects/core/src/services/validator/validator.service.ts",
+        "projects/ryx/src/app/services/validator/validator.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiHomeUrl-Identity-Check",
+      "urlKey": "ApiHomeUrl",
+      "controller": "Identity",
+      "action": "Check",
+      "dynamic": false,
+      "sources": [
+        "projects/core/src/services/identity/identity.service.ts",
+        "projects/ryx/src/app/services/identity/identity.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiHomeUrl-Identity-Get",
+      "urlKey": "ApiHomeUrl",
+      "controller": "Identity",
+      "action": "Get",
+      "dynamic": false,
+      "sources": [
+        "projects/core/src/services/identity/identity.service.ts",
+        "projects/ryx/src/app/services/identity/identity.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiHomeUrl-Identity-GetWebSocketUrl",
+      "urlKey": "ApiHomeUrl",
+      "controller": "Identity",
+      "action": "GetWebSocketUrl",
+      "dynamic": false,
+      "sources": [
+        "projects/core/src/services/identity/identity.service.ts",
+        "projects/ryx/src/app/services/identity/identity.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiLoginUrl-Home-DeviceLogin",
+      "urlKey": "ApiLoginUrl",
+      "controller": "Home",
+      "action": "DeviceLogin",
+      "dynamic": false,
+      "sources": [
+        "projects/core/src/services/api/core-api.service.ts",
+        "projects/core/src/services/login/login.service.ts",
+        "projects/ryx/src/app/services/api/core-api.service.ts",
+        "projects/ryx/src/app/services/login/login.service.ts"
+      ],
+      "count": 4
+    },
+    {
+      "method": "ApiLoginUrl-Home-Logout",
+      "urlKey": "ApiLoginUrl",
+      "controller": "Home",
+      "action": "Logout",
+      "dynamic": false,
+      "sources": [
+        "projects/core/src/services/login/login.service.ts",
+        "projects/ryx/src/app/services/login/login.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiLogUrl-Error-Add",
+      "urlKey": "ApiLogUrl",
+      "controller": "Error",
+      "action": "Add",
+      "dynamic": false,
+      "sources": [
+        "projects/core/src/services/log/log.service.ts",
+        "projects/ryx/src/app/services/log/log.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiMemberUrl-Address-Add",
+      "urlKey": "ApiMemberUrl",
+      "controller": "Address",
+      "action": "Add",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/member/member.service.ts",
+        "projects/ryx/src/app/mms/mms-address/mms-address.service.ts",
+        "projects/jyx/src/app/member/member.service.ts",
+        "projects/jyx/src/app/mms/mms-address/mms-address.service.ts"
+      ],
+      "count": 4
+    },
+    {
+      "method": "ApiMemberUrl-Address-List",
+      "urlKey": "ApiMemberUrl",
+      "controller": "Address",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/member/member.service.ts",
+        "projects/jyx/src/app/member/member.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiMemberUrl-Address-Modify",
+      "urlKey": "ApiMemberUrl",
+      "controller": "Address",
+      "action": "Modify",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/member/member.service.ts",
+        "projects/jyx/src/app/member/member.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiMemberUrl-Address-Remove",
+      "urlKey": "ApiMemberUrl",
+      "controller": "Address",
+      "action": "Remove",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/member/member.service.ts",
+        "projects/jyx/src/app/member/member.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiMemberUrl-Coupon-List",
+      "urlKey": "ApiMemberUrl",
+      "controller": "Coupon",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/member/member.service.ts",
+        "projects/jyx/src/app/member/member.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiMemberUrl-Coupon-Remove",
+      "urlKey": "ApiMemberUrl",
+      "controller": "Coupon",
+      "action": "Remove",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/member/member.service.ts",
+        "projects/jyx/src/app/member/member.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiMemberUrl-Member-Get",
+      "urlKey": "ApiMemberUrl",
+      "controller": "Member",
+      "action": "Get",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/member/member.service.ts",
+        "projects/jyx/src/app/member/member.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiMemberUrl-Member-GetAccount",
+      "urlKey": "ApiMemberUrl",
+      "controller": "Member",
+      "action": "GetAccount",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/member/member.service.ts",
+        "projects/jyx/src/app/member/member.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiMemberUrl-Member-Save",
+      "urlKey": "ApiMemberUrl",
+      "controller": "Member",
+      "action": "Save",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/member/member.service.ts",
+        "projects/jyx/src/app/member/member.service.ts"
+      ],
+      "count": 4
+    },
+    {
+      "method": "ApiMemberUrl-Passenger-Add",
+      "urlKey": "ApiMemberUrl",
+      "controller": "Passenger",
+      "action": "Add",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/member/member.service.ts",
+        "projects/jyx/src/app/member/member.service.ts"
+      ],
+      "count": 3
+    },
+    {
+      "method": "ApiMemberUrl-Passenger-List",
+      "urlKey": "ApiMemberUrl",
+      "controller": "Passenger",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/member/member.service.ts",
+        "projects/jyx/src/app/member/member.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiMemberUrl-Passenger-Modify",
+      "urlKey": "ApiMemberUrl",
+      "controller": "Passenger",
+      "action": "Modify",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/member/member.service.ts",
+        "projects/jyx/src/app/member/member.service.ts"
+      ],
+      "count": 3
+    },
+    {
+      "method": "ApiMemberUrl-Passenger-Remove",
+      "urlKey": "ApiMemberUrl",
+      "controller": "Passenger",
+      "action": "Remove",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/member/member.service.ts",
+        "projects/jyx/src/app/member/member.service.ts"
+      ],
+      "count": 3
+    },
+    {
+      "method": "ApiPasswordUrl-Device-Bind",
+      "urlKey": "ApiPasswordUrl",
+      "controller": "Device",
+      "action": "Bind",
+      "dynamic": false,
+      "sources": [
+        "projects/core/src/services/login/login.service.ts",
+        "projects/ryx/src/app/account/account-bind/account-bind.page.ts",
+        "projects/ryx/src/app/login/login.base.page.ts",
+        "projects/ryx/src/app/registration/registration-register/registration-register.page.ts",
+        "projects/ryx/src/app/registration/registration-register-qrcode/registration-register-qrcode.page.ts",
+        "projects/ryx/src/app/registration/registration-register_ryx/registration-register_ryx.page.ts",
+        "projects/ryx/src/app/services/login/login.service.ts",
+        "projects/jyx/src/app/account/account-bind/account-bind.page.ts",
+        "projects/jyx/src/app/registration/registration-register/registration-register.page.ts",
+        "projects/jyx/src/app/registration/registration-register-qrcode/registration-register-qrcode.page.ts"
+      ],
+      "count": 10
+    },
+    {
+      "method": "ApiPasswordUrl-Device-Check",
+      "urlKey": "ApiPasswordUrl",
+      "controller": "Device",
+      "action": "Check",
+      "dynamic": false,
+      "sources": [
+        "projects/core/src/services/login/login.service.ts",
+        "projects/ryx/src/app/services/login/login.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiPasswordUrl-Device-List",
+      "urlKey": "ApiPasswordUrl",
+      "controller": "Device",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/account/account-device/account-device.page.ts",
+        "projects/jyx/src/app/account/account-device/account-device.page.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiPasswordUrl-Device-Remove",
+      "urlKey": "ApiPasswordUrl",
+      "controller": "Device",
+      "action": "Remove",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/account/account-device/account-device.page.ts",
+        "projects/jyx/src/app/account/account-device/account-device.page.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiPasswordUrl-DingTalk-Bind",
+      "urlKey": "ApiPasswordUrl",
+      "controller": "DingTalk",
+      "action": "Bind",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/account/account-dingtalk/account-dingtalk.page.ts",
+        "projects/jyx/src/app/account/account-dingtalk/account-dingtalk.page.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiPasswordUrl-DingTalk-Check",
+      "urlKey": "ApiPasswordUrl",
+      "controller": "DingTalk",
+      "action": "Check",
+      "dynamic": false,
+      "sources": [
+        "projects/core/src/services/login/login.service.ts",
+        "projects/ryx/src/app/services/login/login.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiPasswordUrl-DingTalk-List",
+      "urlKey": "ApiPasswordUrl",
+      "controller": "DingTalk",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/account/account-dingtalk/account-dingtalk.page.ts",
+        "projects/ryx/src/app/account/account-security/account-security.base.page.ts",
+        "projects/ryx/src/app/account/account-security-en/account-security-en.page.ts",
+        "projects/ryx/src/app/account/account-security_ryx/account-security_ryx.page.ts",
+        "projects/jyx/src/app/account/account-dingtalk/account-dingtalk.page.ts",
+        "projects/jyx/src/app/account/account-security/account-security.base.page.ts"
+      ],
+      "count": 6
+    },
+    {
+      "method": "ApiPasswordUrl-DingTalk-Remove",
+      "urlKey": "ApiPasswordUrl",
+      "controller": "DingTalk",
+      "action": "Remove",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/account/account-dingtalk/account-dingtalk.page.ts",
+        "projects/jyx/src/app/account/account-dingtalk/account-dingtalk.page.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiPasswordUrl-Email-Action",
+      "urlKey": "ApiPasswordUrl",
+      "controller": "Email",
+      "action": "Action",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/account/account-email/account-email.page.ts",
+        "projects/ryx/src/app/account/account-email-en/account-email-en.page.ts",
+        "projects/jyx/src/app/account/account-email/account-email.page.ts"
+      ],
+      "count": 3
+    },
+    {
+      "method": "ApiPasswordUrl-Email-Load",
+      "urlKey": "ApiPasswordUrl",
+      "controller": "Email",
+      "action": "Load",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/account/account-email/account-email.page.ts",
+        "projects/ryx/src/app/account/account-email-en/account-email-en.page.ts",
+        "projects/jyx/src/app/account/account-email/account-email.page.ts"
+      ],
+      "count": 3
+    },
+    {
+      "method": "ApiPasswordUrl-Email-SendCode",
+      "urlKey": "ApiPasswordUrl",
+      "controller": "Email",
+      "action": "SendCode",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/account/account-email/account-email.page.ts",
+        "projects/ryx/src/app/account/account-email-en/account-email-en.page.ts",
+        "projects/jyx/src/app/account/account-email/account-email.page.ts"
+      ],
+      "count": 3
+    },
+    {
+      "method": "ApiPasswordUrl-Home-Action",
+      "urlKey": "ApiPasswordUrl",
+      "controller": "Home",
+      "action": "Action",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/password/password-check/password-check.page.ts",
+        "projects/ryx/src/app/password/password-reset/password-reset.page.ts",
+        "projects/ryx/src/app/password/password-valid/password-valid.page.ts",
+        "projects/jyx/src/app/password/password-check/password-check.page.ts",
+        "projects/jyx/src/app/password/password-reset/password-reset.page.ts",
+        "projects/jyx/src/app/password/password-valid/password-valid.page.ts"
+      ],
+      "count": 6
+    },
+    {
+      "method": "ApiPasswordUrl-Home-SendCode",
+      "urlKey": "ApiPasswordUrl",
+      "controller": "Home",
+      "action": "SendCode",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/password/password-valid/password-valid.page.ts",
+        "projects/jyx/src/app/password/password-valid/password-valid.page.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiPasswordUrl-lark-Bind",
+      "urlKey": "ApiPasswordUrl",
+      "controller": "lark",
+      "action": "Bind",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/account/account-lark/account-lark.page.ts",
+        "projects/jyx/src/app/account/account-lark/account-lark.page.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiPasswordUrl-Lark-List",
+      "urlKey": "ApiPasswordUrl",
+      "controller": "Lark",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/account/account-lark/account-lark.page.ts",
+        "projects/ryx/src/app/account/account-security/account-security.base.page.ts",
+        "projects/ryx/src/app/account/account-security_ryx/account-security_ryx.page.ts",
+        "projects/jyx/src/app/account/account-lark/account-lark.page.ts",
+        "projects/jyx/src/app/account/account-security/account-security.base.page.ts"
+      ],
+      "count": 5
+    },
+    {
+      "method": "ApiPasswordUrl-Lark-Remove",
+      "urlKey": "ApiPasswordUrl",
+      "controller": "Lark",
+      "action": "Remove",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/account/account-lark/account-lark.page.ts",
+        "projects/jyx/src/app/account/account-lark/account-lark.page.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiPasswordUrl-Mobile-Action",
+      "urlKey": "ApiPasswordUrl",
+      "controller": "Mobile",
+      "action": "Action",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/account/account-mobile/account-mobile.base.page.ts",
+        "projects/jyx/src/app/account/account-mobile/account-mobile.base.page.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiPasswordUrl-Mobile-Bind",
+      "urlKey": "ApiPasswordUrl",
+      "controller": "Mobile",
+      "action": "Bind",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/account/account-bind/account-bind.page.ts",
+        "projects/jyx/src/app/account/account-bind/account-bind.page.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiPasswordUrl-Mobile-Load",
+      "urlKey": "ApiPasswordUrl",
+      "controller": "Mobile",
+      "action": "Load",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/account/account-mobile/account-mobile.base.page.ts",
+        "projects/jyx/src/app/account/account-mobile/account-mobile.base.page.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiPasswordUrl-Mobile-SendCode",
+      "urlKey": "ApiPasswordUrl",
+      "controller": "Mobile",
+      "action": "SendCode",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/account/account-mobile/account-mobile.base.page.ts",
+        "projects/jyx/src/app/account/account-mobile/account-mobile.base.page.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiPasswordUrl-Password-Modify",
+      "urlKey": "ApiPasswordUrl",
+      "controller": "Password",
+      "action": "Modify",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/account/account-password/account-password.page.ts",
+        "projects/ryx/src/app/account/account-password-en/account-password-en.page.ts",
+        "projects/ryx/src/app/tmc/tmc-confirm-information/tmc-confirm-information.page.ts",
+        "projects/jyx/src/app/account/account-password/account-password.page.ts",
+        "projects/jyx/src/app/account/account-password-en/account-password-en.page.ts",
+        "projects/jyx/src/app/tmc/tmc-confirm-information/tmc-confirm-information.page.ts"
+      ],
+      "count": 6
+    },
+    {
+      "method": "ApiPasswordUrl-Push-Bind",
+      "urlKey": "ApiPasswordUrl",
+      "controller": "Push",
+      "action": "Bind",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/cordovaPushPluginHelper.ts",
+        "projects/jyx/src/app/cordovaPushPluginHelper.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiPasswordUrl-Wechat-Bind",
+      "urlKey": "ApiPasswordUrl",
+      "controller": "Wechat",
+      "action": "Bind",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/account/account-wechat/account-wechat.page.ts",
+        "projects/jyx/src/app/account/account-wechat/account-wechat.page.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiPasswordUrl-Wechat-Check",
+      "urlKey": "ApiPasswordUrl",
+      "controller": "Wechat",
+      "action": "Check",
+      "dynamic": false,
+      "sources": [
+        "projects/core/src/services/login/login.service.ts",
+        "projects/ryx/src/app/services/login/login.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiPasswordUrl-wechat-jssdk",
+      "urlKey": "ApiPasswordUrl",
+      "controller": "wechat",
+      "action": "jssdk",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/wechatHelper.ts",
+        "projects/jyx/src/app/wechatHelper.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiPasswordUrl-Wechat-List",
+      "urlKey": "ApiPasswordUrl",
+      "controller": "Wechat",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/account/account-security/account-security.base.page.ts",
+        "projects/ryx/src/app/account/account-security-en/account-security-en.page.ts",
+        "projects/ryx/src/app/account/account-security_ryx/account-security_ryx.page.ts",
+        "projects/ryx/src/app/account/account-wechat/account-wechat.page.ts",
+        "projects/jyx/src/app/account/account-security/account-security.base.page.ts",
+        "projects/jyx/src/app/account/account-wechat/account-wechat.page.ts"
+      ],
+      "count": 6
+    },
+    {
+      "method": "ApiPasswordUrl-Wechat-Remove",
+      "urlKey": "ApiPasswordUrl",
+      "controller": "Wechat",
+      "action": "Remove",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/account/account-wechat/account-wechat.page.ts",
+        "projects/jyx/src/app/account/account-wechat/account-wechat.page.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiPasswordUrl-WechatWork-Bind",
+      "urlKey": "ApiPasswordUrl",
+      "controller": "WechatWork",
+      "action": "Bind",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/account/account-wechatwork/account-wechatwork.page.ts",
+        "projects/jyx/src/app/account/account-wechatwork/account-wechatwork.page.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiPasswordUrl-WechatWork-List",
+      "urlKey": "ApiPasswordUrl",
+      "controller": "WechatWork",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/account/account-security/account-security.base.page.ts",
+        "projects/ryx/src/app/account/account-security_ryx/account-security_ryx.page.ts",
+        "projects/ryx/src/app/account/account-wechatwork/account-wechatwork.page.ts",
+        "projects/jyx/src/app/account/account-security/account-security.base.page.ts",
+        "projects/jyx/src/app/account/account-wechatwork/account-wechatwork.page.ts"
+      ],
+      "count": 5
+    },
+    {
+      "method": "ApiPasswordUrl-WechatWork-Remove",
+      "urlKey": "ApiPasswordUrl",
+      "controller": "WechatWork",
+      "action": "Remove",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/account/account-wechatwork/account-wechatwork.page.ts",
+        "projects/jyx/src/app/account/account-wechatwork/account-wechatwork.page.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ApiRegisterUrl-Home-RegisterMobile",
+      "urlKey": "ApiRegisterUrl",
+      "controller": "Home",
+      "action": "RegisterMobile",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/login/login.base.page.ts",
+        "projects/ryx/src/app/registration/registration-register/registration-register.page.ts",
+        "projects/ryx/src/app/registration/registration-register-qrcode/registration-register-qrcode.page.ts",
+        "projects/ryx/src/app/registration/registration-register_ryx/registration-register_ryx.page.ts",
+        "projects/ryx/src/app/registration/registration.service.ts",
+        "projects/jyx/src/app/registration/registration-register/registration-register.page.ts",
+        "projects/jyx/src/app/registration/registration-register-qrcode/registration-register-qrcode.page.ts",
+        "projects/jyx/src/app/registration/registration.service.ts"
+      ],
+      "count": 8
+    },
+    {
+      "method": "ApiRegisterUrl-Home-SendMobileCode",
+      "urlKey": "ApiRegisterUrl",
+      "controller": "Home",
+      "action": "SendMobileCode",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/login/login.base.page.ts",
+        "projects/ryx/src/app/registration/components/qrcode-item/qrcode-item.component.ts",
+        "projects/ryx/src/app/registration/registration-register/registration-register.page.ts",
+        "projects/ryx/src/app/registration/registration-register_ryx/registration-register_ryx.page.ts",
+        "projects/ryx/src/app/registration/registration.service.ts",
+        "projects/jyx/src/app/registration/components/qrcode-item/qrcode-item.component.ts",
+        "projects/jyx/src/app/registration/registration-register/registration-register.page.ts",
+        "projects/jyx/src/app/registration/registration.service.ts"
+      ],
+      "count": 8
+    },
+    {
+      "method": "BfsApiUrl-Home-Images",
+      "urlKey": "BfsApiUrl",
+      "controller": "Home",
+      "action": "Images",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/components/photo-gallary/photo-gallery.service.ts"
+      ],
+      "count": 1
+    },
+    {
+      "method": "BfsApiUrl-Home-UploadImage",
+      "urlKey": "BfsApiUrl",
+      "controller": "Home",
+      "action": "UploadImage",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/components/photo-gallary/photo-gallery.service.ts"
+      ],
+      "count": 1
+    },
+    {
+      "method": "BpmApiExpenseUrl-Home-List",
+      "urlKey": "BpmApiExpenseUrl",
+      "controller": "Home",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm.api.service.ts",
+        "projects/jyx/src/app/bpm/bpm.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "BpmApiExpenseUrl-Receipt-Add",
+      "urlKey": "BpmApiExpenseUrl",
+      "controller": "Receipt",
+      "action": "Add",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm-expense/bpm-expense.service.ts",
+        "projects/jyx/src/app/bpm/bpm-expense/bpm-expense.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "BpmApiExpenseUrl-Receipt-Detail",
+      "urlKey": "BpmApiExpenseUrl",
+      "controller": "Receipt",
+      "action": "Detail",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm-expense/bpm-expense.service.ts",
+        "projects/jyx/src/app/bpm/bpm-expense/bpm-expense.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "BpmApiExpenseUrl-Receipt-GetReceiptType",
+      "urlKey": "BpmApiExpenseUrl",
+      "controller": "Receipt",
+      "action": "GetReceiptType",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm-expense/bpm-expense.service.ts",
+        "projects/jyx/src/app/bpm/bpm-expense/bpm-expense.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "BpmApiExpenseUrl-Receipt-List",
+      "urlKey": "BpmApiExpenseUrl",
+      "controller": "Receipt",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm-expense/bpm-expense.service.ts",
+        "projects/jyx/src/app/bpm/bpm-expense/bpm-expense.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "BpmApiExpenseUrl-Receipt-Recognize",
+      "urlKey": "BpmApiExpenseUrl",
+      "controller": "Receipt",
+      "action": "Recognize",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm-expense/bpm-expense.service.ts",
+        "projects/jyx/src/app/bpm/bpm-expense/bpm-expense.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "BpmApiExpenseUrl-Receipt-Remove",
+      "urlKey": "BpmApiExpenseUrl",
+      "controller": "Receipt",
+      "action": "Remove",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm-expense/bpm-expense.service.ts",
+        "projects/jyx/src/app/bpm/bpm-expense/bpm-expense.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "BpmApiHomeUrl-Category-List",
+      "urlKey": "BpmApiHomeUrl",
+      "controller": "Category",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm.api.service.ts",
+        "projects/jyx/src/app/bpm/bpm.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "BpmApiHomeUrl-Diary-Add",
+      "urlKey": "BpmApiHomeUrl",
+      "controller": "Diary",
+      "action": "Add",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm.api.service.ts",
+        "projects/jyx/src/app/bpm/bpm.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "BpmApiHomeUrl-Diary-List",
+      "urlKey": "BpmApiHomeUrl",
+      "controller": "Diary",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm.api.service.ts",
+        "projects/jyx/src/app/bpm/bpm.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "BpmApiHomeUrl-Diary-Remove",
+      "urlKey": "BpmApiHomeUrl",
+      "controller": "Diary",
+      "action": "Remove",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm.api.service.ts",
+        "projects/jyx/src/app/bpm/bpm.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "BpmApiHomeUrl-DiarySupervisor-List",
+      "urlKey": "BpmApiHomeUrl",
+      "controller": "DiarySupervisor",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm.api.service.ts",
+        "projects/jyx/src/app/bpm/bpm.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "BpmApiHomeUrl-DiarySupervisor-Modify",
+      "urlKey": "BpmApiHomeUrl",
+      "controller": "DiarySupervisor",
+      "action": "Modify",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm.api.service.ts",
+        "projects/jyx/src/app/bpm/bpm.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "BpmApiHomeUrl-Home-Currency",
+      "urlKey": "BpmApiHomeUrl",
+      "controller": "Home",
+      "action": "Currency",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm.api.service.ts",
+        "projects/jyx/src/app/bpm/bpm.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "BpmApiHomeUrl-Home-Customer",
+      "urlKey": "BpmApiHomeUrl",
+      "controller": "Home",
+      "action": "Customer",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm.api.service.ts",
+        "projects/jyx/src/app/bpm/bpm.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "BpmApiHomeUrl-Home-Extension",
+      "urlKey": "BpmApiHomeUrl",
+      "controller": "Home",
+      "action": "Extension",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm.api.service.ts",
+        "projects/jyx/src/app/bpm/bpm.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "BpmApiHomeUrl-Home-GetBpm",
+      "urlKey": "BpmApiHomeUrl",
+      "controller": "Home",
+      "action": "GetBpm",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm.api.service.ts",
+        "projects/jyx/src/app/bpm/bpm.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "BpmApiHomeUrl-Home-Staff",
+      "urlKey": "BpmApiHomeUrl",
+      "controller": "Home",
+      "action": "Staff",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm.api.service.ts",
+        "projects/jyx/src/app/bpm/bpm.api.service.ts"
+      ],
+      "count": 4
+    },
+    {
+      "method": "BpmApiHomeUrl-Home-Tag",
+      "urlKey": "BpmApiHomeUrl",
+      "controller": "Home",
+      "action": "Tag",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm.api.service.ts",
+        "projects/jyx/src/app/bpm/bpm.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "BpmApiHomeUrl-Product-Add",
+      "urlKey": "BpmApiHomeUrl",
+      "controller": "Product",
+      "action": "Add",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm.api.service.ts",
+        "projects/jyx/src/app/bpm/bpm.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "BpmApiHomeUrl-Product-Detail",
+      "urlKey": "BpmApiHomeUrl",
+      "controller": "Product",
+      "action": "Detail",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm.api.service.ts",
+        "projects/jyx/src/app/bpm/bpm.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "BpmApiHomeUrl-Product-List",
+      "urlKey": "BpmApiHomeUrl",
+      "controller": "Product",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm.api.service.ts",
+        "projects/jyx/src/app/bpm/bpm.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "BpmApiHomeUrl-Product-Modify",
+      "urlKey": "BpmApiHomeUrl",
+      "controller": "Product",
+      "action": "Modify",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm.api.service.ts",
+        "projects/jyx/src/app/bpm/bpm.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "BpmApiHomeUrl-Quotation-Detail",
+      "urlKey": "BpmApiHomeUrl",
+      "controller": "Quotation",
+      "action": "Detail",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm.api.service.ts",
+        "projects/jyx/src/app/bpm/bpm.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "BpmApiHomeUrl-Quotation-List",
+      "urlKey": "BpmApiHomeUrl",
+      "controller": "Quotation",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm.api.service.ts",
+        "projects/jyx/src/app/bpm/bpm.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "BpmApiOrderUrl-Order-Add",
+      "urlKey": "BpmApiOrderUrl",
+      "controller": "Order",
+      "action": "Add",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm.api.service.ts",
+        "projects/jyx/src/app/bpm/bpm.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "BpmApiOrderUrl-Order-Detail",
+      "urlKey": "BpmApiOrderUrl",
+      "controller": "Order",
+      "action": "Detail",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm.api.service.ts",
+        "projects/jyx/src/app/bpm/bpm.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "BpmApiOrderUrl-Order-List",
+      "urlKey": "BpmApiOrderUrl",
+      "controller": "Order",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm.api.service.ts",
+        "projects/jyx/src/app/bpm/bpm.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "BpmApiOrderUrl-Order-Modify",
+      "urlKey": "BpmApiOrderUrl",
+      "controller": "Order",
+      "action": "Modify",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm.api.service.ts",
+        "projects/jyx/src/app/bpm/bpm.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "BpmApiOrderUrl-Order-Remove",
+      "urlKey": "BpmApiOrderUrl",
+      "controller": "Order",
+      "action": "Remove",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm.api.service.ts",
+        "projects/jyx/src/app/bpm/bpm.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "BpmApiOrderUrl-OrderNote-Add",
+      "urlKey": "BpmApiOrderUrl",
+      "controller": "OrderNote",
+      "action": "Add",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm.api.service.ts",
+        "projects/jyx/src/app/bpm/bpm.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "BpmApiOrderUrl-OrderNote-List",
+      "urlKey": "BpmApiOrderUrl",
+      "controller": "OrderNote",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm.api.service.ts",
+        "projects/jyx/src/app/bpm/bpm.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "BpmApiOrderUrl-OrderNote-Remove",
+      "urlKey": "BpmApiOrderUrl",
+      "controller": "OrderNote",
+      "action": "Remove",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm.api.service.ts",
+        "projects/jyx/src/app/bpm/bpm.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "BpmApiOrderUrl-OrderTag-List",
+      "urlKey": "BpmApiOrderUrl",
+      "controller": "OrderTag",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm.api.service.ts",
+        "projects/jyx/src/app/bpm/bpm.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "BpmApiOrderUrl-OrderTag-Save",
+      "urlKey": "BpmApiOrderUrl",
+      "controller": "OrderTag",
+      "action": "Save",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/bpm/bpm.api.service.ts",
+        "projects/jyx/src/app/bpm/bpm.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "CrmApiUrl-CommonCustomer-Extract",
+      "urlKey": "CrmApiUrl",
+      "controller": "CommonCustomer",
+      "action": "Extract",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/crm/crm.api.service.ts"
+      ],
+      "count": 1
+    },
+    {
+      "method": "CrmApiUrl-CommonCustomer-List",
+      "urlKey": "CrmApiUrl",
+      "controller": "CommonCustomer",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/crm/crm.api.service.ts"
+      ],
+      "count": 1
+    },
+    {
+      "method": "CrmApiUrl-Customer-Add",
+      "urlKey": "CrmApiUrl",
+      "controller": "Customer",
+      "action": "Add",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/crm/crm.api.service.ts"
+      ],
+      "count": 1
+    },
+    {
+      "method": "CrmApiUrl-Customer-Detail",
+      "urlKey": "CrmApiUrl",
+      "controller": "Customer",
+      "action": "Detail",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/crm/crm.api.service.ts"
+      ],
+      "count": 1
+    },
+    {
+      "method": "CrmApiUrl-Customer-List",
+      "urlKey": "CrmApiUrl",
+      "controller": "Customer",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/crm/crm.api.service.ts"
+      ],
+      "count": 1
+    },
+    {
+      "method": "CrmApiUrl-Customer-Modify",
+      "urlKey": "CrmApiUrl",
+      "controller": "Customer",
+      "action": "Modify",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/crm/crm.api.service.ts"
+      ],
+      "count": 1
+    },
+    {
+      "method": "CrmApiUrl-Customer-Remove",
+      "urlKey": "CrmApiUrl",
+      "controller": "Customer",
+      "action": "Remove",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/crm/crm.api.service.ts"
+      ],
+      "count": 1
+    },
+    {
+      "method": "CrmApiUrl-CustomerNote-Add",
+      "urlKey": "CrmApiUrl",
+      "controller": "CustomerNote",
+      "action": "Add",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/crm/crm.api.service.ts"
+      ],
+      "count": 1
+    },
+    {
+      "method": "CrmApiUrl-CustomerNote-List",
+      "urlKey": "CrmApiUrl",
+      "controller": "CustomerNote",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/crm/crm.api.service.ts"
+      ],
+      "count": 1
+    },
+    {
+      "method": "CrmApiUrl-CustomerNote-Remove",
+      "urlKey": "CrmApiUrl",
+      "controller": "CustomerNote",
+      "action": "Remove",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/crm/crm.api.service.ts"
+      ],
+      "count": 1
+    },
+    {
+      "method": "CrmApiUrl-CustomerTag-List",
+      "urlKey": "CrmApiUrl",
+      "controller": "CustomerTag",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/crm/crm.api.service.ts"
+      ],
+      "count": 1
+    },
+    {
+      "method": "CrmApiUrl-CustomerTag-Save",
+      "urlKey": "CrmApiUrl",
+      "controller": "CustomerTag",
+      "action": "Save",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/crm/crm.api.service.ts"
+      ],
+      "count": 1
+    },
+    {
+      "method": "CrmApiUrl-Home-CustomerType",
+      "urlKey": "CrmApiUrl",
+      "controller": "Home",
+      "action": "CustomerType",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/crm/crm.api.service.ts"
+      ],
+      "count": 1
+    },
+    {
+      "method": "CrmApiUrl-Home-Extension",
+      "urlKey": "CrmApiUrl",
+      "controller": "Home",
+      "action": "Extension",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/crm/crm.api.service.ts"
+      ],
+      "count": 1
+    },
+    {
+      "method": "CrmApiUrl-Home-GetCrm",
+      "urlKey": "CrmApiUrl",
+      "controller": "Home",
+      "action": "GetCrm",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/crm/crm.api.service.ts"
+      ],
+      "count": 1
+    },
+    {
+      "method": "CrmApiUrl-Home-Staff",
+      "urlKey": "CrmApiUrl",
+      "controller": "Home",
+      "action": "Staff",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/crm/crm.api.service.ts"
+      ],
+      "count": 1
+    },
+    {
+      "method": "CrmApiUrl-Home-Tag",
+      "urlKey": "CrmApiUrl",
+      "controller": "Home",
+      "action": "Tag",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/crm/crm.api.service.ts"
+      ],
+      "count": 1
+    },
+    {
+      "method": "CrmApiUrl-Home-Wechat",
+      "urlKey": "CrmApiUrl",
+      "controller": "Home",
+      "action": "Wechat",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/crm/crm.api.service.ts"
+      ],
+      "count": 1
+    },
+    {
+      "method": "FeatureRonglvUrl-jyx-GetScanInfo",
+      "urlKey": "FeatureRonglvUrl",
+      "controller": "jyx",
+      "action": "GetScanInfo",
+      "dynamic": false,
+      "sources": [
+        "projects/jyx/src/app/tmc/jyx.service.ts"
+      ],
+      "count": 1
+    },
+    {
+      "method": "FeatureRonglvUrl-jyx-GetTravelForms",
+      "urlKey": "FeatureRonglvUrl",
+      "controller": "jyx",
+      "action": "GetTravelForms",
+      "dynamic": false,
+      "sources": [
+        "projects/jyx/src/app/tmc/jyx.service.ts"
+      ],
+      "count": 1
+    },
+    {
+      "method": "FeatureRonglvUrl-Jyx-LoginByTmc",
+      "urlKey": "FeatureRonglvUrl",
+      "controller": "Jyx",
+      "action": "LoginByTmc",
+      "dynamic": false,
+      "sources": [
+        "projects/jyx/src/app/tmc/jyx.service.ts"
+      ],
+      "count": 1
+    },
+    {
+      "method": "FeatureRonglvUrl-Jyx-RegisterByTmc",
+      "urlKey": "FeatureRonglvUrl",
+      "controller": "Jyx",
+      "action": "RegisterByTmc",
+      "dynamic": false,
+      "sources": [
+        "projects/jyx/src/app/tmc/jyx.service.ts"
+      ],
+      "count": 1
+    },
+    {
+      "method": "FeatureRonglvUrl-jyx-SaveTravelForms",
+      "urlKey": "FeatureRonglvUrl",
+      "controller": "jyx",
+      "action": "SaveTravelForms",
+      "dynamic": false,
+      "sources": [
+        "projects/jyx/src/app/tmc/jyx.service.ts"
+      ],
+      "count": 1
+    },
+    {
+      "method": "HrApiUrl-Authorize-Load",
+      "urlKey": "HrApiUrl",
+      "controller": "Authorize",
+      "action": "Load",
+      "dynamic": false,
+      "sources": [
+        "projects/core/src/services/authorize/authorize.service.ts",
+        "projects/ryx/src/app/services/authorize/authorize.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "HrApiUrl-Authorize-SubSystems",
+      "urlKey": "HrApiUrl",
+      "controller": "Authorize",
+      "action": "SubSystems",
+      "dynamic": false,
+      "sources": [
+        "projects/core/src/services/authorize/authorize.service.ts",
+        "projects/ryx/src/app/services/authorize/authorize.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "HrApiUrl-Invitation-Add",
+      "urlKey": "HrApiUrl",
+      "controller": "Invitation",
+      "action": "Add",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/hr/hr.service.ts",
+        "projects/jyx/src/app/hr/hr.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "HrApiUrl-Invitation-CostCenter",
+      "urlKey": "HrApiUrl",
+      "controller": "Invitation",
+      "action": "CostCenter",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/hr/hr.service.ts",
+        "projects/jyx/src/app/hr/hr.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "HrApiUrl-Invitation-GetRoles",
+      "urlKey": "HrApiUrl",
+      "controller": "Invitation",
+      "action": "GetRoles",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/hr/hr.service.ts",
+        "projects/jyx/src/app/hr/hr.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "HrApiUrl-Invitation-Handle",
+      "urlKey": "HrApiUrl",
+      "controller": "Invitation",
+      "action": "Handle",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/hr/hr.service.ts",
+        "projects/jyx/src/app/hr/hr.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "HrApiUrl-Invitation-List",
+      "urlKey": "HrApiUrl",
+      "controller": "Invitation",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/hr/hr.service.ts",
+        "projects/jyx/src/app/hr/hr.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "HrApiUrl-Invitation-Organization",
+      "urlKey": "HrApiUrl",
+      "controller": "Invitation",
+      "action": "Organization",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/hr/hr.service.ts",
+        "projects/jyx/src/app/hr/hr.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "HrApiUrl-Invitation-Policy",
+      "urlKey": "HrApiUrl",
+      "controller": "Invitation",
+      "action": "Policy",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/hr/hr.service.ts",
+        "projects/jyx/src/app/hr/hr.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "HrApiUrl-Staff-ComfirmInfo",
+      "urlKey": "HrApiUrl",
+      "controller": "Staff",
+      "action": "ComfirmInfo",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/hr/hr.service.ts",
+        "projects/jyx/src/app/hr/hr.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "HrApiUrl-Staff-Get",
+      "urlKey": "HrApiUrl",
+      "controller": "Staff",
+      "action": "Get",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/hr/hr.service.ts",
+        "projects/jyx/src/app/hr/hr.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "HrApiUrl-Workbench-ChangeHr",
+      "urlKey": "HrApiUrl",
+      "controller": "Workbench",
+      "action": "ChangeHr",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/hr/hr.service.ts",
+        "projects/jyx/src/app/hr/hr.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "HrApiUrl-Workbench-GetData",
+      "urlKey": "HrApiUrl",
+      "controller": "Workbench",
+      "action": "GetData",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/hr/hr.service.ts",
+        "projects/jyx/src/app/hr/hr.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "HrApiUrl-Workbench-Hrs",
+      "urlKey": "HrApiUrl",
+      "controller": "Workbench",
+      "action": "Hrs",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/hr/hr.service.ts",
+        "projects/jyx/src/app/hr/hr.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "HrApiUrl-Workbench-Load",
+      "urlKey": "HrApiUrl",
+      "controller": "Workbench",
+      "action": "Load",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/hr/hr.service.ts",
+        "projects/jyx/src/app/hr/hr.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "MmsApiBuyUrl-Settlement-Buy",
+      "urlKey": "MmsApiBuyUrl",
+      "controller": "Settlement",
+      "action": "Buy",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/mms/mms.api.service.ts",
+        "projects/jyx/src/app/mms/mms.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "MmsApiBuyUrl-Settlement-Index",
+      "urlKey": "MmsApiBuyUrl",
+      "controller": "Settlement",
+      "action": "Index",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/mms/mms.api.service.ts",
+        "projects/jyx/src/app/mms/mms.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "MmsApiHomeUrl-Banner-List",
+      "urlKey": "MmsApiHomeUrl",
+      "controller": "Banner",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/mms/mms.api.service.ts",
+        "projects/jyx/src/app/mms/mms.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "MmsApiHomeUrl-Company-Detail",
+      "urlKey": "MmsApiHomeUrl",
+      "controller": "Company",
+      "action": "Detail",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/mms/mms.api.service.ts",
+        "projects/jyx/src/app/mms/mms.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "MmsApiHomeUrl-Coupon-List",
+      "urlKey": "MmsApiHomeUrl",
+      "controller": "Coupon",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/mms/mms.api.service.ts",
+        "projects/jyx/src/app/mms/mms.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "MmsApiHomeUrl-Home-GetMms",
+      "urlKey": "MmsApiHomeUrl",
+      "controller": "Home",
+      "action": "GetMms",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/mms/mms.api.service.ts",
+        "projects/jyx/src/app/mms/mms.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "MmsApiHomeUrl-Sitemap-List",
+      "urlKey": "MmsApiHomeUrl",
+      "controller": "Sitemap",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/mms/mms.api.service.ts",
+        "projects/jyx/src/app/mms/mms.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "MmsApiHomeUrl-Tag-List",
+      "urlKey": "MmsApiHomeUrl",
+      "controller": "Tag",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/mms/mms.api.service.ts",
+        "projects/jyx/src/app/mms/mms.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "MmsApiMemberUrl-Coupon-Collect",
+      "urlKey": "MmsApiMemberUrl",
+      "controller": "Coupon",
+      "action": "Collect",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/mms/mms.api.service.ts",
+        "projects/jyx/src/app/mms/mms.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "MmsApiOrderUrl-Order-Cancel",
+      "urlKey": "MmsApiOrderUrl",
+      "controller": "Order",
+      "action": "Cancel",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/mms/mms-order.service.ts",
+        "projects/jyx/src/app/mms/mms-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "MmsApiOrderUrl-Order-CancelRefund",
+      "urlKey": "MmsApiOrderUrl",
+      "controller": "Order",
+      "action": "CancelRefund",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/mms/mms-order.service.ts",
+        "projects/jyx/src/app/mms/mms-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "MmsApiOrderUrl-Order-Detail",
+      "urlKey": "MmsApiOrderUrl",
+      "controller": "Order",
+      "action": "Detail",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/mms/mms-order.service.ts",
+        "projects/jyx/src/app/mms/mms-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "MmsApiOrderUrl-Order-Linker",
+      "urlKey": "MmsApiOrderUrl",
+      "controller": "Order",
+      "action": "Linker",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/mms/mms-order.service.ts",
+        "projects/jyx/src/app/mms/mms-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "MmsApiOrderUrl-Order-List",
+      "urlKey": "MmsApiOrderUrl",
+      "controller": "Order",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/mms/mms-order.service.ts",
+        "projects/jyx/src/app/mms/mms-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "MmsApiOrderUrl-Order-Note",
+      "urlKey": "MmsApiOrderUrl",
+      "controller": "Order",
+      "action": "Note",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/mms/mms-order.service.ts",
+        "projects/jyx/src/app/mms/mms-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "MmsApiOrderUrl-Order-Refund",
+      "urlKey": "MmsApiOrderUrl",
+      "controller": "Order",
+      "action": "Refund",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/mms/mms-order.service.ts",
+        "projects/jyx/src/app/mms/mms-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "MmsApiOrderUrl-Order-Sign",
+      "urlKey": "MmsApiOrderUrl",
+      "controller": "Order",
+      "action": "Sign",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/mms/mms-order.service.ts",
+        "projects/jyx/src/app/mms/mms-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "MmsApiProductUrl-Category-List",
+      "urlKey": "MmsApiProductUrl",
+      "controller": "Category",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/mms/mms.api.service.ts",
+        "projects/jyx/src/app/mms/mms.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "MmsApiProductUrl-Goods-Detail",
+      "urlKey": "MmsApiProductUrl",
+      "controller": "Goods",
+      "action": "Detail",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/mms/mms.api.service.ts",
+        "projects/jyx/src/app/mms/mms.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "MmsApiProductUrl-Goods-List",
+      "urlKey": "MmsApiProductUrl",
+      "controller": "Goods",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/mms/mms.api.service.ts",
+        "projects/jyx/src/app/mms/mms.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "MmsApiProductUrl-Goods-Search",
+      "urlKey": "MmsApiProductUrl",
+      "controller": "Goods",
+      "action": "Search",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/mms/mms.api.service.ts",
+        "projects/jyx/src/app/mms/mms.api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "MmsApiShopcartUrl-Shopcart-Add",
+      "urlKey": "MmsApiShopcartUrl",
+      "controller": "Shopcart",
+      "action": "Add",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/mms/mms-shopcart.service.ts",
+        "projects/jyx/src/app/mms/mms-shopcart.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "MmsApiShopcartUrl-Shopcart-Clear",
+      "urlKey": "MmsApiShopcartUrl",
+      "controller": "Shopcart",
+      "action": "Clear",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/mms/mms-shopcart.service.ts",
+        "projects/jyx/src/app/mms/mms-shopcart.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "MmsApiShopcartUrl-Shopcart-GetCount",
+      "urlKey": "MmsApiShopcartUrl",
+      "controller": "Shopcart",
+      "action": "GetCount",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/mms/mms-shopcart.service.ts",
+        "projects/jyx/src/app/mms/mms-shopcart.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "MmsApiShopcartUrl-Shopcart-List",
+      "urlKey": "MmsApiShopcartUrl",
+      "controller": "Shopcart",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/mms/mms-shopcart.service.ts",
+        "projects/jyx/src/app/mms/mms-shopcart.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "MmsApiShopcartUrl-Shopcart-Modify",
+      "urlKey": "MmsApiShopcartUrl",
+      "controller": "Shopcart",
+      "action": "Modify",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/mms/mms-shopcart.service.ts",
+        "projects/jyx/src/app/mms/mms-shopcart.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "MmsApiShopcartUrl-Shopcart-Remove",
+      "urlKey": "MmsApiShopcartUrl",
+      "controller": "Shopcart",
+      "action": "Remove",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/mms/mms-shopcart.service.ts",
+        "projects/jyx/src/app/mms/mms-shopcart.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "MmsApiStoreUrl-Lottery-Buy",
+      "urlKey": "MmsApiStoreUrl",
+      "controller": "Lottery",
+      "action": "Buy",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/mms/mms-store.service.ts",
+        "projects/jyx/src/app/mms/mms-store.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "MmsApiStoreUrl-Lottery-Create",
+      "urlKey": "MmsApiStoreUrl",
+      "controller": "Lottery",
+      "action": "Create",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/mms/mms-store.service.ts",
+        "projects/jyx/src/app/mms/mms-store.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "MmsApiStoreUrl-Lottery-Use",
+      "urlKey": "MmsApiStoreUrl",
+      "controller": "Lottery",
+      "action": "Use",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/mms/mms-store.service.ts",
+        "projects/jyx/src/app/mms/mms-store.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "MmsApiStoreUrl-WechatCard-Buy",
+      "urlKey": "MmsApiStoreUrl",
+      "controller": "WechatCard",
+      "action": "Buy",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/mms/mms-store.service.ts",
+        "projects/jyx/src/app/mms/mms-store.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "MmsApiStoreUrl-WechatCard-Create",
+      "urlKey": "MmsApiStoreUrl",
+      "controller": "WechatCard",
+      "action": "Create",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/mms/mms-store.service.ts",
+        "projects/jyx/src/app/mms/mms-store.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "MmsApiStoreUrl-WechatCard-Use",
+      "urlKey": "MmsApiStoreUrl",
+      "controller": "WechatCard",
+      "action": "Use",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/mms/mms-store.service.ts",
+        "projects/jyx/src/app/mms/mms-store.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "ServiceVersionUrl-Home-Index",
+      "urlKey": "ServiceVersionUrl",
+      "controller": "Home",
+      "action": "Index",
+      "dynamic": false,
+      "sources": [
+        "projects/core/src/services/file-helper.service.ts",
+        "projects/ryx/src/app/services/file-helper.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "Tmc.Api.ForwardUrl-Yjx-GetTravelForms",
+      "urlKey": "Tmc.Api.ForwardUrl",
+      "controller": "Yjx",
+      "action": "GetTravelForms",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/components/add-passenger-travelform-number/add-passenger-travelform-number.component.ts",
+        "projects/jyx/src/app/tmc/components/add-passenger-travelform-number/add-passenger-travelform-number.component.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiBookUrl-BookBase-Initialize",
+      "urlKey": "TmcApiBookUrl",
+      "controller": "BookBase",
+      "action": "Initialize",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiBookUrl-Flight-Book",
+      "urlKey": "TmcApiBookUrl",
+      "controller": "Flight",
+      "action": "Book",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-flight/tmc-flight.service.ts",
+        "projects/jyx/src/app/tmc/tmc-flight/tmc-flight.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiBookUrl-Flight-ExchangeBook",
+      "urlKey": "TmcApiBookUrl",
+      "controller": "Flight",
+      "action": "ExchangeBook",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-order/tmc-order.service.ts",
+        "projects/jyx/src/app/tmc/tmc-order/tmc-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiBookUrl-Flight-GetTravelNDCFlightCabinRuleResult",
+      "urlKey": "TmcApiBookUrl",
+      "controller": "Flight",
+      "action": "GetTravelNDCFlightCabinRuleResult",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-flight/tmc-flight.service.ts",
+        "projects/jyx/src/app/tmc/tmc-flight/tmc-flight.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiBookUrl-Flight-Initialize",
+      "urlKey": "TmcApiBookUrl",
+      "controller": "Flight",
+      "action": "Initialize",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-flight/tmc-flight.service.ts",
+        "projects/jyx/src/app/tmc/tmc-flight/tmc-flight.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiBookUrl-Home-CheckPay",
+      "urlKey": "TmcApiBookUrl",
+      "controller": "Home",
+      "action": "CheckPay",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiBookUrl-Home-Credentials",
+      "urlKey": "TmcApiBookUrl",
+      "controller": "Home",
+      "action": "Credentials",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 3
+    },
+    {
+      "method": "TmcApiBookUrl-Home-GetCostCenter",
+      "urlKey": "TmcApiBookUrl",
+      "controller": "Home",
+      "action": "GetCostCenter",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiBookUrl-Home-GetOrganizations",
+      "urlKey": "TmcApiBookUrl",
+      "controller": "Home",
+      "action": "GetOrganizations",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiBookUrl-Home-GetTravelUrl",
+      "urlKey": "TmcApiBookUrl",
+      "controller": "Home",
+      "action": "GetTravelUrl",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiBookUrl-Home-SearchApprovals",
+      "urlKey": "TmcApiBookUrl",
+      "controller": "Home",
+      "action": "SearchApprovals",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 4
+    },
+    {
+      "method": "TmcApiBookUrl-Home-SearchLinkman",
+      "urlKey": "TmcApiBookUrl",
+      "controller": "Home",
+      "action": "SearchLinkman",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiBookUrl-Hotel-Book",
+      "urlKey": "TmcApiBookUrl",
+      "controller": "Hotel",
+      "action": "Book",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-hotel/tmc-hotel.service.ts",
+        "projects/ryx/src/app/tmc/tmc-hotel/tmc-hotel_ryx.service.ts",
+        "projects/jyx/src/app/tmc/tmc-hotel/tmc-hotel.service.ts"
+      ],
+      "count": 3
+    },
+    {
+      "method": "TmcApiBookUrl-Hotel-Initialize",
+      "urlKey": "TmcApiBookUrl",
+      "controller": "Hotel",
+      "action": "Initialize",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-hotel/tmc-hotel.service.ts",
+        "projects/ryx/src/app/tmc/tmc-hotel/tmc-hotel_ryx.service.ts",
+        "projects/jyx/src/app/tmc/tmc-hotel/tmc-hotel.service.ts"
+      ],
+      "count": 3
+    },
+    {
+      "method": "TmcApiBookUrl-InternationalFlight-Book",
+      "urlKey": "TmcApiBookUrl",
+      "controller": "InternationalFlight",
+      "action": "Book",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-international-flight/public-international-flight.service.ts",
+        "projects/ryx/src/app/tmc/tmc-international-flight/tmc-international-flight.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiBookUrl-InternationalFlight-Initialize",
+      "urlKey": "TmcApiBookUrl",
+      "controller": "InternationalFlight",
+      "action": "Initialize",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-international-flight/public-international-flight.service.ts",
+        "projects/ryx/src/app/tmc/tmc-international-flight/tmc-international-flight.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiBookUrl-InternationalHotel-Book",
+      "urlKey": "TmcApiBookUrl",
+      "controller": "InternationalHotel",
+      "action": "Book",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-international-hotel/public-international-hotel.service.ts",
+        "projects/ryx/src/app/tmc/tmc-international-hotel/tmc-international-hotel.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiBookUrl-InternationalHotel-Initialize",
+      "urlKey": "TmcApiBookUrl",
+      "controller": "InternationalHotel",
+      "action": "Initialize",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-international-hotel/public-international-hotel.service.ts",
+        "projects/ryx/src/app/tmc/tmc-international-hotel/tmc-international-hotel.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiBookUrl-RentalCar-Booking",
+      "urlKey": "TmcApiBookUrl",
+      "controller": "RentalCar",
+      "action": "Booking",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-rental-car/tmc-rental-car.service.ts",
+        "projects/jyx/src/app/tmc/tmc-rental-car/tmc-rental-car.service.ts"
+      ],
+      "count": 4
+    },
+    {
+      "method": "TmcApiBookUrl-RentalCar-Pricing",
+      "urlKey": "TmcApiBookUrl",
+      "controller": "RentalCar",
+      "action": "Pricing",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-rental-car/tmc-rental-car.service.ts",
+        "projects/jyx/src/app/tmc/tmc-rental-car/tmc-rental-car.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiBookUrl-Train-AccountValidate",
+      "urlKey": "TmcApiBookUrl",
+      "controller": "Train",
+      "action": "AccountValidate",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-train/tmc-train.service.ts",
+        "projects/jyx/src/app/tmc/tmc-train/tmc-train.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiBookUrl-Train-Bind",
+      "urlKey": "TmcApiBookUrl",
+      "controller": "Train",
+      "action": "Bind",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-train/tmc-train.service.ts",
+        "projects/jyx/src/app/tmc/tmc-train/tmc-train.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiBookUrl-Train-Book",
+      "urlKey": "TmcApiBookUrl",
+      "controller": "Train",
+      "action": "Book",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-train/tmc-train.service.ts",
+        "projects/jyx/src/app/tmc/tmc-train/tmc-train.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiBookUrl-Train-CodeValidate",
+      "urlKey": "TmcApiBookUrl",
+      "controller": "Train",
+      "action": "CodeValidate",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-train/tmc-train.service.ts",
+        "projects/jyx/src/app/tmc/tmc-train/tmc-train.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiBookUrl-Train-ExchangeBook",
+      "urlKey": "TmcApiBookUrl",
+      "controller": "Train",
+      "action": "ExchangeBook",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-train/tmc-train.service.ts",
+        "projects/jyx/src/app/tmc/tmc-train/tmc-train.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiBookUrl-Train-GetBindAccountNumber",
+      "urlKey": "TmcApiBookUrl",
+      "controller": "Train",
+      "action": "GetBindAccountNumber",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-train/tmc-train.service.ts",
+        "projects/jyx/src/app/tmc/tmc-train/tmc-train.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiBookUrl-Train-GetContacts",
+      "urlKey": "TmcApiBookUrl",
+      "controller": "Train",
+      "action": "GetContacts",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-train/tmc-train.service.ts",
+        "projects/jyx/src/app/tmc/tmc-train/tmc-train.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiBookUrl-Train-Initialize",
+      "urlKey": "TmcApiBookUrl",
+      "controller": "Train",
+      "action": "Initialize",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-train/tmc-train.service.ts",
+        "projects/jyx/src/app/tmc/tmc-train/tmc-train.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiBookUrl-Train-Unbind",
+      "urlKey": "TmcApiBookUrl",
+      "controller": "Train",
+      "action": "Unbind",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-train/tmc-train.service.ts",
+        "projects/jyx/src/app/tmc/tmc-train/tmc-train.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiCarUrl-Car-VerifyStaff",
+      "urlKey": "TmcApiCarUrl",
+      "controller": "Car",
+      "action": "VerifyStaff",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-car/tmc-car.service.ts",
+        "projects/jyx/src/app/tmc/tmc-car/tmc-car.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiFlightDynamicUrl-Home-Detail",
+      "urlKey": "TmcApiFlightDynamicUrl",
+      "controller": "Home",
+      "action": "Detail",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-flight-dynamic/public-flight-dynamic.service.ts",
+        "projects/ryx/src/app/tmc/tmc-flight-dynamic/tmc-flight-dynamic.service.ts",
+        "projects/jyx/src/app/public/public-flight-dynamic/public-flight-dynamic.service.ts",
+        "projects/jyx/src/app/tmc/tmc-flight-dynamic/tmc-flight-dynamic.service.ts"
+      ],
+      "count": 12
+    },
+    {
+      "method": "TmcApiFlightDynamicUrl-Home-Search",
+      "urlKey": "TmcApiFlightDynamicUrl",
+      "controller": "Home",
+      "action": "Search",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-flight-dynamic/public-flight-dynamic.service.ts",
+        "projects/ryx/src/app/tmc/tmc-flight-dynamic/tmc-flight-dynamic.service.ts",
+        "projects/jyx/src/app/public/public-flight-dynamic/public-flight-dynamic.service.ts",
+        "projects/jyx/src/app/tmc/tmc-flight-dynamic/tmc-flight-dynamic.service.ts"
+      ],
+      "count": 4
+    },
+    {
+      "method": "TmcApiFlightUrl-Home-Detail",
+      "urlKey": "TmcApiFlightUrl",
+      "controller": "Home",
+      "action": "Detail",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-flight/tmc-flight.service.ts",
+        "projects/jyx/src/app/tmc/tmc-flight/tmc-flight.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiFlightUrl-Home-Exchange",
+      "urlKey": "TmcApiFlightUrl",
+      "controller": "Home",
+      "action": "Exchange",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-flight/tmc-flight.service.ts",
+        "projects/jyx/src/app/tmc/tmc-flight/tmc-flight.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiFlightUrl-Home-ExchangeDetail",
+      "urlKey": "TmcApiFlightUrl",
+      "controller": "Home",
+      "action": "ExchangeDetail",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-flight/tmc-flight.service.ts",
+        "projects/jyx/src/app/tmc/tmc-flight/tmc-flight.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiFlightUrl-Home-Index",
+      "urlKey": "TmcApiFlightUrl",
+      "controller": "Home",
+      "action": "Index",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-flight/tmc-flight.service.ts",
+        "projects/jyx/src/app/tmc/tmc-flight/tmc-flight.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiFlightUrl-Home-Policy",
+      "urlKey": "TmcApiFlightUrl",
+      "controller": "Home",
+      "action": "Policy",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-flight/tmc-flight.service.ts",
+        "projects/jyx/src/app/tmc/tmc-flight/tmc-flight.service.ts"
+      ],
+      "count": 4
+    },
+    {
+      "method": "TmcApiHomeUrl-Agent-Country",
+      "urlKey": "TmcApiHomeUrl",
+      "controller": "Agent",
+      "action": "Country",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 4
+    },
+    {
+      "method": "TmcApiHomeUrl-Agent-QueryTmc",
+      "urlKey": "TmcApiHomeUrl",
+      "controller": "Agent",
+      "action": "QueryTmc",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/agent.service.ts",
+        "projects/jyx/src/app/tmc/agent.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiHomeUrl-Agent-SelectTmc",
+      "urlKey": "TmcApiHomeUrl",
+      "controller": "Agent",
+      "action": "SelectTmc",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/agent.service.ts",
+        "projects/jyx/src/app/tmc/agent.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiHomeUrl-Agent-SelectTmcCompay",
+      "urlKey": "TmcApiHomeUrl",
+      "controller": "Agent",
+      "action": "SelectTmcCompay",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/agent.service.ts",
+        "projects/jyx/src/app/tmc/agent.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiHomeUrl-Banner-List",
+      "urlKey": "TmcApiHomeUrl",
+      "controller": "Banner",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiHomeUrl-Credentials-Add",
+      "urlKey": "TmcApiHomeUrl",
+      "controller": "Credentials",
+      "action": "Add",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/member/member.service.ts",
+        "projects/jyx/src/app/member/member.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiHomeUrl-Credentials-List",
+      "urlKey": "TmcApiHomeUrl",
+      "controller": "Credentials",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/member/member.service.ts",
+        "projects/ryx/src/app/tmc/tmc-confirm-information/tmc-confirm-information.page.ts",
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/member/member.service.ts",
+        "projects/jyx/src/app/tmc/tmc-confirm-information/tmc-confirm-information.page.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 6
+    },
+    {
+      "method": "TmcApiHomeUrl-Credentials-Modify",
+      "urlKey": "TmcApiHomeUrl",
+      "controller": "Credentials",
+      "action": "Modify",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/member/member.service.ts",
+        "projects/jyx/src/app/member/member.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiHomeUrl-Credentials-Remove",
+      "urlKey": "TmcApiHomeUrl",
+      "controller": "Credentials",
+      "action": "Remove",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/member/member.service.ts",
+        "projects/jyx/src/app/member/member.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiHomeUrl-Home-Agent",
+      "urlKey": "TmcApiHomeUrl",
+      "controller": "Home",
+      "action": "Agent",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiHomeUrl-Home-Exchange",
+      "urlKey": "TmcApiHomeUrl",
+      "controller": "Home",
+      "action": "Exchange",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiHomeUrl-Home-GetAccountWaitingTasks",
+      "urlKey": "TmcApiHomeUrl",
+      "controller": "Home",
+      "action": "GetAccountWaitingTasks",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiHomeUrl-Home-GetRegionType",
+      "urlKey": "TmcApiHomeUrl",
+      "controller": "Home",
+      "action": "GetRegionType",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiHomeUrl-Home-SetAccountMessage",
+      "urlKey": "TmcApiHomeUrl",
+      "controller": "Home",
+      "action": "SetAccountMessage",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiHomeUrl-Home-TaskReviewed",
+      "urlKey": "TmcApiHomeUrl",
+      "controller": "Home",
+      "action": "TaskReviewed",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiHomeUrl-Home-Tourist",
+      "urlKey": "TmcApiHomeUrl",
+      "controller": "Home",
+      "action": "Tourist",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public.service.ts",
+        "projects/jyx/src/app/public/public.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiHomeUrl-Notice-Detail",
+      "urlKey": "TmcApiHomeUrl",
+      "controller": "Notice",
+      "action": "Detail",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiHomeUrl-Notice-List",
+      "urlKey": "TmcApiHomeUrl",
+      "controller": "Notice",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiHomeUrl-Resource-Airport",
+      "urlKey": "TmcApiHomeUrl",
+      "controller": "Resource",
+      "action": "Airport",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/tourist-book.service.ts",
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/public/tourist-book.service.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 4
+    },
+    {
+      "method": "TmcApiHomeUrl-Resource-DomesticHotelCity",
+      "urlKey": "TmcApiHomeUrl",
+      "controller": "Resource",
+      "action": "DomesticHotelCity",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-hotel/tmc-hotel.service.ts",
+        "projects/ryx/src/app/tmc/tmc-hotel/tmc-hotel_ryx.service.ts",
+        "projects/jyx/src/app/tmc/tmc-hotel/tmc-hotel.service.ts"
+      ],
+      "count": 3
+    },
+    {
+      "method": "TmcApiHomeUrl-Resource-InternationalAirport",
+      "urlKey": "TmcApiHomeUrl",
+      "controller": "Resource",
+      "action": "InternationalAirport",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/tourist-book.service.ts",
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/public/tourist-book.service.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 4
+    },
+    {
+      "method": "TmcApiHomeUrl-Resource-TrainStation",
+      "urlKey": "TmcApiHomeUrl",
+      "controller": "Resource",
+      "action": "TrainStation",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiHomeUrl-Staff-Credentials",
+      "urlKey": "TmcApiHomeUrl",
+      "controller": "Staff",
+      "action": "Credentials",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-select-passenger/tmc-select-passenger_ryx.base.page.ts",
+        "projects/ryx/src/app/tmc/tmc-select-passenger_ryx/tmc-select-passenger_ryx.base.page.ts",
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/tmc/tmc-select-passenger/tmc-select-passenger.base.page.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 5
+    },
+    {
+      "method": "TmcApiHomeUrl-Staff-List",
+      "urlKey": "TmcApiHomeUrl",
+      "controller": "Staff",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-select-passenger/tmc-select-passenger_ryx.base.page.ts",
+        "projects/ryx/src/app/tmc/tmc-select-passenger_ryx/tmc-select-passenger_ryx.base.page.ts",
+        "projects/jyx/src/app/tmc/tmc-select-passenger/tmc-select-passenger.base.page.ts"
+      ],
+      "count": 3
+    },
+    {
+      "method": "TmcApiHomeUrl-Staff-Passengers",
+      "urlKey": "TmcApiHomeUrl",
+      "controller": "Staff",
+      "action": "Passengers",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-select-passenger/tmc-select-passenger_ryx.base.page.ts",
+        "projects/ryx/src/app/tmc/tmc-select-passenger_ryx/tmc-select-passenger_ryx.base.page.ts",
+        "projects/jyx/src/app/tmc/tmc-select-passenger/tmc-select-passenger.base.page.ts"
+      ],
+      "count": 3
+    },
+    {
+      "method": "TmcApiHomeUrl-Tmc-GetIdentityCompany",
+      "urlKey": "TmcApiHomeUrl",
+      "controller": "Tmc",
+      "action": "GetIdentityCompany",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiHomeUrl-Tmc-GetTmc",
+      "urlKey": "TmcApiHomeUrl",
+      "controller": "Tmc",
+      "action": "GetTmc",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiHomeUrl-Tmc-GetTmcData",
+      "urlKey": "TmcApiHomeUrl",
+      "controller": "Tmc",
+      "action": "GetTmcData",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiHomeUrl-Translate-Translate",
+      "urlKey": "TmcApiHomeUrl",
+      "controller": "Translate",
+      "action": "Translate",
+      "dynamic": false,
+      "sources": [
+        "projects/core/src/services/lang.service.ts",
+        "projects/ryx/src/app/services/lang.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiHomeUrl-Workbench-Load",
+      "urlKey": "TmcApiHomeUrl",
+      "controller": "Workbench",
+      "action": "Load",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiHotelUrl-City-GetCityByMap",
+      "urlKey": "TmcApiHotelUrl",
+      "controller": "City",
+      "action": "GetCityByMap",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-hotel/tmc-hotel.service.ts",
+        "projects/ryx/src/app/tmc/tmc-hotel/tmc-hotel_ryx.service.ts",
+        "projects/jyx/src/app/tmc/tmc-hotel/tmc-hotel.service.ts"
+      ],
+      "count": 3
+    },
+    {
+      "method": "TmcApiHotelUrl-Condition-Gets",
+      "urlKey": "TmcApiHotelUrl",
+      "controller": "Condition",
+      "action": "Gets",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-hotel/tmc-hotel.service.ts",
+        "projects/ryx/src/app/tmc/tmc-hotel/tmc-hotel_ryx.service.ts",
+        "projects/jyx/src/app/tmc/tmc-hotel/tmc-hotel.service.ts"
+      ],
+      "count": 3
+    },
+    {
+      "method": "TmcApiHotelUrl-Home",
+      "urlKey": "TmcApiHotelUrl-Home",
+      "controller": "",
+      "action": "",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-hotel/tmc-hotel.service.ts",
+        "projects/ryx/src/app/tmc/tmc-hotel/tmc-hotel_ryx.service.ts",
+        "projects/jyx/src/app/tmc/tmc-hotel/tmc-hotel.service.ts"
+      ],
+      "count": 3
+    },
+    {
+      "method": "TmcApiHotelUrl-Home-Detail",
+      "urlKey": "TmcApiHotelUrl",
+      "controller": "Home",
+      "action": "Detail",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-hotel/tmc-hotel.service.ts",
+        "projects/ryx/src/app/tmc/tmc-hotel/tmc-hotel_ryx.service.ts",
+        "projects/jyx/src/app/tmc/tmc-hotel/tmc-hotel.service.ts"
+      ],
+      "count": 3
+    },
+    {
+      "method": "TmcApiHotelUrl-Home-List",
+      "urlKey": "TmcApiHotelUrl",
+      "controller": "Home",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-hotel/tmc-hotel.service.ts",
+        "projects/ryx/src/app/tmc/tmc-hotel/tmc-hotel_ryx.service.ts",
+        "projects/jyx/src/app/tmc/tmc-hotel/tmc-hotel.service.ts"
+      ],
+      "count": 3
+    },
+    {
+      "method": "TmcApiHotelUrl-Home-Policy",
+      "urlKey": "TmcApiHotelUrl",
+      "controller": "Home",
+      "action": "Policy",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-hotel/tmc-hotel.service.ts",
+        "projects/ryx/src/app/tmc/tmc-hotel/tmc-hotel_ryx.service.ts",
+        "projects/jyx/src/app/tmc/tmc-hotel/tmc-hotel.service.ts"
+      ],
+      "count": 4
+    },
+    {
+      "method": "TmcApiHotelUrl-Home-RecommendHotel",
+      "urlKey": "TmcApiHotelUrl",
+      "controller": "Home",
+      "action": "RecommendHotel",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiHotelUrl-Home-SearchHotel",
+      "urlKey": "TmcApiHotelUrl",
+      "controller": "Home",
+      "action": "SearchHotel",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-hotel/tmc-hotel.service.ts",
+        "projects/ryx/src/app/tmc/tmc-hotel/tmc-hotel_ryx.service.ts",
+        "projects/jyx/src/app/tmc/tmc-hotel/tmc-hotel.service.ts"
+      ],
+      "count": 3
+    },
+    {
+      "method": "TmcApiInternationalFlightUrl-Home-Check",
+      "urlKey": "TmcApiInternationalFlightUrl",
+      "controller": "Home",
+      "action": "Check",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-international-flight/public-international-flight.service.ts",
+        "projects/ryx/src/app/tmc/tmc-international-flight/tmc-international-flight.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiInternationalFlightUrl-Home-CheckRoutePolicy",
+      "urlKey": "TmcApiInternationalFlightUrl",
+      "controller": "Home",
+      "action": "CheckRoutePolicy",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-international-flight/public-international-flight.service.ts",
+        "projects/ryx/src/app/tmc/tmc-international-flight/tmc-international-flight.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiInternationalFlightUrl-Home-Detail",
+      "urlKey": "TmcApiInternationalFlightUrl",
+      "controller": "Home",
+      "action": "Detail",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-international-flight/public-international-flight.service.ts",
+        "projects/ryx/src/app/tmc/tmc-international-flight/tmc-international-flight.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiInternationalFlightUrl-Home-FlightCabinLevelPolicy",
+      "urlKey": "TmcApiInternationalFlightUrl",
+      "controller": "Home",
+      "action": "FlightCabinLevelPolicy",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-international-flight/public-international-flight.service.ts",
+        "projects/ryx/src/app/tmc/tmc-international-flight/tmc-international-flight.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiInternationalFlightUrl-Home-GetRuleInfo",
+      "urlKey": "TmcApiInternationalFlightUrl",
+      "controller": "Home",
+      "action": "GetRuleInfo",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-international-flight/public-international-flight.service.ts",
+        "projects/ryx/src/app/tmc/tmc-international-flight/tmc-international-flight.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiInternationalFlightUrl-Home-GetStopCities",
+      "urlKey": "TmcApiInternationalFlightUrl",
+      "controller": "Home",
+      "action": "GetStopCities",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-international-flight/public-international-flight.service.ts",
+        "projects/ryx/src/app/tmc/tmc-international-flight/tmc-international-flight.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiInternationalFlightUrl-Home-Index",
+      "urlKey": "TmcApiInternationalFlightUrl",
+      "controller": "Home",
+      "action": "Index",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-international-flight/public-international-flight.service.ts",
+        "projects/ryx/src/app/tmc/tmc-international-flight/tmc-international-flight.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiInternationalHotelUrl-Condition-Gets",
+      "urlKey": "TmcApiInternationalHotelUrl",
+      "controller": "Condition",
+      "action": "Gets",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-international-hotel/public-international-hotel.service.ts",
+        "projects/ryx/src/app/tmc/tmc-international-hotel/tmc-international-hotel.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiInternationalHotelUrl-Country-GetCoutries",
+      "urlKey": "TmcApiInternationalHotelUrl",
+      "controller": "Country",
+      "action": "GetCoutries",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-international-hotel/public-international-hotel.service.ts",
+        "projects/ryx/src/app/tmc/tmc-international-hotel/tmc-international-hotel.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiInternationalHotelUrl-Home-Detail",
+      "urlKey": "TmcApiInternationalHotelUrl",
+      "controller": "Home",
+      "action": "Detail",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-international-hotel/public-international-hotel.service.ts",
+        "projects/ryx/src/app/tmc/tmc-international-hotel/tmc-international-hotel.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiInternationalHotelUrl-Home-List",
+      "urlKey": "TmcApiInternationalHotelUrl",
+      "controller": "Home",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-international-hotel/public-international-hotel.service.ts",
+        "projects/ryx/src/app/tmc/tmc-international-hotel/tmc-international-hotel.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiInternationalHotelUrl-Home-Policy",
+      "urlKey": "TmcApiInternationalHotelUrl",
+      "controller": "Home",
+      "action": "Policy",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-international-hotel/public-international-hotel.service.ts",
+        "projects/ryx/src/app/tmc/tmc-international-hotel/tmc-international-hotel.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiInternationalHotelUrl-Home-SearchHotel",
+      "urlKey": "TmcApiInternationalHotelUrl",
+      "controller": "Home",
+      "action": "SearchHotel",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-international-hotel/public-international-hotel.service.ts",
+        "projects/ryx/src/app/tmc/tmc-international-hotel/tmc-international-hotel.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiInternationalHotelUrl-Trafficline-Search",
+      "urlKey": "TmcApiInternationalHotelUrl",
+      "controller": "Trafficline",
+      "action": "Search",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-international-hotel/public-international-hotel.service.ts",
+        "projects/ryx/src/app/tmc/tmc-international-hotel/tmc-international-hotel.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiOrderUrl-Flight-GetFlightEmail",
+      "urlKey": "TmcApiOrderUrl",
+      "controller": "Flight",
+      "action": "GetFlightEmail",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiOrderUrl-Flight-GetFlightMessage",
+      "urlKey": "TmcApiOrderUrl",
+      "controller": "Flight",
+      "action": "GetFlightMessage",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiOrderUrl-Insurance-Book",
+      "urlKey": "TmcApiOrderUrl",
+      "controller": "Insurance",
+      "action": "Book",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tabs/tab-tmc-trip/tab-tmc-trip--buy-insurance/tab-tmc-trip--buy-insurance.component.ts",
+        "projects/ryx/src/app/tabs/tab-tmc-trip_ryx/tab-tmc-trip-buy-insurance_ryx/tab-tmc-trip-buy-insurance_ryx.component.ts",
+        "projects/jyx/src/app/tabs/tab-tmc-trip/tab-tmc-trip--buy-insurance/tab-tmc-trip--buy-insurance.component.ts"
+      ],
+      "count": 3
+    },
+    {
+      "method": "TmcApiOrderUrl-Order-AbolishOrder",
+      "urlKey": "TmcApiOrderUrl",
+      "controller": "Order",
+      "action": "AbolishOrder",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-order/tmc-order.service.ts",
+        "projects/jyx/src/app/tmc/tmc-order/tmc-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiOrderUrl-Order-AbolishTicket",
+      "urlKey": "TmcApiOrderUrl",
+      "controller": "Order",
+      "action": "AbolishTicket",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-order/tmc-order.service.ts",
+        "projects/jyx/src/app/tmc/tmc-order/tmc-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiOrderUrl-Order-CancelOrderHotel",
+      "urlKey": "TmcApiOrderUrl",
+      "controller": "Order",
+      "action": "CancelOrderHotel",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-order/tmc-order.service.ts",
+        "projects/jyx/src/app/tmc/tmc-order/tmc-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiOrderUrl-Order-CancelTrain",
+      "urlKey": "TmcApiOrderUrl",
+      "controller": "Order",
+      "action": "CancelTrain",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-order/tmc-order.service.ts",
+        "projects/jyx/src/app/tmc/tmc-order/tmc-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiOrderUrl-Order-CheckInspurRepush",
+      "urlKey": "TmcApiOrderUrl",
+      "controller": "Order",
+      "action": "CheckInspurRepush",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-order/tmc-order.service.ts"
+      ],
+      "count": 1
+    },
+    {
+      "method": "TmcApiOrderUrl-Order-ConfirmVerifyOrderHotelSMSCode",
+      "urlKey": "TmcApiOrderUrl",
+      "controller": "Order",
+      "action": "ConfirmVerifyOrderHotelSMSCode",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-order/tmc-order.service.ts",
+        "projects/jyx/src/app/tmc/tmc-order/tmc-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiOrderUrl-Order-Detail",
+      "urlKey": "TmcApiOrderUrl",
+      "controller": "Order",
+      "action": "Detail",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-order/tmc-order.service.ts",
+        "projects/jyx/src/app/tmc/tmc-order/tmc-order.service.ts"
+      ],
+      "count": 4
+    },
+    {
+      "method": "TmcApiOrderUrl-Order-ExchangeFlightInitalize",
+      "urlKey": "TmcApiOrderUrl",
+      "controller": "Order",
+      "action": "ExchangeFlightInitalize",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-order/public-order.service.ts",
+        "projects/ryx/src/app/tmc/tmc-order/tmc-order.service.ts",
+        "projects/jyx/src/app/tmc/tmc-order/tmc-order.service.ts"
+      ],
+      "count": 3
+    },
+    {
+      "method": "TmcApiOrderUrl-Order-getEmailTemplateSelectItemList",
+      "urlKey": "TmcApiOrderUrl",
+      "controller": "Order",
+      "action": "getEmailTemplateSelectItemList",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiOrderUrl-Order-GetFlightTicketRefundInfo",
+      "urlKey": "TmcApiOrderUrl",
+      "controller": "Order",
+      "action": "GetFlightTicketRefundInfo",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-order/tmc-order.service.ts",
+        "projects/jyx/src/app/tmc/tmc-order/tmc-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiOrderUrl-Order-GetLinkmans?name=",
+      "urlKey": "TmcApiOrderUrl",
+      "controller": "Order",
+      "action": "GetLinkmans?name=",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-order/tmc-order.service.ts"
+      ],
+      "count": 1
+    },
+    {
+      "method": "TmcApiOrderUrl-Order-GetLinkmans?name=${name}${...}",
+      "urlKey": "TmcApiOrderUrl",
+      "controller": "Order",
+      "action": "GetLinkmans?name=${name}${...}",
+      "dynamic": true,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-order/tmc-order.service.ts"
+      ],
+      "count": 1
+    },
+    {
+      "method": "TmcApiOrderUrl-Order-getMobileTemplateSelectItemList",
+      "urlKey": "TmcApiOrderUrl",
+      "controller": "Order",
+      "action": "getMobileTemplateSelectItemList",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiOrderUrl-Order-GetOrderPassengers",
+      "urlKey": "TmcApiOrderUrl",
+      "controller": "Order",
+      "action": "GetOrderPassengers",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-order/tmc-order.service.ts"
+      ],
+      "count": 1
+    },
+    {
+      "method": "TmcApiOrderUrl-Order-GetOrderPays",
+      "urlKey": "TmcApiOrderUrl",
+      "controller": "Order",
+      "action": "GetOrderPays",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-order/tmc-order.service.ts",
+        "projects/jyx/src/app/tmc/tmc-order/tmc-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiOrderUrl-Order-IssueTrain",
+      "urlKey": "TmcApiOrderUrl",
+      "controller": "Order",
+      "action": "IssueTrain",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-order/tmc-order.service.ts",
+        "projects/jyx/src/app/tmc/tmc-order/tmc-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiOrderUrl-Order-List",
+      "urlKey": "TmcApiOrderUrl",
+      "controller": "Order",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-order/tmc-order.service.ts",
+        "projects/jyx/src/app/tmc/tmc-order/tmc-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiOrderUrl-Order-NonVoluntaryRefundFlight",
+      "urlKey": "TmcApiOrderUrl",
+      "controller": "Order",
+      "action": "NonVoluntaryRefundFlight",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-order/tmc-order.service.ts"
+      ],
+      "count": 1
+    },
+    {
+      "method": "TmcApiOrderUrl-Order-RefundFlight",
+      "urlKey": "TmcApiOrderUrl",
+      "controller": "Order",
+      "action": "RefundFlight",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-order/tmc-order.service.ts",
+        "projects/jyx/src/app/tmc/tmc-order/tmc-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiOrderUrl-Order-RePush",
+      "urlKey": "TmcApiOrderUrl",
+      "controller": "Order",
+      "action": "RePush",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-order/tmc-order.service.ts"
+      ],
+      "count": 1
+    },
+    {
+      "method": "TmcApiOrderUrl-Order-SendEmail",
+      "urlKey": "TmcApiOrderUrl",
+      "controller": "Order",
+      "action": "SendEmail",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiOrderUrl-Order-SendSms",
+      "urlKey": "TmcApiOrderUrl",
+      "controller": "Order",
+      "action": "SendSms",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiOrderUrl-Order-SendVerifyOrderHotelSMSCode",
+      "urlKey": "TmcApiOrderUrl",
+      "controller": "Order",
+      "action": "SendVerifyOrderHotelSMSCode",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-order/tmc-order.service.ts",
+        "projects/jyx/src/app/tmc/tmc-order/tmc-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiOrderUrl-Pay-GetTotalPayAmount",
+      "urlKey": "TmcApiOrderUrl",
+      "controller": "Pay",
+      "action": "GetTotalPayAmount",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-order/tmc-order.service.ts",
+        "projects/jyx/src/app/tmc/tmc-order/tmc-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiOrderUrl-Task-List",
+      "urlKey": "TmcApiOrderUrl",
+      "controller": "Task",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-order/tmc-order.service.ts",
+        "projects/jyx/src/app/tmc/tmc-order/tmc-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiOrderUrl-Train-Refund",
+      "urlKey": "TmcApiOrderUrl",
+      "controller": "Train",
+      "action": "Refund",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-train/tmc-train.service.ts",
+        "projects/jyx/src/app/tmc/tmc-train/tmc-train.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiOrderUrl-Travel-List",
+      "urlKey": "TmcApiOrderUrl",
+      "controller": "Travel",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tabs/tab-tmc-home/tmc-home.base.page.ts",
+        "projects/ryx/src/app/tabs/tab-tmc-home_ryx/tab-tmc-home_ryx.page.ts",
+        "projects/ryx/src/app/tabs/tab-tmc-trip/tab-tmc-trip.page.ts",
+        "projects/ryx/src/app/tabs/tab-tmc-trip_ryx/tab-tmc-trip_ryx.page.ts",
+        "projects/ryx/src/app/tmc/tmc-order/tmc-order.service.ts",
+        "projects/ryx/src/app/tmc/tmc.service.ts",
+        "projects/jyx/src/app/tabs/tab-tmc-home/tmc-home.base.page.ts",
+        "projects/jyx/src/app/tabs/tab-tmc-home_jyx/tab-tmc-home_jyx.page.ts",
+        "projects/jyx/src/app/tabs/tab-tmc-trip/tab-tmc-trip.page.ts",
+        "projects/jyx/src/app/tmc/tmc-order/tmc-order.service.ts",
+        "projects/jyx/src/app/tmc/tmc.service.ts"
+      ],
+      "count": 11
+    },
+    {
+      "method": "TmcApiRentalCarUrl-Home-PickupStore",
+      "urlKey": "TmcApiRentalCarUrl",
+      "controller": "Home",
+      "action": "PickupStore",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-rental-car/tmc-rental-car.service.ts",
+        "projects/jyx/src/app/tmc/tmc-rental-car/tmc-rental-car.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiRentalCarUrl-Home-ReturnStore",
+      "urlKey": "TmcApiRentalCarUrl",
+      "controller": "Home",
+      "action": "ReturnStore",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-rental-car/tmc-rental-car.service.ts",
+        "projects/jyx/src/app/tmc/tmc-rental-car/tmc-rental-car.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiRentalCarUrl-Home-Search",
+      "urlKey": "TmcApiRentalCarUrl",
+      "controller": "Home",
+      "action": "Search",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-rental-car/tmc-rental-car.service.ts",
+        "projects/jyx/src/app/tmc/tmc-rental-car/tmc-rental-car.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiTrainUrl-Home-GetExchangeInfo",
+      "urlKey": "TmcApiTrainUrl",
+      "controller": "Home",
+      "action": "GetExchangeInfo",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-train/tmc-train.service.ts",
+        "projects/jyx/src/app/tmc/tmc-train/tmc-train.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiTrainUrl-Home-GetTrainPassenger",
+      "urlKey": "TmcApiTrainUrl",
+      "controller": "Home",
+      "action": "GetTrainPassenger",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-train/tmc-train.service.ts",
+        "projects/jyx/src/app/tmc/tmc-train/tmc-train.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiTrainUrl-Home-Policy",
+      "urlKey": "TmcApiTrainUrl",
+      "controller": "Home",
+      "action": "Policy",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-train/tmc-train.service.ts",
+        "projects/jyx/src/app/tmc/tmc-train/tmc-train.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiTrainUrl-Home-Schedule",
+      "urlKey": "TmcApiTrainUrl",
+      "controller": "Home",
+      "action": "Schedule",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-train/tmc-train.service.ts",
+        "projects/jyx/src/app/tmc/tmc-train/tmc-train.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcApiTrainUrl-Home-Search",
+      "urlKey": "TmcApiTrainUrl",
+      "controller": "Home",
+      "action": "Search",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tmc/tmc-train/tmc-train.service.ts",
+        "projects/jyx/src/app/tmc/tmc-train/tmc-train.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristBookUrl-",
+      "urlKey": "TmcTouristBookUrl-",
+      "controller": "",
+      "action": "",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/tourist-book.service.ts",
+        "projects/jyx/src/app/public/tourist-book.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristBookUrl-${type}-CheckPay${...}",
+      "urlKey": "TmcTouristBookUrl",
+      "controller": "${type}",
+      "action": "CheckPay${...}",
+      "dynamic": true,
+      "sources": [
+        "projects/ryx/src/app/public/tourist-book.service.ts",
+        "projects/jyx/src/app/public/tourist-book.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristBookUrl-Flight-Book",
+      "urlKey": "TmcTouristBookUrl",
+      "controller": "Flight",
+      "action": "Book",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-flight/public-flight.service.ts",
+        "projects/jyx/src/app/public/public-flight/public-flight.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristBookUrl-Flight-ExchangeBook",
+      "urlKey": "TmcTouristBookUrl",
+      "controller": "Flight",
+      "action": "ExchangeBook",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-flight/public-flight.service.ts",
+        "projects/jyx/src/app/public/public-flight/public-flight.service.ts"
+      ],
+      "count": 3
+    },
+    {
+      "method": "TmcTouristBookUrl-Flight-ExchangeInitialize",
+      "urlKey": "TmcTouristBookUrl",
+      "controller": "Flight",
+      "action": "ExchangeInitialize",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-flight/public-flight.service.ts",
+        "projects/jyx/src/app/public/public-flight/public-flight.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristBookUrl-Flight-Initialize",
+      "urlKey": "TmcTouristBookUrl",
+      "controller": "Flight",
+      "action": "Initialize",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-flight/public-flight.service.ts",
+        "projects/jyx/src/app/public/public-flight/public-flight.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristBookUrl-Flight-Validate",
+      "urlKey": "TmcTouristBookUrl",
+      "controller": "Flight",
+      "action": "Validate",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-flight/public-flight.service.ts",
+        "projects/jyx/src/app/public/public-flight/public-flight.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristBookUrl-Home-Country",
+      "urlKey": "TmcTouristBookUrl",
+      "controller": "Home",
+      "action": "Country",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/tourist-book.service.ts",
+        "projects/jyx/src/app/public/tourist-book.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristBookUrl-Home-Credentials",
+      "urlKey": "TmcTouristBookUrl",
+      "controller": "Home",
+      "action": "Credentials",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/tourist-book.service.ts",
+        "projects/jyx/src/app/public/tourist-book.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristBookUrl-Hotel-Book",
+      "urlKey": "TmcTouristBookUrl",
+      "controller": "Hotel",
+      "action": "Book",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-hotel/public-hotel.service.ts",
+        "projects/jyx/src/app/public/public-hotel/public-hotel.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristBookUrl-Hotel-Initialize",
+      "urlKey": "TmcTouristBookUrl",
+      "controller": "Hotel",
+      "action": "Initialize",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-hotel/public-hotel.service.ts",
+        "projects/jyx/src/app/public/public-hotel/public-hotel.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristBookUrl-Train-AccountValidate",
+      "urlKey": "TmcTouristBookUrl",
+      "controller": "Train",
+      "action": "AccountValidate",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-train/public-train.service.ts",
+        "projects/jyx/src/app/public/public-train/public-train.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristBookUrl-Train-Bind",
+      "urlKey": "TmcTouristBookUrl",
+      "controller": "Train",
+      "action": "Bind",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-train/public-train.service.ts",
+        "projects/jyx/src/app/public/public-train/public-train.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristBookUrl-Train-Book",
+      "urlKey": "TmcTouristBookUrl",
+      "controller": "Train",
+      "action": "Book",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-train/public-train.service.ts",
+        "projects/jyx/src/app/public/public-train/public-train.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristBookUrl-Train-CodeValidate",
+      "urlKey": "TmcTouristBookUrl",
+      "controller": "Train",
+      "action": "CodeValidate",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-train/public-train.service.ts",
+        "projects/jyx/src/app/public/public-train/public-train.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristBookUrl-Train-ExchangeBook",
+      "urlKey": "TmcTouristBookUrl",
+      "controller": "Train",
+      "action": "ExchangeBook",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-train/public-train.service.ts",
+        "projects/jyx/src/app/public/public-train/public-train.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristBookUrl-Train-ExchangeInitialize",
+      "urlKey": "TmcTouristBookUrl",
+      "controller": "Train",
+      "action": "ExchangeInitialize",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-train/public-train.service.ts",
+        "projects/jyx/src/app/public/public-train/public-train.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristBookUrl-Train-GetBindAccountNumber",
+      "urlKey": "TmcTouristBookUrl",
+      "controller": "Train",
+      "action": "GetBindAccountNumber",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-train/public-train.service.ts",
+        "projects/jyx/src/app/public/public-train/public-train.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristBookUrl-Train-GetContacts",
+      "urlKey": "TmcTouristBookUrl",
+      "controller": "Train",
+      "action": "GetContacts",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-train/public-train.service.ts",
+        "projects/jyx/src/app/public/public-train/public-train.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristBookUrl-Train-Initialize",
+      "urlKey": "TmcTouristBookUrl",
+      "controller": "Train",
+      "action": "Initialize",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-train/public-train.service.ts",
+        "projects/jyx/src/app/public/public-train/public-train.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristBookUrl-Train-Unbind",
+      "urlKey": "TmcTouristBookUrl",
+      "controller": "Train",
+      "action": "Unbind",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-train/public-train.service.ts",
+        "projects/jyx/src/app/public/public-train/public-train.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristCarUrl-Car-VerifyStaff",
+      "urlKey": "TmcTouristCarUrl",
+      "controller": "Car",
+      "action": "VerifyStaff",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-car/public-car.service.ts",
+        "projects/jyx/src/app/public/public-car/public-car.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristFlightUrl-Home-Detail",
+      "urlKey": "TmcTouristFlightUrl",
+      "controller": "Home",
+      "action": "Detail",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-flight/public-flight.service.ts",
+        "projects/jyx/src/app/public/public-flight/public-flight.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristFlightUrl-Home-Exchange",
+      "urlKey": "TmcTouristFlightUrl",
+      "controller": "Home",
+      "action": "Exchange",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-flight/public-flight.service.ts",
+        "projects/jyx/src/app/public/public-flight/public-flight.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristFlightUrl-Home-ExchangeDetail",
+      "urlKey": "TmcTouristFlightUrl",
+      "controller": "Home",
+      "action": "ExchangeDetail",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-flight/public-flight.service.ts"
+      ],
+      "count": 1
+    },
+    {
+      "method": "TmcTouristFlightUrl-Home-Index",
+      "urlKey": "TmcTouristFlightUrl",
+      "controller": "Home",
+      "action": "Index",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-flight/public-flight.service.ts",
+        "projects/jyx/src/app/public/public-flight/public-flight.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristHotelUrl-Book-Book",
+      "urlKey": "TmcTouristHotelUrl",
+      "controller": "Book",
+      "action": "Book",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-hotel/public-hotel.service.ts",
+        "projects/jyx/src/app/public/public-hotel/public-hotel.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristHotelUrl-City-GetCityByMap",
+      "urlKey": "TmcTouristHotelUrl",
+      "controller": "City",
+      "action": "GetCityByMap",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-hotel/public-hotel.service.ts",
+        "projects/jyx/src/app/public/public-hotel/public-hotel.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristHotelUrl-City-Gets",
+      "urlKey": "TmcTouristHotelUrl",
+      "controller": "City",
+      "action": "Gets",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-hotel/public-hotel.service.ts",
+        "projects/jyx/src/app/public/public-hotel/public-hotel.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristHotelUrl-Condition-Gets",
+      "urlKey": "TmcTouristHotelUrl",
+      "controller": "Condition",
+      "action": "Gets",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-hotel/public-hotel.service.ts",
+        "projects/jyx/src/app/public/public-hotel/public-hotel.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristHotelUrl-Home-Detail",
+      "urlKey": "TmcTouristHotelUrl",
+      "controller": "Home",
+      "action": "Detail",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-hotel/public-hotel.service.ts",
+        "projects/jyx/src/app/public/public-hotel/public-hotel.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristHotelUrl-Home-List",
+      "urlKey": "TmcTouristHotelUrl",
+      "controller": "Home",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-hotel/public-hotel.service.ts",
+        "projects/jyx/src/app/public/public-hotel/public-hotel.service.ts"
+      ],
+      "count": 4
+    },
+    {
+      "method": "TmcTouristHotelUrl-Home-SearchHotel",
+      "urlKey": "TmcTouristHotelUrl",
+      "controller": "Home",
+      "action": "SearchHotel",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-hotel/public-hotel.service.ts",
+        "projects/jyx/src/app/public/public-hotel/public-hotel.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristOrderUrl-Insurance-Book",
+      "urlKey": "TmcTouristOrderUrl",
+      "controller": "Insurance",
+      "action": "Book",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/tabs/tab-public-trip/tab-public-trip-buy-insurance/tab-public-trip-buy-insurance.component.ts",
+        "projects/ryx/src/app/tabs/tab-public-trip_ryx/tab-public-trip-buy-insurance/tab-public-trip-buy-insurance.component.ts",
+        "projects/jyx/src/app/tabs/tab-public-trip/tab-public-trip-buy-insurance/tab-public-trip-buy-insurance.component.ts"
+      ],
+      "count": 3
+    },
+    {
+      "method": "TmcTouristOrderUrl-Order-AbolishOrder",
+      "urlKey": "TmcTouristOrderUrl",
+      "controller": "Order",
+      "action": "AbolishOrder",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-order/public-order.service.ts",
+        "projects/jyx/src/app/public/public-order/public-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristOrderUrl-Order-AbolishTicket",
+      "urlKey": "TmcTouristOrderUrl",
+      "controller": "Order",
+      "action": "AbolishTicket",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-order/public-order.service.ts",
+        "projects/jyx/src/app/public/public-order/public-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristOrderUrl-Order-CancelOrderHotel",
+      "urlKey": "TmcTouristOrderUrl",
+      "controller": "Order",
+      "action": "CancelOrderHotel",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-order/public-order.service.ts",
+        "projects/jyx/src/app/public/public-order/public-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristOrderUrl-Order-CancelTrain",
+      "urlKey": "TmcTouristOrderUrl",
+      "controller": "Order",
+      "action": "CancelTrain",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-order/public-order.service.ts",
+        "projects/jyx/src/app/public/public-order/public-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristOrderUrl-Order-ConfirmVerifyOrderHotelSMSCode",
+      "urlKey": "TmcTouristOrderUrl",
+      "controller": "Order",
+      "action": "ConfirmVerifyOrderHotelSMSCode",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-order/public-order.service.ts",
+        "projects/jyx/src/app/public/public-order/public-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristOrderUrl-Order-Detail",
+      "urlKey": "TmcTouristOrderUrl",
+      "controller": "Order",
+      "action": "Detail",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-order/public-order.service.ts",
+        "projects/jyx/src/app/public/public-order/public-order.service.ts"
+      ],
+      "count": 4
+    },
+    {
+      "method": "TmcTouristOrderUrl-Order-ExchangeFlightInitalize",
+      "urlKey": "TmcTouristOrderUrl",
+      "controller": "Order",
+      "action": "ExchangeFlightInitalize",
+      "dynamic": false,
+      "sources": [
+        "projects/jyx/src/app/public/public-order/public-order.service.ts"
+      ],
+      "count": 1
+    },
+    {
+      "method": "TmcTouristOrderUrl-Order-GetOrderPays",
+      "urlKey": "TmcTouristOrderUrl",
+      "controller": "Order",
+      "action": "GetOrderPays",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-order/public-order.service.ts",
+        "projects/jyx/src/app/public/public-order/public-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristOrderUrl-Order-IssueTrain",
+      "urlKey": "TmcTouristOrderUrl",
+      "controller": "Order",
+      "action": "IssueTrain",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-order/public-order.service.ts",
+        "projects/jyx/src/app/public/public-order/public-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristOrderUrl-Order-List",
+      "urlKey": "TmcTouristOrderUrl",
+      "controller": "Order",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-order/public-order.service.ts",
+        "projects/jyx/src/app/public/public-order/public-order.service.ts"
+      ],
+      "count": 4
+    },
+    {
+      "method": "TmcTouristOrderUrl-Order-RefundFlight",
+      "urlKey": "TmcTouristOrderUrl",
+      "controller": "Order",
+      "action": "RefundFlight",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-order/public-order.service.ts",
+        "projects/jyx/src/app/public/public-order/public-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristOrderUrl-Order-SendVerifyOrderHotelSMSCode",
+      "urlKey": "TmcTouristOrderUrl",
+      "controller": "Order",
+      "action": "SendVerifyOrderHotelSMSCode",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-order/public-order.service.ts",
+        "projects/jyx/src/app/public/public-order/public-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristOrderUrl-Pay-Create",
+      "urlKey": "TmcTouristOrderUrl",
+      "controller": "Pay",
+      "action": "Create",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-order/public-order.service.ts",
+        "projects/jyx/src/app/public/public-order/public-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristOrderUrl-Pay-GetOrderPays",
+      "urlKey": "TmcTouristOrderUrl",
+      "controller": "Pay",
+      "action": "GetOrderPays",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-order/public-order.service.ts",
+        "projects/jyx/src/app/public/public-order/public-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristOrderUrl-Pay-GetTotalPayAmount",
+      "urlKey": "TmcTouristOrderUrl",
+      "controller": "Pay",
+      "action": "GetTotalPayAmount",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-order/public-order.service.ts",
+        "projects/jyx/src/app/public/public-order/public-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristOrderUrl-Pay-Process",
+      "urlKey": "TmcTouristOrderUrl",
+      "controller": "Pay",
+      "action": "Process",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-order/public-wait-payresult/public-wait-payresult.page.ts",
+        "projects/jyx/src/app/public/public-order/public-wait-payresult/public-wait-payresult.page.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristOrderUrl-Task-List",
+      "urlKey": "TmcTouristOrderUrl",
+      "controller": "Task",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-order/public-order.service.ts",
+        "projects/jyx/src/app/public/public-order/public-order.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristOrderUrl-Travel-List",
+      "urlKey": "TmcTouristOrderUrl",
+      "controller": "Travel",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-order/public-order.service.ts",
+        "projects/ryx/src/app/tabs/tab-public-trip/tab-public-trip.page.ts",
+        "projects/ryx/src/app/tabs/tab-public-trip_ryx/tab-public-trip_ryx.page.ts",
+        "projects/jyx/src/app/public/public-order/public-order.service.ts",
+        "projects/jyx/src/app/tabs/tab-public-trip/tab-public-trip.page.ts"
+      ],
+      "count": 5
+    },
+    {
+      "method": "TmcTouristTrainUrl-Home-GetExchangeInfo",
+      "urlKey": "TmcTouristTrainUrl",
+      "controller": "Home",
+      "action": "GetExchangeInfo",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-train/public-train.service.ts",
+        "projects/jyx/src/app/public/public-train/public-train.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristTrainUrl-Home-GetTrainPassenger",
+      "urlKey": "TmcTouristTrainUrl",
+      "controller": "Home",
+      "action": "GetTrainPassenger",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-train/public-train.service.ts",
+        "projects/jyx/src/app/public/public-train/public-train.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristTrainUrl-Home-Policy",
+      "urlKey": "TmcTouristTrainUrl",
+      "controller": "Home",
+      "action": "Policy",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-train/public-train.service.ts",
+        "projects/jyx/src/app/public/public-train/public-train.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristTrainUrl-Home-Refund",
+      "urlKey": "TmcTouristTrainUrl",
+      "controller": "Home",
+      "action": "Refund",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-train/public-train.service.ts",
+        "projects/jyx/src/app/public/public-train/public-train.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristTrainUrl-Home-Schedule",
+      "urlKey": "TmcTouristTrainUrl",
+      "controller": "Home",
+      "action": "Schedule",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-train/public-train.service.ts",
+        "projects/jyx/src/app/public/public-train/public-train.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "TmcTouristTrainUrl-Home-Search",
+      "urlKey": "TmcTouristTrainUrl",
+      "controller": "Home",
+      "action": "Search",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/public/public-train/public-train.service.ts",
+        "projects/jyx/src/app/public/public-train/public-train.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "WorkflowApiUrl-History-List",
+      "urlKey": "WorkflowApiUrl",
+      "controller": "History",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/workflow/workflow-api.service.ts",
+        "projects/jyx/src/app/workflow/workflow-api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "WorkflowApiUrl-Notify-List",
+      "urlKey": "WorkflowApiUrl",
+      "controller": "Notify",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/workflow/workflow-api.service.ts",
+        "projects/jyx/src/app/workflow/workflow-api.service.ts"
+      ],
+      "count": 2
+    },
+    {
+      "method": "WorkflowApiUrl-Task-List",
+      "urlKey": "WorkflowApiUrl",
+      "controller": "Task",
+      "action": "List",
+      "dynamic": false,
+      "sources": [
+        "projects/ryx/src/app/workflow/workflow-api.service.ts",
+        "projects/jyx/src/app/workflow/workflow-api.service.ts"
+      ],
+      "count": 2
+    }
+  ]
+}
