@@ -68,6 +68,12 @@ export type {
   TravelUrlTravelType,
 } from "./travel.js";
 
+export type {
+  AirportResourceParams,
+  AirportResourceResponse,
+  TrafficlineDto,
+} from "./resource.js";
+
 /** Pagination metadata shared across list endpoints. */
 export interface PaginationMeta {
   page: number;

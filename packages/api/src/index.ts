@@ -7,6 +7,7 @@ import {
   type IdentityApi,
 } from "./apis/auth-proxy.js";
 import { createAuthApi } from "./apis/auth.js";
+import { createFlightApi, type FlightApi } from "./apis/flight.js";
 import { createHotelApi, type HotelApi } from "./apis/hotel.js";
 import { createMemberApi, type MemberApi } from "./apis/member.js";
 import { createOrderApi, type OrderApi } from "./apis/order.js";
@@ -31,6 +32,7 @@ export {
   type IdentityApi,
 } from "./apis/auth-proxy.js";
 export { createHotelApi, type HotelApi } from "./apis/hotel.js";
+export { createFlightApi, type FlightApi } from "./apis/flight.js";
 export { createOrderApi, type OrderApi } from "./apis/order.js";
 export { createPayApi, type PayApi } from "./apis/pay.js";
 export { createMemberApi, type MemberApi } from "./apis/member.js";
@@ -70,6 +72,7 @@ export interface Api {
   authProxy: AuthProxyApi;
   identity: IdentityApi;
   hotel: HotelApi;
+  flight: FlightApi;
   order: OrderApi;
   pay: PayApi;
   member: MemberApi;
@@ -113,6 +116,7 @@ export function createApi(config: CreateApiConfig): Api {
     authProxy: createAuthProxyApi(proxy),
     identity: createIdentityApi(proxy),
     hotel: createHotelApi(proxy),
+    flight: createFlightApi(proxy),
     order: createOrderApi(proxy),
     pay: createPayApi(proxy),
     member: createMemberApi(proxy),
