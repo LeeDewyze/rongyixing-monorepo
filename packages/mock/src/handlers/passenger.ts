@@ -1,7 +1,7 @@
 import type { IResponse } from "@ryx/shared-types";
 import { PASSENGER_FLOW_METHODS, successResponse } from "@ryx/api";
 
-import { MOCK_PASSENGER_LIST, MOCK_PASSENGERS } from "../fixtures/member.js";
+import { MOCK_PASSENGERS } from "../fixtures/member.js";
 import { filterMockStaff } from "../fixtures/passenger.js";
 
 export function createPassengerMockHandlers(): Record<
@@ -27,9 +27,7 @@ export function createPassengerMockHandlers(): Record<
       let passengers = MOCK_PASSENGERS;
       if (keyword) {
         passengers = passengers.filter(
-          (p) =>
-            p.Name.toLowerCase().includes(keyword) ||
-            (p.Mobile ?? "").includes(keyword),
+          (p) => p.Name.toLowerCase().includes(keyword) || (p.Mobile ?? "").includes(keyword),
         );
       }
       const pageIndex = params.PageIndex ?? 0;
