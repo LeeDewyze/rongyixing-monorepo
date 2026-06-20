@@ -4,10 +4,11 @@ import { ApiError } from "../errors.js";
 import { loadApiConfig, readCachedApiConfig } from "./api-config.js";
 import {
   createRequestEntity,
+  buildUnsignedFormBody,
   encodeFormBody,
   toFormFields,
 } from "./request-entity.js";
-import { resolveUrl } from "./resolve-url.js";
+import { isLoginMethod, resolveUrl } from "./resolve-url.js";
 import { assertSuccess } from "./response-adapter.js";
 import { computeSign, serializeData } from "./sign.js";
 
@@ -21,11 +22,14 @@ export interface ProxyClientConfig {
   appId?: string;
   fetchImpl?: typeof fetch;
   getTicket?: () => string | null;
+  getTicketName?: () => string;
   getDomain?: () => string | null;
   getLanguage?: () => string;
+  getExtraFields?: () => Record<string, string>;
   mockDelay?: number;
   mockHandler?: MockHandler;
   apiConfig?: ApiConfigSetting | null;
+  rewriteUrl?: (url: string) => string;
   onUnauthorized?: () => void;
   onNoAuthorize?: () => void;
   onSystemError?: (message: string) => void;
@@ -51,7 +55,7 @@ export function createProxyClient(config: ProxyClientConfig): ProxyClient {
   }
 
   async function ensureApiConfig(): Promise<ApiConfigSetting | null> {
-    if (apiConfig?.Urls && Object.keys(apiConfig.Urls).length > 0) {
+    if (apiConfig?.Token) {
       return apiConfig;
     }
     if (mode === "mock") {
@@ -83,10 +87,7 @@ export function createProxyClient(config: ProxyClientConfig): ProxyClient {
     }
   }
 
-  async function sendMock<TRes>(
-    method: string,
-    data: unknown,
-  ): Promise<IResponse<TRes>> {
+  async function sendMock<TRes>(method: string, data: unknown): Promise<IResponse<TRes>> {
     const delay = config.mockDelay ?? 0;
     if (delay > 0) {
       await sleep(delay);
@@ -107,15 +108,15 @@ export function createProxyClient(config: ProxyClientConfig): ProxyClient {
     return result as IResponse<TRes>;
   }
 
-  async function sendReal<TRes>(
-    options: ProxySendOptions,
-  ): Promise<IResponse<TRes>> {
+  async function sendReal<TRes>(options: ProxySendOptions): Promise<IResponse<TRes>> {
     const cfg = await ensureApiConfig();
     const token = getToken();
     const req = createRequestEntity(options.method, options.data, {
-      getTicket: config.getTicket,
+      getTicket: isLoginMethod(options.method) ? () => "" : config.getTicket,
+      getTicketName: config.getTicketName,
       getDomain: config.getDomain,
       getLanguage: config.getLanguage,
+      getExtraFields: config.getExtraFields,
       token,
     });
 
@@ -125,19 +126,36 @@ export function createProxyClient(config: ProxyClientConfig): ProxyClient {
     if (options.isForward) {
       req.IsForward = true;
     }
+    if (options.isShowLoading) {
+      req.IsShowLoading = true;
+    }
 
     const dataStr = serializeData(req.Data);
-    const sign = computeSign(dataStr, req.Timestamp ?? 0, token);
-    const url = resolveUrl({
-      baseUrl: config.baseUrl,
-      method: options.method,
-      explicitUrl: options.url,
-      apiConfig: cfg,
-      mode: mode === "direct" ? "direct" : "proxy",
-      isForward: options.isForward,
-    });
+    const includeSign = !options.skipSign;
+    const sign = includeSign ? computeSign(dataStr, req.Timestamp ?? 0, token) : "";
+    const url = config.rewriteUrl
+      ? config.rewriteUrl(
+          resolveUrl({
+            baseUrl: config.baseUrl,
+            method: options.method,
+            explicitUrl: options.url,
+            apiConfig: cfg,
+            mode: mode === "direct" ? "direct" : "proxy",
+            isForward: options.isForward,
+          }),
+        )
+      : resolveUrl({
+          baseUrl: config.baseUrl,
+          method: options.method,
+          explicitUrl: options.url,
+          apiConfig: cfg,
+          mode: mode === "direct" ? "direct" : "proxy",
+          isForward: options.isForward,
+        });
 
-    const body = encodeFormBody(toFormFields(req, sign));
+    const body = includeSign
+      ? encodeFormBody(toFormFields(req, sign, { includeSign, includeToken: true }))
+      : buildUnsignedFormBody(req);
     const controller = options.timeoutMs ? new AbortController() : undefined;
     const timeoutId =
       options.timeoutMs && controller
@@ -153,10 +171,7 @@ export function createProxyClient(config: ProxyClientConfig): ProxyClient {
       });
 
       if (!response.ok) {
-        throw new ApiError(
-          `Proxy request failed: HTTP ${response.status}`,
-          response.status,
-        );
+        throw new ApiError(`Proxy request failed: HTTP ${response.status}`, response.status);
       }
 
       const payload = (await response.json()) as IResponse<TRes>;
@@ -173,10 +188,7 @@ export function createProxyClient(config: ProxyClientConfig): ProxyClient {
 
   return {
     async send<TRes = unknown>(options: ProxySendOptions): Promise<TRes> {
-      const data =
-        typeof options.data === "string"
-          ? JSON.parse(options.data)
-          : options.data;
+      const data = typeof options.data === "string" ? JSON.parse(options.data) : options.data;
 
       const response =
         mode === "mock"

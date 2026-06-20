@@ -3,7 +3,12 @@ export function getAppName(): string {
 }
 
 export function getApiBaseUrl(): string {
-  return import.meta.env.VITE_API_BASE_URL ?? "";
+  const configured = import.meta.env.VITE_API_BASE_URL ?? "";
+  // Same-origin `/Home/*` in dev so Vite proxy avoids CORS.
+  if (import.meta.env.DEV && getApiMode() !== "mock") {
+    return "";
+  }
+  return configured;
 }
 
 const API_MODE_KEY = "ryx_api_mode";
@@ -32,4 +37,22 @@ export function setApiMode(mode: "mock" | "proxy" | "direct"): void {
 
 export function clearApiModeOverride(): void {
   localStorage.removeItem("ryx_api_mode");
+}
+
+const DEFAULT_LOGIN_URL = "http://ronglv-feature.rtesp.com/Jyx/LoginByRyx";
+
+/** Static ApiConfig from env — skips `GET /Home/Setting` when Token is set. */
+export function getStaticApiConfig(): {
+  Token: string;
+  LoginUrl: string;
+  Urls: Record<string, string>;
+} | null {
+  const token = import.meta.env.VITE_API_TOKEN?.trim();
+  if (!token) return null;
+  const loginUrl = import.meta.env.VITE_LOGIN_URL?.trim() || DEFAULT_LOGIN_URL;
+  return { Token: token, LoginUrl: loginUrl, Urls: {} };
+}
+
+export function hasStaticApiConfig(): boolean {
+  return getStaticApiConfig() !== null;
 }

@@ -1,4 +1,4 @@
-import type { ApiMode } from "@ryx/shared-types";
+import type { ApiMode, ApiConfigSetting } from "@ryx/shared-types";
 
 import {
   createAuthProxyApi,
@@ -51,8 +51,13 @@ export interface CreateApiConfig extends ApiClientConfig {
   mockDelay?: number;
   mockHandler?: MockHandler;
   getTicket?: () => string | null;
+  getTicketName?: () => string;
   getDomain?: () => string | null;
   getLanguage?: () => string;
+  getExtraFields?: () => Record<string, string>;
+  rewriteUrl?: (url: string) => string;
+  /** When set, skips fetching `/Home/Setting` if Token is present. */
+  apiConfig?: ApiConfigSetting | null;
   onNoAuthorize?: () => void;
   onSystemError?: (message: string) => void;
 }
@@ -81,8 +86,12 @@ export function createApi(config: CreateApiConfig): Api {
     appId: config.appId,
     fetchImpl: config.fetchImpl,
     getTicket: config.getTicket,
+    getTicketName: config.getTicketName,
     getDomain: config.getDomain,
     getLanguage: config.getLanguage,
+    getExtraFields: config.getExtraFields,
+    rewriteUrl: config.rewriteUrl,
+    apiConfig: config.apiConfig,
     mockDelay: config.mockDelay,
     mockHandler: config.mockHandler,
     onUnauthorized: config.onUnauthorized,

@@ -17,12 +17,15 @@ export interface PasswordLoginParams {
   Name: string;
   Password: string;
   Device?: string;
+  DeviceName?: string;
+  LoginType?: string;
 }
 
 export interface MobileLoginParams {
   Mobile: string;
   Code: string;
   Device?: string;
+  LoginType?: string;
 }
 
 export interface LoginResultDto {
@@ -30,4 +33,8 @@ export interface LoginResultDto {
   Id: string;
   Name: string;
   Token?: string;
+}
+
+export interface WebSocketUrlDto {
+  Url: string;
 }

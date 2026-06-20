@@ -1,14 +1,16 @@
-import { createBrowserRouter } from "react-router-dom";
+import { Navigate, createBrowserRouter } from "react-router-dom";
 
 import { RootLayout } from "@/app/layouts/RootLayout";
-import { HomePage } from "@/pages/HomePage";
+import { TabLayout } from "@/app/layouts/TabLayout";
+import { HomeTabPage } from "@/pages/home/HomeTabPage";
+import { ProfileTabPage } from "@/pages/home/ProfileTabPage";
+import { TripsTabPage } from "@/pages/home/TripsTabPage";
 import { HotelBookPage } from "@/pages/hotel/HotelBookPage";
 import { HotelDetailPage } from "@/pages/hotel/HotelDetailPage";
 import { HotelListPage } from "@/pages/hotel/HotelListPage";
 import { HotelPayPage } from "@/pages/hotel/HotelPayPage";
 import { HotelResultPage } from "@/pages/hotel/HotelResultPage";
 import { PasswordLoginPage } from "@/pages/PasswordLoginPage";
-import { PhoneLoginPage } from "@/pages/PhoneLoginPage";
 import { SplashPage } from "@/pages/SplashPage";
 
 export const router = createBrowserRouter([
@@ -18,7 +20,7 @@ export const router = createBrowserRouter([
   },
   {
     path: "/login",
-    element: <PhoneLoginPage />,
+    element: <Navigate to="/login/password" replace />,
   },
   {
     path: "/login/password",
@@ -26,10 +28,11 @@ export const router = createBrowserRouter([
   },
   {
     path: "/home",
-    element: <RootLayout />,
+    element: <TabLayout />,
     children: [
-      { index: true, element: <HomePage /> },
-      { path: "hotel", element: <HotelListPage /> },
+      { index: true, element: <HomeTabPage /> },
+      { path: "trips", element: <TripsTabPage /> },
+      { path: "mine", element: <ProfileTabPage /> },
     ],
   },
   {

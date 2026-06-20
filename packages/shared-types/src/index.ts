@@ -19,6 +19,7 @@ export type {
   LoginResultDto,
   MobileLoginParams,
   PasswordLoginParams,
+  WebSocketUrlDto,
 } from "./auth-proxy.js";
 
 export type {
