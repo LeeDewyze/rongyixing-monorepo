@@ -23,4 +23,23 @@ describe("createHotelApi (mock mode)", () => {
     expect(result.Hotels).toHaveLength(1);
     expect(result.Hotels[0]?.HotelId).toBe("H1");
   });
+
+  it("getCities unwraps Trafficlines response", async () => {
+    const proxyWithCities = createProxyClient({
+      baseUrl: "https://example.com",
+      mode: "mock",
+      mockHandler: async () =>
+        successResponse({
+          Trafficlines: [
+            { Code: "010", Name: "北京", Pinyin: "beijing", IsHot: true },
+            { Code: "021", Nickname: "上海", Pinyin: "shanghai", IsHot: true },
+          ],
+        }),
+    });
+    const api = createHotelApi(proxyWithCities);
+    const cities = await api.getCities();
+    expect(cities).toHaveLength(2);
+    expect(cities[0]?.Name).toBe("北京");
+    expect(cities[1]?.Name).toBe("上海");
+  });
 });

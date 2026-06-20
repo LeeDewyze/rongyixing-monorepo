@@ -58,6 +58,11 @@ const DOMAIN_METHODS = {
     "TmcApiOrderUrl-Travel-List",
     "HrApiUrl-Staff-Get",
   ],
+  flight: [
+    "TmcApiHomeUrl-Resource-Airport",
+    "TmcApiFlightUrl-Home-Index",
+    "TmcApiFlightUrl-Home-Policy",
+  ],
 };
 
 async function loadMockMethods() {

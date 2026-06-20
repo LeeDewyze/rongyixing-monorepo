@@ -1,14 +1,21 @@
 import { createAuthMockHandlers } from "./handlers/auth.js";
+import { createFlightMockHandlers } from "./handlers/flight.js";
 import { createHotelMockHandlers } from "./handlers/hotel.js";
 import { createMemberMockHandlers } from "./handlers/member.js";
+import { createPassengerMockHandlers } from "./handlers/passenger.js";
 import { createOrderMockHandlers } from "./handlers/order.js";
+import { createTrainMockHandlers } from "./handlers/train.js";
 import { createTravelMockHandlers } from "./handlers/travel.js";
 import { createMockHandler, createMockRegistry } from "./registry.js";
 
 export { createAuthMockHandlers, MOCK_IDENTITY, MOCK_LOGIN_RESULT } from "./handlers/auth.js";
+export { createFlightMockHandlers } from "./handlers/flight.js";
+export { MOCK_AIRPORTS } from "./fixtures/flight.js";
 export { createHotelMockHandlers, resetHotelMockStore } from "./handlers/hotel.js";
+export { createPassengerMockHandlers, MOCK_STAFF } from "./handlers/passenger.js";
 export { createMemberMockHandlers, MOCK_PASSENGERS } from "./handlers/member.js";
 export { createOrderMockHandlers } from "./handlers/order.js";
+export { createTrainMockHandlers } from "./handlers/train.js";
 export { createTravelMockHandlers } from "./handlers/travel.js";
 export {
   createMockHandler,
@@ -31,7 +38,10 @@ export function createDefaultMockRegistry() {
       createHotelMockHandlers(),
       createOrderMockHandlers(),
       createMemberMockHandlers(),
+      createPassengerMockHandlers(),
+      createTrainMockHandlers(),
       createTravelMockHandlers(),
+      createFlightMockHandlers(),
     ),
   );
 }
@@ -48,7 +58,10 @@ export function listDefaultMockMethods(): string[] {
       createHotelMockHandlers(),
       createOrderMockHandlers(),
       createMemberMockHandlers(),
+      createPassengerMockHandlers(),
+      createTrainMockHandlers(),
       createTravelMockHandlers(),
+      createFlightMockHandlers(),
     ),
   );
 }

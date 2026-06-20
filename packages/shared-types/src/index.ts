@@ -41,12 +41,37 @@ export type {
   PayCreateResponse,
 } from "./hotel.js";
 
+export type { HotelCity, HotelCityResourceResponse } from "./hotel-city.js";
+
 export type {
   MemberPassenger,
   MemberProfile,
   PassengerListParams,
   PassengerListResponse,
 } from "./member.js";
+
+export {
+  CredentialType,
+  ProductType,
+  PRODUCT_TYPE_LABEL,
+  blockedCredentialTypes,
+  credentialDisplayNumber,
+  credentialDisplayType,
+  credentialKey,
+  credentialTypeValue,
+  maxPassengersForProduct,
+  memberToCredential,
+  parseProductType,
+  staffPrimaryCredential,
+  toHotelBookPassenger,
+} from "./passenger.js";
+export type {
+  PassengerBookInfo,
+  PassengerCredential,
+  StaffListParams,
+  StaffListResponse,
+  StaffPassenger,
+} from "./passenger.js";
 
 export type {
   OrderListItem,
@@ -66,6 +91,28 @@ export type {
   TravelUrlRow,
   TravelUrlTravelType,
 } from "./travel.js";
+
+export type {
+  TrainItem,
+  TrainSearchParams,
+  TrainSearchResponse,
+  TrainSeat,
+  TrainStation,
+  TrainStationResourceResponse,
+} from "./train.js";
+
+export type {
+  AirportResourceParams,
+  AirportResourceResponse,
+  FlightFilterCondition,
+  FlightFilterOption,
+  FlightListResult,
+  FlightListView,
+  FlightSearchParams,
+  FlightSegment,
+  FlightSortTab,
+  Trafficline,
+} from "./flight.js";
 
 /** Pagination metadata shared across list endpoints. */
 export interface PaginationMeta {

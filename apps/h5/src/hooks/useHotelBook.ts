@@ -49,8 +49,8 @@ export function usePayCreate() {
 
 export function usePassengerList() {
   return useQuery({
-    queryKey: ["member", "passengers"],
-    queryFn: () => getApi().member.getPassengerList(),
+    queryKey: ["passenger", "list"],
+    queryFn: () => getApi().passenger.getPassengerList(),
   });
 }
 

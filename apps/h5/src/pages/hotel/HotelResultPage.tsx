@@ -3,10 +3,13 @@ import { Button } from "@ryx/ui/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@ryx/ui/components/ui/card";
 
 import { useOrderDetail } from "@/hooks/useHotelBook";
+import { usePageHeader } from "@/components/layout";
 
 export function HotelResultPage() {
   const { orderId = "" } = useParams();
   const { data, isLoading, error } = useOrderDetail(orderId);
+
+  usePageHeader({ title: "订单结果", showBack: true });
 
   if (isLoading && !data) {
     return <p className="p-4 text-muted-foreground">订单确认中…</p>;
@@ -24,7 +27,6 @@ export function HotelResultPage() {
 
   return (
     <div className="space-y-4 p-4 pb-24">
-      <h1 className="text-xl font-bold">订单结果</h1>
 
       <Card>
         <CardHeader>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { getApiMode, setApiMode } from "@/lib/env";
+import { getApiMode, setApiMode, clearApiModeOverride } from "@/lib/env";
 import { resetApi } from "@/lib/api";
 
 const MODES = [
@@ -16,6 +16,7 @@ export function DevMenu() {
   if (!import.meta.env.DEV) return null;
 
   function switchMode(mode: "mock" | "proxy" | "direct") {
+    clearApiModeOverride();
     setApiMode(mode);
     resetApi();
     window.location.reload();
@@ -32,7 +33,11 @@ export function DevMenu() {
       </button>
       {open ? (
         <div className="fixed bottom-28 right-3 z-50 w-40 rounded-lg border bg-background p-2 shadow-lg">
-          <p className="mb-2 text-xs text-muted-foreground">API: {current}</p>
+          <p className="mb-2 text-xs text-muted-foreground">
+            API: {current}
+            <br />
+            {import.meta.env.VITE_API_BASE_URL || "(relative)"}
+          </p>
           {MODES.map((m) => (
             <button
               key={m.value}

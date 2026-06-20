@@ -9,8 +9,11 @@ import {
 import { createAuthApi } from "./apis/auth.js";
 import { createHotelApi, type HotelApi } from "./apis/hotel.js";
 import { createMemberApi, type MemberApi } from "./apis/member.js";
+import { createPassengerApi, type PassengerApi } from "./apis/passenger.js";
 import { createOrderApi, type OrderApi } from "./apis/order.js";
 import { createPayApi, type PayApi } from "./apis/pay.js";
+import { createFlightApi, type FlightApi } from "./apis/flight.js";
+import { createTrainApi, type TrainApi } from "./apis/train.js";
 import { createTravelApi, type TravelApi } from "./apis/travel.js";
 import { createApiClient, type ApiClient, type ApiClientConfig } from "./client.js";
 import { createGatewayClient, type GatewayClient } from "./gateway/gateway.js";
@@ -33,12 +36,18 @@ export {
 export { createHotelApi, type HotelApi } from "./apis/hotel.js";
 export { createOrderApi, type OrderApi } from "./apis/order.js";
 export { createPayApi, type PayApi } from "./apis/pay.js";
+export { createPassengerApi, type PassengerApi } from "./apis/passenger.js";
 export { createMemberApi, type MemberApi } from "./apis/member.js";
+export { createTrainApi, type TrainApi } from "./apis/train.js";
 export { createTravelApi, type TravelApi } from "./apis/travel.js";
+export { createFlightApi, type FlightApi } from "./apis/flight.js";
 export * from "./methods/auth-flow.js";
+export * from "./methods/flight-flow.js";
 export * from "./methods/hotel-flow.js";
 export * from "./methods/order-flow.js";
+export * from "./methods/passenger-flow.js";
 export * from "./methods/member-flow.js";
+export * from "./methods/train-flow.js";
 export * from "./methods/travel-flow.js";
 export * from "./methods/index.js";
 export * from "./proxy/index.js";
@@ -68,7 +77,10 @@ export interface Api {
   order: OrderApi;
   pay: PayApi;
   member: MemberApi;
+  passenger: PassengerApi;
   travel: TravelApi;
+  flight: FlightApi;
+  train: TrainApi;
 }
 
 /** Create a shared API surface for all client apps. */
@@ -107,6 +119,9 @@ export function createApi(config: CreateApiConfig): Api {
     order: createOrderApi(proxy),
     pay: createPayApi(proxy),
     member: createMemberApi(proxy),
+    passenger: createPassengerApi(proxy),
     travel: createTravelApi(proxy),
+    flight: createFlightApi(proxy),
+    train: createTrainApi(proxy),
   };
 }

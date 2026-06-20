@@ -4,6 +4,7 @@ import { Button } from "@ryx/ui/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@ryx/ui/components/ui/card";
 
 import { useOrderDetail, useOrderPays, usePayCreate } from "@/hooks/useHotelBook";
+import { usePageHeader } from "@/components/layout";
 
 export function HotelPayPage() {
   const { orderId = "" } = useParams();
@@ -13,6 +14,7 @@ export function HotelPayPage() {
   const payCreate = usePayCreate();
   const [selected, setSelected] = useState<string>("");
 
+  usePageHeader({ title: "订单支付", showBack: true });
   async function handlePay() {
     if (!selected) return;
     await payCreate.mutateAsync({

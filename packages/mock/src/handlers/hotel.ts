@@ -32,8 +32,16 @@ export function createHotelMockHandlers(): Record<
   return {
     [TMC_METHODS.RESOURCE_DOMESTICHOTELCITY]: () =>
       successResponse([
-        { Code: "010", Name: "北京", Pinyin: "beijing" },
-        { Code: "021", Name: "上海", Pinyin: "shanghai" },
+        { Code: "010", Name: "北京", Pinyin: "beijing", IsHot: true },
+        { Code: "021", Name: "上海", Pinyin: "shanghai", IsHot: true },
+        { Code: "020", Name: "广州", Pinyin: "guangzhou", IsHot: true },
+        { Code: "0755", Name: "深圳", Pinyin: "shenzhen", IsHot: true },
+        { Code: "0571", Name: "杭州", Pinyin: "hangzhou", IsHot: true },
+        { Code: "025", Name: "南京", Pinyin: "nanjing", IsHot: true },
+        { Code: "028", Name: "成都", Pinyin: "chengdu", IsHot: false },
+        { Code: "027", Name: "武汉", Pinyin: "wuhan", IsHot: false },
+        { Code: "023", Name: "重庆", Pinyin: "chongqing", IsHot: false },
+        { Code: "029", Name: "西安", Pinyin: "xian", IsHot: false },
       ]),
     [HOTEL_FLOW_METHODS.LIST]: () => successResponse(MOCK_HOTEL_LIST),
     [HOTEL_FLOW_METHODS.DETAIL]: (data) => {

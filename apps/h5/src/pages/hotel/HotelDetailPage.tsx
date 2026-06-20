@@ -2,6 +2,7 @@ import { Link, useParams } from "react-router-dom";
 import { Button } from "@ryx/ui/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@ryx/ui/components/ui/card";
 
+import { usePageHeader } from "@/components/layout";
 import { useHotelDetail } from "@/hooks/useHotelList";
 
 const CHECK_IN = "2026-06-20";
@@ -10,6 +11,12 @@ const CHECK_OUT = "2026-06-21";
 export function HotelDetailPage() {
   const { hotelId = "" } = useParams();
   const { data, isLoading, error } = useHotelDetail(hotelId, CHECK_IN, CHECK_OUT);
+
+  usePageHeader({
+    title: data?.HotelName ?? "酒店详情",
+    subtitle: data?.Address,
+    showBack: true,
+  });
 
   if (isLoading) return <p className="p-4 text-muted-foreground">加载中…</p>;
   if (error) {
@@ -23,8 +30,6 @@ export function HotelDetailPage() {
 
   return (
     <div className="space-y-4 p-4">
-      <h1 className="text-xl font-bold">{data.HotelName}</h1>
-      <p className="text-sm text-muted-foreground">{data.Address}</p>
       <p className="text-sm">
         {CHECK_IN} → {CHECK_OUT}
       </p>
