@@ -61,6 +61,15 @@ export const PASSWORD_LOGIN_LAYOUT = {
     color: "#FFFFFF",
     text: "忘记密码",
   },
+  rememberPassword: {
+    left: 40,
+    top: 708,
+    fontSize: 24,
+    checkboxSize: 28,
+    checkboxCheckedBg: "#33a1f9",
+    color: "#FFFFFF",
+    text: "记住密码",
+  },
 } as const;
 
 export { LOGIN_FONT };

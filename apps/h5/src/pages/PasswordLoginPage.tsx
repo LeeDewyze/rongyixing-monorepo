@@ -7,11 +7,32 @@ import { designCqw, designHeightPercent, designWidthPercent } from "@/config/des
 import { LOGIN_FONT, PASSWORD_LOGIN_LAYOUT, PASSWORD_LOGIN_SHARED } from "@/config/password-login";
 import { usePasswordLogin } from "@/hooks/useAuth";
 import { getApiMode } from "@/lib/env";
+import {
+  clearRememberedCredentials,
+  loadRememberedCredentials,
+  saveRememberedCredentials,
+} from "@/lib/remember-credentials";
 
 const { overlay, agreement } = PASSWORD_LOGIN_SHARED;
 
-const { title, accountInput, passwordInput, button, forgotPasswordLink, inputClear } =
-  PASSWORD_LOGIN_LAYOUT;
+const {
+  title,
+  accountInput,
+  passwordInput,
+  button,
+  forgotPasswordLink,
+  rememberPassword: rememberPasswordRow,
+  inputClear,
+} = PASSWORD_LOGIN_LAYOUT;
+
+function getInitialFormState() {
+  const remembered = loadRememberedCredentials();
+  return {
+    account: remembered?.account ?? "",
+    password: remembered?.password ?? "",
+    rememberChecked: remembered !== null,
+  };
+}
 
 function InputClearButton({ onClear, size }: { onClear: () => void; size: number }) {
   return (
@@ -73,9 +94,11 @@ function PasswordVisibilityToggle({
 export function PasswordLoginPage() {
   const navigate = useNavigate();
   const login = usePasswordLogin();
-  const [account, setAccount] = useState("");
-  const [password, setPassword] = useState("");
+  const initialForm = getInitialFormState();
+  const [account, setAccount] = useState(initialForm.account);
+  const [password, setPassword] = useState(initialForm.password);
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberChecked, setRememberChecked] = useState(initialForm.rememberChecked);
   const [agreed, setAgreed] = useState(false);
   const [formHint, setFormHint] = useState<string | null>(null);
 
@@ -98,6 +121,11 @@ export function PasswordLoginPage() {
     setFormHint(null);
     try {
       await login.mutateAsync({ Name: account.trim(), Password: password });
+      if (rememberChecked) {
+        saveRememberedCredentials(account.trim(), password);
+      } else {
+        clearRememberedCredentials();
+      }
       navigate("/home");
     } catch {
       // Error surfaced via login.error
@@ -261,6 +289,36 @@ export function PasswordLoginPage() {
           </p>
         ) : null}
 
+        <label
+          className="absolute flex cursor-pointer items-center"
+          style={{
+            left: designWidthPercent(rememberPasswordRow.left),
+            top: designHeightPercent(rememberPasswordRow.top),
+            gap: designCqw(12),
+            fontSize: designCqw(rememberPasswordRow.fontSize),
+            color: rememberPasswordRow.color,
+            lineHeight: "normal",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={rememberChecked}
+            onChange={(e) => {
+              const checked = e.target.checked;
+              setRememberChecked(checked);
+              if (!checked) {
+                clearRememberedCredentials();
+              }
+            }}
+            className="login-remember-checkbox shrink-0 appearance-none rounded-full border border-white/70 bg-transparent"
+            style={{
+              width: designCqw(rememberPasswordRow.checkboxSize),
+              height: designCqw(rememberPasswordRow.checkboxSize),
+            }}
+          />
+          <span className="whitespace-nowrap">{rememberPasswordRow.text}</span>
+        </label>
+
         <Link
           to="/login/forgot-password"
           className="absolute no-underline"
@@ -276,6 +334,17 @@ export function PasswordLoginPage() {
         >
           {forgotPasswordLink.text}
         </Link>
+
+        <style>{`
+          .login-remember-checkbox:checked {
+            border-color: ${rememberPasswordRow.checkboxCheckedBg};
+            background-color: ${rememberPasswordRow.checkboxCheckedBg};
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 10' fill='none'%3E%3Cpath d='M1 5.2 4.4 8.6 11 1.4' stroke='%23ffffff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-size: 58% 58%;
+            background-position: center;
+            background-repeat: no-repeat;
+          }
+        `}</style>
 
         <label
           className="absolute flex cursor-pointer items-center"
