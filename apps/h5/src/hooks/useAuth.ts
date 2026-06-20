@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 
 import { getApi } from "@/lib/api";
-import { getApiMode, hasStaticApiConfig } from "@/lib/env";
+import { getApiMode } from "@/lib/env";
 import { getDeviceId, getDeviceName } from "@/lib/request-context";
 import { saveLoginResult, setWebSocketUrl } from "@/lib/session";
 
@@ -15,9 +15,6 @@ export function usePasswordLogin() {
         );
       }
       const api = getApi();
-      if (mode !== "mock" && !hasStaticApiConfig()) {
-        await api.proxy.loadApiConfig();
-      }
       const result = await api.authProxy.login({
         Name: params.Name,
         Password: params.Password,

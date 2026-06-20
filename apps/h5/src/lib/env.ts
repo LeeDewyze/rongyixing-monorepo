@@ -1,5 +1,11 @@
+const DEFAULT_APP_ID = "com.ronglvonline.app";
+
 export function getAppName(): string {
   return import.meta.env.VITE_APP_NAME ?? "RongYiXing H5";
+}
+
+export function getAppId(): string {
+  return import.meta.env.VITE_APP_ID?.trim() || DEFAULT_APP_ID;
 }
 
 export function getApiBaseUrl(): string {
@@ -32,27 +38,9 @@ export function getMockDelay(): number {
 }
 
 export function setApiMode(mode: "mock" | "proxy" | "direct"): void {
-  localStorage.setItem("ryx_api_mode", mode);
+  localStorage.setItem(API_MODE_KEY, mode);
 }
 
 export function clearApiModeOverride(): void {
-  localStorage.removeItem("ryx_api_mode");
-}
-
-const DEFAULT_LOGIN_URL = "http://ronglv-feature.rtesp.com/Jyx/LoginByRyx";
-
-/** Static ApiConfig from env — skips `GET /Home/Setting` when Token is set. */
-export function getStaticApiConfig(): {
-  Token: string;
-  LoginUrl: string;
-  Urls: Record<string, string>;
-} | null {
-  const token = import.meta.env.VITE_API_TOKEN?.trim();
-  if (!token) return null;
-  const loginUrl = import.meta.env.VITE_LOGIN_URL?.trim() || DEFAULT_LOGIN_URL;
-  return { Token: token, LoginUrl: loginUrl, Urls: {} };
-}
-
-export function hasStaticApiConfig(): boolean {
-  return getStaticApiConfig() !== null;
+  localStorage.removeItem(API_MODE_KEY);
 }

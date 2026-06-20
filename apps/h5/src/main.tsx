@@ -7,13 +7,20 @@ import "@ryx/ui/globals.css";
 
 import { router } from "@/app/routes";
 import { DevMenu } from "@/components/DevMenu";
+import { bootstrapApi } from "@/lib/api";
 import { queryClient } from "@/lib/query";
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-      <DevMenu />
-    </QueryClientProvider>
-  </StrictMode>,
-);
+async function main() {
+  await bootstrapApi();
+
+  createRoot(document.getElementById("root")!).render(
+    <StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+        <DevMenu />
+      </QueryClientProvider>
+    </StrictMode>,
+  );
+}
+
+void main();
