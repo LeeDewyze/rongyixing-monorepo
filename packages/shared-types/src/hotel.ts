@@ -1,3 +1,6 @@
+/** Legacy TMC hotel type filter (list page segment). */
+export type HotelType = "Normal" | "Tmc" | "Agent";
+
 /** Hotel list query params. */
 export interface HotelListParams {
   CityCode?: string;
@@ -7,6 +10,8 @@ export interface HotelListParams {
   PageIndex?: number;
   PageSize?: number;
   Keyword?: string;
+  /** Legacy list filter: non-negotiated / negotiated / agent special. */
+  HotelType?: HotelType;
 }
 
 export interface HotelListItem {
@@ -16,6 +21,8 @@ export interface HotelListItem {
   Star?: number;
   MinPrice?: number;
   ImageUrl?: string;
+  /** e.g. Tmc tag from legacy `Hotel.Tag`. */
+  Tags?: string[];
 }
 
 export interface HotelListResponse {

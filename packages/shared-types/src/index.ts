@@ -27,6 +27,7 @@ export type {
   HotelListItem,
   HotelListParams,
   HotelListResponse,
+  HotelType,
   HotelPolicyParams,
   HotelPolicyResponse,
   OrderDetailParams,

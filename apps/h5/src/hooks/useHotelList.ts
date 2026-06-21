@@ -3,10 +3,12 @@ import type { HotelListParams } from "@ryx/shared-types";
 
 import { getApi } from "@/lib/api";
 
-export function useHotelList(params: HotelListParams = {}) {
+export function useHotelList(params: HotelListParams = {}, enabled = true) {
+  const hasRequired = Boolean(params.CityCode && params.CheckInDate && params.CheckOutDate);
   return useQuery({
     queryKey: ["hotel", "list", params],
     queryFn: () => getApi().hotel.getList(params),
+    enabled: enabled && hasRequired,
   });
 }
 
