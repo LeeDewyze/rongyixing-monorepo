@@ -7,6 +7,9 @@ import { defineConfig, loadEnv } from "vite";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const monorepoRoot = path.resolve(__dirname, "../..");
 
+/** Vite `/Jyx` dev proxy origin — must match `/Home/Setting` LoginUrl host for rtesp test. */
+const DEV_JYX_PROXY_TARGET = "http://ronglv-feature.rtesp.com";
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, __dirname, "");
   const apiBase = env.VITE_API_BASE_URL || "https://app.rongtrip.cn";
@@ -34,6 +37,11 @@ export default defineConfig(({ mode }) => {
         "/Home": {
           target: apiBase,
           changeOrigin: true,
+        },
+        "/Jyx": {
+          target: DEV_JYX_PROXY_TARGET,
+          changeOrigin: true,
+          secure: true,
         },
       },
     },

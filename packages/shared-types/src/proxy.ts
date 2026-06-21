@@ -22,6 +22,8 @@ export interface ApiResult<T = unknown> {
 export interface ApiConfigSetting {
   Token: string;
   Urls: Record<string, string>;
+  /** e.g. https://ronglv-feature.rongtrip.cn/Jyx/LoginByRyx */
+  LoginUrl?: string;
 }
 
 export type ApiMode = "mock" | "proxy" | "direct";
@@ -33,4 +35,7 @@ export interface ProxySendOptions {
   url?: string;
   timeoutMs?: number;
   isForward?: boolean;
+  /** Beeant Identity GetWebSocketUrl: no Sign/Token on form body */
+  skipSign?: boolean;
+  isShowLoading?: boolean;
 }

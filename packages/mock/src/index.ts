@@ -24,9 +24,7 @@ export {
   type MockRegistry,
 } from "./registry.js";
 
-function mergeHandlers(
-  ...maps: Record<string, import("./registry.js").MockHandlerFn>[]
-) {
+function mergeHandlers(...maps: Record<string, import("./registry.js").MockHandlerFn>[]) {
   return Object.assign({}, ...maps);
 }
 

@@ -1,6 +1,6 @@
 import { LOGIN_FONT, LOGIN_LAYOUT } from "@/config/login";
 
-/** Shared header, overlay, and agreement from phone login. */
+/** Shared header, overlay, and agreement tokens. */
 export const PASSWORD_LOGIN_SHARED = {
   paddingX: LOGIN_LAYOUT.paddingX,
   headerTop: LOGIN_LAYOUT.headerTop,
@@ -22,6 +22,9 @@ export const PASSWORD_LOGIN_LAYOUT = {
     color: "#FFFFFF",
     text: "账号密码登录",
   },
+  inputClear: {
+    size: 28,
+  },
   accountInput: {
     left: 40,
     top: 339,
@@ -38,6 +41,7 @@ export const PASSWORD_LOGIN_LAYOUT = {
     placeholder: "登录密码",
     placeholderColor: "rgba(255, 255, 255, 0.45)",
     toggleSize: 40,
+    actionGap: 16,
   },
   button: {
     left: 40,
@@ -49,14 +53,6 @@ export const PASSWORD_LOGIN_LAYOUT = {
     gradient: "linear-gradient(270deg, #2768fa 0%, #33a1f9 100%)",
     text: "登录",
   },
-  phoneCodeLink: {
-    left: 40,
-    top: 708,
-    fontSize: 24,
-    fontWeight: 400,
-    color: "#FFFFFF",
-    text: "手机验证码登录",
-  },
   forgotPasswordLink: {
     right: 40,
     top: 708,
@@ -64,6 +60,15 @@ export const PASSWORD_LOGIN_LAYOUT = {
     fontWeight: 400,
     color: "#FFFFFF",
     text: "忘记密码",
+  },
+  rememberPassword: {
+    left: 40,
+    top: 708,
+    fontSize: 24,
+    checkboxSize: 28,
+    checkboxCheckedBg: "#33a1f9",
+    color: "#FFFFFF",
+    text: "记住密码",
   },
 } as const;
 

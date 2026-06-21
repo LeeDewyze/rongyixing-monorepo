@@ -1,6 +1,18 @@
 import type { ApiConfigSetting } from "@ryx/shared-types";
 
+import { AUTH_FLOW_METHODS } from "../methods/auth-flow.js";
+
 const DEFAULT_PROXY_PATH = "/Home/Proxy";
+
+const LOGIN_URL_METHODS = new Set<string>([
+  AUTH_FLOW_METHODS.LOGIN,
+  AUTH_FLOW_METHODS.MOBILE_LOGIN,
+  AUTH_FLOW_METHODS.DEVICE_LOGIN,
+]);
+
+export function isLoginMethod(method: string): boolean {
+  return LOGIN_URL_METHODS.has(method);
+}
 
 export interface ResolveUrlOptions {
   baseUrl: string;
@@ -21,6 +33,10 @@ export function resolveUrl(options: ResolveUrlOptions): string {
 
   if (options.explicitUrl) {
     return options.explicitUrl;
+  }
+
+  if (options.apiConfig?.LoginUrl && options.method && LOGIN_URL_METHODS.has(options.method)) {
+    return options.apiConfig.LoginUrl;
   }
 
   if (options.isForward || !options.method) {

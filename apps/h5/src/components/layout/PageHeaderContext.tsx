@@ -1,6 +1,5 @@
 import {
   createContext,
-  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -55,9 +54,7 @@ export function PageHeaderProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <PageHeaderStoreContext.Provider value={store}>
-      {children}
-    </PageHeaderStoreContext.Provider>
+    <PageHeaderStoreContext.Provider value={store}>{children}</PageHeaderStoreContext.Provider>
   );
 }
 

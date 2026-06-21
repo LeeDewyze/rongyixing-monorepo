@@ -29,7 +29,7 @@ export function createAuthMockHandlers(): Record<
     [AUTH_FLOW_METHODS.IDENTITY_GET]: () => mockIdentityGet(),
     [AUTH_FLOW_METHODS.IDENTITY_CHECK]: () => successResponse(true),
     [AUTH_FLOW_METHODS.IDENTITY_WEBSOCKET]: () =>
-      successResponse("wss://mock.rongtrip.cn/ws"),
+      successResponse({ Url: "wss://mock.rongtrip.cn/ws" }),
   };
 }
 

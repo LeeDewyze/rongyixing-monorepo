@@ -1,4 +1,4 @@
-import type { ApiMode } from "@ryx/shared-types";
+import type { ApiMode, ApiConfigSetting } from "@ryx/shared-types";
 
 import {
   createAuthProxyApi,
@@ -7,12 +7,12 @@ import {
   type IdentityApi,
 } from "./apis/auth-proxy.js";
 import { createAuthApi } from "./apis/auth.js";
+import { createFlightApi, type FlightApi } from "./apis/flight.js";
 import { createHotelApi, type HotelApi } from "./apis/hotel.js";
 import { createMemberApi, type MemberApi } from "./apis/member.js";
-import { createPassengerApi, type PassengerApi } from "./apis/passenger.js";
 import { createOrderApi, type OrderApi } from "./apis/order.js";
+import { createPassengerApi, type PassengerApi } from "./apis/passenger.js";
 import { createPayApi, type PayApi } from "./apis/pay.js";
-import { createFlightApi, type FlightApi } from "./apis/flight.js";
 import { createTrainApi, type TrainApi } from "./apis/train.js";
 import { createTravelApi, type TravelApi } from "./apis/travel.js";
 import { createApiClient, type ApiClient, type ApiClientConfig } from "./client.js";
@@ -34,13 +34,13 @@ export {
   type IdentityApi,
 } from "./apis/auth-proxy.js";
 export { createHotelApi, type HotelApi } from "./apis/hotel.js";
+export { createFlightApi, type FlightApi } from "./apis/flight.js";
 export { createOrderApi, type OrderApi } from "./apis/order.js";
 export { createPayApi, type PayApi } from "./apis/pay.js";
 export { createPassengerApi, type PassengerApi } from "./apis/passenger.js";
 export { createMemberApi, type MemberApi } from "./apis/member.js";
 export { createTrainApi, type TrainApi } from "./apis/train.js";
 export { createTravelApi, type TravelApi } from "./apis/travel.js";
-export { createFlightApi, type FlightApi } from "./apis/flight.js";
 export * from "./methods/auth-flow.js";
 export * from "./methods/flight-flow.js";
 export * from "./methods/hotel-flow.js";
@@ -60,8 +60,13 @@ export interface CreateApiConfig extends ApiClientConfig {
   mockDelay?: number;
   mockHandler?: MockHandler;
   getTicket?: () => string | null;
+  getTicketName?: () => string;
   getDomain?: () => string | null;
   getLanguage?: () => string;
+  getExtraFields?: () => Record<string, string>;
+  rewriteUrl?: (url: string) => string;
+  /** When set, skips fetching `/Home/Setting` if Token is present. */
+  apiConfig?: ApiConfigSetting | null;
   onNoAuthorize?: () => void;
   onSystemError?: (message: string) => void;
 }
@@ -74,12 +79,12 @@ export interface Api {
   authProxy: AuthProxyApi;
   identity: IdentityApi;
   hotel: HotelApi;
+  flight: FlightApi;
   order: OrderApi;
   pay: PayApi;
   member: MemberApi;
   passenger: PassengerApi;
   travel: TravelApi;
-  flight: FlightApi;
   train: TrainApi;
 }
 
@@ -93,8 +98,12 @@ export function createApi(config: CreateApiConfig): Api {
     appId: config.appId,
     fetchImpl: config.fetchImpl,
     getTicket: config.getTicket,
+    getTicketName: config.getTicketName,
     getDomain: config.getDomain,
     getLanguage: config.getLanguage,
+    getExtraFields: config.getExtraFields,
+    rewriteUrl: config.rewriteUrl,
+    apiConfig: config.apiConfig,
     mockDelay: config.mockDelay,
     mockHandler: config.mockHandler,
     onUnauthorized: config.onUnauthorized,
@@ -116,12 +125,12 @@ export function createApi(config: CreateApiConfig): Api {
     authProxy: createAuthProxyApi(proxy),
     identity: createIdentityApi(proxy),
     hotel: createHotelApi(proxy),
+    flight: createFlightApi(proxy),
     order: createOrderApi(proxy),
     pay: createPayApi(proxy),
     member: createMemberApi(proxy),
     passenger: createPassengerApi(proxy),
     travel: createTravelApi(proxy),
-    flight: createFlightApi(proxy),
     train: createTrainApi(proxy),
   };
 }

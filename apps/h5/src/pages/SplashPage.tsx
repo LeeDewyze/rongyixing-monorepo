@@ -10,7 +10,7 @@ export function SplashPage() {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      navigate("/login", { replace: true });
+      navigate("/login/password", { replace: true });
     }, 2500);
 
     return () => window.clearTimeout(timer);

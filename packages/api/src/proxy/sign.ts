@@ -11,3 +11,20 @@ export function serializeData(data: unknown): string {
   }
   return typeof data === "string" ? data : JSON.stringify(data);
 }
+
+/**
+ * Beeant unsigned /Home/Proxy posts (e.g. GetWebSocketUrl) coerce object Data
+ * via default `toString()` → "[object Object]", not JSON.stringify.
+ */
+export function serializeFormData(data: unknown): string {
+  if (data === undefined || data === null) {
+    return "";
+  }
+  if (typeof data === "string") {
+    return data;
+  }
+  if (typeof data === "object") {
+    return String(data);
+  }
+  return String(data);
+}

@@ -1,5 +1,11 @@
+const DEFAULT_APP_ID = "com.ronglvonline.app";
+
 export function getAppName(): string {
   return import.meta.env.VITE_APP_NAME ?? "RongYiXing H5";
+}
+
+export function getAppId(): string {
+  return import.meta.env.VITE_APP_ID?.trim() || DEFAULT_APP_ID;
 }
 
 export function getApiBaseUrl(): string {

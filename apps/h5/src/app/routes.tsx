@@ -1,10 +1,14 @@
-import { createBrowserRouter } from "react-router-dom";
+import { Navigate, createBrowserRouter } from "react-router-dom";
 
 import { RootLayout } from "@/app/layouts/RootLayout";
+import { TabLayout } from "@/app/layouts/TabLayout";
 import { FlightCabinsPage } from "@/pages/flight/FlightCabinsPage";
 import { FlightListPage } from "@/pages/flight/FlightListPage";
 import { FlightSearchPage } from "@/pages/flight/FlightSearchPage";
-import { HomePage } from "@/pages/HomePage";
+import { FlightSelectCityPage } from "@/pages/flight/FlightSelectCityPage";
+import { HomeTabPage } from "@/pages/home/HomeTabPage";
+import { ProfileTabPage } from "@/pages/home/ProfileTabPage";
+import { TripsTabPage } from "@/pages/home/TripsTabPage";
 import { HotelBookPage } from "@/pages/hotel/HotelBookPage";
 import { HotelDetailPage } from "@/pages/hotel/HotelDetailPage";
 import { HotelListPage } from "@/pages/hotel/HotelListPage";
@@ -13,7 +17,6 @@ import { HotelResultPage } from "@/pages/hotel/HotelResultPage";
 import { HotelSearchPage } from "@/pages/hotel/HotelSearchPage";
 import { PassengerSelectPage } from "@/pages/passenger/PassengerSelectPage";
 import { PasswordLoginPage } from "@/pages/PasswordLoginPage";
-import { PhoneLoginPage } from "@/pages/PhoneLoginPage";
 import { SplashPage } from "@/pages/SplashPage";
 import { TrainListPage } from "@/pages/train/TrainListPage";
 import { TrainSearchPage } from "@/pages/train/TrainSearchPage";
@@ -25,7 +28,7 @@ export const router = createBrowserRouter([
   },
   {
     path: "/login",
-    element: <PhoneLoginPage />,
+    element: <Navigate to="/login/password" replace />,
   },
   {
     path: "/login/password",
@@ -33,8 +36,16 @@ export const router = createBrowserRouter([
   },
   {
     path: "/home",
-    element: <RootLayout />,
-    children: [{ index: true, element: <HomePage /> }],
+    element: <TabLayout />,
+    children: [
+      { index: true, element: <HomeTabPage /> },
+      { path: "trips", element: <TripsTabPage /> },
+      { path: "mine", element: <ProfileTabPage /> },
+    ],
+  },
+  {
+    path: "/flight/select-city",
+    element: <FlightSelectCityPage />,
   },
   {
     path: "/hotel",

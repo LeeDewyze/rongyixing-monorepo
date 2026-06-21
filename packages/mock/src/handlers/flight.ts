@@ -1,18 +1,15 @@
 import type { IResponse } from "@ryx/shared-types";
 import { FLIGHT_FLOW_METHODS, successResponse } from "@ryx/api";
 
-import {
-  createMockFlightList,
-  MOCK_AIRPORTS,
-} from "../fixtures/flight.js";
+import { createMockFlightList, MOCK_AIRPORTS } from "../fixtures/flight.js";
 
-export function createFlightMockHandlers(): Record<
-  string,
-  (data: unknown) => IResponse<unknown>
-> {
+export function createFlightMockHandlers(): Record<string, (data: unknown) => IResponse<unknown>> {
   return {
     [FLIGHT_FLOW_METHODS.RESOURCE_AIRPORT]: () =>
-      successResponse({ Trafficlines: MOCK_AIRPORTS }),
+      successResponse({
+        Trafficlines: MOCK_AIRPORTS,
+        LastUpdateTime: Date.now(),
+      }),
     [FLIGHT_FLOW_METHODS.HOME_INDEX]: (data) => {
       const params = data as {
         FromCode?: string;

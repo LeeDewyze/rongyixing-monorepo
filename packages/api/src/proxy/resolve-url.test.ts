@@ -27,6 +27,21 @@ describe("resolveUrl", () => {
     ).toBe("https://hotel-api.example.com/Home/Detail");
   });
 
+  it("uses LoginUrl from api config for auth login methods", () => {
+    expect(
+      resolveUrl({
+        baseUrl: "https://app.rongtrip.cn",
+        method: "ApiLoginUrl-Home-Login",
+        mode: "proxy",
+        apiConfig: {
+          Token: "t",
+          Urls: {},
+          LoginUrl: "https://ronglv-feature.rongtrip.cn/Jyx/LoginByRyx",
+        },
+      }),
+    ).toBe("https://ronglv-feature.rongtrip.cn/Jyx/LoginByRyx");
+  });
+
   it("uses explicit url when provided", () => {
     expect(
       resolveUrl({

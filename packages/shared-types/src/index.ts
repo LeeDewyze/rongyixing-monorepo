@@ -5,13 +5,7 @@ export interface ApiResponse<T> {
   success: boolean;
 }
 
-export type {
-  ApiConfigSetting,
-  ApiMode,
-  ApiResult,
-  IResponse,
-  ProxySendOptions,
-} from "./proxy.js";
+export type { ApiConfigSetting, ApiMode, ApiResult, IResponse, ProxySendOptions } from "./proxy.js";
 
 export type {
   DeviceLoginParams,
@@ -19,6 +13,7 @@ export type {
   LoginResultDto,
   MobileLoginParams,
   PasswordLoginParams,
+  WebSocketUrlDto,
 } from "./auth-proxy.js";
 
 export type {
@@ -113,6 +108,8 @@ export type {
   FlightSortTab,
   Trafficline,
 } from "./flight.js";
+
+export type { TrafficlineDto } from "./resource.js";
 
 /** Pagination metadata shared across list endpoints. */
 export interface PaginationMeta {
