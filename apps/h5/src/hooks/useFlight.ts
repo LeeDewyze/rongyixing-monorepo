@@ -1,3 +1,4 @@
+import { ApiError } from "@ryx/api";
 import { useQuery } from "@tanstack/react-query";
 import type { FlightSearchParams } from "@ryx/shared-types";
 
@@ -21,9 +22,22 @@ export function useFlightAirports() {
 export function useFlightList(params: FlightSearchParams | null) {
   return useQuery({
     queryKey: ["flight", "list", params],
-    queryFn: () => getApi().flight.searchFlights(params!),
+    queryFn: async () => {
+      const api = getApi();
+      if (getApiMode() !== "mock" && !api.proxy.getApiConfig()?.Token) {
+        await api.proxy.loadApiConfig();
+      }
+      return api.flight.searchFlights(params!);
+    },
     enabled: Boolean(params?.Date && params?.FromCode && params?.ToCode && canQueryFlightList()),
     staleTime: FLIGHT_LIST_STALE_MS,
     refetchOnWindowFocus: false,
+    retry: (failureCount, error) => {
+      if (failureCount >= 2) return false;
+      if (error instanceof ApiError && error.message.includes("没有获取列表")) {
+        return true;
+      }
+      return failureCount < 1;
+    },
   });
 }

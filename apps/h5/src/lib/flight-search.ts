@@ -178,6 +178,30 @@ export interface FlightSearchQueryInitial {
   toAsAirport?: boolean;
 }
 
+/** Resolve list/search cities from URL query — avoids localStorage race on list page load. */
+export function resolveListCitiesFromQuery(
+  airports: Trafficline[],
+  query: FlightSearchQueryInitial,
+): { fromCity: Trafficline; toCity: Trafficline } | null {
+  if (!airports.length || !query.fromCode || !query.toCode) {
+    return null;
+  }
+  return {
+    fromCity: cityFromQuery(
+      airports,
+      query.fromCode,
+      query.fromName,
+      query.fromAsAirport,
+    ),
+    toCity: cityFromQuery(
+      airports,
+      query.toCode,
+      query.toName,
+      query.toAsAirport,
+    ),
+  };
+}
+
 export function cityFromQuery(
   airports: Trafficline[],
   code: string,

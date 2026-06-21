@@ -21,6 +21,7 @@ import {
   buildFlightListSearchParams,
   buildHomeIndexParams,
   displayCityName,
+  resolveListCitiesFromQuery,
   validateFlightSearch,
 } from "@/lib/flight-search";
 import { buildCabinsPath, getFlightListEmptyMessage } from "@/lib/flight-list-refresh";
@@ -123,20 +124,47 @@ export function FlightListPage() {
   const [priceLowToHigh, setPriceLowToHigh] = useState(true);
   const [timeEarlyToLate, setTimeEarlyToLate] = useState(true);
 
+  const resolvedListCities = useMemo(
+    () =>
+      resolveListCitiesFromQuery(form.airports, {
+        fromCode: listParams.FromCode,
+        toCode: listParams.ToCode,
+        fromName,
+        toName,
+        date: listParams.Date,
+        fromAsAirport: listParams.FromAsAirport,
+        toAsAirport: listParams.ToAsAirport,
+      }),
+    [
+      form.airports,
+      listParams.FromCode,
+      listParams.ToCode,
+      listParams.FromAsAirport,
+      listParams.ToAsAirport,
+      listParams.Date,
+      fromName,
+      toName,
+    ],
+  );
+
   const apiListParams = useMemo((): FlightSearchParams | null => {
-    if (!hasListQuery || !form.airports.length) return null;
-    return buildHomeIndexParams(form.fromCity, form.toCity, listParams.Date);
-  }, [hasListQuery, form.airports.length, form.fromCity, form.toCity, listParams.Date]);
+    if (!hasListQuery || !resolvedListCities) return null;
+    return buildHomeIndexParams(
+      resolvedListCities.fromCity,
+      resolvedListCities.toCity,
+      listParams.Date,
+    );
+  }, [hasListQuery, resolvedListCities, listParams.Date]);
 
   const { data, isLoading, isFetching, error, refetch, dataUpdatedAt } = useFlightList(
     apiListParams,
   );
 
   useEffect(() => {
-    if (!form.airports.length || !hasListQuery) return;
+    if (!resolvedListCities || !hasListQuery) return;
     const canonical = buildFlightListSearchParams({
-      fromCity: form.fromCity,
-      toCity: form.toCity,
+      fromCity: resolvedListCities.fromCity,
+      toCity: resolvedListCities.toCity,
       date: listParams.Date,
     });
     const extras = new URLSearchParams(searchParams);
@@ -150,15 +178,7 @@ export function FlightListPage() {
     if (next.toString() !== searchParams.toString()) {
       navigate(`/flight/list?${next.toString()}`, { replace: true });
     }
-  }, [
-    form.airports.length,
-    form.fromCity,
-    form.toCity,
-    hasListQuery,
-    listParams.Date,
-    navigate,
-    searchParams,
-  ]);
+  }, [resolvedListCities, hasListQuery, listParams.Date, navigate, searchParams]);
 
   const resetListFilters = useCallback(() => {
     setFilterApplied(createInitialFilter());
@@ -328,7 +348,7 @@ export function FlightListPage() {
           <p className="py-4 text-center text-sm text-[#808080]">正在获取航班列表…</p>
         )}
 
-        {isAuthenticated && error && (
+        {isAuthenticated && error && !isFetching && displayed.length === 0 && (
           <div className="py-4 text-center">
             <p className="text-sm text-destructive">{formatApiError(error)}</p>
             <button
