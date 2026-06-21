@@ -8,6 +8,7 @@ import {
   todayDateString,
 } from "@/lib/date-search";
 import { displayHotelCity } from "@/lib/hotel-search";
+import { HOME_ASSETS } from "@/config/home-assets";
 
 interface HomeHotelSearchPanelProps {
   city: HotelCity;
@@ -32,11 +33,12 @@ function ChevronDownIcon() {
 
 function MyLocationIcon() {
   return (
-    <svg viewBox="0 0 16 16" className="size-4 text-[#666666]" aria-hidden>
-      <circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" strokeWidth="1.2" />
-      <circle cx="8" cy="8" r="1.5" fill="currentColor" />
-      <path d="M8 2v1.5M8 12.5V14M2 8h1.5M12.5 8H14" stroke="currentColor" strokeWidth="1.2" />
-    </svg>
+    <img
+      src={HOME_ASSETS.products.hotel.myLocation}
+      alt=""
+      className="size-4 shrink-0 object-contain"
+      aria-hidden
+    />
   );
 }
 
@@ -81,7 +83,9 @@ export function HomeHotelSearchPanel({
           aria-label="我的位置"
         >
           <MyLocationIcon />
-          <span className="text-[11px] leading-none text-[#666666]">我的位置</span>
+          <span className="text-right text-[11px] font-normal leading-none tracking-normal text-[#666666] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]">
+            我的位置
+          </span>
         </button>
       </div>
 

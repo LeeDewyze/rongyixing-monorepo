@@ -10,6 +10,7 @@ import flightDefaultIcon from "@/assets/home/flight-default.png";
 import heroBanner from "@/assets/home/hero-banner.png";
 import hotelActiveIcon from "@/assets/home/hotel-active.png";
 import hotelDefaultIcon from "@/assets/home/hotel-default.png";
+import myLocationIcon from "@/assets/home/my-location.svg";
 import tabHomeActiveIcon from "@/assets/home/tab-home-active.svg";
 import tabHomeInactiveIcon from "@/assets/home/tab-home-inactive.svg";
 import tabOrdersActiveIcon from "@/assets/home/tab-orders-active.svg";
@@ -48,6 +49,8 @@ export const HOME_ASSETS = {
       default: hotelDefaultIcon,
       /** Figma 38:5845 */
       active: hotelActiveIcon,
+      /** Figma 10:371 — my location */
+      myLocation: myLocationIcon,
     },
     car: {
       /** Figma 38:5921 — profile 用车 */

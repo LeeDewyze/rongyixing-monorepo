@@ -5,7 +5,9 @@ interface HotelListItemProps {
   onClick: () => void;
 }
 
-/** Design artboard: 131×28 star row (2×) → ~65.5×14 at 1×. */
+/** Figma — contracted hotel badge on list thumbnail. */
+const CONTRACT_HOTEL_BADGE_GRADIENT = "linear-gradient(270deg, #2768FA 0%, #33A1F9 100%)";
+
 function StarRating({ count }: { count: number }) {
   return (
     <div className="inline-flex h-[14px] items-center">
@@ -42,39 +44,49 @@ function formatDisplayPrice(price?: number): string {
   return String(Math.round(price));
 }
 
-const PRICE_FONT = "[font-family:'PingFang_SC',sans-serif]";
+function isContractHotel(hotel: HotelListItemType): boolean {
+  return hotel.Tags?.some((tag) => tag.toLowerCase() === "tmc") ?? false;
+}
 
 function HotelPrice({ price }: { price?: number }) {
   return (
-    <div className={`flex shrink-0 items-baseline ${PRICE_FONT}`}>
+    <div className="flex shrink-0 items-baseline [font-family:'PingFang_SC',sans-serif]">
       <span className="text-[15px] font-semibold leading-none text-[#E72932]">¥</span>
-      <span className="px-0.5 text-[23px] font-semibold leading-none text-[#E72932]">
+      <span className="text-[23px] font-semibold leading-none text-[#E72932]">
         {formatDisplayPrice(price)}
       </span>
-      <span className="text-[12px] font-semibold leading-none text-[#E72932]">起</span>
+      <span className="ml-0.5 text-[12px] font-semibold leading-none text-[#E72932]">起</span>
     </div>
   );
 }
 
 export function HotelListItem({ hotel, onClick }: HotelListItemProps) {
   const stars = hotel.Star && hotel.Star > 0 ? Math.min(5, Math.round(hotel.Star)) : 0;
+  const contracted = isContractHotel(hotel);
 
   return (
     <button
       type="button"
-      className="flex w-full gap-3.5 py-2.5 text-left active:opacity-90"
+      className="flex w-full gap-3 p-3 text-left active:opacity-90"
       onClick={onClick}
     >
-      <div className="size-[100px] shrink-0 overflow-hidden rounded-[10px] bg-[#E5E7EB]">
+      <div className="relative size-24 shrink-0 overflow-hidden rounded-lg bg-[#E5E7EB]">
         {hotel.ImageUrl ? (
           <img src={hotel.ImageUrl} alt="" className="size-full object-cover" loading="lazy" />
         ) : null}
+        {contracted ? (
+          <span
+            className="absolute left-0 top-0 flex h-5 w-[62px] items-center justify-center rounded-tl-lg rounded-tr-lg rounded-br-lg rounded-bl-none text-[10px] leading-none text-white"
+            style={{ background: CONTRACT_HOTEL_BADGE_GRADIENT }}
+          >
+            协议酒店
+          </span>
+        ) : null}
       </div>
 
-      <div className="flex h-[100px] min-w-0 flex-1 flex-col">
-        {/* Reserve two title lines so stars stay at a fixed vertical position. */}
+      <div className="flex min-h-24 min-w-0 flex-1 flex-col">
         <div className="h-12 shrink-0">
-          <h3 className="line-clamp-2 text-base font-medium leading-6 tracking-[0.35px] text-[#333333] [font-family:'Source_Han_Sans_SC','Noto_Sans_SC','PingFang_SC',sans-serif]">
+          <h3 className="line-clamp-2 text-base font-medium leading-6 tracking-[0.35px] text-[#333333] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]">
             {hotel.HotelName}
           </h3>
         </div>
