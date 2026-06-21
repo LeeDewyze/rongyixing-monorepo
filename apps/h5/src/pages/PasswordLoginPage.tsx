@@ -99,7 +99,7 @@ export function PasswordLoginPage() {
   const [password, setPassword] = useState(initialForm.password);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberChecked, setRememberChecked] = useState(initialForm.rememberChecked);
-  const [agreed, setAgreed] = useState(false);
+  const [agreed, setAgreed] = useState(true);
   const [formHint, setFormHint] = useState<string | null>(null);
 
   async function handleLogin() {
