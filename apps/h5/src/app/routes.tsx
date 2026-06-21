@@ -7,8 +7,11 @@ import { FlightListPage } from "@/pages/flight/FlightListPage";
 import { FlightSearchPage } from "@/pages/flight/FlightSearchPage";
 import { FlightSelectCityPage } from "@/pages/flight/FlightSelectCityPage";
 import { HomeTabPage } from "@/pages/home/HomeTabPage";
+import { OrdersTabPage } from "@/pages/home/OrdersTabPage";
 import { ProfileTabPage } from "@/pages/home/ProfileTabPage";
-import { TripsTabPage } from "@/pages/home/TripsTabPage";
+import { OrderHotelDetailPage } from "@/pages/order/OrderHotelDetailPage";
+import { OrderListPage } from "@/pages/order/OrderListPage";
+import { OrderListRedirect } from "@/app/routes/OrderListRedirect";
 import { HotelBookPage } from "@/pages/hotel/HotelBookPage";
 import { HotelDetailPage } from "@/pages/hotel/HotelDetailPage";
 import { HotelListPage } from "@/pages/hotel/HotelListPage";
@@ -40,8 +43,24 @@ export const router = createBrowserRouter([
     element: <TabLayout />,
     children: [
       { index: true, element: <HomeTabPage /> },
-      { path: "trips", element: <TripsTabPage /> },
+      { path: "orders", element: <OrdersTabPage /> },
+      {
+        path: "trips",
+        element: <OrderListRedirect to="/home/orders" />,
+      },
       { path: "mine", element: <ProfileTabPage /> },
+    ],
+  },
+  {
+    path: "/trips",
+    element: <OrderListRedirect to="/home/orders" />,
+  },
+  {
+    path: "/orders",
+    element: <RootLayout />,
+    children: [
+      { index: true, element: <OrderListPage /> },
+      { path: "hotel/:orderId", element: <OrderHotelDetailPage /> },
     ],
   },
   {

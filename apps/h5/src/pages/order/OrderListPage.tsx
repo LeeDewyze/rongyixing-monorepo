@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { OrderListTabId, type OrderAction, type OrderListScope } from "@ryx/shared-types";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import type { OrderAction, OrderListScope } from "@ryx/shared-types";
 
 import {
   OrderCategoryTabs,
@@ -8,53 +8,49 @@ import {
   type OrderCategoryId,
 } from "@/components/order/OrderCategoryTabs";
 import { OrderList } from "@/components/order/OrderList";
-import { ORDER_CATEGORY_TABS, ORDER_HEADER_GRADIENT } from "@/config/order-assets";
+import { usePageHeader } from "@/components/layout";
+import { ORDER_HEADER_GRADIENT } from "@/config/order-assets";
 import { useOrderList } from "@/hooks/useOrderList";
 import { formatApiError } from "@/lib/formatApiError";
-
-const TAB_PARAM_TO_ID: Record<string, OrderCategoryId> = {
-  flight: "flight",
-  train: "train",
-  hotel: "hotel",
-  car: "car",
-};
-
-const TAB_ID_TO_PARAM: Record<OrderCategoryId, string> = {
-  flight: "flight",
-  train: "train",
-  hotel: "hotel",
-  car: "car",
-};
-
-const CATEGORY_TO_TAB_ID: Record<OrderCategoryId, OrderListTabId> = {
-  flight: OrderListTabId.Flight,
-  train: OrderListTabId.Train,
-  hotel: OrderListTabId.Hotel,
-  car: OrderListTabId.Car,
-};
-
-function parseCategoryId(value: string | null): OrderCategoryId {
-  if (value && value in TAB_PARAM_TO_ID) {
-    return TAB_PARAM_TO_ID[value]!;
-  }
-  return "hotel";
-}
-
-function parseScope(value: string | null): OrderListScope {
-  return value === "pendingTravel" ? "pendingTravel" : "all";
-}
+import {
+  CATEGORY_TO_TAB_ID,
+  parseOrderListCategoryId,
+  parseOrderListScope,
+  TAB_ID_TO_PARAM,
+} from "@/lib/order-list-params";
 
 const FALLBACK_HEADER_HEIGHT = 84;
 
-export function TripsTabPage() {
+function BackIcon() {
+  return (
+    <svg viewBox="0 0 10 17" className="h-[17px] w-[10px] shrink-0 text-black" aria-hidden>
+      <path
+        d="M9 1.5 2.5 8.5 9 15.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+interface OrderListPageProps {
+  /** Renders inside TabLayout without a back button. */
+  embeddedInTab?: boolean;
+}
+
+export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const headerRef = useRef<HTMLElement>(null);
   const [headerHeight, setHeaderHeight] = useState(FALLBACK_HEADER_HEIGHT);
   const [scrollRoot, setScrollRoot] = useState<HTMLDivElement | null>(null);
 
-  const categoryId = parseCategoryId(searchParams.get("tab"));
-  const scope = parseScope(searchParams.get("scope"));
+  const categoryId = parseOrderListCategoryId(searchParams);
+  const scope = parseOrderListScope(searchParams.get("scope"));
   const tabId = CATEGORY_TO_TAB_ID[categoryId];
 
   const { data, isLoading, isError, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
@@ -62,6 +58,8 @@ export function TripsTabPage() {
 
   const orders = useMemo(() => data?.pages.flatMap((page) => page.Orders) ?? [], [data?.pages]);
   const isInitialLoading = isLoading && orders.length === 0;
+
+  usePageHeader({ visible: false });
 
   const handleLoadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -72,6 +70,7 @@ export function TripsTabPage() {
   const updateParams = useCallback(
     (next: { tab?: OrderCategoryId; scope?: OrderListScope }) => {
       const params = new URLSearchParams(searchParams);
+      params.delete("tabId");
       if (next.tab) {
         params.set("tab", TAB_ID_TO_PARAM[next.tab]);
       }
@@ -101,7 +100,7 @@ export function TripsTabPage() {
     const observer = new ResizeObserver(updateHeight);
     observer.observe(header);
     return () => observer.disconnect();
-  }, []);
+  }, [embeddedInTab]);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -119,13 +118,32 @@ export function TripsTabPage() {
     return () => window.clearTimeout(timer);
   }, [toastMessage]);
 
+  const rootClassName = embeddedInTab
+    ? "relative h-full min-h-0 overflow-hidden"
+    : "relative h-dvh overflow-hidden bg-[#F5F6F9]";
+
   return (
-    <div className="relative h-full min-h-0 overflow-hidden">
+    <div className={rootClassName}>
       <header
         ref={headerRef}
         className="fixed inset-x-0 top-0 z-30 mx-auto w-full max-w-lg bg-[#F5F6F9]"
       >
         <div style={{ background: ORDER_HEADER_GRADIENT }}>
+          {!embeddedInTab ? (
+            <div className="flex h-11 items-center px-3 pt-[env(safe-area-inset-top)]">
+              <button
+                type="button"
+                className="flex h-11 w-10 shrink-0 items-center justify-center active:opacity-70"
+                aria-label="返回"
+                onClick={() => navigate(-1)}
+              >
+                <BackIcon />
+              </button>
+              <h1 className="pointer-events-none absolute inset-x-0 pt-[env(safe-area-inset-top)] text-center text-[17px] font-semibold leading-[44px] text-[#010101] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]">
+                订单
+              </h1>
+            </div>
+          ) : null}
           <OrderCategoryTabs activeId={categoryId} onChange={(id) => updateParams({ tab: id })} />
           <OrderScopeTabs scope={scope} onChange={(next) => updateParams({ scope: next })} />
         </div>
@@ -161,9 +179,4 @@ export function TripsTabPage() {
       ) : null}
     </div>
   );
-}
-
-/** Maps tab id to category label for tests or deep links. */
-export function getOrderCategoryLabel(id: OrderCategoryId): string {
-  return ORDER_CATEGORY_TABS.find((t) => t.id === id)?.label ?? "";
 }

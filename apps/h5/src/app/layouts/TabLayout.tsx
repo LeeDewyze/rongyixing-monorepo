@@ -25,7 +25,7 @@ const TABS: TabItem[] = [
     ),
   },
   {
-    to: "/home/trips",
+    to: "/home/orders",
     label: "订单",
     icon: (active) => (
       <TabIcon
@@ -46,7 +46,7 @@ const TABS: TabItem[] = [
 
 export function TabLayout() {
   const { pathname } = useLocation();
-  const lockMainScroll = pathname === "/home/trips";
+  const lockMainScroll = pathname === "/home/orders";
 
   return (
     <div
