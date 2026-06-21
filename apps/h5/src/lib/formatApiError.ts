@@ -5,6 +5,12 @@ import { getApiMode } from "@/lib/env";
 /** Human-readable API failure for page-level error UI. */
 export function formatApiError(error: unknown): string {
   if (error instanceof ApiError) {
+    if (error.code?.toLowerCase() === "nologin" || error.message.includes("登陆超时")) {
+      return "登录已过期，请重新登录后再查询航班";
+    }
+    if (error.message.includes("没有获取列表")) {
+      return "航班列表获取失败，请确认出发/到达城市后重试；若仍失败请联系管理员";
+    }
     if (error.status === 501 || error.message.includes("501")) {
       return `接口未实现 (HTTP 501)。当前为 ${getApiMode()} 模式，机票 Mock 请切到 Mock 模式（右下角 DEV 按钮）。`;
     }

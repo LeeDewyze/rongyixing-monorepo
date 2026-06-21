@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseMethod, resolveUrl } from "./resolve-url.js";
+import { isGatewayProxyUrl, parseMethod, resolveUrl } from "./resolve-url.js";
 
 describe("resolveUrl", () => {
   it("falls back to /Home/Proxy when api config is missing", () => {
@@ -106,6 +106,18 @@ describe("resolveUrl", () => {
         explicitUrl: "https://custom.example/post",
       }),
     ).toBe("https://custom.example/post");
+  });
+});
+
+describe("isGatewayProxyUrl", () => {
+  it("detects /Home/Proxy gateway", () => {
+    expect(isGatewayProxyUrl("https://app.rongtrip.cn/Home/Proxy")).toBe(true);
+    expect(isGatewayProxyUrl("/Home/Proxy?domain=rtesp.com")).toBe(true);
+  });
+
+  it("returns false for direct microservice paths", () => {
+    expect(isGatewayProxyUrl("/__ryx/TmcApiFlightUrl/Home/Index")).toBe(false);
+    expect(isGatewayProxyUrl("http://flight-api-tmc.rtesp.com/Home/Index")).toBe(false);
   });
 });
 

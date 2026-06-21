@@ -8,7 +8,7 @@ import {
   encodeFormBody,
   toFormFields,
 } from "./request-entity.js";
-import { isLoginMethod, resolveUrl } from "./resolve-url.js";
+import { isGatewayProxyUrl, isLoginMethod, resolveUrl } from "./resolve-url.js";
 import { assertSuccess } from "./response-adapter.js";
 import { computeSign, serializeData } from "./sign.js";
 
@@ -74,15 +74,16 @@ export function createProxyClient(config: ProxyClientConfig): ProxyClient {
   }
 
   function handleErrorCode(code: string, message: string): void {
-    if (code === "NOLOGIN") {
+    const normalized = code.toLowerCase();
+    if (normalized === "nologin") {
       config.onUnauthorized?.();
       return;
     }
-    if (code === "NOAUTHORIZE") {
+    if (normalized === "noauthorize") {
       config.onNoAuthorize?.();
       return;
     }
-    if (code.toLowerCase() === "systemerror") {
+    if (normalized === "systemerror") {
       config.onSystemError?.(message);
     }
   }
@@ -111,12 +112,25 @@ export function createProxyClient(config: ProxyClientConfig): ProxyClient {
   async function sendReal<TRes>(options: ProxySendOptions): Promise<IResponse<TRes>> {
     const cfg = await ensureApiConfig();
     const token = getToken();
+    const resolvedUrl = resolveUrl({
+      baseUrl: config.baseUrl,
+      method: options.method,
+      explicitUrl: options.url,
+      apiConfig: cfg,
+      mode: mode === "direct" ? "direct" : "proxy",
+      isForward: options.isForward,
+      domain: config.getDomain?.() ?? undefined,
+    });
+    const url = config.rewriteUrl ? config.rewriteUrl(resolvedUrl) : resolvedUrl;
+    const attachExtraFields =
+      !options.skipSign && isGatewayProxyUrl(resolvedUrl) && Boolean(config.getExtraFields);
+
     const req = createRequestEntity(options.method, options.data, {
       getTicket: isLoginMethod(options.method) ? () => "" : config.getTicket,
       getTicketName: config.getTicketName,
       getDomain: config.getDomain,
       getLanguage: config.getLanguage,
-      getExtraFields: config.getExtraFields,
+      getExtraFields: attachExtraFields ? config.getExtraFields : () => ({}),
       token,
     });
 
@@ -129,20 +143,13 @@ export function createProxyClient(config: ProxyClientConfig): ProxyClient {
     if (options.isShowLoading) {
       req.IsShowLoading = true;
     }
+    if (options.requestTimeout != null) {
+      req.Timeout = options.requestTimeout;
+    }
 
     const dataStr = serializeData(req.Data);
     const includeSign = !options.skipSign;
     const sign = includeSign ? computeSign(dataStr, req.Timestamp ?? 0, token) : "";
-    const resolvedUrl = resolveUrl({
-      baseUrl: config.baseUrl,
-      method: options.method,
-      explicitUrl: options.url,
-      apiConfig: cfg,
-      mode: mode === "direct" ? "direct" : "proxy",
-      isForward: options.isForward,
-      domain: config.getDomain?.() ?? undefined,
-    });
-    const url = config.rewriteUrl ? config.rewriteUrl(resolvedUrl) : resolvedUrl;
 
     const body = includeSign
       ? encodeFormBody(toFormFields(req, sign, { includeSign, includeToken: true }))

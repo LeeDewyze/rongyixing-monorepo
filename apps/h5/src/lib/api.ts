@@ -59,6 +59,10 @@ export function getApi() {
       rewriteUrl: rewriteDevProxyUrl,
       onUnauthorized: () => {
         clearSession();
+        const path = `${window.location.pathname}${window.location.search}`;
+        if (!path.startsWith("/login")) {
+          window.location.href = `/login/password?returnTo=${encodeURIComponent(path)}`;
+        }
       },
     });
 

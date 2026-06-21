@@ -37,6 +37,7 @@ export function createFlightApi(proxy: ProxyClient): FlightApi {
         method: FLIGHT_FLOW_METHODS.HOME_INDEX,
         data: params,
         version: "2.0",
+        requestTimeout: 60,
         timeoutMs: 60_000,
       });
     },

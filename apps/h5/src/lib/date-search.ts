@@ -1,22 +1,43 @@
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Format a local calendar date as YYYY-MM-DD (avoids UTC shift from toISOString). */
+export function formatLocalDateString(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+export function parseLocalDate(dateStr: string): Date | null {
+  if (!DATE_RE.test(dateStr)) return null;
+  const d = new Date(`${dateStr}T00:00:00`);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 export function todayDateString(): string {
-  return new Date().toISOString().slice(0, 10);
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return formatLocalDateString(d);
 }
 
 export function addDays(dateStr: string, days: number): string {
-  const d = new Date(`${dateStr}T00:00:00`);
+  const parsed = parseLocalDate(dateStr);
+  const d = parsed ?? new Date();
+  d.setHours(0, 0, 0, 0);
   d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
+  return formatLocalDateString(d);
 }
 
 export function formatDateLabel(dateStr: string): string {
-  const d = new Date(`${dateStr}T00:00:00`);
+  const d = parseLocalDate(dateStr);
+  if (!d) return dateStr;
   const week = ["日", "一", "二", "三", "四", "五", "六"][d.getDay()];
   return `${dateStr.slice(5).replace("-", "月")}日 周${week}`;
 }
 
 export function formatDayChip(dateStr: string): { weekday: string; label: string } {
-  const d = new Date(`${dateStr}T00:00:00`);
-  const weekday = ["日", "一", "二", "三", "四", "五", "六"][d.getDay()];
+  const d = parseLocalDate(dateStr);
+  const weekday = d ? ["日", "一", "二", "三", "四", "五", "六"][d.getDay()] : "—";
   return {
     weekday,
     label: `${dateStr.slice(5).replace("-", "/")}`,
@@ -24,20 +45,22 @@ export function formatDayChip(dateStr: string): { weekday: string; label: string
 }
 
 export function buildDateRange(startDate: string, days = 14): string[] {
-  const start = new Date(`${startDate}T00:00:00`);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const base = start < today ? today : start;
+
+  const parsed = parseLocalDate(startDate);
+  const base = !parsed || parsed < today ? today : parsed;
+
   return Array.from({ length: days }, (_, i) => {
     const d = new Date(base);
     d.setDate(base.getDate() + i);
-    return d.toISOString().slice(0, 10);
+    return formatLocalDateString(d);
   });
 }
 
 export function nightsBetween(checkIn: string, checkOut: string): number {
-  const a = new Date(`${checkIn}T00:00:00`).getTime();
-  const b = new Date(`${checkOut}T00:00:00`).getTime();
+  const a = parseLocalDate(checkIn)?.getTime() ?? NaN;
+  const b = parseLocalDate(checkOut)?.getTime() ?? NaN;
   const nights = Math.round((b - a) / 86400000);
   return nights > 0 ? nights : 1;
 }
@@ -59,6 +82,7 @@ export function relativeDayLabel(dateStr: string): string {
   const today = todayDateString();
   if (dateStr === today) return "今天";
   if (dateStr === addDays(today, 1)) return "明天";
-  const d = new Date(`${dateStr}T00:00:00`);
+  const d = parseLocalDate(dateStr);
+  if (!d) return "";
   return `周${["日", "一", "二", "三", "四", "五", "六"][d.getDay()]}`;
 }

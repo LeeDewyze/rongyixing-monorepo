@@ -12,7 +12,7 @@ export {
   getTimestamp,
   toFormFields,
 } from "./request-entity.js";
-export { resolveUrl, parseMethod, isLoginMethod } from "./resolve-url.js";
+export { resolveUrl, parseMethod, isLoginMethod, isGatewayProxyUrl } from "./resolve-url.js";
 export {
   adaptResponse,
   assertSuccess,
