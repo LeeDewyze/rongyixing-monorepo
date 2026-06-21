@@ -8,7 +8,7 @@ export const ORDER_FLOW_METHODS = {
   GET_ORDER_PAYS: ORDER_METHODS.ORDER_GETORDERPAYS,
   PAY_CREATE: "TmcApiOrderUrl-Pay-Create",
   PAY_PROCESS: "TmcApiOrderUrl-Pay-Process",
+  TRAVEL_LIST: ORDER_METHODS.TRAVEL_LIST,
 } as const;
 
-export type OrderFlowMethod =
-  (typeof ORDER_FLOW_METHODS)[keyof typeof ORDER_FLOW_METHODS];
+export type OrderFlowMethod = (typeof ORDER_FLOW_METHODS)[keyof typeof ORDER_FLOW_METHODS];

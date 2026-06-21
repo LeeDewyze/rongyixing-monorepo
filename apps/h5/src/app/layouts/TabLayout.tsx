@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 
 import { HOME_ASSETS } from "@/config/home-assets";
 
@@ -45,9 +45,20 @@ const TABS: TabItem[] = [
 ];
 
 export function TabLayout() {
+  const { pathname } = useLocation();
+  const lockMainScroll = pathname === "/home/trips";
+
   return (
-    <div className="flex min-h-dvh flex-col bg-[#F5F6F9] text-foreground">
-      <main className="flex-1 overflow-y-auto pb-[calc(3.5rem+env(safe-area-inset-bottom))]">
+    <div
+      className={`flex flex-col bg-[#F5F6F9] text-foreground ${
+        lockMainScroll ? "h-dvh overflow-hidden" : "min-h-dvh"
+      }`}
+    >
+      <main
+        className={`flex min-h-0 flex-1 flex-col pb-[calc(3.5rem+env(safe-area-inset-bottom))] ${
+          lockMainScroll ? "overflow-hidden" : "overflow-y-auto"
+        }`}
+      >
         <Outlet />
       </main>
 
