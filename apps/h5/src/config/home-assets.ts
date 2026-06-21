@@ -4,6 +4,7 @@
  */
 import businessApplyIcon from "@/assets/home/business-apply.png";
 import businessMyApprovalIcon from "@/assets/home/business-my-approval.png";
+import carActiveIcon from "@/assets/home/car-active.png";
 import flightActiveIcon from "@/assets/home/flight-active.png";
 import flightDefaultIcon from "@/assets/home/flight-default.png";
 import heroBanner from "@/assets/home/hero-banner.png";
@@ -47,6 +48,10 @@ export const HOME_ASSETS = {
       default: hotelDefaultIcon,
       /** Figma 38:5845 */
       active: hotelActiveIcon,
+    },
+    car: {
+      /** Figma 38:5921 — profile 用车 */
+      active: carActiveIcon,
     },
   },
   business: {

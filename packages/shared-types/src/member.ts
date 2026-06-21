@@ -36,4 +36,6 @@ export interface MemberProfile {
   Name: string;
   Mobile?: string;
   Email?: string;
+  /** Legacy Member-Get organization code. */
+  OrganizationCode?: string;
 }
