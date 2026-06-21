@@ -69,6 +69,19 @@ describe("resolveUrl", () => {
     ).toBe("https://ronglv-feature.rongtrip.cn/Jyx/LoginByRyx");
   });
 
+  it("uses /Home/Proxy for Identity GetWebSocketUrl (Legacy unsigned)", () => {
+    expect(
+      resolveUrl({
+        baseUrl: "",
+        method: "ApiHomeUrl-Identity-GetWebSocketUrl",
+        apiConfig: {
+          Token: "t",
+          Urls: { ApiHomeUrl: "http://api.rtesp.com" },
+        },
+      }),
+    ).toBe("/Home/Proxy");
+  });
+
   it("uses explicit url when provided", () => {
     expect(
       resolveUrl({

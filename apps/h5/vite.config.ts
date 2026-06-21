@@ -10,6 +10,9 @@ const monorepoRoot = path.resolve(__dirname, "../..");
 /** Vite `/Jyx` dev proxy origin — must match `/Home/Setting` LoginUrl host for rtesp test. */
 const DEV_JYX_PROXY_TARGET = "http://ronglv-feature.rtesp.com";
 
+/** ApiHomeUrl host for Identity-* direct calls (rtesp test). */
+const DEV_API_HOME_TARGET = "http://api.rtesp.com";
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, __dirname, "");
   const apiBase = env.VITE_API_BASE_URL || "https://app.rongtrip.cn";
@@ -56,6 +59,10 @@ export default defineConfig(({ mode }) => {
         },
         "/Member": {
           target: "http://member-api.rtesp.com",
+          changeOrigin: true,
+        },
+        "/Identity": {
+          target: DEV_API_HOME_TARGET,
           changeOrigin: true,
         },
         "/Jyx": {
