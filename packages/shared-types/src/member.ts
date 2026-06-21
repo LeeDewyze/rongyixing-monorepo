@@ -15,6 +15,8 @@ export interface MemberPassenger {
   PassengerTypeName?: string;
   IsSelf?: boolean;
   travelFormId?: string;
+  /** Legacy passenger gender (M/F). */
+  Gender?: string;
 }
 
 export interface PassengerListParams {

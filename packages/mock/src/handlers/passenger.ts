@@ -16,6 +16,11 @@ function hideNumber(num: string): string {
   return `${num.slice(0, 3)}****${num.slice(-4)}`;
 }
 
+function readGender(value: unknown, fallback?: string): string | undefined {
+  if (value == null || value === "") return fallback;
+  return String(value);
+}
+
 export function createPassengerMockHandlers(): Record<
   string,
   (data: unknown) => IResponse<unknown>
@@ -34,7 +39,12 @@ export function createPassengerMockHandlers(): Record<
       return successResponse(filterMockStaff(keyword, pageIndex, pageSize));
     },
     [PASSENGER_FLOW_METHODS.PASSENGER_LIST]: (data) => {
-      const params = data as { Name?: string; Mobile?: string; PageIndex?: number; PageSize?: number };
+      const params = data as {
+        Name?: string;
+        Mobile?: string;
+        PageIndex?: number;
+        PageSize?: number;
+      };
       const keyword = (params.Name ?? params.Mobile ?? "").trim().toLowerCase();
       let passengers = mockPassengers;
       if (keyword) {
@@ -69,7 +79,7 @@ export function createPassengerMockHandlers(): Record<
         IsSelf: false,
         Country: body.Country,
         IssueCountry: body.IssueCountry,
-        Gender: body.Gender,
+        Gender: readGender(body.Gender),
       };
       mockPassengers.unshift(entry);
       return successResponse(entry.Id);
@@ -79,19 +89,22 @@ export function createPassengerMockHandlers(): Record<
       const id = String(body.Id ?? "");
       const idx = mockPassengers.findIndex((p) => p.Id === id);
       if (idx >= 0) {
-        const type = Number(body.Type ?? body.CredentialsType ?? mockPassengers[idx].CredentialsType);
+        const type = Number(
+          body.Type ?? body.CredentialsType ?? mockPassengers[idx].CredentialsType,
+        );
         const number = String(body.Number ?? mockPassengers[idx].Number ?? "");
         mockPassengers[idx] = {
           ...mockPassengers[idx],
           Name: String(body.Name ?? mockPassengers[idx].Name),
           Mobile: String(body.Mobile ?? mockPassengers[idx].Mobile ?? ""),
           CredentialsType: type,
-          CredentialsTypeName: CREDENTIAL_TYPE_LABELS[type] ?? mockPassengers[idx].CredentialsTypeName,
+          CredentialsTypeName:
+            CREDENTIAL_TYPE_LABELS[type] ?? mockPassengers[idx].CredentialsTypeName,
           Number: number,
           HideCredentialsNumber: hideNumber(number),
           CredentialNo: number,
           CredentialType: type,
-          Gender: body.Gender ?? mockPassengers[idx].Gender,
+          Gender: readGender(body.Gender, mockPassengers[idx].Gender),
         };
         return successResponse(mockPassengers[idx]);
       }
@@ -104,7 +117,9 @@ export function createPassengerMockHandlers(): Record<
     },
     [TMC_METHODS.STAFF_CREDENTIALS]: (data) => {
       const params = data as { AccountId?: string };
-      const staff = MOCK_STAFF.find((s) => s.AccountId === params.AccountId || s.Id === params.AccountId);
+      const staff = MOCK_STAFF.find(
+        (s) => s.AccountId === params.AccountId || s.Id === params.AccountId,
+      );
       return successResponse(staff?.Credentials ?? []);
     },
     [TMC_METHODS.CREDENTIALS_ADD]: (data) => {
