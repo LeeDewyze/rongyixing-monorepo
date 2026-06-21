@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { parseMethod, resolveUrl } from "./resolve-url.js";
 
 describe("resolveUrl", () => {
-  it("falls back to /Home/Proxy in proxy mode", () => {
+  it("falls back to /Home/Proxy when api config is missing", () => {
     expect(
       resolveUrl({
         baseUrl: "https://app.rongtrip.cn",
@@ -13,7 +13,34 @@ describe("resolveUrl", () => {
     ).toBe("https://app.rongtrip.cn/Home/Proxy");
   });
 
-  it("resolves direct URL from api config", () => {
+  it("resolves direct service URL when api config is loaded (Legacy)", () => {
+    expect(
+      resolveUrl({
+        baseUrl: "https://app.rongtrip.cn",
+        method: "ApiMemberUrl-Passenger-Add",
+        mode: "proxy",
+        apiConfig: {
+          Token: "t",
+          Urls: { ApiMemberUrl: "http://member-api.rtesp.com" },
+        },
+      }),
+    ).toBe("http://member-api.rtesp.com/Passenger/Add");
+  });
+
+  it("uses same-origin path for vite dev when baseUrl is empty", () => {
+    expect(
+      resolveUrl({
+        baseUrl: "",
+        method: "ApiMemberUrl-Passenger-Add",
+        apiConfig: {
+          Token: "t",
+          Urls: { ApiMemberUrl: "http://member-api.rtesp.com" },
+        },
+      }),
+    ).toBe("/Passenger/Add");
+  });
+
+  it("resolves direct URL from api config in direct mode", () => {
     expect(
       resolveUrl({
         baseUrl: "https://app.rongtrip.cn",

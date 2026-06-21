@@ -83,10 +83,10 @@
 | 6 | 火车填单 | `tmc-train-book_ryx` | `/train/book` | Initialize, Book | [ ] | [ ] | [ ] | |
 | 7 | 出差申请 | `goBusiness` | `/travel/apply` | ⚠️ 待抓包 | [ ] | [ ] | [ ] | 源码路由缺失 |
 | 7 | 选择出差单 | GetTravelUrl | 预订内嵌 | GetTravelUrl | [x] | [x] | [x] | 酒店填单已接 |
-| 7 | 选择常旅客 | `tmc-select-passenger_ryx` | 预订子流程 | Passenger-List, Add | [~] | [~] | [~] | 无独立页 |
+| 7 | 选择常旅客 | `tmc-select-passenger_ryx` | `/passenger/select` | Staff-List, Passenger-List, Add | [~] | [~] | [~] | UI/技术：[passenger-module-design.md](./domains/passenger-module-design.md) · [picker-design-system.md](../h5/ui/picker-design-system.md) |
 | 8 | 账户设置 | `account-setting_ryx` | `/me/settings` | Account-* | [ ] | [ ] | [ ] | P2 |
 | 8 | 账户安全 | `account-security_ryx` | `/me/security` | Password-* | [ ] | [ ] | [ ] | P2 |
-| 8 | 证件管理 | `member-credential-list` | `/me/credentials` | Credentials-* | [ ] | [ ] | [ ] | P2 |
+| 8 | 证件管理 | `member-credential-list` | `/me/credentials` | Credentials-* | [ ] | [ ] | [ ] | P2；与出行人共用编辑页，API 见 [passenger.md §6.6](./domains/passenger.md#66-证件维护出行人-vs-个人信息) |
 | 8 | 我的审批 | `tmc-approval-task` | `/me/approvals` | Task-List, Home-TaskReviewed | [ ] | [ ] | [ ] | P2 可选 |
 
 图例：`[x]` 完成 · `[~]` 部分 · `[ ]` 未做

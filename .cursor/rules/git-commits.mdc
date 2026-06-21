@@ -31,6 +31,13 @@ test(h5): add login form smoke test
 - Subject: imperative mood, ≤50 chars, no period at end
 - Scope: `h5`, `web`, `ui`, `api`, `shared-types`, or omit
 
+## Commit message body
+
+- Optional bullet points after a blank line (why / what changed)
+- **No Git trailers** in commit messages unless the user explicitly asks for human co-author attribution
+- **Never** append `Co-authored-by: Cursor <cursoragent@cursor.com>` — Cursor IDE may inject this; strip it before committing
+- Do not add `Signed-off-by`, `Co-authored-by`, or similar footer lines by default
+
 ## Before commit
 
 ```bash
@@ -44,3 +51,14 @@ Fix critical/high audit findings before merging.
 - Chinese commit messages
 - Vague messages: `fix bug`, `update`, `wip`
 - Commit `.env`, secrets, or `dist/` artifacts
+- `Co-authored-by: Cursor <cursoragent@cursor.com>` or any unsolicited attribution trailers
+
+## Git hooks
+
+Repo hooks live in `.githooks/`. After clone, run `pnpm install` (sets `core.hooksPath`) or:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+`prepare-commit-msg` removes Cursor co-author lines automatically.

@@ -67,6 +67,12 @@ const book = await getApi().hotel.submitBook({ ... })
 const order = await getApi().order.getDetail({ OrderId: book.OrderId })
 ```
 
+## 相关文档
+
+| 文档 | 说明 |
+|------|------|
+| [passenger.md](./passenger.md) | 出行人 / 常旅客选择（填单入住人） |
+
 ## 环境
 
 ```env

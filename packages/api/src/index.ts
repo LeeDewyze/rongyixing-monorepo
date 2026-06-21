@@ -13,6 +13,7 @@ import { createMemberApi, type MemberApi } from "./apis/member.js";
 import { createOrderApi, type OrderApi } from "./apis/order.js";
 import { createPassengerApi, type PassengerApi } from "./apis/passenger.js";
 import { createPayApi, type PayApi } from "./apis/pay.js";
+import { createTmcApi, type TmcApi } from "./apis/tmc.js";
 import { createTrainApi, type TrainApi } from "./apis/train.js";
 import { createTravelApi, type TravelApi } from "./apis/travel.js";
 import { createApiClient, type ApiClient, type ApiClientConfig } from "./client.js";
@@ -41,6 +42,7 @@ export { createPassengerApi, type PassengerApi } from "./apis/passenger.js";
 export { createMemberApi, type MemberApi } from "./apis/member.js";
 export { createTrainApi, type TrainApi } from "./apis/train.js";
 export { createTravelApi, type TravelApi } from "./apis/travel.js";
+export { createTmcApi, type TmcApi } from "./apis/tmc.js";
 export * from "./methods/auth-flow.js";
 export * from "./methods/flight-flow.js";
 export * from "./methods/hotel-flow.js";
@@ -86,6 +88,7 @@ export interface Api {
   passenger: PassengerApi;
   travel: TravelApi;
   train: TrainApi;
+  tmc: TmcApi;
 }
 
 /** Create a shared API surface for all client apps. */
@@ -132,5 +135,6 @@ export function createApi(config: CreateApiConfig): Api {
     passenger: createPassengerApi(proxy),
     travel: createTravelApi(proxy),
     train: createTrainApi(proxy),
+    tmc: createTmcApi(proxy),
   };
 }

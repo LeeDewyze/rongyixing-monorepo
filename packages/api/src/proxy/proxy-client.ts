@@ -55,7 +55,7 @@ export function createProxyClient(config: ProxyClientConfig): ProxyClient {
   }
 
   async function ensureApiConfig(): Promise<ApiConfigSetting | null> {
-    if (apiConfig?.Token) {
+    if (apiConfig?.Token && apiConfig?.Urls && Object.keys(apiConfig.Urls).length > 0) {
       return apiConfig;
     }
     if (mode === "mock") {
@@ -133,25 +133,16 @@ export function createProxyClient(config: ProxyClientConfig): ProxyClient {
     const dataStr = serializeData(req.Data);
     const includeSign = !options.skipSign;
     const sign = includeSign ? computeSign(dataStr, req.Timestamp ?? 0, token) : "";
-    const url = config.rewriteUrl
-      ? config.rewriteUrl(
-          resolveUrl({
-            baseUrl: config.baseUrl,
-            method: options.method,
-            explicitUrl: options.url,
-            apiConfig: cfg,
-            mode: mode === "direct" ? "direct" : "proxy",
-            isForward: options.isForward,
-          }),
-        )
-      : resolveUrl({
-          baseUrl: config.baseUrl,
-          method: options.method,
-          explicitUrl: options.url,
-          apiConfig: cfg,
-          mode: mode === "direct" ? "direct" : "proxy",
-          isForward: options.isForward,
-        });
+    const resolvedUrl = resolveUrl({
+      baseUrl: config.baseUrl,
+      method: options.method,
+      explicitUrl: options.url,
+      apiConfig: cfg,
+      mode: mode === "direct" ? "direct" : "proxy",
+      isForward: options.isForward,
+      domain: config.getDomain?.() ?? undefined,
+    });
+    const url = config.rewriteUrl ? config.rewriteUrl(resolvedUrl) : resolvedUrl;
 
     const body = includeSign
       ? encodeFormBody(toFormFields(req, sign, { includeSign, includeToken: true }))

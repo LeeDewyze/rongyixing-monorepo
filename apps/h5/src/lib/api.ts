@@ -1,6 +1,7 @@
 import { createApi } from "@ryx/api";
 import { createDefaultMockHandler } from "@ryx/mock";
 
+import { persistDomain } from "@/lib/domain";
 import { getApiBaseUrl, getApiMode, getAppId, getMockDelay } from "@/lib/env";
 import {
   getRequestDomain,
@@ -60,6 +61,12 @@ export function getApi() {
         clearSession();
       },
     });
+
+    if (mode !== "mock") {
+      void apiInstance.proxy.loadApiConfig().then((cfg) => {
+        if (cfg.Domain) persistDomain(cfg.Domain);
+      });
+    }
   }
 
   return apiInstance;

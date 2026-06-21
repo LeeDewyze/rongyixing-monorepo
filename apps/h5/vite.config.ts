@@ -34,8 +34,28 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5173,
       proxy: {
-        "/Home": {
+        "/Home/Proxy": {
           target: apiBase,
+          changeOrigin: true,
+        },
+        "/Home/Setting": {
+          target: apiBase,
+          changeOrigin: true,
+        },
+        "/Home": {
+          target: "http://api-tmc.rtesp.com",
+          changeOrigin: true,
+        },
+        "/Staff": {
+          target: "http://api-tmc.rtesp.com",
+          changeOrigin: true,
+        },
+        "/Passenger": {
+          target: "http://member-api.rtesp.com",
+          changeOrigin: true,
+        },
+        "/Member": {
+          target: "http://member-api.rtesp.com",
           changeOrigin: true,
         },
         "/Jyx": {

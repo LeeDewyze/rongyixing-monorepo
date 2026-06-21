@@ -16,6 +16,7 @@ import { HotelPayPage } from "@/pages/hotel/HotelPayPage";
 import { HotelResultPage } from "@/pages/hotel/HotelResultPage";
 import { HotelSearchPage } from "@/pages/hotel/HotelSearchPage";
 import { PassengerSelectPage } from "@/pages/passenger/PassengerSelectPage";
+import { PassengerCredentialPage } from "@/pages/passenger/PassengerCredentialPage";
 import { PasswordLoginPage } from "@/pages/PasswordLoginPage";
 import { SplashPage } from "@/pages/SplashPage";
 import { TrainListPage } from "@/pages/train/TrainListPage";
@@ -62,7 +63,10 @@ export const router = createBrowserRouter([
   {
     path: "/passenger",
     element: <RootLayout />,
-    children: [{ path: "select", element: <PassengerSelectPage /> }],
+    children: [
+      { path: "select", element: <PassengerSelectPage /> },
+      { path: "credential", element: <PassengerCredentialPage /> },
+    ],
   },
   {
     path: "/flight",

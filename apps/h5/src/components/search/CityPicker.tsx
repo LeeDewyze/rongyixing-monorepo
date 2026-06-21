@@ -12,13 +12,14 @@ import {
   type NormalizedPickerItem,
 } from "@/lib/city-picker";
 
+import { PickerShell } from "./PickerShell";
+
 interface CityPickerProps<T> extends CityPickerAdapter<T> {
   open: boolean;
   items: T[];
   historyKey: string;
   onClose: () => void;
   onSelect: (item: T) => void;
-  /** Header title, e.g. 选择出发城市 */
   title?: string;
   browseFilter?: (item: T) => boolean;
   searchPlaceholder?: string;
@@ -215,147 +216,110 @@ export function CityPicker<T>({
         : "grid-cols-3";
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col bg-[#f5f7fa]">
-      {/* Gradient header + search */}
-      <div
-        className="shrink-0 bg-gradient-to-b from-[#d6e4ff] to-[#f5f7fa] pt-[env(safe-area-inset-top)]"
-      >
-        <div className="relative flex h-11 items-center px-1">
-          <button
-            type="button"
-            className="flex h-11 w-11 items-center justify-center text-2xl text-[#333333] active:opacity-70"
-            onClick={onClose}
-            aria-label="返回"
-          >
-            ‹
-          </button>
-          <h1 className="pointer-events-none absolute inset-x-11 truncate text-center text-base font-semibold text-[#333333]">
-            {title}
-          </h1>
-        </div>
-
-        <div className="px-4 pb-3 pt-1">
-          <div className="flex h-10 items-center gap-2 rounded-full bg-white px-3 shadow-sm">
-            <span className="text-sm text-[#999999]" aria-hidden>🔍</span>
-            <input
-              ref={inputRef}
-              type="search"
-              enterKeyHint="search"
-              className="min-w-0 flex-1 bg-transparent text-sm text-[#333333] outline-none placeholder:text-[#bbbbbb]"
-              placeholder={searchPlaceholder}
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-            />
-            <button
-              type="button"
-              className="shrink-0 rounded-full px-3 py-1 text-sm font-medium text-[#5099fe] active:opacity-80"
-              style={{ backgroundColor: "#e8eeff" }}
-              onClick={() => inputRef.current?.focus()}
-            >
-              搜索
-            </button>
+    <PickerShell
+      title={title}
+      searchPlaceholder={searchPlaceholder}
+      keyword={keyword}
+      onKeywordChange={setKeyword}
+      onBack={onClose}
+      onSearchClick={() => inputRef.current?.focus()}
+      inputRef={inputRef}
+      onBodyScroll={handleListScroll}
+      bodyOverlay={
+        !isSearching && letters.length > 0 ? (
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex w-5 flex-col items-center justify-center gap-0.5">
+            {letters.map((letter) => (
+              <button
+                key={letter}
+                type="button"
+                className="pointer-events-auto text-[11px] leading-3 text-[#999999] active:text-[#5099fe]"
+                onClick={() => scrollToLetter(letter)}
+              >
+                {letter}
+              </button>
+            ))}
           </div>
-        </div>
-      </div>
-
-      {/* Body */}
-      <div className="relative flex-1 overflow-y-auto" onScroll={handleListScroll}>
-        {isSearching ? (
-          <div className="pb-6">
-            {visibleSearchResults.length === 0 ? (
-              <p className="py-10 text-center text-sm text-[#999999]">没有符合条件的数据</p>
-            ) : (
-              <ul>
-                {visibleSearchResults.map((row) => (
-                  <li key={row.id}>
-                    <SearchResultRow row={row} showCode={showCodeInSearch} onSelect={handleSelect} />
-                  </li>
-                ))}
-                {visibleCount < searchResults.length ? (
-                  <li className="p-3 text-center text-xs text-[#999999]">加载更多…</li>
-                ) : null}
-              </ul>
-            )}
-          </div>
-        ) : (
-          <>
-            {showHistory && historyRows.length > 0 ? (
-              <section className="pb-2">
-                <div className="flex items-center justify-between px-4 pb-2 pt-1">
-                  <h3 className="text-xs font-medium text-[#666666]">{historyTitle}</h3>
-                  <button
-                    type="button"
-                    className="text-xs text-[#999999] active:opacity-70"
-                    onClick={handleClearHistory}
-                  >
-                    清除
-                  </button>
-                </div>
-                <div className={`grid ${hotGridClass} gap-2 px-4`}>
-                  {historyRows.map((row) => (
-                    <CityChip key={row.id} label={row.name} onClick={() => handleSelect(row.item)} />
-                  ))}
-                </div>
-              </section>
-            ) : null}
-
-            {hotItems.length > 0 ? (
-              <section className="pb-2">
-                <h3 className="px-4 pb-2 pt-2 text-xs font-medium text-[#666666]">{hotTitle}</h3>
-                <div className={`grid ${hotGridClass} gap-2 px-4`}>
-                  {hotItems.map((row) => (
-                    <CityChip key={row.id} label={row.name} onClick={() => handleSelect(row.item)} />
-                  ))}
-                </div>
-              </section>
-            ) : null}
-
-            <ul className="pb-16">
-              {letters.map((letter) => (
-                <li key={letter}>
-                  <div
-                    ref={(el) => {
-                      letterRefs.current[letter] = el;
-                    }}
-                    className="bg-[#e8eef8] px-4 py-1.5 text-sm font-semibold text-[#333333]"
-                    data-letter={letter}
-                  >
-                    {letter}
-                  </div>
-                  <ul>
-                    {groups[letter]?.map((row) => (
-                      <li key={row.id}>
-                        <PickerListRow
-                          row={row}
-                          showCode={showCodeInBrowse}
-                          onSelect={handleSelect}
-                        />
-                      </li>
-                    ))}
-                  </ul>
+        ) : null
+      }
+    >
+      {isSearching ? (
+        <div className="pb-6">
+          {visibleSearchResults.length === 0 ? (
+            <p className="py-10 text-center text-sm text-[#999999]">没有符合条件的数据</p>
+          ) : (
+            <ul>
+              {visibleSearchResults.map((row) => (
+                <li key={row.id}>
+                  <SearchResultRow row={row} showCode={showCodeInSearch} onSelect={handleSelect} />
                 </li>
               ))}
+              {visibleCount < searchResults.length ? (
+                <li className="p-3 text-center text-xs text-[#999999]">加载更多…</li>
+              ) : null}
             </ul>
-          </>
-        )}
-      </div>
-
-      {!isSearching && letters.length > 0 ? (
-        <div
-          className="pointer-events-none absolute inset-y-36 right-0 flex w-5 flex-col items-center justify-center gap-0.5"
-        >
-          {letters.map((letter) => (
-            <button
-              key={letter}
-              type="button"
-              className="pointer-events-auto text-[11px] leading-3 text-[#999999] active:text-[#5099fe]"
-              onClick={() => scrollToLetter(letter)}
-            >
-              {letter}
-            </button>
-          ))}
+          )}
         </div>
-      ) : null}
-    </div>
+      ) : (
+        <>
+          {showHistory && historyRows.length > 0 ? (
+            <section className="pb-2">
+              <div className="flex items-center justify-between px-4 pb-2 pt-1">
+                <h3 className="text-xs font-medium text-[#666666]">{historyTitle}</h3>
+                <button
+                  type="button"
+                  className="text-xs text-[#999999] active:opacity-70"
+                  onClick={handleClearHistory}
+                >
+                  清除
+                </button>
+              </div>
+              <div className={`grid ${hotGridClass} gap-2 px-4`}>
+                {historyRows.map((row) => (
+                  <CityChip key={row.id} label={row.name} onClick={() => handleSelect(row.item)} />
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          {hotItems.length > 0 ? (
+            <section className="pb-2">
+              <h3 className="px-4 pb-2 pt-2 text-xs font-medium text-[#666666]">{hotTitle}</h3>
+              <div className={`grid ${hotGridClass} gap-2 px-4`}>
+                {hotItems.map((row) => (
+                  <CityChip key={row.id} label={row.name} onClick={() => handleSelect(row.item)} />
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          <ul className="pb-16">
+            {letters.map((letter) => (
+              <li key={letter}>
+                <div
+                  ref={(el) => {
+                    letterRefs.current[letter] = el;
+                  }}
+                  className="bg-[#e8eef8] px-4 py-1.5 text-sm font-semibold text-[#333333]"
+                  data-letter={letter}
+                >
+                  {letter}
+                </div>
+                <ul>
+                  {groups[letter]?.map((row) => (
+                    <li key={row.id}>
+                      <PickerListRow
+                        row={row}
+                        showCode={showCodeInBrowse}
+                        onSelect={handleSelect}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </PickerShell>
   );
 }

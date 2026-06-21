@@ -39,6 +39,28 @@ export type {
 export type { HotelCity, HotelCityResourceResponse } from "./hotel-city.js";
 
 export type {
+  CredentialFormMode,
+  CredentialFormValues,
+  CredentialPayload,
+  StaffCredentialsParams,
+  TmcInfo,
+} from "./credential.js";
+export {
+  CREDENTIAL_TYPE_LABELS,
+  CREDENTIAL_TYPE_OPTIONS,
+  LEGACY_MEMBER_CREDENTIAL_TYPE_OPTIONS,
+  isIdCardType,
+  PASSENGER_TYPE_ADULT,
+  PASSENGER_TYPE_LABELS,
+  PassengerType,
+} from "./credential.js";
+export type {
+  MemberCredentialApiPayload,
+  ExternalPassengerApiPayload,
+  StaffCredentialApiPayload,
+} from "./credential.js";
+
+export type {
   MemberPassenger,
   MemberProfile,
   PassengerListParams,

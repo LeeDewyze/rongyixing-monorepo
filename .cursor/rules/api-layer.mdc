@@ -6,6 +6,8 @@ alwaysApply: false
 
 # API Layer Conventions
 
+> Legacy alignment (req.Data research, normalize, payload builders): see **legacy-api.mdc**.
+
 ## Layering
 
 1. **DTO** → `packages/shared-types`

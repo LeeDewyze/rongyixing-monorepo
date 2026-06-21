@@ -24,6 +24,8 @@ export interface ApiConfigSetting {
   Urls: Record<string, string>;
   /** e.g. https://ronglv-feature.rongtrip.cn/Jyx/LoginByRyx */
   LoginUrl?: string;
+  /** Tenant domain — Legacy `ApiConfig.Domain`, sent on every Proxy request. */
+  Domain?: string;
 }
 
 export type ApiMode = "mock" | "proxy" | "direct";

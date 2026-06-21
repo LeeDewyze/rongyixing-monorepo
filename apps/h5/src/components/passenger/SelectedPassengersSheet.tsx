@@ -18,7 +18,7 @@ export function SelectedPassengersSheet({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col justify-end bg-black/40">
+    <div className="fixed inset-0 z-[70] flex flex-col justify-end bg-black/40">
       <button type="button" className="flex-1" aria-label="关闭" onClick={onClose} />
       <div className="max-h-[70vh] overflow-y-auto rounded-t-2xl bg-background p-4 pb-6">
         <div className="mb-4 flex items-center justify-between">

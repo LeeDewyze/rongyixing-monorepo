@@ -101,3 +101,22 @@ export function isSelected(
   const key = credentialKey(credential);
   return selected.some((i) => credentialKey(i.credential) === key);
 }
+
+/** Drop selection entries for a deleted external passenger or staff credential. */
+export function removeDeletedFromSelection(
+  current: PassengerBookInfo[],
+  target: { passengerId?: string; credential?: PassengerCredential },
+): PassengerBookInfo[] {
+  if (target.credential) {
+    const key = credentialKey(target.credential);
+    return current.filter((i) => credentialKey(i.credential) !== key);
+  }
+  if (target.passengerId) {
+    return current.filter((i) => {
+      if (i.credential.Id === target.passengerId) return false;
+      if ("Id" in i.passenger && i.passenger.Id === target.passengerId) return false;
+      return true;
+    });
+  }
+  return current;
+}

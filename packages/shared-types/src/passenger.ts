@@ -97,6 +97,8 @@ export function maxPassengersForProduct(type: ProductType): number {
     case ProductType.Hotel:
     case ProductType.HotelInternational:
       return 3;
+    case ProductType.Train:
+      return 5;
     case ProductType.Flight:
     case ProductType.InternationalFlight:
       return 9;
@@ -159,18 +161,24 @@ export function staffPrimaryCredential(staff: StaffPassenger): PassengerCredenti
 }
 
 export function memberToCredential(p: import("./member.js").MemberPassenger): PassengerCredential {
+  const credType = p.CredentialsType ?? p.CredentialType;
+  const credTypeName = p.CredentialsTypeName ?? p.CredentialTypeName;
+  const number = p.Number ?? p.CredentialNo;
+  const hideNumber =
+    p.HideCredentialsNumber ??
+    p.HideNumber ??
+    (number ? `${number.slice(0, 3)}****${number.slice(-4)}` : "");
+
   return {
     Id: p.Id,
     Name: p.Name,
     Mobile: p.Mobile,
-    Type: p.CredentialType,
-    TypeName: p.CredentialTypeName,
-    CredentialsType: p.CredentialType,
-    CredentialsTypeName: p.CredentialTypeName,
-    Number: p.CredentialNo,
-    HideNumber: p.CredentialNo
-      ? `${p.CredentialNo.slice(0, 3)}****${p.CredentialNo.slice(-4)}`
-      : "",
+    Type: credType,
+    TypeName: credTypeName,
+    CredentialsType: credType,
+    CredentialsTypeName: credTypeName,
+    Number: number,
+    HideNumber: hideNumber,
   };
 }
 

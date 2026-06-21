@@ -13,6 +13,20 @@ import {
 const PAGE_SIZE = 20;
 const EMPTY_PASSENGERS: PassengerBookInfo[] = [];
 
+function nextPageParam(
+  items: unknown[] | undefined,
+  totalCount: number | undefined,
+  pageParam: number,
+): number | undefined {
+  const pageItems = items ?? [];
+  if (totalCount != null) {
+    const loaded = (pageParam + 1) * PAGE_SIZE;
+    return loaded < totalCount ? pageParam + 1 : undefined;
+  }
+  // Legacy API: no TotalCount — infer from page size
+  return pageItems.length >= PAGE_SIZE ? pageParam + 1 : undefined;
+}
+
 /** Cached snapshots so useSyncExternalStore getSnapshot stays referentially stable. */
 const selectionSnapshotCache = new Map<
   ProductType,
@@ -59,11 +73,8 @@ export function useStaffList(keyword: string, enabled = true) {
         PageSize: PAGE_SIZE,
       }),
     initialPageParam: 0,
-    getNextPageParam: (lastPage, _pages, pageParam) => {
-      const loaded = (pageParam + 1) * PAGE_SIZE;
-      const total = lastPage.TotalCount ?? lastPage.Staffs.length;
-      return loaded < total ? pageParam + 1 : undefined;
-    },
+    getNextPageParam: (lastPage, _pages, pageParam) =>
+      nextPageParam(lastPage?.Staffs, lastPage?.TotalCount, pageParam),
     enabled,
   });
 }
@@ -74,15 +85,13 @@ export function useExternalPassengerList(keyword: string, enabled = true) {
     queryFn: ({ pageParam = 0 }) =>
       getApi().passenger.getPassengerList({
         Name: keyword,
+        Mobile: keyword,
         PageIndex: pageParam,
         PageSize: PAGE_SIZE,
       }),
     initialPageParam: 0,
-    getNextPageParam: (lastPage, _pages, pageParam) => {
-      const loaded = (pageParam + 1) * PAGE_SIZE;
-      const total = lastPage.TotalCount ?? lastPage.Passengers.length;
-      return loaded < total ? pageParam + 1 : undefined;
-    },
+    getNextPageParam: (lastPage, _pages, pageParam) =>
+      nextPageParam(lastPage?.Passengers, lastPage?.TotalCount, pageParam),
     enabled,
   });
 }
@@ -110,7 +119,14 @@ export function usePassengerSelection(forType: ProductType) {
 export function useAllowExternalPassengers() {
   return useQuery({
     queryKey: ["passenger", "allowExternal"],
-    queryFn: async () => true,
-    staleTime: Infinity,
+    queryFn: async () => {
+      try {
+        const tmc = await getApi().tmc.getTmc();
+        return tmc.AllowAddingNonTmcUser !== false;
+      } catch {
+        return true;
+      }
+    },
+    staleTime: 5 * 60 * 1000,
   });
 }

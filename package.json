@@ -6,6 +6,7 @@
     "node": ">=20"
   },
   "scripts": {
+    "prepare": "git config core.hooksPath .githooks 2>/dev/null || true",
     "build:workspace": "pnpm --filter @ryx/shared-types build && pnpm --filter @ryx/api build && pnpm --filter @ryx/mock build",
     "dev:h5": "pnpm build:workspace && pnpm --filter @ryx/h5 dev",
     "dev:h5:mock": "pnpm build:workspace && VITE_API_MODE=mock pnpm --filter @ryx/h5 dev",

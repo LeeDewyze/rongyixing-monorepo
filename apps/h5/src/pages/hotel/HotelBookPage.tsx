@@ -8,6 +8,7 @@ import { PassengerSelectEntry } from "@/components/passenger";
 import { usePageHeader } from "@/components/layout";
 import { useHotelInitBook, useHotelSubmitBook, useTravelForms } from "@/hooks/useHotelBook";
 import { usePassengerSelection } from "@/hooks/usePassenger";
+import { clearPassengerSelection } from "@/lib/passenger-selection";
 
 export function HotelBookPage() {
   const { hotelId = "" } = useParams();
@@ -55,6 +56,7 @@ export function HotelBookPage() {
       TravelFormId: travelFormId || undefined,
     });
 
+    clearPassengerSelection(ProductType.Hotel);
     navigate(`/hotel/result/${result.OrderId}`);
   }
 

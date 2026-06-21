@@ -18,6 +18,7 @@ export function normalizeApiConfigSetting(payload: unknown): ApiConfigSetting {
     Token: data.Token ?? "",
     Urls: data.Urls ?? {},
     LoginUrl: data.LoginUrl,
+    Domain: data.Domain,
   };
 }
 
