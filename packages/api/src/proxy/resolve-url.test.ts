@@ -27,7 +27,7 @@ describe("resolveUrl", () => {
     ).toBe("http://member-api.rtesp.com/Passenger/Add");
   });
 
-  it("uses same-origin path for vite dev when baseUrl is empty", () => {
+  it("uses __ryx dev proxy path when baseUrl is empty", () => {
     expect(
       resolveUrl({
         baseUrl: "",
@@ -37,7 +37,23 @@ describe("resolveUrl", () => {
           Urls: { ApiMemberUrl: "http://member-api.rtesp.com" },
         },
       }),
-    ).toBe("/Passenger/Add");
+    ).toBe("/__ryx/ApiMemberUrl/Passenger/Add");
+  });
+
+  it("disambiguates hotel Home/List in vite dev", () => {
+    expect(
+      resolveUrl({
+        baseUrl: "",
+        method: "TmcApiHotelUrl-Home-List",
+        apiConfig: {
+          Token: "t",
+          Urls: {
+            TmcApiHotelUrl: "http://hotel-api-tmc.rtesp.com",
+            TmcApiHomeUrl: "http://api-tmc.rtesp.com",
+          },
+        },
+      }),
+    ).toBe("/__ryx/TmcApiHotelUrl/Home/List");
   });
 
   it("resolves direct URL from api config in direct mode", () => {

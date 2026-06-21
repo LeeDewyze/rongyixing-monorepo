@@ -5,9 +5,7 @@ import { AUTH_FLOW_METHODS } from "../methods/auth-flow.js";
 const DEFAULT_PROXY_PATH = "/Home/Proxy";
 
 /** Legacy posts unsigned identity websocket to /Home/Proxy (empty Method in getUrl). */
-const PROXY_ONLY_METHODS = new Set<string>([
-  AUTH_FLOW_METHODS.IDENTITY_WEBSOCKET,
-]);
+const PROXY_ONLY_METHODS = new Set<string>([AUTH_FLOW_METHODS.IDENTITY_WEBSOCKET]);
 
 const LOGIN_URL_METHODS = new Set<string>([
   AUTH_FLOW_METHODS.LOGIN,
@@ -33,12 +31,16 @@ function normalizeBase(baseUrl: string): string {
   return baseUrl.replace(/\/$/, "");
 }
 
+/** Vite dev prefix — disambiguates shared paths like /Home/List across microservices. */
+export const DEV_RYX_PROXY_PREFIX = "/__ryx";
+
 /** Legacy uses absolute service URL; Vite dev uses same-origin path + proxy. */
-function toFetchUrl(serviceUrl: string, baseUrl: string): string {
+function toFetchUrl(serviceUrl: string, baseUrl: string, urlKey?: string): string {
   const base = normalizeBase(baseUrl);
   if (!base) {
     try {
-      return new URL(serviceUrl).pathname;
+      const pathname = new URL(serviceUrl).pathname;
+      return urlKey ? `${DEV_RYX_PROXY_PREFIX}/${urlKey}${pathname}` : pathname;
     } catch {
       return serviceUrl;
     }
@@ -53,12 +55,14 @@ function resolveServiceUrl(
 ): string | null {
   const parts = method.split("-");
   if (parts.length < 3) return null;
-  const [urlKey, controller, ...actionParts] = parts;
+  const urlKey = parts[0] ?? "";
+  const controller = parts[1] ?? "";
+  const actionParts = parts.slice(2);
   const serviceBase = apiConfig.Urls[urlKey];
   if (!serviceBase) return null;
   const action = actionParts.join("-");
   const absolute = `${serviceBase.replace(/\/$/, "")}/${controller}/${action}`;
-  return toFetchUrl(absolute, baseUrl);
+  return toFetchUrl(absolute, baseUrl, urlKey);
 }
 
 /** Resolve POST URL from Method string (beeant getUrl logic). */
