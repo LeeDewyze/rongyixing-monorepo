@@ -1,4 +1,4 @@
-import type { Trafficline } from "@ryx/shared-types";
+import type { FlightSearchParams, Trafficline } from "@ryx/shared-types";
 
 import {
   buildDateRange,
@@ -16,6 +16,7 @@ export const DEFAULT_FLIGHT_FROM: Trafficline = {
   Id: "9278",
   Tag: "AirportCity",
   Code: "BJS",
+  AirportCityCode: "BJS",
   Name: "北京",
   Nickname: "北京",
   CityName: "北京",
@@ -27,6 +28,7 @@ export const DEFAULT_FLIGHT_TO: Trafficline = {
   Id: "9280",
   Tag: "AirportCity",
   Code: "SHA",
+  AirportCityCode: "SHA",
   Name: "上海",
   Nickname: "上海",
   CityName: "上海",
@@ -74,13 +76,41 @@ export function persistFlightCities(fromCity: Trafficline, toCity: Trafficline) 
   localStorage.setItem(FLIGHT_STORAGE_TO, JSON.stringify(toCity));
 }
 
+/** Legacy: Tag=Airport → airport code; Tag=AirportCity → AirportCityCode. */
+export function isFlightAirportQuery(city: Trafficline): boolean {
+  return city.Tag === "Airport";
+}
+
+/** Resolve Home-Index FromCode/ToCode (matches beeant setSearchFlightModelSource). */
+export function resolveFlightLocationCode(city: Trafficline): string {
+  if (isFlightAirportQuery(city)) {
+    return city.Code;
+  }
+  return city.AirportCityCode || city.Code;
+}
+
 export function resolveCityFromAirports(
   code: string,
   name: string | undefined,
   airports: Trafficline[],
   fallback: Trafficline,
+  asAirport?: boolean,
 ): Trafficline {
-  const found = airports.find((c) => c.Code === code);
+  if (asAirport === true) {
+    const airport = airports.find((c) => c.Tag === "Airport" && c.Code === code);
+    if (airport) return airport;
+  } else if (asAirport === false) {
+    const city = airports.find(
+      (c) =>
+        c.Tag === "AirportCity" &&
+        (c.Code === code || c.AirportCityCode === code),
+    );
+    if (city) return city;
+  }
+
+  const found =
+    airports.find((c) => c.Code === code) ??
+    airports.find((c) => c.AirportCityCode === code);
   if (found) return found;
   if (!code) return fallback;
   return {
@@ -90,6 +120,23 @@ export function resolveCityFromAirports(
     Name: name ?? code,
     Nickname: name ?? code,
     CityName: name ?? code,
+  };
+}
+
+/** Build TmcApiFlightUrl-Home-Index payload from selected cities. */
+export function buildHomeIndexParams(
+  fromCity: Trafficline,
+  toCity: Trafficline,
+  date: string,
+): FlightSearchParams {
+  const fromAsAirport = isFlightAirportQuery(fromCity);
+  const toAsAirport = isFlightAirportQuery(toCity);
+  return {
+    Date: date,
+    FromCode: resolveFlightLocationCode(fromCity),
+    ToCode: resolveFlightLocationCode(toCity),
+    FromAsAirport: fromAsAirport,
+    ToAsAirport: toAsAirport,
   };
 }
 
@@ -104,14 +151,16 @@ export function buildFlightListSearchParams({
   toCity,
   date,
 }: FlightListQueryInput): URLSearchParams {
+  const fromAsAirport = isFlightAirportQuery(fromCity);
+  const toAsAirport = isFlightAirportQuery(toCity);
   return new URLSearchParams({
-    fromCode: fromCity.Code,
-    toCode: toCity.Code,
+    fromCode: resolveFlightLocationCode(fromCity),
+    toCode: resolveFlightLocationCode(toCity),
     fromName: displayCityName(fromCity),
     toName: displayCityName(toCity),
     date,
-    fromAsAirport: String(fromCity.Tag === "Airport"),
-    toAsAirport: String(toCity.Tag === "Airport"),
+    fromAsAirport: String(fromAsAirport),
+    toAsAirport: String(toAsAirport),
   });
 }
 
@@ -135,17 +184,33 @@ export function cityFromQuery(
   name: string | undefined,
   asAirport: boolean | undefined,
 ): Trafficline {
-  const resolved = resolveCityFromAirports(code, name, airports, {
+  const fallback: Trafficline = {
     Id: code,
     Tag: asAirport ? "Airport" : "AirportCity",
     Code: code,
     Name: name ?? code,
     Nickname: name ?? code,
-  });
-  if (asAirport && resolved.Tag !== "Airport") {
-    return { ...resolved, Tag: "Airport" };
+  };
+
+  if (name) {
+    const cityByName = airports.find(
+      (c) =>
+        c.Tag === "AirportCity" &&
+        (c.Name === name || c.Nickname === name || c.CityName === name),
+    );
+    if (cityByName) {
+      return cityByName;
+    }
+
+    const airportByName = airports.find(
+      (c) => c.Tag === "Airport" && (c.Name === name || c.Nickname === name),
+    );
+    if (airportByName) {
+      return airportByName;
+    }
   }
-  return resolved;
+
+  return resolveCityFromAirports(code, name, airports, fallback, asAirport);
 }
 
 export function loadDefaultSearchForm(): {

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 
-import { buildDateRange, formatDayChip } from "@/lib/flight-search";
+import { buildDateRange, formatDayChip, todayDateString } from "@/lib/flight-search";
+import { parseLocalDate } from "@/lib/date-search";
 
 interface FlightDateStripProps {
   selectedDate: string;
@@ -17,7 +18,9 @@ export function FlightDateStrip({
   className = "",
 }: FlightDateStripProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const dates = buildDateRange(selectedDate, days);
+  const anchorDate =
+    parseLocalDate(selectedDate) ? selectedDate : todayDateString();
+  const dates = buildDateRange(anchorDate, days);
 
   useEffect(() => {
     const el = scrollRef.current?.querySelector(`[data-date="${selectedDate}"]`);

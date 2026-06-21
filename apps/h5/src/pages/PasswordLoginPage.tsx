@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import passwordBg from "@/assets/login/password-bg.png";
 import { DesignScreen } from "@/components/DesignScreen";
@@ -93,6 +93,8 @@ function PasswordVisibilityToggle({
 
 export function PasswordLoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const returnTo = searchParams.get("returnTo");
   const login = usePasswordLogin();
   const initialForm = getInitialFormState();
   const [account, setAccount] = useState(initialForm.account);
@@ -126,7 +128,7 @@ export function PasswordLoginPage() {
       } else {
         clearRememberedCredentials();
       }
-      navigate("/home");
+      navigate(returnTo?.startsWith("/") ? returnTo : "/home");
     } catch {
       // Error surfaced via login.error
     }

@@ -40,4 +40,6 @@ export interface ProxySendOptions {
   /** Beeant Identity GetWebSocketUrl: no Sign/Token on form body */
   skipSign?: boolean;
   isShowLoading?: boolean;
+  /** Beeant RequestEntity.Timeout (seconds) included in form body */
+  requestTimeout?: number;
 }

@@ -104,6 +104,16 @@ function appendDomainQuery(url: string, domain?: string | null): string {
   return `${url}${sep}domain=${encodeURIComponent(domain.trim())}`;
 }
 
+/** True when POST goes through app gateway `/Home/Proxy` (not direct microservice URL). */
+export function isGatewayProxyUrl(url: string): boolean {
+  try {
+    const pathname = url.startsWith("http") ? new URL(url).pathname : url.split("?")[0] ?? url;
+    return pathname.includes("/Home/Proxy");
+  } catch {
+    return url.includes("/Home/Proxy");
+  }
+}
+
 export function parseMethod(method: string): {
   urlKey: string;
   controller: string;

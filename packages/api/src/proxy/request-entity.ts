@@ -75,8 +75,8 @@ const SKIP_FORM_KEYS = new Set([
   "Data",
   "Url",
   "IsForward",
-  "Timeout",
   "LoadingMsg",
+  "IsShowLoading",
   /** Handled explicitly above; must not leak via the generic req loop */
   "Token",
   "Sign",

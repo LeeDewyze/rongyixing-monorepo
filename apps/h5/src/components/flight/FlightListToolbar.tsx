@@ -1,77 +1,78 @@
-import type { FlightSortTab } from "@ryx/shared-types";
+import filterIcon from "@/assets/flight/toolbar-filter.png";
+import priceIcon from "@/assets/flight/toolbar-price.png";
+import timeIcon from "@/assets/flight/toolbar-time.png";
+
+export type FlightListSort = "time" | "price";
 
 interface FlightListToolbarProps {
-  activeTab: FlightSortTab;
-  filtered: boolean;
-  priceLowToHigh: boolean;
-  timeEarlyToLate: boolean;
-  onFilter: () => void;
-  onOpenTimeSort: () => void;
-  onOpenPriceSort: () => void;
+  onFilterClick: () => void;
+  sort: FlightListSort;
+  onSortChange: (sort: FlightListSort) => void;
+  filterActive?: boolean;
 }
 
 export function FlightListToolbar({
-  activeTab,
-  filtered,
-  priceLowToHigh,
-  timeEarlyToLate,
-  onFilter,
-  onOpenTimeSort,
-  onOpenPriceSort,
+  onFilterClick,
+  sort,
+  onSortChange,
+  filterActive = false,
 }: FlightListToolbarProps) {
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#eeeeee] bg-white pb-[max(0.25rem,env(safe-area-inset-bottom))] shadow-[0_-2px_8px_rgba(0,0,0,0.04)]">
       <div className="mx-auto grid max-w-lg grid-cols-3">
-        <ToolbarItem
-          active={activeTab === "filter"}
-          hint={filtered ? "已筛选" : "筛选"}
-          onClick={onFilter}
+        <ToolbarButton
+          active={filterActive}
+          icon={filterIcon}
+          label="筛选"
+          onClick={onFilterClick}
         />
-        <ToolbarItem
-          active={activeTab === "time"}
-          hint={
-            activeTab === "time"
-              ? timeEarlyToLate
-                ? "从早到晚"
-                : "从晚到早"
-              : "时间"
-          }
-          onClick={onOpenTimeSort}
+        <ToolbarButton
+          active={sort === "time"}
+          icon={timeIcon}
+          label="时间"
+          onClick={() => onSortChange("time")}
         />
-        <ToolbarItem
-          active={activeTab === "price"}
-          hint={
-            activeTab === "price"
-              ? priceLowToHigh
-                ? "从低到高"
-                : "从高到低"
-              : "价格"
-          }
-          onClick={onOpenPriceSort}
+        <ToolbarButton
+          active={sort === "price"}
+          icon={priceIcon}
+          label="价格"
+          onClick={() => onSortChange("price")}
         />
       </div>
     </div>
   );
 }
 
-function ToolbarItem({
+function ToolbarButton({
   active,
-  hint,
+  icon,
+  label,
   onClick,
 }: {
   active: boolean;
-  hint: string;
+  icon: string;
+  label: string;
   onClick: () => void;
 }) {
   return (
     <button
       type="button"
-      onClick={onClick}
-      className={`flex flex-col items-center py-3 text-xs ${
-        active ? "font-semibold text-primary" : "text-muted-foreground"
+      className={`flex flex-col items-center gap-1 py-2.5 text-[11px] ${
+        active ? "text-[#5099fe]" : "text-[#666666]"
       }`}
+      onClick={onClick}
     >
-      {hint}
+      <img
+        src={icon}
+        alt=""
+        className={`size-5${
+          active
+            ? " [filter:invert(48%)_sepia(79%)_saturate(2476%)_hue-rotate(196deg)_brightness(101%)_contrast(101%)]"
+            : ""
+        }`}
+        aria-hidden
+      />
+      {label}
     </button>
   );
 }

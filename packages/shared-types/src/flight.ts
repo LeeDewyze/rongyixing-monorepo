@@ -68,6 +68,11 @@ export interface FlightSegment {
   Meal?: string;
   CodeShareNumber?: string;
   CodeShareAirlineName?: string;
+  /** Home-Detail lookup key from list API (`Data` in Legacy). */
+  DetailKey?: string;
+  Data?: string;
+  /** Low inventory hint — show「剩N张」when 1–5. */
+  RemainSeats?: number;
 }
 
 export interface FlightListView {
