@@ -35,6 +35,7 @@ export const MOCK_HOTEL_LIST: HotelListResponse = {
       Star: 5,
       MinPrice: 698,
       ImageUrl: "https://picsum.photos/seed/hotel-wuhan-4/200/200",
+      Tags: ["Tmc"],
     },
     {
       HotelId: "H10005",

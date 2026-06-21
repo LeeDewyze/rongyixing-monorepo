@@ -1,38 +1,49 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import type { HotelType } from "@ryx/shared-types";
 
 import { HotelListFilterBar, type HotelListFilterId } from "@/components/hotel/HotelListFilterBar";
 import { HotelListItem } from "@/components/hotel/HotelListItem";
 import { HotelListSearchBar } from "@/components/hotel/HotelListSearchBar";
-import { HotelTypeTabs } from "@/components/hotel/HotelTypeTabs";
 import { usePageHeader } from "@/components/layout";
-import { BRAND_HEADER_BG } from "@/config/brand";
+import headerProfileIcon from "@/assets/hotel/header-profile.png";
 import { useHotelList } from "@/hooks/useHotelList";
 import { formatApiError } from "@/lib/formatApiError";
 
-function parseHotelType(value: string | null): HotelType {
-  if (value === "Tmc" || value === "Agent") return value;
-  return "Normal";
+/** Figma hotel list — sky-blue header fading into filter panel (#EEF4FC). */
+const HOTEL_LIST_HEADER_GRADIENT =
+  "linear-gradient(180deg, #8EC8FF 0%, #B8DBFF 42%, #DCE9FA 78%, #EEF4FC 100%)";
+
+/** Soft fade from header tail into list background. */
+const HOTEL_LIST_HEADER_FADE = "linear-gradient(180deg, #EEF4FC 0%, #F5F6F9 100%)";
+
+function BackIcon() {
+  return (
+    <svg viewBox="0 0 10 17" className="h-[17px] w-[10px] shrink-0 text-black" aria-hidden>
+      <path
+        d="M9 1.5 2.5 8.5 9 15.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
 }
 
-function MoreMenuIcon() {
+function ProfileHeaderIcon() {
   return (
-    <svg viewBox="0 0 20 20" className="size-5" aria-hidden>
-      <circle cx="4" cy="10" r="1.5" fill="currentColor" />
-      <circle cx="10" cy="10" r="1.5" fill="currentColor" />
-      <circle cx="16" cy="10" r="1.5" fill="currentColor" />
-    </svg>
+    <img src={headerProfileIcon} alt="" className="size-6 shrink-0 object-contain" aria-hidden />
   );
 }
 
 function HotelListSkeleton() {
   return (
-    <div>
-      {Array.from({ length: 6 }, (_, i) => (
-        <div key={i} className="flex gap-3.5 py-2.5">
-          <div className="size-[100px] shrink-0 animate-pulse rounded-[10px] bg-[#E5E7EB]" />
-          <div className="flex min-h-[100px] flex-1 flex-col justify-between py-0.5">
+    <div className="flex flex-col gap-2">
+      {Array.from({ length: 4 }, (_, i) => (
+        <div key={i} className="flex gap-3 rounded-lg bg-white p-3">
+          <div className="size-24 shrink-0 animate-pulse rounded-lg bg-[#E5E7EB]" />
+          <div className="flex min-h-24 flex-1 flex-col justify-between py-0.5">
             <div className="space-y-2">
               <div className="h-4 w-full animate-pulse rounded bg-[#E5E7EB]" />
               <div className="h-4 w-3/4 animate-pulse rounded bg-[#E5E7EB]" />
@@ -51,7 +62,7 @@ function HotelListSkeleton() {
 
 export function HotelListPage() {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const [activeFilter, setActiveFilter] = useState<HotelListFilterId | null>(null);
 
   const cityCode = searchParams.get("cityCode") ?? "";
@@ -59,7 +70,6 @@ export function HotelListPage() {
   const checkIn = searchParams.get("checkIn") ?? "";
   const checkOut = searchParams.get("checkOut") ?? "";
   const keyword = searchParams.get("keyword") ?? "";
-  const hotelType = parseHotelType(searchParams.get("hotelType"));
 
   const hasParams = Boolean(cityCode && checkIn && checkOut);
 
@@ -78,10 +88,9 @@ export function HotelListPage() {
             CheckInDate: checkIn,
             CheckOutDate: checkOut,
             Keyword: keyword || undefined,
-            HotelType: hotelType,
           }
         : {},
-    [hasParams, cityCode, cityName, checkIn, checkOut, keyword, hotelType],
+    [hasParams, cityCode, cityName, checkIn, checkOut, keyword],
   );
 
   const { data, isLoading, isFetching, error, refetch } = useHotelList(listParams);
@@ -94,12 +103,6 @@ export function HotelListPage() {
     navigate("/hotel");
   }
 
-  function handleHotelTypeChange(next: HotelType) {
-    const params = new URLSearchParams(searchParams);
-    params.set("hotelType", next);
-    setSearchParams(params, { replace: true });
-  }
-
   function openDetail(hotelId: string) {
     const params = new URLSearchParams({
       checkIn,
@@ -110,57 +113,64 @@ export function HotelListPage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col bg-[#5099FE]">
+    <div className="flex min-h-full flex-col bg-[#F5F6F9]">
       <div className="sticky top-0 z-20 shrink-0">
-        <div style={{ backgroundColor: BRAND_HEADER_BG }}>
-          <div className="pt-[env(safe-area-inset-top)]">
-            <div className="flex items-center gap-0.5 px-1 pb-3 pt-1">
-              <button
-                type="button"
-                className="flex h-11 w-10 shrink-0 items-center justify-center text-[26px] font-light leading-none text-white active:opacity-70"
-                aria-label="返回"
-                onClick={() => navigate(-1)}
-              >
-                ‹
-              </button>
-              <HotelListSearchBar
-                cityName={cityName}
-                checkIn={checkIn}
-                checkOut={checkOut}
-                keyword={keyword}
-                onCityClick={goModifySearch}
-                onDateClick={goModifySearch}
-                onKeywordClick={goModifySearch}
-              />
-              <button
-                type="button"
-                className="flex h-11 w-10 shrink-0 items-center justify-center text-white active:opacity-70"
-                aria-label="更多"
-              >
-                <MoreMenuIcon />
-              </button>
-            </div>
+        <div
+          className="pt-[env(safe-area-inset-top)]"
+          style={{ background: HOTEL_LIST_HEADER_GRADIENT }}
+        >
+          <div className="relative flex h-11 items-center px-3">
+            <button
+              type="button"
+              className="flex h-11 w-10 shrink-0 items-center justify-center active:opacity-70"
+              aria-label="返回"
+              onClick={() => navigate(-1)}
+            >
+              <BackIcon />
+            </button>
+            <h1 className="pointer-events-none absolute inset-x-0 text-center text-[17px] font-semibold text-[#010101] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]">
+              酒店查询
+            </h1>
+            <button
+              type="button"
+              className="ml-auto flex h-11 w-10 shrink-0 items-center justify-center active:opacity-70"
+              aria-label="个人中心"
+              onClick={() => navigate("/home/mine")}
+            >
+              <ProfileHeaderIcon />
+            </button>
           </div>
-        </div>
 
-        <div className="rounded-t-[18px] bg-white">
+          <div className="px-3 pt-1.5">
+            <HotelListSearchBar
+              cityName={cityName}
+              checkIn={checkIn}
+              checkOut={checkOut}
+              keyword={keyword}
+              onCityClick={goModifySearch}
+              onDateClick={goModifySearch}
+              onKeywordClick={goModifySearch}
+            />
+          </div>
+
           <HotelListFilterBar
             activeId={activeFilter}
             onSelect={(id) => setActiveFilter((prev) => (prev === id ? null : id))}
           />
-          <HotelTypeTabs value={hotelType} onChange={handleHotelTypeChange} />
         </div>
+
+        <div className="h-2 shrink-0" style={{ background: HOTEL_LIST_HEADER_FADE }} aria-hidden />
       </div>
 
-      <div className="flex-1 bg-white pb-4">
+      <div className="flex-1 px-3 pb-2 pt-0">
         {isLoading ? <HotelListSkeleton /> : null}
 
         {error ? (
-          <div className="px-4 py-8 text-center">
+          <div className="rounded-lg bg-white px-4 py-8 text-center">
             <p className="text-sm text-destructive">{formatApiError(error)}</p>
             <button
               type="button"
-              className="mt-3 text-sm font-medium text-[#5099FE]"
+              className="mt-3 text-sm font-medium text-[#2768FA]"
               onClick={() => refetch()}
             >
               重试
@@ -169,19 +179,16 @@ export function HotelListPage() {
         ) : null}
 
         {!isLoading && !error && hotels.length === 0 ? (
-          <div className="px-4 py-16 text-center">
+          <div className="rounded-lg bg-white px-4 py-16 text-center">
             <p className="text-sm text-[#716161]">暂无数据</p>
           </div>
         ) : null}
 
-        {!isLoading && !error ? (
-          <ul className="px-3 pt-1">
-            {hotels.map((hotel, index) => (
-              <li key={hotel.HotelId}>
+        {!isLoading && !error && hotels.length > 0 ? (
+          <ul className="flex flex-col gap-2">
+            {hotels.map((hotel) => (
+              <li key={hotel.HotelId} className="overflow-hidden rounded-lg bg-white">
                 <HotelListItem hotel={hotel} onClick={() => openDetail(hotel.HotelId)} />
-                {index < hotels.length - 1 ? (
-                  <div aria-hidden className="ml-[114px] border-b border-[#2768FA]/30" />
-                ) : null}
               </li>
             ))}
           </ul>

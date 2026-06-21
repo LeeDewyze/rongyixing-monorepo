@@ -91,10 +91,20 @@ export type {
   StaffPassenger,
 } from "./passenger.js";
 
+export { OrderListTabId } from "./order.js";
 export type {
+  OrderAction,
+  OrderActionKind,
+  OrderCarListItem,
+  OrderFlightListItem,
+  OrderHotelListItem,
   OrderListItem,
+  OrderListItemBase,
   OrderListParams,
   OrderListResponse,
+  OrderListScope,
+  OrderListType,
+  OrderTrainListItem,
   PayProcessParams,
   PayProcessResponse,
 } from "./order.js";

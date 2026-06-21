@@ -1,3 +1,4 @@
+import searchLocationPinIcon from "@/assets/hotel/search-location-pin.png";
 import { formatHotelStayDate } from "@/lib/date-search";
 
 interface HotelListSearchBarProps {
@@ -8,6 +9,19 @@ interface HotelListSearchBarProps {
   onCityClick: () => void;
   onDateClick: () => void;
   onKeywordClick: () => void;
+}
+
+const SEARCH_BAR_DIVIDER_CLASS = "mx-2 h-8 w-0.5 shrink-0 bg-[#D9D9D9]";
+
+function LocationPinIcon() {
+  return (
+    <img
+      src={searchLocationPinIcon}
+      alt=""
+      className="size-4 shrink-0 object-contain"
+      aria-hidden
+    />
+  );
 }
 
 function SearchIcon() {
@@ -29,41 +43,38 @@ export function HotelListSearchBar({
   onKeywordClick,
 }: HotelListSearchBarProps) {
   return (
-    <div className="flex h-[34px] min-w-0 flex-1 items-center rounded-full border-[0.5px] border-[#E5E5E5] bg-white pl-3 pr-2.5 shadow-[0_2px_6px_rgba(229,229,229,0.5)]">
+    <div className="flex h-12 w-full items-center rounded-[24px] bg-white px-3 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+      <LocationPinIcon />
       <button
         type="button"
-        className="shrink-0 text-[15px] font-medium leading-none text-[#5099FE]"
+        className="ml-1 shrink-0 text-[14px] font-medium leading-none tracking-normal text-[#010101] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]"
         onClick={onCityClick}
       >
         {cityName}
       </button>
 
-      <span className="mx-2 h-5 w-px shrink-0 bg-[rgba(0,0,0,0.08)]" aria-hidden />
+      <span className={SEARCH_BAR_DIVIDER_CLASS} aria-hidden />
 
       <button
         type="button"
         className="flex shrink-0 flex-col items-start justify-center leading-none"
         onClick={onDateClick}
       >
-        <div className="flex items-center gap-1 text-[10px] text-[#808080]">
+        <div className="flex items-center gap-1 text-[11px] text-[#808080]">
           <span>住</span>
-          <span className="text-[11px] font-medium text-[#5099FE]">
-            {formatHotelStayDate(checkIn)}
-          </span>
+          <span className="font-medium text-[#2768FA]">{formatHotelStayDate(checkIn)}</span>
         </div>
-        <div className="mt-0.5 flex items-center gap-1 text-[10px] text-[#808080]">
+        <div className="mt-0.5 flex items-center gap-1 text-[11px] text-[#808080]">
           <span>离</span>
-          <span className="text-[11px] font-medium text-[#5099FE]">
-            {formatHotelStayDate(checkOut)}
-          </span>
+          <span className="font-medium text-[#2768FA]">{formatHotelStayDate(checkOut)}</span>
         </div>
       </button>
 
-      <span className="mx-2 h-5 w-px shrink-0 bg-[rgba(0,0,0,0.08)]" aria-hidden />
+      <span className={SEARCH_BAR_DIVIDER_CLASS} aria-hidden />
 
       <button
         type="button"
-        className="flex min-w-0 flex-1 items-center gap-1 text-left"
+        className="flex min-w-0 flex-1 items-center gap-1.5 text-left"
         onClick={onKeywordClick}
       >
         <SearchIcon />

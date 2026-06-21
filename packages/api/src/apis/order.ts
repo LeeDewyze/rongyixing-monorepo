@@ -7,6 +7,13 @@ import type {
 
 import { ORDER_FLOW_METHODS } from "../methods/order-flow.js";
 import type { ProxyClient } from "../proxy/proxy-client.js";
+import {
+  buildOrderListRequest,
+  isPendingTravelScope,
+  normalizeOrderListResponse,
+  normalizeTravelListResponse,
+  resolveOrderListTabId,
+} from "./order-list-map.js";
 
 export interface OrderApi {
   getList(params: OrderListParams): Promise<OrderListResponse>;
@@ -16,11 +23,26 @@ export interface OrderApi {
 
 export function createOrderApi(proxy: ProxyClient): OrderApi {
   return {
-    getList(params) {
-      return proxy.send<OrderListResponse>({
+    async getList(params) {
+      const tabId = resolveOrderListTabId(params);
+      if (tabId == null) {
+        return { Orders: [], TotalCount: 0 };
+      }
+
+      const request = buildOrderListRequest(params);
+      if (isPendingTravelScope(params.Scope)) {
+        const data = await proxy.send<unknown>({
+          method: ORDER_FLOW_METHODS.TRAVEL_LIST,
+          data: request,
+        });
+        return normalizeTravelListResponse(data, tabId);
+      }
+
+      const data = await proxy.send<unknown>({
         method: ORDER_FLOW_METHODS.LIST,
-        data: params,
+        data: request,
       });
+      return normalizeOrderListResponse(data, tabId);
     },
     getDetail(params) {
       return proxy.send<OrderDetailResponse>({
