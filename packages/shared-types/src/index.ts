@@ -137,6 +137,13 @@ export type {
 export type {
   AirportResourceParams,
   AirportResourceResponse,
+  FlightCabinTab,
+  FlightDetailParams,
+  FlightDetailResult,
+  FlightFare,
+  FlightFareBasic,
+  FlightFareRule,
+  FlightFareVariables,
   FlightFilterCondition,
   FlightFilterOption,
   FlightListResult,

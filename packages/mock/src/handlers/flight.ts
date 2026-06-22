@@ -1,7 +1,7 @@
 import type { IResponse } from "@ryx/shared-types";
 import { FLIGHT_FLOW_METHODS, successResponse } from "@ryx/api";
 
-import { createMockFlightList, MOCK_AIRPORTS } from "../fixtures/flight.js";
+import { createMockFlightDetail, createMockFlightList, MOCK_AIRPORTS } from "../fixtures/flight.js";
 
 export function createFlightMockHandlers(): Record<string, (data: unknown) => IResponse<unknown>> {
   return {
@@ -17,6 +17,15 @@ export function createFlightMockHandlers(): Record<string, (data: unknown) => IR
         Date?: string;
       };
       return successResponse(createMockFlightList(params));
+    },
+    [FLIGHT_FLOW_METHODS.HOME_DETAIL]: (data) => {
+      const params = data as {
+        FlightNumber?: string;
+        FromCode?: string;
+        ToCode?: string;
+        Date?: string;
+      };
+      return successResponse(createMockFlightDetail(params));
     },
     [FLIGHT_FLOW_METHODS.HOME_POLICY]: () =>
       successResponse({

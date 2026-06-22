@@ -32,10 +32,14 @@ export function normalizeFlightSegments(result: FlightListResult | undefined): F
       .map((view) => {
         const seg = view.Segment;
         if (!seg) return null;
+        const detailKey = seg.DetailKey ?? seg.Data ?? view.Data;
         return enrichSegment({
           ...seg,
           LowestFare: seg.LowestFare ?? view.Price,
           Number: seg.Number || seg.FlightNumber || "",
+          Data: seg.Data ?? view.Data,
+          DetailKey: detailKey,
+          BookType: seg.BookType ?? view.BookType,
         });
       })
       .filter((s): s is FlightSegment => Boolean(s));
@@ -205,7 +209,13 @@ export function isFilterActive(filter: FlightFilterCondition): boolean {
   );
 }
 
-export function formatFlightTime(value: string): string {
-  const part = value.includes(" ") ? value.split(" ")[1] : value;
-  return part?.slice(0, 5) ?? value;
+export function formatFlightTime(value: string | undefined): string {
+  if (!value) return "--:--";
+  if (value.includes("T")) {
+    return value.split("T")[1]?.slice(0, 5) ?? "--:--";
+  }
+  if (value.includes(" ")) {
+    return value.split(" ")[1]?.slice(0, 5) ?? "--:--";
+  }
+  return value.slice(0, 5);
 }

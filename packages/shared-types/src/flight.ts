@@ -71,12 +71,16 @@ export interface FlightSegment {
   /** Home-Detail lookup key from list API (`Data` in Legacy). */
   DetailKey?: string;
   Data?: string;
+  /** From `FlightViews[].BookType` — required for full Home-Detail fares. */
+  BookType?: string | number;
   /** Low inventory hint — show「剩N张」when 1–5. */
   RemainSeats?: number;
 }
 
 export interface FlightListView {
   Price?: string;
+  Data?: string;
+  BookType?: string | number;
   Segment?: FlightSegment;
 }
 
@@ -106,3 +110,71 @@ export interface FlightFilterCondition {
 }
 
 export type FlightSortTab = "none" | "filter" | "time" | "price";
+
+/** Home-Detail query (TmcApiFlightUrl-Home-Detail v2.0). */
+export interface FlightDetailParams {
+  Date: string;
+  FromCode: string;
+  ToCode: string;
+  FlightNumber: string;
+  FromAsAirport?: boolean;
+  ToAsAirport?: boolean;
+  ADTPtcs?: number;
+  DetailKey?: string;
+  BookType?: string;
+  Lang?: string;
+}
+
+export interface FlightFareBasic {
+  CabinCode?: string;
+  CabinType?: number;
+  CabinTypeName?: string;
+  CabinTypeAttach?: string;
+  Discount?: number | string;
+  FareType?: number;
+  Count?: string | number;
+}
+
+export interface FlightFareRule {
+  Name?: string;
+  Description?: string;
+  Tag?: string;
+  Variables?: string | FlightFareVariables;
+  VariablesObj?: FlightFareVariables;
+}
+
+export interface FlightFareVariables {
+  Baggage?: string;
+  [key: string]: unknown;
+}
+
+/** Cabin fare row from Home-Detail `FlightFares`. */
+export interface FlightFare {
+  Id?: string;
+  Code?: string;
+  FlightNumber?: string;
+  Type?: number;
+  TypeName?: string;
+  Name?: string;
+  Explain?: string;
+  SalesPrice?: string;
+  TicketPrice?: string;
+  Tax?: string;
+  Discount?: string | number;
+  Count?: string | number;
+  IsAgreement?: boolean;
+  IsAllowOrder?: boolean;
+  FareType?: number;
+  FareTypeName?: string;
+  Variables?: string | FlightFareVariables;
+  VariablesObj?: FlightFareVariables;
+  FlightFareBasics?: FlightFareBasic[];
+  FlightFareRules?: FlightFareRule[];
+}
+
+export interface FlightDetailResult {
+  FlightSegments?: FlightSegment[];
+  FlightFares?: FlightFare[];
+}
+
+export type FlightCabinTab = "economy" | "business";

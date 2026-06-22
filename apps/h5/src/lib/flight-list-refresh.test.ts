@@ -54,4 +54,21 @@ describe("flight-list-refresh", () => {
     expect(path).toContain("detailKey=dk-1");
     expect(path).toContain("date=2026-06-20");
   });
+
+  it("buildCabinsPath forwards BookType for Home-Detail", () => {
+    const path = buildCabinsPath(
+      {
+        Id: "seg-kn",
+        Number: "KN5977",
+        TakeoffTime: "2026-06-23T20:50:00",
+        ArrivalTime: "2026-06-23T22:55:00",
+        FromAirport: "PKX",
+        ToAirport: "PVG",
+        DetailKey: "dk-kn",
+        BookType: 2,
+      },
+      new URLSearchParams(),
+    );
+    expect(path).toContain("bookType=2");
+  });
 });

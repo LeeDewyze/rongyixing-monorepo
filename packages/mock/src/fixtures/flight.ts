@@ -1,4 +1,4 @@
-import type { FlightListResult, FlightSegment, Trafficline } from "@ryx/shared-types";
+import type { FlightDetailResult, FlightListResult, FlightSegment, Trafficline } from "@ryx/shared-types";
 
 export const MOCK_AIRPORTS: Trafficline[] = [
   {
@@ -210,7 +210,113 @@ export function createMockFlightList(params: {
     Result: { FlightSegments: segments },
     FlightViews: segments.map((seg) => ({
       Price: seg.LowestFare,
-      Segment: { ...seg },
+      Data: seg.Data ?? `mock-${seg.Id}`,
+      BookType: 2,
+      Segment: {
+        ...seg,
+        DetailKey: seg.Data ?? `mock-${seg.Id}`,
+        Data: seg.Data ?? `mock-${seg.Id}`,
+        BookType: 2,
+      },
     })),
+  };
+}
+
+function mockCabinsForSegment(seg: FlightSegment) {
+  const base = Number(seg.LowestFare ?? 720);
+  return [
+    {
+      FlightNumber: seg.Number,
+      Code: "Y",
+      SalesPrice: String(base),
+      Tax: seg.Tax ?? "70",
+      IsAgreement: true,
+      IsAllowOrder: true,
+      Count: "9",
+      FlightFareBasics: [
+        {
+          CabinCode: "Y",
+          CabinType: 1,
+          CabinTypeName: "经济舱",
+          Discount: 0.45,
+        },
+      ],
+      VariablesObj: { Baggage: "托运行李20KG" },
+    },
+    {
+      FlightNumber: seg.Number,
+      Code: "T",
+      SalesPrice: "360",
+      Tax: seg.Tax ?? "70",
+      IsAllowOrder: true,
+      Count: "5",
+      FlightFareBasics: [
+        {
+          CabinCode: "T",
+          CabinType: 1,
+          CabinTypeName: "经济舱",
+          Discount: 0.22,
+        },
+      ],
+      VariablesObj: { Baggage: "托运行李20KG" },
+    },
+    {
+      FlightNumber: seg.Number,
+      Code: "M",
+      SalesPrice: String(base + 120),
+      Tax: seg.Tax ?? "70",
+      IsAllowOrder: true,
+      Count: "5",
+      FlightFareBasics: [
+        {
+          CabinCode: "M",
+          CabinType: 1,
+          CabinTypeName: "经济舱",
+          Discount: 0.65,
+        },
+      ],
+      VariablesObj: { Baggage: "托运行李20KG" },
+    },
+    {
+      FlightNumber: seg.Number,
+      Code: "C",
+      SalesPrice: String(base + 800),
+      Tax: seg.Tax ?? "70",
+      IsAllowOrder: true,
+      Count: "2",
+      FlightFareBasics: [
+        {
+          CabinCode: "C",
+          CabinType: 2,
+          CabinTypeName: "公务舱",
+          Discount: 0.85,
+        },
+      ],
+      VariablesObj: { Baggage: "托运行李30KG" },
+    },
+  ];
+}
+
+export function createMockFlightDetail(params: {
+  FlightNumber?: string;
+  FromCode?: string;
+  ToCode?: string;
+  Date?: string;
+}): FlightDetailResult {
+  const list = createMockFlightList({
+    FromCode: params.FromCode,
+    ToCode: params.ToCode,
+    Date: params.Date,
+  });
+  const segments = list.Result?.FlightSegments ?? [];
+  const flightNumber = (params.FlightNumber ?? "").toUpperCase();
+  const segment =
+    segments.find((s) => s.Number.toUpperCase() === flightNumber) ?? segments[0];
+  if (!segment) {
+    return { FlightSegments: [], FlightFares: [] };
+  }
+  return {
+    FlightSegments: [{ ...segment }],
+    FlightFares: mockCabinsForSegment(segment),
   };
 }
