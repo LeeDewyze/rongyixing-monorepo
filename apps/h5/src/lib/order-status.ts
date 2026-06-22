@@ -9,9 +9,10 @@ const ORDER_STATUS_COLORS: Record<string, string> = {
   待支付: "#FF4D4F",
   待出票: "#FF4D4F",
   待出行: "#FF9500",
-  交易完成: "#52C41A",
-  已完成: "#52C41A",
+  交易完成: "#34C759",
+  已完成: "#34C759",
   已取消: "#9CA3AF",
+  交易取消: "#8E8E93",
 };
 
 const TICKET_STATUS_COLORS: Record<string, string> = {
@@ -21,6 +22,7 @@ const TICKET_STATUS_COLORS: Record<string, string> = {
 };
 
 const GRAY_PRICE_STATUSES = new Set(["Cancelled", "已取消"]);
+const GRAY_PRICE_STATUS_NAMES = new Set(["已取消", "交易取消"]);
 
 export function getOrderStatusStyle(statusName: string): StatusStyle {
   return { color: ORDER_STATUS_COLORS[statusName] ?? "#010101" };
@@ -34,7 +36,12 @@ export function shouldGrayPrice(item: OrderListItem): boolean {
   if (GRAY_PRICE_STATUSES.has(item.Status)) {
     return true;
   }
-  return item.StatusName === "已取消";
+  return GRAY_PRICE_STATUS_NAMES.has(item.StatusName);
+}
+
+/** Hide per-ticket status (e.g. 废除) when the order itself is cancelled. */
+export function shouldShowTicketStatus(item: OrderListItem): boolean {
+  return !shouldGrayPrice(item);
 }
 
 export function getOrderActions(item: OrderListItem): OrderAction[] {

@@ -15,13 +15,8 @@ interface OrderProductIconProps {
 
 export function OrderProductIcon({ tabId }: OrderProductIconProps) {
   return (
-    <span className="inline-flex size-8 shrink-0 overflow-hidden rounded-[8px]">
-      <img
-        src={PRODUCT_ICONS[tabId]}
-        alt=""
-        className="size-full scale-[1.12] object-cover"
-        aria-hidden
-      />
+    <span className="inline-flex size-5 shrink-0 overflow-hidden rounded-[4px]">
+      <img src={PRODUCT_ICONS[tabId]} alt="" className="size-full object-contain" aria-hidden />
     </span>
   );
 }

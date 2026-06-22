@@ -1,0 +1,83 @@
+/**
+ * Order category tab bar.
+ *
+ * The active "bump" + full-width bottom rail are drawn by a fixed-pixel SVG
+ * (OrderTabsBackground) so the S-curve never distorts when the bar width changes.
+ * Buttons sit transparently on top.
+ */
+.order-category-tabs {
+  position: relative;
+  height: 3.5rem;
+  isolation: isolate;
+}
+
+.order-category-tabs__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.order-category-tabs__list {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+}
+
+.order-category-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 0.75rem;
+  border: none;
+  background: transparent;
+  font-size: 15px;
+  line-height: 1;
+  color: #666666;
+  font-weight: 500;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.order-category-tab--active {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1;
+  color: #010101;
+}
+
+/* Scope filter: 全部 / 待出行 — Figma 351×40, 12px side inset, 8px radius */
+.order-scope-tabs {
+  border-radius: 8px;
+}
+
+.order-scope-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 14px;
+  line-height: 1;
+  font-weight: 400;
+  color: #666666;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.order-scope-tab--active {
+  background: #ffffff;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1;
+  color: #010101;
+  box-shadow: 0 1px 4px rgba(39, 104, 250, 0.12);
+}

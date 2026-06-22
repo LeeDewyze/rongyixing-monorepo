@@ -4,7 +4,7 @@ import type { OrderAction, OrderListItem } from "@ryx/shared-types";
 import { OrderListTabId } from "@ryx/shared-types";
 
 import { ORDER_CARD_BODY_GRADIENT, ORDER_FONT } from "@/config/order-assets";
-import { getOrderActions, shouldGrayPrice } from "@/lib/order-status";
+import { getOrderActions, shouldGrayPrice, shouldShowTicketStatus } from "@/lib/order-status";
 
 import { OrderActionBar } from "./OrderActionBar";
 import { OrderProductIcon } from "./OrderProductIcon";
@@ -17,7 +17,7 @@ interface OrderListCardProps {
 
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
-    <p className={`text-[13px] font-normal leading-[1.4] text-[#666666] ${ORDER_FONT}`}>
+    <p className={`text-[14px] font-normal leading-none text-[#666666] ${ORDER_FONT}`}>
       {label}：{value}
     </p>
   );
@@ -38,7 +38,7 @@ function TransportBody({
     <>
       <div className="flex items-start justify-between gap-2">
         <p
-          className={`min-w-0 flex-1 text-[15px] font-medium leading-snug text-[#010101] ${ORDER_FONT}`}
+          className={`min-w-0 flex-1 text-[15px] font-medium leading-none text-[#010101] ${ORDER_FONT}`}
         >
           {routeTitle}
         </p>
@@ -67,7 +67,7 @@ function TrainBody({
     <>
       <div className="flex items-start justify-between gap-2">
         <p
-          className={`min-w-0 flex-1 text-[15px] font-medium leading-snug text-[#010101] ${ORDER_FONT}`}
+          className={`min-w-0 flex-1 text-[15px] font-medium leading-none text-[#010101] ${ORDER_FONT}`}
         >
           {routeTitle}
         </p>
@@ -89,7 +89,7 @@ function renderBody(item: OrderListItem): ReactNode {
           routeTitle={item.RouteTitle}
           departTime={item.DepartTime}
           passengerNames={item.PassengerNames}
-          ticketStatusName={item.TicketStatusName}
+          ticketStatusName={shouldShowTicketStatus(item) ? item.TicketStatusName : undefined}
         />
       );
     case OrderListTabId.Train:
@@ -98,7 +98,7 @@ function renderBody(item: OrderListItem): ReactNode {
           routeTitle={item.RouteTitle}
           departTime={item.DepartTime}
           passengerNames={item.PassengerNames}
-          ticketStatusName={item.TicketStatusName}
+          ticketStatusName={shouldShowTicketStatus(item) ? item.TicketStatusName : undefined}
         />
       );
     case OrderListTabId.Hotel:
@@ -135,23 +135,27 @@ export function OrderListCard({ item, onAction }: OrderListCardProps) {
   const grayPrice = shouldGrayPrice(item);
 
   return (
-    <article className="overflow-hidden rounded-lg bg-white p-3">
+    <article className="w-full overflow-hidden rounded-[8px] bg-white p-3">
       <header className="flex items-center gap-2">
         <OrderProductIcon tabId={item.tabId} />
-        <p className={`min-w-0 flex-1 truncate text-[13px] text-[#010101] ${ORDER_FONT}`}>
+        <p
+          className={`min-w-0 flex-1 truncate text-[14px] font-medium leading-none text-[#010101] ${ORDER_FONT}`}
+        >
           订单编号：{item.OrderNumber ?? item.OrderId}
         </p>
         <OrderStatusBadge label={item.StatusName} variant="order" />
       </header>
 
-      <div className="mt-3 rounded-lg p-3" style={{ background: ORDER_CARD_BODY_GRADIENT }}>
+      <div className="mt-3 rounded-[8px] p-3" style={{ background: ORDER_CARD_BODY_GRADIENT }}>
         {renderBody(item)}
       </div>
 
       <footer className="mt-3 flex items-center justify-between gap-3">
         <p
-          className={`text-[20px] font-semibold leading-none ${ORDER_FONT} ${
-            grayPrice ? "text-[#9CA3AF]" : "text-[#FF4D4F]"
+          className={`leading-none ${ORDER_FONT} ${
+            grayPrice
+              ? "text-[24px] font-medium text-[#8E8E93]"
+              : "text-[24px] font-medium text-[#FF383C]"
           }`}
         >
           ¥{item.TotalAmount ?? "-"}

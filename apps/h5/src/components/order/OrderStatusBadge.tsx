@@ -11,7 +11,7 @@ export function OrderStatusBadge({ label, variant }: OrderStatusBadgeProps) {
 
   return (
     <span
-      className={`shrink-0 text-[14px] font-normal leading-none ${ORDER_FONT}`}
+      className={`shrink-0 text-[14px] font-medium leading-none ${ORDER_FONT}`}
       style={{ color: style.color }}
     >
       {label}

@@ -17,8 +17,8 @@ describe("parseOrderListCategoryId", () => {
     expect(parseOrderListCategoryId(new URLSearchParams("tabId=1"))).toBe("flight");
   });
 
-  it("defaults to hotel", () => {
-    expect(parseOrderListCategoryId(new URLSearchParams())).toBe("hotel");
+  it("defaults to flight", () => {
+    expect(parseOrderListCategoryId(new URLSearchParams())).toBe("flight");
   });
 });
 

@@ -54,7 +54,7 @@ function OrderListSkeleton() {
   return (
     <div className="flex flex-col gap-3 px-3">
       {Array.from({ length: 3 }, (_, i) => (
-        <div key={i} className="rounded-lg bg-white p-3">
+        <div key={i} className="w-full rounded-[8px] bg-white p-3">
           <div className="flex items-center gap-2">
             <div className="size-8 animate-pulse rounded-lg bg-[#E5E7EB]" />
             <div className="h-4 flex-1 animate-pulse rounded bg-[#E5E7EB]" />

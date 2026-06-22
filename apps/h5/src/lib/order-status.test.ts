@@ -6,14 +6,16 @@ import {
   getOrderStatusStyle,
   getTicketStatusStyle,
   shouldGrayPrice,
+  shouldShowTicketStatus,
 } from "./order-status";
 
 describe("getOrderStatusStyle", () => {
   it("maps primary status colors", () => {
     expect(getOrderStatusStyle("待付款").color).toBe("#FF4D4F");
     expect(getOrderStatusStyle("待出行").color).toBe("#FF9500");
-    expect(getOrderStatusStyle("交易完成").color).toBe("#52C41A");
+    expect(getOrderStatusStyle("交易完成").color).toBe("#34C759");
     expect(getOrderStatusStyle("已取消").color).toBe("#9CA3AF");
+    expect(getOrderStatusStyle("交易取消").color).toBe("#8E8E93");
   });
 });
 
@@ -39,6 +41,19 @@ describe("shouldGrayPrice", () => {
     expect(shouldGrayPrice(item)).toBe(true);
   });
 
+  it("returns true for trade-cancelled status name", () => {
+    const item: OrderFlightListItem = {
+      tabId: OrderListTabId.Flight,
+      OrderId: "5",
+      Status: "Cancelled",
+      StatusName: "交易取消",
+      RouteTitle: "A",
+      DepartTime: "t",
+      PassengerNames: "p",
+    };
+    expect(shouldGrayPrice(item)).toBe(true);
+  });
+
   it("returns false for active orders", () => {
     const item: OrderFlightListItem = {
       tabId: OrderListTabId.Flight,
@@ -50,6 +65,36 @@ describe("shouldGrayPrice", () => {
       PassengerNames: "p",
     };
     expect(shouldGrayPrice(item)).toBe(false);
+  });
+});
+
+describe("shouldShowTicketStatus", () => {
+  it("hides ticket status when order is trade-cancelled", () => {
+    const item: OrderFlightListItem = {
+      tabId: OrderListTabId.Flight,
+      OrderId: "6",
+      Status: "Cancelled",
+      StatusName: "交易取消",
+      RouteTitle: "A",
+      DepartTime: "t",
+      PassengerNames: "p",
+      TicketStatusName: "废除",
+    };
+    expect(shouldShowTicketStatus(item)).toBe(false);
+  });
+
+  it("shows ticket status for active orders", () => {
+    const item: OrderFlightListItem = {
+      tabId: OrderListTabId.Flight,
+      OrderId: "7",
+      Status: "WaitPay",
+      StatusName: "待付款",
+      RouteTitle: "A",
+      DepartTime: "t",
+      PassengerNames: "p",
+      TicketStatusName: "待出票",
+    };
+    expect(shouldShowTicketStatus(item)).toBe(true);
   });
 });
 

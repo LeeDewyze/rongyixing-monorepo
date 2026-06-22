@@ -49,11 +49,13 @@ function parseCategoryFromTabIdParam(value: string | null): OrderCategoryId | un
   return TAB_ID_TO_CATEGORY[tabId as OrderListTabId];
 }
 
+export const DEFAULT_ORDER_CATEGORY: OrderCategoryId = "flight";
+
 export function parseOrderListCategoryId(searchParams: URLSearchParams): OrderCategoryId {
   return (
     parseCategoryFromTabParam(searchParams.get("tab")) ??
     parseCategoryFromTabIdParam(searchParams.get("tabId")) ??
-    "hotel"
+    DEFAULT_ORDER_CATEGORY
   );
 }
 

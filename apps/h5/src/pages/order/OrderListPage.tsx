@@ -9,11 +9,13 @@ import {
 } from "@/components/order/OrderCategoryTabs";
 import { OrderList } from "@/components/order/OrderList";
 import { usePageHeader } from "@/components/layout";
-import { ORDER_HEADER_GRADIENT } from "@/config/order-assets";
+import { ORDER_FONT, ORDER_HEADER_GRADIENT } from "@/config/order-assets";
 import { useOrderList } from "@/hooks/useOrderList";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { formatApiError } from "@/lib/formatApiError";
 import {
   CATEGORY_TO_TAB_ID,
+  DEFAULT_ORDER_CATEGORY,
   parseOrderListCategoryId,
   parseOrderListScope,
   TAB_ID_TO_PARAM,
@@ -46,6 +48,7 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
   const [searchParams, setSearchParams] = useSearchParams();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const headerRef = useRef<HTMLElement>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
   const [headerHeight, setHeaderHeight] = useState(FALLBACK_HEADER_HEIGHT);
   const [scrollRoot, setScrollRoot] = useState<HTMLDivElement | null>(null);
 
@@ -53,19 +56,49 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
   const scope = parseOrderListScope(searchParams.get("scope"));
   const tabId = CATEGORY_TO_TAB_ID[categoryId];
 
-  const { data, isLoading, isError, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useOrderList({ tabId, scope });
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refresh,
+  } = useOrderList({ tabId, scope });
 
   const orders = useMemo(() => data?.pages.flatMap((page) => page.Orders) ?? [], [data?.pages]);
   const isInitialLoading = isLoading && orders.length === 0;
 
   usePageHeader({ visible: false });
 
+  useEffect(() => {
+    const hasCategory = searchParams.has("tab") || searchParams.has("tabId");
+    if (hasCategory) {
+      return;
+    }
+    const params = new URLSearchParams(searchParams);
+    params.set("tab", TAB_ID_TO_PARAM[DEFAULT_ORDER_CATEGORY]);
+    setSearchParams(params, { replace: true });
+  }, [searchParams, setSearchParams]);
+
   const handleLoadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
       void fetchNextPage();
     }
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
+  const handleScrollRoot = useCallback((node: HTMLDivElement | null) => {
+    scrollRef.current = node;
+    setScrollRoot(node);
+  }, []);
+
+  const { pullDistance, statusLabel, isActive } = usePullToRefresh({
+    scrollRef,
+    scrollElement: scrollRoot,
+    onRefresh: refresh,
+    disabled: isInitialLoading,
+  });
 
   const updateParams = useCallback(
     (next: { tab?: OrderCategoryId; scope?: OrderListScope }) => {
@@ -128,7 +161,15 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
         ref={headerRef}
         className="fixed inset-x-0 top-0 z-30 mx-auto w-full max-w-lg bg-[#F5F6F9]"
       >
-        <div style={{ background: ORDER_HEADER_GRADIENT }}>
+        <div
+          style={{
+            backgroundColor: "#F5F6F9",
+            backgroundImage: ORDER_HEADER_GRADIENT,
+            backgroundRepeat: "no-repeat",
+            backgroundSize: "100% 100%",
+          }}
+          className={embeddedInTab ? "pt-[calc(env(safe-area-inset-top)+12px)]" : undefined}
+        >
           {!embeddedInTab ? (
             <div className="flex h-11 items-center px-3 pt-[env(safe-area-inset-top)]">
               <button
@@ -145,15 +186,26 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
             </div>
           ) : null}
           <OrderCategoryTabs activeId={categoryId} onChange={(id) => updateParams({ tab: id })} />
+        </div>
+        <div className="bg-[#F5F6F9]">
           <OrderScopeTabs scope={scope} onChange={(next) => updateParams({ scope: next })} />
         </div>
       </header>
 
       <div
-        ref={setScrollRoot}
+        ref={handleScrollRoot}
         className="h-full overflow-y-auto overscroll-y-contain [-webkit-overflow-scrolling:touch]"
         style={{ paddingTop: headerHeight }}
       >
+        <div
+          className={`flex items-end justify-center overflow-hidden text-sm text-[#9CA3AF] transition-[height] duration-200 ease-out ${ORDER_FONT} ${
+            isActive ? "opacity-100" : "opacity-0"
+          }`}
+          style={{ height: isActive ? pullDistance : 0 }}
+          aria-live="polite"
+        >
+          <span className="pb-2">{statusLabel}</span>
+        </div>
         <OrderList
           orders={orders}
           isLoading={isInitialLoading}
