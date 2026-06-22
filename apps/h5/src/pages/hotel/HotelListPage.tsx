@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import type { HotelCity } from "@ryx/shared-types";
 
 import { HotelListFilterBar, type HotelListFilterId } from "@/components/hotel/HotelListFilterBar";
 import { HotelListItem } from "@/components/hotel/HotelListItem";
 import { HotelListSearchBar } from "@/components/hotel/HotelListSearchBar";
 import { HotelStayDatePickerSheet } from "@/components/hotel/HotelStayDatePickerSheet";
+import { CityPicker } from "@/components/search";
 import { usePageHeader } from "@/components/layout";
 import headerProfileIcon from "@/assets/hotel/header-profile.png";
 import { useHotelCities, useHotelList } from "@/hooks/useHotelList";
 import { formatApiError } from "@/lib/formatApiError";
-import { hotelCityFromQuery } from "@/lib/hotel-search";
+import { CITY_HISTORY_KEYS, hotelCityFromQuery, hotelCityPickerAdapter } from "@/lib/hotel-search";
 
 /** Figma hotel list — sky-blue header fading into filter panel (#EEF4FC). */
 const HOTEL_LIST_HEADER_GRADIENT =
@@ -67,6 +69,7 @@ export function HotelListPage() {
   const [searchParams] = useSearchParams();
   const [activeFilter, setActiveFilter] = useState<HotelListFilterId | null>(null);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [cityPickerOpen, setCityPickerOpen] = useState(false);
 
   const cityCode = searchParams.get("cityCode") ?? "";
   const cityName = searchParams.get("cityName") ?? cityCode;
@@ -130,6 +133,14 @@ export function HotelListPage() {
     navigate({ pathname: "/hotel/list", search: next.toString() }, { replace: true });
   }
 
+  function handleCitySelect(city: HotelCity) {
+    const next = new URLSearchParams(searchParams);
+    next.set("cityCode", city.Code);
+    next.set("cityName", city.Name);
+    navigate({ pathname: "/hotel/list", search: next.toString() }, { replace: true });
+    setCityPickerOpen(false);
+  }
+
   function openDetail(hotelId: string) {
     const params = new URLSearchParams({
       checkIn,
@@ -174,7 +185,7 @@ export function HotelListPage() {
               checkIn={checkIn}
               checkOut={checkOut}
               keyword={keyword}
-              onCityClick={goModifySearch}
+              onCityClick={() => setCityPickerOpen(true)}
               onDateClick={() => setDatePickerOpen(true)}
               onKeywordClick={goModifySearch}
             />
@@ -232,6 +243,20 @@ export function HotelListPage() {
         checkOut={checkOut}
         onClose={() => setDatePickerOpen(false)}
         onConfirm={handleDateConfirm}
+      />
+
+      <CityPicker
+        open={cityPickerOpen}
+        items={cities}
+        title="选择酒店城市"
+        historyKey={CITY_HISTORY_KEYS.hotel}
+        searchPlaceholder="搜索城市名称"
+        hotTitle="热门城市"
+        historyTitle="历史记录"
+        hotGridColumns={3}
+        onClose={() => setCityPickerOpen(false)}
+        onSelect={handleCitySelect}
+        {...hotelCityPickerAdapter}
       />
     </div>
   );
