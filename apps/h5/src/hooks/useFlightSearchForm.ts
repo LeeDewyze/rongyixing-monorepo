@@ -16,6 +16,8 @@ export type FlightCityPickerTarget = "from" | "to" | null;
 export interface UseFlightSearchFormOptions {
   /** Write city changes to localStorage (default true). */
   persistCities?: boolean;
+  /** Fetch airport list only when true (default true). */
+  enabled?: boolean;
 }
 
 /**
@@ -23,7 +25,8 @@ export interface UseFlightSearchFormOptions {
  */
 export function useFlightSearchForm(options: UseFlightSearchFormOptions = {}) {
   const persistCities = options.persistCities ?? true;
-  const { data: airports = [], isLoading, error } = useFlightAirports();
+  const enabled = options.enabled ?? true;
+  const { data: airports = [], isLoading, error } = useFlightAirports({ enabled });
 
   const defaults = loadDefaultSearchForm();
   const [fromCity, setFromCity] = useState<Trafficline>(defaults.fromCity);
@@ -31,7 +34,6 @@ export function useFlightSearchForm(options: UseFlightSearchFormOptions = {}) {
   const [date, setDate] = useState(defaults.date);
   const [picker, setPicker] = useState<FlightCityPickerTarget>(null);
   const [validationError, setValidationError] = useState("");
-  const [swapping, setSwapping] = useState(false);
 
   useEffect(() => {
     if (persistCities) {
@@ -52,21 +54,9 @@ export function useFlightSearchForm(options: UseFlightSearchFormOptions = {}) {
     (initial: FlightSearchQueryInitial) => {
       if (!airports.length) return;
       setFromCity(
-        cityFromQuery(
-          airports,
-          initial.fromCode,
-          initial.fromName,
-          initial.fromAsAirport,
-        ),
+        cityFromQuery(airports, initial.fromCode, initial.fromName, initial.fromAsAirport),
       );
-      setToCity(
-        cityFromQuery(
-          airports,
-          initial.toCode,
-          initial.toName,
-          initial.toAsAirport,
-        ),
-      );
+      setToCity(cityFromQuery(airports, initial.toCode, initial.toName, initial.toAsAirport));
       setDate(initial.date);
       setValidationError("");
       setPicker(null);
@@ -75,10 +65,8 @@ export function useFlightSearchForm(options: UseFlightSearchFormOptions = {}) {
   );
 
   const swapCities = useCallback(() => {
-    setSwapping(true);
     setFromCity(toCity);
     setToCity(fromCity);
-    setTimeout(() => setSwapping(false), 240);
   }, [fromCity, toCity]);
 
   const validate = useCallback((): string | null => {
@@ -100,7 +88,6 @@ export function useFlightSearchForm(options: UseFlightSearchFormOptions = {}) {
     date,
     picker,
     validationError,
-    swapping,
     setFromCity,
     setToCity,
     setDate,

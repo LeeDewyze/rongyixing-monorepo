@@ -4,7 +4,6 @@ import { RootLayout } from "@/app/layouts/RootLayout";
 import { TabLayout } from "@/app/layouts/TabLayout";
 import { FlightCabinsPage } from "@/pages/flight/FlightCabinsPage";
 import { FlightListPage } from "@/pages/flight/FlightListPage";
-import { FlightSearchPage } from "@/pages/flight/FlightSearchPage";
 import { FlightSelectCityPage } from "@/pages/flight/FlightSelectCityPage";
 import { HomeTabPage } from "@/pages/home/HomeTabPage";
 import { OrdersTabPage } from "@/pages/home/OrdersTabPage";
@@ -90,7 +89,7 @@ export const router = createBrowserRouter([
     path: "/flight",
     element: <RootLayout />,
     children: [
-      { index: true, element: <FlightSearchPage /> },
+      { index: true, element: <Navigate to="/home?product=flight" replace /> },
       { path: "list", element: <FlightListPage /> },
       { path: ":flightId/cabins", element: <FlightCabinsPage /> },
     ],

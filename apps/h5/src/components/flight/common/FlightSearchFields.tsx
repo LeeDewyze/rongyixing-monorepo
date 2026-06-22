@@ -17,7 +17,6 @@ export function FlightSearchFields({ form, className = "" }: FlightSearchFieldsP
       <FlightCityPairField
         fromCity={form.fromCity}
         toCity={form.toCity}
-        swapping={form.swapping}
         onSelectFrom={() => form.setPicker("from")}
         onSelectTo={() => form.setPicker("to")}
         onSwap={form.swapCities}

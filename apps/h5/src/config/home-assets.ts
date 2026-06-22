@@ -7,6 +7,7 @@ import businessMyApprovalIcon from "@/assets/home/business-my-approval.png";
 import carActiveIcon from "@/assets/home/car-active.png";
 import flightActiveIcon from "@/assets/home/flight-active.png";
 import flightDefaultIcon from "@/assets/home/flight-default.png";
+import flightSwapCitiesIcon from "@/assets/home/flight-swap-cities.png";
 import heroBanner from "@/assets/home/hero-banner.png";
 import hotelActiveIcon from "@/assets/home/hotel-active.png";
 import hotelDefaultIcon from "@/assets/home/hotel-default.png";
@@ -38,6 +39,8 @@ export const HOME_ASSETS = {
       default: flightDefaultIcon,
       /** Figma 38:5816 */
       active: flightActiveIcon,
+      /** Flight home search — swap departure/arrival cities */
+      swapCities: flightSwapCitiesIcon,
     },
     train: {
       /** Figma 38:5828 */

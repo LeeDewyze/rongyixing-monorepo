@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
+import { FlightCityPickerHostFromForm } from "@/components/flight/common";
 import { HomeBusinessPanel } from "@/components/home/HomeBusinessPanel";
+import { HomeFlightSearchPanel } from "@/components/home/HomeFlightSearchPanel";
 import { HomeProductTabPointer } from "@/components/home/HomeProductTabPointer";
 import {
   HomeHeroSection,
@@ -12,6 +14,7 @@ import { HomeHotelSearchPanel } from "@/components/home/HomeHotelSearchPanel";
 import { HomeTrainSearchPanel } from "@/components/home/HomeTrainSearchPanel";
 import { HomeRecentTripPanel } from "@/components/home/HomeRecentTripPanel";
 import { CityPicker } from "@/components/search";
+import { useFlightSearchForm } from "@/hooks/useFlightSearchForm";
 import { useHotelSearchForm } from "@/hooks/useHotelSearchForm";
 import { useTrainSearchForm } from "@/hooks/useTrainSearchForm";
 import { formatApiError } from "@/lib/formatApiError";
@@ -45,16 +48,13 @@ export function HomeTabPage() {
   const [keyword, setKeyword] = useState("");
   const hotelForm = useHotelSearchForm();
   const trainForm = useTrainSearchForm({ enabled: activeProduct === "train" });
+  const flightForm = useFlightSearchForm({ enabled: activeProduct === "flight" });
 
   useEffect(() => {
     setActiveProduct(parseHomeProduct(searchParams));
   }, [searchParams]);
 
   function handleProductChange(product: HomeProductId) {
-    if (product === "flight") {
-      navigate("/flight");
-      return;
-    }
     setActiveProduct(product);
     setSearchParams(buildHomeProductSearch(product), { replace: true });
   }
@@ -72,6 +72,11 @@ export function HomeTabPage() {
     navigate(`/train/list?${trainForm.buildSearchParams().toString()}`);
   }
 
+  function handleFlightSearch() {
+    if (flightForm.validate()) return;
+    navigate(`/flight/list?${flightForm.buildSearchParams().toString()}`);
+  }
+
   function handleTrainStationSelect(station: (typeof trainForm.stations)[number]) {
     if (trainForm.picker === "from") trainForm.setFromStation(station);
     if (trainForm.picker === "to") trainForm.setToStation(station);
@@ -85,6 +90,29 @@ export function HomeTabPage() {
         onTravelModeChange={setTravelMode}
         onProductChange={handleProductChange}
       />
+
+      {activeProduct === "flight" ? (
+        <div className="relative">
+          <HomeProductTabPointer product={activeProduct} />
+          {flightForm.isLoading ? (
+            <HomeSearchPanelSkeleton />
+          ) : flightForm.error ? (
+            <HomeSearchPanelError error={flightForm.error} />
+          ) : (
+            <HomeFlightSearchPanel
+              fromCity={flightForm.fromCity}
+              toCity={flightForm.toCity}
+              date={flightForm.date}
+              validationError={flightForm.validationError || undefined}
+              onSelectFrom={() => flightForm.setPicker("from")}
+              onSelectTo={() => flightForm.setPicker("to")}
+              onSwap={flightForm.swapCities}
+              onDateChange={flightForm.setDate}
+              onSearch={handleFlightSearch}
+            />
+          )}
+        </div>
+      ) : null}
 
       {activeProduct === "hotel" ? (
         <div className="relative">
@@ -135,6 +163,8 @@ export function HomeTabPage() {
 
       {travelMode === "business" ? <HomeBusinessPanel /> : null}
       <HomeRecentTripPanel />
+
+      <FlightCityPickerHostFromForm form={flightForm} />
 
       <CityPicker
         open={hotelForm.picker === "city"}

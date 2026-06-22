@@ -11,11 +11,13 @@ function canQueryFlightList(): boolean {
   return getApiMode() === "mock" || Boolean(getTicket());
 }
 
-export function useFlightAirports() {
+export function useFlightAirports(options?: { enabled?: boolean }) {
+  const enabled = options?.enabled ?? true;
   return useQuery({
     queryKey: ["flight", "airports"],
     queryFn: () => getApi().flight.getAirports(),
     staleTime: 1000 * 60 * 30,
+    enabled,
   });
 }
 

@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ProductType } from "@ryx/shared-types";
-import type { FlightFilterCondition, FlightSearchParams, FlightSortTab, Trafficline } from "@ryx/shared-types";
+import type {
+  FlightFilterCondition,
+  FlightSearchParams,
+  FlightSortTab,
+  Trafficline,
+} from "@ryx/shared-types";
 
 import { FlightCityPickerHost } from "@/components/flight/common";
 import { FlightFilterSheet } from "@/components/flight/FlightFilterSheet";
@@ -40,15 +45,9 @@ import {
   sortByPrice,
   sortByTime,
 } from "@/utils/flight-list";
-import {
-  partitionFlightList,
-  resolveFlightCardVariant,
-} from "@/utils/flight-list-display";
+import { partitionFlightList, resolveFlightCardVariant } from "@/utils/flight-list-display";
 
-function buildListUrl(
-  base: URLSearchParams,
-  date: string,
-): string {
+function buildListUrl(base: URLSearchParams, date: string): string {
   const params = new URLSearchParams(base);
   params.set("date", date);
   return `/flight/list?${params.toString()}`;
@@ -97,14 +96,12 @@ export function FlightListPage() {
   ]);
 
   const hasListQuery = Boolean(
-    parseLocalDate(listParams.Date) &&
-    listParams.FromCode &&
-    listParams.ToCode,
+    parseLocalDate(listParams.Date) && listParams.FromCode && listParams.ToCode,
   );
 
   useEffect(() => {
     if (!parseLocalDate(listParams.Date) || !listParams.FromCode || !listParams.ToCode) {
-      navigate("/flight", { replace: true });
+      navigate("/home?product=flight", { replace: true });
       return;
     }
     const today = todayDateString();
@@ -156,9 +153,8 @@ export function FlightListPage() {
     );
   }, [hasListQuery, resolvedListCities, listParams.Date]);
 
-  const { data, isLoading, isFetching, error, refetch, dataUpdatedAt } = useFlightList(
-    apiListParams,
-  );
+  const { data, isLoading, isFetching, error, refetch, dataUpdatedAt } =
+    useFlightList(apiListParams);
 
   useEffect(() => {
     if (!resolvedListCities || !hasListQuery) return;
@@ -168,7 +164,15 @@ export function FlightListPage() {
       date: listParams.Date,
     });
     const extras = new URLSearchParams(searchParams);
-    for (const key of ["fromCode", "toCode", "fromName", "toName", "date", "fromAsAirport", "toAsAirport"]) {
+    for (const key of [
+      "fromCode",
+      "toCode",
+      "fromName",
+      "toName",
+      "date",
+      "fromAsAirport",
+      "toAsAirport",
+    ]) {
       extras.delete(key);
     }
     const next = new URLSearchParams(canonical);
@@ -334,9 +338,7 @@ export function FlightListPage() {
               type="button"
               className="mt-3 text-sm font-medium text-[#5099fe]"
               onClick={() =>
-                navigate(
-                  `/login/password?returnTo=${encodeURIComponent(listReturnTo)}`,
-                )
+                navigate(`/login/password?returnTo=${encodeURIComponent(listReturnTo)}`)
               }
             >
               去登录
@@ -367,14 +369,15 @@ export function FlightListPage() {
           </div>
         )}
 
-        {isAuthenticated && directFlights.map((seg, index) => (
-          <FlightSegmentCard
-            key={seg.Id}
-            segment={seg}
-            variant={resolveFlightCardVariant(seg, index, "direct")}
-            onClick={() => openCabins(seg.Id)}
-          />
-        ))}
+        {isAuthenticated &&
+          directFlights.map((seg, index) => (
+            <FlightSegmentCard
+              key={seg.Id}
+              segment={seg}
+              variant={resolveFlightCardVariant(seg, index, "direct")}
+              onClick={() => openCabins(seg.Id)}
+            />
+          ))}
 
         {isAuthenticated && transferFlights.length > 0 && (
           <>
