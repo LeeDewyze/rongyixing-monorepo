@@ -287,10 +287,13 @@ export function prepareFlightFareRulesForSheet(fare: FlightFare): FlightFareRule
       else seenTags.add(tag);
     }
 
-    const details = rule.VariablesObj?.Details?.filter(
-      (item): item is { name: string; value: unknown } =>
-        Boolean(item && typeof item === "object" && "name" in item),
-    );
+    const rawDetails = rule.VariablesObj?.Details;
+    const details = Array.isArray(rawDetails)
+      ? rawDetails.filter(
+          (item): item is { name: string; value: unknown } =>
+            Boolean(item && typeof item === "object" && "name" in item),
+        )
+      : undefined;
 
     return {
       Tag: tag || undefined,

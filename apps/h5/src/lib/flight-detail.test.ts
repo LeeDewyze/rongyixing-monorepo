@@ -198,7 +198,7 @@ describe("fare baggage and remain count", () => {
     const detail = normalizeFlightDetailData({
       FlightFares: [
         {
-          SalesPrice: 330,
+          SalesPrice: "330",
           Count: 5,
           Discount: 0.2,
           Variables: { FlightNumber: "KN5977" },
@@ -241,7 +241,7 @@ describe("prepareFlightFareRulesForSheet", () => {
         {
           Name: "改期费",
           Tag: "北京-上海",
-          Description: null,
+          Description: undefined,
           Variables: {
             "2026年06月16日 20:50前": "￥17/人",
           },
