@@ -1,0 +1,61 @@
+.calendar-picker-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+
+.calendar-picker-sheet--visible {
+  pointer-events: auto;
+}
+
+.calendar-picker-sheet__backdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  padding: 0;
+  background: rgba(15, 23, 42, 0.42);
+  opacity: 0;
+  transition: opacity 320ms ease;
+  cursor: default;
+}
+
+.calendar-picker-sheet--visible .calendar-picker-sheet__backdrop {
+  opacity: 1;
+}
+
+.calendar-picker-sheet__panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  height: 100%;
+  max-height: 100%;
+  flex-direction: column;
+  background: #f5f6f9;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -8px 32px rgba(39, 104, 250, 0.12);
+  transform: translateY(100%);
+  transition: transform 320ms cubic-bezier(0.32, 0.72, 0, 1);
+  will-change: transform;
+  overflow: hidden;
+}
+
+.calendar-picker-sheet--visible .calendar-picker-sheet__panel {
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .calendar-picker-sheet__panel,
+  .calendar-picker-sheet__backdrop {
+    transition: none;
+  }
+
+  .calendar-picker-sheet--visible .calendar-picker-sheet__panel {
+    transform: translateY(0);
+  }
+}

@@ -44,7 +44,7 @@ export function useHotelSearchForm() {
   }, [city, checkIn, checkOut]);
 
   useEffect(() => {
-    if (checkOut <= checkIn) {
+    if (checkOut < checkIn) {
       setCheckOut(addDays(checkIn, 1));
     }
   }, [checkIn, checkOut]);

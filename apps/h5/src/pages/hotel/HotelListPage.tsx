@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { HotelListFilterBar, type HotelListFilterId } from "@/components/hotel/HotelListFilterBar";
 import { HotelListItem } from "@/components/hotel/HotelListItem";
 import { HotelListSearchBar } from "@/components/hotel/HotelListSearchBar";
+import { HotelStayDatePickerSheet } from "@/components/hotel/HotelStayDatePickerSheet";
 import { usePageHeader } from "@/components/layout";
 import headerProfileIcon from "@/assets/hotel/header-profile.png";
 import { useHotelCities, useHotelList } from "@/hooks/useHotelList";
@@ -65,6 +66,7 @@ export function HotelListPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [activeFilter, setActiveFilter] = useState<HotelListFilterId | null>(null);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
 
   const cityCode = searchParams.get("cityCode") ?? "";
   const cityName = searchParams.get("cityName") ?? cityCode;
@@ -121,6 +123,13 @@ export function HotelListPage() {
     navigate("/hotel");
   }
 
+  function handleDateConfirm(nextCheckIn: string, nextCheckOut: string) {
+    const next = new URLSearchParams(searchParams);
+    next.set("checkIn", nextCheckIn);
+    next.set("checkOut", nextCheckOut);
+    navigate({ pathname: "/hotel/list", search: next.toString() }, { replace: true });
+  }
+
   function openDetail(hotelId: string) {
     const params = new URLSearchParams({
       checkIn,
@@ -166,7 +175,7 @@ export function HotelListPage() {
               checkOut={checkOut}
               keyword={keyword}
               onCityClick={goModifySearch}
-              onDateClick={goModifySearch}
+              onDateClick={() => setDatePickerOpen(true)}
               onKeywordClick={goModifySearch}
             />
           </div>
@@ -216,6 +225,14 @@ export function HotelListPage() {
           <p className="py-3 text-center text-xs text-[#9CA3AF]">更新中…</p>
         ) : null}
       </div>
+
+      <HotelStayDatePickerSheet
+        open={datePickerOpen}
+        checkIn={checkIn}
+        checkOut={checkOut}
+        onClose={() => setDatePickerOpen(false)}
+        onConfirm={handleDateConfirm}
+      />
     </div>
   );
 }

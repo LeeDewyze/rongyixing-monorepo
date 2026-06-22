@@ -81,7 +81,7 @@ export function validateHotelSearch(
   if (!city?.Code) return "请选择目的地";
   if (!checkIn) return "请选择入住日期";
   if (!checkOut) return "请选择离店日期";
-  if (checkOut <= checkIn) return "离店日期须晚于入住日期";
+  if (checkOut < checkIn) return "离店日期须晚于入住日期";
   return null;
 }
 
