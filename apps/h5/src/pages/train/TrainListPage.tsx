@@ -42,7 +42,7 @@ export function TrainListPage() {
     <div className="space-y-4 p-4 pb-20">
       <div className="flex justify-end">
         <Button asChild variant="outline" size="sm">
-          <Link to="/train">修改</Link>
+          <Link to="/home?product=train">修改</Link>
         </Button>
       </div>
 

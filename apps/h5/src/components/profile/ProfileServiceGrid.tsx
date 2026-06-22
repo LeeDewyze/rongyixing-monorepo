@@ -1,12 +1,13 @@
 import { useNavigate } from "react-router-dom";
 
+import type { OrderCategoryId } from "@/components/order/OrderCategoryTabs";
 import { HOME_ASSETS } from "@/config/home-assets";
+import { TAB_ID_TO_PARAM } from "@/lib/order-list-params";
 
 interface ProfileService {
-  id: string;
+  id: OrderCategoryId;
   label: string;
   icon: string;
-  to?: string;
   comingSoon?: boolean;
 }
 
@@ -15,25 +16,21 @@ const SERVICES: ProfileService[] = [
     id: "flight",
     label: "机票",
     icon: HOME_ASSETS.products.flight.active,
-    to: "/flight",
   },
   {
     id: "train",
     label: "火车票",
     icon: HOME_ASSETS.products.train.active,
-    to: "/train",
   },
   {
     id: "hotel",
     label: "酒店",
     icon: HOME_ASSETS.products.hotel.active,
-    to: "/hotel",
   },
   {
     id: "car",
     label: "用车",
     icon: HOME_ASSETS.products.car.active,
-    comingSoon: true,
   },
 ];
 
@@ -45,8 +42,10 @@ export function ProfileServiceGrid() {
   const navigate = useNavigate();
 
   function handleClick(service: ProfileService) {
-    if (service.comingSoon || !service.to) return;
-    navigate(service.to);
+    if (service.comingSoon) {
+      return;
+    }
+    navigate(`/home/orders?tab=${TAB_ID_TO_PARAM[service.id]}`);
   }
 
   return (

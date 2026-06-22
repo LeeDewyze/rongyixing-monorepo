@@ -23,7 +23,6 @@ import { PassengerCredentialPage } from "@/pages/passenger/PassengerCredentialPa
 import { PasswordLoginPage } from "@/pages/PasswordLoginPage";
 import { SplashPage } from "@/pages/SplashPage";
 import { TrainListPage } from "@/pages/train/TrainListPage";
-import { TrainSearchPage } from "@/pages/train/TrainSearchPage";
 
 export const router = createBrowserRouter([
   {
@@ -100,7 +99,7 @@ export const router = createBrowserRouter([
     path: "/train",
     element: <RootLayout />,
     children: [
-      { index: true, element: <TrainSearchPage /> },
+      { index: true, element: <Navigate to="/home?product=train" replace /> },
       { path: "list", element: <TrainListPage /> },
     ],
   },

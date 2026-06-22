@@ -21,15 +21,18 @@ export interface TrainSearchQueryInitial {
   date: string;
 }
 
-export function useTrainStations() {
+export function useTrainStations(options?: { enabled?: boolean }) {
+  const enabled = options?.enabled ?? true;
   return useQuery({
     queryKey: ["train", "stations"],
     queryFn: () => getApi().train.getStations(),
+    enabled,
   });
 }
 
-export function useTrainSearchForm() {
-  const { data: stations = [], isLoading, error } = useTrainStations();
+export function useTrainSearchForm(options?: { enabled?: boolean }) {
+  const enabled = options?.enabled ?? true;
+  const { data: stations = [], isLoading, error } = useTrainStations({ enabled });
   const defaults = loadDefaultTrainSearchForm();
 
   const [fromStation, setFromStation] = useState<TrainStation>(defaults.fromStation);
@@ -37,7 +40,6 @@ export function useTrainSearchForm() {
   const [date, setDate] = useState(defaults.date);
   const [picker, setPicker] = useState<TrainStationPickerTarget>(null);
   const [validationError, setValidationError] = useState("");
-  const [swapping, setSwapping] = useState(false);
 
   useEffect(() => {
     persistTrainStations(fromStation, toStation);
@@ -56,10 +58,8 @@ export function useTrainSearchForm() {
   );
 
   const swapStations = useCallback(() => {
-    setSwapping(true);
     setFromStation(toStation);
     setToStation(fromStation);
-    setTimeout(() => setSwapping(false), 240);
   }, [fromStation, toStation]);
 
   const validate = useCallback((): string | null => {
@@ -81,7 +81,6 @@ export function useTrainSearchForm() {
     date,
     picker,
     validationError,
-    swapping,
     setFromStation,
     setToStation,
     setDate,
@@ -96,13 +95,15 @@ export function useTrainSearchForm() {
 
 export type TrainSearchForm = ReturnType<typeof useTrainSearchForm>;
 
-export function useTrainList(params: {
-  Date: string;
-  FromStation: string;
-  ToStation: string;
-  FromName?: string;
-  ToName?: string;
-} | null) {
+export function useTrainList(
+  params: {
+    Date: string;
+    FromStation: string;
+    ToStation: string;
+    FromName?: string;
+    ToName?: string;
+  } | null,
+) {
   return useQuery({
     queryKey: ["train", "list", params],
     queryFn: () => getApi().train.searchTrains(params!),

@@ -1,6 +1,6 @@
 import { OrderListTabId } from "@ryx/shared-types";
 
-import orderEmptyIllustration from "@/assets/order/empty.svg";
+import orderEmptyIllustration from "@/assets/order/empty.png";
 
 export const ORDER_ASSETS = {
   empty: orderEmptyIllustration,

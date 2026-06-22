@@ -19,6 +19,7 @@ import tabProfileActiveIcon from "@/assets/home/tab-profile-active.svg";
 import tabProfileInactiveIcon from "@/assets/home/tab-profile-inactive.svg";
 import trainActiveIcon from "@/assets/home/train-active.png";
 import trainDefaultIcon from "@/assets/home/train-default.png";
+import trainSwapStationsIcon from "@/assets/home/train-swap-stations.png";
 import travelModeTrack from "@/assets/home/travel-mode-track.png";
 
 export type HomeTravelMode = "business" | "personal";
@@ -43,6 +44,8 @@ export const HOME_ASSETS = {
       default: trainDefaultIcon,
       /** Figma 38:5838 */
       active: trainActiveIcon,
+      /** Train home search — swap departure/arrival stations */
+      swapStations: trainSwapStationsIcon,
     },
     hotel: {
       /** Figma 38:5822 */

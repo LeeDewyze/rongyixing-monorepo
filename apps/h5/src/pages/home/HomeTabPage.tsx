@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { HomeBusinessPanel } from "@/components/home/HomeBusinessPanel";
 import { HomeProductTabPointer } from "@/components/home/HomeProductTabPointer";
@@ -9,52 +9,72 @@ import {
   type HomeTravelMode,
 } from "@/components/home/HomeHeroSection";
 import { HomeHotelSearchPanel } from "@/components/home/HomeHotelSearchPanel";
+import { HomeTrainSearchPanel } from "@/components/home/HomeTrainSearchPanel";
 import { HomeRecentTripPanel } from "@/components/home/HomeRecentTripPanel";
 import { CityPicker } from "@/components/search";
 import { useHotelSearchForm } from "@/hooks/useHotelSearchForm";
+import { useTrainSearchForm } from "@/hooks/useTrainSearchForm";
 import { formatApiError } from "@/lib/formatApiError";
+import { buildHomeProductSearch, parseHomeProduct } from "@/lib/home-params";
 import { CITY_HISTORY_KEYS, hotelCityPickerAdapter } from "@/lib/hotel-search";
+import { trainStationPickerAdapter } from "@/lib/train-search";
+
+function HomeSearchPanelSkeleton() {
+  return (
+    <div className="mx-3 rounded-lg bg-white px-3 py-10 text-center">
+      <p className="text-sm text-[#666666]">加载中…</p>
+    </div>
+  );
+}
+
+function HomeSearchPanelError({ error }: { error: unknown }) {
+  return (
+    <div className="mx-3 rounded-lg bg-white px-3 py-10 text-center">
+      <p className="text-sm text-destructive">{formatApiError(error)}</p>
+    </div>
+  );
+}
 
 export function HomeTabPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [travelMode, setTravelMode] = useState<HomeTravelMode>("business");
-  const [activeProduct, setActiveProduct] = useState<HomeProductId>("hotel");
+  const [activeProduct, setActiveProduct] = useState<HomeProductId>(() =>
+    parseHomeProduct(searchParams),
+  );
   const [keyword, setKeyword] = useState("");
-  const form = useHotelSearchForm();
+  const hotelForm = useHotelSearchForm();
+  const trainForm = useTrainSearchForm({ enabled: activeProduct === "train" });
+
+  useEffect(() => {
+    setActiveProduct(parseHomeProduct(searchParams));
+  }, [searchParams]);
 
   function handleProductChange(product: HomeProductId) {
-    setActiveProduct(product);
     if (product === "flight") {
       navigate("/flight");
       return;
     }
-    if (product === "train") {
-      navigate("/train");
-    }
+    setActiveProduct(product);
+    setSearchParams(buildHomeProductSearch(product), { replace: true });
   }
 
-  function handleSearch() {
-    if (form.validate()) return;
-    const params = form.buildSearchParams();
+  function handleHotelSearch() {
+    if (hotelForm.validate()) return;
+    const params = hotelForm.buildSearchParams();
     const trimmed = keyword.trim();
     if (trimmed) params.set("keyword", trimmed);
     navigate(`/hotel/list?${params.toString()}`);
   }
 
-  if (form.isLoading) {
-    return (
-      <div className="flex min-h-full items-center justify-center bg-[#F5F6F9] p-8">
-        <p className="text-sm text-[#666666]">加载中…</p>
-      </div>
-    );
+  function handleTrainSearch() {
+    if (trainForm.validate()) return;
+    navigate(`/train/list?${trainForm.buildSearchParams().toString()}`);
   }
 
-  if (form.error) {
-    return (
-      <div className="flex min-h-full items-center justify-center bg-[#F5F6F9] p-8">
-        <p className="text-sm text-destructive">{formatApiError(form.error)}</p>
-      </div>
-    );
+  function handleTrainStationSelect(station: (typeof trainForm.stations)[number]) {
+    if (trainForm.picker === "from") trainForm.setFromStation(station);
+    if (trainForm.picker === "to") trainForm.setToStation(station);
   }
 
   return (
@@ -69,18 +89,47 @@ export function HomeTabPage() {
       {activeProduct === "hotel" ? (
         <div className="relative">
           <HomeProductTabPointer product={activeProduct} />
-          <HomeHotelSearchPanel
-            city={form.city}
-            keyword={keyword}
-            checkIn={form.checkIn}
-            checkOut={form.checkOut}
-            validationError={form.validationError || undefined}
-            onCitySelect={() => form.setPicker("city")}
-            onKeywordChange={setKeyword}
-            onCheckInChange={form.setCheckIn}
-            onCheckOutChange={form.setCheckOut}
-            onSearch={handleSearch}
-          />
+          {hotelForm.isLoading ? (
+            <HomeSearchPanelSkeleton />
+          ) : hotelForm.error ? (
+            <HomeSearchPanelError error={hotelForm.error} />
+          ) : (
+            <HomeHotelSearchPanel
+              city={hotelForm.city}
+              keyword={keyword}
+              checkIn={hotelForm.checkIn}
+              checkOut={hotelForm.checkOut}
+              validationError={hotelForm.validationError || undefined}
+              onCitySelect={() => hotelForm.setPicker("city")}
+              onKeywordChange={setKeyword}
+              onCheckInChange={hotelForm.setCheckIn}
+              onCheckOutChange={hotelForm.setCheckOut}
+              onSearch={handleHotelSearch}
+            />
+          )}
+        </div>
+      ) : null}
+
+      {activeProduct === "train" ? (
+        <div className="relative">
+          <HomeProductTabPointer product={activeProduct} />
+          {trainForm.isLoading ? (
+            <HomeSearchPanelSkeleton />
+          ) : trainForm.error ? (
+            <HomeSearchPanelError error={trainForm.error} />
+          ) : (
+            <HomeTrainSearchPanel
+              fromStation={trainForm.fromStation}
+              toStation={trainForm.toStation}
+              date={trainForm.date}
+              validationError={trainForm.validationError || undefined}
+              onSelectFrom={() => trainForm.setPicker("from")}
+              onSelectTo={() => trainForm.setPicker("to")}
+              onSwap={trainForm.swapStations}
+              onDateChange={trainForm.setDate}
+              onSearch={handleTrainSearch}
+            />
+          )}
         </div>
       ) : null}
 
@@ -88,17 +137,30 @@ export function HomeTabPage() {
       <HomeRecentTripPanel />
 
       <CityPicker
-        open={form.picker === "city"}
-        items={form.cities}
+        open={hotelForm.picker === "city"}
+        items={hotelForm.cities}
         title="选择酒店城市"
         historyKey={CITY_HISTORY_KEYS.hotel}
         searchPlaceholder="搜索城市名称"
         hotTitle="热门城市"
         historyTitle="历史记录"
         hotGridColumns={3}
-        onClose={() => form.setPicker(null)}
-        onSelect={form.setCity}
+        onClose={() => hotelForm.setPicker(null)}
+        onSelect={hotelForm.setCity}
         {...hotelCityPickerAdapter}
+      />
+
+      <CityPicker
+        open={trainForm.picker !== null}
+        items={trainForm.stations}
+        title={trainForm.picker === "from" ? "选择出发城市" : "选择到达城市"}
+        historyKey={CITY_HISTORY_KEYS.train}
+        searchPlaceholder="搜索城市或车站名称"
+        hotTitle="热门火车站"
+        historyTitle="历史记录"
+        onClose={() => trainForm.setPicker(null)}
+        onSelect={handleTrainStationSelect}
+        {...trainStationPickerAdapter}
       />
     </div>
   );
