@@ -55,7 +55,20 @@ export function buildCabinsPath(
   if (segment.FromAirport) params.set("fromAirport", segment.FromAirport);
   if (segment.ToAirport) params.set("toAirport", segment.ToAirport);
   if (segment.TakeoffTime) params.set("takeoffTime", segment.TakeoffTime);
+  if (segment.ArrivalTime) params.set("arrivalTime", segment.ArrivalTime);
+  if (segment.AirlineName) params.set("airlineName", segment.AirlineName);
+  if (segment.AirlineSrc) params.set("airlineSrc", segment.AirlineSrc);
+  if (segment.FlyTimeName) params.set("flyTimeName", segment.FlyTimeName);
+  if (segment.FromAirportName) params.set("fromAirportName", segment.FromAirportName);
+  if (segment.ToAirportName) params.set("toAirportName", segment.ToAirportName);
+  if (segment.FromTerminal) params.set("fromTerminal", segment.FromTerminal);
+  if (segment.ToTerminal) params.set("toTerminal", segment.ToTerminal);
+  if (segment.PlaneTypeDescribe) params.set("planeTypeDescribe", segment.PlaneTypeDescribe);
+  if (segment.Meal) params.set("meal", segment.Meal);
   const detailKey = segment.DetailKey ?? segment.Data;
   if (detailKey) params.set("detailKey", detailKey);
+  if (segment.BookType != null && segment.BookType !== "") {
+    params.set("bookType", String(segment.BookType));
+  }
   return `/flight/${encodeURIComponent(segment.Id)}/cabins?${params.toString()}`;
 }

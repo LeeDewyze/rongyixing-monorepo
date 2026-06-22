@@ -36,6 +36,15 @@ export {
 } from "./apis/auth-proxy.js";
 export { createHotelApi, type HotelApi } from "./apis/hotel.js";
 export { createFlightApi, type FlightApi } from "./apis/flight.js";
+export {
+  adaptFlightDetailResponse,
+  applyLegacyInitDetailResult,
+  formatCabinTypeName,
+  normalizeFlightDetailResponse,
+  normalizeFlightDetailResult,
+  resolveCheckedBaggage,
+  selectCabinsForSegment,
+} from "./apis/flight-detail-adapter.js";
 export { createOrderApi, type OrderApi } from "./apis/order.js";
 export { createPayApi, type PayApi } from "./apis/pay.js";
 export { createPassengerApi, type PassengerApi } from "./apis/passenger.js";
