@@ -24,6 +24,34 @@ describe("createHotelApi (mock mode)", () => {
     expect(result.Hotels[0]?.HotelId).toBe("H1");
   });
 
+  it("getList includes CityName in request data", async () => {
+    let capturedData: unknown;
+    const proxyWithCapture = createProxyClient({
+      baseUrl: "https://example.com",
+      mode: "mock",
+      mockHandler: async (method, data) => {
+        if (method === HOTEL_FLOW_METHODS.LIST) {
+          capturedData = data;
+          return successResponse({ Hotels: [], TotalCount: 0 });
+        }
+        return successResponse(null);
+      },
+    });
+    const api = createHotelApi(proxyWithCapture);
+    await api.getList({
+      CityCode: "1101",
+      CityName: "北京",
+      CheckInDate: "2026-06-22",
+      CheckOutDate: "2026-06-23",
+    });
+    expect(capturedData).toMatchObject({
+      CityCode: "1101",
+      CityName: "北京",
+      BeginDate: "2026-06-22",
+      EndDate: "2026-06-23",
+    });
+  });
+
   it("getList normalizes legacy HotelDayPrices response", async () => {
     const proxyLegacy = createProxyClient({
       baseUrl: "https://example.com",

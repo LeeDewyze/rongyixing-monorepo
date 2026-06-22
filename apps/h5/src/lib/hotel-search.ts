@@ -85,14 +85,37 @@ export function validateHotelSearch(
   return null;
 }
 
-export function hotelCityFromQuery(
-  cities: HotelCity[],
-  code: string,
-  name?: string,
-): HotelCity {
-  const found = cities.find((c) => c.Code === code);
-  if (found) return found;
-  return { Code: code, Name: name ?? code };
+/** Match city labels from URL, storage, or defaults against the TMC catalog. */
+function hotelCityNameMatches(city: HotelCity, label: string) {
+  const normalized = label.trim();
+  if (!normalized) return false;
+  return city.Name === normalized || city.Nickname === normalized;
+}
+
+/**
+ * Resolve a city against the API catalog. Upgrades legacy codes (e.g. mock `010`)
+ * to the TMC code (e.g. `1101`) when names match.
+ */
+export function resolveHotelCityInCatalog(cities: HotelCity[], city: HotelCity): HotelCity {
+  if (!cities.length) return city;
+
+  const byCode = cities.find((c) => c.Code === city.Code);
+  if (byCode) return byCode;
+
+  const labels = [city.Name, city.Nickname].filter(Boolean) as string[];
+  for (const label of labels) {
+    const byName = cities.find((c) => hotelCityNameMatches(c, label));
+    if (byName) return byName;
+  }
+
+  return city;
+}
+
+export function hotelCityFromQuery(cities: HotelCity[], code: string, name?: string): HotelCity {
+  return resolveHotelCityInCatalog(cities, {
+    Code: code,
+    Name: name ?? code,
+  });
 }
 
 export function toHotelPickerOptions(cities: HotelCity[]) {
@@ -118,9 +141,7 @@ export const hotelCityPickerAdapter = {
     return undefined;
   },
   getSearchValues: (city: HotelCity) =>
-    [city.Code, city.Name, city.Nickname, city.Pinyin, city.Initial].filter(
-      Boolean,
-    ) as string[],
+    [city.Code, city.Name, city.Nickname, city.Pinyin, city.Initial].filter(Boolean) as string[],
 };
 
 export { CITY_HISTORY_KEYS };

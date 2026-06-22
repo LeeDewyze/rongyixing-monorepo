@@ -6,8 +6,9 @@ import { HotelListItem } from "@/components/hotel/HotelListItem";
 import { HotelListSearchBar } from "@/components/hotel/HotelListSearchBar";
 import { usePageHeader } from "@/components/layout";
 import headerProfileIcon from "@/assets/hotel/header-profile.png";
-import { useHotelList } from "@/hooks/useHotelList";
+import { useHotelCities, useHotelList } from "@/hooks/useHotelList";
 import { formatApiError } from "@/lib/formatApiError";
+import { hotelCityFromQuery } from "@/lib/hotel-search";
 
 /** Figma hotel list — sky-blue header fading into filter panel (#EEF4FC). */
 const HOTEL_LIST_HEADER_GRADIENT =
@@ -73,24 +74,41 @@ export function HotelListPage() {
 
   const hasParams = Boolean(cityCode && checkIn && checkOut);
 
+  const { data: cities = [], isLoading: citiesLoading } = useHotelCities();
+
+  const resolvedCity = useMemo(
+    () => (hasParams ? hotelCityFromQuery(cities, cityCode, cityName) : null),
+    [hasParams, cities, cityCode, cityName],
+  );
+
+  const listReady = hasParams && !citiesLoading;
+
   useEffect(() => {
     if (!hasParams) navigate("/hotel", { replace: true });
   }, [hasParams, navigate]);
+
+  useEffect(() => {
+    if (!listReady || !resolvedCity || resolvedCity.Code === cityCode) return;
+    const next = new URLSearchParams(searchParams);
+    next.set("cityCode", resolvedCity.Code);
+    next.set("cityName", resolvedCity.Name);
+    navigate({ pathname: "/hotel/list", search: next.toString() }, { replace: true });
+  }, [listReady, resolvedCity, cityCode, searchParams, navigate]);
 
   usePageHeader({ visible: false });
 
   const listParams = useMemo(
     () =>
-      hasParams
+      listReady && resolvedCity
         ? {
-            CityCode: cityCode,
-            CityName: cityName,
+            CityCode: resolvedCity.Code,
+            CityName: resolvedCity.Name,
             CheckInDate: checkIn,
             CheckOutDate: checkOut,
             Keyword: keyword || undefined,
           }
         : {},
-    [hasParams, cityCode, cityName, checkIn, checkOut, keyword],
+    [listReady, resolvedCity, checkIn, checkOut, keyword],
   );
 
   const { data, isLoading, isFetching, error, refetch } = useHotelList(listParams);
@@ -107,7 +125,7 @@ export function HotelListPage() {
     const params = new URLSearchParams({
       checkIn,
       checkOut,
-      cityCode,
+      cityCode: resolvedCity?.Code ?? cityCode,
     });
     navigate(`/hotel/${hotelId}?${params.toString()}`);
   }
@@ -163,7 +181,7 @@ export function HotelListPage() {
       </div>
 
       <div className="flex-1 px-3 pb-2 pt-0">
-        {isLoading ? <HotelListSkeleton /> : null}
+        {citiesLoading || isLoading ? <HotelListSkeleton /> : null}
 
         {error ? (
           <div className="rounded-lg bg-white px-4 py-8 text-center">
@@ -178,13 +196,13 @@ export function HotelListPage() {
           </div>
         ) : null}
 
-        {!isLoading && !error && hotels.length === 0 ? (
+        {!citiesLoading && !isLoading && !error && hotels.length === 0 ? (
           <div className="rounded-lg bg-white px-4 py-16 text-center">
             <p className="text-sm text-[#716161]">暂无数据</p>
           </div>
         ) : null}
 
-        {!isLoading && !error && hotels.length > 0 ? (
+        {!citiesLoading && !isLoading && !error && hotels.length > 0 ? (
           <ul className="flex flex-col gap-2">
             {hotels.map((hotel) => (
               <li key={hotel.HotelId} className="overflow-hidden rounded-lg bg-white">

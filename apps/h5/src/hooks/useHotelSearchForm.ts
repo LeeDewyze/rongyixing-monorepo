@@ -7,6 +7,7 @@ import {
   hotelCityFromQuery,
   loadDefaultHotelSearchForm,
   persistHotelSearch,
+  resolveHotelCityInCatalog,
   validateHotelSearch,
 } from "@/lib/hotel-search";
 import { addDays } from "@/lib/date-search";
@@ -29,6 +30,14 @@ export function useHotelSearchForm() {
   const [checkOut, setCheckOut] = useState(defaults.checkOut);
   const [picker, setPicker] = useState<HotelCityPickerTarget>(null);
   const [validationError, setValidationError] = useState("");
+
+  useEffect(() => {
+    if (!cities.length) return;
+    setCity((prev) => {
+      const resolved = resolveHotelCityInCatalog(cities, prev);
+      return resolved.Code === prev.Code && resolved.Name === prev.Name ? prev : resolved;
+    });
+  }, [cities]);
 
   useEffect(() => {
     persistHotelSearch(city, checkIn, checkOut);

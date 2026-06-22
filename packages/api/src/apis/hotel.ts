@@ -84,11 +84,7 @@ function parseHotelListPrice(item: LegacyHotelDayPrice): number | undefined {
   const hotel = item.Hotel ?? {};
   // Item AvgPrice matches legacy goToDetail(hotelprice: item.AvgPrice) and is the
   // authoritative list quote when present; Variables/hotel.AvgPrice are fallbacks.
-  return (
-    toPrice(item.AvgPrice) ??
-    getHotelVariablesAvgPrice(hotel) ??
-    toPrice(hotel.AvgPrice)
-  );
+  return toPrice(item.AvgPrice) ?? getHotelVariablesAvgPrice(hotel) ?? toPrice(hotel.AvgPrice);
 }
 
 function parseHotelStar(category: string | number | undefined): number | undefined {
@@ -154,6 +150,10 @@ function buildHotelListRequest(params: HotelListParams): Record<string, unknown>
     Stars: null,
     Passengers: "",
   };
+  const cityName = params.CityName?.trim();
+  if (cityName) {
+    data.CityName = cityName;
+  }
   const keyword = params.Keyword?.trim();
   if (keyword) {
     data.SearchKey = keyword;
