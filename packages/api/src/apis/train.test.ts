@@ -39,6 +39,26 @@ describe("normalizeTrainSearchResponse", () => {
     });
   });
 
+  it("uses min seat SalesPrice and ignores train LowestPrice (legacy sleeper)", () => {
+    const result = normalizeTrainSearchResponse([
+      {
+        TrainCode: "D1043",
+        FromStationName: "北京南",
+        ToStationName: "上海虹桥",
+        StartTime: "2026-06-22 20:47:00",
+        ArrivalTime: "2026-06-23 02:16:00",
+        LowestPrice: 573,
+        Seats: [
+          { SeatTypeName: "一等卧", SalesPrice: "0", TicketPrice: "800", Count: 5 },
+          { SeatTypeName: "二等卧", SalesPrice: "0", TicketPrice: "573", Count: 10 },
+        ],
+      },
+    ]);
+
+    expect(result.Trains[0]?.LowestPrice).toBe(0);
+    expect(result.Trains[0]?.Seats?.[0]?.Price).toBe(0);
+  });
+
   it("keeps mock { Trains } payload", () => {
     const result = normalizeTrainSearchResponse({
       Trains: [

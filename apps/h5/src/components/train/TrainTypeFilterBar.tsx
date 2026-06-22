@@ -37,21 +37,23 @@ function Checkbox({ checked }: { checked: boolean }) {
 
 export function TrainTypeFilterBar({ value, onChange }: TrainTypeFilterBarProps) {
   return (
-    <div className="flex items-center gap-4 bg-[#eef3ff] px-4 py-2.5">
-      {OPTIONS.map((option) => {
-        const checked = value === option.value;
-        return (
-          <button
-            key={option.value}
-            type="button"
-            className="flex items-center gap-1.5 text-[13px] text-[#333333] active:opacity-80"
-            onClick={() => onChange(option.value)}
-          >
-            <Checkbox checked={checked} />
-            <span>{option.label}</span>
-          </button>
-        );
-      })}
+    <div className="w-full bg-[#e4edfd] px-3 pb-2 pt-1">
+      <div className="flex h-8 items-center rounded-lg bg-[#F5F6F9] px-2">
+        {OPTIONS.map((option) => {
+          const checked = value === option.value;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              className="flex min-w-0 flex-1 items-center justify-center gap-1.5 text-[13px] text-[#333333] active:opacity-80"
+              onClick={() => onChange(option.value)}
+            >
+              <Checkbox checked={checked} />
+              <span className="truncate">{option.label}</span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

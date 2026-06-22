@@ -47,7 +47,7 @@ export function TrainSeatRow({ seats, expanded, onBookAttempt }: TrainSeatRowPro
           >
             <div className="min-w-0 flex-1">
               <span className="font-medium text-[#333333]">{seat.SeatTypeName}</span>
-              <span className="ml-2 text-[#999999]">¥{seat.Price ?? "-"}</span>
+              <span className="ml-2 text-[#999999]">¥{seat.Price ?? 0}</span>
               <span className={`ml-2 ${availability.scarce ? "text-[#ff4d4f]" : "text-[#5099fe]"}`}>
                 {availability.text}
               </span>

@@ -299,12 +299,12 @@ export function TrainListPage() {
         className="h-full overflow-y-auto overscroll-y-contain [-webkit-overflow-scrolling:touch]"
         style={{ paddingTop: headerHeight }}
       >
-        <div className="sticky top-0 z-10 shrink-0">
+        <div className="sticky top-0 z-20 shrink-0">
           <TrainListDateStrip
             selectedDate={listParams.Date}
             onSelect={handleDateSelect}
             onOpenCalendar={() => setCalendarOpen(true)}
-            days={14}
+            days={7}
           />
           <TrainTypeFilterBar
             value={trainTypeFilter}
@@ -315,7 +315,7 @@ export function TrainListPage() {
           />
         </div>
 
-        <div className="space-y-3 px-3 py-3 pb-[calc(3.5rem+env(safe-area-inset-bottom))]">
+        <div className="relative z-0 space-y-3 px-3 py-3 pb-[calc(4.5rem+0.75rem+env(safe-area-inset-bottom))]">
           {!isAuthenticated && (
             <div className="rounded-xl bg-white p-8 text-center shadow-sm">
               <p className="text-sm text-[#808080]">请先登录后再查询车次</p>

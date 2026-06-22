@@ -39,10 +39,8 @@ function normalizeTrainDuration(value: unknown): string | undefined {
 }
 
 function normalizeTrainSeat(seat: LegacyRecord): TrainSeat {
-  const price =
-    parseSeatPrice(seat.SalesPrice) ??
-    parseSeatPrice(seat.Price) ??
-    parseSeatPrice(seat.TicketPrice);
+  // Legacy list UI uses seat.SalesPrice only (see train-list-item_ryx.base getLowestSeatPrice).
+  const price = parseSeatPrice(seat.SalesPrice);
   const count = typeof seat.Count === "number" ? seat.Count : undefined;
   const seatTypeName = typeof seat.SeatTypeName === "string" ? seat.SeatTypeName : undefined;
 
@@ -53,10 +51,11 @@ function normalizeTrainSeat(seat: LegacyRecord): TrainSeat {
   };
 }
 
-function lowestSeatPrice(seats: TrainSeat[]): number | undefined {
+function lowestSeatSalesPrice(seats: TrainSeat[]): number | undefined {
+  if (!seats.length) return undefined;
   const prices = seats
     .map((seat) => seat.Price)
-    .filter((price): price is number => price !== undefined && price > 0);
+    .filter((price): price is number => price !== undefined);
   return prices.length ? Math.min(...prices) : undefined;
 }
 
@@ -91,7 +90,7 @@ function normalizeTrainItem(train: LegacyRecord): TrainItem {
       normalizeTrainDuration(train.TravelTimeName) ??
       (typeof train.Duration === "string" ? train.Duration : undefined),
     Seats: seats,
-    LowestPrice: parseSeatPrice(train.LowestPrice) ?? lowestSeatPrice(seats),
+    LowestPrice: lowestSeatSalesPrice(seats),
     StartTimeStamp: typeof train.StartTimeStamp === "number" ? train.StartTimeStamp : undefined,
     ArrivalTimeStamp:
       typeof train.ArrivalTimeStamp === "number" ? train.ArrivalTimeStamp : undefined,

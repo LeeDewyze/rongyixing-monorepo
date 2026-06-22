@@ -47,7 +47,7 @@ function TrainRouteMiddle({ trainCode }: { trainCode: string }) {
 
 function LowestPriceBadge() {
   return (
-    <span className="absolute left-0 top-0 z-10 flex h-4 min-w-[54px] items-center justify-center rounded-tl-lg bg-[#34C759] px-1.5 text-[10px] font-normal leading-[100%] tracking-[0] text-white [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]">
+    <span className="absolute left-0 top-0 flex h-4 min-w-[54px] items-center justify-center rounded-tl-lg bg-[#34C759] px-1.5 text-[10px] font-normal leading-[100%] tracking-[0] text-white [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]">
       价格最低
     </span>
   );
@@ -67,7 +67,7 @@ export function TrainListItemCard({
     <button
       type="button"
       onClick={onToggle}
-      className={`relative w-full overflow-hidden rounded-lg text-left shadow-[0_2px_8px_rgba(0,0,0,0.06)] transition active:scale-[0.99] ${expanded ? "" : "min-h-[96px]"} ${
+      className={`relative z-0 w-full overflow-hidden rounded-lg text-left shadow-[0_2px_8px_rgba(0,0,0,0.06)] transition active:scale-[0.99] ${expanded ? "" : "min-h-[96px]"} ${
         isLowest
           ? "bg-white bg-[linear-gradient(184.36deg,#D7FFF0_5.34%,#FFFFFF_98.28%)] bg-[length:100%_48px] bg-top bg-no-repeat"
           : "bg-white"
@@ -109,7 +109,7 @@ export function TrainListItemCard({
                 剩{minSeatCount(train)}张
               </span>
             ) : null}
-            <p className={`${TRAIN_PRICE_CLASS} ${priceColor}`}>¥{train.LowestPrice ?? "-"}</p>
+            <p className={`${TRAIN_PRICE_CLASS} ${priceColor}`}>¥{train.LowestPrice ?? 0}</p>
           </div>
         </div>
 
