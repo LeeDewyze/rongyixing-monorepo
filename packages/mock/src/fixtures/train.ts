@@ -97,5 +97,21 @@ export function createMockTrainList(params: TrainSearchParams): TrainItem[] {
         { SeatTypeName: "商务座", Price: 1748, Count: 5 },
       ],
     },
+    {
+      Id: "T3",
+      TrainCode: "K101",
+      StartTime: `${params.Date} 22:30`,
+      ArrivalTime: `${params.Date} 14:15`,
+      FromStation: params.FromName ?? params.FromStation,
+      ToStation: params.ToName ?? params.ToStation,
+      Duration: "15小时45分",
+      LowestPrice: 189,
+      Seats: [
+        { SeatTypeName: "硬座", Price: 189, Count: 99 },
+        { SeatTypeName: "硬卧", Price: 322, Count: 12 },
+        { SeatTypeName: "软卧", Price: 504, Count: 2 },
+        { SeatTypeName: "无座", Price: 189, Count: 99 },
+      ],
+    },
   ];
 }

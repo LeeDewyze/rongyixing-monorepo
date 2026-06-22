@@ -121,12 +121,17 @@ export type {
 } from "./travel.js";
 
 export type {
+  TrainFilterCondition,
+  TrainFilterOption,
   TrainItem,
   TrainSearchParams,
   TrainSearchResponse,
   TrainSeat,
+  TrainSortKind,
+  TrainSortTab,
   TrainStation,
   TrainStationResourceResponse,
+  TrainTypeFilter,
 } from "./train.js";
 
 export type {

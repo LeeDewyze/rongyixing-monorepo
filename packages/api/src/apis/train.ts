@@ -1,6 +1,8 @@
 import type {
+  TrainItem,
   TrainSearchParams,
   TrainSearchResponse,
+  TrainSeat,
   TrainStation,
   TrainStationResourceResponse,
 } from "@ryx/shared-types";
@@ -13,11 +15,115 @@ export interface TrainApi {
   searchTrains(params: TrainSearchParams): Promise<TrainSearchResponse>;
 }
 
+type LegacyRecord = Record<string, unknown>;
+
 function normalizeTrainStations(
   res: TrainStation[] | TrainStationResourceResponse | null | undefined,
 ): TrainStation[] {
   if (Array.isArray(res)) return res;
   return res?.Trafficlines ?? res?.TrafficLines ?? [];
+}
+
+function parseSeatPrice(value: unknown): number | undefined {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+}
+
+function normalizeTrainDuration(value: unknown): string | undefined {
+  if (typeof value !== "string" || !value.trim()) return undefined;
+  return value.replace(/h/g, "小时").replace(/m/g, "分");
+}
+
+function normalizeTrainSeat(seat: LegacyRecord): TrainSeat {
+  const price =
+    parseSeatPrice(seat.SalesPrice) ??
+    parseSeatPrice(seat.Price) ??
+    parseSeatPrice(seat.TicketPrice);
+  const count = typeof seat.Count === "number" ? seat.Count : undefined;
+  const seatTypeName = typeof seat.SeatTypeName === "string" ? seat.SeatTypeName : undefined;
+
+  return {
+    SeatTypeName: seatTypeName,
+    Price: price,
+    Count: count,
+  };
+}
+
+function lowestSeatPrice(seats: TrainSeat[]): number | undefined {
+  const prices = seats
+    .map((seat) => seat.Price)
+    .filter((price): price is number => price !== undefined && price > 0);
+  return prices.length ? Math.min(...prices) : undefined;
+}
+
+function normalizeTrainItem(train: LegacyRecord): TrainItem {
+  const seats = Array.isArray(train.Seats)
+    ? train.Seats.map((seat) => normalizeTrainSeat(seat as LegacyRecord))
+    : [];
+  const trainCode = typeof train.TrainCode === "string" ? train.TrainCode : "";
+  const trainNo = typeof train.TrainNo === "string" ? train.TrainNo : "";
+  const fromStationCode = typeof train.FromStationCode === "string" ? train.FromStationCode : "";
+  const startTime = typeof train.StartTime === "string" ? train.StartTime : "";
+  const id =
+    (typeof train.Id === "string" && train.Id) ||
+    trainCode ||
+    trainNo ||
+    `${fromStationCode}-${startTime}`;
+
+  return {
+    Id: id,
+    TrainCode: trainCode || trainNo,
+    StartTime: startTime,
+    ArrivalTime: typeof train.ArrivalTime === "string" ? train.ArrivalTime : "",
+    FromStation:
+      (typeof train.FromStationName === "string" && train.FromStationName) ||
+      (typeof train.FromStation === "string" && train.FromStation) ||
+      fromStationCode,
+    ToStation:
+      (typeof train.ToStationName === "string" && train.ToStationName) ||
+      (typeof train.ToStation === "string" && train.ToStation) ||
+      (typeof train.ToStationCode === "string" ? train.ToStationCode : ""),
+    Duration:
+      normalizeTrainDuration(train.TravelTimeName) ??
+      (typeof train.Duration === "string" ? train.Duration : undefined),
+    Seats: seats,
+    LowestPrice: parseSeatPrice(train.LowestPrice) ?? lowestSeatPrice(seats),
+    StartTimeStamp: typeof train.StartTimeStamp === "number" ? train.StartTimeStamp : undefined,
+    ArrivalTimeStamp:
+      typeof train.ArrivalTimeStamp === "number" ? train.ArrivalTimeStamp : undefined,
+    DurationMinutes: typeof train.DurationMinutes === "number" ? train.DurationMinutes : undefined,
+    ArriveDays: parseArriveDays(train.ArriveDays),
+  };
+}
+
+function parseArriveDays(value: unknown): number | undefined {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+}
+
+/** Legacy Home-Search returns TrainEntity[] in Data; mock uses { Trains }. */
+export function normalizeTrainSearchResponse(res: unknown): TrainSearchResponse {
+  if (Array.isArray(res)) {
+    return { Trains: res.map((train) => normalizeTrainItem(train as LegacyRecord)) };
+  }
+
+  if (res && typeof res === "object") {
+    const payload = res as LegacyRecord;
+    const trains = payload.Trains;
+    if (Array.isArray(trains)) {
+      return { Trains: trains.map((train) => normalizeTrainItem(train as LegacyRecord)) };
+    }
+  }
+
+  return { Trains: [] };
 }
 
 export function createTrainApi(proxy: ProxyClient): TrainApi {
@@ -29,15 +135,20 @@ export function createTrainApi(proxy: ProxyClient): TrainApi {
       });
       return normalizeTrainStations(res);
     },
-    searchTrains(params) {
-      return proxy.send<TrainSearchResponse>({
+    async searchTrains(params) {
+      const res = await proxy.send<unknown>({
         method: TRAIN_FLOW_METHODS.HOME_SEARCH,
         data: {
           Date: params.Date,
           FromStation: params.FromStation,
           ToStation: params.ToStation,
+          TrainCode: "",
         },
+        version: "1.0",
+        requestTimeout: 60,
+        timeoutMs: 60_000,
       });
+      return normalizeTrainSearchResponse(res);
     },
   };
 }
