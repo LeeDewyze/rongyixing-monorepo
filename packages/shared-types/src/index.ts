@@ -129,10 +129,12 @@ export type {
   TrainSeat,
   TrainSortKind,
   TrainSortTab,
+  TrainDurationSortMode,
   TrainStation,
   TrainStationResourceResponse,
   TrainTypeFilter,
 } from "./train.js";
+export { parseTrainDurationMinutes, parseTravelTimeMinutes } from "./train.js";
 
 export type {
   AirportResourceParams,

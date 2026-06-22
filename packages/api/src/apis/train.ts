@@ -6,6 +6,7 @@ import type {
   TrainStation,
   TrainStationResourceResponse,
 } from "@ryx/shared-types";
+import { parseTrainDurationMinutes, parseTravelTimeMinutes } from "@ryx/shared-types";
 
 import { TRAIN_FLOW_METHODS } from "../methods/train-flow.js";
 import type { ProxyClient } from "../proxy/proxy-client.js";
@@ -59,6 +60,38 @@ function lowestSeatSalesPrice(seats: TrainSeat[]): number | undefined {
   return prices.length ? Math.min(...prices) : undefined;
 }
 
+function parseDurationMinutesValue(train: LegacyRecord): number | undefined {
+  const travelTime = parseTravelTimeMinutes(train.TravelTime);
+  if (travelTime !== undefined) return travelTime;
+  if (typeof train.DurationMinutes === "number" && Number.isFinite(train.DurationMinutes)) {
+    return train.DurationMinutes;
+  }
+  const duration =
+    normalizeTrainDuration(train.TravelTimeName) ??
+    (typeof train.Duration === "string" ? train.Duration : undefined);
+  const parsed = parseTrainDurationMinutes(duration);
+  return parsed > 0 ? parsed : undefined;
+}
+
+function buildTrainItemId(train: LegacyRecord): string {
+  const trainCode = typeof train.TrainCode === "string" ? train.TrainCode : "";
+  const trainNo = typeof train.TrainNo === "string" ? train.TrainNo : "";
+  const fromStationCode = typeof train.FromStationCode === "string" ? train.FromStationCode : "";
+  const toStationCode = typeof train.ToStationCode === "string" ? train.ToStationCode : "";
+  const startTime = typeof train.StartTime === "string" ? train.StartTime : "";
+  const arrivalTime = typeof train.ArrivalTime === "string" ? train.ArrivalTime : "";
+  const code = trainCode || trainNo;
+
+  const routeKey = [code, fromStationCode, toStationCode, startTime, arrivalTime]
+    .filter((part) => part.length > 0)
+    .join("|");
+  if (routeKey) return routeKey;
+
+  const explicitId = typeof train.Id === "string" ? train.Id.trim() : "";
+  if (explicitId && startTime) return `${explicitId}|${startTime}`;
+  return explicitId || `train-${startTime || "unknown"}`;
+}
+
 function normalizeTrainItem(train: LegacyRecord): TrainItem {
   const seats = Array.isArray(train.Seats)
     ? train.Seats.map((seat) => normalizeTrainSeat(seat as LegacyRecord))
@@ -67,11 +100,7 @@ function normalizeTrainItem(train: LegacyRecord): TrainItem {
   const trainNo = typeof train.TrainNo === "string" ? train.TrainNo : "";
   const fromStationCode = typeof train.FromStationCode === "string" ? train.FromStationCode : "";
   const startTime = typeof train.StartTime === "string" ? train.StartTime : "";
-  const id =
-    (typeof train.Id === "string" && train.Id) ||
-    trainCode ||
-    trainNo ||
-    `${fromStationCode}-${startTime}`;
+  const id = buildTrainItemId(train);
 
   return {
     Id: id,
@@ -94,7 +123,8 @@ function normalizeTrainItem(train: LegacyRecord): TrainItem {
     StartTimeStamp: typeof train.StartTimeStamp === "number" ? train.StartTimeStamp : undefined,
     ArrivalTimeStamp:
       typeof train.ArrivalTimeStamp === "number" ? train.ArrivalTimeStamp : undefined,
-    DurationMinutes: typeof train.DurationMinutes === "number" ? train.DurationMinutes : undefined,
+    TravelTime: parseTravelTimeMinutes(train.TravelTime),
+    DurationMinutes: parseDurationMinutesValue(train),
     ArriveDays: parseArriveDays(train.ArriveDays),
   };
 }

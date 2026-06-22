@@ -2,6 +2,7 @@ import type { TrainItem } from "@ryx/shared-types";
 
 import {
   formatTrainClock,
+  formatTrainDuration,
   getTrainArrivalDayTip,
   minSeatCount,
   shouldShowScarceTrainBadge,
@@ -62,6 +63,7 @@ export function TrainListItemCard({
   const isLowest = Boolean(train.isLowestPrice);
   const priceColor = isLowest ? "text-[#16a34a]" : "text-[#FF383C]";
   const arrivalDayTip = getTrainArrivalDayTip(train);
+  const durationLabel = formatTrainDuration(train);
 
   return (
     <button
@@ -84,8 +86,8 @@ export function TrainListItemCard({
             </div>
 
             <div className="flex shrink-0 flex-col items-center gap-0.5 px-2.5">
-              {train.Duration ? (
-                <span className={TRAIN_DURATION_CLASS}>{train.Duration}</span>
+              {durationLabel ? (
+                <span className={TRAIN_DURATION_CLASS}>{durationLabel}</span>
               ) : (
                 <span className="h-3" aria-hidden />
               )}

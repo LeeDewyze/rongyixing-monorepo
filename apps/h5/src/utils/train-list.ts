@@ -4,8 +4,11 @@ import type {
   TrainItem,
   TrainSeat,
   TrainSortKind,
+  TrainSortTab,
+  TrainDurationSortMode,
   TrainTypeFilter,
 } from "@ryx/shared-types";
+import { parseTrainDurationMinutes, parseTravelTimeMinutes } from "@ryx/shared-types";
 
 export function parseTrainTimestamp(value: string): number {
   const normalized = value.includes("T") ? value : value.replace(" ", "T");
@@ -43,20 +46,79 @@ export function getTrainArrivalDayTip(train: TrainItem): string | null {
 }
 
 export function parseDurationMinutes(duration?: string): number {
-  if (!duration) return 0;
-  const hourMatch = duration.match(/(\d+)\s*小时/);
-  const minuteMatch = duration.match(/(\d+)\s*分/);
-  const hours = hourMatch ? Number(hourMatch[1]) : 0;
-  const minutes = minuteMatch ? Number(minuteMatch[1]) : 0;
-  return hours * 60 + minutes;
+  return parseTrainDurationMinutes(duration);
+}
+
+/** Legacy list label: "6时10分", "20时0分", or "45分" when under one hour. */
+export function formatTrainDurationMinutes(totalMinutes: number): string | null {
+  if (!Number.isFinite(totalMinutes) || totalMinutes <= 0) return null;
+  const minutes = Math.round(totalMinutes);
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  if (hours <= 0) return `${mins}分`;
+  return `${hours}时${mins}分`;
+}
+
+export function formatTrainDuration(train: TrainItem): string | null {
+  return formatTrainDurationMinutes(getTrainTravelMinutes(train));
+}
+
+function parseTimeToMinutes(value: string): number | null {
+  const match = value.match(/(\d{2}):(\d{2})/);
+  if (!match) return null;
+  return Number(match[1]) * 60 + Number(match[2]);
+}
+
+function durationMinutesFromTimestamps(train: TrainItem): number | undefined {
+  const startTs = train.StartTimeStamp ?? parseTrainTimestamp(train.StartTime);
+  let arrivalTs = train.ArrivalTimeStamp ?? parseTrainTimestamp(train.ArrivalTime);
+
+  if (startTs && arrivalTs) {
+    if (typeof train.ArriveDays === "number" && train.ArriveDays > 0) {
+      arrivalTs += train.ArriveDays * 86_400_000;
+    } else if (arrivalTs <= startTs) {
+      arrivalTs += 86_400_000;
+    }
+    const minutes = Math.round((arrivalTs - startTs) / 60_000);
+    if (minutes > 0) return minutes;
+  }
+
+  // Fallback: parse "HH:MM" time strings directly (API may omit date prefix)
+  const startMinutes = parseTimeToMinutes(train.StartTime);
+  const arrivalMinutes = parseTimeToMinutes(train.ArrivalTime);
+  if (startMinutes !== null && arrivalMinutes !== null) {
+    if (typeof train.ArriveDays === "number" && train.ArriveDays > 0) {
+      return arrivalMinutes + train.ArriveDays * 1440 - startMinutes;
+    }
+    if (arrivalMinutes <= startMinutes) {
+      return arrivalMinutes + 1440 - startMinutes;
+    }
+    return arrivalMinutes - startMinutes;
+  }
+
+  return undefined;
+}
+
+/** Legacy TravelTime minutes used for duration sorting. */
+export function getTrainTravelMinutes(train: TrainItem): number {
+  const travelTime = parseTravelTimeMinutes(train.TravelTime);
+  if (travelTime !== undefined) return travelTime;
+  if (typeof train.DurationMinutes === "number" && train.DurationMinutes > 0) {
+    return train.DurationMinutes;
+  }
+  const parsed = parseTrainDurationMinutes(train.Duration);
+  if (parsed > 0) return parsed;
+  return durationMinutesFromTimestamps(train) ?? 0;
 }
 
 export function enrichTrainItem(train: TrainItem): TrainItem {
+  const startTs = train.StartTimeStamp ?? parseTrainTimestamp(train.StartTime);
+  const arrivalTs = train.ArrivalTimeStamp ?? parseTrainTimestamp(train.ArrivalTime);
+  const withTimestamps = { ...train, StartTimeStamp: startTs, ArrivalTimeStamp: arrivalTs };
+
   return {
-    ...train,
-    StartTimeStamp: train.StartTimeStamp ?? parseTrainTimestamp(train.StartTime),
-    ArrivalTimeStamp: train.ArrivalTimeStamp ?? parseTrainTimestamp(train.ArrivalTime),
-    DurationMinutes: train.DurationMinutes ?? parseDurationMinutes(train.Duration),
+    ...withTimestamps,
+    DurationMinutes: getTrainTravelMinutes(withTimestamps),
   };
 }
 
@@ -80,12 +142,48 @@ export function applyTrainTypeFilter(trains: TrainItem[], mode: TrainTypeFilter)
   return trains;
 }
 
+export const TRAIN_FILTER_TIME_SPANS = [
+  { label: "00:00-12:00", value: { lower: 0, upper: 12 } },
+  { label: "12:00-18:00", value: { lower: 12, upper: 18 } },
+  { label: "18:00-00:00", value: { lower: 18, upper: 24 } },
+] as const;
+
 export function createInitialTrainFilter(): TrainFilterCondition {
   return {
     seatTypes: [],
     onlyHasTickets: false,
     departureTimeSpan: null,
+    arrivalTimeSpan: null,
   };
+}
+
+export function toggleTrainTimeSpan(
+  current: { lower: number; upper: number } | null,
+  span: { lower: number; upper: number },
+): { lower: number; upper: number } | null {
+  if (current?.lower === span.lower && current?.upper === span.upper) {
+    return null;
+  }
+  return span;
+}
+
+export function resetTrainFilterDraft(filter: TrainFilterCondition): TrainFilterCondition {
+  return {
+    ...filter,
+    onlyHasTickets: false,
+    departureTimeSpan: null,
+    arrivalTimeSpan: null,
+    seatTypes: filter.seatTypes.map((option) => ({ ...option, isChecked: false })),
+  };
+}
+
+function matchesTimeSpan(time: string, span: { lower: number; upper: number }): boolean {
+  const ts = parseTrainTimestamp(time);
+  if (!ts) return false;
+  const date = new Date(ts);
+  const hour = date.getHours();
+  const minute = date.getMinutes();
+  return span.lower <= hour && (hour < span.upper || (hour === span.upper && minute <= 0));
 }
 
 export function buildFilterOptions(trains: TrainItem[]): TrainFilterCondition {
@@ -131,11 +229,13 @@ export function applyTrainFilters(trains: TrainItem[], filter: TrainFilterCondit
   }
 
   if (filter.departureTimeSpan) {
-    const { lower, upper } = filter.departureTimeSpan;
-    result = result.filter((train) => {
-      const hour = new Date(parseTrainTimestamp(train.StartTime)).getHours();
-      return hour >= lower && hour < upper;
-    });
+    const span = filter.departureTimeSpan;
+    result = result.filter((train) => matchesTimeSpan(train.StartTime, span));
+  }
+
+  if (filter.arrivalTimeSpan) {
+    const span = filter.arrivalTimeSpan;
+    result = result.filter((train) => matchesTimeSpan(train.ArrivalTime, span));
   }
 
   return result;
@@ -145,6 +245,7 @@ export function isTrainFilterActive(filter: TrainFilterCondition): boolean {
   return (
     filter.onlyHasTickets ||
     filter.departureTimeSpan !== null ||
+    filter.arrivalTimeSpan !== null ||
     filter.seatTypes.some((o: TrainFilterOption) => o.isChecked)
   );
 }
@@ -159,6 +260,42 @@ export function getDefaultSortedTrains(trains: TrainItem[]): TrainItem[] {
   });
 }
 
+/** Restore legacy initSortTrains order by train id. */
+export function reorderTrainsByIds(trains: TrainItem[], orderedIds: string[]): TrainItem[] {
+  const rank = new Map(orderedIds.map((id, index) => [id, index]));
+  return [...trains].sort(
+    (a, b) =>
+      (rank.get(a.Id) ?? Number.MAX_SAFE_INTEGER) - (rank.get(b.Id) ?? Number.MAX_SAFE_INTEGER),
+  );
+}
+
+export interface TrainListOrderState {
+  activeTab: TrainSortTab;
+  durationSortMode: TrainDurationSortMode;
+  timeEarlyToLate: boolean;
+  priceLowToHigh: boolean;
+}
+
+/** Resolve list order for toolbar tabs. */
+export function resolveTrainListOrder(
+  trains: TrainItem[],
+  state: TrainListOrderState,
+): TrainItem[] {
+  if (state.activeTab === "duration" && state.durationSortMode === "short") {
+    return sortTrains(trains, "duration", true);
+  }
+  if (state.activeTab === "duration" && state.durationSortMode === "long") {
+    return sortTrains(trains, "duration", false);
+  }
+  if (state.activeTab === "time") {
+    return sortTrains(trains, "time", state.timeEarlyToLate);
+  }
+  if (state.activeTab === "price") {
+    return sortTrains(trains, "price", state.priceLowToHigh);
+  }
+  return getDefaultSortedTrains(trains);
+}
+
 export function sortTrains(
   trains: TrainItem[],
   kind: TrainSortKind,
@@ -170,7 +307,10 @@ export function sortTrains(
     let diff = 0;
 
     if (kind === "duration") {
-      diff = (enrichedA.DurationMinutes ?? 0) - (enrichedB.DurationMinutes ?? 0);
+      diff = getTrainTravelMinutes(enrichedA) - getTrainTravelMinutes(enrichedB);
+      if (diff === 0) {
+        diff = (enrichedA.StartTimeStamp ?? 0) - (enrichedB.StartTimeStamp ?? 0);
+      }
     } else if (kind === "time") {
       diff = (enrichedA.StartTimeStamp ?? 0) - (enrichedB.StartTimeStamp ?? 0);
       if (diff === 0) {
@@ -193,10 +333,37 @@ export function markLowestPrice(trains: TrainItem[]): TrainItem[] {
   }));
 }
 
+/** Stable React key: index + route fields (API ids may duplicate). */
+export function getTrainListItemKey(train: TrainItem, index: number): string {
+  return [
+    index,
+    train.Id,
+    train.TrainCode,
+    train.FromStation,
+    train.ToStation,
+    train.StartTime,
+    train.ArrivalTime,
+  ].join("|");
+}
+
 export type SeatAvailabilityLabel = {
   text: string;
   scarce: boolean;
 };
+
+const SEAT_TYPE_ALIASES: Record<string, string> = {
+  硬: "硬座",
+  软: "软座",
+};
+
+/** Legacy list shows full seat type names (e.g. 硬座, not 硬). */
+export function formatSeatTypeDisplayName(name?: string): string {
+  if (!name) return "";
+  const trimmed = name.trim();
+  return SEAT_TYPE_ALIASES[trimmed] ?? trimmed;
+}
+
+export const COLLAPSED_SEAT_PREVIEW_LIMIT = 4;
 
 export function formatSeatAvailability(count?: number): SeatAvailabilityLabel {
   if (count === undefined || count <= 0) {
@@ -228,6 +395,7 @@ export function mergeTrainFilterChecks(
   return {
     onlyHasTickets: current.onlyHasTickets,
     departureTimeSpan: current.departureTimeSpan,
+    arrivalTimeSpan: current.arrivalTimeSpan,
     seatTypes: next.seatTypes.map((option: TrainFilterOption) => ({
       ...option,
       isChecked:

@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { TrainSortTab } from "@ryx/shared-types";
+import type { TrainDurationSortMode, TrainSortTab } from "@ryx/shared-types";
 
 import filterIcon from "@/assets/flight/toolbar-filter.png";
 import priceIcon from "@/assets/flight/toolbar-price.png";
@@ -8,13 +8,21 @@ import timeIcon from "@/assets/flight/toolbar-time.png";
 interface TrainListToolbarProps {
   activeTab: TrainSortTab;
   filtered: boolean;
-  durationShortToLong: boolean;
+  durationSortMode: TrainDurationSortMode;
   timeEarlyToLate: boolean;
   priceLowToHigh: boolean;
   onFilter: () => void;
-  onOpenDurationSort: () => void;
+  onDurationSort: () => void;
   onOpenTimeSort: () => void;
   onOpenPriceSort: () => void;
+}
+
+function getDurationToolbarHint(
+  activeTab: TrainSortTab,
+  durationSortMode: TrainDurationSortMode,
+): string {
+  if (activeTab === "duration" && durationSortMode === "long") return "耗时最长";
+  return "耗时最短";
 }
 
 function DurationIcon({ active }: { active: boolean }) {
@@ -65,14 +73,16 @@ function ToolbarItem({
 export function TrainListToolbar({
   activeTab,
   filtered,
-  durationShortToLong,
+  durationSortMode,
   timeEarlyToLate,
   priceLowToHigh,
   onFilter,
-  onOpenDurationSort,
+  onDurationSort,
   onOpenTimeSort,
   onOpenPriceSort,
 }: TrainListToolbarProps) {
+  const durationActive = activeTab === "duration" && durationSortMode !== "off";
+  const durationHint = getDurationToolbarHint(activeTab, durationSortMode);
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#eeeeee] bg-white pb-[max(0.25rem,env(safe-area-inset-bottom))] shadow-[0_-2px_8px_rgba(0,0,0,0.04)]">
       <div className="mx-auto grid max-w-lg grid-cols-4">
@@ -94,10 +104,10 @@ export function TrainListToolbar({
           onClick={onFilter}
         />
         <ToolbarItem
-          active={activeTab === "duration"}
-          hint={activeTab === "duration" ? (durationShortToLong ? "从短到长" : "从长到短") : "耗时"}
-          icon={<DurationIcon active={activeTab === "duration"} />}
-          onClick={onOpenDurationSort}
+          active={durationActive}
+          hint={durationHint}
+          icon={<DurationIcon active={durationActive} />}
+          onClick={onDurationSort}
         />
         <ToolbarItem
           active={activeTab === "time"}

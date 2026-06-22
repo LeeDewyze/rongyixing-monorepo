@@ -31,12 +31,48 @@ describe("normalizeTrainSearchResponse", () => {
       FromStation: "北京南",
       ToStation: "上海虹桥",
       Duration: "4小时28分",
+      DurationMinutes: 268,
       LowestPrice: 553,
       Seats: [
         { SeatTypeName: "二等座", Price: 553, Count: 99 },
         { SeatTypeName: "一等座", Price: 933, Count: 20 },
       ],
     });
+  });
+
+  it("maps legacy TravelTime minutes for duration sorting", () => {
+    const result = normalizeTrainSearchResponse([
+      {
+        TrainCode: "K101",
+        FromStationName: "北京",
+        ToStationName: "上海",
+        StartTime: "2026-06-22 22:30:00",
+        ArrivalTime: "2026-06-23 14:15:00",
+        TravelTime: 945,
+        Seats: [{ SeatTypeName: "硬座", SalesPrice: "189", Count: 10 }],
+      },
+    ]);
+
+    expect(result.Trains[0]).toMatchObject({
+      TravelTime: 945,
+      DurationMinutes: 945,
+    });
+  });
+
+  it("parses TravelTimeName with 时/分 labels", () => {
+    const result = normalizeTrainSearchResponse([
+      {
+        TrainCode: "D77",
+        FromStationName: "北京",
+        ToStationName: "上海",
+        StartTime: "2026-06-22 08:00:00",
+        ArrivalTime: "2026-06-22 19:20:00",
+        TravelTimeName: "11时20分",
+        Seats: [{ SeatTypeName: "二等座", SalesPrice: "100", Count: 10 }],
+      },
+    ]);
+
+    expect(result.Trains[0]?.DurationMinutes).toBe(680);
   });
 
   it("uses min seat SalesPrice and ignores train LowestPrice (legacy sleeper)", () => {
@@ -57,6 +93,61 @@ describe("normalizeTrainSearchResponse", () => {
 
     expect(result.Trains[0]?.LowestPrice).toBe(0);
     expect(result.Trains[0]?.Seats?.[0]?.Price).toBe(0);
+  });
+
+  it("assigns unique ids for same train code at different departure times", () => {
+    const result = normalizeTrainSearchResponse([
+      {
+        TrainCode: "D1006",
+        FromStationCode: "BXP",
+        StartTime: "2026-06-22 05:50:00",
+        ArrivalTime: "2026-06-22 12:00:00",
+        TravelTimeName: "6时10分",
+        Seats: [{ SeatTypeName: "二等座", SalesPrice: "75.5", Count: 10 }],
+      },
+      {
+        TrainCode: "D1006",
+        FromStationCode: "VNP",
+        StartTime: "2026-06-22 06:00:00",
+        ArrivalTime: "2026-06-22 12:00:00",
+        TravelTimeName: "6时",
+        Seats: [{ SeatTypeName: "二等座", SalesPrice: "50.5", Count: 10 }],
+      },
+    ]);
+
+    expect(result.Trains).toHaveLength(2);
+    expect(result.Trains[0]?.Id).not.toBe(result.Trains[1]?.Id);
+    expect(result.Trains[0]?.Id).toContain("D1006");
+    expect(result.Trains[1]?.Id).toContain("06:00:00");
+  });
+
+  it("ignores duplicate API ids when building route-based ids", () => {
+    const result = normalizeTrainSearchResponse([
+      {
+        Id: "same-server-id",
+        TrainCode: "G6705",
+        FromStationCode: "VNP",
+        ToStationCode: "SHH",
+        StartTime: "2026-06-22 09:00:00",
+        ArrivalTime: "2026-06-22 12:00:00",
+        TravelTimeName: "3时",
+        Seats: [{ SeatTypeName: "二等座", SalesPrice: "0", Count: 10 }],
+      },
+      {
+        Id: "same-server-id",
+        TrainCode: "G6707",
+        FromStationCode: "BXP",
+        ToStationCode: "SHH",
+        StartTime: "2026-06-22 09:00:00",
+        ArrivalTime: "2026-06-22 12:00:00",
+        TravelTimeName: "3时",
+        Seats: [{ SeatTypeName: "二等座", SalesPrice: "0", Count: 10 }],
+      },
+    ]);
+
+    expect(result.Trains[0]?.Id).not.toBe(result.Trains[1]?.Id);
+    expect(result.Trains[0]?.Id).toContain("G6705");
+    expect(result.Trains[1]?.Id).toContain("G6707");
   });
 
   it("keeps mock { Trains } payload", () => {

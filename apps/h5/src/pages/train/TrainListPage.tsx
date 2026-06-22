@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import type { TrainItem } from "@ryx/shared-types";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ProductType } from "@ryx/shared-types";
 import type {
+  TrainDurationSortMode,
   TrainFilterCondition,
   TrainSortKind,
   TrainSortTab,
@@ -43,12 +45,12 @@ import {
   applyTrainTypeFilter,
   buildFilterOptions,
   createInitialTrainFilter,
-  getDefaultSortedTrains,
+  getTrainListItemKey,
   isTrainFilterActive,
   markLowestPrice,
   mergeTrainFilterChecks,
   normalizeTrains,
-  sortTrains,
+  resolveTrainListOrder,
 } from "@/utils/train-list";
 
 function buildListUrl(base: URLSearchParams, date: string): string {
@@ -106,7 +108,7 @@ export function TrainListPage() {
   const [sortSheet, setSortSheet] = useState<TrainSortKind | null>(null);
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TrainSortTab>("none");
-  const [durationShortToLong, setDurationShortToLong] = useState(true);
+  const [durationSortMode, setDurationSortMode] = useState<TrainDurationSortMode>("off");
   const [timeEarlyToLate, setTimeEarlyToLate] = useState(true);
   const [priceLowToHigh, setPriceLowToHigh] = useState(true);
   const [expandedTrainId, setExpandedTrainId] = useState<string | null>(null);
@@ -136,8 +138,25 @@ export function TrainListPage() {
     setFilterDraft(createInitialTrainFilter());
     setTrainTypeFilter("all");
     setActiveTab("none");
+    setDurationSortMode("off");
     resetExpanded();
   }, [resetExpanded]);
+
+  const getFilteredTrains = useCallback((): TrainItem[] => {
+    let trains = applyTrainTypeFilter(rawTrains, trainTypeFilter);
+    trains = applyTrainFilters(trains, filterApplied);
+    return trains;
+  }, [rawTrains, trainTypeFilter, filterApplied]);
+
+  const listOrderState = useMemo(
+    () => ({
+      activeTab,
+      durationSortMode,
+      timeEarlyToLate,
+      priceLowToHigh,
+    }),
+    [activeTab, durationSortMode, timeEarlyToLate, priceLowToHigh],
+  );
 
   useEffect(() => {
     resetExpanded();
@@ -146,36 +165,16 @@ export function TrainListPage() {
     trainTypeFilter,
     filterApplied,
     activeTab,
-    durationShortToLong,
+    durationSortMode,
     timeEarlyToLate,
     priceLowToHigh,
     resetExpanded,
   ]);
 
   const displayed = useMemo(() => {
-    let trains = applyTrainTypeFilter(rawTrains, trainTypeFilter);
-    trains = applyTrainFilters(trains, filterApplied);
-
-    if (activeTab === "duration") {
-      trains = sortTrains(trains, "duration", durationShortToLong);
-    } else if (activeTab === "time") {
-      trains = sortTrains(trains, "time", timeEarlyToLate);
-    } else if (activeTab === "price") {
-      trains = sortTrains(trains, "price", priceLowToHigh);
-    } else {
-      trains = getDefaultSortedTrains(trains);
-    }
-
+    const trains = resolveTrainListOrder(getFilteredTrains(), listOrderState);
     return markLowestPrice(trains);
-  }, [
-    rawTrains,
-    trainTypeFilter,
-    filterApplied,
-    activeTab,
-    durationShortToLong,
-    timeEarlyToLate,
-    priceLowToHigh,
-  ]);
+  }, [getFilteredTrains, listOrderState]);
 
   const filtered = isTrainFilterActive(filterApplied);
 
@@ -232,11 +231,18 @@ export function TrainListPage() {
     setActiveTab("filter");
   }
 
-  function handleSortConfirm(kind: TrainSortKind, ascending: boolean) {
-    if (kind === "duration") {
-      setDurationShortToLong(ascending);
+  function handleDurationSort() {
+    if (activeTab !== "duration" || durationSortMode === "off") {
       setActiveTab("duration");
-    } else if (kind === "time") {
+      setDurationSortMode("short");
+      return;
+    }
+    setDurationSortMode((mode) => (mode === "short" ? "long" : "short"));
+  }
+
+  function handleSortConfirm(kind: TrainSortKind, ascending: boolean) {
+    setDurationSortMode("off");
+    if (kind === "time") {
       setTimeEarlyToLate(ascending);
       setActiveTab("time");
     } else {
@@ -311,6 +317,7 @@ export function TrainListPage() {
             onChange={(value) => {
               setTrainTypeFilter(value);
               setActiveTab("none");
+              setDurationSortMode("off");
             }}
           />
         </div>
@@ -355,9 +362,9 @@ export function TrainListPage() {
           )}
 
           {isAuthenticated &&
-            displayed.map((train) => (
+            displayed.map((train, index) => (
               <TrainListItemCard
-                key={train.Id}
+                key={getTrainListItemKey(train, index)}
                 train={train}
                 expanded={expandedTrainId === train.Id}
                 onToggle={() => toggleTrainCard(train.Id)}
@@ -370,14 +377,14 @@ export function TrainListPage() {
       <TrainListToolbar
         activeTab={activeTab}
         filtered={filtered}
-        durationShortToLong={durationShortToLong}
+        durationSortMode={durationSortMode}
         timeEarlyToLate={timeEarlyToLate}
         priceLowToHigh={priceLowToHigh}
         onFilter={() => {
           setFilterDraft(filterApplied);
           setFilterOpen(true);
         }}
-        onOpenDurationSort={() => setSortSheet("duration")}
+        onDurationSort={handleDurationSort}
         onOpenTimeSort={() => setSortSheet("time")}
         onOpenPriceSort={() => setSortSheet("price")}
       />
@@ -385,7 +392,7 @@ export function TrainListPage() {
       <TrainSortSheet
         open={sortSheet !== null}
         kind={sortSheet}
-        durationShortToLong={durationShortToLong}
+        durationShortToLong={durationSortMode === "short"}
         timeEarlyToLate={timeEarlyToLate}
         priceLowToHigh={priceLowToHigh}
         onClose={() => setSortSheet(null)}
