@@ -45,6 +45,7 @@ export {
   resolveCheckedBaggage,
   selectCabinsForSegment,
 } from "./apis/flight-detail-adapter.js";
+export { stripFlightOrderBookDto } from "./apis/flight-book-adapter.js";
 export { createOrderApi, type OrderApi } from "./apis/order.js";
 export { createPayApi, type PayApi } from "./apis/pay.js";
 export { createPassengerApi, type PassengerApi } from "./apis/passenger.js";

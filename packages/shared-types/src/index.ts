@@ -135,6 +135,16 @@ export type {
 } from "./train.js";
 
 export type {
+  FlightBookLinkmanDto,
+  FlightBookParams,
+  FlightBookPassengerDto,
+  FlightBookResponse,
+  FlightInitBookParams,
+  FlightInitBookResponse,
+  FlightOrderBookDto,
+} from "./flight-book.js";
+
+export type {
   AirportResourceParams,
   AirportResourceResponse,
   FlightCabinTab,

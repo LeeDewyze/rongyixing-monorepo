@@ -2,6 +2,7 @@ import type {
   FlightFilterCondition,
   FlightFilterOption,
   FlightListResult,
+  FlightListView,
   FlightSegment,
 } from "@ryx/shared-types";
 
@@ -23,6 +24,20 @@ export function enrichSegment(seg: FlightSegment): FlightSegment {
   };
 }
 
+/** Stable route id when Home-Index `FlightViews[].Segment` has no `Id`. */
+export function resolveFlightSegmentId(
+  seg: Pick<FlightSegment, "Id" | "Number" | "FlightNumber" | "TakeoffTime" | "DetailKey" | "Data">,
+  view?: Pick<FlightListView, "FlightNos" | "Data">,
+): string {
+  if (seg.Id) return seg.Id;
+  if (view?.FlightNos) return view.FlightNos;
+  const detailKey = seg.DetailKey ?? seg.Data ?? view?.Data;
+  if (detailKey) return detailKey;
+  const flightNumber = seg.Number || seg.FlightNumber || "";
+  if (flightNumber && seg.TakeoffTime) return `${flightNumber}-${seg.TakeoffTime}`;
+  return flightNumber || "unknown";
+}
+
 /** Normalize Home-Index payload (FlightViews or Result.FlightSegments). */
 export function normalizeFlightSegments(result: FlightListResult | undefined): FlightSegment[] {
   if (!result) return [];
@@ -35,6 +50,10 @@ export function normalizeFlightSegments(result: FlightListResult | undefined): F
         const detailKey = seg.DetailKey ?? seg.Data ?? view.Data;
         return enrichSegment({
           ...seg,
+          Id: resolveFlightSegmentId(
+            { ...seg, DetailKey: detailKey, Data: seg.Data ?? view.Data },
+            view,
+          ),
           LowestFare: seg.LowestFare ?? view.Price,
           Number: seg.Number || seg.FlightNumber || "",
           Data: seg.Data ?? view.Data,

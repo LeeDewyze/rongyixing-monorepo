@@ -81,6 +81,8 @@ export interface FlightListView {
   Price?: string;
   Data?: string;
   BookType?: string | number;
+  /** Combined flight numbers for transfer itineraries, e.g. `SC7954SC7615`. */
+  FlightNos?: string;
   Segment?: FlightSegment;
 }
 
