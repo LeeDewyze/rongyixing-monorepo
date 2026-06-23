@@ -9,6 +9,7 @@ import {
   formatCabinInfoLine,
   formatFareSalesPrice,
   isEconomyFare,
+  isFlightFareBookable,
   normalizeFlightDetailData,
   prepareFlightFareForDisplay,
   prepareFlightFareRulesForSheet,
@@ -259,5 +260,15 @@ describe("prepareFlightFareRulesForSheet", () => {
     expect(rows[1]?.Tag).toBeUndefined();
     expect(rows[0]?.Details?.[0]?.value).toBe("￥33/人");
     expect(rows[2]?.Description).toBe("1件,每件23KG,体积不超过40*60*100cm");
+  });
+});
+
+describe("isFlightFareBookable", () => {
+  it("allows fares with inventory even when IsAllowOrder is false", () => {
+    expect(isFlightFareBookable({ Count: 4, IsAllowOrder: false })).toBe(true);
+  });
+
+  it("blocks sold-out fares", () => {
+    expect(isFlightFareBookable({ Count: 0, IsAllowOrder: true })).toBe(false);
   });
 });

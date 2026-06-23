@@ -7,6 +7,7 @@ import { FlightCabinsHeader } from "@/components/flight/FlightCabinsHeader";
 import { FlightCabinsSummary } from "@/components/flight/FlightCabinsSummary";
 import { FlightFareRulesSheet } from "@/components/flight/FlightFareRulesSheet";
 import { FlightCabinsTabs } from "@/components/flight/FlightCabinsTabs";
+import { FlightListTimeoutDialog } from "@/components/flight/FlightListTimeoutDialog";
 import { FLIGHT_CABINS_HEADER_BG, FLIGHT_CABINS_HEADER_GRADIENT } from "@/config/flight-cabins";
 import { formatCabinsDepartTitle } from "@/utils/flight-list-display";
 import { usePageHeader } from "@/components/layout";
@@ -15,11 +16,15 @@ import { usePassengerSelection } from "@/hooks/usePassenger";
 import {
   buildFlightDetailParams,
   filterFaresForFlight,
+  isFlightFareBookable,
   normalizeFlightDetailData,
   parseFlightCabinsQuery,
   partitionCabinsByTab,
   resolveDetailSegment,
 } from "@/lib/flight-detail";
+import { saveFlightBookSelection } from "@/lib/flight-book-session";
+import { isFlightListTimedOut } from "@/lib/flight-list-refresh";
+import { buildPassengerSelectPath } from "@/lib/passenger-selection";
 import { getApiMode } from "@/lib/env";
 import { formatApiError } from "@/lib/formatApiError";
 import { getTicket } from "@/lib/session";
@@ -40,7 +45,8 @@ export function FlightCabinsPage() {
     [query, selectedPassengers.length],
   );
 
-  const { data: rawDetail, isLoading, isFetching, error, refetch } = useFlightDetail(detailParams);
+  const { data: rawDetail, isLoading, isFetching, error, refetch, dataUpdatedAt } =
+    useFlightDetail(detailParams);
 
   const detail = useMemo(() => normalizeFlightDetailData(rawDetail), [rawDetail]);
 
@@ -56,6 +62,9 @@ export function FlightCabinsPage() {
 
   const [activeTab, setActiveTab] = useState<FlightCabinTab>("economy");
   const [rulesFare, setRulesFare] = useState<FlightFare | null>(null);
+  const [timeoutOpen, setTimeoutOpen] = useState(false);
+
+  const cabinsReturnTo = `/flight/${encodeURIComponent(flightId)}/cabins?${searchParams.toString()}`;
 
   useEffect(() => {
     if (groupedCabins.economy.length === 0 && groupedCabins.business.length > 0) {
@@ -71,8 +80,39 @@ export function FlightCabinsPage() {
     navigate(listHref);
   }
 
-  function handleBook(_fare: FlightFare) {
-    window.alert("预订填单功能开发中，Phase B 已完成舱位列表展示。");
+  function proceedToBook(fare: FlightFare) {
+    saveFlightBookSelection({
+      flightId,
+      cabinsQuery: query,
+      segment,
+      fare,
+      detailSnapshot: detail ?? undefined,
+      priceSnapshotAt: dataUpdatedAt || Date.now(),
+      selectedAt: Date.now(),
+    });
+    navigate("/flight/book");
+  }
+
+  function handleBook(fare: FlightFare) {
+    if (!isFlightFareBookable(fare)) {
+      window.alert("该舱位已售罄");
+      return;
+    }
+    if (selectedPassengers.length === 0) {
+      navigate(buildPassengerSelectPath(ProductType.Flight, cabinsReturnTo));
+      return;
+    }
+    const snapshotAt = dataUpdatedAt || Date.now();
+    if (isFlightListTimedOut(snapshotAt)) {
+      setTimeoutOpen(true);
+      return;
+    }
+    proceedToBook(fare);
+  }
+
+  function handleTimeoutConfirm() {
+    setTimeoutOpen(false);
+    navigate(listHref);
   }
 
   function handleShowRules(fare: FlightFare) {
@@ -175,6 +215,8 @@ export function FlightCabinsPage() {
         fare={rulesFare}
         onClose={() => setRulesFare(null)}
       />
+
+      <FlightListTimeoutDialog open={timeoutOpen} onConfirm={handleTimeoutConfirm} />
     </div>
   );
 }

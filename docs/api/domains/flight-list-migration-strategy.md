@@ -87,22 +87,30 @@ flowchart LR
 - [x] 选航班跳转 cabins 携带 `flightNumber` / 机场 / `detailKey`
 - [ ] Proxy 真环境验收（需登录态手动验证）
 
-### Phase B — 舱位页（列表下游，阻塞完整预订）
+### Phase B — 舱位页（列表下游）
 
-- 封装 / 校对 `Home-Detail`（Proxy 先通）
-- 实现 `FlightCabinsPage`（替换 placeholder）
-- Policy 可后置，Detail 必须先通
+- [x] 封装 / 校对 `Home-Detail`（Proxy 先通）
+- [x] 实现 `FlightCabinsPage`（舱位列表 + 摘要 + 退改签）
+- [ ] Policy 完整色标 / 过滤差标（填单链依赖部分可后置，见填单策略）
 
-> 无 Phase B，列表页只能算「浏览航班」，Wave 5 列表不能标 `[x]`。
+> Phase B 详情与验收见已完成提交；**填单 Phase C** 见 [flight-book-migration-strategy.md](./flight-book-migration-strategy.md)。
 
-### Phase C — 延期（列表相关但非 MVP）
+### Phase C — 填单与下单（当前迭代）
+
+- 舱位「预订」→ `/flight/book`
+- `Flight-Initialize` / `Flight-Book`（Proxy 优先）
+- 填单页 MVP + 下单后跳转
+
+→ 完整策略：[flight-book-migration-strategy.md](./flight-book-migration-strategy.md)
+
+### 延期（列表/预订增强，非 Phase C v1）
 
 | 项 | 原因 |
 |----|------|
 | 改签 `isExchange` + `Home-Exchange` | 依赖订单详情入口 |
-| 往返双段 | 搜索页 + bookInfos 状态机更大 |
+| 往返双段 | **产品决策排除**（Legacy ryx 国内往返 UI 已关；见 [flight-book-migration-strategy.md §13](./flight-book-migration-strategy.md#13-已拍板)） |
 | 多人按乘客分别选航班 | 需 bookInfos + 汇总页 |
-| `isClearBookInfos` 路由守卫 | 填单链起来后再接 |
+| `isClearBookInfos` 路由守卫 | 填单链稳定后再接 |
 
 ---
 

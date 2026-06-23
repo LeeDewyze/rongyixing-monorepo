@@ -268,6 +268,13 @@ export function fareRemainCount(fare: FlightFare): number | null {
   return count;
 }
 
+/** Legacy gates booking via policy `IsAllowBook` (C1-full). Phase C: only block sold-out fares. */
+export function isFlightFareBookable(fare: FlightFare): boolean {
+  const count = prepareFlightFareForDisplay(fare).Count;
+  if (count != null && count !== "" && Number(count) === 0) return false;
+  return true;
+}
+
 export interface FlightFareRuleSheetRow {
   Tag?: string;
   Name?: string;

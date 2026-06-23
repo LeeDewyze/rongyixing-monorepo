@@ -3,6 +3,7 @@ import { Navigate, createBrowserRouter } from "react-router-dom";
 import { RootLayout } from "@/app/layouts/RootLayout";
 import { TabLayout } from "@/app/layouts/TabLayout";
 import { FlightCabinsPage } from "@/pages/flight/FlightCabinsPage";
+import { FlightBookPage } from "@/pages/flight/FlightBookPage";
 import { FlightListPage } from "@/pages/flight/FlightListPage";
 import { FlightSelectCityPage } from "@/pages/flight/FlightSelectCityPage";
 import { HomeTabPage } from "@/pages/home/HomeTabPage";
@@ -91,6 +92,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to="/home?product=flight" replace /> },
       { path: "list", element: <FlightListPage /> },
+      { path: "book", element: <FlightBookPage /> },
       { path: ":flightId/cabins", element: <FlightCabinsPage /> },
     ],
   },

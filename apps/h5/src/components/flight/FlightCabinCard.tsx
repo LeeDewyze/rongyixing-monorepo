@@ -5,6 +5,7 @@ import {
   fareRemainCount,
   formatCabinInfoLine,
   formatFareSalesPrice,
+  isFlightFareBookable,
   prepareFlightFareForDisplay,
   shouldShowFareRemainCount,
 } from "@/lib/flight-detail";
@@ -20,7 +21,7 @@ export function FlightCabinCard({ fare, onBook, onShowRules }: FlightCabinCardPr
   const remain = fareRemainCount(cabin);
   const showRemain = shouldShowFareRemainCount(cabin);
   const baggage = fareBaggageText(cabin);
-  const allowBook = cabin.IsAllowOrder !== false;
+  const allowBook = isFlightFareBookable(cabin);
 
   return (
     <div className="overflow-hidden rounded-xl bg-white px-3 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">

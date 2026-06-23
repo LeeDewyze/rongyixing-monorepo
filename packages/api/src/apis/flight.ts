@@ -1,15 +1,21 @@
 import type {
   AirportResourceParams,
   AirportResourceResponse,
+  FlightBookParams,
+  FlightBookResponse,
   FlightDetailParams,
   FlightDetailResult,
+  FlightInitBookParams,
+  FlightInitBookResponse,
   FlightListResult,
   FlightSearchParams,
   Trafficline,
   TrafficlineDto,
 } from "@ryx/shared-types";
 
+import { stripFlightOrderBookDto } from "./flight-book-adapter.js";
 import { normalizeFlightDetailResponse } from "./flight-detail-adapter.js";
+import { BOOK_METHODS } from "../methods/book.js";
 import { FLIGHT_FLOW_METHODS } from "../methods/flight-flow.js";
 import type { ProxyClient } from "../proxy/proxy-client.js";
 
@@ -18,6 +24,8 @@ export interface FlightApi {
   getAirports(params?: AirportResourceParams): Promise<Trafficline[]>;
   searchFlights(params: FlightSearchParams): Promise<FlightListResult>;
   getFlightDetail(params: FlightDetailParams): Promise<FlightDetailResult>;
+  initializeBook(params: FlightInitBookParams): Promise<FlightInitBookResponse>;
+  submitBook(params: FlightBookParams): Promise<FlightBookResponse>;
 }
 
 export function createFlightApi(proxy: ProxyClient): FlightApi {
@@ -54,6 +62,20 @@ export function createFlightApi(proxy: ProxyClient): FlightApi {
         timeoutMs: 60_000,
       });
       return normalizeFlightDetailResponse(raw);
+    },
+    initializeBook(params) {
+      return proxy.send<FlightInitBookResponse>({
+        method: BOOK_METHODS.FLIGHT_INITIALIZE,
+        data: stripFlightOrderBookDto(params),
+        timeoutMs: 60_000,
+      });
+    },
+    submitBook(params) {
+      return proxy.send<FlightBookResponse>({
+        method: BOOK_METHODS.FLIGHT_BOOK,
+        data: stripFlightOrderBookDto(params),
+        timeoutMs: 60_000,
+      });
     },
   };
 }
