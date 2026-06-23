@@ -39,16 +39,39 @@ function normalizeTrainDuration(value: unknown): string | undefined {
   return value.replace(/h/g, "小时").replace(/m/g, "分");
 }
 
+function normalizeBedInfos(value: unknown): TrainSeat["BedInfos"] {
+  if (!Array.isArray(value)) return undefined;
+
+  const beds = value
+    .map((item) => {
+      const bed = item as LegacyRecord;
+      const bedTypeName = typeof bed.BedTypeName === "string" ? bed.BedTypeName : undefined;
+      const price =
+        parseSeatPrice(bed.BedTicketPrice) ??
+        parseSeatPrice(bed.SalesPrice) ??
+        parseSeatPrice(bed.Price);
+      if (!bedTypeName && price === undefined) return null;
+      return { BedTypeName: bedTypeName, Price: price };
+    })
+    .filter((bed): bed is NonNullable<typeof bed> => bed !== null);
+
+  return beds.length ? beds : undefined;
+}
+
 function normalizeTrainSeat(seat: LegacyRecord): TrainSeat {
   // Legacy list UI uses seat.SalesPrice only (see train-list-item_ryx.base getLowestSeatPrice).
   const price = parseSeatPrice(seat.SalesPrice);
+  const ticketPrice = parseSeatPrice(seat.TicketPrice);
   const count = typeof seat.Count === "number" ? seat.Count : undefined;
   const seatTypeName = typeof seat.SeatTypeName === "string" ? seat.SeatTypeName : undefined;
+  const bedInfos = normalizeBedInfos(seat.BedInfos);
 
   return {
     SeatTypeName: seatTypeName,
     Price: price,
+    TicketPrice: ticketPrice,
     Count: count,
+    BedInfos: bedInfos,
   };
 }
 

@@ -108,8 +108,25 @@ export function createMockTrainList(params: TrainSearchParams): TrainItem[] {
       LowestPrice: 189,
       Seats: [
         { SeatTypeName: "硬座", Price: 189, Count: 99 },
-        { SeatTypeName: "硬卧", Price: 322, Count: 12 },
-        { SeatTypeName: "软卧", Price: 504, Count: 2 },
+        {
+          SeatTypeName: "硬卧",
+          Price: 322,
+          Count: 12,
+          BedInfos: [
+            { BedTypeName: "上铺", Price: 298 },
+            { BedTypeName: "中铺", Price: 310 },
+            { BedTypeName: "下铺", Price: 322 },
+          ],
+        },
+        {
+          SeatTypeName: "软卧",
+          Price: 504,
+          Count: 2,
+          BedInfos: [
+            { BedTypeName: "上铺", Price: 480 },
+            { BedTypeName: "下铺", Price: 504 },
+          ],
+        },
         { SeatTypeName: "无座", Price: 189, Count: 99 },
       ],
     },

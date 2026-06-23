@@ -7,7 +7,10 @@ import {
   applyTrainTypeFilter,
   createInitialTrainFilter,
   formatSeatAvailability,
+  formatExpandedSeatAvailability,
+  formatSeatDiscountRate,
   formatSeatTypeDisplayName,
+  formatSeatTypeShortName,
   formatTrainClock,
   formatTrainDuration,
   formatTrainDurationMinutes,
@@ -18,6 +21,7 @@ import {
   enrichTrainItem,
   isHighSpeedTrain,
   isRegularTrain,
+  isSleeperSeat,
   isTrainFilterActive,
   markLowestPrice,
   parseDurationMinutes,
@@ -230,7 +234,7 @@ describe("train-list utils", () => {
     const baseState = {
       activeTab: "duration" as const,
       timeEarlyToLate: true,
-      priceLowToHigh: true,
+      priceSortMode: "off",
     };
 
     const shortest = resolveTrainListOrder(trains, {
@@ -249,7 +253,7 @@ describe("train-list utils", () => {
       activeTab: "none",
       durationSortMode: "off",
       timeEarlyToLate: true,
-      priceLowToHigh: true,
+      priceSortMode: "off",
     });
     expect(defaultOrder.map((train) => train.Id)).toEqual(["t1", "t4"]);
   });
@@ -283,10 +287,67 @@ describe("train-list utils", () => {
       activeTab: "duration",
       durationSortMode: "long",
       timeEarlyToLate: true,
-      priceLowToHigh: true,
+      priceSortMode: "off",
     });
     expect(sorted[0]?.TrainCode).toBe("K101");
     expect(getTrainListItemKey(sorted[0]!, 0)).not.toBe(getTrainListItemKey(sorted[1]!, 1));
+  });
+
+  it("sorts departure time earliest by default and toggles to latest", () => {
+    const trains: TrainItem[] = [
+      {
+        Id: "early",
+        TrainCode: "G1",
+        StartTime: "2026-06-22 07:00:00",
+        ArrivalTime: "2026-06-22 12:00:00",
+        FromStation: "北京",
+        ToStation: "上海",
+        LowestPrice: 100,
+      },
+      {
+        Id: "late",
+        TrainCode: "G3",
+        StartTime: "2026-06-22 14:00:00",
+        ArrivalTime: "2026-06-22 18:00:00",
+        FromStation: "北京",
+        ToStation: "上海",
+        LowestPrice: 200,
+      },
+    ];
+
+    const earliest = resolveTrainListOrder(trains, {
+      activeTab: "time",
+      durationSortMode: "off",
+      timeEarlyToLate: true,
+      priceSortMode: "off",
+    });
+    expect(earliest.map((train) => train.Id)).toEqual(["early", "late"]);
+
+    const latest = resolveTrainListOrder(trains, {
+      activeTab: "time",
+      durationSortMode: "off",
+      timeEarlyToLate: false,
+      priceSortMode: "off",
+    });
+    expect(latest.map((train) => train.Id)).toEqual(["late", "early"]);
+  });
+
+  it("sorts price low to high when price toolbar is active", () => {
+    const sorted = resolveTrainListOrder(sampleTrains, {
+      activeTab: "price",
+      durationSortMode: "off",
+      timeEarlyToLate: true,
+      priceSortMode: "low",
+    });
+    expect(sorted[0]?.TrainCode).toBe("K101");
+
+    const reversed = resolveTrainListOrder(sampleTrains, {
+      activeTab: "price",
+      durationSortMode: "off",
+      timeEarlyToLate: true,
+      priceSortMode: "high",
+    });
+    expect(reversed[0]?.TrainCode).toBe("G1");
   });
 
   it("marks lowest price without reordering", () => {
@@ -303,6 +364,14 @@ describe("train-list utils", () => {
     expect(formatSeatAvailability(0)).toEqual({ text: "无票", scarce: false });
     expect(formatSeatTypeDisplayName("硬座")).toBe("硬座");
     expect(formatSeatTypeDisplayName("硬")).toBe("硬座");
+    expect(formatSeatTypeShortName("二等座")).toBe("二等");
+    expect(formatExpandedSeatAvailability(99)).toEqual({ text: "有票", scarce: false });
+    expect(formatExpandedSeatAvailability(6)).toEqual({ text: "6张", scarce: false });
+    expect(formatExpandedSeatAvailability(2)).toEqual({ text: "剩2张", scarce: true });
+    expect(formatSeatDiscountRate(434, 448)).toBe("9.7折");
+    expect(formatSeatDiscountRate(434, 434)).toBeNull();
+    expect(isSleeperSeat({ SeatTypeName: "硬卧", Price: 322 })).toBe(true);
+    expect(isSleeperSeat({ SeatTypeName: "二等座", Price: 553 })).toBe(false);
   });
 
   it("shows arrival day tip for next-day trains", () => {

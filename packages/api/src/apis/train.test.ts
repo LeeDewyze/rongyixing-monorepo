@@ -95,6 +95,49 @@ describe("normalizeTrainSearchResponse", () => {
     expect(result.Trains[0]?.Seats?.[0]?.Price).toBe(0);
   });
 
+  it("maps sleeper berth prices from BedInfos", () => {
+    const result = normalizeTrainSearchResponse([
+      {
+        TrainCode: "K101",
+        FromStationName: "北京南",
+        ToStationName: "上海",
+        StartTime: "2026-06-22 22:30:00",
+        ArrivalTime: "2026-06-23 14:15:00",
+        Seats: [
+          {
+            SeatTypeName: "硬卧",
+            SalesPrice: "227.5",
+            Count: 12,
+            BedInfos: [
+              { BedTypeName: "上铺", BedTicketPrice: "210.5" },
+              { BedTypeName: "中铺", BedTicketPrice: "218.5" },
+              { BedTypeName: "下铺", BedTicketPrice: "227.5" },
+            ],
+          },
+          {
+            SeatTypeName: "软卧",
+            SalesPrice: "364.5",
+            Count: 2,
+            BedInfos: [
+              { BedTypeName: "上铺", BedTicketPrice: "340.5" },
+              { BedTypeName: "下铺", BedTicketPrice: "364.5" },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    expect(result.Trains[0]?.Seats?.[0]?.BedInfos).toEqual([
+      { BedTypeName: "上铺", Price: 210.5 },
+      { BedTypeName: "中铺", Price: 218.5 },
+      { BedTypeName: "下铺", Price: 227.5 },
+    ]);
+    expect(result.Trains[0]?.Seats?.[1]?.BedInfos).toEqual([
+      { BedTypeName: "上铺", Price: 340.5 },
+      { BedTypeName: "下铺", Price: 364.5 },
+    ]);
+  });
+
   it("assigns unique ids for same train code at different departure times", () => {
     const result = normalizeTrainSearchResponse([
       {

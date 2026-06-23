@@ -5,7 +5,7 @@ import { ProductType } from "@ryx/shared-types";
 import type {
   TrainDurationSortMode,
   TrainFilterCondition,
-  TrainSortKind,
+  TrainPriceSortMode,
   TrainSortTab,
   TrainStation,
   TrainTypeFilter,
@@ -19,7 +19,6 @@ import { TrainListDateStrip } from "@/components/train/TrainListDateStrip";
 import { TrainListHeader } from "@/components/train/TrainListHeader";
 import { TrainListItemCard } from "@/components/train/TrainListItemCard";
 import { TrainListToolbar } from "@/components/train/TrainListToolbar";
-import { TrainSortSheet } from "@/components/train/TrainSortSheet";
 import { TrainTypeFilterBar } from "@/components/train/TrainTypeFilterBar";
 import {
   useTrainList,
@@ -105,15 +104,15 @@ export function TrainListPage() {
   const [filterApplied, setFilterApplied] =
     useState<TrainFilterCondition>(createInitialTrainFilter);
   const [filterOpen, setFilterOpen] = useState(false);
-  const [sortSheet, setSortSheet] = useState<TrainSortKind | null>(null);
   const [calendarOpen, setCalendarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<TrainSortTab>("none");
+  const [activeTab, setActiveTab] = useState<TrainSortTab>("time");
   const [durationSortMode, setDurationSortMode] = useState<TrainDurationSortMode>("off");
   const [timeEarlyToLate, setTimeEarlyToLate] = useState(true);
-  const [priceLowToHigh, setPriceLowToHigh] = useState(true);
+  const [priceSortMode, setPriceSortMode] = useState<TrainPriceSortMode>("off");
   const [expandedTrainId, setExpandedTrainId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const headerRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [headerHeight, setHeaderHeight] = useState(FALLBACK_HEADER_HEIGHT);
 
   const { data, isLoading, isFetching, error, refetch } = useTrainList(
@@ -137,8 +136,10 @@ export function TrainListPage() {
     setFilterApplied(createInitialTrainFilter());
     setFilterDraft(createInitialTrainFilter());
     setTrainTypeFilter("all");
-    setActiveTab("none");
+    setActiveTab("time");
     setDurationSortMode("off");
+    setTimeEarlyToLate(true);
+    setPriceSortMode("off");
     resetExpanded();
   }, [resetExpanded]);
 
@@ -153,9 +154,9 @@ export function TrainListPage() {
       activeTab,
       durationSortMode,
       timeEarlyToLate,
-      priceLowToHigh,
+      priceSortMode,
     }),
-    [activeTab, durationSortMode, timeEarlyToLate, priceLowToHigh],
+    [activeTab, durationSortMode, timeEarlyToLate, priceSortMode],
   );
 
   useEffect(() => {
@@ -167,8 +168,20 @@ export function TrainListPage() {
     activeTab,
     durationSortMode,
     timeEarlyToLate,
-    priceLowToHigh,
+    priceSortMode,
     resetExpanded,
+  ]);
+
+  useLayoutEffect(() => {
+    scrollContainerRef.current?.scrollTo({ top: 0, behavior: "auto" });
+  }, [
+    listParams.Date,
+    trainTypeFilter,
+    filterApplied,
+    activeTab,
+    durationSortMode,
+    timeEarlyToLate,
+    priceSortMode,
   ]);
 
   const displayed = useMemo(() => {
@@ -233,6 +246,7 @@ export function TrainListPage() {
 
   function handleDurationSort() {
     if (activeTab !== "duration" || durationSortMode === "off") {
+      setPriceSortMode("off");
       setActiveTab("duration");
       setDurationSortMode("short");
       return;
@@ -240,16 +254,24 @@ export function TrainListPage() {
     setDurationSortMode((mode) => (mode === "short" ? "long" : "short"));
   }
 
-  function handleSortConfirm(kind: TrainSortKind, ascending: boolean) {
-    setDurationSortMode("off");
-    if (kind === "time") {
-      setTimeEarlyToLate(ascending);
+  function handleTimeSort() {
+    if (activeTab !== "time") {
+      setDurationSortMode("off");
+      setPriceSortMode("off");
       setActiveTab("time");
-    } else {
-      setPriceLowToHigh(ascending);
-      setActiveTab("price");
+      return;
     }
-    setSortSheet(null);
+    setTimeEarlyToLate((early) => !early);
+  }
+
+  function handlePriceSort() {
+    if (activeTab !== "price" || priceSortMode === "off") {
+      setDurationSortMode("off");
+      setActiveTab("price");
+      setPriceSortMode("low");
+      return;
+    }
+    setPriceSortMode((mode) => (mode === "low" ? "high" : "low"));
   }
 
   function handleModifySearch(params: URLSearchParams) {
@@ -302,7 +324,10 @@ export function TrainListPage() {
       </div>
 
       <div
-        className="h-full overflow-y-auto overscroll-y-contain [-webkit-overflow-scrolling:touch]"
+        ref={scrollContainerRef}
+        className={`h-full overscroll-y-contain [-webkit-overflow-scrolling:touch] [scrollbar-gutter:stable] ${
+          filterOpen ? "overflow-hidden" : "overflow-y-auto"
+        }`}
         style={{ paddingTop: headerHeight }}
       >
         <div className="sticky top-0 z-20 shrink-0">
@@ -316,8 +341,10 @@ export function TrainListPage() {
             value={trainTypeFilter}
             onChange={(value) => {
               setTrainTypeFilter(value);
-              setActiveTab("none");
+              setActiveTab("time");
               setDurationSortMode("off");
+              setTimeEarlyToLate(true);
+              setPriceSortMode("off");
             }}
           />
         </div>
@@ -379,24 +406,14 @@ export function TrainListPage() {
         filtered={filtered}
         durationSortMode={durationSortMode}
         timeEarlyToLate={timeEarlyToLate}
-        priceLowToHigh={priceLowToHigh}
+        priceSortMode={priceSortMode}
         onFilter={() => {
           setFilterDraft(filterApplied);
           setFilterOpen(true);
         }}
         onDurationSort={handleDurationSort}
-        onOpenTimeSort={() => setSortSheet("time")}
-        onOpenPriceSort={() => setSortSheet("price")}
-      />
-
-      <TrainSortSheet
-        open={sortSheet !== null}
-        kind={sortSheet}
-        durationShortToLong={durationSortMode === "short"}
-        timeEarlyToLate={timeEarlyToLate}
-        priceLowToHigh={priceLowToHigh}
-        onClose={() => setSortSheet(null)}
-        onConfirm={handleSortConfirm}
+        onTimeSort={handleTimeSort}
+        onPriceSort={handlePriceSort}
       />
 
       <TrainFilterSheet

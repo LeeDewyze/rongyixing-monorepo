@@ -17,10 +17,19 @@ export interface TrainSearchParams {
   ToName?: string;
 }
 
+export interface TrainBedInfo {
+  BedTypeName?: string;
+  Price?: number;
+}
+
 export interface TrainSeat {
   SeatTypeName?: string;
   Price?: number;
+  /** Original ticket price before discount; used for discount badge when lower than Price. */
+  TicketPrice?: number;
   Count?: number;
+  /** Sleeper berth prices (legacy BedInfos). */
+  BedInfos?: TrainBedInfo[];
 }
 
 export interface TrainItem {
@@ -94,6 +103,9 @@ export type TrainSortTab = "none" | "filter" | "duration" | "time" | "price";
 
 /** Duration toolbar: off (default list), short (asc), long (desc). */
 export type TrainDurationSortMode = "off" | "short" | "long";
+
+/** Price toolbar: off (default list), low (asc), high (desc). */
+export type TrainPriceSortMode = "off" | "low" | "high";
 
 export type TrainSortKind = "duration" | "time" | "price";
 

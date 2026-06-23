@@ -6,6 +6,7 @@ import type {
   TrainSortKind,
   TrainSortTab,
   TrainDurationSortMode,
+  TrainPriceSortMode,
   TrainTypeFilter,
 } from "@ryx/shared-types";
 import { parseTrainDurationMinutes, parseTravelTimeMinutes } from "@ryx/shared-types";
@@ -273,7 +274,7 @@ export interface TrainListOrderState {
   activeTab: TrainSortTab;
   durationSortMode: TrainDurationSortMode;
   timeEarlyToLate: boolean;
-  priceLowToHigh: boolean;
+  priceSortMode: TrainPriceSortMode;
 }
 
 /** Resolve list order for toolbar tabs. */
@@ -290,8 +291,11 @@ export function resolveTrainListOrder(
   if (state.activeTab === "time") {
     return sortTrains(trains, "time", state.timeEarlyToLate);
   }
-  if (state.activeTab === "price") {
-    return sortTrains(trains, "price", state.priceLowToHigh);
+  if (state.activeTab === "price" && state.priceSortMode === "low") {
+    return sortTrains(trains, "price", true);
+  }
+  if (state.activeTab === "price" && state.priceSortMode === "high") {
+    return sortTrains(trains, "price", false);
   }
   return getDefaultSortedTrains(trains);
 }
@@ -363,6 +367,36 @@ export function formatSeatTypeDisplayName(name?: string): string {
   return SEAT_TYPE_ALIASES[trimmed] ?? trimmed;
 }
 
+/** Expanded seat row uses shorter labels (e.g. 二等座 → 二等). */
+export function formatSeatTypeShortName(name?: string): string {
+  const full = formatSeatTypeDisplayName(name);
+  if (full.endsWith("座") && full.length > 2) {
+    return full.slice(0, -1);
+  }
+  return full;
+}
+
+export function formatSeatPriceLabel(price?: number): string {
+  if (price === undefined) return "0";
+  return Number.isInteger(price) ? String(price) : String(price);
+}
+
+/** Discount badge such as 9.7折 when sales price is below ticket price. */
+export function formatSeatDiscountRate(salesPrice?: number, ticketPrice?: number): string | null {
+  if (salesPrice === undefined || ticketPrice === undefined || ticketPrice <= 0) {
+    return null;
+  }
+  if (salesPrice >= ticketPrice) return null;
+  const rate = Math.round((salesPrice / ticketPrice) * 100) / 10;
+  return `${rate}折`;
+}
+
+/** Whether seat is a sleeper type that may expose berth prices. */
+export function isSleeperSeat(seat: TrainSeat): boolean {
+  const name = formatSeatTypeDisplayName(seat.SeatTypeName);
+  return name.includes("卧") || (seat.BedInfos?.length ?? 0) > 0;
+}
+
 export const COLLAPSED_SEAT_PREVIEW_LIMIT = 4;
 
 export function formatSeatAvailability(count?: number): SeatAvailabilityLabel {
@@ -373,6 +407,20 @@ export function formatSeatAvailability(count?: number): SeatAvailabilityLabel {
     return { text: `剩${count}张`, scarce: true };
   }
   return { text: "有票", scarce: false };
+}
+
+/** Expanded seat row availability: 无票 / 剩N张 / N张 / 有票. */
+export function formatExpandedSeatAvailability(count?: number): SeatAvailabilityLabel {
+  if (count === undefined || count <= 0) {
+    return { text: "无票", scarce: false };
+  }
+  if (count > 20) {
+    return { text: "有票", scarce: false };
+  }
+  if (count <= 5) {
+    return { text: `剩${count}张`, scarce: true };
+  }
+  return { text: `${count}张`, scarce: false };
 }
 
 export function minSeatCount(train: TrainItem): number | undefined {

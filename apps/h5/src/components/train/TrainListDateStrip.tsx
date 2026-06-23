@@ -77,7 +77,7 @@ export function TrainListDateStrip({
       <button
         type="button"
         onClick={onOpenCalendar}
-        className="flex size-11 shrink-0 flex-col items-center justify-center bg-[linear-gradient(0.65deg,#CCDFFB_0.46%,#ABCCFD_99.35%)] shadow-[-4px_0_4px_-3px_#03030340] active:opacity-80"
+        className="relative z-10 flex size-11 shrink-0 flex-col items-center justify-center bg-[linear-gradient(0.65deg,#CCDFFB_0.46%,#ABCCFD_99.35%)] shadow-[-4px_0_4px_-3px_#03030340] active:opacity-80"
         aria-label="选择日期"
       >
         <img

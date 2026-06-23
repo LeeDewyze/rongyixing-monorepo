@@ -130,6 +130,7 @@ export type {
   TrainSortKind,
   TrainSortTab,
   TrainDurationSortMode,
+  TrainPriceSortMode,
   TrainStation,
   TrainStationResourceResponse,
   TrainTypeFilter,

@@ -1,5 +1,6 @@
 import type { TrainItem } from "@ryx/shared-types";
 
+import trainRouteArrow from "@/assets/train/route-arrow.png";
 import {
   formatTrainClock,
   formatTrainDuration,
@@ -19,11 +20,17 @@ const TRAIN_STATION_CLASS =
 const TRAIN_DURATION_CLASS =
   "text-[11px] font-normal leading-[100%] tracking-[0] text-[#666666] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
 
+const TRAIN_CODE_CLASS =
+  "text-[11px] font-normal leading-[100%] tracking-[0] text-[#666666] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
+
 const TRAIN_DAY_TIP_CLASS =
   "absolute right-0 bottom-full mb-0.5 whitespace-nowrap text-[10px] font-normal leading-[100%] tracking-[0] text-[#010101] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
 
 const TRAIN_PRICE_CLASS =
   "text-[24px] font-medium leading-[100%] tracking-[0] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
+
+const TRAIN_SCARCE_BADGE_CLASS =
+  "flex h-4 min-w-[36px] shrink-0 items-center justify-center whitespace-nowrap rounded border border-[#FF383C] bg-[#FF383C1A] px-1 text-[10px] font-normal leading-[100%] tracking-[0] text-[#FF383C] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
 
 interface TrainListItemCardProps {
   train: TrainItem;
@@ -35,13 +42,15 @@ interface TrainListItemCardProps {
 function TrainRouteMiddle({ trainCode }: { trainCode: string }) {
   return (
     <div className="flex flex-col items-center gap-0.5">
-      <div className="relative flex h-3 w-12 items-center">
-        <div className="h-px flex-1 bg-gradient-to-r from-[#5099fe]/20 to-[#5099fe]" />
-        <svg viewBox="0 0 8 8" className="size-2 shrink-0 text-[#5099fe]" aria-hidden>
-          <path d="M1 1l5 3-5 3V1z" fill="currentColor" />
-        </svg>
-      </div>
-      <span className="text-[11px] font-medium leading-none text-[#5099fe]">{trainCode}</span>
+      <img
+        src={trainRouteArrow}
+        alt=""
+        width={56}
+        height={12}
+        className="h-3 w-14 shrink-0 object-contain"
+        aria-hidden
+      />
+      <span className={TRAIN_CODE_CLASS}>{trainCode}</span>
     </div>
   );
 }
@@ -105,11 +114,9 @@ export function TrainListItemCard({
             </div>
           </div>
 
-          <div className="flex shrink-0 flex-col items-end pl-1">
+          <div className="flex shrink-0 items-center justify-end gap-1 pl-1">
             {shouldShowScarceTrainBadge(train) ? (
-              <span className="mb-0.5 rounded border border-[#ff4d4f] px-1 text-[10px] text-[#ff4d4f]">
-                剩{minSeatCount(train)}张
-              </span>
+              <span className={TRAIN_SCARCE_BADGE_CLASS}>剩{minSeatCount(train)}张</span>
             ) : null}
             <p className={`${TRAIN_PRICE_CLASS} ${priceColor}`}>¥{train.LowestPrice ?? 0}</p>
           </div>

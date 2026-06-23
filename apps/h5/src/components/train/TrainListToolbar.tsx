@@ -1,20 +1,31 @@
 import type { ReactNode } from "react";
-import type { TrainDurationSortMode, TrainSortTab } from "@ryx/shared-types";
+import type { TrainDurationSortMode, TrainPriceSortMode, TrainSortTab } from "@ryx/shared-types";
 
-import filterIcon from "@/assets/flight/toolbar-filter.png";
-import priceIcon from "@/assets/flight/toolbar-price.png";
-import timeIcon from "@/assets/flight/toolbar-time.png";
+import durationIcon from "@/assets/train/toolbar-duration.png";
+import filterIcon from "@/assets/train/toolbar-filter.png";
+import priceIcon from "@/assets/train/toolbar-price.png";
+import timeIcon from "@/assets/train/toolbar-time.png";
 
 interface TrainListToolbarProps {
   activeTab: TrainSortTab;
   filtered: boolean;
   durationSortMode: TrainDurationSortMode;
   timeEarlyToLate: boolean;
-  priceLowToHigh: boolean;
+  priceSortMode: TrainPriceSortMode;
   onFilter: () => void;
   onDurationSort: () => void;
-  onOpenTimeSort: () => void;
-  onOpenPriceSort: () => void;
+  onTimeSort: () => void;
+  onPriceSort: () => void;
+}
+
+function getTimeToolbarHint(activeTab: TrainSortTab, timeEarlyToLate: boolean): string {
+  if (activeTab === "time" && !timeEarlyToLate) return "发时最晚";
+  return "发时最早";
+}
+
+function getPriceToolbarHint(activeTab: TrainSortTab, priceSortMode: TrainPriceSortMode): string {
+  if (activeTab === "price" && priceSortMode === "high") return "价格最高";
+  return "价格最低";
 }
 
 function getDurationToolbarHint(
@@ -25,23 +36,19 @@ function getDurationToolbarHint(
   return "耗时最短";
 }
 
-function DurationIcon({ active }: { active: boolean }) {
+const TOOLBAR_ICON_ACTIVE_FILTER =
+  " [filter:invert(48%)_sepia(79%)_saturate(2476%)_hue-rotate(196deg)_brightness(101%)_contrast(101%)]";
+
+function ToolbarIcon({ src, active }: { src: string; active: boolean }) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      className={`size-5 ${active ? "text-[#5099fe]" : "text-[#666666]"}`}
+    <img
+      src={src}
+      alt=""
+      width={20}
+      height={20}
+      className={`size-5 object-contain${active ? TOOLBAR_ICON_ACTIVE_FILTER : ""}`}
       aria-hidden
-    >
-      <path
-        d="M12 4v8l4 2"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" strokeWidth="1.6" />
-    </svg>
+    />
   );
 }
 
@@ -75,73 +82,45 @@ export function TrainListToolbar({
   filtered,
   durationSortMode,
   timeEarlyToLate,
-  priceLowToHigh,
+  priceSortMode,
   onFilter,
   onDurationSort,
-  onOpenTimeSort,
-  onOpenPriceSort,
+  onTimeSort,
+  onPriceSort,
 }: TrainListToolbarProps) {
   const durationActive = activeTab === "duration" && durationSortMode !== "off";
   const durationHint = getDurationToolbarHint(activeTab, durationSortMode);
+  const timeActive = activeTab === "time";
+  const timeHint = getTimeToolbarHint(activeTab, timeEarlyToLate);
+  const priceActive = activeTab === "price" && priceSortMode !== "off";
+  const priceHint = getPriceToolbarHint(activeTab, priceSortMode);
+  const filterActive = filtered;
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#eeeeee] bg-white pb-[max(0.25rem,env(safe-area-inset-bottom))] shadow-[0_-2px_8px_rgba(0,0,0,0.04)]">
       <div className="mx-auto grid max-w-lg grid-cols-4">
         <ToolbarItem
-          active={activeTab === "filter"}
+          active={filterActive}
           hint={filtered ? "已筛选" : "筛选"}
-          icon={
-            <img
-              src={filterIcon}
-              alt=""
-              className={`size-5${
-                activeTab === "filter"
-                  ? " [filter:invert(48%)_sepia(79%)_saturate(2476%)_hue-rotate(196deg)_brightness(101%)_contrast(101%)]"
-                  : ""
-              }`}
-              aria-hidden
-            />
-          }
+          icon={<ToolbarIcon src={filterIcon} active={filterActive} />}
           onClick={onFilter}
         />
         <ToolbarItem
           active={durationActive}
           hint={durationHint}
-          icon={<DurationIcon active={durationActive} />}
+          icon={<ToolbarIcon src={durationIcon} active={durationActive} />}
           onClick={onDurationSort}
         />
         <ToolbarItem
-          active={activeTab === "time"}
-          hint={activeTab === "time" ? (timeEarlyToLate ? "从早到晚" : "从晚到早") : "时间"}
-          icon={
-            <img
-              src={timeIcon}
-              alt=""
-              className={`size-5${
-                activeTab === "time"
-                  ? " [filter:invert(48%)_sepia(79%)_saturate(2476%)_hue-rotate(196deg)_brightness(101%)_contrast(101%)]"
-                  : ""
-              }`}
-              aria-hidden
-            />
-          }
-          onClick={onOpenTimeSort}
+          active={timeActive}
+          hint={timeHint}
+          icon={<ToolbarIcon src={timeIcon} active={timeActive} />}
+          onClick={onTimeSort}
         />
         <ToolbarItem
-          active={activeTab === "price"}
-          hint={activeTab === "price" ? (priceLowToHigh ? "从低到高" : "从高到低") : "价格"}
-          icon={
-            <img
-              src={priceIcon}
-              alt=""
-              className={`size-5${
-                activeTab === "price"
-                  ? " [filter:invert(48%)_sepia(79%)_saturate(2476%)_hue-rotate(196deg)_brightness(101%)_contrast(101%)]"
-                  : ""
-              }`}
-              aria-hidden
-            />
-          }
-          onClick={onOpenPriceSort}
+          active={priceActive}
+          hint={priceHint}
+          icon={<ToolbarIcon src={priceIcon} active={priceActive} />}
+          onClick={onPriceSort}
         />
       </div>
     </div>
