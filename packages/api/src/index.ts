@@ -7,6 +7,7 @@ import {
   type IdentityApi,
 } from "./apis/auth-proxy.js";
 import { createAuthApi } from "./apis/auth.js";
+import { createBookApi, type BookApi } from "./apis/book.js";
 import { createFlightApi, type FlightApi } from "./apis/flight.js";
 import { createHotelApi, type HotelApi } from "./apis/hotel.js";
 import { createMemberApi, type MemberApi } from "./apis/member.js";
@@ -34,8 +35,9 @@ export {
   type AuthProxyApi,
   type IdentityApi,
 } from "./apis/auth-proxy.js";
-export { createHotelApi, type HotelApi } from "./apis/hotel.js";
+export { createBookApi, type BookApi } from "./apis/book.js";
 export { createFlightApi, type FlightApi } from "./apis/flight.js";
+export { createHotelApi, type HotelApi } from "./apis/hotel.js";
 export {
   adaptFlightDetailResponse,
   applyLegacyInitDetailResult,
@@ -92,6 +94,7 @@ export interface Api {
   identity: IdentityApi;
   hotel: HotelApi;
   flight: FlightApi;
+  book: BookApi;
   order: OrderApi;
   pay: PayApi;
   member: MemberApi;
@@ -139,6 +142,7 @@ export function createApi(config: CreateApiConfig): Api {
     identity: createIdentityApi(proxy),
     hotel: createHotelApi(proxy),
     flight: createFlightApi(proxy),
+    book: createBookApi(proxy),
     order: createOrderApi(proxy),
     pay: createPayApi(proxy),
     member: createMemberApi(proxy),

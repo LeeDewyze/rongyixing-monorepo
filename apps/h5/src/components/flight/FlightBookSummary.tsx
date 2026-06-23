@@ -26,18 +26,9 @@ export function FlightBookSummary({ selection, onShowRules }: FlightBookSummaryP
   return (
     <div className="px-3 pb-3">
       <div className="rounded-xl bg-[linear-gradient(135deg,#24a8ff_0%,#2468f7_100%)] px-3.5 pb-3 pt-3 shadow-[0_8px_18px_rgba(36,104,247,0.22)]">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-[20px] font-semibold leading-snug text-white">{routeLabel}</p>
-            {subtitle ? <p className="mt-1 text-[13px] text-white/90">{subtitle}</p> : null}
-          </div>
-          <button
-            type="button"
-            aria-label="收起航班信息"
-            className="mt-1 flex size-5 shrink-0 items-center justify-center rounded-full border border-white/80 text-[14px] leading-none text-white"
-          >
-            ⌃
-          </button>
+        <div className="min-w-0">
+          <p className="text-[20px] font-semibold leading-snug text-white">{routeLabel}</p>
+          {subtitle ? <p className="mt-1 text-[13px] text-white/90">{subtitle}</p> : null}
         </div>
 
         <div className="mt-3 rounded-lg bg-white px-3 py-3">

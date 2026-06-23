@@ -1,46 +1,43 @@
 import { describe, expect, it } from "vitest";
+import type { PassengerBookInfo } from "@ryx/shared-types";
 
 import {
-  FLIGHT_PAY_TYPE_COMPANY,
-  FLIGHT_PAY_TYPE_PERSON,
-  parseFlightPayTypeOptions,
-  resolveDefaultFlightPayType,
-  resolveFlightHoldMinutes,
+  resolveFlightBookTmcFlags,
+  resolveTotalServiceFee,
 } from "./flight-book-pay";
 
-describe("parseFlightPayTypeOptions", () => {
-  it("falls back to company and person", () => {
-    expect(parseFlightPayTypeOptions(undefined)).toEqual([
-      { value: FLIGHT_PAY_TYPE_COMPANY, label: "公付" },
-      { value: FLIGHT_PAY_TYPE_PERSON, label: "个付" },
-    ]);
-  });
+const passengers: PassengerBookInfo[] = [
+  {
+    id: "p1",
+    passenger: { Id: "p1", Name: "张三", AccountId: "acc-1" },
+    credential: {
+      Id: "c1",
+      Name: "张三",
+      Mobile: "13800138000",
+      Number: "110101199001011234",
+      CredentialsType: 1,
+    },
+  },
+];
 
-  it("maps initialize PayTypes", () => {
-    expect(parseFlightPayTypeOptions({ "2": "个付", "1": "公付" })).toEqual([
-      { value: 1, label: "公付" },
-      { value: 2, label: "个付" },
-    ]);
-  });
-});
-
-describe("resolveDefaultFlightPayType", () => {
-  it("prefers company pay", () => {
+describe("resolveFlightBookTmcFlags", () => {
+  it("reads notify language and service fee flags from Tmc", () => {
     expect(
-      resolveDefaultFlightPayType([
-        { value: 2, label: "个付" },
-        { value: 1, label: "公付" },
-      ]),
-    ).toBe(FLIGHT_PAY_TYPE_COMPANY);
+      resolveFlightBookTmcFlags({
+        Tmc: { IsShowServiceFee: true, IsDisplayNotifyLanguage: true },
+      }),
+    ).toEqual({
+      isShowServiceFee: true,
+      isDisplayNotifyLanguage: true,
+    });
   });
 });
 
-describe("resolveFlightHoldMinutes", () => {
-  it("uses tmc hold minute when present", () => {
-    expect(resolveFlightHoldMinutes({ Tmc: { FlightHoldMinute: 15 } })).toBe(15);
-  });
-
-  it("defaults to 20 minutes", () => {
-    expect(resolveFlightHoldMinutes({ Tmc: { FlightHoldMinute: 0 } })).toBe(20);
+describe("resolveTotalServiceFee", () => {
+  it("sums service fees by passenger account id", () => {
+    expect(resolveTotalServiceFee(passengers, { "acc-1": 10, "acc-2": 5 })).toBe(10);
+    expect(
+      resolveTotalServiceFee([passengers[0]!, passengers[0]!], { "acc-1": 10 }),
+    ).toBe(20);
   });
 });

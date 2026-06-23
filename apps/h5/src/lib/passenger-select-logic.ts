@@ -36,6 +36,32 @@ export function createBookInfo(
   };
 }
 
+function resolvePassengerAccountId(
+  passenger: StaffPassenger | MemberPassenger,
+): string | undefined {
+  if ("AccountId" in passenger && passenger.AccountId) {
+    return String(passenger.AccountId);
+  }
+  return undefined;
+}
+
+/** Swap ticket credential for an already-selected passenger (book page only). */
+export function replacePassengerCredential(
+  items: PassengerBookInfo[],
+  target: PassengerBookInfo,
+  credential: PassengerCredential,
+): PassengerBookInfo[] {
+  const targetAccountId = resolvePassengerAccountId(target.passenger);
+  return items.map((item) => {
+    const itemAccountId = resolvePassengerAccountId(item.passenger);
+    const samePerson =
+      targetAccountId && itemAccountId
+        ? itemAccountId === targetAccountId
+        : item.id === target.id;
+    return samePerson ? createBookInfo(item.passenger, credential, item.isNotWhitelist) : item;
+  });
+}
+
 export function toggleSelection(
   current: PassengerBookInfo[],
   info: PassengerBookInfo,

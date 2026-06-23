@@ -34,15 +34,28 @@ export function createFlightMockHandlers(): Record<string, (data: unknown) => IR
         Policies: ["符合差旅标准"],
       }),
     [BOOK_METHODS.FLIGHT_INITIALIZE]: (data) => {
-      const params = data as { Passengers?: { FlightCabin?: { SalesPrice?: string } }[] };
+      const params = data as { Passengers?: { FlightCabin?: { SalesPrice?: string }; ClientId?: string }[] };
       const unit = Number(params?.Passengers?.[0]?.FlightCabin?.SalesPrice ?? 680);
       const count = params?.Passengers?.length ?? 1;
+      const clientId = params?.Passengers?.[0]?.ClientId ?? "acc-1";
       return successResponse({
         OrderAmount: unit * count,
-        ServiceFees: {},
+        ServiceFees: { [clientId]: 10 },
+        PayTypes: { "1": "公付", "2": "个付" },
         IllegalReasons: [],
         ExpenseTypes: [{ Id: "1", Name: "机票", Tag: "flight" }],
-        Staffs: [],
+        Staffs: [
+          {
+            Account: { Id: clientId, Mobile: "13800138000", Email: "test@example.com" },
+            Organization: { Code: "A001", Name: "技术部" },
+            CostCenter: { Code: "CC", Name: "默认" },
+          },
+        ],
+        Tmc: {
+          IsShowServiceFee: true,
+          IsDisplayNotifyLanguage: true,
+          FlightHoldMinute: 20,
+        },
       });
     },
     [BOOK_METHODS.FLIGHT_BOOK]: () => {
@@ -55,6 +68,33 @@ export function createFlightMockHandlers(): Record<string, (data: unknown) => IR
         HasTasks: false,
         IsCheckPay: false,
       });
+    },
+    [BOOK_METHODS.HOME_SEARCHLINKMAN]: (data) => {
+      const params = data as { name?: string };
+      const keyword = (params.name ?? "").trim();
+      const items = [
+        { Text: "李四", Value: "lisi@example.com|13900139000|acc-link-2" },
+        { Text: "王五", Value: "wangwu@example.com|13700137000|acc-link-3" },
+      ];
+      if (!keyword) return successResponse(items);
+      return successResponse(
+        items.filter((item) => item.Text.includes(keyword) || keyword.includes(item.Text[0] ?? "")),
+      );
+    },
+    [BOOK_METHODS.HOME_GETORGANIZATIONS]: () =>
+      successResponse([
+        { Id: "org-1", Code: "A001", Name: "技术部" },
+        { Id: "org-2", Code: "A002", Name: "产品部", ParentId: "root" },
+      ]),
+    [BOOK_METHODS.HOME_GETCOSTCENTER]: (data) => {
+      const params = data as { name?: string };
+      const keyword = (params.name ?? "").trim();
+      const items = [
+        { Text: "CC-默认", Value: "CC" },
+        { Text: "CC2-研发", Value: "CC2" },
+      ];
+      if (!keyword) return successResponse(items);
+      return successResponse(items.filter((item) => item.Text.includes(keyword)));
     },
   };
 }

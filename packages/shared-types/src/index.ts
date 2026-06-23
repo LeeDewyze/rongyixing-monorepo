@@ -138,13 +138,20 @@ export type {
 export { parseTrainDurationMinutes, parseTravelTimeMinutes } from "./train.js";
 
 export type {
+  BookCostCenterOption,
+  BookOrganizationOption,
+  FlightAuthorizedContact,
   FlightBookLinkmanDto,
   FlightBookParams,
   FlightBookPassengerDto,
   FlightBookResponse,
   FlightInitBookParams,
   FlightInitBookResponse,
+  FlightInitStaff,
   FlightOrderBookDto,
+  FlightPassengerBookForm,
+  FlightPassengerContactOption,
+  SearchLinkmanOption,
 } from "./flight-book.js";
 
 export type {

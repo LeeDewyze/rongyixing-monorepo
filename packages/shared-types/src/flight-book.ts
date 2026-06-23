@@ -24,7 +24,69 @@ export interface FlightBookPassengerDto {
   travelNumber?: string;
   Policy?: Record<string, unknown>;
   TravelPayType?: number;
+  MessageLang?: string;
+  Email?: string;
+  CostCenterCode?: string;
+  CostCenterName?: string;
+  OrganizationName?: string;
+  OrganizationCode?: string;
   OutNumbers?: Record<string, string> | null;
+}
+
+export interface FlightInitStaffAccount {
+  Id?: string | number;
+  Mobile?: string;
+  Email?: string | null;
+}
+
+export interface FlightInitStaffOrg {
+  Code?: string;
+  Name?: string;
+  Parent?: unknown;
+  ParentId?: string;
+  Id?: string;
+}
+
+export interface FlightInitStaff {
+  Account?: FlightInitStaffAccount;
+  CostCenter?: FlightInitStaffOrg;
+  Organization?: FlightInitStaffOrg;
+  Name?: string;
+  Id?: string | number;
+  Number?: string;
+}
+
+export interface BookOrganizationOption {
+  Id?: string;
+  Code?: string;
+  Name?: string;
+  ParentId?: string;
+  Parent?: { Id?: string };
+}
+
+export interface BookCostCenterOption {
+  Text: string;
+  Value: string;
+}
+
+export interface FlightPassengerContactOption {
+  value: string;
+  checked: boolean;
+}
+
+/** Per-passenger book form state (Legacy combindInfo credential detail). */
+export interface FlightPassengerBookForm {
+  passengerId: string;
+  mobileOptions: FlightPassengerContactOption[];
+  emailOptions: FlightPassengerContactOption[];
+  otherMobile: string;
+  otherEmail: string;
+  organization: { code: string; name: string };
+  otherOrganizationName: string;
+  costCenter: { code: string; name: string };
+  otherCostCenterName: string;
+  otherCostCenterCode: string;
+  expanded: boolean;
 }
 
 export interface FlightBookLinkmanDto {
@@ -33,6 +95,20 @@ export interface FlightBookLinkmanDto {
   Mobile?: string;
   Email?: string;
   MessageLang?: string;
+}
+
+/** Authorized account that can view the order (Legacy `AddContact`). */
+export interface FlightAuthorizedContact {
+  accountId: string;
+  name: string;
+  mobile?: string;
+  email?: string;
+  notifyLanguage?: string;
+}
+
+export interface SearchLinkmanOption {
+  Text: string;
+  Value: string;
 }
 
 /** Legacy `OrderBookDto` — PascalCase matches backend. */

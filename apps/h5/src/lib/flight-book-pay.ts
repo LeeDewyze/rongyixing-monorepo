@@ -1,4 +1,6 @@
-import type { FlightInitBookResponse } from "@ryx/shared-types";
+import type { FlightInitBookResponse, PassengerBookInfo } from "@ryx/shared-types";
+
+import { resolvePassengerServiceFee } from "@/lib/flight-book";
 
 /** Legacy `OrderTravelPayType`. */
 export const FLIGHT_PAY_TYPE_COMPANY = 1;
@@ -37,4 +39,28 @@ export function resolveFlightHoldMinutes(init: FlightInitBookResponse | undefine
   const minute = tmc?.FlightHoldMinute;
   if (typeof minute === "number" && minute > 0) return minute;
   return 20;
+}
+
+export function resolveFlightBookTmcFlags(init: FlightInitBookResponse | undefined): {
+  isShowServiceFee: boolean;
+  isDisplayNotifyLanguage: boolean;
+} {
+  const tmc = init?.Tmc as
+    | { IsShowServiceFee?: boolean; IsDisplayNotifyLanguage?: boolean }
+    | undefined;
+  return {
+    isShowServiceFee: Boolean(tmc?.IsShowServiceFee),
+    isDisplayNotifyLanguage: Boolean(tmc?.IsDisplayNotifyLanguage),
+  };
+}
+
+export function resolveTotalServiceFee(
+  passengers: PassengerBookInfo[],
+  serviceFees?: Record<string, number | string>,
+): number {
+  if (!serviceFees || passengers.length === 0) return 0;
+  return passengers.reduce(
+    (sum, passenger) => sum + resolvePassengerServiceFee(passenger, serviceFees),
+    0,
+  );
 }

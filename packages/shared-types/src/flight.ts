@@ -127,6 +127,12 @@ export interface FlightDetailParams {
   Lang?: string;
 }
 
+export interface FlightTax {
+  Name?: string;
+  Tag?: string;
+  Tax?: number | string;
+}
+
 export interface FlightFareBasic {
   CabinCode?: string;
   CabinType?: number;
@@ -135,6 +141,8 @@ export interface FlightFareBasic {
   Discount?: number | string;
   FareType?: number;
   Count?: string | number;
+  FlightSegmentIds?: string[];
+  FlightTaxs?: FlightTax[];
 }
 
 export interface FlightFareRule {

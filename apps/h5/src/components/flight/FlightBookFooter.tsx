@@ -48,7 +48,7 @@ export function FlightBookFooter({
             className="pb-0.5 text-[13px] text-[#5099fe]"
             onClick={onShowBill}
           >
-            账单明细
+            明细
           </button>
         </div>
 

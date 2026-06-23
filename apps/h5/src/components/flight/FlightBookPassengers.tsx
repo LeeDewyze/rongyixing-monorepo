@@ -1,64 +1,262 @@
 import { Link } from "react-router-dom";
-import { ProductType, credentialDisplayNumber, credentialDisplayType } from "@ryx/shared-types";
+import type { ReactNode } from "react";
+import {
+  ProductType,
+  credentialDisplayNumber,
+  credentialDisplayType,
+  type FlightPassengerBookForm,
+  type PassengerBookInfo,
+} from "@ryx/shared-types";
 
-import { usePassengerSelection } from "@/hooks/usePassenger";
+import {
+  FlightBookCredentialSwitchButton,
+  FlightBookExpandableSummaryCard,
+} from "@/components/flight/FlightBookExpandableSummaryCard";
 import { buildPassengerSelectPath } from "@/lib/passenger-selection";
+
+function DetailRow({
+  label,
+  children,
+  action,
+}: {
+  label: string;
+  children: ReactNode;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="flex min-h-[2.5rem] items-center gap-2 border-b border-[#f0f0f0] py-2 last:border-b-0">
+      <span className="w-[5.5rem] shrink-0 whitespace-nowrap text-[14px] leading-none text-[#666666]">
+        {label}
+      </span>
+      <div className="min-w-0 flex-1">{children}</div>
+      {action ? <div className="shrink-0">{action}</div> : null}
+    </div>
+  );
+}
+
+const detailValueClass =
+  "w-full min-w-0 bg-transparent text-right text-[14px] leading-tight text-[#333333] outline-none placeholder:text-[#cccccc]";
+const detailActionClass =
+  "flex w-full min-w-0 items-center justify-end gap-1 truncate text-[14px] leading-tight text-[#333333]";
+
+function ContactCheckboxList({
+  options,
+  onChange,
+}: {
+  options: FlightPassengerBookForm["mobileOptions"];
+  onChange: (next: FlightPassengerBookForm["mobileOptions"]) => void;
+}) {
+  if (!options.length) {
+    return <p className="text-right text-[14px] text-[#999999]">暂无</p>;
+  }
+
+  return (
+    <div className="space-y-2">
+      {options.map((option, index) => (
+        <label
+          key={`${option.value}-${index}`}
+          className="flex items-center justify-end gap-2 text-[14px] leading-tight text-[#333333]"
+        >
+          <span className="truncate">{option.value}</span>
+          <input
+            type="checkbox"
+            checked={option.checked}
+            onChange={(event) => {
+              const next = options.map((item, idx) =>
+                idx === index ? { ...item, checked: event.target.checked } : item,
+              );
+              onChange(next);
+            }}
+            className="size-4 shrink-0 accent-[#5099fe]"
+          />
+        </label>
+      ))}
+    </div>
+  );
+}
+
+function resolveStaffAccountId(passenger: PassengerBookInfo): string | undefined {
+  const fromPassenger = passenger.passenger.AccountId;
+  if (fromPassenger) return String(fromPassenger);
+  return passenger.credential.AccountId ? String(passenger.credential.AccountId) : undefined;
+}
 
 interface FlightBookPassengersProps {
   returnTo: string;
+  passengers: PassengerBookInfo[];
+  forms: FlightPassengerBookForm[];
+  showOrganizations: boolean;
+  showCostCenter: boolean;
+  onUpdateForm: (passengerId: string, patch: Partial<FlightPassengerBookForm>) => void;
+  onOpenOrganization: (passengerId: string) => void;
+  onOpenCostCenter: (passengerId: string) => void;
+  onChangeCredential: (passenger: PassengerBookInfo) => void;
 }
 
-export function FlightBookPassengers({ returnTo }: FlightBookPassengersProps) {
-  const { selected } = usePassengerSelection(ProductType.Flight);
+export function FlightBookPassengers({
+  returnTo,
+  passengers,
+  forms,
+  showOrganizations,
+  showCostCenter,
+  onUpdateForm,
+  onOpenOrganization,
+  onOpenCostCenter,
+  onChangeCredential,
+}: FlightBookPassengersProps) {
   const selectPath = buildPassengerSelectPath(ProductType.Flight, returnTo);
 
-  return (
-    <section className="rounded-xl bg-white px-3 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
-      <div className="flex items-center justify-between gap-3">
+  if (passengers.length === 0) {
+    return (
+      <section className="rounded-xl bg-white px-3 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
         <h2 className="text-[16px] font-semibold text-[#222222]">旅客信息</h2>
-      </div>
-
-      {selected.length === 0 ? (
         <div className="mt-3 flex items-center justify-between rounded-lg bg-[#f6f8fc] px-3 py-3">
           <p className="text-[13px] text-[#999999]">请选择乘机人</p>
           <Link
             to={selectPath}
-            className="flex size-5 items-center justify-center rounded-full border border-[#5099fe] text-[16px] font-light leading-none text-[#5099fe]"
+            className="text-[14px] text-[#5099fe]"
             aria-label="选择乘机人"
           >
-            +
+            去选择
           </Link>
         </div>
-      ) : (
-        <ul className="mt-3 space-y-2">
-          {selected.map((item) => (
-            <li
-              key={item.id}
-              className="flex items-center justify-between gap-3 rounded-lg bg-[#f6f8fc] px-3 py-3"
+      </section>
+    );
+  }
+
+  return (
+    <section className="rounded-xl bg-white px-3 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+      <h2 className="text-[16px] font-semibold text-[#222222]">旅客信息</h2>
+
+      <div className="mt-3 space-y-3">
+        {passengers.map((passenger) => {
+          const form = forms.find((item) => item.passengerId === passenger.id);
+          if (!form) return null;
+
+          const canSwitchCredential = Boolean(resolveStaffAccountId(passenger));
+          const credentialLine = `${credentialDisplayType(passenger.credential)}：${credentialDisplayNumber(passenger.credential)}`;
+
+          return (
+            <FlightBookExpandableSummaryCard
+              key={passenger.id}
+              name={passenger.credential.Name ?? ""}
+              subtitle={credentialLine}
+              expanded={form.expanded}
+              onToggleExpanded={() => onUpdateForm(passenger.id, { expanded: !form.expanded })}
+              footerAction={
+                canSwitchCredential ? (
+                  <FlightBookCredentialSwitchButton
+                    onClick={() => onChangeCredential(passenger)}
+                  />
+                ) : null
+              }
             >
-              <div className="min-w-0">
-                <p className="text-[16px] font-semibold text-[#222222]">{item.credential.Name}</p>
-                <p className="mt-1 truncate text-[13px] leading-snug text-[#666666]">
-                  {credentialDisplayType(item.credential)}：
-                  {credentialDisplayNumber(item.credential)}
-                </p>
-              </div>
-              <div className="flex shrink-0 items-center gap-3">
-                <Link to={selectPath} className="text-[13px] text-[#5099fe]">
-                  全部信息
-                </Link>
-                <Link
-                  to={selectPath}
-                  className="flex size-5 items-center justify-center rounded-full border border-[#5099fe] text-[16px] font-light leading-none text-[#5099fe]"
-                  aria-label="选择乘机人"
-                >
-                  +
-                </Link>
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+              <DetailRow label="联系电话">
+                <ContactCheckboxList
+                  options={form.mobileOptions}
+                  onChange={(mobileOptions) => onUpdateForm(passenger.id, { mobileOptions })}
+                />
+              </DetailRow>
+
+              <DetailRow label="联系邮箱">
+                <ContactCheckboxList
+                  options={form.emailOptions}
+                  onChange={(emailOptions) => onUpdateForm(passenger.id, { emailOptions })}
+                />
+              </DetailRow>
+
+              {showOrganizations ? (
+                <DetailRow label="部门">
+                  <button
+                    type="button"
+                    className={detailActionClass}
+                    onClick={() => onOpenOrganization(passenger.id)}
+                  >
+                    <span className="truncate">{form.organization.name || "请选择"}</span>
+                    <span className="shrink-0 text-[16px] text-[#bbbbbb]" aria-hidden>
+                      ›
+                    </span>
+                  </button>
+                </DetailRow>
+              ) : null}
+
+              {showCostCenter ? (
+                <DetailRow label="成本中心">
+                  <button
+                    type="button"
+                    className={detailActionClass}
+                    onClick={() => onOpenCostCenter(passenger.id)}
+                  >
+                    <span className="truncate">{form.costCenter.name || "请选择"}</span>
+                    <span className="shrink-0 text-[16px] text-[#bbbbbb]" aria-hidden>
+                      ›
+                    </span>
+                  </button>
+                </DetailRow>
+              ) : null}
+
+              <DetailRow label="其他电话">
+                <input
+                  type="tel"
+                  value={form.otherMobile}
+                  placeholder="请输入"
+                  onChange={(event) => onUpdateForm(passenger.id, { otherMobile: event.target.value })}
+                  className={detailValueClass}
+                />
+              </DetailRow>
+
+              <DetailRow label="其他邮箱">
+                <input
+                  type="email"
+                  value={form.otherEmail}
+                  placeholder="请输入"
+                  onChange={(event) => onUpdateForm(passenger.id, { otherEmail: event.target.value })}
+                  className={detailValueClass}
+                />
+              </DetailRow>
+
+              {showOrganizations ? (
+                <DetailRow label="其他部门">
+                  <input
+                    type="text"
+                    value={form.otherOrganizationName}
+                    placeholder="名称"
+                    onChange={(event) =>
+                      onUpdateForm(passenger.id, { otherOrganizationName: event.target.value })
+                    }
+                    className={detailValueClass}
+                  />
+                </DetailRow>
+              ) : null}
+
+              {showCostCenter ? (
+                <DetailRow label="其他成本中心">
+                  <div className="flex min-w-0 items-center justify-end gap-1.5">
+                    <input
+                      type="text"
+                      value={form.otherCostCenterName}
+                      placeholder="名称"
+                      onChange={(event) =>
+                        onUpdateForm(passenger.id, { otherCostCenterName: event.target.value })
+                      }
+                      className={`${detailValueClass} min-w-0 flex-1`}
+                    />
+                    <input
+                      type="text"
+                      value={form.otherCostCenterCode}
+                      placeholder="代码"
+                      onChange={(event) =>
+                        onUpdateForm(passenger.id, { otherCostCenterCode: event.target.value })
+                      }
+                      className={`${detailValueClass} w-14 shrink-0`}
+                    />
+                  </div>
+                </DetailRow>
+              ) : null}
+            </FlightBookExpandableSummaryCard>
+          );
+        })}
+      </div>
     </section>
   );
 }
