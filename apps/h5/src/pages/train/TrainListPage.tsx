@@ -7,38 +7,26 @@ import type {
   TrainFilterCondition,
   TrainPriceSortMode,
   TrainSortTab,
-  TrainStation,
   TrainTypeFilter,
 } from "@ryx/shared-types";
 
 import { CalendarPickerSheet } from "@/components/calendar/CalendarPickerSheet";
 import { usePageHeader } from "@/components/layout";
-import { CityPicker } from "@/components/search/CityPicker";
 import { TrainFilterSheet } from "@/components/train/TrainFilterSheet";
 import { TrainListDateStrip } from "@/components/train/TrainListDateStrip";
 import { TrainListHeader } from "@/components/train/TrainListHeader";
 import { TrainListItemCard } from "@/components/train/TrainListItemCard";
 import { TrainListToolbar } from "@/components/train/TrainListToolbar";
+import { TrainModifySearchSheet } from "@/components/train/TrainModifySearchSheet";
 import { TrainTypeFilterBar } from "@/components/train/TrainTypeFilterBar";
-import {
-  useTrainList,
-  useTrainStations,
-  type TrainStationPickerTarget,
-} from "@/hooks/useTrainSearchForm";
+import { useTrainList } from "@/hooks/useTrainSearchForm";
 import { usePassengerSelection } from "@/hooks/usePassenger";
 import { TRAIN_CALENDAR_CONFIG } from "@/lib/calendar-picker";
-import { CITY_HISTORY_KEYS } from "@/lib/city-picker";
 import { parseLocalDate, todayDateString } from "@/lib/date-search";
 import { getApiMode } from "@/lib/env";
 import { formatApiError } from "@/lib/formatApiError";
 import { buildPassengerSelectPath } from "@/lib/passenger-selection";
 import { getTicket } from "@/lib/session";
-import {
-  buildTrainListSearchParams,
-  stationFromQuery,
-  trainStationPickerAdapter,
-  validateTrainSearch,
-} from "@/lib/train-search";
 import {
   applyTrainFilters,
   applyTrainTypeFilter,
@@ -63,10 +51,7 @@ const FALLBACK_HEADER_HEIGHT = 56;
 export function TrainListPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [headerPicker, setHeaderPicker] = useState<TrainStationPickerTarget>(null);
-  const { data: headerStations = [] } = useTrainStations({
-    enabled: headerPicker !== null,
-  });
+  const [modifyOpen, setModifyOpen] = useState(false);
   const { selected: selectedPassengers } = usePassengerSelection(ProductType.Train);
   const listReturnTo = `/train/list?${searchParams.toString()}`;
   const isAuthenticated = getApiMode() === "mock" || Boolean(getTicket());
@@ -279,30 +264,20 @@ export function TrainListPage() {
     navigate(`/train/list?${params.toString()}`, { replace: true });
   }
 
-  function handleHeaderStationSelect(station: TrainStation) {
-    const fromStation = stationFromQuery(headerStations, listParams.FromStation, fromName);
-    const toStation = stationFromQuery(headerStations, listParams.ToStation, toName);
-    const nextFrom = headerPicker === "from" ? station : fromStation;
-    const nextTo = headerPicker === "to" ? station : toStation;
-    const message = validateTrainSearch(nextFrom, nextTo);
-    if (message) {
-      setToastMessage(message);
-      setHeaderPicker(null);
-      return;
-    }
-
-    handleModifySearch(
-      buildTrainListSearchParams({
-        fromStation: nextFrom,
-        toStation: nextTo,
-        date: listParams.Date,
-      }),
-    );
-    setHeaderPicker(null);
+  function handleModifyOpen() {
+    setModifyOpen(true);
   }
 
-  function openHeaderPicker(target: TrainStationPickerTarget) {
-    setHeaderPicker(target);
+  function handleModifyClose() {
+    setModifyOpen(false);
+  }
+
+  function handleHeaderBack() {
+    if (modifyOpen) {
+      handleModifyClose();
+      return;
+    }
+    navigate(-1);
   }
 
   function toggleTrainCard(trainId: string) {
@@ -311,22 +286,23 @@ export function TrainListPage() {
 
   return (
     <div className="relative h-dvh overflow-hidden bg-[#F5F6F9]">
-      <div ref={headerRef} className="fixed inset-x-0 top-0 z-30 mx-auto w-full max-w-lg">
+      <div ref={headerRef} className="fixed inset-x-0 top-0 z-50 mx-auto w-full max-w-lg">
         <TrainListHeader
           fromName={fromName}
           toName={toName}
           passengerHref={buildPassengerSelectPath(ProductType.Train, listReturnTo)}
           passengerCount={selectedPassengers.length}
-          onBack={() => navigate(-1)}
-          onFromClick={() => openHeaderPicker("from")}
-          onToClick={() => openHeaderPicker("to")}
+          modifyOpen={modifyOpen}
+          onBack={handleHeaderBack}
+          onModifyOpen={handleModifyOpen}
+          onModifyClose={handleModifyClose}
         />
       </div>
 
       <div
         ref={scrollContainerRef}
         className={`h-full overscroll-y-contain [-webkit-overflow-scrolling:touch] [scrollbar-gutter:stable] ${
-          filterOpen ? "overflow-hidden" : "overflow-y-auto"
+          filterOpen || modifyOpen ? "overflow-hidden" : "overflow-y-auto"
         }`}
         style={{ paddingTop: headerHeight }}
       >
@@ -436,20 +412,19 @@ export function TrainListPage() {
         }}
       />
 
-      {headerPicker !== null ? (
-        <CityPicker
-          open
-          items={headerStations}
-          title={headerPicker === "from" ? "选择出发站" : "选择到达站"}
-          historyKey={CITY_HISTORY_KEYS.train}
-          searchPlaceholder="搜索城市或车站名称"
-          hotTitle="热门火车站"
-          historyTitle="历史记录"
-          onClose={() => setHeaderPicker(null)}
-          onSelect={handleHeaderStationSelect}
-          {...trainStationPickerAdapter}
-        />
-      ) : null}
+      <TrainModifySearchSheet
+        open={modifyOpen}
+        headerTop={headerHeight}
+        initial={{
+          fromCode: listParams.FromStation,
+          toCode: listParams.ToStation,
+          fromName,
+          toName,
+          date: listParams.Date,
+        }}
+        onClose={handleModifyClose}
+        onSearch={handleModifySearch}
+      />
 
       {toastMessage ? (
         <div className="pointer-events-none fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-50 flex justify-center px-4">
