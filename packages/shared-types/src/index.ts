@@ -83,6 +83,7 @@ export {
   credentialDisplayType,
   credentialKey,
   credentialTypeValue,
+  maskCredentialNumber,
   maxPassengersForProduct,
   memberToCredential,
   parseProductType,

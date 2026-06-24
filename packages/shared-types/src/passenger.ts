@@ -140,6 +140,19 @@ export function credentialDisplayNumber(c: PassengerCredential): string {
   return c.HideNumber ?? c.HideCredentialsNumber ?? c.Number ?? "";
 }
 
+/** Legacy CredentialsEntity.getHideNumber — mask middle digits for alert/UI display. */
+export function maskCredentialNumber(number: string): string {
+  const nu = number.trim();
+  if (!nu) return "";
+  if (nu.length < 8) {
+    return `${nu.substring(0, 3)}****${nu.substring(7)}`;
+  }
+  if (nu.length >= 18) {
+    return `${nu.substring(0, 6)}********${nu.substring(14)}`;
+  }
+  return nu;
+}
+
 export function credentialKey(c: PassengerCredential): string {
   return `${c.Number ?? ""}:${credentialTypeValue(c)}`;
 }

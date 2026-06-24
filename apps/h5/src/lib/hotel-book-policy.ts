@@ -8,6 +8,7 @@ import type {
   HotelRoomPlan,
   PassengerBookInfo,
 } from "@ryx/shared-types";
+import { CredentialType, credentialTypeValue, maskCredentialNumber } from "@ryx/shared-types";
 
 function getPassengerAccountId(passenger: PassengerBookInfo): string {
   if ("AccountId" in passenger.passenger && passenger.passenger.AccountId) {
@@ -382,6 +383,112 @@ export function formatHotelPolicyBlockMessage(
     default:
       return `${who}无法预订${ruleText ? `：${ruleText}` : ""}`;
   }
+}
+
+/** Resolve full credential number from passenger snapshot (before display masking). */
+function resolveFullCredentialNumber(passenger: PassengerBookInfo): string {
+  const credential = passenger.credential;
+  const direct = credential.Number?.trim();
+  if (direct) return direct;
+
+  if ("Credentials" in passenger.passenger && passenger.passenger.Credentials?.length) {
+    const matched = passenger.passenger.Credentials.find((item) => item.Id === credential.Id);
+    const fromList = matched?.Number?.trim();
+    if (fromList) return fromList;
+  }
+
+  const fromPassenger =
+    "Number" in passenger.passenger ? passenger.passenger.Number?.trim() : undefined;
+  if (fromPassenger) return fromPassenger;
+
+  return "";
+}
+
+/** Credential number for policy exceed alert — ID cards masked per legacy getHideNumber. */
+export function formatPassengerCredentialForAlert(passenger: PassengerBookInfo): string {
+  const number = resolveFullCredentialNumber(passenger);
+  if (number) {
+    if (credentialTypeValue(passenger.credential) === CredentialType.IdCard) {
+      return maskCredentialNumber(number);
+    }
+    return number;
+  }
+
+  return (
+    passenger.credential.HideNumber?.trim() ??
+    passenger.credential.HideCredentialsNumber?.trim() ??
+    ""
+  );
+}
+
+function findPlanPolicyItem(
+  plan: HotelRoomPlan,
+  results: HotelPolicyPassengerResult[] | undefined,
+  passenger: PassengerBookInfo,
+): HotelPolicyItem | undefined {
+  const uniqueId = getPlanUniqueId(plan);
+  if (!uniqueId) return undefined;
+  const accountId = getPassengerAccountId(passenger);
+  const entry = results?.find((item) => String(item.PassengerKey ?? "") == accountId);
+  return entry?.HotelPolicies?.find((item) => policyItemMatchesPlanUniqueId(item, uniqueId));
+}
+
+/**
+ * Legacy onBookRoomPlan exceed alert:
+ * `Name(maskedId);rule1;rule2` joined by comma, suffix `，超标不可预订`.
+ */
+export function buildHotelPolicyExceedAlertMessage(
+  plan: HotelRoomPlan,
+  results: HotelPolicyPassengerResult[] | undefined,
+  passengers: PassengerBookInfo[],
+): string | null {
+  const tips: string[] = [];
+  for (const passenger of passengers) {
+    const policy = findPlanPolicyItem(plan, results, passenger);
+    if (!policy || isAllowedByPolicy(policy)) continue;
+    const name = passenger.passenger.Name?.trim() ?? "";
+    const credential = formatPassengerCredentialForAlert(passenger);
+    const ruleMsg = (policy.Rules ?? []).filter(Boolean).join(";");
+    const identity = credential ? `(${credential})` : "";
+    tips.push(`${name}${identity};${ruleMsg}`);
+  }
+  if (!tips.length) return null;
+  return `${tips.join(",")}，超标不可预订`;
+}
+
+export interface ResolveHotelPlanBookAlertInput {
+  plan: HotelRoomPlan;
+  displayColor: HotelPolicyColor | undefined;
+  bookColor: HotelPolicyColor | undefined;
+  policyResults: HotelPolicyPassengerResult[] | undefined;
+  passengers: PassengerBookInfo[];
+  isAgent: boolean;
+  policyChecked: boolean;
+}
+
+/** Returns alert message when book action should be blocked; null when navigation is allowed. */
+export function resolveHotelPlanBookAlertMessage(
+  input: ResolveHotelPlanBookAlertInput,
+): string | null {
+  const { plan, displayColor, bookColor, policyResults, passengers, isAgent, policyChecked } =
+    input;
+  if (!policyChecked) return null;
+
+  const color = displayColor ?? bookColor;
+  if (color === "danger_nopermission" && !isAgent) {
+    return "您没有权限预订该类型产品！";
+  }
+  if (color === "danger_full" || bookColor === "danger_full") {
+    return "已满房，不可预订";
+  }
+
+  if (!isHotelPlanBookable(bookColor, isAgent, policyChecked)) {
+    const exceedMessage = buildHotelPolicyExceedAlertMessage(plan, policyResults, passengers);
+    if (exceedMessage) return exceedMessage;
+    return formatHotelPolicyBlockMessage(bookColor);
+  }
+
+  return null;
 }
 
 export function policyButtonClassName(color: HotelPolicyColor | undefined): string {

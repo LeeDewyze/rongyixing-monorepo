@@ -106,9 +106,11 @@ export function HotelDetailPlanRow({
           ) : (
             <button
               type="button"
-              disabled={button.disabled}
+              aria-disabled={button.disabled}
               onClick={onBook}
-              className={`flex w-[62px] shrink-0 flex-col overflow-hidden rounded-md border ${button.shellClass} disabled:opacity-100 active:opacity-90`}
+              className={`flex w-[62px] shrink-0 flex-col overflow-hidden rounded-md border ${button.shellClass} active:opacity-90 ${
+                button.disabled ? "cursor-not-allowed" : ""
+              }`}
             >
               <span
                 className={`flex h-[30px] items-center justify-center px-0.5 text-center ${button.topLabelClass} ${button.topClass}`}

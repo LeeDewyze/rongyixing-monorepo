@@ -23,6 +23,40 @@ export function isCredentialAllowed(
   return !blocked.includes(credentialTypeValue(credential));
 }
 
+/** Prefer full credential Number from staff/member payload when list rows only expose HideNumber. */
+export function enrichCredentialWithFullNumber(
+  passenger: StaffPassenger | MemberPassenger,
+  credential: PassengerCredential,
+): PassengerCredential {
+  if (credential.Number?.trim()) return credential;
+
+  if ("Credentials" in passenger && passenger.Credentials?.length) {
+    const matched = passenger.Credentials.find((item) => item.Id === credential.Id);
+    const fromList = matched?.Number?.trim();
+    if (fromList) return { ...credential, Number: fromList };
+  }
+
+  if ("Number" in passenger) {
+    const isPrimary = credential.Id === passenger.Id;
+    const fromPassenger = passenger.Number?.trim();
+    if (isPrimary && fromPassenger) return { ...credential, Number: fromPassenger };
+  }
+
+  const memberNumber =
+    "CredentialNo" in passenger
+      ? (passenger.CredentialNo?.trim() ?? passenger.Number?.trim())
+      : undefined;
+  if (memberNumber) return { ...credential, Number: memberNumber };
+
+  return credential;
+}
+
+export function enrichPassengerBookInfo(info: PassengerBookInfo): PassengerBookInfo {
+  const credential = enrichCredentialWithFullNumber(info.passenger, info.credential);
+  if (credential === info.credential) return info;
+  return { ...info, credential };
+}
+
 export function createBookInfo(
   passenger: StaffPassenger | MemberPassenger,
   credential: PassengerCredential,
@@ -31,7 +65,7 @@ export function createBookInfo(
   return {
     id: credential.Id,
     passenger,
-    credential,
+    credential: enrichCredentialWithFullNumber(passenger, credential),
     isNotWhitelist,
   };
 }

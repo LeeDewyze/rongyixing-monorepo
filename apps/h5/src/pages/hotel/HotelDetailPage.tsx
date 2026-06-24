@@ -12,6 +12,7 @@ import { HotelDetailSectionTabs } from "@/components/hotel/HotelDetailSectionTab
 import { HotelDetailStickyHeader } from "@/components/hotel/HotelDetailStickyHeader";
 import { HotelDetailTrafficSection } from "@/components/hotel/HotelDetailTrafficSection";
 import { HotelPassengerRequiredDialog } from "@/components/hotel/HotelPassengerRequiredDialog";
+import { HotelPolicyAlertDialog } from "@/components/hotel/HotelPolicyAlertDialog";
 import { HotelPolicyFilterSheet } from "@/components/hotel/HotelPolicyFilterSheet";
 import { HotelStayDatePickerSheet } from "@/components/hotel/HotelStayDatePickerSheet";
 import { usePageHeader } from "@/components/layout";
@@ -22,9 +23,10 @@ import { usePassengerSelection } from "@/hooks/usePassenger";
 import {
   buildHotelPolicyParams,
   buildPolicyColorMap,
-  formatHotelPolicyBlockMessage,
   isHotelPlanBookable,
+  resolveHotelPlanBookAlertMessage,
   resolvePlanBookingPolicyColor,
+  resolvePlanPolicyColor,
 } from "@/lib/hotel-book-policy";
 import { saveHotelGalleryImages } from "@/lib/hotel-gallery-session";
 import { formatApiError } from "@/lib/formatApiError";
@@ -67,6 +69,7 @@ export function HotelDetailPage() {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [policyFilterOpen, setPolicyFilterOpen] = useState(false);
   const [passengerRequiredOpen, setPassengerRequiredOpen] = useState(false);
+  const [policyAlertMessage, setPolicyAlertMessage] = useState<string | null>(null);
   const [policyFilterEnabled, setPolicyFilterEnabled] = useState(true);
   const [filterPassengerId, setFilterPassengerId] = useState<string | null>(null);
   const { expandedRoomId, toggleRoom } = useExpandedRoomState();
@@ -221,9 +224,22 @@ export function HotelDetailPage() {
   function handleBook(plan: HotelRoomPlan) {
     if (!requirePassengersBeforeAction()) return;
     const policyChecked = detailReady && selectedPassengers.length > 0 && !isPolicyChecking;
+    const displayColor = resolvePlanPolicyColor(plan, policyColors);
     const bookColor = resolvePlanBookingPolicyColor(plan, policyResults, selectedPassengers);
+    const alertMessage = resolveHotelPlanBookAlertMessage({
+      plan,
+      displayColor,
+      bookColor,
+      policyResults,
+      passengers: selectedPassengers,
+      isAgent,
+      policyChecked,
+    });
+    if (alertMessage) {
+      setPolicyAlertMessage(alertMessage);
+      return;
+    }
     if (!isHotelPlanBookable(bookColor, isAgent, policyChecked)) {
-      window.alert(formatHotelPolicyBlockMessage(bookColor));
       return;
     }
     const bookParams = new URLSearchParams({
@@ -380,6 +396,12 @@ export function HotelDetailPage() {
         open={passengerRequiredOpen}
         onClose={() => setPassengerRequiredOpen(false)}
         onConfirm={handlePassengerRequiredConfirm}
+      />
+
+      <HotelPolicyAlertDialog
+        open={policyAlertMessage != null}
+        message={policyAlertMessage ?? ""}
+        onClose={() => setPolicyAlertMessage(null)}
       />
     </div>
   );

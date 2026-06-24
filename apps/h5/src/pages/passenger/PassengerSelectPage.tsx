@@ -10,6 +10,7 @@ import {
   PassengerAddExternalButton,
   PassengerPickerFooter,
   PassengerSegmentTabs,
+  PassengerSelectAlertDialog,
   SelectedPassengersSheet,
   type PassengerTabKey,
 } from "@/components/passenger";
@@ -48,10 +49,8 @@ export function PassengerSelectPage() {
 
   const [tab, setTab] = useState<PassengerTabKey>("employee");
   const [keyword, setKeyword] = useState("");
-  const [draft, setDraft] = useState<PassengerBookInfo[]>(() =>
-    loadPassengerSelection(forType),
-  );
-  const [error, setError] = useState("");
+  const [draft, setDraft] = useState<PassengerBookInfo[]>(() => loadPassengerSelection(forType));
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [selectedSheetOpen, setSelectedSheetOpen] = useState(false);
   const [externalDeleteTarget, setExternalDeleteTarget] = useState<MemberPassenger | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -86,7 +85,9 @@ export function PassengerSelectPage() {
   function handleToggle(info: PassengerBookInfo, checked: boolean) {
     const result = toggleSelection(draft, info, checked, forType);
     setDraft(result.items);
-    setError(result.error ?? "");
+    if (result.error) {
+      setAlertMessage(result.error);
+    }
   }
 
   function handleRemove(item: PassengerBookInfo) {
@@ -95,7 +96,7 @@ export function PassengerSelectPage() {
 
   function handleConfirm() {
     if (draft.length === 0) {
-      setError("请至少选择一位出行人");
+      setAlertMessage("请至少选择一位出行人");
       return;
     }
     setSelected(draft);
@@ -125,7 +126,14 @@ export function PassengerSelectPage() {
         forType,
         passenger,
       }),
-      { state: credentialNavigationState({ mode: "external", returnTo: selectReturnTo, forType, passenger }) },
+      {
+        state: credentialNavigationState({
+          mode: "external",
+          returnTo: selectReturnTo,
+          forType,
+          passenger,
+        }),
+      },
     );
   }
 
@@ -133,9 +141,10 @@ export function PassengerSelectPage() {
     setExternalDeleteTarget(passenger);
   }
 
-  function pruneDraftAfterDelete(
-    target: { passengerId?: string; credential?: PassengerCredential },
-  ) {
+  function pruneDraftAfterDelete(target: {
+    passengerId?: string;
+    credential?: PassengerCredential;
+  }) {
     setDraft((prev) => {
       const next = removeDeletedFromSelection(prev, target);
       if (next.length !== prev.length) {
@@ -153,7 +162,7 @@ export function PassengerSelectPage() {
       pruneDraftAfterDelete({ passengerId: target.Id });
       setExternalDeleteTarget(null);
     } catch (err) {
-      setError(formatApiError(err));
+      setAlertMessage(formatApiError(err));
     }
   }
 
@@ -196,17 +205,14 @@ export function PassengerSelectPage() {
       await removeStaffCredential.mutateAsync(credentialFormFromCredential(credential, staffId));
       pruneDraftAfterDelete({ credential });
     } catch (err) {
-      setError(formatApiError(err));
+      setAlertMessage(formatApiError(err));
     }
   }
 
-  const isLoading =
-    tab === "employee" ? staffQuery.isLoading : externalQuery.isLoading;
+  const isLoading = tab === "employee" ? staffQuery.isLoading : externalQuery.isLoading;
   const listError = tab === "employee" ? staffQuery.error : externalQuery.error;
-  const hasMore =
-    tab === "employee" ? staffQuery.hasNextPage : externalQuery.hasNextPage;
-  const fetchMore =
-    tab === "employee" ? staffQuery.fetchNextPage : externalQuery.fetchNextPage;
+  const hasMore = tab === "employee" ? staffQuery.hasNextPage : externalQuery.hasNextPage;
+  const fetchMore = tab === "employee" ? staffQuery.fetchNextPage : externalQuery.fetchNextPage;
   const isFetchingMore =
     tab === "employee" ? staffQuery.isFetchingNextPage : externalQuery.isFetchingNextPage;
 
@@ -220,11 +226,7 @@ export function PassengerSelectPage() {
         onBack={handleBack}
         onSearchClick={() => inputRef.current?.focus()}
         inputRef={inputRef}
-        tabs={
-          allowExternal ? (
-            <PassengerSegmentTabs active={tab} onChange={setTab} />
-          ) : null
-        }
+        tabs={allowExternal ? <PassengerSegmentTabs active={tab} onChange={setTab} /> : null}
         footer={
           <PassengerPickerFooter
             selectedCount={draft.length}
@@ -235,19 +237,11 @@ export function PassengerSelectPage() {
         }
       >
         <div className="pb-4 pt-1">
-          {error ? (
-            <p className="mx-4 mb-2 text-sm text-[#ff4d4f]" role="alert">
-              {error}
-            </p>
-          ) : null}
-
           {tab === "external" && allowExternal ? (
             <PassengerAddExternalButton onClick={openExternalAdd} />
           ) : null}
 
-          {isLoading ? (
-            <p className="py-10 text-center text-sm text-[#999999]">加载中…</p>
-          ) : null}
+          {isLoading ? <p className="py-10 text-center text-sm text-[#999999]">加载中…</p> : null}
 
           {listError ? (
             <p className="mx-4 py-4 text-sm text-[#ff4d4f]">{formatApiError(listError)}</p>
@@ -324,6 +318,12 @@ export function PassengerSelectPage() {
         loading={removeExternal.isPending}
         onConfirm={() => void confirmExternalRemove()}
         onCancel={() => setExternalDeleteTarget(null)}
+      />
+
+      <PassengerSelectAlertDialog
+        open={alertMessage != null}
+        message={alertMessage ?? ""}
+        onClose={() => setAlertMessage(null)}
       />
     </>
   );

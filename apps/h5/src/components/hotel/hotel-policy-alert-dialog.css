@@ -1,0 +1,164 @@
+.hotel-policy-alert {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 28px;
+}
+
+.hotel-policy-alert__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgb(15 23 42 / 0.46);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  opacity: 0;
+  transition: opacity 280ms ease;
+}
+
+.hotel-policy-alert[data-visible="true"] .hotel-policy-alert__backdrop {
+  opacity: 1;
+}
+
+.hotel-policy-alert__panel {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 320px;
+  overflow: hidden;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow:
+    0 24px 64px rgb(15 23 42 / 0.18),
+    0 0 0 1px rgb(255 255 255 / 0.65) inset;
+  opacity: 0;
+  transform: scale(0.94) translateY(8px);
+  transition:
+    opacity 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.hotel-policy-alert[data-visible="true"] .hotel-policy-alert__panel {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+.hotel-policy-alert__accent {
+  height: 3px;
+  background: linear-gradient(90deg, #fb923c 0%, #ef4444 100%);
+}
+
+.hotel-policy-alert__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 20px 0;
+}
+
+.hotel-policy-alert__icon {
+  display: flex;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #fff7ed 0%, #ffedd5 100%);
+  color: #ea580c;
+  box-shadow: inset 0 0 0 1px rgb(251 146 60 / 0.18);
+}
+
+.hotel-policy-alert__title {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #1a1a1a;
+}
+
+.hotel-policy-alert__body {
+  max-height: min(52vh, 280px);
+  overflow-y: auto;
+  padding: 14px 20px 18px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.hotel-policy-alert__content {
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fafbfd 0%, #f4f6fa 100%);
+  padding: 14px;
+  box-shadow: inset 0 0 0 1px #e8ecf3;
+}
+
+.hotel-policy-alert__entry + .hotel-policy-alert__entry {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.hotel-policy-alert__identity {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: #1a1a1a;
+}
+
+.hotel-policy-alert__rule {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #5c6573;
+}
+
+.hotel-policy-alert__plain {
+  font-size: 14px;
+  line-height: 1.65;
+  color: #333;
+}
+
+.hotel-policy-alert__tag {
+  display: inline-flex;
+  margin-top: 12px;
+  align-items: center;
+  border-radius: 999px;
+  background: #fef2f2;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #dc2626;
+  box-shadow: inset 0 0 0 1px #fecaca;
+}
+
+.hotel-policy-alert__footer {
+  border-top: 1px solid #eef1f6;
+  background: linear-gradient(180deg, #fcfdff 0%, #f8fafc 100%);
+  padding: 12px 16px 14px;
+}
+
+.hotel-policy-alert__confirm {
+  display: flex;
+  width: 100%;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #3d7cff 0%, #2768fa 100%);
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  box-shadow:
+    0 4px 14px rgb(39 104 250 / 0.28),
+    inset 0 1px 0 rgb(255 255 255 / 0.22);
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease,
+    opacity 120ms ease;
+}
+
+.hotel-policy-alert__confirm:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 8px rgb(39 104 250 / 0.22);
+}

@@ -4,10 +4,12 @@ import type { HotelDetailResponse } from "@ryx/shared-types";
 import {
   buildHotelPolicyRoomPlansPayload,
   buildPolicyColorMap,
+  buildHotelPolicyExceedAlertMessage,
   getHotelPlanBookButtonPresentation,
   getHotelPlanPayTypeLabel,
   isHotelPlanBookable,
   policyItemMatchesPlanUniqueId,
+  resolveHotelPlanBookAlertMessage,
   resolvePlanBookingPolicyColor,
 } from "./hotel-book-policy";
 
@@ -402,6 +404,119 @@ describe("buildPolicyColorMap", () => {
       detail: DETAIL,
     });
     expect(colors["uniq-a"]).toBe("success");
+  });
+});
+
+describe("buildHotelPolicyExceedAlertMessage", () => {
+  const plan = {
+    PlanId: "P1",
+    PlanName: "含早",
+    Price: 821,
+    RoomPlanUniqueId: "uniq-b",
+  };
+  const passengers = [
+    {
+      id: "p1",
+      passenger: { Id: "acc-1", AccountId: "acc-1", Name: "申晓杰" },
+      credential: { Id: "c1", Name: "申晓杰", Type: 1, Number: "410928199005125121" },
+    },
+  ];
+
+  it("formats legacy exceed alert with full credential and rules", () => {
+    const message = buildHotelPolicyExceedAlertMessage(
+      plan,
+      [
+        {
+          PassengerKey: "acc-1",
+          HotelPolicies: [
+            {
+              UniqueIdId: "uniq-b",
+              IsAllowBook: false,
+              Rules: ["违反每晚价格只能预订500元以下政策"],
+            },
+          ],
+        },
+      ],
+      passengers,
+    );
+    expect(message).toBe(
+      "申晓杰(410928********5121);违反每晚价格只能预订500元以下政策，超标不可预订",
+    );
+  });
+
+  it("falls back to HideNumber when Number is missing", () => {
+    const message = buildHotelPolicyExceedAlertMessage(
+      plan,
+      [
+        {
+          PassengerKey: "acc-2",
+          HotelPolicies: [{ UniqueIdId: "uniq-b", IsAllowBook: false, Rules: ["超出差标"] }],
+        },
+      ],
+      [
+        {
+          id: "p2",
+          passenger: { Id: "acc-2", AccountId: "acc-2", Name: "SUN/XUE" },
+          credential: { Id: "c2", Name: "SUN/XUE", Type: 2, HideNumber: "EB68***94" },
+        },
+      ],
+    );
+    expect(message).toBe("SUN/XUE(EB68***94);超出差标，超标不可预订");
+  });
+
+  it("prefers full Number from staff credentials list", () => {
+    const message = buildHotelPolicyExceedAlertMessage(
+      plan,
+      [
+        {
+          PassengerKey: "acc-2",
+          HotelPolicies: [{ UniqueIdId: "uniq-b", IsAllowBook: false, Rules: ["超出差标"] }],
+        },
+      ],
+      [
+        {
+          id: "c2",
+          passenger: {
+            Id: "acc-2",
+            AccountId: "acc-2",
+            Name: "SUN/XUE",
+            Credentials: [
+              { Id: "c2", Name: "SUN/XUE", Type: 2, Number: "EB6812345694", HideNumber: "EB68***94" },
+            ],
+          },
+          credential: { Id: "c2", Name: "SUN/XUE", Type: 2, HideNumber: "EB68***94" },
+        },
+      ],
+    );
+    expect(message).toBe("SUN/XUE(EB6812345694);超出差标，超标不可预订");
+  });
+});
+
+describe("resolveHotelPlanBookAlertMessage", () => {
+  it("returns nopermission message for non-agents", () => {
+    const message = resolveHotelPlanBookAlertMessage({
+      plan: { PlanId: "P1", PlanName: "x", Price: 1, RoomPlanUniqueId: "u1" },
+      displayColor: "danger_nopermission",
+      bookColor: "danger_nopermission",
+      policyResults: [],
+      passengers: [],
+      isAgent: false,
+      policyChecked: true,
+    });
+    expect(message).toBe("您没有权限预订该类型产品！");
+  });
+
+  it("returns full-house message", () => {
+    const message = resolveHotelPlanBookAlertMessage({
+      plan: { PlanId: "P1", PlanName: "x", Price: 1, RoomPlanUniqueId: "u1" },
+      displayColor: "danger_full",
+      bookColor: "danger_full",
+      policyResults: [],
+      passengers: [],
+      isAgent: false,
+      policyChecked: true,
+    });
+    expect(message).toBe("已满房，不可预订");
   });
 });
 

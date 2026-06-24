@@ -2,6 +2,7 @@ import type { PassengerBookInfo, ProductType } from "@ryx/shared-types";
 import { ProductType as PT } from "@ryx/shared-types";
 
 import { getApiMode } from "@/lib/env";
+import { enrichPassengerBookInfo } from "@/lib/passenger-select-logic";
 
 function isMockPassengerEntry(item: PassengerBookInfo): boolean {
   const id = String(item.id ?? "");
@@ -40,8 +41,14 @@ export function loadPassengerSelection(forType: ProductType): PassengerBookInfo[
     if (raw) {
       const parsed = JSON.parse(raw) as PassengerBookInfo[];
       if (Array.isArray(parsed)) {
-        const sanitized = sanitizePassengerSelection(parsed);
-        if (sanitized.length !== parsed.length) {
+        const enriched = parsed.map(enrichPassengerBookInfo);
+        const sanitized = sanitizePassengerSelection(enriched);
+        const numbersChanged = enriched.some(
+          (item, index) =>
+            (item.credential.Number?.trim() ?? "") !==
+            (parsed[index]?.credential.Number?.trim() ?? ""),
+        );
+        if (sanitized.length !== parsed.length || numbersChanged) {
           savePassengerSelection(forType, sanitized);
         }
         return sanitized;
