@@ -84,6 +84,25 @@ export function getRoomLowestPrice(room: HotelRoom): number | undefined {
 
 export { isRoomFullyBooked };
 
+export function getRoomGalleryUrls(room: HotelRoom, roomDefaultImg?: string): string[] {
+  if (room.ImageUrls?.length) return room.ImageUrls;
+  const fallback = room.ImageUrlFallback ?? room.ImageUrl ?? roomDefaultImg;
+  return fallback ? [fallback] : [];
+}
+
+export function getRoomDetailSpecItems(room: HotelRoom): Array<{ label: string; value: string }> {
+  if (room.Details?.length) {
+    return room.Details.map((item) => ({
+      label: item.Label,
+      value: item.Value,
+    }));
+  }
+  if (room.Specs) {
+    return [{ label: "房型说明", value: room.Specs }];
+  }
+  return [];
+}
+
 export function buildHotelShowImagesUrl(
   hotelId: string,
   hotelName: string,

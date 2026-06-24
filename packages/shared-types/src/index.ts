@@ -34,6 +34,7 @@ export type {
   HotelPolicyPassengerResult,
   HotelPolicyResponse,
   HotelRoom,
+  HotelRoomDetailItem,
   HotelRoomPlan,
   OrderDetailParams,
   OrderDetailResponse,

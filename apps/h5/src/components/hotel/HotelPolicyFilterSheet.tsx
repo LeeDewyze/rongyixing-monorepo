@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import type { PassengerBookInfo } from "@ryx/shared-types";
 
+import { HOTEL_DETAIL_FONT } from "@/components/hotel/hotel-detail-chrome";
+
 import "./hotel-policy-filter-sheet.css";
 
-const SHEET_ANIMATION_MS = 320;
+const SHEET_ANIMATION_MS = 360;
 
 interface HotelPolicyFilterSheetProps {
   open: boolean;
@@ -18,6 +20,66 @@ function maskCredential(number?: string, hideNumber?: string): string {
   if (!value) return "";
   if (value.length <= 4) return value;
   return `${"*".repeat(Math.min(value.length - 4, 6))}${value.slice(-4)}`;
+}
+
+function passengerInitial(name?: string): string {
+  const trimmed = name?.trim();
+  if (!trimmed) return "旅";
+  return trimmed.slice(0, 1).toUpperCase();
+}
+
+function credentialTypeLabel(type?: number): string | null {
+  if (type === 1) return "身份证";
+  if (type === 2) return "护照";
+  if (type === 3) return "其他";
+  return null;
+}
+
+function CloseIcon() {
+  return (
+    <svg viewBox="0 0 14 14" className="size-3.5" aria-hidden>
+      <path
+        d="M2 2l10 10M12 2 2 12"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg viewBox="0 0 12 12" className="size-3" aria-hidden>
+      <path
+        d="M2.5 6.2 4.8 8.5 9.5 3.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function AllPlansIcon() {
+  return (
+    <svg viewBox="0 0 20 20" className="size-5" aria-hidden>
+      <rect x="2.5" y="3" width="15" height="4" rx="1.2" fill="currentColor" opacity="0.9" />
+      <rect x="2.5" y="8.5" width="15" height="4" rx="1.2" fill="currentColor" opacity="0.65" />
+      <rect x="2.5" y="14" width="15" height="3" rx="1" fill="currentColor" opacity="0.4" />
+    </svg>
+  );
+}
+
+function SelectionCheck({ selected }: { selected: boolean }) {
+  return (
+    <span className="hotel-policy-filter-sheet__check" aria-hidden>
+      {selected ? <CheckIcon /> : null}
+    </span>
+  );
 }
 
 export function HotelPolicyFilterSheet({
@@ -51,57 +113,137 @@ export function HotelPolicyFilterSheet({
 
   if (!open) return null;
 
+  const showAll = draftId === null;
+
   return (
-    <div className="hotel-policy-filter-sheet" data-visible={visible}>
-      <button type="button" className="hotel-policy-filter-sheet__backdrop" onClick={handleClose} />
-      <div className="hotel-policy-filter-sheet__panel">
-        <h2 className="text-center text-[16px] font-medium text-[#333333]">过滤差标</h2>
+    <div
+      className={`hotel-policy-filter-sheet ${HOTEL_DETAIL_FONT}`}
+      data-visible={visible}
+      role="presentation"
+    >
+      <button
+        type="button"
+        className="hotel-policy-filter-sheet__backdrop"
+        aria-label="关闭"
+        onClick={handleClose}
+      />
 
-        <div className="mt-4 space-y-2">
-          <label className="flex items-center gap-3 rounded-lg px-3 py-3 active:bg-[#F5F6F9]">
-            <input
-              type="radio"
-              name="policy-filter"
-              checked={draftId === null}
-              onChange={() => setDraftId(null)}
-              className="size-4 accent-[#2768FA]"
-            />
-            <span className="text-[14px] text-[#333333]">不过滤差标</span>
-          </label>
-
-          {passengers.map((passenger) => {
-            const cred = maskCredential(
-              passenger.credential.Number,
-              passenger.credential.HideNumber,
-            );
-            return (
-              <label
-                key={passenger.id}
-                className="flex items-center gap-3 rounded-lg px-3 py-3 active:bg-[#F5F6F9]"
-              >
-                <input
-                  type="radio"
-                  name="policy-filter"
-                  checked={draftId === passenger.id}
-                  onChange={() => setDraftId(passenger.id)}
-                  className="size-4 accent-[#2768FA]"
-                />
-                <div className="min-w-0">
-                  <p className="text-[14px] text-[#333333]">{passenger.passenger.Name}</p>
-                  {cred ? <p className="text-[12px] text-[#999999]">{cred}</p> : null}
-                </div>
-              </label>
-            );
-          })}
+      <div
+        className="hotel-policy-filter-sheet__panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="hotel-policy-filter-title"
+        aria-describedby="hotel-policy-filter-desc"
+      >
+        <div className="hotel-policy-filter-sheet__handle-wrap">
+          <div className="hotel-policy-filter-sheet__handle" aria-hidden />
         </div>
 
-        <button
-          type="button"
-          onClick={handleConfirm}
-          className="mt-5 w-full rounded-lg bg-[#2768FA] py-3 text-[15px] font-medium text-white active:opacity-90"
-        >
-          确定
-        </button>
+        <div className="hotel-policy-filter-sheet__header">
+          <div className="min-w-0 flex-1">
+            <h2
+              id="hotel-policy-filter-title"
+              className="text-[18px] font-semibold tracking-tight text-[#1A1A1A]"
+            >
+              过滤差标
+            </h2>
+            <p
+              id="hotel-policy-filter-desc"
+              className="mt-1 text-[13px] leading-snug text-[#8B919A]"
+            >
+              选择查看全部价格，或按旅客差旅标准筛选
+            </p>
+          </div>
+          <button
+            type="button"
+            className="hotel-policy-filter-sheet__close"
+            aria-label="关闭"
+            onClick={handleClose}
+          >
+            <CloseIcon />
+          </button>
+        </div>
+
+        <div className="hotel-policy-filter-sheet__body hotel-policy-filter-sheet__content-enter">
+          <section className="hotel-policy-filter-sheet__section">
+            <p className="hotel-policy-filter-sheet__section-label">查看方式</p>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={showAll}
+              data-selected={showAll}
+              className="hotel-policy-filter-sheet__all-card"
+              onClick={() => setDraftId(null)}
+            >
+              <span className="hotel-policy-filter-sheet__all-icon">
+                <AllPlansIcon />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-[15px] font-semibold text-[#1A1A1A]">不过滤差标</p>
+                <p className="mt-0.5 text-[12px] leading-relaxed text-[#8B919A]">
+                  展示所有房型的价格与预订状态
+                </p>
+              </div>
+              <SelectionCheck selected={showAll} />
+            </button>
+          </section>
+
+          {passengers.length > 0 ? (
+            <section className="hotel-policy-filter-sheet__section" role="radiogroup" aria-label="按旅客过滤">
+              <p className="hotel-policy-filter-sheet__section-label">
+                按旅客查看
+                <span className="hotel-policy-filter-sheet__section-badge">{passengers.length}</span>
+              </p>
+              <div className="hotel-policy-filter-sheet__list">
+                {passengers.map((passenger) => {
+                  const cred = maskCredential(
+                    passenger.credential.Number,
+                    passenger.credential.HideNumber,
+                  );
+                  const credType = credentialTypeLabel(passenger.credential.Type);
+                  const selected = draftId === passenger.id;
+                  return (
+                    <button
+                      key={passenger.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      data-selected={selected}
+                      className="hotel-policy-filter-sheet__option"
+                      onClick={() => setDraftId(passenger.id)}
+                    >
+                      <span className="hotel-policy-filter-sheet__avatar">
+                        {passengerInitial(passenger.passenger.Name)}
+                      </span>
+                      <div className="hotel-policy-filter-sheet__meta">
+                        <p className="hotel-policy-filter-sheet__name">{passenger.passenger.Name}</p>
+                        {cred ? (
+                          <div className="hotel-policy-filter-sheet__cred-row">
+                            {credType ? (
+                              <span className="hotel-policy-filter-sheet__cred-tag">{credType}</span>
+                            ) : null}
+                            <span className="hotel-policy-filter-sheet__cred">{cred}</span>
+                          </div>
+                        ) : null}
+                      </div>
+                      <SelectionCheck selected={selected} />
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          ) : null}
+        </div>
+
+        <div className="hotel-policy-filter-sheet__footer">
+          <button
+            type="button"
+            onClick={handleConfirm}
+            className="hotel-policy-filter-sheet__confirm"
+          >
+            确定
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ProductType, type HotelRoomPlan } from "@ryx/shared-types";
+import { ProductType, type HotelRoom, type HotelRoomPlan } from "@ryx/shared-types";
 
 import { HOTEL_HEADER_GRADIENT } from "@/components/hotel/hotel-detail-chrome";
 import { HotelDetailDateBar } from "@/components/hotel/HotelDetailDateBar";
@@ -11,6 +11,7 @@ import { HotelDetailRoomCard, useExpandedRoomState } from "@/components/hotel/Ho
 import { HotelDetailSectionTabs } from "@/components/hotel/HotelDetailSectionTabs";
 import { HotelDetailStickyHeader } from "@/components/hotel/HotelDetailStickyHeader";
 import { HotelDetailTrafficSection } from "@/components/hotel/HotelDetailTrafficSection";
+import { HotelPassengerRequiredDialog } from "@/components/hotel/HotelPassengerRequiredDialog";
 import { HotelPolicyFilterSheet } from "@/components/hotel/HotelPolicyFilterSheet";
 import { HotelStayDatePickerSheet } from "@/components/hotel/HotelStayDatePickerSheet";
 import { usePageHeader } from "@/components/layout";
@@ -27,16 +28,15 @@ import {
 } from "@/lib/hotel-book-policy";
 import { saveHotelGalleryImages } from "@/lib/hotel-gallery-session";
 import { formatApiError } from "@/lib/formatApiError";
-import { getApiMode } from "@/lib/env";
 import { hasAgentIdentity } from "@/lib/flight-book-save-order";
 import { buildPassengerSelectPath } from "@/lib/passenger-selection";
-import { getTicket } from "@/lib/session";
 import {
   buildHotelDetailParams,
   buildHotelDetailUrl,
   buildHotelMapUrl,
   buildHotelRoomDetailUrl,
   buildHotelShowImagesUrl,
+  getRoomGalleryUrls,
   parseHotelDetailQuery,
 } from "@/utils/hotel-detail";
 
@@ -63,42 +63,51 @@ export function HotelDetailPage() {
   const { selected: selectedPassengers } = usePassengerSelection(ProductType.Hotel);
   const { data: identity } = useIdentity();
   const isAgent = hasAgentIdentity(identity);
-  const isAuthenticated = getApiMode() === "mock" || Boolean(getTicket());
 
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [policyFilterOpen, setPolicyFilterOpen] = useState(false);
+  const [passengerRequiredOpen, setPassengerRequiredOpen] = useState(false);
   const [filterPassengerId, setFilterPassengerId] = useState<string | null>(null);
   const { expandedRoomId, toggleRoom } = useExpandedRoomState();
 
   const detailReturnTo = `/hotel/${encodeURIComponent(hotelId)}?${searchParams.toString()}`;
   const passengerHref = buildPassengerSelectPath(ProductType.Hotel, detailReturnTo);
 
-  const { data, isLoading, isFetching, error, refetch } = useHotelDetail(detailParams);
+  const { data, isLoading, isFetching, isSuccess, error, refetch } = useHotelDetail(detailParams);
+
+  // Legacy: initFilterPolicy runs only after Home/Detail succeeds (getHotelDetail → initFilterPolicy).
+  const detailReady = isSuccess && Boolean(data) && !isFetching;
 
   const policyParams = useMemo(() => {
-    if (!data || selectedPassengers.length === 0) return null;
+    if (!detailReady || selectedPassengers.length === 0) return null;
     return buildHotelPolicyParams({
-      detail: data,
+      detail: data!,
       passengers: selectedPassengers,
       cityCode: query.cityCode,
     });
-  }, [data, query.cityCode, selectedPassengers]);
+  }, [data, detailReady, query.cityCode, selectedPassengers]);
 
-  const { data: policyResults } = useHotelPolicy(
-    policyParams,
-    Boolean(data && selectedPassengers.length > 0),
-  );
+  const {
+    data: policyResults,
+    isLoading: isPolicyLoading,
+    isFetching: isPolicyFetching,
+  } = useHotelPolicy(policyParams, detailReady && selectedPassengers.length > 0);
+  const isPolicyChecking =
+    selectedPassengers.length > 0 && (!detailReady || isPolicyLoading || isPolicyFetching);
 
   const policyColors = useMemo(
     () =>
-      buildPolicyColorMap({
-        results: policyResults,
-        filterPassengerId,
-        passengers: selectedPassengers,
-        detail: data ?? { HotelId: hotelId, HotelName: "" },
-      }),
-    [policyResults, filterPassengerId, selectedPassengers, data, hotelId],
+      !detailReady || selectedPassengers.length === 0 || isPolicyChecking
+        ? {}
+        : buildPolicyColorMap({
+            results: policyResults,
+            filterPassengerId,
+            passengers: selectedPassengers,
+            detail: data!,
+          }),
+    [data, detailReady, filterPassengerId, isPolicyChecking, policyResults, selectedPassengers],
   );
+  const policyChecked = detailReady && selectedPassengers.length > 0 && !isPolicyChecking;
 
   const {
     stickyRef,
@@ -141,13 +150,32 @@ export function HotelDetailPage() {
     navigate(buildHotelShowImagesUrl(hotelId, data.HotelName, index));
   }
 
+  function handleOpenRoomGallery(room: HotelRoom) {
+    const urls = getRoomGalleryUrls(room, data?.RoomDefaultImg);
+    if (!urls.length) return;
+    saveHotelGalleryImages(urls);
+    navigate(buildHotelShowImagesUrl(hotelId, room.RoomName, 0));
+  }
+
   function handleDateConfirm(checkIn: string, checkOut: string) {
     setDatePickerOpen(false);
     const next = buildHotelDetailUrl(hotelId, { ...query, checkIn, checkOut });
     navigate(next, { replace: true });
   }
 
+  function requirePassengersBeforeAction(): boolean {
+    if (selectedPassengers.length > 0) return true;
+    setPassengerRequiredOpen(true);
+    return false;
+  }
+
+  function handlePassengerRequiredConfirm() {
+    setPassengerRequiredOpen(false);
+    navigate(passengerHref);
+  }
+
   function handleToggleRoom(roomId: string) {
+    if (!requirePassengersBeforeAction()) return;
     toggleRoom(roomId);
   }
 
@@ -156,13 +184,10 @@ export function HotelDetailPage() {
   }
 
   function handleBook(plan: HotelRoomPlan) {
-    if (selectedPassengers.length === 0 && isAuthenticated) {
-      const proceed = window.confirm("请先添加旅客。是否前往选择旅客？");
-      if (proceed) navigate(passengerHref);
-      return;
-    }
+    if (!requirePassengersBeforeAction()) return;
     const color = resolvePlanPolicyColor(plan, policyColors);
-    if (!isHotelPlanBookable(color, isAgent)) {
+    const policyChecked = detailReady && selectedPassengers.length > 0 && !isPolicyChecking;
+    if (!isHotelPlanBookable(color, isAgent, policyChecked)) {
       window.alert(formatHotelPolicyBlockMessage(color));
       return;
     }
@@ -274,9 +299,11 @@ export function HotelDetailPage() {
               room={room}
               expanded={expandedRoomId === room.RoomId}
               policyColors={policyColors}
+              policyLoading={isPolicyChecking}
               isAgent={isAgent}
               onToggle={() => handleToggleRoom(room.RoomId)}
               onOpenRoomDetail={() => handleOpenRoomDetail(room.RoomId)}
+              onOpenRoomGallery={() => handleOpenRoomGallery(room)}
               onBook={handleBook}
             />
           ))
@@ -311,6 +338,12 @@ export function HotelDetailPage() {
         selectedId={filterPassengerId}
         onClose={() => setPolicyFilterOpen(false)}
         onConfirm={setFilterPassengerId}
+      />
+
+      <HotelPassengerRequiredDialog
+        open={passengerRequiredOpen}
+        onClose={() => setPassengerRequiredOpen(false)}
+        onConfirm={handlePassengerRequiredConfirm}
       />
     </div>
   );

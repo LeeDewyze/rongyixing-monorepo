@@ -18,17 +18,100 @@ function getPassengerAccountId(passenger: PassengerBookInfo): string {
 
 type LegacyPolicyRoomPlan = {
   TotalAmount?: number;
-  Number?: number;
-  SupplierNumber?: number;
+  Number?: number | string;
+  SupplierNumber?: number | string;
   BeginDate?: string;
   EndDate?: string;
-  Room?: { Id: string };
+  Room?: { Id: string | number };
   Id?: string;
-  SupplierType?: number;
+  SupplierType?: number | string;
 };
 
-function getPlanUniqueId(plan: HotelRoomPlan): string {
-  return plan.RoomPlanUniqueId ?? plan.PlanId;
+/** Legacy Home-Policy uses plan BeginDate/EndDate with time suffix when present. */
+export function toLegacyPolicyDate(value: string | undefined): string | undefined {
+  if (!value?.trim()) return undefined;
+  const trimmed = value.trim();
+  if (trimmed.includes("T")) return trimmed;
+  return `${trimmed}T00:00:00`;
+}
+
+function toLegacyPolicyRoomId(roomId: string): string | number {
+  const numeric = Number(roomId);
+  if (Number.isFinite(numeric) && String(numeric) === roomId) {
+    return numeric;
+  }
+  return roomId;
+}
+
+function toLegacyPolicyNumber(value: number | string | undefined): string | number {
+  if (value == null || value === "") return "";
+  return value;
+}
+
+function toLegacyPolicySupplierNumber(value: number | string | undefined): string {
+  if (value == null || value === "") return "";
+  return String(value);
+}
+
+function getPlanUniqueId(plan: HotelRoomPlan): string | undefined {
+  const id = plan.RoomPlanUniqueId?.trim();
+  return id || undefined;
+}
+
+/**
+ * Legacy ryx match:
+ *   it.UniqueIdId == getRoomPlanUniqueId(plan)
+ * where getRoomPlanUniqueId reads `plan.Variables.RoomPlanUniqueId`.
+ * No transformation, no SupplierNumber concat.
+ */
+export function policyItemMatchesPlanUniqueId(
+  policy: HotelPolicyItem,
+  planUniqueId: string,
+): boolean {
+  if (!planUniqueId) return false;
+  const uniqueIdId = policy.UniqueIdId?.trim();
+  if (!uniqueIdId) return false;
+  return uniqueIdId == planUniqueId;
+}
+
+/** Legacy filterPassengerPolicy uses passenger AccountId as PassengerKey. */
+export function resolveFilterPassengerAccountId(
+  passengers: PassengerBookInfo[],
+  filterPassengerId: string | null,
+): string | undefined {
+  const selectedPassenger = filterPassengerId
+    ? passengers.find((item) => item.id === filterPassengerId)
+    : passengers[0];
+  if (!selectedPassenger) return undefined;
+  const accountId = getPassengerAccountId(selectedPassenger);
+  return accountId || undefined;
+}
+
+function findPolicyEntry(
+  results: HotelPolicyPassengerResult[],
+  passengers: PassengerBookInfo[],
+  filterPassengerId: string | null,
+): HotelPolicyPassengerResult | undefined {
+  const accountId = resolveFilterPassengerAccountId(passengers, filterPassengerId);
+  if (!accountId) return undefined;
+  return results.find((item) => String(item.PassengerKey ?? "") == accountId);
+}
+
+function getFullHouseOrCanBook(plan: HotelRoomPlan): string | undefined {
+  const value = plan.VariablesObj?.FullHouseOrCanBook;
+  return value != null ? String(value) : undefined;
+}
+
+/** Legacy TmcHotelRyxService.isFull — VariablesObj.FullHouseOrCanBook contains "full". */
+function isPlanFull(plan: HotelRoomPlan): boolean {
+  const value = getFullHouseOrCanBook(plan);
+  return Boolean(value && value.toLowerCase().includes("full"));
+}
+
+/** Legacy TmcHotelRyxService.isNoPermission — FullHouseOrCanBook contains "nopermission". */
+function isPlanNoPermission(plan: HotelRoomPlan): boolean {
+  const value = getFullHouseOrCanBook(plan);
+  return Boolean(value && value.toLowerCase().includes("nopermission"));
 }
 
 /** Legacy Home-Policy RoomPlans JSON array (deduped by RoomPlanUniqueId). */
@@ -41,18 +124,18 @@ export function buildHotelPolicyRoomPlansPayload(
   for (const room of detail.Rooms ?? []) {
     for (const plan of room.Plans) {
       const uniqueId = getPlanUniqueId(plan);
-      if (seen.has(uniqueId)) continue;
+      if (!uniqueId || seen.has(uniqueId)) continue;
       seen.add(uniqueId);
 
       const legacyId = plan.LegacyId;
       const idEmpty = !legacyId || legacyId === "0";
       const item: LegacyPolicyRoomPlan = {
         TotalAmount: plan.TotalAmount ?? plan.Price,
-        Number: plan.Number,
-        SupplierNumber: plan.SupplierNumber,
-        BeginDate: detail.CheckInDate,
-        EndDate: detail.CheckOutDate,
-        Room: { Id: room.RoomId },
+        Number: toLegacyPolicyNumber(plan.Number),
+        SupplierNumber: toLegacyPolicySupplierNumber(plan.SupplierNumber),
+        BeginDate: toLegacyPolicyDate(plan.BeginDate ?? detail.CheckInDate),
+        EndDate: toLegacyPolicyDate(plan.EndDate ?? detail.CheckOutDate),
+        Room: { Id: toLegacyPolicyRoomId(room.RoomId) },
       };
 
       if (!idEmpty) {
@@ -104,15 +187,38 @@ export function buildHotelPolicyParams(input: {
   };
 }
 
-function resolvePolicyItemColor(policy: HotelPolicyItem, plan?: HotelRoomPlan): HotelPolicyColor {
-  if (plan?.Number === 0) return "danger_full";
-  if (policy.IsAllowBook === true) {
-    return policy.Rules?.length ? "warning" : "success";
+/**
+ * Legacy API may return IsAllowBook as a string "false"/"true" or numeric 0/1
+ * instead of a native boolean.  JS treats the string `"false"` as truthy,
+ * so we must coerce before checking.
+ */
+function isAllowedByPolicy(policy: HotelPolicyItem): boolean {
+  const raw = policy.IsAllowBook;
+  if (raw === false || raw === 0 || raw === "0" || raw === "false" || raw === "False") {
+    return false;
   }
-  const rulesText = (policy.Rules ?? []).join("");
-  if (/满|售罄|无房/.test(rulesText)) return "danger_full";
-  if (/权限|无权限/.test(rulesText)) return "danger_nopermission";
-  return "danger_disabled";
+  if (raw === true || raw === 1 || raw === "1" || raw === "true" || raw === "True") {
+    return true;
+  }
+  // absent / null / other → treat as allowed (legacy default)
+  return true;
+}
+
+/** Legacy filterPassengerPolicy color resolution per plan policy row. */
+function resolvePolicyItemColor(policy: HotelPolicyItem, plan: HotelRoomPlan): HotelPolicyColor {
+  let color: HotelPolicyColor;
+  if (isAllowedByPolicy(policy)) {
+    color = policy.Rules?.length ? "warning" : "success";
+  } else {
+    color = "danger_disabled";
+  }
+  if (isPlanFull(plan)) {
+    color = "danger_full";
+  }
+  if (isPlanNoPermission(plan)) {
+    color = "danger_nopermission";
+  }
+  return color;
 }
 
 export function buildPolicyColorMap(input: {
@@ -122,29 +228,56 @@ export function buildPolicyColorMap(input: {
   detail: HotelDetailResponse;
 }): Record<string, HotelPolicyColor> {
   const { results, filterPassengerId, passengers, detail } = input;
-  if (!results?.length || passengers.length === 0) return {};
+  if (passengers.length === 0) return {};
 
-  const selectedPassenger = filterPassengerId
-    ? passengers.find((item) => item.id === filterPassengerId)
-    : passengers[0];
-  const passengerKey = getPassengerAccountId(selectedPassenger ?? passengers[0]!);
+  if (!results?.length) {
+    const colors: Record<string, HotelPolicyColor> = {};
+    for (const room of detail.Rooms ?? []) {
+      for (const plan of room.Plans) {
+        const uniqueId = getPlanUniqueId(plan);
+        if (!uniqueId) continue;
+        colors[uniqueId] = "success";
+      }
+    }
+    return colors;
+  }
 
-  const entry =
-    results.find((item) => String(item.PassengerKey ?? "") === passengerKey) ?? results[0];
+  const entry = findPolicyEntry(results, passengers, filterPassengerId);
+  const colors: Record<string, HotelPolicyColor> = {};
 
-  const planByUniqueId = new Map<string, HotelRoomPlan>();
+  if (!entry) {
+    for (const room of detail.Rooms ?? []) {
+      for (const plan of room.Plans) {
+        const uniqueId = getPlanUniqueId(plan);
+        if (!uniqueId) continue;
+        colors[uniqueId] = "success";
+      }
+    }
+    return colors;
+  }
+
   for (const room of detail.Rooms ?? []) {
     for (const plan of room.Plans) {
-      planByUniqueId.set(getPlanUniqueId(plan), plan);
+      const uniqueId = getPlanUniqueId(plan);
+      if (!uniqueId) continue;
+      const policy = entry.HotelPolicies?.find((item) =>
+        policyItemMatchesPlanUniqueId(item, uniqueId),
+      );
+      if (policy) {
+        colors[uniqueId] = resolvePolicyItemColor(policy, plan);
+      }
     }
   }
 
-  const colors: Record<string, HotelPolicyColor> = {};
-  for (const policy of entry?.HotelPolicies ?? []) {
-    const uniqueId = policy.UniqueIdId;
-    if (!uniqueId) continue;
-    colors[uniqueId] = resolvePolicyItemColor(policy, planByUniqueId.get(uniqueId));
+  // API often returns only restricted plans; omitted rows are bookable.
+  for (const room of detail.Rooms ?? []) {
+    for (const plan of room.Plans) {
+      const uniqueId = getPlanUniqueId(plan);
+      if (!uniqueId || colors[uniqueId]) continue;
+      colors[uniqueId] = isPlanFull(plan) ? "danger_full" : "success";
+    }
   }
+
   return colors;
 }
 
@@ -152,7 +285,9 @@ export function resolvePlanPolicyColor(
   plan: HotelRoomPlan,
   colors: Record<string, HotelPolicyColor>,
 ): HotelPolicyColor | undefined {
-  return colors[getPlanUniqueId(plan)];
+  const uniqueId = getPlanUniqueId(plan);
+  if (!uniqueId) return undefined;
+  return colors[uniqueId];
 }
 
 export function isRoomFullyBooked(
@@ -170,9 +305,11 @@ export function isRoomFullyBooked(
 export function isHotelPlanBookable(
   color: HotelPolicyColor | undefined,
   isAgent: boolean,
+  policyChecked = true,
 ): boolean {
+  if (!policyChecked) return false;
   if (isAgent) return color !== "danger_full";
-  if (!color) return true;
+  if (!color) return false;
   return color === "success" || color === "warning";
 }
 
@@ -208,4 +345,85 @@ export function policyButtonClassName(color: HotelPolicyColor | undefined): stri
     default:
       return "bg-[#2768FA] text-white active:opacity-90";
   }
+}
+
+export interface HotelPlanBookButtonPresentation {
+  topLabel: string;
+  bottomLabel: string;
+  shellClass: string;
+  topClass: string;
+  bottomClass: string;
+  disabled: boolean;
+}
+
+/** Legacy room-plan-item book button labels and colors. */
+export function getHotelPlanBookButtonPresentation(
+  policyColor: HotelPolicyColor | undefined,
+  bookable: boolean,
+  payTypeLabel: string,
+  isAgent = false,
+): HotelPlanBookButtonPresentation {
+  if (policyColor === "danger_full") {
+    return {
+      topLabel: "满房",
+      bottomLabel: "",
+      shellClass: "border-[#EF4444]",
+      topClass: "bg-[#EF4444] text-white",
+      bottomClass: "bg-white text-[#EF4444]",
+      disabled: true,
+    };
+  }
+
+  if (policyColor === "danger_disabled") {
+    return {
+      topLabel: "超标",
+      bottomLabel: "不可预订",
+      shellClass: "border-[#EF4444]",
+      topClass: "bg-[#EF4444] text-white",
+      bottomClass: "bg-white text-[#EF4444]",
+      disabled: !isAgent,
+    };
+  }
+
+  if (policyColor === "danger_nopermission") {
+    return {
+      topLabel: "无权限",
+      bottomLabel: "不可预订",
+      shellClass: "border-[#EF4444]",
+      topClass: "bg-[#EF4444] text-white",
+      bottomClass: "bg-white text-[#EF4444]",
+      disabled: !isAgent,
+    };
+  }
+
+  if (!bookable) {
+    return {
+      topLabel: "不可预订",
+      bottomLabel: "",
+      shellClass: "border-[#CCCCCC]",
+      topClass: "bg-[#CCCCCC] text-white",
+      bottomClass: "bg-white text-[#9CA3AF]",
+      disabled: true,
+    };
+  }
+
+  if (policyColor === "warning") {
+    return {
+      topLabel: "预订",
+      bottomLabel: payTypeLabel,
+      shellClass: "border-[#FF8C00]",
+      topClass: "bg-[#FF8C00] text-white",
+      bottomClass: "bg-white text-[#FF8C00]",
+      disabled: false,
+    };
+  }
+
+  return {
+    topLabel: "预订",
+    bottomLabel: payTypeLabel,
+    shellClass: "border-[#22C55E]",
+    topClass: "bg-[#22C55E] text-white",
+    bottomClass: "bg-white text-[#2768FA]",
+    disabled: false,
+  };
 }

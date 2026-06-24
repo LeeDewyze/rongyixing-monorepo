@@ -305,7 +305,50 @@ describe("normalizeHotelDetailResponse", () => {
     expect(result.Rooms?.[0]?.RoomName).toBe("高级大床房");
     expect(result.Rooms?.[0]?.Plans[0]?.Price).toBe(796);
     expect(result.Rooms?.[0]?.Plans[0]?.RoomPlanUniqueId).toBe("uniq-796");
+    expect(result.Rooms?.[0]?.Plans[0]?.SupplierNumber).toBe(1);
     expect(result.Rooms?.[0]?.ImageUrl).toBe("https://example.com/room.jpg");
+  });
+
+  it("preserves string SupplierNumber from legacy detail", () => {
+    const result = normalizeHotelDetailResponse(
+      {
+        Hotel: {
+          Id: "10627",
+          Name: "Test Hotel",
+          Rooms: [
+            {
+              Id: "196354",
+              Name: "大床",
+              RoomPlans: [
+                {
+                  Id: "0",
+                  Name: "含早",
+                  TotalAmount: 540,
+                  SupplierNumber: "RM1008773489DPRS24754919_8FE52E35AC3FE08F0B1B1ABB1E7DE831",
+                  SupplierType: "Dttrip",
+                  BeginDate: "2026-06-26T00:00:00",
+                  EndDate: "2026-06-27T00:00:00",
+                  Variables: JSON.stringify({
+                    RoomPlanUniqueId: "uniq-dttrip",
+                  }),
+                },
+              ],
+            },
+          ],
+        },
+      },
+      {
+        HotelId: "10627",
+        CheckInDate: "2026-06-26",
+        CheckOutDate: "2026-06-27",
+      },
+    );
+
+    expect(result.Rooms?.[0]?.Plans[0]?.SupplierNumber).toBe(
+      "RM1008773489DPRS24754919_8FE52E35AC3FE08F0B1B1ABB1E7DE831",
+    );
+    expect(result.Rooms?.[0]?.Plans[0]?.BeginDate).toBe("2026-06-26T00:00:00");
+    expect(result.Rooms?.[0]?.Plans[0]?.SupplierType).toBe("Dttrip");
   });
 
   it("maps legacy hotel info fields for detail section", () => {
@@ -616,6 +659,33 @@ describe("normalizeHotelDetailResponse", () => {
     expect(result.ImageUrls).toEqual([
       "https://cdn.example.com/Hotel350_350/a.jpg",
       "https://cdn.example.com/Hotel350_350/b.jpg",
+    ]);
+  });
+
+  it("maps room RoomDetails to Details", () => {
+    const result = normalizeHotelDetailResponse({
+      Hotel: {
+        Id: "H1",
+        Name: "Test Hotel",
+        Rooms: [
+          {
+            Id: "R001",
+            Name: "大床房",
+            RoomDetails: [
+              { Name: "面积", Description: "20" },
+              { Name: "楼层", Description: "1-3" },
+              { Name: "床型名称", Description: "大床" },
+            ],
+            RoomPlans: [],
+          },
+        ],
+      },
+    });
+
+    expect(result.Rooms?.[0]?.Details).toEqual([
+      { Label: "面积", Value: "20", Tag: undefined },
+      { Label: "楼层", Value: "1-3", Tag: undefined },
+      { Label: "床型名称", Value: "大床", Tag: undefined },
     ]);
   });
 });

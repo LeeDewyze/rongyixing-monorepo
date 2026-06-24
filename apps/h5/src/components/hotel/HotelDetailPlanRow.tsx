@@ -1,13 +1,16 @@
 import type { HotelPolicyColor, HotelRoomPlan } from "@ryx/shared-types";
 
-import { policyButtonClassName } from "@/lib/hotel-book-policy";
+import { HOTEL_DETAIL_FONT } from "@/components/hotel/hotel-detail-chrome";
+import { getHotelPlanBookButtonPresentation, isHotelPlanBookable } from "@/lib/hotel-book-policy";
 
 interface HotelDetailPlanRowProps {
   plan: HotelRoomPlan;
   policyColor?: HotelPolicyColor;
-  bookable: boolean;
+  isAgent?: boolean;
   onBook: () => void;
   isLast?: boolean;
+  loading?: boolean;
+  policyChecked?: boolean;
 }
 
 function formatBreakfastLabel(breakfast?: string): string | null {
@@ -36,93 +39,98 @@ function getPayTypeLabel(plan: HotelRoomPlan): string {
   return "预付";
 }
 
-function bookButtonStyles(
-  bookable: boolean,
-  policyColor?: HotelPolicyColor,
-): { shell: string; book: string; pay: string } {
-  if (!bookable) {
-    return {
-      shell: "border-[#CCCCCC]",
-      book: "bg-[#CCCCCC] text-white",
-      pay: "bg-white text-[#CCCCCC]",
-    };
+function cancelChipClass(cancelLabel: string): string {
+  if (cancelLabel === "不可取消") {
+    return "bg-[#FFF7ED] text-[#EA580C] ring-1 ring-[#FFEDD5]";
   }
-  const policyClass = policyButtonClassName(policyColor);
-  if (policyClass.includes("FF8C00")) {
-    return {
-      shell: "border-[#FF8C00]",
-      book: "bg-[#FF8C00] text-white",
-      pay: "bg-white text-[#FF8C00]",
-    };
-  }
-  if (policyClass.includes("CCCCCC")) {
-    return {
-      shell: "border-[#CCCCCC]",
-      book: "bg-[#CCCCCC] text-white",
-      pay: "bg-white text-[#CCCCCC]",
-    };
-  }
-  return {
-    shell: "border-[#22C55E]",
-    book: "bg-[#22C55E] text-white",
-    pay: "bg-white text-[#2768FA]",
-  };
+  return "bg-[#F5F3FF] text-[#8B7FD4] ring-1 ring-[#EDE9FE]";
 }
 
 export function HotelDetailPlanRow({
   plan,
   policyColor,
-  bookable,
+  isAgent = false,
   onBook,
   isLast = false,
+  loading = false,
+  policyChecked = false,
 }: HotelDetailPlanRowProps) {
   const breakfast = formatBreakfastLabel(plan.Breakfast);
   const cancelLabel = formatCancelPolicyLabel(plan.CancelPolicy);
   const payLabel = getPayTypeLabel(plan);
-  const buttonStyles = bookButtonStyles(bookable, policyColor);
+  const awaitingPolicy = !policyChecked;
+  const displayColor = policyColor ?? (policyChecked ? "success" : undefined);
+  const displayBookable = isHotelPlanBookable(displayColor, isAgent, policyChecked);
+  const button = getHotelPlanBookButtonPresentation(
+    displayColor,
+    displayBookable,
+    payLabel,
+    isAgent,
+  );
 
   return (
     <div
-      className={`flex items-stretch gap-3 px-3 py-3 ${
-        isLast ? "" : "border-b border-dashed border-[#E5E7EB]"
+      className={`mx-3 rounded-lg bg-white p-3 ring-1 ring-[#ECEEF2] shadow-[0_1px_4px_rgba(0,0,0,0.03)] ${HOTEL_DETAIL_FONT} ${
+        isLast ? "mb-3" : "mb-2"
       }`}
     >
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <p className="text-[14px] font-semibold leading-snug text-[#333333]">{plan.PlanName}</p>
-          <span className="inline-flex h-[18px] items-center rounded border border-[#2768FA] px-1 text-[10px] leading-none text-[#2768FA]">
-            专票
-          </span>
-          <span className="text-[12px] leading-none text-[#8B7FD4]">{cancelLabel}</span>
-        </div>
-        {breakfast ? (
-          <p className="mt-1.5 text-[12px] leading-none text-[#999999]">{breakfast}</p>
-        ) : null}
-      </div>
+      <div className="flex items-stretch gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="text-[14px] font-semibold leading-snug text-[#1A1A1A]">{plan.PlanName}</p>
 
-      <div className="flex shrink-0 items-center gap-3">
-        <div className="flex items-baseline text-[#2768FA]">
-          <span className="text-[12px] font-medium">¥</span>
-          <span className="text-[22px] font-semibold leading-none">{Math.round(plan.Price)}</span>
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            <span className="inline-flex h-[20px] items-center rounded-full bg-[#EEF4FF] px-2 text-[10px] font-medium leading-none text-[#2768FA] ring-1 ring-[#D6E4FF]">
+              专票
+            </span>
+            <span
+              className={`inline-flex h-[20px] items-center rounded-full px-2 text-[10px] font-medium leading-none ${cancelChipClass(cancelLabel)}`}
+            >
+              {cancelLabel}
+            </span>
+            {breakfast ? (
+              <span className="inline-flex h-[20px] items-center rounded-full bg-[#F5F6F9] px-2 text-[10px] leading-none text-[#666666] ring-1 ring-[#ECEEF2]">
+                {breakfast}
+              </span>
+            ) : null}
+          </div>
         </div>
 
-        <button
-          type="button"
-          disabled={!bookable}
-          onClick={onBook}
-          className={`flex w-[52px] shrink-0 flex-col overflow-hidden rounded-md border ${buttonStyles.shell} disabled:opacity-100`}
-        >
-          <span
-            className={`flex h-[30px] items-center justify-center text-[13px] font-medium ${buttonStyles.book}`}
+        <div className="flex shrink-0 flex-col items-end justify-between gap-2">
+          <div
+            className={`flex items-baseline ${displayBookable ? "text-[#2768FA]" : "text-[#EF4444] opacity-70"}`}
           >
-            预订
-          </span>
-          <span
-            className={`flex h-[22px] items-center justify-center border-t text-[11px] ${buttonStyles.pay} ${buttonStyles.shell}`}
-          >
-            {payLabel}
-          </span>
-        </button>
+            <span className="text-[11px] font-medium">¥</span>
+            <span className="text-[22px] font-semibold leading-none tracking-tight">
+              {Math.round(plan.Price)}
+            </span>
+          </div>
+
+          {loading || awaitingPolicy ? (
+            <div className="flex h-[52px] w-[56px] items-center justify-center rounded-lg bg-[#F3F4F6] text-[11px] text-[#999999]">
+              校验中
+            </div>
+          ) : (
+            <button
+              type="button"
+              disabled={button.disabled}
+              onClick={onBook}
+              className={`flex w-[56px] shrink-0 flex-col overflow-hidden rounded-md border ${button.shellClass} disabled:opacity-100 active:opacity-90`}
+            >
+              <span
+                className={`flex h-[30px] items-center justify-center text-[13px] font-semibold ${button.topClass}`}
+              >
+                {button.topLabel}
+              </span>
+              {button.bottomLabel ? (
+                <span
+                  className={`flex h-[22px] items-center justify-center border-t text-[10px] font-medium ${button.bottomClass} ${button.shellClass}`}
+                >
+                  {button.bottomLabel}
+                </span>
+              ) : null}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

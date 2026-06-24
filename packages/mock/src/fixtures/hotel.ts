@@ -76,9 +76,22 @@ export const MOCK_HOTEL_DETAIL: HotelDetailResponse = {
       RoomId: "R001",
       RoomName: "ICON 36城景大床客房",
       ImageUrl: "https://picsum.photos/seed/hroom1/200/200",
-      ImageCount: 7,
+      ImageUrls: [
+        "https://picsum.photos/seed/hroom1a/800/500",
+        "https://picsum.photos/seed/hroom1b/800/500",
+      ],
+      ImageCount: 2,
       Specs: "1张1.98米特大床 36m² 2人入住 10-22层",
       Tags: ["城景", "浴缸"],
+      Details: [
+        { Label: "面积", Value: "36㎡" },
+        { Label: "楼层", Value: "10-22层" },
+        { Label: "上网情况", Value: "免费WiFi" },
+        { Label: "床型名称", Value: "特大床" },
+        { Label: "描述", Value: "" },
+        { Label: "房间最大入住人数", Value: "2" },
+        { Label: "窗型", Value: "城景" },
+      ],
       Plans: [
         {
           PlanId: "P001",

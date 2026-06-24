@@ -57,12 +57,21 @@ export interface HotelRoomPlan {
   CancelPolicy?: string;
   /** Legacy RoomPlan.Id (may be "0"). */
   LegacyId?: string;
-  SupplierType?: number;
+  SupplierType?: number | string;
   TotalAmount?: number;
-  Number?: number;
-  SupplierNumber?: number;
+  Number?: number | string;
+  SupplierNumber?: number | string;
+  BeginDate?: string;
+  EndDate?: string;
   RoomPlanUniqueId?: string;
   VariablesObj?: Record<string, unknown>;
+}
+
+/** Legacy `RoomDetails` row for room detail page. */
+export interface HotelRoomDetailItem {
+  Label: string;
+  Value: string;
+  Tag?: string;
 }
 
 export interface HotelRoom {
@@ -73,10 +82,14 @@ export interface HotelRoom {
   ImageUrlFallback?: string;
   /** Room photo count for gallery badge. */
   ImageCount?: number;
+  /** Full-size room gallery URLs (legacy room / hotel image index). */
+  ImageUrls?: string[];
   /** e.g. "1张1.98米特大床 36m² 2人入住 10-22层" */
   Specs?: string;
   /** Feature tags e.g. 城景, 浴缸 */
   Tags?: string[];
+  /** Structured specs from legacy `RoomDetails`. */
+  Details?: HotelRoomDetailItem[];
   /** Strikethrough reference price. */
   OriginalPrice?: number;
   /** Tax-inclusive total for display. */

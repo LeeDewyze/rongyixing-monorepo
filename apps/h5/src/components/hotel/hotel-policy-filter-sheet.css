@@ -11,7 +11,9 @@
   position: absolute;
   inset: 0;
   border: 0;
-  background: rgb(0 0 0 / 0.45);
+  background: rgb(15 23 42 / 0.42);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   opacity: 0;
   transition: opacity 320ms ease;
 }
@@ -23,15 +25,339 @@
 .hotel-policy-filter-sheet__panel {
   position: relative;
   z-index: 1;
+  display: flex;
   width: 100%;
   max-width: 480px;
-  border-radius: 16px 16px 0 0;
+  max-height: min(88vh, 640px);
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 20px 20px 0 0;
   background: #fff;
-  padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+  box-shadow:
+    0 -16px 48px rgb(15 23 42 / 0.14),
+    0 -1px 0 rgb(255 255 255 / 0.95) inset;
   transform: translateY(100%);
-  transition: transform 320ms ease;
+  transition: transform 360ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .hotel-policy-filter-sheet[data-visible="true"] .hotel-policy-filter-sheet__panel {
+  transform: translateY(0);
+}
+
+.hotel-policy-filter-sheet__handle-wrap {
+  flex-shrink: 0;
+  padding: 8px 0 4px;
+}
+
+.hotel-policy-filter-sheet__handle {
+  width: 40px;
+  height: 4px;
+  margin: 0 auto;
+  border-radius: 999px;
+  background: #e2e5eb;
+}
+
+.hotel-policy-filter-sheet__header {
+  display: flex;
+  flex-shrink: 0;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 20px 0;
+}
+
+.hotel-policy-filter-sheet__close {
+  display: flex;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  background: #f3f4f6;
+  color: #6b7280;
+  transition:
+    background-color 120ms ease,
+    transform 120ms ease;
+}
+
+.hotel-policy-filter-sheet__close:active {
+  background: #e8eaef;
+  transform: scale(0.94);
+}
+
+.hotel-policy-filter-sheet__body {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 12px 16px 8px;
+}
+
+.hotel-policy-filter-sheet__section {
+  margin-bottom: 14px;
+}
+
+.hotel-policy-filter-sheet__section:last-child {
+  margin-bottom: 0;
+}
+
+.hotel-policy-filter-sheet__section-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding: 0 2px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #8b919a;
+}
+
+.hotel-policy-filter-sheet__section-badge {
+  display: inline-flex;
+  min-width: 18px;
+  height: 18px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #eef4ff;
+  padding: 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #2768fa;
+}
+
+.hotel-policy-filter-sheet__all-card {
+  position: relative;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 12px;
+  overflow: hidden;
+  border: 1px solid #e8eaef;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #fafbfc 0%, #f5f7fa 100%);
+  padding: 14px 14px 14px 16px;
+  text-align: left;
+  transition:
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 120ms ease;
+}
+
+.hotel-policy-filter-sheet__all-card:active {
+  transform: scale(0.99);
+}
+
+.hotel-policy-filter-sheet__all-card[data-selected="true"] {
+  border-color: #9eb8f8;
+  background: linear-gradient(135deg, #f7faff 0%, #eef4ff 100%);
+  box-shadow:
+    0 4px 16px rgb(39 104 250 / 0.1),
+    inset 3px 0 0 #2768fa;
+}
+
+.hotel-policy-filter-sheet__all-icon {
+  display: flex;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: #fff;
+  color: #2768fa;
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 0.06),
+    inset 0 0 0 1px rgb(39 104 250 / 0.08);
+}
+
+.hotel-policy-filter-sheet__all-card[data-selected="true"] .hotel-policy-filter-sheet__all-icon {
+  background: #2768fa;
+  color: #fff;
+  box-shadow: 0 2px 8px rgb(39 104 250 / 0.24);
+}
+
+.hotel-policy-filter-sheet__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.hotel-policy-filter-sheet__option {
+  position: relative;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 12px;
+  overflow: hidden;
+  border: 1px solid #eceef2;
+  border-radius: 12px;
+  background: #fff;
+  padding: 11px 12px 11px 14px;
+  text-align: left;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 120ms ease;
+}
+
+.hotel-policy-filter-sheet__option:active {
+  transform: scale(0.99);
+}
+
+.hotel-policy-filter-sheet__option[data-selected="true"] {
+  border-color: #b8cdfa;
+  background: linear-gradient(90deg, #eef4ff 0%, #f8fbff 48%, #fff 100%);
+  box-shadow: 0 2px 10px rgb(39 104 250 / 0.08);
+}
+
+.hotel-policy-filter-sheet__option[data-selected="true"]::before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 0;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: #2768fa;
+}
+
+.hotel-policy-filter-sheet__avatar {
+  display: flex;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: linear-gradient(145deg, #edf3ff 0%, #dce8ff 100%);
+  font-size: 14px;
+  font-weight: 600;
+  color: #2768fa;
+  box-shadow: inset 0 0 0 1px rgb(39 104 250 / 0.1);
+  transition:
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.hotel-policy-filter-sheet__option[data-selected="true"] .hotel-policy-filter-sheet__avatar {
+  box-shadow:
+    0 0 0 2px #fff,
+    0 0 0 3px #2768fa;
+  transform: scale(1.02);
+}
+
+.hotel-policy-filter-sheet__meta {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.hotel-policy-filter-sheet__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.hotel-policy-filter-sheet__cred-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.hotel-policy-filter-sheet__cred-tag {
+  flex-shrink: 0;
+  border-radius: 4px;
+  background: #f3f4f6;
+  padding: 1px 5px;
+  font-size: 10px;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.hotel-policy-filter-sheet__cred {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: #8b919a;
+}
+
+.hotel-policy-filter-sheet__check {
+  display: flex;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1.5px solid #d8dce3;
+  background: #fff;
+  color: transparent;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.hotel-policy-filter-sheet__option[data-selected="true"] .hotel-policy-filter-sheet__check,
+.hotel-policy-filter-sheet__all-card[data-selected="true"] .hotel-policy-filter-sheet__check {
+  border-color: #2768fa;
+  background: #2768fa;
+  color: #fff;
+  transform: scale(1.05);
+}
+
+.hotel-policy-filter-sheet__footer {
+  flex-shrink: 0;
+  border-top: 1px solid #f0f2f5;
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.92) 0%, #fff 24%);
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+}
+
+.hotel-policy-filter-sheet__confirm {
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #3d7bff 0%, #2768fa 100%);
+  padding: 13px 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  box-shadow: 0 4px 14px rgb(39 104 250 / 0.26);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.hotel-policy-filter-sheet__confirm:active {
+  opacity: 0.92;
+  transform: scale(0.985);
+  box-shadow: 0 2px 8px rgb(39 104 250 / 0.2);
+}
+
+.hotel-policy-filter-sheet__content-enter {
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 280ms ease 80ms,
+    transform 320ms cubic-bezier(0.32, 0.72, 0, 1) 80ms;
+}
+
+.hotel-policy-filter-sheet[data-visible="true"] .hotel-policy-filter-sheet__content-enter {
+  opacity: 1;
   transform: translateY(0);
 }

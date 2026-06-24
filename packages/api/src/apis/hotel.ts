@@ -57,6 +57,14 @@ function toPrice(value: unknown): number | undefined {
   return Number.isFinite(n) && n >= 0 ? n : undefined;
 }
 
+/** Legacy RoomPlan.SupplierNumber is often an opaque supplier key string, not a price. */
+function toLegacySupplierNumber(value: unknown): string | number | undefined {
+  if (value == null || value === "") return undefined;
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  const text = String(value).trim();
+  return text || undefined;
+}
+
 function parseVariablesObject(variables: unknown): Record<string, unknown> | undefined {
   let current: unknown = variables;
   for (let depth = 0; depth < 2; depth += 1) {
@@ -164,14 +172,22 @@ type LegacyRoomPlan = {
   Name?: string;
   TotalAmount?: number | string;
   SalesPrice?: number | string;
-  Number?: number;
+  Number?: number | string;
   SupplierNumber?: number | string;
-  SupplierType?: number;
+  SupplierType?: number | string;
+  BeginDate?: string;
+  EndDate?: string;
   Variables?: unknown;
   VariablesObj?: Record<string, unknown>;
   RoomPlanPrices?: { Price?: number | string }[];
   RoomPlanRules?: { Description?: string }[];
   Room?: { Id?: string };
+};
+
+type LegacyRoomDetail = {
+  Name?: string;
+  Description?: string;
+  Tag?: string;
 };
 
 type LegacyRoom = {
@@ -185,6 +201,7 @@ type LegacyRoom = {
   Variables?: unknown;
   VariablesObj?: Record<string, unknown>;
   Images?: (LegacyHotelImage | string)[];
+  RoomDetails?: LegacyRoomDetail[];
   RoomPlans?: LegacyRoomPlan[];
 };
 
@@ -773,10 +790,29 @@ function mapLegacyRoomPlan(
     SupplierType: plan.SupplierType,
     TotalAmount: toPrice(plan.TotalAmount ?? plan.SalesPrice),
     Number: plan.Number,
-    SupplierNumber: toPrice(plan.SupplierNumber),
+    SupplierNumber: toLegacySupplierNumber(plan.SupplierNumber),
+    BeginDate: plan.BeginDate,
+    EndDate: plan.EndDate,
     RoomPlanUniqueId: uniqueId,
     VariablesObj: vars,
   };
+}
+
+function mapLegacyRoomDetails(
+  room: LegacyRoom,
+): import("@ryx/shared-types").HotelRoomDetailItem[] | undefined {
+  const details = room.RoomDetails;
+  if (!Array.isArray(details) || details.length === 0) return undefined;
+
+  const items = details
+    .map((item) => ({
+      Label: (item.Name ?? item.Tag ?? "").trim(),
+      Value: (item.Description ?? "").trim(),
+      Tag: item.Tag,
+    }))
+    .filter((item) => item.Label.length > 0);
+
+  return items.length > 0 ? items : undefined;
 }
 
 function mapLegacyRoom(
@@ -793,6 +829,8 @@ function mapLegacyRoom(
   const primaryUrl = roomImageUrls[0] ?? fallbackUrl ?? roomDefaultImg;
   const imageCount = roomImageUrls.length > 0 ? roomImageUrls.length : primaryUrl ? 1 : undefined;
   const thumbnailUrl = primaryUrl ? toHotelRoomThumbnailUrl(primaryUrl) : undefined;
+  const galleryUrls =
+    roomImageUrls.length > 0 ? roomImageUrls : primaryUrl ? [primaryUrl] : undefined;
 
   return {
     RoomId: room.Id != null ? String(room.Id) : `room-${roomIndex}`,
@@ -800,7 +838,9 @@ function mapLegacyRoom(
     ImageUrl: thumbnailUrl,
     ImageUrlFallback:
       thumbnailUrl && primaryUrl && thumbnailUrl !== primaryUrl ? primaryUrl : undefined,
-    ImageCount: imageCount > 0 ? imageCount : undefined,
+    ImageCount: imageCount != null && imageCount > 0 ? imageCount : undefined,
+    ImageUrls: galleryUrls,
+    Details: mapLegacyRoomDetails(room),
     Plans: plans,
   };
 }
