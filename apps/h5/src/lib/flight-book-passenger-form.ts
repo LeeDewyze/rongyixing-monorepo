@@ -58,6 +58,15 @@ export function createPassengerBookForm(
     otherCostCenterName: "",
     otherCostCenterCode: "",
     expanded: false,
+    showTravelDetail: false,
+    expenseType: "",
+    illegalReason: "",
+    otherIllegalReason: "",
+    selectedInsuranceId: "",
+    outNumbers: {},
+    approvalId: "",
+    selectedApproverName: "",
+    isSkipApprove: false,
   };
 }
 

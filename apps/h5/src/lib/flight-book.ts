@@ -1,35 +1,211 @@
 import type {
   FlightAuthorizedContact,
   FlightBookPassengerDto,
-  FlightFare,
+  FlightBookPolicy,
+  FlightDetailResult,
+  FlightInsuranceProduct,
   FlightOrderBookDto,
+  FlightOutNumberField,
   FlightPassengerBookForm,
+  FlightSegment,
   FlightTax,
   PassengerBookInfo,
 } from "@ryx/shared-types";
 import { credentialDisplayNumber } from "@ryx/shared-types";
 
+import { resolveAppChannel } from "@/lib/app-channel";
 import { buildAuthorizedLinkmans } from "@/lib/flight-book-contacts";
+import {
+  prepareBookFlightCabinDto,
+  prepareInitFlightCabinDto,
+  resolveFlightCabinCode,
+  resolveInitFlightSegments,
+  resolvePassengerTravelNumber,
+  resolvePassengerTravelPolicy,
+  syncSegmentWithFlightCabin,
+} from "@/lib/flight-book-cabin";
+import { mergeOutNumberValues } from "@/lib/flight-book-outnumber";
+import { formatPolicyRules } from "@/lib/flight-book-policy";
 import {
   resolvePassengerFormEmail,
   resolvePassengerFormMobile,
 } from "@/lib/flight-book-passenger-form";
 import type { FlightBookSelection } from "@/lib/flight-book-session";
+import { resolveFlightTravelType } from "@/lib/flight-travel-mode";
+import { resolveTravelFormPassengerId } from "@/lib/flight-book-travel";
 
-function buildCabinRules(fare: FlightFare): Record<string, string> | undefined {
-  const rules = fare.FlightFareRules;
-  if (!rules?.length) return undefined;
-  const map: Record<string, string> = {};
-  for (const rule of rules) {
-    const key = `${rule.Tag ?? rule.Name ?? "rule"}-${Object.keys(map).length}`;
-    map[key] = rule.Description ?? rule.Name ?? "";
+function normalizeFlightSegment(segment: FlightSegment): FlightSegment {
+  const next = { ...segment };
+  const flightNumber = next.Number ?? next.FlightNumber ?? "";
+  if (flightNumber) {
+    next.Number = flightNumber;
+    next.FlightNumber = flightNumber;
   }
-  return map;
+  return next;
 }
 
-function prepareFlightCabin(fare: FlightFare): FlightFare & { Rules?: Record<string, string> } {
-  const rules = buildCabinRules(fare);
-  return rules ? { ...fare, Rules: rules } : { ...fare };
+function enrichFlightSegment(
+  segment: FlightSegment,
+  selection: FlightBookSelection,
+): FlightSegment {
+  const next = normalizeFlightSegment(segment);
+  const query = selection.cabinsQuery;
+  if (!next.DetailKey && query.detailKey) next.DetailKey = query.detailKey;
+  if (!next.Data && query.detailKey) next.Data = query.detailKey;
+  if (next.BookType == null && query.bookType) next.BookType = query.bookType;
+  return next;
+}
+
+function mergeTravelNumberOutNumbers(
+  outNumbers: Record<string, string> | null | undefined,
+  travelNumber?: string,
+): Record<string, string> | null {
+  if (!outNumbers || !Object.keys(outNumbers).length) {
+    if (!travelNumber) return null;
+    return { TravelNumber: travelNumber };
+  }
+  if (outNumbers.TravelNumber?.trim()) {
+    return outNumbers;
+  }
+  if (!travelNumber) return outNumbers;
+  return { ...outNumbers, TravelNumber: travelNumber };
+}
+
+/** Initialize ClientId — aligned with proxy verify script (AccountId, not credential Id). */
+export function resolveFlightInitClientId(info: PassengerBookInfo): string {
+  const accountId =
+    ("AccountId" in info.passenger ? info.passenger.AccountId : undefined) ??
+    info.credential.AccountId;
+  return String(accountId ?? info.credential.Id ?? info.id);
+}
+
+function resolveInitTravelFormId(value?: string): string | undefined {
+  if (!value) return undefined;
+  if (/^TF\d+$/i.test(value)) return undefined;
+  return value;
+}
+
+function resolvePassengerFlightPolicyForBook(
+  selection: FlightBookSelection,
+  passenger: PassengerBookInfo,
+  fallback?: FlightBookPolicy,
+): FlightBookPolicy | undefined {
+  return (
+    selection.flightPoliciesByPassengerId?.[passenger.id] ??
+    fallback ??
+    selection.flightPolicy
+  );
+}
+
+/** Legacy `fillBookPassengers` — spread vmCredential with Account/Policy normalization. */
+export function buildSubmitCredentials(
+  info: PassengerBookInfo,
+  accountId: string,
+): Record<string, unknown> {
+  const cred = info.credential;
+  const passengerPolicy = resolvePassengerTravelPolicy(info);
+  const hideNumber =
+    cred.HideNumber ??
+    cred.HideCredentialsNumber ??
+    credentialDisplayNumber(cred);
+  const credType = cred.CredentialsType ?? cred.Type;
+
+  return {
+    ...cred,
+    Type: credType,
+    CredentialsType: credType,
+    AccountId: accountId,
+    Account: accountId ? { Id: accountId } : cred.Account,
+    ...(passengerPolicy ? { Policy: passengerPolicy } : {}),
+    ...(cred.Name && hideNumber ? { CredentialsInfo: `${cred.Name}|${hideNumber}` } : {}),
+    checked: true,
+  };
+}
+
+/** Legacy submit uses passenger AccountId. */
+export function resolveFlightSubmitClientId(info: PassengerBookInfo): string {
+  return String(info.passenger.AccountId ?? info.id);
+}
+
+export interface FlightTicketNoticeRule {
+  key: string;
+  url: string;
+}
+
+/** Legacy `onTicketNeedKnow` — titles and URLs from Home-Detail `FlightRule`. */
+export function resolveFlightTicketNoticeRules(
+  detailSnapshot?: FlightBookSelection["detailSnapshot"],
+): FlightTicketNoticeRule[] {
+  const flightRule = detailSnapshot?.FlightRule;
+  if (!flightRule) return [];
+  return Object.entries(flightRule).map(([key, url]) => ({
+    key,
+    url: String(url),
+  }));
+}
+
+/** Initialize payload — aligned with Legacy `initializeBookDto` and proxy verify script. */
+export function buildFlightInitBookDto(input: {
+  selection: FlightBookSelection;
+  passengers: PassengerBookInfo[];
+  travelFormId?: string;
+  agentId?: string;
+}): FlightOrderBookDto {
+  const { selection, passengers, travelFormId, agentId } = input;
+  const policy = selection.flightPolicy;
+  const flightCabin = prepareInitFlightCabinDto({
+    flightPolicy: policy,
+    fare: selection.fare,
+    detailSnapshot: selection.detailSnapshot,
+  });
+  const resolvedCabin = resolveFlightCabinCode(flightCabin, selection.segment);
+  const initSegments = resolveInitFlightSegments({ selection });
+
+  const passengerDtos: FlightBookPassengerDto[] = passengers.map((info) => {
+    const cred = info.credential;
+    const clientId = resolveFlightInitClientId(info);
+    const accountId = info.passenger.AccountId ?? info.id;
+    const passengerPolicy = resolvePassengerTravelPolicy(info);
+
+    const passengerTravelFormId = resolveInitTravelFormId(
+      travelFormId ??
+        ("travelFormId" in info.passenger ? info.passenger.travelFormId : undefined),
+    );
+
+    return {
+      ClientId: clientId,
+      FlightSegments: initSegments,
+      FlightCabin: resolvedCabin,
+      Credentials: {
+        Id: cred.Id,
+        Name: cred.Name,
+        Mobile: cred.Mobile,
+        Number: cred.Number,
+        Type: cred.CredentialsType ?? cred.Type,
+        CredentialsType: cred.CredentialsType ?? cred.Type,
+        Account: accountId ? { Id: accountId } : cred.Account,
+      },
+      Mobile: cred.Mobile,
+      Policy: passengerPolicy,
+      travelFormId: passengerTravelFormId,
+      travelNumber: resolvePassengerTravelNumber(info),
+    };
+  });
+
+  const resolvedTravelFormId = resolveInitTravelFormId(
+    travelFormId ?? passengerDtos.find((passenger) => passenger.travelFormId)?.travelFormId,
+  );
+
+  const dto: FlightOrderBookDto = {
+    TravelFormId: resolvedTravelFormId,
+    Passengers: passengerDtos,
+  };
+
+  if (agentId) {
+    dto.AgentId = agentId;
+  }
+
+  return dto;
 }
 
 export function buildFlightOrderBookDto(input: {
@@ -40,7 +216,15 @@ export function buildFlightOrderBookDto(input: {
   travelPayType?: number;
   messageLang?: string;
   authorizedContacts?: FlightAuthorizedContact[];
-  linkman?: { name: string; mobile: string; messageLang?: string };
+  agentId?: string;
+  channel?: string;
+  isSave?: boolean;
+  insurancesByPassenger?: Record<string, FlightInsuranceProduct[]>;
+  outNumberFieldsByPassenger?: Record<string, FlightOutNumberField[]>;
+  flightPolicy?: FlightBookPolicy;
+  flightPoliciesByPassenger?: Record<string, FlightBookPolicy>;
+  travelNumber?: string;
+  travelType?: number;
 }): FlightOrderBookDto {
   const {
     selection,
@@ -50,66 +234,124 @@ export function buildFlightOrderBookDto(input: {
     travelPayType,
     messageLang,
     authorizedContacts,
-    linkman,
+    agentId,
+    channel,
+    isSave,
+    insurancesByPassenger,
+    outNumberFieldsByPassenger,
+    flightPolicy,
+    flightPoliciesByPassenger,
+    travelNumber,
+    travelType,
   } = input;
-  const segment = { ...selection.segment };
-  const flightCabin = prepareFlightCabin(selection.fare);
+  const defaultPolicy = flightPolicy ?? selection.flightPolicy;
+  const policiesByPassenger =
+    flightPoliciesByPassenger ?? selection.flightPoliciesByPassengerId;
+  const detailSnapshot = selection.detailSnapshot;
+  const resolvedTravelType = travelType ?? resolveFlightTravelType();
+  const sharedTravelNumber =
+    travelNumber ??
+    passengers.map(resolvePassengerTravelNumber).find(Boolean);
 
   const passengerDtos: FlightBookPassengerDto[] = passengers.map((info) => {
     const cred = info.credential;
-    const accountId = info.passenger.AccountId ?? info.id;
+    const accountId = resolveFlightSubmitClientId(info);
     const form = passengerForms?.[info.id];
+    const travelFormPassengerId = resolveTravelFormPassengerId(info, passengers);
+    const travelForm = passengerForms?.[travelFormPassengerId] ?? form;
+    const insuranceProducts = insurancesByPassenger?.[info.id] ?? [];
+    const selectedInsurance = insuranceProducts.find(
+      (item) => String(item.Id ?? "") === String(form?.selectedInsuranceId ?? ""),
+    );
 
-    const mobile = form ? resolvePassengerFormMobile(form) : cred.Mobile;
-    const email = form ? resolvePassengerFormEmail(form) : undefined;
     const costCenterCode = form?.otherCostCenterCode || form?.costCenter.code || "";
     const costCenterName = form?.otherCostCenterName || form?.costCenter.name || "";
     const organizationName = form?.otherOrganizationName || form?.organization.name || "";
     const organizationCode = form?.otherOrganizationName ? "" : form?.organization.code || "";
+    const outNumbers = mergeTravelNumberOutNumbers(
+      travelForm ? mergeOutNumberValues(travelForm, outNumberFieldsByPassenger?.[travelFormPassengerId] ?? []) : null,
+      sharedTravelNumber,
+    );
 
-    return {
+    const passengerPolicy =
+      policiesByPassenger?.[info.id] ??
+      resolvePassengerFlightPolicyForBook(selection, info, defaultPolicy);
+
+    const resolvedCabin = prepareBookFlightCabinDto({
+      flightPolicy: passengerPolicy,
+      fare: selection.fare,
+      detailSnapshot,
+      insuranceProducts: selectedInsurance ? [selectedInsurance] : undefined,
+      segment: selection.segment,
+    });
+    const segment = syncSegmentWithFlightCabin(
+      enrichFlightSegment(selection.segment, selection),
+      resolvedCabin,
+    );
+
+    const mobile = form ? resolvePassengerFormMobile(form) : cred.Mobile ?? "";
+    const email = form ? resolvePassengerFormEmail(form) ?? "" : "";
+
+    const passenger: FlightBookPassengerDto = {
       ClientId: accountId,
+      ApprovalId: travelForm?.approvalId || "0",
+      MessageLang: messageLang ?? "cn",
+      CardName: "",
+      CardNumber: "",
+      TicketNum: "",
       FlightSegments: [segment],
-      FlightCabin: flightCabin,
-      Credentials: {
-        Id: cred.Id,
-        Name: cred.Name,
-        Mobile: cred.Mobile,
-        Number: cred.Number,
-        Type: cred.CredentialsType ?? cred.Type,
-        CredentialsType: cred.CredentialsType ?? cred.Type,
-        Account: accountId ? { Id: accountId } : undefined,
-      },
+      FlightCabin: resolvedCabin,
+      Credentials: buildSubmitCredentials(info, accountId),
       Mobile: mobile,
       Email: email,
-      CostCenterCode: costCenterCode,
-      CostCenterName: costCenterName,
-      OrganizationName: organizationName,
-      OrganizationCode: organizationCode,
-      TravelPayType: travelPayType,
-      MessageLang: messageLang,
       travelFormId:
         travelFormId ??
         ("travelFormId" in info.passenger ? info.passenger.travelFormId : undefined),
+      travelNumber: resolvePassengerTravelNumber(info),
+      IllegalPolicy: formatPolicyRules(passengerPolicy) || "",
+      IllegalReason: (travelForm?.otherIllegalReason || travelForm?.illegalReason || "").trim(),
+      IsSkipApprove: travelForm?.isSkipApprove ?? false,
+      OutNumbers: outNumbers,
+      InsuranceProducts: [],
+      TravelType: resolvedTravelType,
+      TravelPayType: 0,
+      Policy: resolvePassengerTravelPolicy(info),
     };
+
+    if (costCenterCode) passenger.CostCenterCode = costCenterCode;
+    if (costCenterName) passenger.CostCenterName = costCenterName;
+    if (organizationName) passenger.OrganizationName = organizationName;
+    if (form?.otherOrganizationName?.trim()) {
+      passenger.OrganizationCode = "";
+    } else if (organizationCode) {
+      passenger.OrganizationCode = organizationCode;
+    }
+    if (travelForm?.expenseType) passenger.ExpenseType = travelForm.expenseType;
+
+    return passenger;
   });
 
   const dto: FlightOrderBookDto = {
-    TravelFormId: travelFormId,
+    TravelFormId: travelFormId ?? passengerDtos.find((passenger) => passenger.travelFormId)?.travelFormId,
     Passengers: passengerDtos,
-    TravelPayType: travelPayType,
+    Channel: channel ?? resolveAppChannel(),
   };
+
+  if (agentId) {
+    dto.AgentId = agentId;
+  }
+
+  if (travelPayType != null) {
+    dto.TravelPayType = travelPayType;
+  }
+
+  // Legacy bookFlight(isSave) — both flags mirror save vs submit, not API response.
+  const saveOrder = Boolean(isSave);
+  dto.IsFromOffline = saveOrder;
+  dto.IsForbidAutoIssue = saveOrder;
 
   if (authorizedContacts?.length) {
     dto.Linkmans = buildAuthorizedLinkmans(authorizedContacts);
-  } else if (linkman?.name && linkman.mobile) {
-    dto.Linkmans = [
-      {
-        Name: linkman.name,
-        Mobile: linkman.mobile,
-        MessageLang: linkman.messageLang ?? messageLang,
-      },
-    ];
   }
 
   return dto;
@@ -151,7 +393,7 @@ function toAmount(value: unknown): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-export function resolveFlightFareTaxLines(fare: FlightFare): FlightBookBillTaxLine[] {
+export function resolveFlightFareTaxLines(fare: import("@ryx/shared-types").FlightFare): FlightBookBillTaxLine[] {
   const taxs =
     fare.FlightFareBasics?.flatMap((basic) => basic.FlightTaxs ?? []) ??
     ([] as FlightTax[]);

@@ -44,4 +44,11 @@ describe("stripFlightOrderBookDto", () => {
     expect(policy.FlightDescription).toBeNull();
     expect(policy.Setting).toBeNull();
   });
+
+  it("preserves MessageLang on passengers after strip", () => {
+    const dto = {
+      Passengers: [{ ClientId: "acc-1", MessageLang: "en" }],
+    };
+    expect(stripFlightOrderBookDto(dto).Passengers[0]?.MessageLang).toBe("en");
+  });
 });

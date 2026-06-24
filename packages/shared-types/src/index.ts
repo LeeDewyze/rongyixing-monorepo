@@ -148,11 +148,22 @@ export type {
   FlightInitBookParams,
   FlightInitBookResponse,
   FlightInitStaff,
+  FlightInitStaffApprover,
+  FlightInsuranceProduct,
   FlightOrderBookDto,
+  FlightOutNumberField,
   FlightPassengerBookForm,
   FlightPassengerContactOption,
+  FlightTmcAgent,
+  SearchApprovalOption,
   SearchLinkmanOption,
 } from "./flight-book.js";
+
+export type {
+  FlightBookPolicy,
+  FlightPolicyParams,
+  FlightPolicyPassengerResult,
+} from "./flight-policy.js";
 
 export type {
   AirportResourceParams,

@@ -32,6 +32,9 @@ function stripFlightSegment(segment: FlightSegment): FlightSegment {
     flightListResult?: null;
     detailResultForVerify?: null;
     detailResult?: null;
+    DetailKey?: unknown;
+    Data?: unknown;
+    BookType?: unknown;
     Cabins?: FlightFare[];
   } = {
     ...segment,
@@ -42,6 +45,9 @@ function stripFlightSegment(segment: FlightSegment): FlightSegment {
     detailResult: null,
   };
   delete next.detailResultForVerify;
+  delete next.DetailKey;
+  delete next.Data;
+  delete next.BookType;
   if (next.Cabins) {
     next.Cabins = next.Cabins.map((cabin) => stripFlightCabin(cabin) as FlightFare);
   }

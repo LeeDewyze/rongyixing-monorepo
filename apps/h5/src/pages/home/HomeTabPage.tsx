@@ -20,6 +20,7 @@ import { useTrainSearchForm } from "@/hooks/useTrainSearchForm";
 import { formatApiError } from "@/lib/formatApiError";
 import { buildHomeProductSearch, parseHomeProduct } from "@/lib/home-params";
 import { CITY_HISTORY_KEYS, hotelCityPickerAdapter } from "@/lib/hotel-search";
+import { loadHomeTravelMode, saveHomeTravelMode } from "@/lib/flight-travel-mode";
 import { trainStationPickerAdapter } from "@/lib/train-search";
 
 function HomeSearchPanelSkeleton() {
@@ -41,7 +42,7 @@ function HomeSearchPanelError({ error }: { error: unknown }) {
 export function HomeTabPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [travelMode, setTravelMode] = useState<HomeTravelMode>("business");
+  const [travelMode, setTravelMode] = useState<HomeTravelMode>(() => loadHomeTravelMode());
   const [activeProduct, setActiveProduct] = useState<HomeProductId>(() =>
     parseHomeProduct(searchParams),
   );
@@ -87,7 +88,10 @@ export function HomeTabPage() {
       <HomeHeroSection
         travelMode={travelMode}
         activeProduct={activeProduct}
-        onTravelModeChange={setTravelMode}
+        onTravelModeChange={(mode) => {
+          setTravelMode(mode);
+          saveHomeTravelMode(mode);
+        }}
         onProductChange={handleProductChange}
       />
 

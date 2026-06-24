@@ -3,9 +3,13 @@ interface FlightBookFooterProps {
   agreed: boolean;
   disabled: boolean;
   pending: boolean;
+  showTicketNotice?: boolean;
+  showSaveOrder?: boolean;
   onAgreedChange: (agreed: boolean) => void;
   onShowBill: () => void;
+  onShowTicketNotice?: () => void;
   onSubmit: () => void;
+  onSave?: () => void;
 }
 
 export function FlightBookFooter({
@@ -13,9 +17,13 @@ export function FlightBookFooter({
   agreed,
   disabled,
   pending,
+  showTicketNotice = false,
+  showSaveOrder = false,
   onAgreedChange,
   onShowBill,
+  onShowTicketNotice,
   onSubmit,
+  onSave,
 }: FlightBookFooterProps) {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-30 bg-white px-4 pt-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
@@ -34,7 +42,21 @@ export function FlightBookFooter({
         </span>
         <span>
           我已阅读并同意
-          <span className="text-[#5099fe]">购票须知</span>
+          {showTicketNotice ? (
+            <button
+              type="button"
+              className="text-[#5099fe]"
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                onShowTicketNotice?.();
+              }}
+            >
+              购票须知
+            </button>
+          ) : (
+            <span className="text-[#5099fe]">购票须知</span>
+          )}
         </span>
       </label>
 
@@ -52,14 +74,26 @@ export function FlightBookFooter({
           </button>
         </div>
 
-        <button
-          type="button"
-          disabled={disabled || !agreed}
-          className="min-w-[9rem] rounded-full bg-[linear-gradient(90deg,#24a8ff_0%,#2468f7_100%)] px-6 py-3 text-[15px] font-medium text-white shadow-[0_6px_14px_rgba(36,104,247,0.24)] disabled:bg-none disabled:bg-[#cccccc] disabled:shadow-none active:opacity-90"
-          onClick={onSubmit}
-        >
-          {pending ? "提交中…" : "生成订单"}
-        </button>
+        <div className="flex shrink-0 items-center gap-2">
+          {showSaveOrder ? (
+            <button
+              type="button"
+              disabled={disabled || !agreed}
+              className="rounded-full border border-[#5099fe] px-4 py-3 text-[14px] text-[#5099fe] disabled:border-[#cccccc] disabled:text-[#cccccc]"
+              onClick={onSave}
+            >
+              保存订单
+            </button>
+          ) : null}
+          <button
+            type="button"
+            disabled={disabled || !agreed}
+            className="min-w-[9rem] rounded-full bg-[linear-gradient(90deg,#24a8ff_0%,#2468f7_100%)] px-6 py-3 text-[15px] font-medium text-white shadow-[0_6px_14px_rgba(36,104,247,0.24)] disabled:bg-none disabled:bg-[#cccccc] disabled:shadow-none active:opacity-90"
+            onClick={onSubmit}
+          >
+            {pending ? "提交中…" : "生成订单"}
+          </button>
+        </div>
       </div>
     </div>
   );

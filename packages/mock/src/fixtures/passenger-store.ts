@@ -15,6 +15,9 @@ export let mockPassengers: MemberPassenger[] = [
     CredentialType: CredentialType.IdCard,
     CredentialTypeName: "身份证",
     IsSelf: true,
+    Policy: {
+      FlightForceInsuranceId: "ins-1",
+    },
   },
   {
     Id: "P002",

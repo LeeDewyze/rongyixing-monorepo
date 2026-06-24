@@ -8,6 +8,8 @@ import type {
   FlightInitBookParams,
   FlightInitBookResponse,
   FlightListResult,
+  FlightPolicyParams,
+  FlightPolicyPassengerResult,
   FlightSearchParams,
   Trafficline,
   TrafficlineDto,
@@ -24,6 +26,7 @@ export interface FlightApi {
   getAirports(params?: AirportResourceParams): Promise<Trafficline[]>;
   searchFlights(params: FlightSearchParams): Promise<FlightListResult>;
   getFlightDetail(params: FlightDetailParams): Promise<FlightDetailResult>;
+  getFlightPolicy(params: FlightPolicyParams): Promise<FlightPolicyPassengerResult[]>;
   initializeBook(params: FlightInitBookParams): Promise<FlightInitBookResponse>;
   submitBook(params: FlightBookParams): Promise<FlightBookResponse>;
 }
@@ -62,6 +65,14 @@ export function createFlightApi(proxy: ProxyClient): FlightApi {
         timeoutMs: 60_000,
       });
       return normalizeFlightDetailResponse(raw);
+    },
+    getFlightPolicy(params) {
+      return proxy.send<FlightPolicyPassengerResult[]>({
+        method: FLIGHT_FLOW_METHODS.HOME_POLICY,
+        data: params,
+        version: "2.0",
+        timeoutMs: 60_000,
+      });
     },
     initializeBook(params) {
       return proxy.send<FlightInitBookResponse>({

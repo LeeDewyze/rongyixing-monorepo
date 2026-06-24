@@ -12,6 +12,11 @@ import {
   FlightBookCredentialSwitchButton,
   FlightBookExpandableSummaryCard,
 } from "@/components/flight/FlightBookExpandableSummaryCard";
+import {
+  FlightBookPassengerExtras,
+  type FlightBookServiceFeeRow,
+} from "@/components/flight/FlightBookExtras";
+import type { FlightNotifyLanguage } from "@/lib/flight-book-notify";
 import { buildPassengerSelectPath } from "@/lib/passenger-selection";
 
 function DetailRow({
@@ -37,7 +42,7 @@ function DetailRow({
 const detailValueClass =
   "w-full min-w-0 bg-transparent text-right text-[14px] leading-tight text-[#333333] outline-none placeholder:text-[#cccccc]";
 const detailActionClass =
-  "flex w-full min-w-0 items-center justify-end gap-1 truncate text-[14px] leading-tight text-[#333333]";
+  "flex w-full min-w-0 items-center justify-end gap-1 truncate text-[14px] leading-tight text-[#333333] disabled:text-[#cccccc]";
 
 function ContactCheckboxList({
   options,
@@ -75,6 +80,23 @@ function ContactCheckboxList({
   );
 }
 
+const emptyOrgCost = { code: "", name: "" };
+
+function formatCostCenterDisplay(costCenter: FlightPassengerBookForm["costCenter"]): string {
+  if (costCenter.code && costCenter.name) {
+    return `${costCenter.code}-${costCenter.name}`;
+  }
+  return costCenter.name || costCenter.code || "请选择";
+}
+
+function hasOtherCostCenterInput(form: FlightPassengerBookForm): boolean {
+  return Boolean(form.otherCostCenterName.trim() || form.otherCostCenterCode.trim());
+}
+
+function hasOtherOrganizationInput(form: FlightPassengerBookForm): boolean {
+  return Boolean(form.otherOrganizationName.trim());
+}
+
 function resolveStaffAccountId(passenger: PassengerBookInfo): string | undefined {
   const fromPassenger = passenger.passenger.AccountId;
   if (fromPassenger) return String(fromPassenger);
@@ -87,6 +109,11 @@ interface FlightBookPassengersProps {
   forms: FlightPassengerBookForm[];
   showOrganizations: boolean;
   showCostCenter: boolean;
+  showNotifyLanguage?: boolean;
+  showServiceFee?: boolean;
+  notifyLanguage?: FlightNotifyLanguage;
+  serviceFees?: FlightBookServiceFeeRow[];
+  onOpenNotifyLanguage?: () => void;
   onUpdateForm: (passengerId: string, patch: Partial<FlightPassengerBookForm>) => void;
   onOpenOrganization: (passengerId: string) => void;
   onOpenCostCenter: (passengerId: string) => void;
@@ -99,6 +126,11 @@ export function FlightBookPassengers({
   forms,
   showOrganizations,
   showCostCenter,
+  showNotifyLanguage = false,
+  showServiceFee = false,
+  notifyLanguage = "cn",
+  serviceFees = [],
+  onOpenNotifyLanguage,
   onUpdateForm,
   onOpenOrganization,
   onOpenCostCenter,
@@ -170,9 +202,14 @@ export function FlightBookPassengers({
                   <button
                     type="button"
                     className={detailActionClass}
+                    disabled={hasOtherOrganizationInput(form)}
                     onClick={() => onOpenOrganization(passenger.id)}
                   >
-                    <span className="truncate">{form.organization.name || "请选择"}</span>
+                    <span className="truncate">
+                      {hasOtherOrganizationInput(form)
+                        ? "已填写其他部门"
+                        : form.organization.name || "请选择"}
+                    </span>
                     <span className="shrink-0 text-[16px] text-[#bbbbbb]" aria-hidden>
                       ›
                     </span>
@@ -185,9 +222,14 @@ export function FlightBookPassengers({
                   <button
                     type="button"
                     className={detailActionClass}
+                    disabled={hasOtherCostCenterInput(form)}
                     onClick={() => onOpenCostCenter(passenger.id)}
                   >
-                    <span className="truncate">{form.costCenter.name || "请选择"}</span>
+                    <span className="truncate">
+                      {hasOtherCostCenterInput(form)
+                        ? "已填写其他成本中心"
+                        : formatCostCenterDisplay(form.costCenter)}
+                    </span>
                     <span className="shrink-0 text-[16px] text-[#bbbbbb]" aria-hidden>
                       ›
                     </span>
@@ -220,43 +262,67 @@ export function FlightBookPassengers({
                   <input
                     type="text"
                     value={form.otherOrganizationName}
-                    placeholder="名称"
-                    onChange={(event) =>
-                      onUpdateForm(passenger.id, { otherOrganizationName: event.target.value })
-                    }
+                    placeholder="请输入名称"
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      onUpdateForm(passenger.id, {
+                        otherOrganizationName: value,
+                        ...(value.trim() ? { organization: emptyOrgCost } : {}),
+                      });
+                    }}
                     className={detailValueClass}
                   />
                 </DetailRow>
               ) : null}
 
               {showCostCenter ? (
-                <DetailRow label="其他成本中心">
-                  <div className="flex min-w-0 items-center justify-end gap-1.5">
+                <>
+                  <DetailRow label="其他成本中心名称">
                     <input
                       type="text"
                       value={form.otherCostCenterName}
-                      placeholder="名称"
-                      onChange={(event) =>
-                        onUpdateForm(passenger.id, { otherCostCenterName: event.target.value })
-                      }
-                      className={`${detailValueClass} min-w-0 flex-1`}
+                      placeholder="请输入名称"
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        onUpdateForm(passenger.id, {
+                          otherCostCenterName: value,
+                          ...(value.trim() ? { costCenter: emptyOrgCost } : {}),
+                        });
+                      }}
+                      className={detailValueClass}
                     />
+                  </DetailRow>
+                  <DetailRow label="其他成本中心代码">
                     <input
                       type="text"
                       value={form.otherCostCenterCode}
-                      placeholder="代码"
-                      onChange={(event) =>
-                        onUpdateForm(passenger.id, { otherCostCenterCode: event.target.value })
-                      }
-                      className={`${detailValueClass} w-14 shrink-0`}
+                      placeholder="请输入代码"
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        onUpdateForm(passenger.id, {
+                          otherCostCenterCode: value,
+                          ...(value.trim() ? { costCenter: emptyOrgCost } : {}),
+                        });
+                      }}
+                      className={detailValueClass}
                     />
-                  </div>
-                </DetailRow>
+                  </DetailRow>
+                </>
               ) : null}
             </FlightBookExpandableSummaryCard>
           );
         })}
       </div>
+
+      {onOpenNotifyLanguage ? (
+        <FlightBookPassengerExtras
+          showNotifyLanguage={showNotifyLanguage}
+          showServiceFee={showServiceFee}
+          notifyLanguage={notifyLanguage}
+          serviceFees={serviceFees}
+          onOpenNotifyLanguage={onOpenNotifyLanguage}
+        />
+      ) : null}
     </section>
   );
 }

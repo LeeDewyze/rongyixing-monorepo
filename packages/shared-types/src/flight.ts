@@ -39,6 +39,7 @@ export interface FlightSearchParams {
 export interface FlightSegment {
   Id: string;
   Number: string;
+  CabinCode?: string;
   FlightNumber?: string;
   Airline?: string;
   AirlineName?: string;
@@ -75,6 +76,8 @@ export interface FlightSegment {
   BookType?: string | number;
   /** Low inventory hint — show「剩N张」when 1–5. */
   RemainSeats?: number;
+  /** Cabin rows attached on list segments for Home-Policy. */
+  Cabins?: FlightFare[];
 }
 
 export interface FlightListView {
@@ -89,6 +92,7 @@ export interface FlightListView {
 export interface FlightListResult {
   Result?: {
     FlightSegments?: FlightSegment[];
+    FlightFares?: FlightFare[];
   };
   FlightViews?: FlightListView[];
 }
@@ -161,6 +165,7 @@ export interface FlightFareVariables {
 /** Cabin fare row from Home-Detail `FlightFares`. */
 export interface FlightFare {
   Id?: string;
+  Key?: string;
   Code?: string;
   FlightNumber?: string;
   Type?: number;
@@ -180,11 +185,25 @@ export interface FlightFare {
   VariablesObj?: FlightFareVariables;
   FlightFareBasics?: FlightFareBasic[];
   FlightFareRules?: FlightFareRule[];
+  /** Legacy Initialize/Book — uuid → policy rule text. */
+  Rules?: Record<string, string>;
+  CabinCodes?: Record<string, string>;
+  InsuranceProducts?: FlightFareInsuranceRef[];
+}
+
+export interface FlightFareInsuranceRef {
+  Id?: string | number;
+  Name?: string;
+  Price?: string | number;
+  Detail?: string;
+  DetailUrl?: string;
 }
 
 export interface FlightDetailResult {
   FlightSegments?: FlightSegment[];
   FlightFares?: FlightFare[];
+  /** Ticket notice links from Home-Detail — keys are titles, values are URLs. */
+  FlightRule?: Record<string, string>;
 }
 
 export type FlightCabinTab = "economy" | "business";

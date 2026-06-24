@@ -1,5 +1,39 @@
 import type { FlightFare, FlightSegment } from "./flight.js";
 
+export interface FlightInsuranceProduct {
+  Id?: string | number;
+  Name?: string;
+  Price?: string | number;
+  Detail?: string;
+  DetailUrl?: string;
+}
+
+export interface FlightInitStaffApprover {
+  Name?: string;
+  Type?: number;
+  Tag?: string;
+  AccountId?: string | number;
+}
+
+export interface FlightTmcAgent {
+  Id?: string | number;
+  Name?: string;
+  LogoFullFileName?: string;
+  FlightQueryType?: string | number;
+}
+
+export interface FlightOutNumberField {
+  key: string;
+  label: string;
+  value: string;
+  required: boolean;
+  isTravelNumber?: boolean;
+  canSelect?: boolean;
+  labelDataList?: string[];
+  staffNumber?: string;
+  staffOutNumber?: string;
+}
+
 export interface FlightBookCredential {
   Id?: string;
   Name?: string;
@@ -15,6 +49,9 @@ export interface FlightBookCredential {
 
 export interface FlightBookPassengerDto {
   ClientId: string;
+  CardName?: string;
+  CardNumber?: string;
+  TicketNum?: string;
   Mobile?: string;
   FlightSegments?: FlightSegment[];
   FlightSegment?: FlightSegment;
@@ -31,6 +68,13 @@ export interface FlightBookPassengerDto {
   OrganizationName?: string;
   OrganizationCode?: string;
   OutNumbers?: Record<string, string> | null;
+  InsuranceProducts?: FlightInsuranceProduct[];
+  IllegalReason?: string;
+  IllegalPolicy?: string;
+  ExpenseType?: string;
+  ApprovalId?: string;
+  IsSkipApprove?: boolean;
+  TravelType?: number;
 }
 
 export interface FlightInitStaffAccount {
@@ -54,6 +98,10 @@ export interface FlightInitStaff {
   Name?: string;
   Id?: string | number;
   Number?: string;
+  OutNumber?: string;
+  Approvers?: FlightInitStaffApprover[];
+  DefaultApprover?: { AccountId?: string | number; Name?: string };
+  Policy?: Record<string, unknown> | null;
 }
 
 export interface BookOrganizationOption {
@@ -87,6 +135,16 @@ export interface FlightPassengerBookForm {
   otherCostCenterName: string;
   otherCostCenterCode: string;
   expanded: boolean;
+  /** 出差信息 */
+  showTravelDetail: boolean;
+  expenseType: string;
+  illegalReason: string;
+  otherIllegalReason: string;
+  selectedInsuranceId: string;
+  outNumbers: Record<string, string>;
+  approvalId: string;
+  selectedApproverName: string;
+  isSkipApprove: boolean;
 }
 
 export interface FlightBookLinkmanDto {
@@ -131,9 +189,18 @@ export interface FlightInitBookResponse {
   PayTypes?: Record<string, string>;
   IllegalReasons?: string[];
   ExpenseTypes?: { Id: string; Name: string; Tag?: string }[];
-  Staffs?: unknown[];
-  Insurances?: Record<string, unknown>;
+  Staffs?: FlightInitStaff[];
+  Insurances?: Record<string, FlightInsuranceProduct[] | null>;
   Tmc?: Record<string, unknown>;
+  OutNumbers?: Record<string, string[]>;
+  TmcServices?: FlightTmcAgent[];
+  isSkipApprove?: boolean;
+  TravelFrom?: { TravelNumber?: string; Id?: string; Numbers?: string[] };
+}
+
+export interface SearchApprovalOption {
+  Text: string;
+  Value: string;
 }
 
 export type FlightBookParams = FlightOrderBookDto;

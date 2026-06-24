@@ -1,4 +1,5 @@
-import type { FlightDetailResult, FlightFare, FlightSegment } from "@ryx/shared-types";
+import type { FlightDetailResult, FlightFare, FlightListResult, FlightSegment } from "@ryx/shared-types";
+import type { FlightBookPolicy } from "@ryx/shared-types";
 
 import type { FlightCabinsQuery } from "@/lib/flight-detail";
 
@@ -11,6 +12,11 @@ export interface FlightBookSelection {
   segment: FlightSegment;
   fare: FlightFare;
   detailSnapshot?: FlightDetailResult;
+  listSnapshot?: FlightListResult;
+  /** Primary policy (first passenger) — banner / backward compat. */
+  flightPolicy?: FlightBookPolicy;
+  /** Per-passenger Home-Policy result — Legacy `bookInfo.flightPolicy` per passenger. */
+  flightPoliciesByPassengerId?: Record<string, FlightBookPolicy>;
   /** When cabin prices were last fetched — used for 10-minute timeout. */
   priceSnapshotAt: number;
   selectedAt: number;

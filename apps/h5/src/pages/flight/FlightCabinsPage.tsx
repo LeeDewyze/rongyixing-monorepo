@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ProductType, type FlightCabinTab, type FlightFare } from "@ryx/shared-types";
+import { ProductType, type FlightBookPolicy, type FlightFare } from "@ryx/shared-types";
 
 import { FlightCabinCard } from "@/components/flight/FlightCabinCard";
 import { FlightCabinsHeader } from "@/components/flight/FlightCabinsHeader";
@@ -23,11 +23,21 @@ import {
   resolveDetailSegment,
 } from "@/lib/flight-detail";
 import { saveFlightBookSelection } from "@/lib/flight-book-session";
+import { loadFlightListSnapshot } from "@/lib/flight-list-session";
 import { isFlightListTimedOut } from "@/lib/flight-list-refresh";
 import { buildPassengerSelectPath } from "@/lib/passenger-selection";
 import { getApiMode } from "@/lib/env";
 import { formatApiError } from "@/lib/formatApiError";
 import { getTicket } from "@/lib/session";
+import { getApi } from "@/lib/api";
+import {
+  buildFlightPolicyParams,
+  buildPassengerFlightPoliciesMap,
+  formatFlightPolicyBookBlockMessage,
+  isFlightPolicyBookAllowed,
+} from "@/lib/flight-book-policy";
+import { hasAgentIdentity } from "@/lib/flight-book-save-order";
+import { useIdentity } from "@/hooks/useIdentity";
 
 export function FlightCabinsPage() {
   const navigate = useNavigate();
@@ -35,6 +45,7 @@ export function FlightCabinsPage() {
   const [searchParams] = useSearchParams();
   const query = useMemo(() => parseFlightCabinsQuery(searchParams), [searchParams]);
   const { selected: selectedPassengers } = usePassengerSelection(ProductType.Flight);
+  const { data: identity } = useIdentity();
   const isAuthenticated = getApiMode() === "mock" || Boolean(getTicket());
   const listHref = searchParams.toString()
     ? `/flight/list?${searchParams.toString()}`
@@ -80,13 +91,65 @@ export function FlightCabinsPage() {
     navigate(listHref);
   }
 
-  function proceedToBook(fare: FlightFare) {
+  async function proceedToBook(fare: FlightFare) {
+    let flightPoliciesByPassengerId: Record<string, FlightBookPolicy> = {};
+    let flightPolicy = undefined;
+    const listSnapshot = loadFlightListSnapshot({
+      Date: query.date,
+      FromCode: query.fromCode,
+      ToCode: query.toCode,
+      FromAsAirport: query.fromAsAirport,
+      ToAsAirport: query.toAsAirport,
+    });
+    const policyParams = buildFlightPolicyParams({
+      listSnapshot: listSnapshot ?? undefined,
+      detailSnapshot: detail ?? undefined,
+      passengers: selectedPassengers,
+    });
+    if (policyParams && selectedPassengers.length > 0) {
+      try {
+        const policyResults = await getApi().flight.getFlightPolicy(policyParams);
+        flightPoliciesByPassengerId = buildPassengerFlightPoliciesMap({
+          results: policyResults,
+          passengers: selectedPassengers,
+          fare,
+          segmentNumber: segment.Number ?? segment.FlightNumber,
+        });
+        flightPolicy = selectedPassengers[0]
+          ? flightPoliciesByPassengerId[selectedPassengers[0].id]
+          : undefined;
+      } catch {
+        flightPolicy = undefined;
+        flightPoliciesByPassengerId = {};
+      }
+    }
+
+    const isAgent = hasAgentIdentity(identity);
+    for (const passenger of selectedPassengers) {
+      const passengerPolicy = flightPoliciesByPassengerId[passenger.id];
+      if (
+        passengerPolicy &&
+        !isFlightPolicyBookAllowed(passengerPolicy, isAgent)
+      ) {
+        window.alert(
+          formatFlightPolicyBookBlockMessage(
+            passengerPolicy,
+            passenger.passenger?.Name,
+          ),
+        );
+        return;
+      }
+    }
+
     saveFlightBookSelection({
       flightId,
       cabinsQuery: query,
       segment,
       fare,
       detailSnapshot: detail ?? undefined,
+      listSnapshot: listSnapshot ?? undefined,
+      flightPolicy,
+      flightPoliciesByPassengerId,
       priceSnapshotAt: dataUpdatedAt || Date.now(),
       selectedAt: Date.now(),
     });
@@ -107,7 +170,7 @@ export function FlightCabinsPage() {
       setTimeoutOpen(true);
       return;
     }
-    proceedToBook(fare);
+    void proceedToBook(fare);
   }
 
   function handleTimeoutConfirm() {

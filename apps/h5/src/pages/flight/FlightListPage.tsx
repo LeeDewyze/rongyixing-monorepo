@@ -30,6 +30,7 @@ import {
   validateFlightSearch,
 } from "@/lib/flight-search";
 import { buildCabinsPath, getFlightListEmptyMessage } from "@/lib/flight-list-refresh";
+import { saveFlightListSnapshot } from "@/lib/flight-list-session";
 import { parseLocalDate, todayDateString } from "@/lib/date-search";
 import { buildPassengerSelectPath } from "@/lib/passenger-selection";
 import { getApiMode } from "@/lib/env";
@@ -155,6 +156,12 @@ export function FlightListPage() {
 
   const { data, isLoading, isFetching, error, refetch, dataUpdatedAt } =
     useFlightList(apiListParams);
+
+  useEffect(() => {
+    if (data && apiListParams) {
+      saveFlightListSnapshot(apiListParams, data);
+    }
+  }, [apiListParams, data]);
 
   useEffect(() => {
     if (!resolvedListCities || !hasListQuery) return;

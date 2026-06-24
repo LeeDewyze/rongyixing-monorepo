@@ -15,6 +15,8 @@ export interface MemberPassenger {
   PassengerTypeName?: string;
   IsSelf?: boolean;
   travelFormId?: string;
+  travelNumber?: string;
+  Policy?: Record<string, unknown>;
   /** Legacy passenger gender (M/F). */
   Gender?: string;
 }

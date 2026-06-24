@@ -1,6 +1,24 @@
 import type { PassengerBookInfo, ProductType } from "@ryx/shared-types";
 import { ProductType as PT } from "@ryx/shared-types";
 
+import { getApiMode } from "@/lib/env";
+
+function isMockPassengerEntry(item: PassengerBookInfo): boolean {
+  const id = String(item.id ?? "");
+  const credId = String(item.credential?.Id ?? "");
+  const travelFormId =
+    "travelFormId" in item.passenger ? item.passenger.travelFormId : undefined;
+  if (/^P\d+$/i.test(id) || /^P\d+$/i.test(credId)) return true;
+  if (travelFormId && /^TF\d+$/i.test(String(travelFormId))) return true;
+  return false;
+}
+
+/** Drop mock-mode passengers when running against real APIs. */
+export function sanitizePassengerSelection(items: PassengerBookInfo[]): PassengerBookInfo[] {
+  if (getApiMode() === "mock") return items;
+  return items.filter((item) => !isMockPassengerEntry(item));
+}
+
 const STORAGE_PREFIX = "ryx_passenger_selection_";
 export const PASSENGER_SELECTION_EVENT = "ryx-passenger-selection-change";
 
@@ -21,7 +39,13 @@ export function loadPassengerSelection(forType: ProductType): PassengerBookInfo[
     const raw = localStorage.getItem(passengerSelectionKey(forType));
     if (raw) {
       const parsed = JSON.parse(raw) as PassengerBookInfo[];
-      if (Array.isArray(parsed)) return parsed;
+      if (Array.isArray(parsed)) {
+        const sanitized = sanitizePassengerSelection(parsed);
+        if (sanitized.length !== parsed.length) {
+          savePassengerSelection(forType, sanitized);
+        }
+        return sanitized;
+      }
     }
   } catch {
     /* ignore */
