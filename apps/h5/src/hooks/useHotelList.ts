@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import type { HotelListParams } from "@ryx/shared-types";
+import type { HotelDetailParams, HotelListParams, HotelPolicyParams } from "@ryx/shared-types";
 
 import { getApi } from "@/lib/api";
 
@@ -12,16 +12,21 @@ export function useHotelList(params: HotelListParams = {}, enabled = true) {
   });
 }
 
-export function useHotelDetail(hotelId: string, checkIn?: string, checkOut?: string) {
+export function useHotelDetail(params: HotelDetailParams | null) {
   return useQuery({
-    queryKey: ["hotel", "detail", hotelId, checkIn, checkOut],
-    queryFn: () =>
-      getApi().hotel.getDetail({
-        HotelId: hotelId,
-        CheckInDate: checkIn,
-        CheckOutDate: checkOut,
-      }),
-    enabled: Boolean(hotelId),
+    queryKey: ["hotel", "detail", params],
+    queryFn: () => getApi().hotel.getDetail(params!),
+    enabled: Boolean(
+      params?.HotelId && params.CheckInDate && params.CheckOutDate && params.CityCode,
+    ),
+  });
+}
+
+export function useHotelPolicy(params: HotelPolicyParams | null, enabled = true) {
+  return useQuery({
+    queryKey: ["hotel", "policy", params],
+    queryFn: () => getApi().hotel.getPolicy(params!),
+    enabled: enabled && Boolean(params?.RoomPlans && params.Passengers && params.CityCode),
   });
 }
 

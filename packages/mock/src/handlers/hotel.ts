@@ -1,14 +1,7 @@
 import type { IResponse } from "@ryx/shared-types";
-import {
-  HOTEL_FLOW_METHODS,
-  successResponse,
-  TMC_METHODS,
-} from "@ryx/api";
+import { HOTEL_FLOW_METHODS, successResponse, TMC_METHODS } from "@ryx/api";
 
-import {
-  MOCK_HOTEL_DETAIL,
-  MOCK_HOTEL_LIST,
-} from "../fixtures/hotel.js";
+import { MOCK_HOTEL_DETAIL, MOCK_HOTEL_LIST, MOCK_HOTEL_POLICY } from "../fixtures/hotel.js";
 import {
   createMockOrderDetail,
   MOCK_ORDER_PAYS,
@@ -25,10 +18,7 @@ function getOrCreateOrder(orderId: string) {
   return orderStore.get(orderId)!;
 }
 
-export function createHotelMockHandlers(): Record<
-  string,
-  (data: unknown) => IResponse<unknown>
-> {
+export function createHotelMockHandlers(): Record<string, (data: unknown) => IResponse<unknown>> {
   return {
     [TMC_METHODS.RESOURCE_DOMESTICHOTELCITY]: () =>
       successResponse([
@@ -51,11 +41,7 @@ export function createHotelMockHandlers(): Record<
       }
       return successResponse(MOCK_HOTEL_DETAIL);
     },
-    [HOTEL_FLOW_METHODS.POLICY]: () =>
-      successResponse({
-        IsIllegal: false,
-        Policies: ["符合差旅标准"],
-      }),
+    [HOTEL_FLOW_METHODS.POLICY]: () => successResponse(MOCK_HOTEL_POLICY),
     [HOTEL_FLOW_METHODS.INIT]: (data) => {
       const params = data as { PlanId?: string };
       const plan = MOCK_HOTEL_DETAIL.Rooms?.flatMap((r) => r.Plans).find(

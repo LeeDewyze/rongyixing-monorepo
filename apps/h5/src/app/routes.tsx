@@ -17,6 +17,8 @@ import { HotelDetailPage } from "@/pages/hotel/HotelDetailPage";
 import { HotelListPage } from "@/pages/hotel/HotelListPage";
 import { HotelPayPage } from "@/pages/hotel/HotelPayPage";
 import { HotelResultPage } from "@/pages/hotel/HotelResultPage";
+import { HotelShowImagesPage } from "@/pages/hotel/HotelShowImagesPage";
+import { HotelRoomDetailPage } from "@/pages/hotel/HotelRoomDetailPage";
 import { HotelSearchPage } from "@/pages/hotel/HotelSearchPage";
 import { PassengerSelectPage } from "@/pages/passenger/PassengerSelectPage";
 import { PassengerCredentialPage } from "@/pages/passenger/PassengerCredentialPage";
@@ -72,7 +74,9 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <HotelSearchPage /> },
       { path: "list", element: <HotelListPage /> },
+      { path: ":hotelId/images", element: <HotelShowImagesPage /> },
       { path: ":hotelId", element: <HotelDetailPage /> },
+      { path: ":hotelId/room/:roomId", element: <HotelRoomDetailPage /> },
       { path: ":hotelId/book", element: <HotelBookPage /> },
       { path: "result/:orderId", element: <HotelResultPage /> },
       { path: "pay/:orderId", element: <HotelPayPage /> },

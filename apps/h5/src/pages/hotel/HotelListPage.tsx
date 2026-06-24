@@ -141,13 +141,15 @@ export function HotelListPage() {
     setCityPickerOpen(false);
   }
 
-  function openDetail(hotelId: string) {
+  function openDetail(hotel: (typeof hotels)[number]) {
     const params = new URLSearchParams({
       checkIn,
       checkOut,
       cityCode: resolvedCity?.Code ?? cityCode,
+      cityName: resolvedCity?.Name ?? cityName,
+      minPrice: String(hotel.MinPrice ?? ""),
     });
-    navigate(`/hotel/${hotelId}?${params.toString()}`);
+    navigate(`/hotel/${hotel.HotelId}?${params.toString()}`);
   }
 
   return (
@@ -226,7 +228,7 @@ export function HotelListPage() {
           <ul className="flex flex-col gap-2">
             {hotels.map((hotel) => (
               <li key={hotel.HotelId} className="overflow-hidden rounded-lg bg-white">
-                <HotelListItem hotel={hotel} onClick={() => openDetail(hotel.HotelId)} />
+                <HotelListItem hotel={hotel} onClick={() => openDetail(hotel)} />
               </li>
             ))}
           </ul>

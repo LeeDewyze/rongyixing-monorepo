@@ -46,7 +46,7 @@ export function formatCabinTypeName(cabinType: number | string | undefined): str
   }
 }
 
-function normalizeEntityKeys(value: unknown): unknown {
+export function normalizeEntityKeys(value: unknown): unknown {
   if (Array.isArray(value)) {
     return value.map((item) => normalizeEntityKeys(item));
   }
