@@ -24,7 +24,7 @@ import {
   buildPolicyColorMap,
   formatHotelPolicyBlockMessage,
   isHotelPlanBookable,
-  resolvePlanPolicyColor,
+  resolvePlanBookingPolicyColor,
 } from "@/lib/hotel-book-policy";
 import { saveHotelGalleryImages } from "@/lib/hotel-gallery-session";
 import { formatApiError } from "@/lib/formatApiError";
@@ -67,6 +67,7 @@ export function HotelDetailPage() {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [policyFilterOpen, setPolicyFilterOpen] = useState(false);
   const [passengerRequiredOpen, setPassengerRequiredOpen] = useState(false);
+  const [policyFilterEnabled, setPolicyFilterEnabled] = useState(true);
   const [filterPassengerId, setFilterPassengerId] = useState<string | null>(null);
   const { expandedRoomId, toggleRoom } = useExpandedRoomState();
 
@@ -91,6 +92,7 @@ export function HotelDetailPage() {
     data: policyResults,
     isLoading: isPolicyLoading,
     isFetching: isPolicyFetching,
+    refetch: refetchPolicy,
   } = useHotelPolicy(policyParams, detailReady && selectedPassengers.length > 0);
   const isPolicyChecking =
     selectedPassengers.length > 0 && (!detailReady || isPolicyLoading || isPolicyFetching);
@@ -101,11 +103,19 @@ export function HotelDetailPage() {
         ? {}
         : buildPolicyColorMap({
             results: policyResults,
-            filterPassengerId,
+            filterPassengerId: policyFilterEnabled ? filterPassengerId : null,
             passengers: selectedPassengers,
             detail: data!,
           }),
-    [data, detailReady, filterPassengerId, isPolicyChecking, policyResults, selectedPassengers],
+    [
+      data,
+      detailReady,
+      filterPassengerId,
+      isPolicyChecking,
+      policyFilterEnabled,
+      policyResults,
+      selectedPassengers,
+    ],
   );
   const policyChecked = detailReady && selectedPassengers.length > 0 && !isPolicyChecking;
 
@@ -133,6 +143,18 @@ export function HotelDetailPage() {
       navigate("/hotel", { replace: true });
     }
   }, [navigate, query.checkIn, query.checkOut, query.cityCode]);
+
+  // Legacy initFilterPolicy: default to first passenger until user picks「不过滤差标」.
+  useEffect(() => {
+    if (selectedPassengers.length === 0) {
+      setFilterPassengerId(null);
+      return;
+    }
+    setFilterPassengerId((prev) => {
+      if (prev && selectedPassengers.some((item) => item.id === prev)) return prev;
+      return selectedPassengers[0]?.id ?? null;
+    });
+  }, [selectedPassengers]);
 
   function handleBack() {
     const listParams = new URLSearchParams({
@@ -174,6 +196,19 @@ export function HotelDetailPage() {
     navigate(passengerHref);
   }
 
+  /** Legacy filterPassengerPolicy always calls getPolicy() after filter sheet confirm. */
+  async function handlePolicyFilterConfirm(passengerId: string | null) {
+    if (passengerId === null) {
+      setPolicyFilterEnabled(false);
+    } else {
+      setPolicyFilterEnabled(true);
+      setFilterPassengerId(passengerId);
+    }
+    if (detailReady && selectedPassengers.length > 0) {
+      await refetchPolicy();
+    }
+  }
+
   function handleToggleRoom(roomId: string) {
     if (!requirePassengersBeforeAction()) return;
     toggleRoom(roomId);
@@ -185,10 +220,10 @@ export function HotelDetailPage() {
 
   function handleBook(plan: HotelRoomPlan) {
     if (!requirePassengersBeforeAction()) return;
-    const color = resolvePlanPolicyColor(plan, policyColors);
     const policyChecked = detailReady && selectedPassengers.length > 0 && !isPolicyChecking;
-    if (!isHotelPlanBookable(color, isAgent, policyChecked)) {
-      window.alert(formatHotelPolicyBlockMessage(color));
+    const bookColor = resolvePlanBookingPolicyColor(plan, policyResults, selectedPassengers);
+    if (!isHotelPlanBookable(bookColor, isAgent, policyChecked)) {
+      window.alert(formatHotelPolicyBlockMessage(bookColor));
       return;
     }
     const bookParams = new URLSearchParams({
@@ -335,9 +370,10 @@ export function HotelDetailPage() {
       <HotelPolicyFilterSheet
         open={policyFilterOpen}
         passengers={selectedPassengers}
-        selectedId={filterPassengerId}
+        showAllSelected={!policyFilterEnabled}
+        selectedPassengerId={filterPassengerId}
         onClose={() => setPolicyFilterOpen(false)}
-        onConfirm={setFilterPassengerId}
+        onConfirm={handlePolicyFilterConfirm}
       />
 
       <HotelPassengerRequiredDialog

@@ -10,7 +10,9 @@ const SHEET_ANIMATION_MS = 360;
 interface HotelPolicyFilterSheetProps {
   open: boolean;
   passengers: PassengerBookInfo[];
-  selectedId: string | null;
+  /** True when「不过滤差标」is the active filter (distinct from unset passenger id). */
+  showAllSelected: boolean;
+  selectedPassengerId: string | null;
   onClose: () => void;
   onConfirm: (passengerId: string | null) => void;
 }
@@ -85,21 +87,22 @@ function SelectionCheck({ selected }: { selected: boolean }) {
 export function HotelPolicyFilterSheet({
   open,
   passengers,
-  selectedId,
+  showAllSelected,
+  selectedPassengerId,
   onClose,
   onConfirm,
 }: HotelPolicyFilterSheetProps) {
   const [visible, setVisible] = useState(false);
-  const [draftId, setDraftId] = useState<string | null>(selectedId);
+  const [draftId, setDraftId] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
-      setDraftId(selectedId ?? passengers[0]?.id ?? null);
+      setDraftId(showAllSelected ? null : (selectedPassengerId ?? passengers[0]?.id ?? null));
       requestAnimationFrame(() => setVisible(true));
       return;
     }
     setVisible(false);
-  }, [open, passengers, selectedId]);
+  }, [open, passengers, selectedPassengerId, showAllSelected]);
 
   function handleClose() {
     setVisible(false);
@@ -181,7 +184,7 @@ export function HotelPolicyFilterSheet({
               <div className="min-w-0 flex-1">
                 <p className="text-[15px] font-semibold text-[#1A1A1A]">不过滤差标</p>
                 <p className="mt-0.5 text-[12px] leading-relaxed text-[#8B919A]">
-                  展示所有房型的价格与预订状态
+                  不按旅客差标过滤，全部展示为可预订
                 </p>
               </div>
               <SelectionCheck selected={showAll} />
@@ -189,10 +192,16 @@ export function HotelPolicyFilterSheet({
           </section>
 
           {passengers.length > 0 ? (
-            <section className="hotel-policy-filter-sheet__section" role="radiogroup" aria-label="按旅客过滤">
+            <section
+              className="hotel-policy-filter-sheet__section"
+              role="radiogroup"
+              aria-label="按旅客过滤"
+            >
               <p className="hotel-policy-filter-sheet__section-label">
                 按旅客查看
-                <span className="hotel-policy-filter-sheet__section-badge">{passengers.length}</span>
+                <span className="hotel-policy-filter-sheet__section-badge">
+                  {passengers.length}
+                </span>
               </p>
               <div className="hotel-policy-filter-sheet__list">
                 {passengers.map((passenger) => {
@@ -216,11 +225,15 @@ export function HotelPolicyFilterSheet({
                         {passengerInitial(passenger.passenger.Name)}
                       </span>
                       <div className="hotel-policy-filter-sheet__meta">
-                        <p className="hotel-policy-filter-sheet__name">{passenger.passenger.Name}</p>
+                        <p className="hotel-policy-filter-sheet__name">
+                          {passenger.passenger.Name}
+                        </p>
                         {cred ? (
                           <div className="hotel-policy-filter-sheet__cred-row">
                             {credType ? (
-                              <span className="hotel-policy-filter-sheet__cred-tag">{credType}</span>
+                              <span className="hotel-policy-filter-sheet__cred-tag">
+                                {credType}
+                              </span>
                             ) : null}
                             <span className="hotel-policy-filter-sheet__cred">{cred}</span>
                           </div>

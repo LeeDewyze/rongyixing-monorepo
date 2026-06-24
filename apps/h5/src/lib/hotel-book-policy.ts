@@ -77,14 +77,76 @@ export function policyItemMatchesPlanUniqueId(
 /** Legacy filterPassengerPolicy uses passenger AccountId as PassengerKey. */
 export function resolveFilterPassengerAccountId(
   passengers: PassengerBookInfo[],
-  filterPassengerId: string | null,
+  filterPassengerId: string | null | undefined,
 ): string | undefined {
-  const selectedPassenger = filterPassengerId
-    ? passengers.find((item) => item.id === filterPassengerId)
-    : passengers[0];
+  if (filterPassengerId == null) return undefined;
+  const selectedPassenger = passengers.find((item) => item.id === filterPassengerId);
   if (!selectedPassenger) return undefined;
   const accountId = getPassengerAccountId(selectedPassenger);
   return accountId || undefined;
+}
+
+function buildUnfilteredDisplayColorMap(
+  detail: HotelDetailResponse,
+): Record<string, HotelPolicyColor> {
+  const colors: Record<string, HotelPolicyColor> = {};
+  for (const room of detail.Rooms ?? []) {
+    for (const plan of room.Plans) {
+      const uniqueId = getPlanUniqueId(plan);
+      if (!uniqueId) continue;
+      colors[uniqueId] = "success";
+    }
+  }
+  return colors;
+}
+
+function resolvePassengerPlanPolicyColor(
+  plan: HotelRoomPlan,
+  entry: HotelPolicyPassengerResult | undefined,
+): HotelPolicyColor {
+  const uniqueId = getPlanUniqueId(plan);
+  if (!uniqueId) return "success";
+
+  if (!entry) {
+    return isPlanFull(plan) ? "danger_full" : "success";
+  }
+
+  const policy = entry.HotelPolicies?.find((item) => policyItemMatchesPlanUniqueId(item, uniqueId));
+  if (policy) {
+    return resolvePolicyItemColor(policy, plan);
+  }
+
+  return isPlanFull(plan) ? "danger_full" : "success";
+}
+
+const POLICY_COLOR_STRICTNESS: Record<HotelPolicyColor, number> = {
+  success: 1,
+  warning: 2,
+  danger_disabled: 3,
+  danger_nopermission: 4,
+  danger_full: 5,
+};
+
+/** Strictest policy color across passengers — used when validating book clicks. */
+export function resolvePlanBookingPolicyColor(
+  plan: HotelRoomPlan,
+  results: HotelPolicyPassengerResult[] | undefined,
+  passengers: PassengerBookInfo[],
+): HotelPolicyColor | undefined {
+  const uniqueId = getPlanUniqueId(plan);
+  if (!uniqueId) return undefined;
+  if (!passengers.length) return undefined;
+
+  let strictest: HotelPolicyColor | undefined;
+  for (const passenger of passengers) {
+    const accountId = getPassengerAccountId(passenger);
+    const entry = results?.find((item) => String(item.PassengerKey ?? "") == accountId);
+    const color = resolvePassengerPlanPolicyColor(plan, entry);
+    if (!strictest || POLICY_COLOR_STRICTNESS[color] > POLICY_COLOR_STRICTNESS[strictest]) {
+      strictest = color;
+    }
+  }
+  return strictest;
 }
 
 function findPolicyEntry(
@@ -230,30 +292,20 @@ export function buildPolicyColorMap(input: {
   const { results, filterPassengerId, passengers, detail } = input;
   if (passengers.length === 0) return {};
 
+  // Legacy 不过滤差标: filterPassengerPolicy("") → no PassengerKey match → all success.
+  if (filterPassengerId === null) {
+    return buildUnfilteredDisplayColorMap(detail);
+  }
+
   if (!results?.length) {
-    const colors: Record<string, HotelPolicyColor> = {};
-    for (const room of detail.Rooms ?? []) {
-      for (const plan of room.Plans) {
-        const uniqueId = getPlanUniqueId(plan);
-        if (!uniqueId) continue;
-        colors[uniqueId] = "success";
-      }
-    }
-    return colors;
+    return buildUnfilteredDisplayColorMap(detail);
   }
 
   const entry = findPolicyEntry(results, passengers, filterPassengerId);
   const colors: Record<string, HotelPolicyColor> = {};
 
   if (!entry) {
-    for (const room of detail.Rooms ?? []) {
-      for (const plan of room.Plans) {
-        const uniqueId = getPlanUniqueId(plan);
-        if (!uniqueId) continue;
-        colors[uniqueId] = "success";
-      }
-    }
-    return colors;
+    return buildUnfilteredDisplayColorMap(detail);
   }
 
   for (const room of detail.Rooms ?? []) {
@@ -353,7 +405,29 @@ export interface HotelPlanBookButtonPresentation {
   shellClass: string;
   topClass: string;
   bottomClass: string;
+  topLabelClass: string;
   disabled: boolean;
+  priceClass: string;
+}
+
+/** Legacy HotelPaymentType labels (Prepay / SelfPay / Settle). */
+export function getHotelPlanPayTypeLabel(plan: HotelRoomPlan): string {
+  const paymentType = plan.PaymentType;
+  if (paymentType === 2) return "到店付";
+  if (paymentType === 4) return "月结";
+  if (paymentType === 1) return "预付";
+
+  const vars = plan.VariablesObj;
+  const fromVars = vars?.PayType ?? vars?.PaymentType ?? vars?.PayTypeName;
+  if (fromVars != null && String(fromVars).trim()) return String(fromVars);
+  if (plan.PlanName.includes("到店付") || plan.PlanName.includes("现付")) return "到店付";
+  if (plan.PlanName.includes("月结")) return "月结";
+  if (plan.PlanName.includes("预付")) return "预付";
+  return "预付";
+}
+
+function blockedBottomLabel(payTypeLabel: string, isAgent: boolean): string {
+  return isAgent ? payTypeLabel : "不可预订";
 }
 
 /** Legacy room-plan-item book button labels and colors. */
@@ -370,29 +444,35 @@ export function getHotelPlanBookButtonPresentation(
       shellClass: "border-[#EF4444]",
       topClass: "bg-[#EF4444] text-white",
       bottomClass: "bg-white text-[#EF4444]",
+      topLabelClass: "text-[13px] font-semibold",
       disabled: true,
+      priceClass: "text-[#EF4444] opacity-70",
     };
   }
 
   if (policyColor === "danger_disabled") {
     return {
       topLabel: "超标",
-      bottomLabel: "不可预订",
+      bottomLabel: blockedBottomLabel(payTypeLabel, isAgent),
       shellClass: "border-[#EF4444]",
       topClass: "bg-[#EF4444] text-white",
       bottomClass: "bg-white text-[#EF4444]",
+      topLabelClass: "text-[13px] font-semibold",
       disabled: !isAgent,
+      priceClass: "text-[#EF4444] opacity-70",
     };
   }
 
   if (policyColor === "danger_nopermission") {
     return {
       topLabel: "无权限",
-      bottomLabel: "不可预订",
+      bottomLabel: blockedBottomLabel(payTypeLabel, isAgent),
       shellClass: "border-[#EF4444]",
       topClass: "bg-[#EF4444] text-white",
       bottomClass: "bg-white text-[#EF4444]",
+      topLabelClass: "text-[12px] font-semibold",
       disabled: !isAgent,
+      priceClass: "text-[#EF4444] opacity-70",
     };
   }
 
@@ -403,18 +483,22 @@ export function getHotelPlanBookButtonPresentation(
       shellClass: "border-[#CCCCCC]",
       topClass: "bg-[#CCCCCC] text-white",
       bottomClass: "bg-white text-[#9CA3AF]",
+      topLabelClass: "text-[11px] font-semibold",
       disabled: true,
+      priceClass: "text-[#9CA3AF]",
     };
   }
 
   if (policyColor === "warning") {
     return {
-      topLabel: "预订",
+      topLabel: "违规预订",
       bottomLabel: payTypeLabel,
       shellClass: "border-[#FF8C00]",
       topClass: "bg-[#FF8C00] text-white",
       bottomClass: "bg-white text-[#FF8C00]",
+      topLabelClass: "text-[11px] font-semibold leading-tight",
       disabled: false,
+      priceClass: "text-[#FF8C00]",
     };
   }
 
@@ -424,6 +508,8 @@ export function getHotelPlanBookButtonPresentation(
     shellClass: "border-[#22C55E]",
     topClass: "bg-[#22C55E] text-white",
     bottomClass: "bg-white text-[#2768FA]",
+    topLabelClass: "text-[13px] font-semibold",
     disabled: false,
+    priceClass: "text-[#2768FA]",
   };
 }

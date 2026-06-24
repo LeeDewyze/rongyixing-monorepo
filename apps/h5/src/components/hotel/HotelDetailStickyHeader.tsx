@@ -26,6 +26,10 @@ function BackIcon() {
   );
 }
 
+function HeaderActionDivider() {
+  return <span className="h-3.5 w-px shrink-0 bg-[#2768FA]/20" aria-hidden />;
+}
+
 export function HotelDetailStickyHeader({
   hotelName,
   passengerCount,
@@ -36,42 +40,45 @@ export function HotelDetailStickyHeader({
 }: HotelDetailStickyHeaderProps) {
   return (
     <div className={`pt-[env(safe-area-inset-top)] ${HOTEL_DETAIL_FONT}`}>
-      <div className="flex h-12 items-center gap-2 px-3">
+      <div className="flex h-12 items-center gap-1.5 px-2.5">
         <button
           type="button"
           onClick={onBack}
-          className="flex h-12 w-8 shrink-0 items-center justify-center active:opacity-70"
+          className="flex h-10 w-9 shrink-0 items-center justify-center rounded-full active:bg-white/40"
           aria-label="返回"
         >
           <BackIcon />
         </button>
 
         <h1
-          className="min-w-0 flex-1 truncate text-[16px] font-semibold leading-tight"
+          className="min-w-0 flex-1 truncate pr-1 text-[15px] font-semibold leading-tight tracking-tight"
           style={{ color: HOTEL_CHROME.title }}
         >
           {hotelName}
         </h1>
 
-        <div className="flex shrink-0 items-center gap-4">
+        <div className="flex shrink-0 items-center rounded-full border border-white/80 bg-white/60 py-0.5 pl-0.5 pr-1 shadow-[0_1px_6px_rgba(39,104,250,0.1)] backdrop-blur-[3px]">
           <button
             type="button"
             disabled={!canFilterPolicy}
             onClick={onOpenPolicyFilter}
-            className="text-[14px] font-medium active:opacity-70 disabled:font-normal"
+            className="whitespace-nowrap rounded-full px-2 py-1.5 text-[12px] font-medium leading-none active:bg-white/70 disabled:opacity-50"
             style={{ color: canFilterPolicy ? HOTEL_CHROME.action : HOTEL_CHROME.actionDisabled }}
           >
             过滤差标
           </button>
+
+          <HeaderActionDivider />
+
           <Link
             to={passengerHref}
-            className="relative inline-flex items-center gap-1.5 text-[14px] font-medium active:opacity-70"
+            className="relative inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-1.5 pr-3 text-[12px] font-medium leading-none active:bg-white/70"
             style={{ color: HOTEL_CHROME.action }}
           >
-            <span>添加旅客</span>
+            添加旅客
             {passengerCount > 0 ? (
-              <span className="flex size-5 items-center justify-center rounded-full bg-[#E72932] text-[11px] font-medium leading-none text-white">
-                {passengerCount}
+              <span className="absolute -right-0.5 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#E72932] px-0.5 text-[10px] font-semibold leading-none text-white ring-2 ring-white/80">
+                {passengerCount > 9 ? "9+" : passengerCount}
               </span>
             ) : null}
           </Link>

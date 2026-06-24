@@ -64,6 +64,8 @@ export interface HotelRoomPlan {
   BeginDate?: string;
   EndDate?: string;
   RoomPlanUniqueId?: string;
+  /** Legacy RoomPlan.PaymentType (1 prepaid, 2 pay at hotel, 4 monthly). */
+  PaymentType?: number;
   VariablesObj?: Record<string, unknown>;
 }
 

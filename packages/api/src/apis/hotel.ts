@@ -181,6 +181,7 @@ type LegacyRoomPlan = {
   VariablesObj?: Record<string, unknown>;
   RoomPlanPrices?: { Price?: number | string }[];
   RoomPlanRules?: { Description?: string }[];
+  PaymentType?: number;
   Room?: { Id?: string };
 };
 
@@ -794,6 +795,10 @@ function mapLegacyRoomPlan(
     BeginDate: plan.BeginDate,
     EndDate: plan.EndDate,
     RoomPlanUniqueId: uniqueId,
+    PaymentType:
+      typeof plan.PaymentType === "number" && Number.isFinite(plan.PaymentType)
+        ? plan.PaymentType
+        : undefined,
     VariablesObj: vars,
   };
 }

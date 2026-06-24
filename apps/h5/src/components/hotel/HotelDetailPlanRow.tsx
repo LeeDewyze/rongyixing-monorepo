@@ -1,7 +1,11 @@
 import type { HotelPolicyColor, HotelRoomPlan } from "@ryx/shared-types";
 
 import { HOTEL_DETAIL_FONT } from "@/components/hotel/hotel-detail-chrome";
-import { getHotelPlanBookButtonPresentation, isHotelPlanBookable } from "@/lib/hotel-book-policy";
+import {
+  getHotelPlanBookButtonPresentation,
+  getHotelPlanPayTypeLabel,
+  isHotelPlanBookable,
+} from "@/lib/hotel-book-policy";
 
 interface HotelDetailPlanRowProps {
   plan: HotelRoomPlan;
@@ -31,14 +35,6 @@ function formatCancelPolicyLabel(cancelPolicy?: string): string {
   return "限时取消";
 }
 
-function getPayTypeLabel(plan: HotelRoomPlan): string {
-  const vars = plan.VariablesObj;
-  const fromVars = vars?.PayType ?? vars?.PaymentType ?? vars?.PayTypeName;
-  if (fromVars != null && String(fromVars).trim()) return String(fromVars);
-  if (plan.PlanName.includes("预付")) return "预付";
-  return "预付";
-}
-
 function cancelChipClass(cancelLabel: string): string {
   if (cancelLabel === "不可取消") {
     return "bg-[#FFF7ED] text-[#EA580C] ring-1 ring-[#FFEDD5]";
@@ -57,7 +53,7 @@ export function HotelDetailPlanRow({
 }: HotelDetailPlanRowProps) {
   const breakfast = formatBreakfastLabel(plan.Breakfast);
   const cancelLabel = formatCancelPolicyLabel(plan.CancelPolicy);
-  const payLabel = getPayTypeLabel(plan);
+  const payLabel = getHotelPlanPayTypeLabel(plan);
   const awaitingPolicy = !policyChecked;
   const displayColor = policyColor ?? (policyChecked ? "success" : undefined);
   const displayBookable = isHotelPlanBookable(displayColor, isAgent, policyChecked);
@@ -96,9 +92,7 @@ export function HotelDetailPlanRow({
         </div>
 
         <div className="flex shrink-0 flex-col items-end justify-between gap-2">
-          <div
-            className={`flex items-baseline ${displayBookable ? "text-[#2768FA]" : "text-[#EF4444] opacity-70"}`}
-          >
+          <div className={`flex items-baseline ${button.priceClass}`}>
             <span className="text-[11px] font-medium">¥</span>
             <span className="text-[22px] font-semibold leading-none tracking-tight">
               {Math.round(plan.Price)}
@@ -106,7 +100,7 @@ export function HotelDetailPlanRow({
           </div>
 
           {loading || awaitingPolicy ? (
-            <div className="flex h-[52px] w-[56px] items-center justify-center rounded-lg bg-[#F3F4F6] text-[11px] text-[#999999]">
+            <div className="flex h-[52px] w-[62px] items-center justify-center rounded-lg bg-[#F3F4F6] text-[11px] text-[#999999]">
               校验中
             </div>
           ) : (
@@ -114,10 +108,10 @@ export function HotelDetailPlanRow({
               type="button"
               disabled={button.disabled}
               onClick={onBook}
-              className={`flex w-[56px] shrink-0 flex-col overflow-hidden rounded-md border ${button.shellClass} disabled:opacity-100 active:opacity-90`}
+              className={`flex w-[62px] shrink-0 flex-col overflow-hidden rounded-md border ${button.shellClass} disabled:opacity-100 active:opacity-90`}
             >
               <span
-                className={`flex h-[30px] items-center justify-center text-[13px] font-semibold ${button.topClass}`}
+                className={`flex h-[30px] items-center justify-center px-0.5 text-center ${button.topLabelClass} ${button.topClass}`}
               >
                 {button.topLabel}
               </span>
