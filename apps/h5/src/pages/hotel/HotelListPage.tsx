@@ -205,7 +205,7 @@ export function HotelListPage() {
 
         {error ? (
           <div className="rounded-lg bg-white px-4 py-8 text-center">
-            <p className="text-sm text-destructive">{formatApiError(error)}</p>
+            <p className="text-sm text-destructive">{formatApiError(error, "hotel")}</p>
             <button
               type="button"
               className="mt-3 text-sm font-medium text-[#2768FA]"

@@ -56,8 +56,14 @@ export function FlightCabinsPage() {
     [query, selectedPassengers.length],
   );
 
-  const { data: rawDetail, isLoading, isFetching, error, refetch, dataUpdatedAt } =
-    useFlightDetail(detailParams);
+  const {
+    data: rawDetail,
+    isLoading,
+    isFetching,
+    error,
+    refetch,
+    dataUpdatedAt,
+  } = useFlightDetail(detailParams);
 
   const detail = useMemo(() => normalizeFlightDetailData(rawDetail), [rawDetail]);
 
@@ -239,7 +245,7 @@ export function FlightCabinsPage() {
 
       {isAuthenticated && error && !isFetching && !detail?.FlightFares?.length && (
         <div className="px-3 py-6 text-center">
-          <p className="text-sm text-destructive">{formatApiError(error)}</p>
+          <p className="text-sm text-destructive">{formatApiError(error, "flight")}</p>
           <button
             type="button"
             className="mt-2 text-sm font-medium text-[#5099fe]"

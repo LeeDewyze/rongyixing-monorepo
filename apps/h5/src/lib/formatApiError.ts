@@ -2,16 +2,35 @@ import { ApiError } from "@ryx/api";
 
 import { getApiMode } from "@/lib/env";
 
+export type ApiErrorContext = "flight" | "train" | "hotel" | "generic";
+
+const LIST_FETCH_FAILED: Record<ApiErrorContext, string> = {
+  flight: "航班列表获取失败，请确认出发/到达城市后重试；若仍失败请联系管理员",
+  train: "车次列表获取失败，请确认出发/到达站及日期后重试；若仍失败请联系管理员",
+  hotel: "酒店列表获取失败，请确认城市及入住日期后重试；若仍失败请联系管理员",
+  generic: "列表获取失败，请确认查询条件后重试；若仍失败请联系管理员",
+};
+
+const LOGIN_EXPIRED: Record<ApiErrorContext, string> = {
+  flight: "登录已过期，请重新登录后再查询航班",
+  train: "登录已过期，请重新登录后再查询车次",
+  hotel: "登录已过期，请重新登录后再查询酒店",
+  generic: "登录已过期，请重新登录",
+};
+
 /** Human-readable API failure for page-level error UI. */
-export function formatApiError(error: unknown): string {
+export function formatApiError(error: unknown, context: ApiErrorContext = "generic"): string {
   if (error instanceof ApiError) {
     if (error.code?.toLowerCase() === "nologin" || error.message.includes("登陆超时")) {
-      return "登录已过期，请重新登录后再查询航班";
+      return LOGIN_EXPIRED[context];
     }
     if (error.message.includes("没有获取列表")) {
-      return "航班列表获取失败，请确认出发/到达城市后重试；若仍失败请联系管理员";
+      return LIST_FETCH_FAILED[context];
     }
-    if (error.message.includes("没有获取详情") || error.message.includes("舱位")) {
+    if (
+      context === "flight" &&
+      (error.message.includes("没有获取详情") || error.message.includes("舱位"))
+    ) {
       return "舱位信息获取失败，请返回列表重新选择航班";
     }
     if (error.status === 501 || error.message.includes("501")) {

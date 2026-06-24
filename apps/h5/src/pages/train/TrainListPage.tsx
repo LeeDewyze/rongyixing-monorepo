@@ -347,7 +347,7 @@ export function TrainListPage() {
 
           {isAuthenticated && error && !isFetching && displayed.length === 0 && (
             <div className="py-4 text-center">
-              <p className="text-sm text-destructive">{formatApiError(error)}</p>
+              <p className="text-sm text-destructive">{formatApiError(error, "train")}</p>
               <button
                 type="button"
                 className="mt-2 text-sm font-medium text-[#5099fe]"

@@ -15,11 +15,11 @@ import "./train-modify-search-sheet.css";
 
 const SHEET_ANIMATION_MS = 320;
 
-const PANEL_PRIMARY_TEXT =
-  "text-[17px] font-medium leading-none tracking-normal text-[#010101] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
+const FONT = "[font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
 
-const PANEL_SECONDARY_TEXT =
-  "text-[14px] font-[400] leading-[100%] tracking-[0] text-[#666666] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
+const PRIMARY_TEXT = `text-[17px] font-medium leading-none tracking-normal text-[#333333] ${FONT}`;
+
+const SECONDARY_TEXT = `text-[14px] font-normal leading-[100%] tracking-[0] text-[#666666] ${FONT}`;
 
 interface TrainModifySearchSheetProps {
   open: boolean;
@@ -34,7 +34,7 @@ function SwapStationsIcon({ onSwap }: { onSwap: () => void }) {
     <button
       type="button"
       aria-label="交换出发站和到达站"
-      className="flex shrink-0 items-center justify-center"
+      className="train-modify-search-sheet__swap"
       onClick={onSwap}
     >
       <img
@@ -42,7 +42,7 @@ function SwapStationsIcon({ onSwap }: { onSwap: () => void }) {
         alt=""
         width={27}
         height={24}
-        className="block h-6 w-[27.32px] object-contain"
+        className="block h-6 w-[27px] object-contain"
         aria-hidden
       />
     </button>
@@ -130,49 +130,49 @@ export function TrainModifySearchSheet({
         />
 
         <div className="train-modify-search-sheet__panel-wrap" style={{ top: headerTop }}>
-          <div className="train-modify-search-sheet__panel px-4 pb-4 pt-3">
-            <div className="flex h-12 items-center gap-2">
+          <div className="train-modify-search-sheet__panel">
+            <div className="train-modify-search-sheet__panel-inner">
+              <div className="train-modify-search-sheet__field">
+                <button
+                  type="button"
+                  className={`train-modify-search-sheet__field-button text-left ${PRIMARY_TEXT}`}
+                  onClick={() => form.setPicker("from")}
+                >
+                  {displayStationName(form.fromStation)}
+                </button>
+                <SwapStationsIcon onSwap={form.swapStations} />
+                <button
+                  type="button"
+                  className={`train-modify-search-sheet__field-button text-right ${PRIMARY_TEXT}`}
+                  onClick={() => form.setPicker("to")}
+                >
+                  {displayStationName(form.toStation)}
+                </button>
+              </div>
+
               <button
                 type="button"
-                className={`min-w-0 flex-1 truncate text-left ${PANEL_PRIMARY_TEXT}`}
-                onClick={() => form.setPicker("from")}
+                className="train-modify-search-sheet__date-row"
+                onClick={() => setCalendarOpen(true)}
               >
-                {displayStationName(form.fromStation)}
+                <span className={PRIMARY_TEXT}>{formatHotelDateShort(form.date)}</span>
+                <span className={`ml-1.5 ${SECONDARY_TEXT}`}>{relativeDayLabel(form.date)}</span>
               </button>
-              <SwapStationsIcon onSwap={form.swapStations} />
+
+              {form.validationError ? (
+                <p className={`pt-2 text-center text-sm text-destructive ${FONT}`}>
+                  {form.validationError}
+                </p>
+              ) : null}
+
               <button
                 type="button"
-                className={`min-w-0 flex-1 truncate text-right ${PANEL_PRIMARY_TEXT}`}
-                onClick={() => form.setPicker("to")}
+                className={`train-modify-search-sheet__search ${FONT}`}
+                onClick={handleSubmit}
               >
-                {displayStationName(form.toStation)}
+                搜索
               </button>
             </div>
-
-            <button
-              type="button"
-              className="mt-3 flex h-12 w-full items-center text-left active:opacity-90"
-              onClick={() => setCalendarOpen(true)}
-            >
-              <span className={PANEL_PRIMARY_TEXT}>{formatHotelDateShort(form.date)}</span>
-              <span className={`ml-1 ${PANEL_SECONDARY_TEXT}`}>{relativeDayLabel(form.date)}</span>
-            </button>
-
-            {form.validationError ? (
-              <p className="pt-2 text-center text-sm text-destructive">{form.validationError}</p>
-            ) : null}
-
-            <button
-              type="button"
-              className="mt-4 flex h-10 w-full items-center justify-center rounded-[24px] text-[17px] font-medium text-white active:opacity-90 [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]"
-              style={{
-                background: "linear-gradient(270deg, #2768FA 0%, #33A1F9 100%)",
-                boxShadow: "0px 2px 16px 0px rgba(175, 175, 175, 0.2)",
-              }}
-              onClick={handleSubmit}
-            >
-              搜索
-            </button>
           </div>
         </div>
       </div>
