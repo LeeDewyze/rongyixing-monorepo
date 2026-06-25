@@ -102,8 +102,11 @@ export function createHotelMockHandlers(): Record<string, (data: unknown) => IRe
     [HOTEL_FLOW_METHODS.GET_ORDER_PAYS]: () => successResponse(MOCK_ORDER_PAYS),
     [HOTEL_FLOW_METHODS.PAY_CREATE]: (data) => {
       const params = data as { OrderId?: string };
+      const payOrderId = `PAY${Date.now()}`;
       return successResponse({
-        PayOrderId: `PAY${Date.now()}`,
+        PayOrderId: payOrderId,
+        OutTradeNo: payOrderId,
+        Number: payOrderId,
         PayUrl: `/pay/mock?orderId=${params?.OrderId ?? ""}`,
       });
     },

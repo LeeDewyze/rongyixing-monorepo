@@ -12,7 +12,8 @@ import { OrderStatusBadge } from "./OrderStatusBadge";
 
 interface OrderListCardProps {
   item: OrderListItem;
-  onAction?: (action: OrderAction) => void;
+  onAction?: (action: OrderAction, item: OrderListItem) => void;
+  onCardClick?: (item: OrderListItem) => void;
 }
 
 function DetailRow({ label, value }: { label: string; value: string }) {
@@ -130,12 +131,23 @@ function renderBody(item: OrderListItem): ReactNode {
   }
 }
 
-export function OrderListCard({ item, onAction }: OrderListCardProps) {
+export function OrderListCard({ item, onAction, onCardClick }: OrderListCardProps) {
   const actions = getOrderActions(item);
   const grayPrice = shouldGrayPrice(item);
 
   return (
-    <article className="w-full overflow-hidden rounded-[8px] bg-white p-3">
+    <article
+      className="w-full overflow-hidden rounded-[8px] bg-white p-3"
+      onClick={() => onCardClick?.(item)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onCardClick?.(item);
+        }
+      }}
+      role={onCardClick ? "button" : undefined}
+      tabIndex={onCardClick ? 0 : undefined}
+    >
       <header className="flex items-center gap-2">
         <OrderProductIcon tabId={item.tabId} />
         <p
@@ -160,7 +172,10 @@ export function OrderListCard({ item, onAction }: OrderListCardProps) {
         >
           ¥{item.TotalAmount ?? "-"}
         </p>
-        <OrderActionBar actions={actions} onAction={onAction} />
+        <OrderActionBar
+          actions={actions}
+          onAction={(action) => onAction?.(action, item)}
+        />
       </footer>
     </article>
   );

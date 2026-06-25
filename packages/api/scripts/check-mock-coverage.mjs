@@ -26,6 +26,7 @@ const DOMAIN_METHODS = {
     "TmcApiOrderUrl-Order-CancelOrderHotel",
     "TmcApiOrderUrl-Order-GetOrderPays",
     "TmcApiOrderUrl-Pay-Create",
+    "TmcApiOrderUrl-Pay-GetTotalPayAmount",
   ],
   auth: [
     "ApiLoginUrl-Home-DeviceLogin",
@@ -43,6 +44,7 @@ const DOMAIN_METHODS = {
     "TmcApiOrderUrl-Order-GetOrderPays",
     "TmcApiOrderUrl-Pay-Create",
     "TmcApiOrderUrl-Pay-Process",
+    "TmcApiOrderUrl-Pay-GetTotalPayAmount",
   ],
   member: [
     "ApiMemberUrl-Member-Get",

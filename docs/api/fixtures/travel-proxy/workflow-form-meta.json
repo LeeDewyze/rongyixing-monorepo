@@ -1,0 +1,187 @@
+{
+  "formMeta": {
+    "workflowId": "318",
+    "layoutTag": "LayoutTravel",
+    "flowTag": "Travel",
+    "getUrl": "http://workflow.rtesp.com/Form/Get?ticket=***REDACTED***&CheckFlowType=&FlowTag=Travel",
+    "addUrl": "http://workflow.rtesp.com/Form/Add?SaveNotifyUrl=&ticket=***REDACTED***&CheckFlowType=&FlowTag=Travel",
+    "modifyUrl": "http://workflow.rtesp.com/Form/Modify?SaveNotifyUrl=&ticket=***REDACTED***&CheckFlowType=&FlowTag=Travel",
+    "removeUrl": "http://workflow.rtesp.com/Form/Remove?SaveNotifyUrl=&ticket=***REDACTED***&CheckFlowType=&FlowTag=Travel)",
+    "formLayoutDetailPath": "/Form/FormLayoutDetail",
+    "addRuleFieldCount": 13,
+    "addRule": [
+      {
+        "Name": "Workflow.Id",
+        "Message": "工作流必须",
+        "Rules": [
+          {
+            "Pattern": "^[0-9]{1,}$",
+            "Options": "",
+            "Message": "",
+            "IsRange": false
+          }
+        ]
+      },
+      {
+        "Name": "Name",
+        "Message": "名称不能为空且长度不能超过20",
+        "Rules": [
+          {
+            "Pattern": "^([\\s\\S]{1,20})$",
+            "Options": "",
+            "Message": "",
+            "IsRange": false
+          }
+        ]
+      },
+      {
+        "Name": "Tag",
+        "Message": "标签不能超过100个字符",
+        "Rules": [
+          {
+            "Pattern": "^([\\s\\S]{0,100})$",
+            "Options": "",
+            "Message": "",
+            "IsRange": false
+          }
+        ]
+      },
+      {
+        "Name": "IndexUrl",
+        "Message": "地址长度不能超过500字符",
+        "Rules": [
+          {
+            "Pattern": "^([\\s\\S]{0,1000})$",
+            "Options": "",
+            "Message": "",
+            "IsRange": false
+          }
+        ]
+      },
+      {
+        "Name": "HandleUrl",
+        "Message": "审批处理地址长度不能超过500字符",
+        "Rules": [
+          {
+            "Pattern": "^([\\s\\S]{0,500})$",
+            "Options": "",
+            "Message": "",
+            "IsRange": false
+          }
+        ]
+      },
+      {
+        "Name": "ExpiredUrl",
+        "Message": "过期提醒地址长度不能超过500字符",
+        "Rules": [
+          {
+            "Pattern": "^([\\s\\S]{0,500})$",
+            "Options": "",
+            "Message": "",
+            "IsRange": false
+          }
+        ]
+      },
+      {
+        "Name": "RemindUrl",
+        "Message": "审批提醒地址长度不能超过500字符",
+        "Rules": [
+          {
+            "Pattern": "^([\\s\\S]{0,500})$",
+            "Options": "",
+            "Message": "",
+            "IsRange": false
+          }
+        ]
+      },
+      {
+        "Name": "MessageUrl",
+        "Message": "审批处理地址长度不能超过500字符",
+        "Rules": [
+          {
+            "Pattern": "^([\\s\\S]{0,500})$",
+            "Options": "",
+            "Message": "",
+            "IsRange": false
+          }
+        ]
+      },
+      {
+        "Name": "DetailUrl",
+        "Message": "审批单详情地址长度不能超过500字符",
+        "Rules": [
+          {
+            "Pattern": "^([\\s\\S]{0,500})$",
+            "Options": "",
+            "Message": "",
+            "IsRange": false
+          }
+        ]
+      },
+      {
+        "Name": "ResultUrl",
+        "Message": "审批单结果通知地址长度不能超过500字符",
+        "Rules": [
+          {
+            "Pattern": "^([\\s\\S]{0,500})$",
+            "Options": "",
+            "Message": "",
+            "IsRange": false
+          }
+        ]
+      },
+      {
+        "Name": "Sequence",
+        "Message": "排序必须是从1开始的整形",
+        "Rules": [
+          {
+            "Pattern": "(^([\\s\\S]+)$)",
+            "Options": "",
+            "Message": "",
+            "IsRange": false
+          }
+        ]
+      },
+      {
+        "Name": "Remark",
+        "Message": "备注长度不能超过100",
+        "Rules": [
+          {
+            "Pattern": "^([\\s\\S]{0,100})$",
+            "Options": "",
+            "Message": "",
+            "IsRange": false
+          }
+        ]
+      },
+      {
+        "Name": "Roles",
+        "Message": "角色分配过多",
+        "Rules": [
+          {
+            "Pattern": "^([\\s\\S]{0,2000})$",
+            "Options": "",
+            "Message": "",
+            "IsRange": false
+          }
+        ]
+      }
+    ]
+  },
+  "taskMeta": {
+    "getUrl": "/Task/get",
+    "listPath": "/Task/list",
+    "getPath": "/Task/get"
+  },
+  "discoveredPaths": [
+    "/CityCtrl/DefaultData",
+    "/CityCtrl/GetDatas",
+    "/Form/FormLayoutDetail",
+    "/OrganizationCtrl/DefaultData",
+    "/PositionCtrl/DefaultData",
+    "/StaffCtrl/DefaultApplicant",
+    "/StaffCtrl/DefaultData",
+    "/StaffCtrl/GetDatas",
+    "/StaffCtrl/GetDefaultPolicy"
+  ]
+}

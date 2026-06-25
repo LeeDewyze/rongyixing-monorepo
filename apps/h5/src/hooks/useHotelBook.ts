@@ -9,6 +9,8 @@ import {
 } from "@/lib/hotel-book-session";
 import { getApi } from "@/lib/api";
 
+export { useOrderPays, usePayCreate, usePayProcess, usePayTotalAmount } from "./useOrderPay";
+
 export function useHotelBookSelection() {
   const [selection, setSelectionState] = useState<HotelBookSelection | null>(() =>
     loadHotelBookSelection(),
@@ -59,21 +61,6 @@ export function useOrderDetail(orderId: string, pollMs = 3000) {
       if (data?.isShowPayButton) return false;
       return pollMs;
     },
-  });
-}
-
-export function useOrderPays(orderId: string) {
-  return useQuery({
-    queryKey: ["pay", "channels", orderId],
-    queryFn: () => getApi().pay.getOrderPays({ OrderId: orderId }),
-    enabled: Boolean(orderId),
-  });
-}
-
-export function usePayCreate() {
-  return useMutation({
-    mutationFn: (params: { OrderId: string; PayType: string; Amount?: number }) =>
-      getApi().pay.create(params),
   });
 }
 

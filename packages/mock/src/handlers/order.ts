@@ -25,6 +25,17 @@ export function createOrderMockHandlers(): Record<string, (data: unknown) => IRe
       getHotelHandlers()[HOTEL_FLOW_METHODS.CANCEL_HOTEL]!(data),
     [ORDER_FLOW_METHODS.GET_ORDER_PAYS]: (data) =>
       getHotelHandlers()[HOTEL_FLOW_METHODS.GET_ORDER_PAYS]!(data),
+    [ORDER_FLOW_METHODS.GET_TOTAL_PAY_AMOUNT]: (data) => {
+      const params = data as { OrderId?: string };
+      const state = getHotelHandlers()[HOTEL_FLOW_METHODS.ORDER_DETAIL]!({
+        OrderId: params?.OrderId ?? "ORD-MOCK",
+      });
+      const detail = state.Data as { TotalAmount?: number };
+      return successResponse({
+        TotalPayAmount: detail?.TotalAmount ?? 589,
+        PayHoldTime: 20,
+      });
+    },
     [ORDER_FLOW_METHODS.PAY_CREATE]: (data) =>
       getHotelHandlers()[HOTEL_FLOW_METHODS.PAY_CREATE]!(data),
     [ORDER_FLOW_METHODS.PAY_PROCESS]: () => successResponse({ Success: true, Message: "支付成功" }),

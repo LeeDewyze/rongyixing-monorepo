@@ -65,11 +65,22 @@ async function runHotel(api) {
   const pays = await api.pay.getOrderPays({ OrderId: book.OrderId });
   ok("pay.getOrderPays", pays);
 
+  const total = await api.pay.getTotalPayAmount({ OrderId: book.OrderId });
+  ok("pay.getTotalPayAmount", total);
+
   const pay = await api.pay.create({
     OrderId: book.OrderId,
-    PayType: pays[0]?.PayType ?? "Wechat",
+    PayType: pays[0]?.PayType ?? "3",
   });
   ok("pay.create", pay);
+
+  if (pay.OutTradeNo || pay.PayOrderId) {
+    const processed = await api.pay.process({
+      OutTradeNo: pay.OutTradeNo ?? pay.PayOrderId ?? "",
+      Type: pays[0]?.PayType ?? "3",
+    });
+    ok("pay.process", processed);
+  }
 }
 
 async function runAuth(api) {

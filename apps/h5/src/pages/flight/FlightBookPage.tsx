@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ProductType,
@@ -67,6 +67,7 @@ import {
 import {
   parseFlightPayTypeOptions,
   resolveDefaultFlightPayType,
+  resolveInitialFlightBookAgentId,
   resolveFlightBookTmcFlags,
   resolveFlightHoldMinutes,
   resolveTotalServiceFee,
@@ -105,12 +106,15 @@ import { clearPassengerSelection } from "@/lib/passenger-selection";
 
 export function FlightBookPage() {
   const navigate = useNavigate();
+  const skipEmptySelectionRedirectRef = useRef(false);
   const { selection } = useFlightBookSelection();
   const { selected, setSelected } = usePassengerSelection(ProductType.Flight);
   const submitBook = useFlightSubmitBook();
 
   const [travelPayType, setTravelPayType] = useState<number | null>(null);
   const [agentId, setAgentId] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitPhase, setSubmitPhase] = useState<"book" | "checkPay">("book");
   const [agreed, setAgreed] = useState(false);
   const [rulesOpen, setRulesOpen] = useState(false);
   const [ticketNoticeOpen, setTicketNoticeOpen] = useState(false);
@@ -217,15 +221,31 @@ export function FlightBookPage() {
     agentId ?? (tmcAgents.length === 1 ? String(tmcAgents[0]?.Id ?? "") : undefined);
 
   useEffect(() => {
-    if (!selection) {
+    if (!selection && !skipEmptySelectionRedirectRef.current) {
       navigate("/flight/list", { replace: true });
     }
   }, [navigate, selection]);
+
+  function finishBookNavigation(path: string, state?: { bookedOrderId: string; product: "flight" }) {
+    skipEmptySelectionRedirectRef.current = true;
+    navigate(path, { replace: true, state });
+    clearFlightBookSelection();
+    clearPassengerSelection(ProductType.Flight);
+  }
 
   useEffect(() => {
     if (travelPayType != null || !payOptions.length) return;
     setTravelPayType(resolveDefaultFlightPayType(payOptions));
   }, [payOptions, travelPayType]);
+
+  // Legacy: after Initialize, default selectedTmcAgent to tmcAgents[0] if unset.
+  useEffect(() => {
+    if (!initBook.data || tmcAgents.length === 0) return;
+    const nextAgentId = resolveInitialFlightBookAgentId(agentId, tmcAgents);
+    if (nextAgentId && nextAgentId !== agentId) {
+      setAgentId(nextAgentId);
+    }
+  }, [agentId, initBook.data, tmcAgents]);
 
   useEffect(() => {
     if (!expenseTypes.length || !primaryTravelPassenger) return;
@@ -268,19 +288,7 @@ export function FlightBookPage() {
     if (!selection || selected.length === 0) return null;
     return resolveFlightBookBillBreakdown({ selection, passengers: selected, serviceFees });
   }, [selection, selected, serviceFees]);
-  const orderAmount =
-    selection && selected.length
-      ? resolveFlightBookDisplayAmount(selection, selected, serviceFees) + totalInsurance
-      : 0;
 
-  if (!selection) {
-    return null;
-  }
-
-  const timedOut = isFlightListTimedOut(selection.priceSnapshotAt);
-  const isPending = initBook.isFetching || submitBook.isPending;
-  const initError = initBook.error;
-  const submitError = submitBook.error;
   const tmcHasInsurance = Boolean(
     (initBook.data?.Tmc as { FlightHasInsurance?: boolean } | undefined)?.FlightHasInsurance,
   );
@@ -289,7 +297,7 @@ export function FlightBookPage() {
     | undefined;
 
   useEffect(() => {
-    if (!initBook.data || !tmcHasInsurance) return;
+    if (!selection || !initBook.data || !tmcHasInsurance) return;
     for (const passenger of selected) {
       const products = insurancesByPassenger[passenger.id] ?? [];
       const forcedId = resolveForcedInsuranceProductId(passenger, products, tmcInsuranceFlags);
@@ -299,7 +307,29 @@ export function FlightBookPage() {
         updateForm(passenger.id, { selectedInsuranceId: forcedId });
       }
     }
-  }, [forms, initBook.data, insurancesByPassenger, selected, tmcHasInsurance, tmcInsuranceFlags]);
+  }, [
+    forms,
+    initBook.data,
+    insurancesByPassenger,
+    selected,
+    selection,
+    tmcHasInsurance,
+    tmcInsuranceFlags,
+    updateForm,
+  ]);
+
+  if (!selection) {
+    return null;
+  }
+
+  const orderAmount = resolveFlightBookDisplayAmount(selection, selected, serviceFees) + totalInsurance;
+  const timedOut = isFlightListTimedOut(selection.priceSnapshotAt);
+  const isInitBlocking = initBook.isFetching && !initBook.data;
+  const isPending = isSubmitting || submitBook.isPending || isInitBlocking;
+  const submitPendingLabel =
+    submitPhase === "checkPay" ? "等待支付确认…" : "提交中…";
+  const initError = initBook.error;
+  const submitError = submitBook.error;
 
   function handleBack() {
     if (!selection) {
@@ -310,100 +340,126 @@ export function FlightBookPage() {
   }
 
   async function submitOrder(isSave: boolean) {
-    if (!selection || selected.length === 0 || !initParams || !agreed) return;
+    if (!selection || selected.length === 0 || !initParams) {
+      window.alert("订单信息不完整，请返回舱位页重新选择");
+      return;
+    }
+    if (!agreed) {
+      window.alert("请先阅读并同意购票须知");
+      return;
+    }
     if (timedOut) {
       window.alert("您的停留时间过长，价格信息可能发生变动，请重新查询");
       navigate(buildCabinsHref(selection));
       return;
     }
-
-    const passengerValidationError = validatePassengerBookForms(selected, forms);
-    if (passengerValidationError) {
-      const invalidPassenger = selected.find((passenger) => {
-        const form = forms[passenger.id];
-        return form && !resolvePassengerFormMobile(form);
-      });
-      if (invalidPassenger) {
-        updateForm(invalidPassenger.id, { expanded: true });
-      }
-      window.alert(passengerValidationError);
+    if (tmcAgents.length > 1 && !resolvedAgentId) {
+      window.alert("请选择服务商");
       return;
     }
 
-    const travelValidationError = validateAllPassengerTravelInfo({
-      passengers: selected,
-      forms,
-      policy: flightPolicy,
-      policyByPassenger: policiesByPassenger,
-      init: initBook.data,
-      outNumberFieldsByPassenger,
-      showApproverPickerByPassenger,
-    });
-    if (travelValidationError) {
-      window.alert(travelValidationError);
-      return;
-    }
+    setIsSubmitting(true);
+    setSubmitPhase("book");
 
-    const insuranceValidationError = validateAllPassengerInsuranceSelections({
-      passengers: selected,
-      forms,
-      insurancesByPassenger,
-      init: initBook.data,
-      tmcHasInsurance,
-    });
-    if (insuranceValidationError) {
-      window.alert(insuranceValidationError);
-      return;
-    }
-
-    const contactValidationError = validateAuthorizedContacts(authorizedContacts);
-    if (contactValidationError) {
-      window.alert(contactValidationError);
-      return;
-    }
-
-    const bookDto = buildFlightOrderBookDto({
-      selection,
-      passengers: selected,
-      passengerForms: forms,
-      travelPayType: resolvedPayType,
-      messageLang: notifyLanguage,
-      authorizedContacts,
-      agentId: resolvedAgentId,
-      isSave,
-      insurancesByPassenger,
-      outNumberFieldsByPassenger,
-      flightPolicy,
-      flightPoliciesByPassenger: policiesByPassenger,
-      travelNumber: initBook.data?.TravelFrom?.TravelNumber,
-    });
-
-    const result = await submitBook.mutateAsync(bookDto);
-    const orderId = resolveFlightBookOrderId(result);
-    clearFlightBookSelection();
-    clearPassengerSelection(ProductType.Flight);
-
-    if (isSave) {
-      window.alert("订单已保存");
-      navigate("/orders", {
-        replace: true,
-        state: orderId ? { bookedOrderId: orderId, product: "flight" } : undefined,
-      });
-      return;
-    }
-
-    if (result.IsCheckPay && orderId) {
-      const checkPayReady = await pollFlightCheckPay(orderId);
-      if (shouldNavigateToPay({ travelPayType: resolvedPayType, checkPayReady })) {
-        navigate(`/hotel/pay/${orderId}`, { replace: true });
+    try {
+      const passengerValidationError = validatePassengerBookForms(selected, forms);
+      if (passengerValidationError) {
+        const invalidPassenger = selected.find((passenger) => {
+          const form = forms[passenger.id];
+          return form && !resolvePassengerFormMobile(form);
+        });
+        if (invalidPassenger) {
+          updateForm(invalidPassenger.id, { expanded: true });
+        }
+        window.alert(passengerValidationError);
         return;
       }
-    }
 
-    navigate("/orders", {
-      replace: true,
-      state: orderId ? { bookedOrderId: orderId, product: "flight" } : undefined,
-    });
+      const travelValidationError = validateAllPassengerTravelInfo({
+        passengers: selected,
+        forms,
+        policy: flightPolicy,
+        policyByPassenger: policiesByPassenger,
+        init: initBook.data,
+        outNumberFieldsByPassenger,
+        showApproverPickerByPassenger,
+      });
+      if (travelValidationError) {
+        window.alert(travelValidationError);
+        return;
+      }
+
+      const insuranceValidationError = validateAllPassengerInsuranceSelections({
+        passengers: selected,
+        forms,
+        insurancesByPassenger,
+        init: initBook.data,
+        tmcHasInsurance,
+      });
+      if (insuranceValidationError) {
+        window.alert(insuranceValidationError);
+        return;
+      }
+
+      const contactValidationError = validateAuthorizedContacts(authorizedContacts);
+      if (contactValidationError) {
+        window.alert(contactValidationError);
+        return;
+      }
+
+      const bookDto = buildFlightOrderBookDto({
+        selection,
+        passengers: selected,
+        passengerForms: forms,
+        travelPayType: resolvedPayType,
+        messageLang: notifyLanguage,
+        authorizedContacts,
+        agentId: resolvedAgentId,
+        isSave,
+        insurancesByPassenger,
+        outNumberFieldsByPassenger,
+        flightPolicy,
+        flightPoliciesByPassenger: policiesByPassenger,
+        travelNumber: initBook.data?.TravelFrom?.TravelNumber,
+      });
+
+      const result = await submitBook.mutateAsync(bookDto);
+      const orderId = resolveFlightBookOrderId(result);
+
+      if (isSave) {
+        window.alert("订单已保存");
+        if (orderId) {
+          finishBookNavigation("/orders", { bookedOrderId: orderId, product: "flight" });
+        } else {
+          finishBookNavigation("/orders");
+        }
+        return;
+      }
+
+      if (result.IsCheckPay && orderId) {
+        setSubmitPhase("checkPay");
+        const checkPayReady = await pollFlightCheckPay(orderId);
+        if (shouldNavigateToPay({ travelPayType: resolvedPayType, checkPayReady })) {
+          finishBookNavigation(`/flight/pay/${orderId}`);
+          return;
+        }
+      }
+
+      if (orderId) {
+        finishBookNavigation(`/orders/flight/${orderId}`, {
+          bookedOrderId: orderId,
+          product: "flight",
+        });
+        return;
+      }
+
+      finishBookNavigation("/orders");
+    } catch (error) {
+      window.alert(formatApiError(error));
+    } finally {
+      setIsSubmitting(false);
+      setSubmitPhase("book");
+    }
   }
 
   return (
@@ -425,7 +481,7 @@ export function FlightBookPage() {
         {!initBook.isFetching ? (
           <FlightBookAgentPicker
             agents={tmcAgents}
-            value={agentId ?? String(tmcAgents[0]?.Id ?? "")}
+            value={agentId ?? ""}
             onChange={(nextAgentId) => setAgentId(nextAgentId)}
           />
         ) : null}
@@ -558,6 +614,7 @@ export function FlightBookPage() {
         amount={orderAmount}
         agreed={agreed}
         pending={isPending}
+        pendingLabel={submitPendingLabel}
         disabled={selected.length === 0 || isPending || initBook.isError}
         showTicketNotice={ticketNoticeRules.length > 0}
         showSaveOrder={showSaveOrder}

@@ -56,6 +56,19 @@ describe("resolveUrl", () => {
     ).toBe("/__ryx/TmcApiHotelUrl/Home/List");
   });
 
+  it("routes workflow approval lists through vite dev proxy", () => {
+    expect(
+      resolveUrl({
+        baseUrl: "",
+        method: "WorkflowApiUrl-History-List",
+        apiConfig: {
+          Token: "t",
+          Urls: { WorkflowApiUrl: "http://api-workflow.rtesp.com" },
+        },
+      }),
+    ).toBe("/__ryx/WorkflowApiUrl/History/List");
+  });
+
   it("resolves direct URL from api config in direct mode", () => {
     expect(
       resolveUrl({

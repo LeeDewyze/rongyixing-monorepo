@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import type { OrderAction, OrderListScope } from "@ryx/shared-types";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import type { OrderAction, OrderListItem, OrderListScope } from "@ryx/shared-types";
 
 import {
   OrderCategoryTabs,
@@ -20,6 +20,7 @@ import {
   parseOrderListScope,
   TAB_ID_TO_PARAM,
 } from "@/lib/order-list-params";
+import { getOrderDetailPath, getOrderPayPath } from "@/lib/order-routes";
 
 const FALLBACK_HEADER_HEIGHT = 84;
 
@@ -43,8 +44,14 @@ interface OrderListPageProps {
   embeddedInTab?: boolean;
 }
 
+interface OrdersLocationState {
+  bookedOrderId?: string;
+  product?: string;
+}
+
 export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const headerRef = useRef<HTMLElement>(null);
@@ -115,9 +122,47 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
     [searchParams, setSearchParams],
   );
 
-  const handleAction = useCallback((_action: OrderAction) => {
-    setToastMessage("功能即将上线");
-  }, []);
+  const handleAction = useCallback(
+    (action: OrderAction, item: OrderListItem) => {
+      switch (action.kind) {
+        case "pay":
+          navigate(getOrderPayPath(item));
+          return;
+        case "cancel":
+        case "refund":
+        case "exchange":
+          setToastMessage("功能即将上线");
+          return;
+        default:
+          setToastMessage("功能即将上线");
+      }
+    },
+    [navigate],
+  );
+
+  const handleCardClick = useCallback(
+    (item: OrderListItem) => {
+      navigate(getOrderDetailPath(item));
+    },
+    [navigate],
+  );
+
+  useEffect(() => {
+    const state = location.state as OrdersLocationState | null;
+    if (!state?.bookedOrderId) {
+      return;
+    }
+
+    if (state.product === "flight") {
+      const params = new URLSearchParams(searchParams);
+      params.delete("tabId");
+      params.set("tab", TAB_ID_TO_PARAM.flight);
+      setSearchParams(params, { replace: true });
+    }
+
+    setToastMessage(`下单成功，订单号 ${state.bookedOrderId}`);
+    navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
+  }, [location.pathname, location.search, location.state, navigate, searchParams, setSearchParams]);
 
   useLayoutEffect(() => {
     const header = headerRef.current;
@@ -212,6 +257,7 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
           isLoadingMore={isFetchingNextPage}
           errorMessage={isError ? formatApiError(error) : undefined}
           onAction={handleAction}
+          onCardClick={handleCardClick}
           onLoadMore={handleLoadMore}
           hasMore={Boolean(hasNextPage)}
           scrollRoot={scrollRoot}

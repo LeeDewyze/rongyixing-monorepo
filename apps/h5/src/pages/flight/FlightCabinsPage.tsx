@@ -33,8 +33,10 @@ import { getApi } from "@/lib/api";
 import {
   buildFlightPolicyParams,
   buildPassengerFlightPoliciesMap,
+  FLIGHT_POLICY_FETCH_FAILED_MESSAGE,
   formatFlightPolicyBookBlockMessage,
   isFlightPolicyBookAllowed,
+  shouldBlockBookingOnPolicyFetchFailure,
 } from "@/lib/flight-book-policy";
 import { hasAgentIdentity } from "@/lib/flight-book-save-order";
 import { navigateBack } from "@/lib/navigation";
@@ -113,6 +115,8 @@ export function FlightCabinsPage() {
       detailSnapshot: detail ?? undefined,
       passengers: selectedPassengers,
     });
+    const isAgent = hasAgentIdentity(identity);
+
     if (policyParams && selectedPassengers.length > 0) {
       try {
         const policyResults = await getApi().flight.getFlightPolicy(policyParams);
@@ -126,12 +130,14 @@ export function FlightCabinsPage() {
           ? flightPoliciesByPassengerId[selectedPassengers[0].id]
           : undefined;
       } catch {
+        if (shouldBlockBookingOnPolicyFetchFailure(isAgent)) {
+          window.alert(FLIGHT_POLICY_FETCH_FAILED_MESSAGE);
+          return;
+        }
         flightPolicy = undefined;
         flightPoliciesByPassengerId = {};
       }
     }
-
-    const isAgent = hasAgentIdentity(identity);
     for (const passenger of selectedPassengers) {
       const passengerPolicy = flightPoliciesByPassengerId[passenger.id];
       if (passengerPolicy && !isFlightPolicyBookAllowed(passengerPolicy, isAgent)) {

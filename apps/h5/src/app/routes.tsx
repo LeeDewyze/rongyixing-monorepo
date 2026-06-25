@@ -5,11 +5,14 @@ import { TabLayout } from "@/app/layouts/TabLayout";
 import { FlightCabinsPage } from "@/pages/flight/FlightCabinsPage";
 import { FlightBookPage } from "@/pages/flight/FlightBookPage";
 import { FlightListPage } from "@/pages/flight/FlightListPage";
+import { FlightPayPage } from "@/pages/flight/FlightPayPage";
+import { FlightResultPage } from "@/pages/flight/FlightResultPage";
 import { FlightSelectCityPage } from "@/pages/flight/FlightSelectCityPage";
 import { HomeTabPage } from "@/pages/home/HomeTabPage";
 import { OrdersTabPage } from "@/pages/home/OrdersTabPage";
 import { ProfileTabPage } from "@/pages/home/ProfileTabPage";
 import { OrderHotelDetailPage } from "@/pages/order/OrderHotelDetailPage";
+import { OrderFlightDetailPage } from "@/pages/order/OrderFlightDetailPage";
 import { OrderListPage } from "@/pages/order/OrderListPage";
 import { OrderListRedirect } from "@/app/routes/OrderListRedirect";
 import { HotelBookPage } from "@/pages/hotel/HotelBookPage";
@@ -25,6 +28,9 @@ import { PassengerCredentialPage } from "@/pages/passenger/PassengerCredentialPa
 import { PasswordLoginPage } from "@/pages/PasswordLoginPage";
 import { SplashPage } from "@/pages/SplashPage";
 import { TrainListPage } from "@/pages/train/TrainListPage";
+import { TravelApplyPage } from "@/pages/travel/TravelApplyPage";
+import { TravelApprovalPage } from "@/pages/travel/TravelApprovalPage";
+import { TravelTaskPage } from "@/pages/travel/TravelTaskPage";
 
 export const router = createBrowserRouter([
   {
@@ -62,6 +68,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <OrderListPage /> },
       { path: "hotel/:orderId", element: <OrderHotelDetailPage /> },
+      { path: "flight/:orderId", element: <OrderFlightDetailPage /> },
     ],
   },
   {
@@ -97,6 +104,8 @@ export const router = createBrowserRouter([
       { index: true, element: <Navigate to="/home?product=flight" replace /> },
       { path: "list", element: <FlightListPage /> },
       { path: "book", element: <FlightBookPage /> },
+      { path: "result/:orderId", element: <FlightResultPage /> },
+      { path: "pay/:orderId", element: <FlightPayPage /> },
       { path: ":flightId/cabins", element: <FlightCabinsPage /> },
     ],
   },
@@ -106,6 +115,16 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to="/home?product=train" replace /> },
       { path: "list", element: <TrainListPage /> },
+    ],
+  },
+  {
+    path: "/travel",
+    element: <RootLayout />,
+    children: [
+      { path: "apply", element: <TravelApplyPage /> },
+      { path: "approval", element: <TravelApprovalPage /> },
+      { path: "workflow", element: <Navigate to="/travel/approval?tab=mine" replace /> },
+      { path: "task", element: <TravelTaskPage /> },
     ],
   },
 ]);

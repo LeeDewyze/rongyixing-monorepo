@@ -11,7 +11,8 @@ interface OrderListProps {
   isLoading?: boolean;
   isLoadingMore?: boolean;
   errorMessage?: string;
-  onAction?: Parameters<typeof OrderListCard>[0]["onAction"];
+  onAction?: (action: OrderAction, item: OrderListItem) => void;
+  onCardClick?: (item: OrderListItem) => void;
   onLoadMore?: () => void;
   hasMore?: boolean;
   scrollRoot?: HTMLElement | null;
@@ -77,6 +78,7 @@ export function OrderList({
   isLoadingMore,
   errorMessage,
   onAction,
+  onCardClick,
   onLoadMore,
   hasMore,
   scrollRoot,
@@ -98,7 +100,7 @@ export function OrderList({
   return (
     <div className="flex flex-col gap-3 px-3 pb-4">
       {orders.map((item) => (
-        <OrderListCard key={item.OrderId} item={item} onAction={onAction} />
+        <OrderListCard key={item.OrderId} item={item} onAction={onAction} onCardClick={onCardClick} />
       ))}
 
       {hasMore ? (

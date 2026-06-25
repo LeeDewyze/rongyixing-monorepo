@@ -113,6 +113,13 @@ export function isFlightPolicyBookAllowed(
   return policy?.IsAllowBook !== false;
 }
 
+export const FLIGHT_POLICY_FETCH_FAILED_MESSAGE = "差标获取失败，请稍后重试";
+
+/** Non-agents must not proceed when policy API fails; agents may book without policy (Legacy). */
+export function shouldBlockBookingOnPolicyFetchFailure(isAgent: boolean): boolean {
+  return !isAgent;
+}
+
 export function formatFlightPolicyBookBlockMessage(
   policy?: FlightBookPolicy,
   passengerName?: string,

@@ -1,3 +1,4 @@
+import { createApprovalMockHandlers } from "./handlers/approval.js";
 import { createAuthMockHandlers } from "./handlers/auth.js";
 import { createFlightMockHandlers } from "./handlers/flight.js";
 import { createHotelMockHandlers } from "./handlers/hotel.js";
@@ -5,6 +6,7 @@ import { createMemberMockHandlers } from "./handlers/member.js";
 import { createPassengerMockHandlers } from "./handlers/passenger.js";
 import { createOrderMockHandlers } from "./handlers/order.js";
 import { createTrainMockHandlers } from "./handlers/train.js";
+import { createTmcMockHandlers } from "./handlers/tmc.js";
 import { createTravelMockHandlers } from "./handlers/travel.js";
 import { createMockHandler, createMockRegistry } from "./registry.js";
 
@@ -32,12 +34,14 @@ function mergeHandlers(...maps: Record<string, import("./registry.js").MockHandl
 export function createDefaultMockRegistry() {
   return createMockRegistry(
     mergeHandlers(
+      createApprovalMockHandlers(),
       createAuthMockHandlers(),
       createHotelMockHandlers(),
       createOrderMockHandlers(),
       createMemberMockHandlers(),
       createPassengerMockHandlers(),
       createTrainMockHandlers(),
+      createTmcMockHandlers(),
       createTravelMockHandlers(),
       createFlightMockHandlers(),
     ),
@@ -52,12 +56,14 @@ export function createDefaultMockHandler() {
 export function listDefaultMockMethods(): string[] {
   return Object.keys(
     mergeHandlers(
+      createApprovalMockHandlers(),
       createAuthMockHandlers(),
       createHotelMockHandlers(),
       createOrderMockHandlers(),
       createMemberMockHandlers(),
       createPassengerMockHandlers(),
       createTrainMockHandlers(),
+      createTmcMockHandlers(),
       createTravelMockHandlers(),
       createFlightMockHandlers(),
     ),

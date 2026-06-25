@@ -195,7 +195,7 @@ flowchart LR
 
 - [ ] Book 成功 → 清 `bookContext` + `clearPassengerSelection(Flight)`
 - [ ] 跳转：`/orders/flight/:orderId`（页未迁则临时 `/orders?tab=flight` + toast）
-- [ ] 支付：复用 `pay.getOrderPays` / `pay.create`
+- [x] 支付：复用 `pay.getTotalPayAmount` / `getOrderPays` / `create` / `process` → [flight-pay-migration-strategy.md](./flight-pay-migration-strategy.md)
 
 ---
 

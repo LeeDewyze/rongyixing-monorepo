@@ -5,6 +5,7 @@ import { resolvePassengerServiceFee } from "@/lib/flight-book";
 /** Legacy `OrderTravelPayType`. */
 export const FLIGHT_PAY_TYPE_COMPANY = 1;
 export const FLIGHT_PAY_TYPE_PERSON = 2;
+export const FLIGHT_PAY_TYPE_CREDIT = 4;
 
 export interface FlightPayTypeOption {
   value: number;
@@ -32,6 +33,24 @@ export function resolveDefaultFlightPayType(options: FlightPayTypeOption[]): num
     options[0]?.value ??
     FLIGHT_PAY_TYPE_COMPANY
   );
+}
+
+export function resolveFlightBookAgentId(
+  agentId: string | null | undefined,
+  agents: Array<{ Id?: string | number }>,
+): string | undefined {
+  if (agentId) return agentId;
+  if (agents.length === 0) return undefined;
+  return String(agents[0]?.Id ?? "");
+}
+
+/** Legacy: `selectedTmcAgent = selectedTmcAgent || tmcAgents[0]` after Initialize. */
+export function resolveInitialFlightBookAgentId(
+  currentAgentId: string | null,
+  agents: Array<{ Id?: string | number }>,
+): string | null {
+  if (currentAgentId) return currentAgentId;
+  return resolveFlightBookAgentId(null, agents) ?? null;
 }
 
 export function resolveFlightHoldMinutes(init: FlightInitBookResponse | undefined): number {

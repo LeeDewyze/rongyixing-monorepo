@@ -124,19 +124,53 @@ export function segmentFromCabinsQuery(query: FlightCabinsQuery): FlightSegment 
   };
 }
 
+/** List/query route labels — must win over detail leg[0] for transfer flights. */
+const ROUTE_DISPLAY_FIELDS = [
+  "FromCityName",
+  "ToCityName",
+  "FromAirportName",
+  "ToAirportName",
+  "FromTerminal",
+  "ToTerminal",
+  "FromAirport",
+  "ToAirport",
+  "TakeoffTime",
+  "ArrivalTime",
+  "FlyTimeName",
+  "AirlineName",
+  "AirlineSrc",
+  "PlaneTypeDescribe",
+  "Meal",
+] as const satisfies ReadonlyArray<keyof FlightSegment>;
+
+function preferQueryRouteDisplay(
+  querySegment: FlightSegment,
+  detailSegment: FlightSegment,
+): FlightSegment {
+  const merged: FlightSegment = { ...detailSegment };
+  for (const key of ROUTE_DISPLAY_FIELDS) {
+    const queryValue = querySegment[key];
+    if (queryValue != null && queryValue !== "") {
+      merged[key] = queryValue as never;
+    }
+  }
+  return merged;
+}
+
 export function resolveDetailSegment(
   query: FlightCabinsQuery,
   detailSegment: FlightSegment | undefined,
 ): FlightSegment {
-  if (detailSegment) {
-    return {
-      ...segmentFromCabinsQuery(query),
-      ...detailSegment,
-      Number: detailSegment.Number || query.flightNumber,
-      FlightNumber: detailSegment.FlightNumber || query.flightNumber,
-    };
+  const fromQuery = segmentFromCabinsQuery(query);
+  if (!detailSegment) {
+    return fromQuery;
   }
-  return segmentFromCabinsQuery(query);
+  const merged = preferQueryRouteDisplay(fromQuery, detailSegment);
+  return {
+    ...merged,
+    Number: detailSegment.Number || query.flightNumber,
+    FlightNumber: detailSegment.FlightNumber || query.flightNumber,
+  };
 }
 
 export function normalizeFlightDetailData(result: FlightDetailResult | undefined): FlightDetailResult {

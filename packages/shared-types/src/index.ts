@@ -8,6 +8,23 @@ export interface ApiResponse<T> {
 export type { ApiConfigSetting, ApiMode, ApiResult, IResponse, ProxySendOptions } from "./proxy.js";
 
 export type {
+  ApprovalTask,
+  ApprovalTaskListParams,
+  OrderApprovalTaskParams,
+  OrderApprovalTaskType,
+  WaitingTaskCountResult,
+  WorkflowNotify,
+} from "./approval-task.js";
+
+export type {
+  WorkbenchGroup,
+  WorkbenchItem,
+  WorkbenchLink,
+  WorkbenchLoadResponse,
+} from "./workbench.js";
+export { normalizeWorkbenchResponse } from "./workbench.js";
+
+export type {
   DeviceLoginParams,
   IdentityDto,
   LoginResultDto,
@@ -43,10 +60,13 @@ export type {
   HotelRoomDetailItem,
   HotelRoomPlan,
   OrderDetailParams,
+  OrderDetailProductType,
   OrderDetailResponse,
   OrderPayChannel,
   PayCreateParams,
   PayCreateResponse,
+  PayTotalAmountParams,
+  PayTotalAmountResponse,
 } from "./hotel.js";
 
 export type { HotelCity, HotelCityResourceResponse } from "./hotel-city.js";

@@ -82,9 +82,11 @@ export interface OrderListResponse {
 }
 
 export interface PayProcessParams {
-  OrderId: string;
+  OrderId?: string;
   PayOrderId?: string;
   PayType?: string;
+  OutTradeNo?: string;
+  Type?: string;
 }
 
 export interface PayProcessResponse {

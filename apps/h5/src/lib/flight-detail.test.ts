@@ -14,8 +14,57 @@ import {
   prepareFlightFareForDisplay,
   prepareFlightFareRulesForSheet,
   partitionCabinsByTab,
+  resolveDetailSegment,
   shouldShowFareRemainCount,
 } from "./flight-detail";
+
+describe("resolveDetailSegment", () => {
+  const baseQuery = {
+    date: "2026-06-24",
+    fromCode: "BJS",
+    toCode: "SHA",
+    fromName: "北京",
+    toName: "上海",
+    fromAsAirport: false,
+    toAsAirport: false,
+    flightNumber: "MU5176",
+    fromAirport: "PKX",
+    toAirport: "PVG",
+    takeoffTime: "2026-06-24 22:40:00",
+    arrivalTime: "2026-06-25 08:50:00",
+    detailKey: "dk-transfer",
+    bookType: "",
+    airlineName: "东方航空",
+    flyTimeName: "10小时10分",
+    fromAirportName: "大兴国际机场",
+    toAirportName: "浦东国际机场",
+    fromTerminal: "",
+    toTerminal: "T1",
+    planeTypeDescribe: "空客A320(小)",
+    meal: "N",
+    airlineSrc: "",
+  };
+
+  it("keeps list overall route when detail returns first transfer leg", () => {
+    const segment = resolveDetailSegment(baseQuery, {
+      Number: "MU5176",
+      FromCityName: "北京",
+      ToCityName: "南昌",
+      FromAirportName: "大兴国际机场",
+      ToAirportName: "昌北国际机场",
+      ToTerminal: "T2",
+      TakeoffTime: "2026-06-24 22:40:00",
+      ArrivalTime: "2026-06-25 00:50:00",
+      FlyTimeName: "2小时10分",
+    });
+
+    expect(segment.ToCityName).toBe("上海");
+    expect(segment.ToAirportName).toBe("浦东国际机场");
+    expect(segment.ToTerminal).toBe("T1");
+    expect(segment.ArrivalTime).toBe("2026-06-25 08:50:00");
+    expect(segment.FlyTimeName).toBe("10小时10分");
+  });
+});
 
 describe("buildFlightDetailParams", () => {
   it("uses airport codes and passenger count for Home-Detail", () => {

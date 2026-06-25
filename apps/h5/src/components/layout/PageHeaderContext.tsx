@@ -115,7 +115,7 @@ export function usePageHeader({
       title,
       subtitle,
       showBack,
-      onBack: onBackRef.current,
+      onBack: () => onBackRef.current?.(),
       right: rightRef.current,
       extended: extendedRef.current,
       visible,
