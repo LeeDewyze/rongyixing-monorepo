@@ -19,6 +19,18 @@ describe("normalizeOrderPayChannels", () => {
     );
   });
 
+  it("maps object response with ICBC channel", () => {
+    expect(
+      normalizeOrderPayChannels({ "3": "微信支付", "2": "支付宝", "6": "工行快捷支付" }),
+    ).toEqual(
+      expect.arrayContaining([
+        { PayType: "3", PayTypeName: "微信支付" },
+        { PayType: "2", PayTypeName: "支付宝" },
+        { PayType: "6", PayTypeName: "工行快捷支付" },
+      ]),
+    );
+  });
+
   it("keeps array response", () => {
     expect(
       normalizeOrderPayChannels([{ PayType: "Wechat", PayTypeName: "微信支付" }]),
@@ -32,14 +44,30 @@ describe("resolveLegacyPayType", () => {
     expect(resolveLegacyPayType("ali")).toBe("2");
     expect(resolveLegacyPayType("6")).toBe("6");
   });
+
+  it("maps ICBC quickexpress alias", () => {
+    expect(resolveLegacyPayType("quickexpress")).toBe("6");
+    expect(resolveLegacyPayType("QuickExpress")).toBe("6");
+  });
 });
 
 describe("buildLegacyPayCreatePayload", () => {
-  it("uses mobile H5 create params", () => {
+  it("uses mobile H5 create params for WeChat", () => {
     expect(buildLegacyPayCreatePayload({ orderId: "ORD-1", payType: "wechat" })).toEqual({
       Channel: "App",
       Type: "3",
       OrderId: "ORD-1",
+      IsApp: false,
+      CreateType: "Mobile",
+      DataType: "json",
+    });
+  });
+
+  it("uses mobile H5 create params for ICBC (Type 6)", () => {
+    expect(buildLegacyPayCreatePayload({ orderId: "ORD-2", payType: "6" })).toEqual({
+      Channel: "App",
+      Type: "6",
+      OrderId: "ORD-2",
       IsApp: false,
       CreateType: "Mobile",
       DataType: "json",

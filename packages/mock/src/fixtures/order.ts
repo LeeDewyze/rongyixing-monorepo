@@ -164,6 +164,7 @@ export function resolveOrderDetailPayload(orderId: string, state: MockOrderState
 export const MOCK_ORDER_PAYS = [
   { PayType: "3", PayTypeName: "微信支付" },
   { PayType: "2", PayTypeName: "支付宝" },
+  { PayType: "6", PayTypeName: "工行快捷支付" },
 ];
 
 /** Status codes that appear under the "待出行" scope filter (mock only). */
