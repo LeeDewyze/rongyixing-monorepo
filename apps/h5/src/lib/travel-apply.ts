@@ -514,153 +514,73 @@ export async function submitTravelApply(
   });
 }
 
-// ── Form/Get 解析（编辑反填） ──────────────────────────────────────────
+// ── Form/Get 加载主表字段（编辑反填） ──────────────────────────────────
+// 注意：workflow Form/Get 只返回主表控件，slave 数据不可用。
+// 因此编辑时只能恢复出差类型和事由，出差人和行程使用默认值。
 
-/** Raw form field from Form/Get response. */
-interface FormGetDetail {
-  Name?: string;
-  Tag?: string | null;
-  Content?: string;
-  Number?: string;
-  Slave?: string;
-  SlaveRow?: number;
-}
+/** Form/Get 返回的控件数组（同 Form/Flow 的 var datas 结构）。 */
+export type FormGetResponse = TravelApplyRawControl[];
 
-/** Raw time field from Form/Get response. */
-interface FormGetTime {
-  Tag?: string | null;
-  Time?: string;
-  Slave?: string;
-  SlaveRow?: number;
-}
-
-/** Raw Form/Get response shape. */
-interface FormGetResponse {
-  Id?: number;
-  Name?: string;
-  Tag?: string;
-  Status?: number;
-  FormDetails?: FormGetDetail[];
-  FormTimes?: FormGetTime[];
-}
-
-/** Fetch existing travel form data for editing. */
+/** 通过 Form/Get 加载已有表单数据。 */
 export async function fetchTravelFormData(
   ticket: string,
   formId: string,
 ): Promise<FormGetResponse | null> {
-  const params = new URLSearchParams({ ticket, CheckFlowType: "", FlowTag: "Travel" });
+  const params = new URLSearchParams({ ticket, CheckFlowType: "", FlowTag: "Travel", Id: formId });
   const url = `${WORKFLOW_SITE}/Form/Get?${params.toString()}`;
-  const raw = await fetchJson<{ Data?: FormGetResponse; Status: boolean }>(url);
-  if (!raw) return null;
-  const data = raw.Data ?? raw;
-  if (!data || typeof data !== "object") return null;
-  return data as FormGetResponse;
+  try {
+    const raw = await fetchJson<unknown>(url);
+    if (!raw) return null;
+    // Form/Get returns [{ datas: [...] }, {name, value}, ...]
+    let controls: unknown[];
+    if (Array.isArray(raw)) {
+      if (raw.length > 0 && raw[0] && typeof raw[0] === "object" && "datas" in (raw[0] as Record<string, unknown>)) {
+        controls = (raw[0] as Record<string, unknown[]>).datas as unknown[];
+      } else {
+        controls = raw as unknown[];
+      }
+    } else if (typeof raw === "object" && raw !== null && "datas" in (raw as Record<string, unknown>)) {
+      controls = (raw as Record<string, unknown[]>).datas as unknown[];
+    } else {
+      return null;
+    }
+    if (!Array.isArray(controls)) return null;
+    return controls as TravelApplyRawControl[];
+  } catch {
+    return null;
+  }
 }
 
-/** Parse Form/Get response into form values for edit re-fill. */
+/** 从控件中读取 defaultValue，兼容 string / {label, value} 格式。 */
+function readControlDefault(control: TravelApplyRawControl): string {
+  const raw = (control as unknown as { defaultValue?: unknown }).defaultValue;
+  if (raw == null) return "";
+  if (typeof raw === "string") return raw;
+  if (typeof raw === "object") {
+    const obj = raw as { label?: string; value?: string | number; Text?: string; Value?: string | number };
+    return String(obj.value ?? obj.Value ?? obj.label ?? obj.Text ?? "");
+  }
+  return String(raw);
+}
+
+/** 从 Form/Get 响应中提取前端可用的表单字段。 */
 export function parseFormDataToValues(
   meta: TravelApplyMeta,
-  formData: FormGetResponse,
+  controls: FormGetResponse,
   cities: TravelApplyCity[],
   staffOptions: TravelApplyOption[],
-): TravelApplyFormValues | null {
-  const details = formData.FormDetails ?? [];
-  const times = formData.FormTimes ?? [];
+): { travelTypes: string[]; reason: string } | null {
+  if (!Array.isArray(controls) || controls.length === 0) return null;
 
-  function findDetail(tag?: string | null, label?: string): FormGetDetail | undefined {
-    return details.find((d) =>
-      tag ? d.Tag === tag : d.Name === label,
-    );
-  }
-
-  function findTime(tag: string, slaveRow = 0): FormGetTime | undefined {
-    return times.find((t) => t.Tag === tag && (t.SlaveRow ?? 0) === slaveRow);
-  }
-
-  // travelTypes
-  const travelTypeDetail = findDetail("TravelType");
-  const travelTypes = travelTypeDetail?.Content
-    ? travelTypeDetail.Content.split(",").map((s) => s.trim()).filter(Boolean)
+  const travelTypeCtrl = controls.find((c) => c.tag === "TravelType" && !c.slave);
+  const travelTypes = travelTypeCtrl
+    ? readControlDefault(travelTypeCtrl).split(",").map((s) => s.trim()).filter(Boolean)
     : [];
 
-  // reason
-  const reasonDetail = findDetail(null, "出差事由");
-  const reason = reasonDetail?.Content ?? "";
+  const reasonCtrl = controls.find((c) => c.label === "出差事由" && !c.slave);
+  const reason = reasonCtrl ? readControlDefault(reasonCtrl) : "";
 
-  // travelers — group by SlaveRow from TravelAccount slaves
-  const accountDetails = details.filter((d) => d.Slave === "TravelAccount");
-  const travelerRows = new Set(accountDetails.map((d) => d.SlaveRow ?? 0));
-  const travelers: TravelApplyTraveler[] = [];
-  const sortedRows = [...travelerRows].sort((a, b) => a - b);
-  for (const row of sortedRows) {
-    const accountDetail = accountDetails.find(
-      (d) => d.Tag === "AccountId" && (d.SlaveRow ?? 0) === row,
-    );
-    const policyDetail = accountDetails.find(
-      (d) => d.Tag === "PolicyId" && (d.SlaveRow ?? 0) === row,
-    );
-    if (!accountDetail) continue;
-
-    const label = accountDetail.Content ?? "";
-    const value = accountDetail.Number ?? "";
-    // find matching staff option or use raw value
-    const match = staffOptions.find(
-      (s) => s.value === value || s.label === label,
-    );
-    const account = match ?? { label, value };
-    travelers.push({
-      account,
-      policyId: policyDetail?.Content || policyDetail?.Number,
-    });
-  }
-
-  // segments — group by SlaveRow from TravelDetail slaves
-  const detailTimes = times.filter((t) => t.Slave === "TravelDetail");
-  const detailDetails = details.filter((d) => d.Slave === "TravelDetail");
-  const segmentRows = new Set([
-    ...detailTimes.map((t) => t.SlaveRow ?? 0),
-    ...detailDetails.map((d) => d.SlaveRow ?? 0),
-  ]);
-  const segments: TravelApplySegment[] = [];
-  const sortedSegmentRows = [...segmentRows].sort((a, b) => a - b);
-  for (const row of sortedSegmentRows) {
-    const start = findTime("StartDate", row);
-    const end = findTime("EndDate", row);
-    const fromDetail = detailDetails.find(
-      (d) => d.Tag === "FromCityName" && (d.SlaveRow ?? 0) === row,
-    );
-    const toDetail = detailDetails.find(
-      (d) => d.Tag === "ToCityName" && (d.SlaveRow ?? 0) === row,
-    );
-
-    if (!start && !end && !fromDetail && !toDetail) continue;
-
-    const findCity = (label?: string, number?: string): TravelApplyCity => {
-      return (
-        cities.find((c) => c.value === number || c.label === label) ?? {
-          label: label ?? "",
-          value: number ?? "",
-        }
-      );
-    };
-
-    segments.push({
-      startDate: start?.Time ?? "",
-      endDate: end?.Time ?? "",
-      fromCity: findCity(fromDetail?.Content, fromDetail?.Number),
-      toCity: findCity(toDetail?.Content, toDetail?.Number),
-    });
-  }
-
-  if (travelers.length === 0) {
-    travelers.push(defaultTravelApplyTraveler(meta.defaultAccount));
-  }
-  if (segments.length === 0) {
-    segments.push(defaultTravelApplySegment(cities));
-  }
-
-  return { travelTypes, reason, travelers, segments };
+  return { travelTypes, reason };
 }
 
 // ── 修改（Form/Modify） ────────────────────────────────────────────────

@@ -276,27 +276,33 @@ export function TravelApplyPage() {
     0,
   );
 
-  // Load existing form for edit
+  // Load existing form for edit — from Form/Get API
   useEffect(() => {
     if (!meta || !editId || travelers.length > 0 || segments.length > 0) return;
     setLoadingEdit(true);
+
     const ticketVal = getTicket();
-    if (!ticketVal) return;
+    if (!ticketVal) {
+      setLoadingEdit(false);
+      return;
+    }
+
     fetchTravelFormData(ticketVal, editId)
-      .then((formData) => {
-        if (!formData) {
+      .then((controls) => {
+        if (!controls) {
           setValidationError("加载申请单数据失败");
           return;
         }
-        const parsed = parseFormDataToValues(meta, formData, meta.cities, meta.staffOptions);
+        const parsed = parseFormDataToValues(meta, controls, meta.cities, meta.staffOptions);
         if (!parsed) {
           setValidationError("解析申请单数据失败");
           return;
         }
         setTravelTypes(parsed.travelTypes);
         setReason(parsed.reason);
-        setTravelers(parsed.travelers);
-        setSegments(parsed.segments);
+        // travelers/segments use defaults (API doesn't return slave data)
+        setTravelers([defaultTravelApplyTraveler(meta.defaultAccount)]);
+        setSegments([defaultTravelApplySegment(meta.cities)]);
       })
       .catch(() => setValidationError("加载申请单数据失败"))
       .finally(() => setLoadingEdit(false));
