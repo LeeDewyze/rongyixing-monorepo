@@ -1,64 +1,65 @@
 import type { HotelBillNight } from "@/lib/hotel-book";
 import { HOTEL_DETAIL_FONT } from "@/components/hotel/hotel-detail-chrome";
-import { formatHotelDateShort } from "@/lib/date-search";
 
-interface HotelBookBillSheetProps {
-  open: boolean;
+export interface HotelBookBillSheetProps {
   nights: HotelBillNight[];
+  nightCount: number;
+  roomSubtotal: number;
   serviceFee: number;
-  total: number;
-  onClose: () => void;
+  roomCount: number;
+}
+
+function formatBillAmount(value: number): string {
+  if (!Number.isFinite(value)) return "—";
+  return String(Math.round(value * 100) / 100);
 }
 
 export function HotelBookBillSheet({
-  open,
   nights,
+  nightCount,
+  roomSubtotal,
   serviceFee,
-  total,
-  onClose,
+  roomCount,
 }: HotelBookBillSheetProps) {
-  if (!open) return null;
+  const quantityLabel = roomCount > 1 ? `${roomCount} x ` : "1 x ";
 
   return (
-    <div className={`fixed inset-0 z-50 flex flex-col justify-end bg-black/40 ${HOTEL_DETAIL_FONT}`}>
-      <button type="button" className="flex-1" aria-label="关闭" onClick={onClose} />
-      <div className="max-h-[70vh] overflow-y-auto rounded-t-2xl bg-white pb-[max(1rem,env(safe-area-inset-bottom))]">
-        <div className="sticky top-0 flex items-center justify-between border-b border-[#EEEEEE] bg-white px-4 py-3">
-          <p className="text-[16px] font-semibold text-[#333333]">账单明细</p>
-          <button
-            type="button"
-            className="text-[22px] leading-none text-[#999999]"
-            aria-label="关闭"
-            onClick={onClose}
-          >
-            ×
-          </button>
-        </div>
-
-        <div className="space-y-3 px-4 py-4">
-          {nights.map((night) => (
-            <div
-              key={night.date}
-              className="flex items-center justify-between text-[14px] text-[#333333]"
-            >
-              <span>{formatHotelDateShort(night.date)}</span>
-              <span>¥{night.price}</span>
-            </div>
-          ))}
-
-          {serviceFee > 0 ? (
-            <div className="flex items-center justify-between border-t border-[#F0F0F0] pt-3 text-[14px] text-[#333333]">
-              <span>服务费</span>
-              <span>¥{serviceFee}</span>
-            </div>
-          ) : null}
-
-          <div className="flex items-center justify-between border-t border-[#F0F0F0] pt-3 text-[15px] font-medium text-[#333333]">
-            <span>总计</span>
-            <span className="text-[18px] text-[#FF4D4F]">¥{total}</span>
-          </div>
-        </div>
+    <div
+      className={`mx-3 mb-2 overflow-hidden rounded-2xl border border-white/80 bg-white/95 shadow-[0_8px_28px_rgba(15,23,42,0.14)] backdrop-blur-md ${HOTEL_DETAIL_FONT}`}
+      role="dialog"
+      aria-label="房费明细"
+    >
+      <div className="flex items-center justify-between px-4 py-3">
+        <p className="text-[15px] font-medium text-[#010101]">房费明细</p>
+        <p className="text-[13px] text-[#666666]">
+          <span>{nightCount}晚,共 </span>
+          <span className="font-medium text-[#FF4D4F]">¥{formatBillAmount(roomSubtotal)}</span>
+        </p>
       </div>
+
+      <div className="space-y-2.5 px-4 pb-3">
+        {nights.map((night) => (
+          <div
+            key={night.date}
+            className="flex items-center justify-between text-[13px] leading-none text-[#999999]"
+          >
+            <span>{night.date}</span>
+            <span>
+              {quantityLabel}¥{formatBillAmount(night.price)}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {serviceFee > 0 ? (
+        <>
+          <div className="mx-4 border-t border-dashed border-[#E5E7EB]" />
+          <div className="flex items-center justify-between px-4 py-3 text-[14px] text-[#333333]">
+            <span>服务费</span>
+            <span className="font-medium">¥{formatBillAmount(serviceFee)}</span>
+          </div>
+        </>
+      ) : null}
     </div>
   );
 }

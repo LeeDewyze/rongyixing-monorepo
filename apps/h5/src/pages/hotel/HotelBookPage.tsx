@@ -21,7 +21,6 @@ import { FlightBookOrganizationSheet } from "@/components/flight/FlightBookOrgan
 import { FlightOutNumberPickerSheet } from "@/components/flight/FlightOutNumberPickerSheet";
 import { HotelBookWarmReminderDialog } from "@/components/hotel/HotelBookWarmReminderDialog";
 import { HotelBookArrivalTimeSheet } from "@/components/hotel/HotelBookArrivalTimeSheet";
-import { HotelBookBillSheet } from "@/components/hotel/HotelBookBillSheet";
 import { HotelBookCreditCardSection } from "@/components/hotel/HotelBookCreditCardSection";
 import { HotelBookFooter } from "@/components/hotel/HotelBookFooter";
 import { HotelBookHeader } from "@/components/hotel/HotelBookHeader";
@@ -517,7 +516,11 @@ export function HotelBookPage() {
         amount={displayAmount}
         disabled={submitBook.isPending}
         pending={submitBook.isPending}
-        onShowBill={() => setBillOpen(true)}
+        billOpen={billOpen}
+        billNights={billNights}
+        serviceFee={serviceFeeTotal}
+        roomCount={Math.max(passengers.length, 1)}
+        onBillToggle={() => setBillOpen((open) => !open)}
         onSubmit={() => void handleSubmit()}
       />
 
@@ -569,14 +572,6 @@ export function HotelBookPage() {
         checkInOutTime={selection.checkInOutTime}
         bookingNotice={selection.bookingNotice}
         onClose={() => setNoticeOpen(false)}
-      />
-
-      <HotelBookBillSheet
-        open={billOpen}
-        nights={billNights}
-        serviceFee={serviceFeeTotal}
-        total={displayAmount}
-        onClose={() => setBillOpen(false)}
       />
 
       <HotelBookWarmReminderDialog

@@ -13,7 +13,7 @@ export function DevMenu() {
   const [open, setOpen] = useState(false);
   const current = getApiMode();
 
-  if (!import.meta.env.DEV) return null;
+  if (!import.meta.env.DEV || import.meta.env.VITE_SHOW_DEV_MENU !== "true") return null;
 
   function switchMode(mode: "mock" | "proxy" | "direct") {
     clearApiModeOverride();
