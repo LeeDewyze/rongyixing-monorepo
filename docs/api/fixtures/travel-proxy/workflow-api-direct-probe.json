@@ -1,0 +1,34 @@
+{
+  "/Home/Index": {
+    "url": "http://api-workflow.rtesp.com/Home/Index?ticket=f1d53cb4d73143ea861646b4a76a7d26",
+    "status": 404,
+    "contentType": null,
+    "length": 0,
+    "preview": "",
+    "apiHints": []
+  },
+  "/Task/List": {
+    "url": "http://api-workflow.rtesp.com/Task/List?ticket=f1d53cb4d73143ea861646b4a76a7d26",
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "length": 150,
+    "preview": "{\"Data\":null,\"Status\":false,\"Code\":\"ParemeterError\",\"Message\":\"参数错误\",\"Timestamp\":\"1782371513\",\"Sign\":null,\"Language\":null,\"Token\":null,\"TraceId\":null}",
+    "apiHints": []
+  },
+  "/Form/Get": {
+    "url": "http://api-workflow.rtesp.com/Form/Get?ticket=f1d53cb4d73143ea861646b4a76a7d26",
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "length": 150,
+    "preview": "{\"Data\":null,\"Status\":false,\"Code\":\"ParemeterError\",\"Message\":\"参数错误\",\"Timestamp\":\"1782371513\",\"Sign\":null,\"Language\":null,\"Token\":null,\"TraceId\":null}",
+    "apiHints": []
+  },
+  "/Form/Flow": {
+    "url": "http://api-workflow.rtesp.com/Form/Flow?ticket=f1d53cb4d73143ea861646b4a76a7d26",
+    "status": 404,
+    "contentType": null,
+    "length": 0,
+    "preview": "",
+    "apiHints": []
+  }
+}

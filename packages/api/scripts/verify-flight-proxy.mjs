@@ -1,10 +1,14 @@
 #!/usr/bin/env node
 /**
- * Proxy smoke test: login → list → detail → initialize → (optional) book.
+ * Proxy smoke test: login → list → detail → policy → initialize → (optional) book → checkPay.
  *
  * Usage:
+ *   pnpm --filter @ryx/api build
  *   FLIGHT_PROXY_USER=T18610773065 FLIGHT_PROXY_PASS=Temp123456 \
  *     node packages/api/scripts/verify-flight-proxy.mjs
+ *
+ * Submit book (writes book-request.json / book-response.json):
+ *   FLIGHT_PROXY_SUBMIT=1 node packages/api/scripts/verify-flight-proxy.mjs
  */
 import { writeFileSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -22,6 +26,7 @@ const FROM = process.env.FLIGHT_PROXY_FROM ?? "BJS";
 const TO = process.env.FLIGHT_PROXY_TO ?? "SHA";
 const FLIGHT_HINT = process.env.FLIGHT_PROXY_FLIGHT ?? "";
 const SUBMIT_BOOK = process.env.FLIGHT_PROXY_SUBMIT === "1";
+const RUN_PAY = process.env.FLIGHT_PROXY_PAY === "1";
 
 function log(step, data) {
   console.log(`\n=== ${step} ===`);
@@ -231,6 +236,23 @@ async function main() {
     Count: fare.Count,
   });
 
+  const policyParams = {
+    Flights: JSON.stringify(list),
+    Passengers: passenger.accountId,
+    FlightDetail: JSON.stringify(detail),
+  };
+  save("policy-request", policyParams);
+
+  let policyResults;
+  try {
+    policyResults = await api.flight.getFlightPolicy(policyParams);
+    save("policy-response", policyResults);
+    log("policy-OK", policyResults);
+  } catch (err) {
+    save("policy-error", { message: String(err), params: policyParams });
+    throw err;
+  }
+
   const initParams = buildOrderBookDto({
     segments: detail.FlightSegments?.length ? detail.FlightSegments : [picked],
     fare,
@@ -249,9 +271,46 @@ async function main() {
   }
 
   if (SUBMIT_BOOK) {
+    save("book-request", initParams);
     const bookRes = await api.flight.submitBook(initParams);
     save("book-response", bookRes);
     log("book-OK", bookRes);
+
+    if (bookRes?.IsCheckPay) {
+      const tradeNo = bookRes.TradeNo ?? bookRes.OrderId ?? "";
+      let checkPayReady = false;
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        checkPayReady = await api.book.checkPay(tradeNo);
+        if (checkPayReady) break;
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+      }
+      save("check-pay-response", { tradeNo, ready: checkPayReady });
+      log("checkPay", { tradeNo, ready: checkPayReady });
+
+      if (RUN_PAY && checkPayReady && tradeNo) {
+        const total = await api.pay.getTotalPayAmount({ OrderId: tradeNo });
+        save("pay-total-response", total);
+        log("getTotalPayAmount", total);
+
+        const pays = await api.pay.getOrderPays({ OrderId: tradeNo });
+        save("pay-channels-response", pays);
+        log("getOrderPays", pays);
+
+        const payType = pays[0]?.PayType ?? "3";
+        const created = await api.pay.create({ OrderId: tradeNo, PayType: payType });
+        save("pay-create-response", created);
+        log("pay.create", created);
+
+        const outTradeNo = created.OutTradeNo ?? created.PayOrderId ?? created.Number;
+        if (outTradeNo) {
+          const processed = await api.pay.process({ OutTradeNo: outTradeNo, Type: payType });
+          save("pay-process-response", processed);
+          log("pay.process", processed);
+        }
+      } else if (RUN_PAY) {
+        console.log("\n(skip pay — checkPay not ready or missing tradeNo)");
+      }
+    }
   } else {
     console.log("\n(skip book — set FLIGHT_PROXY_SUBMIT=1 to submit)");
   }

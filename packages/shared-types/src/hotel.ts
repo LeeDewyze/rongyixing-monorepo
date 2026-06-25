@@ -113,6 +113,8 @@ export interface OrderDetailParams {
   OrderId: string;
 }
 
+export type OrderDetailProductType = "Flight" | "Hotel" | "Train" | "Car";
+
 export interface OrderDetailResponse {
   OrderId: string;
   OrderNumber?: string;
@@ -120,9 +122,14 @@ export interface OrderDetailResponse {
   StatusName?: string;
   isShowPayButton?: boolean;
   TotalAmount?: number;
+  ProductType?: OrderDetailProductType;
   HotelName?: string;
   CheckInDate?: string;
   CheckOutDate?: string;
+  RouteTitle?: string;
+  DepartTime?: string;
+  PassengerNames?: string;
+  TicketStatusName?: string;
 }
 
 export interface OrderPayChannel {
@@ -131,13 +138,29 @@ export interface OrderPayChannel {
   Icon?: string;
 }
 
+export interface PayTotalAmountParams {
+  OrderId: string;
+  Key?: string;
+}
+
+export interface PayTotalAmountResponse {
+  TotalPayAmount: number;
+  PayHoldTime?: number;
+}
+
 export interface PayCreateParams {
   OrderId: string;
   PayType: string;
   Amount?: number;
+  Key?: string;
 }
 
 export interface PayCreateResponse {
   PayUrl?: string;
   PayOrderId?: string;
+  OutTradeNo?: string;
+  Number?: string;
+  Url?: string;
+  Status?: boolean;
+  Message?: string;
 }

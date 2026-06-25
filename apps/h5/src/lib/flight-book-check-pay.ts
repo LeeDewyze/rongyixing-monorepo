@@ -1,12 +1,20 @@
 import { getApi } from "@/lib/api";
+import {
+  FLIGHT_PAY_TYPE_CREDIT,
+  FLIGHT_PAY_TYPE_PERSON,
+} from "@/lib/flight-book-pay";
 
 const POLL_INTERVAL_MS = 3000;
 const MAX_ATTEMPTS = 5;
 
 export async function pollFlightCheckPay(tradeNo: string): Promise<boolean> {
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
-    const ready = await getApi().book.checkPay(tradeNo);
-    if (ready) return true;
+    try {
+      const ready = await getApi().book.checkPay(tradeNo);
+      if (ready) return true;
+    } catch {
+      // Legacy keeps polling; fall through to next attempt.
+    }
     await new Promise((resolve) => window.setTimeout(resolve, POLL_INTERVAL_MS));
   }
   return false;
@@ -18,5 +26,5 @@ export function shouldNavigateToPay(input: {
 }): boolean {
   const { travelPayType, checkPayReady } = input;
   if (!checkPayReady) return false;
-  return travelPayType === 2;
+  return travelPayType === FLIGHT_PAY_TYPE_PERSON || travelPayType === FLIGHT_PAY_TYPE_CREDIT;
 }

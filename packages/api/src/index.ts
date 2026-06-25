@@ -6,6 +6,7 @@ import {
   type AuthProxyApi,
   type IdentityApi,
 } from "./apis/auth-proxy.js";
+import { createApprovalApi, type ApprovalApi } from "./apis/approval.js";
 import { createAuthApi } from "./apis/auth.js";
 import { createBookApi, type BookApi } from "./apis/book.js";
 import { createFlightApi, type FlightApi } from "./apis/flight.js";
@@ -28,6 +29,13 @@ import {
 
 export { ApiError } from "./errors.js";
 export { createApiClient, type ApiClient, type ApiClientConfig } from "./client.js";
+export { createApprovalApi, type ApprovalApi } from "./apis/approval.js";
+export {
+  normalizeApprovalTask,
+  normalizeApprovalTaskList,
+  normalizeWaitingTaskCount,
+  normalizeWorkflowNotifyList,
+} from "./apis/approval-task-adapter.js";
 export { createAuthApi, type AuthApi } from "./apis/auth.js";
 export {
   createAuthProxyApi,
@@ -55,6 +63,7 @@ export { createMemberApi, type MemberApi } from "./apis/member.js";
 export { createTrainApi, type TrainApi } from "./apis/train.js";
 export { createTravelApi, type TravelApi } from "./apis/travel.js";
 export { createTmcApi, type TmcApi } from "./apis/tmc.js";
+export * from "./methods/approval-flow.js";
 export * from "./methods/auth-flow.js";
 export * from "./methods/flight-flow.js";
 export * from "./methods/hotel-flow.js";
@@ -102,6 +111,7 @@ export interface Api {
   travel: TravelApi;
   train: TrainApi;
   tmc: TmcApi;
+  approval: ApprovalApi;
 }
 
 /** Create a shared API surface for all client apps. */
@@ -150,5 +160,6 @@ export function createApi(config: CreateApiConfig): Api {
     travel: createTravelApi(proxy),
     train: createTrainApi(proxy),
     tmc: createTmcApi(proxy),
+    approval: createApprovalApi(proxy),
   };
 }

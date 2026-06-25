@@ -3,6 +3,8 @@ import type { PassengerBookInfo } from "@ryx/shared-types";
 
 import {
   resolveFlightBookTmcFlags,
+  resolveFlightBookAgentId,
+  resolveInitialFlightBookAgentId,
   resolveTotalServiceFee,
 } from "./flight-book-pay";
 
@@ -19,6 +21,24 @@ const passengers: PassengerBookInfo[] = [
     },
   },
 ];
+
+describe("resolveFlightBookAgentId", () => {
+  it("uses explicit agent id or defaults to the first service", () => {
+    const agents = [{ Id: "A1" }, { Id: "A2" }];
+    expect(resolveFlightBookAgentId("A2", agents)).toBe("A2");
+    expect(resolveFlightBookAgentId(null, agents)).toBe("A1");
+    expect(resolveFlightBookAgentId(null, [])).toBeUndefined();
+  });
+});
+
+describe("resolveInitialFlightBookAgentId", () => {
+  it("keeps current selection or defaults like Legacy initialize", () => {
+    const agents = [{ Id: "A1" }, { Id: "A2" }];
+    expect(resolveInitialFlightBookAgentId("A2", agents)).toBe("A2");
+    expect(resolveInitialFlightBookAgentId(null, agents)).toBe("A1");
+    expect(resolveInitialFlightBookAgentId(null, [])).toBeNull();
+  });
+});
 
 describe("resolveFlightBookTmcFlags", () => {
   it("reads notify language and service fee flags from Tmc", () => {

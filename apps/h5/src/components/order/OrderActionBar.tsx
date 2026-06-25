@@ -25,7 +25,10 @@ export function OrderActionBar({ actions, onAction }: OrderActionBarProps) {
                 ? "border border-transparent bg-[#2768FA] font-medium text-white"
                 : "border border-[#2768FA] bg-white font-normal text-[#2768FA]"
             }`}
-            onClick={() => onAction?.(action)}
+            onClick={(event) => {
+              event.stopPropagation();
+              onAction?.(action);
+            }}
           >
             {action.label}
           </button>

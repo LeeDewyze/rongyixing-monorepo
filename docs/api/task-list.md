@@ -56,7 +56,7 @@ H5 页面    ███░░░░░░░░░  ≈28%   6 done + 4 partial /
 | **4** | 订单列表 + 详情 | 4 | [ ] | `/orders` + 酒店详情页 |
 | **5** | 机票链 | 3 | [ ] | 封装 flight domain |
 | **6** | 火车链 | 3 | [ ] | 封装 train domain |
-| **7** | 出差 + 常旅客 | 3 | [~] | 出差申请抓包 |
+| **7** | 出差 + 常旅客 | 3 | [~] | Phase A 审批列表 + 申请占位 |
 | **8** | 账户/审批 P2 | 4 | [ ] | 可选 |
 
 ---
@@ -97,8 +97,9 @@ H5 页面    ███░░░░░░░░░  ≈28%   6 done + 4 partial /
 - [x] 酒店详情 `/hotel/:id`
 - [x] 酒店填单（含选出差单）
 - [x] 下单结果 `/hotel/result/:orderId`
-- [x] 支付 `/hotel/pay/:orderId`
-- [ ] Policy / SearchHotel / Pay-Process
+- [x] 支付 `/hotel/pay/:orderId`（含 Pay-Process）
+- [x] 机票支付 `/flight/pay/:orderId`
+- [ ] Policy / SearchHotel
 
 ### Wave 4 — 订单 `[ ]`
 
@@ -111,8 +112,10 @@ H5 页面    ███░░░░░░░░░  ≈28%   6 done + 4 partial /
 
 - [ ] 机票搜索 / 列表 / 填单
 - [ ] 火车搜索 / 车次 / 填单
-- [ ] 出差申请（抓包）
+- [~] 出差申请（`/travel/apply` 占位，提交 API 待抓包）
 - [x] 选择出差单（预订内嵌）
+- [~] 审批任务（`/travel/approval` · Task-List）
+- [~] 我的审批（`/travel/workflow` · Workflow History）
 - [~] 选择常旅客（独立页 `/passenger/select`；酒店填单已消费，机票/火车待接填单）→ [passenger.md](./domains/passenger.md)
 - [ ] 账户设置 / 安全 / 证件 / 审批（P2）
 
@@ -169,7 +172,8 @@ H5 页面    ███░░░░░░░░░  ≈28%   6 done + 4 partial /
 | `TmcApiOrderUrl-Order-CancelOrderHotel` | [x] | [x] | [ ] | 酒店详情 |
 | `TmcApiOrderUrl-Order-GetOrderPays` | [x] | [x] | [x] | 支付 |
 | `TmcApiOrderUrl-Pay-Create` | [x] | [x] | [x] | 支付 |
-| `TmcApiOrderUrl-Pay-Process` | [x] | [x] | [ ] | 支付 |
+| `TmcApiOrderUrl-Pay-Process` | [x] | [x] | [x] | 支付 |
+| `TmcApiOrderUrl-Pay-GetTotalPayAmount` | [x] | [x] | [x] | 支付 |
 
 ### 6.5 会员 / 出差
 
@@ -178,8 +182,10 @@ H5 页面    ███░░░░░░░░░  ≈28%   6 done + 4 partial /
 | `ApiMemberUrl-Member-Get` | [x] | [x] | [ ] | 我的 |
 | `ApiMemberUrl-Passenger-List` | [x] | [x] | [x] | 填单 |
 | `ApiMemberUrl-Passenger-Add` | [x] | [x] | [ ] | 常旅客 |
-| `HrApiUrl-Staff-Get` | [x] | [x] | [ ] | 出差 |
-| 出差申请提交 | [ ] | [ ] | [ ] | Wave 7 · 抓包 |
+| `TmcApiOrderUrl-Task-List` | [x] | [x] | [~] | `/travel/approval` |
+| `WorkflowApiUrl-History-List` | [x] | [x] | [~] | `/travel/workflow` |
+| `TmcApiHomeUrl-Home-GetAccountWaitingTasks` | [x] | [x] | [~] | 待我审批角标 |
+| `TmcApiHomeUrl-Workbench-Load` | 首页/出差入口 URL | [x] | [x] | [~] | TravelApply/Workflow |
 
 ### 6.6 机票 / 火车 `[-]`
 
@@ -229,10 +235,23 @@ VITE_API_BASE_URL=http://app.rtesp.com
 
 ---
 
-## 九、相关文档
+## 九、Proxy 测试环境阻塞项（2026-06-24）
+
+> 明细见 [proxy-test-known-issues.md](./proxy-test-known-issues.md)
+
+| # | 问题 | 阻塞 | 负责 |
+|---|------|------|------|
+| 1 | 机票订单详情 `Order-Detail` SQL 报错 `FromCityName` | 详情页、详情「去支付」 | 后端 |
+| 2 | Proxy 个付 E2E（checkPay → `/flight/pay`）未验通 | 填单后自动支付 | 后端 + 联调 |
+| 3 | 列表失败文案为 H5 自研（非 Legacy） | 无 | 产品可选 |
+
+---
+
+## 十、相关文档
 
 | 文档 | 路径 |
 |------|------|
+| **Proxy 已知问题** | [proxy-test-known-issues.md](./proxy-test-known-issues.md) |
 | **页面→接口矩阵** | [PAGE-API-MATRIX.md](./PAGE-API-MATRIX.md) |
 | H5 路由对照 | [H5-RYX-MIGRATION.md](./H5-RYX-MIGRATION.md) |
 | 迁移方案 | [../接口迁移方案.md](../接口迁移方案.md) |

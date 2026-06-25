@@ -3,6 +3,8 @@ import type { HotelBookParams, HotelInitBookParams } from "@ryx/shared-types";
 
 import { getApi } from "@/lib/api";
 
+export { useOrderPays, usePayCreate, usePayProcess, usePayTotalAmount } from "./useOrderPay";
+
 export function useHotelInitBook() {
   return useMutation({
     mutationFn: (params: HotelInitBookParams) => getApi().hotel.initBook(params),
@@ -29,21 +31,6 @@ export function useOrderDetail(orderId: string, pollMs = 3000) {
       if (data?.isShowPayButton) return false;
       return pollMs;
     },
-  });
-}
-
-export function useOrderPays(orderId: string) {
-  return useQuery({
-    queryKey: ["pay", "channels", orderId],
-    queryFn: () => getApi().pay.getOrderPays({ OrderId: orderId }),
-    enabled: Boolean(orderId),
-  });
-}
-
-export function usePayCreate() {
-  return useMutation({
-    mutationFn: (params: { OrderId: string; PayType: string; Amount?: number }) =>
-      getApi().pay.create(params),
   });
 }
 

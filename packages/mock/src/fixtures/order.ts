@@ -15,6 +15,25 @@ export interface MockOrderState extends OrderDetailResponse {
 }
 
 export function createMockOrderDetail(orderId: string): MockOrderState {
+  const isFlight = /FLT|FLT-/i.test(orderId);
+  if (isFlight) {
+    return {
+      OrderId: orderId,
+      OrderNumber: `FL${orderId.slice(-8).toUpperCase()}`,
+      Status: "Booking",
+      StatusName: "预订中",
+      isShowPayButton: false,
+      TotalAmount: 680,
+      ProductType: "Flight",
+      RouteTitle: "KN5977 北京—上海",
+      DepartTime: "2026-06-23 08:30:00",
+      PassengerNames: "测试旅客",
+      TicketStatusName: "待出票",
+      createdAt: Date.now(),
+      pollCount: 0,
+    };
+  }
+
   return {
     OrderId: orderId,
     OrderNumber: `HT${orderId.slice(-8).toUpperCase()}`,
@@ -43,9 +62,8 @@ export function resolveOrderDetail(state: MockOrderState): OrderDetailResponse {
 }
 
 export const MOCK_ORDER_PAYS = [
-  { PayType: "Wechat", PayTypeName: "微信支付", Icon: "wechat" },
-  { PayType: "Alipay", PayTypeName: "支付宝", Icon: "alipay" },
-  { PayType: "Corporate", PayTypeName: "企业支付", Icon: "corporate" },
+  { PayType: "3", PayTypeName: "微信支付" },
+  { PayType: "2", PayTypeName: "支付宝" },
 ];
 
 /** Status codes that appear under the "待出行" scope filter (mock only). */

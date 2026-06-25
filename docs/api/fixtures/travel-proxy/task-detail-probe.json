@@ -1,0 +1,39 @@
+{
+  "taskSample": {
+    "id": "44880000000013",
+    "name": "申晓杰向您发起了【出差申请】审批流程",
+    "number": "ced7a3f33cf3400cae1f6d2186e2942b",
+    "statusName": "处理中",
+    "tag": "Travel",
+    "handleUrl": "http://workflow.rtesp.com/FormTask/Handle?flowtag=Travel"
+  },
+  "workflowTaskSample": {
+    "id": "44880000000013",
+    "url": "http://workflow.rtesp.com/FormTask/Detail?flowtag=Travel&taskId=44880000000013&sign=67e7beb37787eb92266d10c45c84601f",
+    "name": "申晓杰向您发起了【出差申请】审批流程"
+  },
+  "handlePage": {
+    "label": "task.handle",
+    "method": "GET",
+    "url": "http://workflow.rtesp.com/FormTask/Handle?flowtag=Travel&taskid=44880000000013&ticket=***REDACTED***&isApp=true&lang=cn",
+    "status": 200,
+    "contentType": "text/html; charset=utf-8",
+    "durationMs": 92,
+    "isJson": false,
+    "bodyPreview": "<!DOCTYPE html>\n<html>\n<head>\n    <meta charset=\"utf-8\" />\n    <meta name=\"format-detection\" content=\"telephone=no\">\n    <meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no\" />\n    <link rel=\"shortcut icon\" href=\"http://shared.rtesp.com/img/favicon.ico\" type=\"image/x-icon\" />\n    <script type=\"text/javascript\" src=\"/js/plugin/jquery.min.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/winner/winner.classbase.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/winner/dataloader/winner.dataloader.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/plugin/jquery.lazyload.min.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/plugin/layer/layer.js\"></script>\n    <link href=\"/js/plugin/layui/css/layui.css\" rel=\"stylesheet\" />\n\n    <script type=\"text/javascript\" src=\"/js/plugin/layui/layui.js\"></script>\n    <title>&#x6D41;&#x7A0B;&#x5904;&#x7406;</title>\n\n    \n    <script type=\"text/javascript\" src=\"/js/winner/validator/winner.validator.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/winner/table/winner.table.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/winner/checkbox/winner.checkbox.js",
+    "bodyLength": 80917,
+    "json": null
+  },
+  "detailPage": {
+    "label": "task.detail",
+    "method": "GET",
+    "url": "http://workflow.rtesp.com/FormTask/Detail?flowtag=Travel&taskId=44880000000013&sign=67e7beb37787eb92266d10c45c84601f&ticket=***REDACTED***",
+    "status": 200,
+    "contentType": "text/html; charset=utf-8",
+    "durationMs": 97,
+    "isJson": false,
+    "bodyPreview": "<!DOCTYPE html>\n<html>\n<head>\n    <meta charset=\"utf-8\" />\n    <meta name=\"format-detection\" content=\"telephone=no\">\n    <meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no\" />\n    <link rel=\"shortcut icon\" href=\"http://shared.rtesp.com/img/favicon.ico\" type=\"image/x-icon\" />\n    <script type=\"text/javascript\" src=\"/js/plugin/jquery.min.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/winner/winner.classbase.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/winner/dataloader/winner.dataloader.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/plugin/jquery.lazyload.min.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/plugin/layer/layer.js\"></script>\n    <link href=\"/js/plugin/layui/css/layui.css\" rel=\"stylesheet\" />\n\n    <script type=\"text/javascript\" src=\"/js/plugin/layui/layui.js\"></script>\n    <title>&#x6D41;&#x7A0B;&#x5904;&#x7406;</title>\n\n    \n    <script type=\"text/javascript\" src=\"/js/winner/validator/winner.validator.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/winner/table/winner.table.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/winner/checkbox/winner.checkbox.js",
+    "bodyLength": 80597,
+    "json": null
+  }
+}

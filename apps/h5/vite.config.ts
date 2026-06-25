@@ -24,6 +24,7 @@ const DEV_RYX_SERVICE_TARGETS: Record<string, string> = {
   TmcApiTrainUrl: "http://train-api-tmc.rtesp.com",
   TmcApiBookUrl: "http://book-api-tmc.rtesp.com",
   TmcApiOrderUrl: "http://order-api-tmc.rtesp.com",
+  WorkflowApiUrl: "http://api-workflow.rtesp.com",
   ApiMemberUrl: "http://member-api.rtesp.com",
   ApiHomeUrl: DEV_API_HOME_TARGET,
 };

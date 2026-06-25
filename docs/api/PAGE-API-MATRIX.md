@@ -70,18 +70,21 @@
 | 3 | 酒店详情 | `tmc-hotel-detail_ryx` | `/hotel/:id` | Home-Detail, Policy | [~] | [~] | [x] | Policy 未接 UI |
 | 3 | 酒店填单 | `tmc-hotel-book_ryx` | `/hotel/:id/book` | Initialize, Book, GetTravelUrl, Passenger-List | [x] | [x] | [x] | HotelBookPage |
 | 3 | 下单结果 | `tmc-checkout-success` | `/hotel/result/:orderId` | Order-Detail | [x] | [x] | [x] | 轮询 |
-| 3 | 支付 | 支付子页 | `/hotel/pay/:orderId` | GetOrderPays, Pay-Create | [~] | [x] | [x] | 缺 Pay-Process |
+| 3 | 支付 | 支付子页 | `/hotel/pay/:orderId` | GetOrderPays, Pay-Create, Pay-Process | [~] | [x] | [x] | OrderPayPage |
 | 4 | 订单列表 | `tmc-order-list_ryx` | `/orders` | Order-List | [x] | [x] | [ ] | API 有，无页面 |
 | 4 | 酒店订单详情 | `tmc-order-hotel-detail_ryx` | `/orders/hotel/:id` | Detail, CancelOrderHotel, SMS 验证 | [~] | [~] | [ ] | |
 | 4 | 机票订单详情 | `tmc-order-flight-detail_ryx` | `/orders/flight/:id` | Detail, RefundFlight, Exchange… | [ ] | [ ] | [ ] | |
 | 4 | 火车订单详情 | `tmc-order-train-detail_ryx` | `/orders/train/:id` | Detail, IssueTrain, CancelTrain | [ ] | [ ] | [ ] | |
 | 5 | 机票搜索 | `tmc-flight-search_ryx` | `/flight` | Home-Index, Policy | [ ] | [ ] | [ ] | |
 | 5 | 机票列表 | `tmc-flight-list_ryx` | `/flight/list` | Home-Detail, Home-Exchange | [ ] | [ ] | [ ] | |
-| 5 | 机票填单 | `tmc-flight-book_ryx` | `/flight/book` | Initialize, Book, GetTravelUrl | [ ] | [ ] | [ ] | |
+| 5 | 机票填单 | `tmc-flight-book_ryx` | `/flight/book` | Initialize, Book, GetTravelUrl | [~] | [~] | [~] | FlightBookPage |
+| 5 | 机票支付 | payOrder 弹层 | `/flight/pay/:orderId` | GetTotalPayAmount, GetOrderPays, Pay-Create, Pay-Process | [~] | [x] | [x] | FlightPayPage |
 | 6 | 火车搜索 | `tmc-train-search_ryx` | `/train` | TrainStation, Search | [ ] | [ ] | [ ] | |
 | 6 | 火车车次 | `tmc-train-list_ryx` | `/train/list` | Schedule, Policy | [ ] | [ ] | [ ] | |
 | 6 | 火车填单 | `tmc-train-book_ryx` | `/train/book` | Initialize, Book | [ ] | [ ] | [ ] | |
-| 7 | 出差申请 | `goBusiness` | `/travel/apply` | ⚠️ 待抓包 | [ ] | [ ] | [ ] | 源码路由缺失 |
+| 7 | 出差申请 | `goBusiness` / Workbench | `/travel/apply` | Workbench-Load → workflow Form/Flow | [~] | [x] | [~] | iframe |
+| 7 | 待我审批/已审 | `tmc-approval-task` | `/travel/approval` | Task-List, GetAccountWaitingTasks | [~] | [~] | [x] | TravelApprovalPage |
+| 7 | 我的审批 | Workbench | `/travel/workflow` | Workbench-Load → Task/Index | [~] | [x] | [~] | iframe |
 | 7 | 选择出差单 | GetTravelUrl | 预订内嵌 | GetTravelUrl | [x] | [x] | [x] | 酒店填单已接 |
 | 7 | 选择常旅客 | `tmc-select-passenger_ryx` | `/passenger/select` | Staff-List, Passenger-List, Add | [~] | [~] | [~] | UI/技术：[passenger-module-design.md](./domains/passenger-module-design.md) · [picker-design-system.md](../h5/ui/picker-design-system.md) |
 | 8 | 账户设置 | `account-setting_ryx` | `/me/settings` | Account-* | [ ] | [ ] | [ ] | P2 |
@@ -135,7 +138,8 @@
 | `TmcApiOrderUrl-Order-Detail` | 结果轮询 | [x] | [x] | [x] |
 | `TmcApiOrderUrl-Order-GetOrderPays` | 支付渠道 | [x] | [x] | [x] |
 | `TmcApiOrderUrl-Pay-Create` | 发起支付 | [x] | [x] | [x] |
-| `TmcApiOrderUrl-Pay-Process` | 支付回调 | [x] | [x] | [ ] |
+| `TmcApiOrderUrl-Pay-Process` | 支付回调 | [x] | [x] | [x] |
+| `TmcApiOrderUrl-Pay-GetTotalPayAmount` | 应付金额 | [x] | [x] | [x] |
 
 ### Wave 4 · 订单
 
@@ -156,6 +160,10 @@
 | `TmcApiFlightUrl-Home-Policy` | 政策 |
 | `TmcApiBookUrl-Flight-Initialize` | 初始化 |
 | `TmcApiBookUrl-Flight-Book` | 下单 |
+| `TmcApiBookUrl-Home-CheckPay` | 下单后可支付 |
+| `TmcApiOrderUrl-Pay-GetTotalPayAmount` | 应付金额 |
+| `TmcApiOrderUrl-Order-GetOrderPays` | 支付渠道 |
+| `TmcApiOrderUrl-Pay-Create` / `Pay-Process` | 支付 |
 
 ### Wave 6 · 火车（待封装）
 

@@ -3,6 +3,7 @@ interface FlightBookFooterProps {
   agreed: boolean;
   disabled: boolean;
   pending: boolean;
+  pendingLabel?: string;
   showTicketNotice?: boolean;
   showSaveOrder?: boolean;
   onAgreedChange: (agreed: boolean) => void;
@@ -17,6 +18,7 @@ export function FlightBookFooter({
   agreed,
   disabled,
   pending,
+  pendingLabel,
   showTicketNotice = false,
   showSaveOrder = false,
   onAgreedChange,
@@ -91,7 +93,7 @@ export function FlightBookFooter({
             className="min-w-[9rem] rounded-full bg-[linear-gradient(90deg,#24a8ff_0%,#2468f7_100%)] px-6 py-3 text-[15px] font-medium text-white shadow-[0_6px_14px_rgba(36,104,247,0.24)] disabled:bg-none disabled:bg-[#cccccc] disabled:shadow-none active:opacity-90"
             onClick={onSubmit}
           >
-            {pending ? "提交中…" : "生成订单"}
+            {pending ? (pendingLabel ?? "提交中…") : "生成订单"}
           </button>
         </div>
       </div>

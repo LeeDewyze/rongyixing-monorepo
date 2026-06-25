@@ -14,6 +14,7 @@ import {
   normalizeTravelListResponse,
   resolveOrderListTabId,
 } from "./order-list-map.js";
+import { normalizeOrderDetailResponse } from "./order-detail-map.js";
 
 export interface OrderApi {
   getList(params: OrderListParams): Promise<OrderListResponse>;
@@ -44,11 +45,12 @@ export function createOrderApi(proxy: ProxyClient): OrderApi {
       });
       return normalizeOrderListResponse(data, tabId);
     },
-    getDetail(params) {
-      return proxy.send<OrderDetailResponse>({
+    async getDetail(params) {
+      const data = await proxy.send<unknown>({
         method: ORDER_FLOW_METHODS.DETAIL,
         data: params,
       });
+      return normalizeOrderDetailResponse(data);
     },
     cancelHotel(params) {
       return proxy.send<boolean>({
