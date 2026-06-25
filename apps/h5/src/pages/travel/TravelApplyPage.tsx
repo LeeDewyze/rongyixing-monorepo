@@ -143,7 +143,7 @@ function SectionCard({
 function MetaChip({ label, value }: { label: string; value: string }) {
   if (!value) return null;
   return (
-    <div className="min-w-0 flex-1 rounded-xl bg-white/15 px-3 py-2 backdrop-blur-sm">
+    <div className="min-w-0 flex-1 rounded-xl bg-white/10 px-3 py-2">
       <p className="truncate text-[11px] text-white/75">{label}</p>
       <p className="truncate text-sm font-medium text-white">{value}</p>
     </div>
@@ -247,7 +247,7 @@ const TRAVEL_MINE_APPROVAL_PATH = "/travel/approval?tab=mine";
 export function TravelApplyPage() {
   const navigate = useNavigate();
   const goHome = useHomeBack();
-  usePageHeader({ title: "出差申请", showBack: true, onBack: goHome });
+  usePageHeader({ visible: false });
   const [searchParams] = useSearchParams();
   const editId = searchParams.get("editId") || null;
 
@@ -419,12 +419,24 @@ export function TravelApplyPage() {
       : validationError;
   const travelNumber = meta.travelNumber.label || meta.travelNumber.value;
 
-  const pageTitle = isEditing ? "编辑出差申请" : "出差申请";
-
   return (
     <div className="min-h-full bg-[#F5F6F9]">
       {/* header hasn't changed but let's at least show title */}
-      <div className="bg-gradient-to-br from-[#2768FA] via-[#2B7AFF] to-[#33A1F9] px-4 pb-10 pt-1">
+      <div className="bg-gradient-to-b from-[#5099fe] to-[#6aabff] pt-[env(safe-area-inset-top)] pb-10 px-4">
+        <div className="flex items-center px-1 pb-2 pt-1">
+          <button
+            type="button"
+            className="flex h-11 w-10 shrink-0 items-center justify-center text-[26px] font-light leading-none text-white active:opacity-70"
+            aria-label="返回"
+            onClick={goHome}
+          >
+            ‹
+          </button>
+          <h1 className="min-w-0 flex-1 truncate text-center text-[17px] font-medium text-white">
+            {isEditing ? "编辑出差申请" : "出差申请"}
+          </h1>
+          <span className="w-10 shrink-0" />
+        </div>
         <p className="text-xs text-white/70">差旅单号</p>
         <p className="mt-1 truncate text-[20px] font-semibold tracking-wide text-white">
           {travelNumber || (isEditing ? editId! : "—")}
@@ -452,7 +464,7 @@ export function TravelApplyPage() {
                     className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm transition-colors ${
                       active
                         ? "border-[#2768FA] bg-[#EEF4FF] font-medium text-[#2768FA] shadow-[0_2px_8px_rgba(39,104,250,0.12)]"
-                        : "border-[#E8ECF2] bg-[#FAFBFC] text-[#4B5563] active:bg-[#F3F4F6]"
+                        : "border-[#E8ECF2] bg-[#FAFBFC] text-[#4B5563] hover:bg-[#F3F4F6] hover:border-[#D1D5DB] active:bg-[#E8ECF2]"
                     }`}
                     onClick={() => toggleTravelType(type.value)}
                   >
@@ -602,7 +614,7 @@ export function TravelApplyPage() {
         ) : null}
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 border-t border-[#ECECEC] bg-white/95 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-md">
+      <div className="fixed inset-x-0 bottom-0 border-t border-border bg-white/95 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-md">
         <button
           type="button"
           disabled={submitApply.isPending || modifyApply.isPending}
