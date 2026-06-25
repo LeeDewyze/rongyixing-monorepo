@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { ApprovalTask } from "@ryx/shared-types";
 
 interface ApprovalTaskListProps {
@@ -9,6 +10,8 @@ interface ApprovalTaskListProps {
   hasMore?: boolean;
   isFetchingMore?: boolean;
   onOpenTask: (task: ApprovalTask) => void;
+  /** Optional actions rendered below each task card's info. */
+  renderActions?: (task: ApprovalTask) => ReactNode;
 }
 
 export function ApprovalTaskList({
@@ -20,6 +23,7 @@ export function ApprovalTaskList({
   hasMore,
   isFetchingMore,
   onOpenTask,
+  renderActions,
 }: ApprovalTaskListProps) {
   if (isLoading && tasks.length === 0) {
     return <p className="py-8 text-center text-sm text-[#808080]">加载中…</p>;
@@ -36,23 +40,32 @@ export function ApprovalTaskList({
   return (
     <div className="space-y-3 p-3">
       {tasks.map((task) => (
-        <button
+        <div
           key={task.id}
-          type="button"
-          className="block w-full rounded-xl bg-white p-4 text-left shadow-sm"
-          onClick={() => onOpenTask(task)}
+          className="rounded-xl bg-white shadow-sm"
         >
-          <p className="text-base font-medium text-[#010101]">{task.name}</p>
-          {task.statusName ? (
-            <p className="mt-2 text-sm text-[#2768FA]">{task.statusName}</p>
+          <button
+            type="button"
+            className="block w-full p-4 text-left"
+            onClick={() => onOpenTask(task)}
+          >
+            <p className="text-base font-medium text-[#010101]">{task.name}</p>
+            {task.statusName ? (
+              <p className="mt-2 text-sm text-[#2768FA]">{task.statusName}</p>
+            ) : null}
+            {task.expiredTime ? (
+              <p className="mt-1 text-xs text-[#999999]">过期时间：{task.expiredTime}</p>
+            ) : null}
+            {task.number ? (
+              <p className="mt-1 text-xs text-[#999999]">{task.number}</p>
+            ) : null}
+          </button>
+          {renderActions ? (
+            <div className="flex justify-end gap-2 border-t border-[#F0F2F5] px-4 py-2.5">
+              {renderActions(task)}
+            </div>
           ) : null}
-          {task.expiredTime ? (
-            <p className="mt-1 text-xs text-[#999999]">过期时间：{task.expiredTime}</p>
-          ) : null}
-          {task.number ? (
-            <p className="mt-1 text-xs text-[#999999]">{task.number}</p>
-          ) : null}
-        </button>
+        </div>
       ))}
 
       {hasMore ? (

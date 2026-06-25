@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { CityPicker, ResourcePicker } from "@/components/search";
 import { usePageHeader } from "@/components/layout";
-import { useSubmitTravelApply, useTravelApplyMeta } from "@/hooks/useTravelApply";
+import {
+  useSubmitTravelApply,
+  useModifyTravelApply,
+  useTravelApplyMeta,
+} from "@/hooks/useTravelApply";
 import { useHomeBack } from "@/lib/app-back";
 import { formatDateLabel, parseLocalDate } from "@/lib/date-search";
 import { formatApiError } from "@/lib/formatApiError";
@@ -11,6 +15,8 @@ import { getTicket } from "@/lib/session";
 import {
   defaultTravelApplySegment,
   defaultTravelApplyTraveler,
+  fetchTravelFormData,
+  parseFormDataToValues,
   staffPickerOptions,
   travelCityPickerAdapter,
   validateTravelApply,
@@ -242,10 +248,13 @@ export function TravelApplyPage() {
   const navigate = useNavigate();
   const goHome = useHomeBack();
   usePageHeader({ title: "出差申请", showBack: true, onBack: goHome });
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get("editId") || null;
 
   const ticket = getTicket();
   const metaQuery = useTravelApplyMeta();
   const submitApply = useSubmitTravelApply(metaQuery.data);
+  const modifyApply = useModifyTravelApply(metaQuery.data);
   const pickerAdapter = useMemo(() => travelCityPickerAdapter(), []);
   const [travelTypes, setTravelTypes] = useState<string[]>([]);
   const [reason, setReason] = useState("");
@@ -254,7 +263,9 @@ export function TravelApplyPage() {
   const [pickerTarget, setPickerTarget] = useState<CityPickerTarget | null>(null);
   const [staffPickerIndex, setStaffPickerIndex] = useState<number | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [loadingEdit, setLoadingEdit] = useState(false);
 
+  const isEditing = Boolean(editId);
   const meta = metaQuery.data;
   const staffOptions = useMemo(
     () => (meta ? staffPickerOptions(meta.staffOptions) : []),
@@ -265,14 +276,47 @@ export function TravelApplyPage() {
     0,
   );
 
+  // Load existing form for edit — from Form/Get API
   useEffect(() => {
-    if (!meta) return;
+    if (!meta || !editId || travelers.length > 0 || segments.length > 0) return;
+    setLoadingEdit(true);
+
+    const ticketVal = getTicket();
+    if (!ticketVal) {
+      setLoadingEdit(false);
+      return;
+    }
+
+    fetchTravelFormData(ticketVal, editId)
+      .then((controls) => {
+        if (!controls) {
+          setValidationError("加载申请单数据失败");
+          return;
+        }
+        const parsed = parseFormDataToValues(meta, controls, meta.cities, meta.staffOptions);
+        if (!parsed) {
+          setValidationError("解析申请单数据失败");
+          return;
+        }
+        setTravelTypes(parsed.travelTypes);
+        setReason(parsed.reason);
+        // travelers/segments use defaults (API doesn't return slave data)
+        setTravelers([defaultTravelApplyTraveler(meta.defaultAccount)]);
+        setSegments([defaultTravelApplySegment(meta.cities)]);
+      })
+      .catch(() => setValidationError("加载申请单数据失败"))
+      .finally(() => setLoadingEdit(false));
+  }, [meta, editId]);
+
+  // Init for new form
+  useEffect(() => {
+    if (!meta || editId || travelers.length > 0 || segments.length > 0) return;
     setTravelTypes((prev) => (prev.length ? prev : meta.travelTypes.slice(0, 1).map((it) => it.value)));
     setTravelers((prev) =>
       prev.length ? prev : [defaultTravelApplyTraveler(meta.defaultAccount)],
     );
     setSegments((prev) => (prev.length ? prev : [defaultTravelApplySegment(meta.cities)]));
-  }, [meta]);
+  }, [meta, editId]);
 
   function toggleTravelType(value: string) {
     setTravelTypes((prev) =>
@@ -321,7 +365,9 @@ export function TravelApplyPage() {
 
     setValidationError(null);
     try {
-      const result = await submitApply.mutateAsync(values);
+      const result = isEditing
+        ? await modifyApply.mutateAsync({ values, formId: editId! })
+        : await submitApply.mutateAsync(values);
       if (result.Status) {
         navigate(TRAVEL_MINE_APPROVAL_PATH, { replace: true });
         return;
@@ -342,7 +388,7 @@ export function TravelApplyPage() {
     );
   }
 
-  if (metaQuery.isLoading) {
+  if (metaQuery.isLoading || loadingEdit) {
     return <ApplyPageSkeleton />;
   }
 
@@ -366,15 +412,22 @@ export function TravelApplyPage() {
     );
   }
 
-  const submitError = submitApply.error ? formatApiError(submitApply.error) : validationError;
+  const submitError = submitApply.error
+    ? formatApiError(submitApply.error)
+    : modifyApply.error
+      ? formatApiError(modifyApply.error)
+      : validationError;
   const travelNumber = meta.travelNumber.label || meta.travelNumber.value;
+
+  const pageTitle = isEditing ? "编辑出差申请" : "出差申请";
 
   return (
     <div className="min-h-full bg-[#F5F6F9]">
+      {/* header hasn't changed but let's at least show title */}
       <div className="bg-gradient-to-br from-[#2768FA] via-[#2B7AFF] to-[#33A1F9] px-4 pb-10 pt-1">
         <p className="text-xs text-white/70">差旅单号</p>
         <p className="mt-1 truncate text-[20px] font-semibold tracking-wide text-white">
-          {travelNumber || "—"}
+          {travelNumber || (isEditing ? editId! : "—")}
         </p>
         <div className="mt-4 flex gap-2">
           <MetaChip label="申请人" value={meta.applicant.label} />
@@ -552,11 +605,15 @@ export function TravelApplyPage() {
       <div className="fixed inset-x-0 bottom-0 border-t border-[#ECECEC] bg-white/95 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-md">
         <button
           type="button"
-          disabled={submitApply.isPending}
+          disabled={submitApply.isPending || modifyApply.isPending}
           className="flex h-[50px] w-full items-center justify-center rounded-full bg-gradient-to-r from-[#2768FA] to-[#5099FE] text-[16px] font-medium text-white shadow-[0_8px_24px_rgba(39,104,250,0.28)] transition-opacity disabled:opacity-60 active:opacity-90"
           onClick={() => void handleSubmit()}
         >
-          {submitApply.isPending ? "提交中…" : "提交申请"}
+          {submitApply.isPending || modifyApply.isPending
+            ? "提交中…"
+            : isEditing
+              ? "保存修改"
+              : "提交申请"}
         </button>
       </div>
 

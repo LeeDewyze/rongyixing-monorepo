@@ -514,6 +514,127 @@ export async function submitTravelApply(
   });
 }
 
+// ── Form/Get 加载主表字段（编辑反填） ──────────────────────────────────
+// 注意：workflow Form/Get 只返回主表控件，slave 数据不可用。
+// 因此编辑时只能恢复出差类型和事由，出差人和行程使用默认值。
+
+/** Form/Get 返回的控件数组（同 Form/Flow 的 var datas 结构）。 */
+export type FormGetResponse = TravelApplyRawControl[];
+
+/** 通过 Form/Get 加载已有表单数据。 */
+export async function fetchTravelFormData(
+  ticket: string,
+  formId: string,
+): Promise<FormGetResponse | null> {
+  const params = new URLSearchParams({ ticket, CheckFlowType: "", FlowTag: "Travel", Id: formId });
+  const url = `${WORKFLOW_SITE}/Form/Get?${params.toString()}`;
+  try {
+    const raw = await fetchJson<unknown>(url);
+    if (!raw) return null;
+    // Form/Get returns [{ datas: [...] }, {name, value}, ...]
+    let controls: unknown[];
+    if (Array.isArray(raw)) {
+      if (raw.length > 0 && raw[0] && typeof raw[0] === "object" && "datas" in (raw[0] as Record<string, unknown>)) {
+        controls = (raw[0] as Record<string, unknown[]>).datas as unknown[];
+      } else {
+        controls = raw as unknown[];
+      }
+    } else if (typeof raw === "object" && raw !== null && "datas" in (raw as Record<string, unknown>)) {
+      controls = (raw as Record<string, unknown[]>).datas as unknown[];
+    } else {
+      return null;
+    }
+    if (!Array.isArray(controls)) return null;
+    return controls as TravelApplyRawControl[];
+  } catch {
+    return null;
+  }
+}
+
+/** 从控件中读取 defaultValue，兼容 string / {label, value} 格式。 */
+function readControlDefault(control: TravelApplyRawControl): string {
+  const raw = (control as unknown as { defaultValue?: unknown }).defaultValue;
+  if (raw == null) return "";
+  if (typeof raw === "string") return raw;
+  if (typeof raw === "object") {
+    const obj = raw as { label?: string; value?: string | number; Text?: string; Value?: string | number };
+    return String(obj.value ?? obj.Value ?? obj.label ?? obj.Text ?? "");
+  }
+  return String(raw);
+}
+
+/** 从 Form/Get 响应中提取前端可用的表单字段。 */
+export function parseFormDataToValues(
+  meta: TravelApplyMeta,
+  controls: FormGetResponse,
+  cities: TravelApplyCity[],
+  staffOptions: TravelApplyOption[],
+): { travelTypes: string[]; reason: string } | null {
+  if (!Array.isArray(controls) || controls.length === 0) return null;
+
+  const travelTypeCtrl = controls.find((c) => c.tag === "TravelType" && !c.slave);
+  const travelTypes = travelTypeCtrl
+    ? readControlDefault(travelTypeCtrl).split(",").map((s) => s.trim()).filter(Boolean)
+    : [];
+
+  const reasonCtrl = controls.find((c) => c.label === "出差事由" && !c.slave);
+  const reason = reasonCtrl ? readControlDefault(reasonCtrl) : "";
+
+  return { travelTypes, reason };
+}
+
+// ── 修改（Form/Modify） ────────────────────────────────────────────────
+
+/** Submit travel form edit via Form/Modify. */
+export async function modifyTravelApply(
+  meta: TravelApplyMeta,
+  values: TravelApplyFormValues,
+  formId: string | number,
+): Promise<TravelApplySubmitResult> {
+  const modifyUrl = meta.addUrl.replace("/Form/Add?", "/Form/Modify?");
+  const travelers = await resolveTravelersWithPolicy(meta, values.travelers);
+  const body = buildTravelApplyBody(meta, { ...values, travelers });
+  body.append("Id", String(formId));
+  return fetchJson<TravelApplySubmitResult>(modifyUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+  });
+}
+
+// ── 撤回（FormTask/Revoke） ────────────────────────────────────────────
+
+/** Revoke/withdraw a submitted travel form. */
+export async function revokeTravelApply(
+  ticket: string,
+  formId: string | number,
+): Promise<TravelApplySubmitResult> {
+  const params = new URLSearchParams({
+    ticket,
+    CheckFlowType: "",
+    FlowTag: "Travel",
+  });
+  const url = `${WORKFLOW_SITE}/FormTask/Revoke?${params.toString()}`;
+  const body = new URLSearchParams({ Id: String(formId) });
+  return fetchJson<TravelApplySubmitResult>(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+  });
+}
+
+/** Status values where revoke is allowed: 草稿(1), 审批中(2 or 4). */
+export function isTravelFormRevokable(status?: string | number): boolean {
+  const s = typeof status === "string" ? Number(status) : (status ?? 0);
+  return s === 1 || s === 2 || s === 4;
+}
+
+/** Status values where edit is allowed: 草稿(1), 已驳回(5). */
+export function isTravelFormEditable(status?: string | number): boolean {
+  const s = typeof status === "string" ? Number(status) : (status ?? 0);
+  return s === 1 || s === 5;
+}
+
 export function validateTravelApply(values: TravelApplyFormValues): string | null {
   if (values.travelTypes.length === 0) return "请选择出差类型";
   if (!values.reason.trim()) return "请填写出差事由";

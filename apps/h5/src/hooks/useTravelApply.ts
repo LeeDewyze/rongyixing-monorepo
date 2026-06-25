@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getTicket } from "@/lib/session";
 import {
   fetchTravelApplyMeta,
+  modifyTravelApply,
   submitTravelApply,
   type TravelApplyFormValues,
   type TravelApplyMeta,
@@ -25,6 +26,26 @@ export function useSubmitTravelApply(meta: TravelApplyMeta | undefined) {
     mutationFn: (values: TravelApplyFormValues) => {
       if (!meta) throw new Error("出差申请表单未加载完成");
       return submitTravelApply(meta, values);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["travel"] });
+      void queryClient.invalidateQueries({ queryKey: ["approval"] });
+    },
+  });
+}
+
+export function useModifyTravelApply(meta: TravelApplyMeta | undefined) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      values,
+      formId,
+    }: {
+      values: TravelApplyFormValues;
+      formId: string;
+    }) => {
+      if (!meta) throw new Error("出差申请表单未加载完成");
+      return modifyTravelApply(meta, values, formId);
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["travel"] });
