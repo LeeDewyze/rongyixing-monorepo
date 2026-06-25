@@ -1,17 +1,17 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ProductType, type FlightBookPolicy, type FlightFare } from "@ryx/shared-types";
+import { ProductType, type FlightBookPolicy, type FlightCabinTab, type FlightFare } from "@ryx/shared-types";
 
 import { FlightCabinCard } from "@/components/flight/FlightCabinCard";
 import { FlightCabinsHeader } from "@/components/flight/FlightCabinsHeader";
 import { FlightCabinsSummary } from "@/components/flight/FlightCabinsSummary";
 import { FlightFareRulesSheet } from "@/components/flight/FlightFareRulesSheet";
 import { FlightCabinsTabs } from "@/components/flight/FlightCabinsTabs";
-import { FlightListTimeoutDialog } from "@/components/flight/FlightListTimeoutDialog";
 import { FLIGHT_CABINS_HEADER_BG, FLIGHT_CABINS_HEADER_GRADIENT } from "@/config/flight-cabins";
 import { formatCabinsDepartTitle } from "@/utils/flight-list-display";
 import { usePageHeader } from "@/components/layout";
 import { useFlightDetail } from "@/hooks/useFlight";
+import { useFlightPriceTimeout } from "@/hooks/useFlightPriceTimeout";
 import { usePassengerSelection } from "@/hooks/usePassenger";
 import {
   buildFlightDetailParams,
@@ -82,9 +82,36 @@ export function FlightCabinsPage() {
 
   const [activeTab, setActiveTab] = useState<FlightCabinTab>("economy");
   const [rulesFare, setRulesFare] = useState<FlightFare | null>(null);
-  const [timeoutOpen, setTimeoutOpen] = useState(false);
+  const [priceSnapshotAt, setPriceSnapshotAt] = useState(0);
+
+  const detailRouteKey = useMemo(
+    () =>
+      `${flightId}|${query.date}|${query.fromCode}|${query.toCode}|${query.flightNumber ?? ""}`,
+    [flightId, query.date, query.fromCode, query.toCode, query.flightNumber],
+  );
 
   const cabinsReturnTo = `/flight/${encodeURIComponent(flightId)}/cabins?${searchParams.toString()}`;
+
+  useEffect(() => {
+    setPriceSnapshotAt(0);
+  }, [detailRouteKey]);
+
+  useEffect(() => {
+    if (!dataUpdatedAt || !detail || priceSnapshotAt !== 0) return;
+    setPriceSnapshotAt(dataUpdatedAt);
+  }, [dataUpdatedAt, detail, priceSnapshotAt]);
+
+  const handleTimeoutRefresh = useCallback(() => {
+    const params = new URLSearchParams(searchParams);
+    params.set("doRefresh", "true");
+    navigate(`/flight/list?${params.toString()}`);
+  }, [navigate, searchParams]);
+
+  const { openTimeoutDialog } = useFlightPriceTimeout({
+    enabled: Boolean(detailParams && detail),
+    snapshotAt: priceSnapshotAt,
+    onRefresh: handleTimeoutRefresh,
+  });
 
   useEffect(() => {
     if (groupedCabins.economy.length === 0 && groupedCabins.business.length > 0) {
@@ -157,7 +184,7 @@ export function FlightCabinsPage() {
       listSnapshot: listSnapshot ?? undefined,
       flightPolicy,
       flightPoliciesByPassengerId,
-      priceSnapshotAt: dataUpdatedAt || Date.now(),
+      priceSnapshotAt: priceSnapshotAt || Date.now(),
       selectedAt: Date.now(),
     });
     navigate("/flight/book");
@@ -172,17 +199,11 @@ export function FlightCabinsPage() {
       navigate(buildPassengerSelectPath(ProductType.Flight, cabinsReturnTo));
       return;
     }
-    const snapshotAt = dataUpdatedAt || Date.now();
-    if (isFlightListTimedOut(snapshotAt)) {
-      setTimeoutOpen(true);
+    if (priceSnapshotAt && isFlightListTimedOut(priceSnapshotAt)) {
+      openTimeoutDialog();
       return;
     }
     void proceedToBook(fare);
-  }
-
-  function handleTimeoutConfirm() {
-    setTimeoutOpen(false);
-    navigate(listHref);
   }
 
   function handleShowRules(fare: FlightFare) {
@@ -286,7 +307,6 @@ export function FlightCabinsPage() {
         onClose={() => setRulesFare(null)}
       />
 
-      <FlightListTimeoutDialog open={timeoutOpen} onConfirm={handleTimeoutConfirm} />
     </div>
   );
 }

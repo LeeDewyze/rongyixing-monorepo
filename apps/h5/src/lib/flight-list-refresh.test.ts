@@ -26,7 +26,7 @@ describe("flight-list-refresh", () => {
     expect(isFlightListStale(now - FLIGHT_LIST_STALE_MS, now)).toBe(true);
     expect(isFlightListStale(now - FLIGHT_LIST_STALE_MS + 1, now)).toBe(false);
     expect(isFlightListTimedOut(now - FLIGHT_LIST_TIMEOUT_MS, now)).toBe(true);
-    expect(msUntilFlightListTimeout(now - 60_000, now)).toBe(FLIGHT_LIST_TIMEOUT_MS - 60_000);
+    expect(msUntilFlightListTimeout(now - 1_000, now)).toBe(FLIGHT_LIST_TIMEOUT_MS - 1_000);
   });
 
   it("empty message differs when filters active", () => {

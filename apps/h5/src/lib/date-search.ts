@@ -58,6 +58,27 @@ export function buildDateRange(startDate: string, days = 14): string[] {
   });
 }
 
+/** List date strip: from max(today, selected - daysBefore) through selected + daysAfter. */
+export function buildListDateStripRange(
+  selectedDate: string,
+  daysBefore = 7,
+  daysAfter = 13,
+): string[] {
+  const today = todayDateString();
+  const anchor = parseLocalDate(selectedDate) ? selectedDate : today;
+  let start = addDays(anchor, -daysBefore);
+  if (start < today) {
+    start = today;
+  }
+  const end = addDays(anchor, daysAfter);
+
+  const dates: string[] = [];
+  for (let current = start; current <= end; current = addDays(current, 1)) {
+    dates.push(current);
+  }
+  return dates;
+}
+
 export function nightsBetween(checkIn: string, checkOut: string): number {
   const a = parseLocalDate(checkIn)?.getTime() ?? NaN;
   const b = parseLocalDate(checkOut)?.getTime() ?? NaN;

@@ -1,22 +1,16 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ProductType } from "@ryx/shared-types";
-import type {
-  FlightFilterCondition,
-  FlightSearchParams,
-  FlightSortTab,
-  Trafficline,
-} from "@ryx/shared-types";
+import type { FlightFilterCondition, FlightSearchParams, FlightSortTab } from "@ryx/shared-types";
 
-import { FlightCityPickerHost } from "@/components/flight/common";
+import { CalendarPickerSheet } from "@/components/calendar/CalendarPickerSheet";
+import { PassengerSelectAlertDialog } from "@/components/passenger";
 import { FlightFilterSheet } from "@/components/flight/FlightFilterSheet";
 import { FlightListDateStrip } from "@/components/flight/FlightListDateStrip";
 import { FlightListHeader } from "@/components/flight/FlightListHeader";
-import { FlightListTimeoutDialog } from "@/components/flight/FlightListTimeoutDialog";
 import { FlightListToolbar } from "@/components/flight/FlightListToolbar";
 import { FlightModifySearchSheet } from "@/components/flight/FlightModifySearchSheet";
 import { FlightSegmentCard } from "@/components/flight/FlightSegmentCard";
-import { FlightSortSheet, type FlightSortKind } from "@/components/flight/FlightSortSheet";
 import { usePageHeader } from "@/components/layout";
 import { useFlightListPageEffects } from "@/hooks/useFlightListPageEffects";
 import { useFlightList } from "@/hooks/useFlight";
@@ -25,13 +19,12 @@ import { usePassengerSelection } from "@/hooks/usePassenger";
 import {
   buildFlightListSearchParams,
   buildHomeIndexParams,
-  displayCityName,
   resolveListCitiesFromQuery,
-  validateFlightSearch,
 } from "@/lib/flight-search";
 import { buildCabinsPath, getFlightListEmptyMessage } from "@/lib/flight-list-refresh";
 import { saveFlightListSnapshot } from "@/lib/flight-list-session";
 import { parseLocalDate, todayDateString } from "@/lib/date-search";
+import { FLIGHT_CALENDAR_CONFIG } from "@/lib/calendar-picker";
 import { buildPassengerSelectPath } from "@/lib/passenger-selection";
 import { getApiMode } from "@/lib/env";
 import { formatApiError } from "@/lib/formatApiError";
@@ -41,6 +34,7 @@ import {
   buildFilterOptions,
   createInitialFilter,
   getDefaultSortedFlights,
+  initLowestPriceSegments,
   isFilterActive,
   normalizeFlightSegments,
   sortByPrice,
@@ -54,6 +48,9 @@ function buildListUrl(base: URLSearchParams, date: string): string {
   params.set("date", date);
   return `/flight/list?${params.toString()}`;
 }
+
+const FALLBACK_HEADER_HEIGHT = 56;
+const FLIGHT_LIST_PASSENGER_REQUIRED_MESSAGE = "请先添加旅客";
 
 export function FlightListPage() {
   const navigate = useNavigate();
@@ -117,11 +114,15 @@ export function FlightListPage() {
   const [filterDraft, setFilterDraft] = useState<FlightFilterCondition>(createInitialFilter);
   const [filterApplied, setFilterApplied] = useState<FlightFilterCondition>(createInitialFilter);
   const [filterOpen, setFilterOpen] = useState(false);
-  const [sortSheet, setSortSheet] = useState<FlightSortKind | null>(null);
   const [modifyOpen, setModifyOpen] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<FlightSortTab>("none");
   const [priceLowToHigh, setPriceLowToHigh] = useState(true);
   const [timeEarlyToLate, setTimeEarlyToLate] = useState(true);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [headerHeight, setHeaderHeight] = useState(FALLBACK_HEADER_HEIGHT);
+  const [passengerAlertOpen, setPassengerAlertOpen] = useState(false);
 
   const resolvedListCities = useMemo(
     () =>
@@ -205,7 +206,7 @@ export function FlightListPage() {
     navigate(`/flight/list?${next.toString()}`, { replace: true });
   }, [navigate, searchParams]);
 
-  const { timeoutOpen, confirmTimeoutRefresh } = useFlightListPageEffects({
+  useFlightListPageEffects({
     listParams: apiListParams ?? listParams,
     searchParams,
     selectedPassengers,
@@ -227,7 +228,7 @@ export function FlightListPage() {
   }, [rawSegments]);
 
   const displayed = useMemo(() => {
-    let segments = applyFlightFilters(rawSegments, filterApplied);
+    let segments = initLowestPriceSegments(applyFlightFilters(rawSegments, filterApplied));
     if (activeTab === "price") {
       segments = sortByPrice(segments, priceLowToHigh);
     } else if (activeTab === "time") {
@@ -246,6 +247,42 @@ export function FlightListPage() {
 
   usePageHeader({ visible: false });
 
+  useLayoutEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+
+    const updateHeight = () => {
+      setHeaderHeight(header.offsetHeight);
+    };
+
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
+
+  useLayoutEffect(() => {
+    scrollContainerRef.current?.scrollTo({ top: 0, behavior: "auto" });
+  }, [listParams.Date, filterApplied, activeTab, priceLowToHigh, timeEarlyToLate]);
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const main = document.querySelector("main");
+    const previousMainOverflow = main instanceof HTMLElement ? main.style.overflow : "";
+    if (main instanceof HTMLElement) {
+      main.style.overflow = "hidden";
+    }
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      if (main instanceof HTMLElement) {
+        main.style.overflow = previousMainOverflow;
+      }
+    };
+  }, []);
+
   if (!hasListQuery) return null;
 
   function handleDateSelect(date: string) {
@@ -258,15 +295,20 @@ export function FlightListPage() {
     setActiveTab("filter");
   }
 
-  function handleSortConfirm(kind: FlightSortKind, ascending: boolean) {
-    if (kind === "time") {
-      setTimeEarlyToLate(ascending);
+  function handleTimeSort() {
+    if (activeTab !== "time") {
       setActiveTab("time");
-    } else {
-      setPriceLowToHigh(ascending);
-      setActiveTab("price");
+      return;
     }
-    setSortSheet(null);
+    setTimeEarlyToLate((early) => !early);
+  }
+
+  function handlePriceSort() {
+    if (activeTab !== "price") {
+      setActiveTab("price");
+      return;
+    }
+    setPriceLowToHigh((low) => !low);
   }
 
   function handleModifySearch(params: URLSearchParams) {
@@ -274,136 +316,138 @@ export function FlightListPage() {
     navigate(`/flight/list?${params.toString()}`, { replace: true });
   }
 
-  function handleSelectFrom(city: Trafficline) {
-    const message = validateFlightSearch(city, form.toCity);
-    if (message) {
-      form.setValidationError(message);
-      return;
-    }
-    form.setFromCity(city);
-    form.setValidationError("");
-    handleModifySearch(
-      buildFlightListSearchParams({
-        fromCity: city,
-        toCity: form.toCity,
-        date: listParams.Date,
-      }),
-    );
+  function handleModifyOpen() {
+    setModifyOpen(true);
   }
 
-  function handleSelectTo(city: Trafficline) {
-    const message = validateFlightSearch(form.fromCity, city);
-    if (message) {
-      form.setValidationError(message);
+  function handleModifyClose() {
+    setModifyOpen(false);
+  }
+
+  function handleHeaderBack() {
+    if (modifyOpen) {
+      handleModifyClose();
       return;
     }
-    form.setToCity(city);
-    form.setValidationError("");
-    handleModifySearch(
-      buildFlightListSearchParams({
-        fromCity: form.fromCity,
-        toCity: city,
-        date: listParams.Date,
-      }),
-    );
+    navigateBack(navigate, "/home?product=flight");
   }
 
   function openCabins(flightId: string) {
     const segment = displayed.find((s) => s.Id === flightId);
     if (!segment) return;
+    if (selectedPassengers.length === 0) {
+      setPassengerAlertOpen(true);
+      return;
+    }
     navigate(buildCabinsPath(segment, searchParams));
   }
 
+  function handlePassengerAlertDismiss() {
+    setPassengerAlertOpen(false);
+  }
+
+  function handlePassengerAlertConfirm() {
+    setPassengerAlertOpen(false);
+    navigate(buildPassengerSelectPath(ProductType.Flight, listReturnTo));
+  }
+
   return (
-    <div className="flex min-h-full flex-col bg-[#f2f4f8] pb-[calc(3.5rem+env(safe-area-inset-bottom))]">
-      <div className="sticky top-0 z-20 shrink-0">
+    <div className="relative h-dvh overflow-hidden bg-[#F5F6F9]">
+      <div ref={headerRef} className="fixed inset-x-0 top-0 z-50 mx-auto w-full max-w-lg">
         <FlightListHeader
-          fromName={displayCityName(form.fromCity) || fromName}
-          toName={displayCityName(form.toCity) || toName}
+          fromName={fromName}
+          toName={toName}
           passengerHref={buildPassengerSelectPath(ProductType.Flight, listReturnTo)}
           passengerCount={selectedPassengers.length}
-          onBack={() => navigateBack(navigate, "/home?product=flight")}
-          onFromClick={() => form.setPicker("from")}
-          onToClick={() => form.setPicker("to")}
+          modifyOpen={modifyOpen}
+          onBack={handleHeaderBack}
+          onModifyOpen={handleModifyOpen}
+          onModifyClose={handleModifyClose}
         />
-        <FlightListDateStrip
-          selectedDate={listParams.Date}
-          onSelect={handleDateSelect}
-          onOpenCalendar={() => setModifyOpen(true)}
-        />
-        {form.validationError ? (
-          <p className="bg-[#eef3ff] px-4 pb-2 text-center text-xs text-[#ff4d4f]">
-            {form.validationError}
-          </p>
-        ) : null}
       </div>
 
-      <div className="flex-1 space-y-3 px-3 py-3">
-        {!isAuthenticated && (
-          <div className="rounded-xl bg-white p-8 text-center shadow-sm">
-            <p className="text-sm text-[#808080]">请先登录后再查询航班</p>
-            <button
-              type="button"
-              className="mt-3 text-sm font-medium text-[#5099fe]"
-              onClick={() =>
-                navigate(`/login/password?returnTo=${encodeURIComponent(listReturnTo)}`)
-              }
-            >
-              去登录
-            </button>
-          </div>
-        )}
+      <div
+        ref={scrollContainerRef}
+        className={`h-full overscroll-y-contain [-webkit-overflow-scrolling:touch] [scrollbar-gutter:stable] ${
+          filterOpen || modifyOpen ? "overflow-hidden" : "overflow-y-auto"
+        }`}
+        style={{ paddingTop: headerHeight }}
+      >
+        <div className="sticky top-0 z-20 shrink-0">
+          <FlightListDateStrip
+            selectedDate={listParams.Date}
+            onSelect={handleDateSelect}
+            onOpenCalendar={() => setCalendarOpen(true)}
+          />
+        </div>
 
-        {isAuthenticated && (isLoading || isFetching) && (
-          <p className="py-4 text-center text-sm text-[#808080]">正在获取航班列表…</p>
-        )}
-
-        {isAuthenticated && error && !isFetching && displayed.length === 0 && (
-          <div className="py-4 text-center">
-            <p className="text-sm text-destructive">{formatApiError(error, "flight")}</p>
-            <button
-              type="button"
-              className="mt-2 text-sm font-medium text-[#5099fe]"
-              onClick={() => refetch()}
-            >
-              重试
-            </button>
-          </div>
-        )}
-
-        {isAuthenticated && !isLoading && !error && displayed.length === 0 && (
-          <div className="rounded-xl bg-white p-8 text-center text-sm text-[#808080] shadow-sm">
-            {getFlightListEmptyMessage(filtered)}
-          </div>
-        )}
-
-        {isAuthenticated &&
-          directFlights.map((seg, index) => (
-            <FlightSegmentCard
-              key={seg.Id}
-              segment={seg}
-              variant={resolveFlightCardVariant(seg, index, "direct")}
-              onClick={() => openCabins(seg.Id)}
-            />
-          ))}
-
-        {isAuthenticated && transferFlights.length > 0 && (
-          <>
-            <div className="flex items-center gap-2 py-1 text-center text-xs text-[#999999]">
-              <span className="h-px flex-1 bg-[#e5e5e5]" />
-              <span className="shrink-0 px-2">推荐中转航班</span>
-              <span className="h-px flex-1 bg-[#e5e5e5]" />
+        <div className="relative z-0 space-y-3 px-3 py-3 pb-[calc(4.5rem+0.75rem+env(safe-area-inset-bottom))]">
+          {!isAuthenticated && (
+            <div className="rounded-xl bg-white p-8 text-center shadow-sm">
+              <p className="text-sm text-[#808080]">请先登录后再查询航班</p>
+              <button
+                type="button"
+                className="mt-3 text-sm font-medium text-[#5099fe]"
+                onClick={() =>
+                  navigate(`/login/password?returnTo=${encodeURIComponent(listReturnTo)}`)
+                }
+              >
+                去登录
+              </button>
             </div>
-            {transferFlights.map((seg, index) => (
+          )}
+
+          {isAuthenticated && (isLoading || isFetching) && (
+            <p className="py-4 text-center text-sm text-[#808080]">正在获取航班列表…</p>
+          )}
+
+          {isAuthenticated && error && !isFetching && displayed.length === 0 && (
+            <div className="py-4 text-center">
+              <p className="text-sm text-destructive">{formatApiError(error, "flight")}</p>
+              <button
+                type="button"
+                className="mt-2 text-sm font-medium text-[#5099fe]"
+                onClick={() => refetch()}
+              >
+                重试
+              </button>
+            </div>
+          )}
+
+          {isAuthenticated && !isLoading && !error && displayed.length === 0 && (
+            <div className="rounded-xl bg-white p-8 text-center text-sm text-[#808080] shadow-sm">
+              {getFlightListEmptyMessage(filtered)}
+            </div>
+          )}
+
+          {isAuthenticated &&
+            directFlights.map((seg, index) => (
               <FlightSegmentCard
                 key={seg.Id}
                 segment={seg}
-                variant={resolveFlightCardVariant(seg, index, "transfer")}
+                variant={resolveFlightCardVariant(seg, "direct")}
                 onClick={() => openCabins(seg.Id)}
               />
             ))}
-          </>
-        )}
+
+          {isAuthenticated && transferFlights.length > 0 && (
+            <>
+              <div className="flex items-center gap-2 py-1 text-center text-xs text-[#999999]">
+                <span className="h-px flex-1 bg-[#e5e5e5]" />
+                <span className="shrink-0 px-2">推荐中转航班</span>
+                <span className="h-px flex-1 bg-[#e5e5e5]" />
+              </div>
+              {transferFlights.map((seg, index) => (
+                <FlightSegmentCard
+                  key={seg.Id}
+                  segment={seg}
+                  variant={resolveFlightCardVariant(seg, "transfer")}
+                  onClick={() => openCabins(seg.Id)}
+                />
+              ))}
+            </>
+          )}
+        </div>
       </div>
 
       <FlightListToolbar
@@ -415,17 +459,8 @@ export function FlightListPage() {
           setFilterDraft(filterApplied);
           setFilterOpen(true);
         }}
-        onOpenTimeSort={() => setSortSheet("time")}
-        onOpenPriceSort={() => setSortSheet("price")}
-      />
-
-      <FlightSortSheet
-        open={sortSheet !== null}
-        kind={sortSheet}
-        timeEarlyToLate={timeEarlyToLate}
-        priceLowToHigh={priceLowToHigh}
-        onClose={() => setSortSheet(null)}
-        onConfirm={handleSortConfirm}
+        onTimeSort={handleTimeSort}
+        onPriceSort={handlePriceSort}
       />
 
       <FlightFilterSheet
@@ -436,8 +471,21 @@ export function FlightListPage() {
         onConfirm={handleFilterConfirm}
       />
 
+      <CalendarPickerSheet
+        open={calendarOpen}
+        config={FLIGHT_CALENDAR_CONFIG}
+        startDate={listParams.Date}
+        endDate={listParams.Date}
+        onClose={() => setCalendarOpen(false)}
+        onConfirm={(selected) => {
+          setCalendarOpen(false);
+          handleDateSelect(selected);
+        }}
+      />
+
       <FlightModifySearchSheet
         open={modifyOpen}
+        headerTop={headerHeight}
         initial={{
           fromCode: listParams.FromCode,
           toCode: listParams.ToCode,
@@ -447,19 +495,16 @@ export function FlightListPage() {
           fromAsAirport: listParams.FromAsAirport,
           toAsAirport: listParams.ToAsAirport,
         }}
-        onClose={() => setModifyOpen(false)}
+        onClose={handleModifyClose}
         onSearch={handleModifySearch}
       />
 
-      <FlightCityPickerHost
-        airports={form.airports}
-        picker={form.picker}
-        onClose={() => form.setPicker(null)}
-        onSelectFrom={handleSelectFrom}
-        onSelectTo={handleSelectTo}
+      <PassengerSelectAlertDialog
+        open={passengerAlertOpen}
+        message={FLIGHT_LIST_PASSENGER_REQUIRED_MESSAGE}
+        onClose={handlePassengerAlertDismiss}
+        onConfirm={handlePassengerAlertConfirm}
       />
-
-      <FlightListTimeoutDialog open={timeoutOpen} onConfirm={confirmTimeoutRefresh} />
     </div>
   );
 }

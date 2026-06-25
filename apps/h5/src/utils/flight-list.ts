@@ -125,6 +125,50 @@ export function createInitialFilter(): FlightFilterCondition {
   };
 }
 
+/** Legacy `take-off-timespan_ryx` — 3-hour departure windows. */
+export const FLIGHT_FILTER_TIME_SPANS = [
+  { label: "不限", value: null },
+  { label: "06:00-09:00", value: { lower: 6, upper: 9 } },
+  { label: "09:00-12:00", value: { lower: 9, upper: 12 } },
+  { label: "12:00-15:00", value: { lower: 12, upper: 15 } },
+  { label: "15:00-18:00", value: { lower: 15, upper: 18 } },
+  { label: "18:00-21:00", value: { lower: 18, upper: 21 } },
+  { label: "21:00-24:00", value: { lower: 21, upper: 24 } },
+] as const;
+
+export type FlightFilterSection = "time" | "airline" | "fromAirport" | "toAirport";
+
+export function isFlightFilterSectionActive(
+  filter: FlightFilterCondition,
+  section: FlightFilterSection,
+): boolean {
+  switch (section) {
+    case "time":
+      return filter.takeOffTimeSpan !== null;
+    case "airline":
+      return filter.airCompanies.some((o) => o.isChecked);
+    case "fromAirport":
+      return filter.fromAirports.some((o) => o.isChecked);
+    case "toAirport":
+      return filter.toAirports.some((o) => o.isChecked);
+    default:
+      return false;
+  }
+}
+
+export function resetFlightFilterDraft(filter: FlightFilterCondition): FlightFilterCondition {
+  return {
+    ...filter,
+    onlyDirect: false,
+    isAgreement: false,
+    takeOffTimeSpan: null,
+    airCompanies: filter.airCompanies.map((o) => ({ ...o, isChecked: false })),
+    fromAirports: filter.fromAirports.map((o) => ({ ...o, isChecked: false })),
+    toAirports: filter.toAirports.map((o) => ({ ...o, isChecked: false })),
+    airTypes: filter.airTypes.map((o) => ({ ...o, isChecked: false })),
+  };
+}
+
 export function buildFilterOptions(segments: FlightSegment[]): FlightFilterCondition {
   const filter = createInitialFilter();
   const pushUnique = (
@@ -140,6 +184,7 @@ export function buildFilterOptions(segments: FlightSegment[]): FlightFilterCondi
         id: s.Airline,
         label: s.AirlineName,
         isChecked: false,
+        icon: s.AirlineSrc,
       });
     }
     if (s.FromAirport && s.FromAirportName) {

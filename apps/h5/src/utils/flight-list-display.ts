@@ -2,15 +2,14 @@ import type { FlightSegment } from "@ryx/shared-types";
 
 import { parseLocalDate } from "@/lib/date-search";
 
-export type FlightCardVariant =
-  | "direct-lowest"
-  | "direct"
-  | "transfer-lowest"
-  | "transfer";
+export type FlightCardVariant = "direct-lowest" | "direct" | "transfer-lowest" | "transfer";
 
 export function shortAirportName(name: string | undefined): string {
   if (!name) return "";
-  return name.replace(/国际机场/g, "").replace(/机场/g, "").trim();
+  return name
+    .replace(/国际机场/g, "")
+    .replace(/机场/g, "")
+    .trim();
 }
 
 export function partitionFlightList(segments: FlightSegment[]): {
@@ -24,18 +23,12 @@ export function partitionFlightList(segments: FlightSegment[]): {
 
 export function resolveFlightCardVariant(
   segment: FlightSegment,
-  indexInGroup: number,
   group: "direct" | "transfer",
 ): FlightCardVariant {
   if (group === "transfer") {
-    return indexInGroup === 0 && segment.isLowestPrice ? "transfer-lowest" : "transfer";
+    return segment.isLowestPrice ? "transfer-lowest" : "transfer";
   }
-  if (
-    indexInGroup === 0 &&
-    segment.isLowestPrice &&
-    !segment.IsTransfer &&
-    !segment.IsStop
-  ) {
+  if (segment.isLowestPrice && !segment.IsTransfer && !segment.IsStop) {
     return "direct-lowest";
   }
   return "direct";
@@ -92,23 +85,95 @@ export function formatArrivalDateBadge(
   return `${month}月${day}日`;
 }
 
-/** Legacy `flightMealType` pipe — simplified for H5 display. */
+/** Legacy `flightMealType` pipe — supports IATA codes and API-localized labels. */
 export function formatFlightMealLabel(meal: string | undefined | null): string | undefined {
   if (meal == null || meal === "") return undefined;
-  const value = String(meal).trim().toUpperCase();
-  if (!value) return undefined;
-  if (value === "N") return "无餐食";
-  if (value === "R" || value === "S") return "有小食";
-  if (value === "B") return "早餐";
-  if (value === "L") return "午餐";
-  if (value === "D") return "晚餐";
-  if (value === "H") return "热食";
-  if (value === "O") return "冷食";
-  if (value === "M") return "有餐食";
-  return "有餐食";
+  const raw = String(meal).trim();
+  if (!raw) return undefined;
+
+  // Home-Index often returns localized meal text (早餐, 点心, etc.).
+  if (raw.length > 1 || /[\u4e00-\u9fff]/.test(raw)) {
+    return raw;
+  }
+
+  const code = raw.toUpperCase();
+  const labels: Record<string, string> = {
+    N: "无餐食",
+    M: "不特定餐食",
+    B: "早餐",
+    L: "午餐",
+    D: "晚餐",
+    C: "免费酒精饮料",
+    K: "大陆式早餐",
+    S: "点心或早午餐",
+    O: "冷食",
+    H: "热食",
+    R: "茶点或小吃",
+  };
+
+  return labels[code];
 }
 
 export function formatFlightMetaDuration(flyTimeName: string | undefined): string | undefined {
   if (!flyTimeName) return undefined;
   return flyTimeName.startsWith("飞") ? flyTimeName : `飞${flyTimeName}`;
+}
+
+/** List card airline short name, e.g. 东方航空 → 东航, 中国国航 → 国航 */
+export function shortAirlineName(name: string | undefined): string {
+  if (!name) return "";
+  let value = name.trim();
+  if (value.startsWith("中国")) {
+    value = value.slice(2);
+  }
+  const match = value.match(/^(.+)航空$/);
+  if (match) {
+    return `${match[1].slice(0, 1)}航`;
+  }
+  return value;
+}
+
+/** List card plane label with Chinese parentheses */
+export function formatFlightListPlaneLabel(planeTypeDescribe?: string, planeType?: string): string {
+  const raw = planeTypeDescribe?.trim() || planeType?.trim() || "";
+  if (!raw) return "";
+  return raw.replace(/\(/g, "（").replace(/\)/g, "）");
+}
+
+function formatFlightListPlaneMeta(
+  planeType?: string,
+  planeTypeDescribe?: string,
+): string | undefined {
+  const code = planeType?.trim();
+  if (code) return `机型 ${code}`;
+  const describe = formatFlightListPlaneLabel(planeTypeDescribe, undefined);
+  return describe || undefined;
+}
+
+/**
+ * Legacy list card meta line: 联合航空 | KN5955 | 机型 73E | 无餐食 |
+ * Uses full airline name, flight number, plane code, and meal when available.
+ */
+export function formatFlightListMetaLine(
+  segment: Pick<
+    FlightSegment,
+    "AirlineName" | "Number" | "FlightNumber" | "PlaneType" | "PlaneTypeDescribe" | "Meal"
+  >,
+): string {
+  const parts: string[] = [];
+
+  const airlineName = segment.AirlineName?.trim();
+  if (airlineName) parts.push(airlineName);
+
+  const flightNo = (segment.Number ?? segment.FlightNumber ?? "").trim();
+  if (flightNo) parts.push(flightNo);
+
+  const planeMeta = formatFlightListPlaneMeta(segment.PlaneType, segment.PlaneTypeDescribe);
+  if (planeMeta) parts.push(planeMeta);
+
+  const meal = formatFlightMealLabel(segment.Meal);
+  if (meal) parts.push(meal);
+
+  if (!parts.length) return "";
+  return parts.join(" | ");
 }

@@ -6,12 +6,9 @@ export const FLIGHT_LIST_STALE_MS = 2 * 60 * 1000;
 /** Legacy: `pagePopTimeoutTime` — price may be stale after 10 minutes. */
 export const FLIGHT_LIST_TIMEOUT_MS = 10 * 60 * 1000;
 
-export const FLIGHT_LIST_TIMEOUT_MESSAGE =
-  "您的停留时间过长，价格信息可能发生变动，请重新查询";
+export const FLIGHT_LIST_TIMEOUT_MESSAGE = "您的停留时间过长，价格信息可能发生变动，请重新查询";
 
-export function passengerSelectionFingerprint(
-  passengers: PassengerBookInfo[],
-): string {
+export function passengerSelectionFingerprint(passengers: PassengerBookInfo[]): string {
   return passengers
     .map((p) => p.id)
     .sort()
@@ -45,10 +42,7 @@ export function getFlightListEmptyMessage(filtered: boolean): string {
 }
 
 /** Build cabins route query for Phase B `Home-Detail`. */
-export function buildCabinsPath(
-  segment: FlightSegment,
-  searchParams: URLSearchParams,
-): string {
+export function buildCabinsPath(segment: FlightSegment, searchParams: URLSearchParams): string {
   const params = new URLSearchParams(searchParams);
   const flightNumber = segment.Number || segment.FlightNumber || "";
   if (flightNumber) params.set("flightNumber", flightNumber);

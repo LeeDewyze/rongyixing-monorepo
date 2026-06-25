@@ -125,8 +125,9 @@ function buildSegments(params: {
       Tax: "70",
       IsStop: false,
       IsAgreement: true,
-      PlaneType: "空客A320",
+      PlaneType: "320",
       PlaneTypeDescribe: "空客A320(中)",
+      Meal: "M",
     },
     {
       Id: "F002",
@@ -150,8 +151,9 @@ function buildSegments(params: {
       Tax: "70",
       IsStop: false,
       RemainSeats: 2,
-      PlaneType: "波音737",
+      PlaneType: "738",
       PlaneTypeDescribe: "波音737(中)",
+      Meal: "N",
     },
     {
       Id: "F003",

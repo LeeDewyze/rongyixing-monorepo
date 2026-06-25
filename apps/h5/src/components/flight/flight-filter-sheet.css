@@ -1,0 +1,294 @@
+.flight-filter-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+
+.flight-filter-sheet--visible {
+  pointer-events: auto;
+}
+
+.flight-filter-sheet__backdrop {
+  position: absolute;
+  inset: 0;
+  border: none;
+  padding: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  opacity: 0;
+  transition: opacity 320ms ease;
+  cursor: default;
+}
+
+.flight-filter-sheet--visible .flight-filter-sheet__backdrop {
+  opacity: 1;
+}
+
+.flight-filter-sheet__panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  height: 65dvh;
+  min-height: 65dvh;
+  max-height: 65dvh;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 16px 16px 0 0;
+  background: #f5f6f9;
+  box-shadow: 0 -12px 40px rgba(39, 104, 250, 0.16);
+  transform: translateY(100%);
+  transition: transform 320ms cubic-bezier(0.32, 0.72, 0, 1);
+  will-change: transform;
+}
+
+.flight-filter-sheet--visible .flight-filter-sheet__panel {
+  transform: translateY(0);
+}
+
+.flight-filter-sheet__handle {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  z-index: 2;
+  width: 36px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.12);
+  transform: translateX(-50%);
+}
+
+.flight-filter-sheet__header {
+  flex-shrink: 0;
+  background: linear-gradient(180deg, #7ab1ff 0%, #f5f6f9 99.64%);
+}
+
+.flight-filter-sheet__quick-filters {
+  flex-shrink: 0;
+  display: flex;
+  gap: 10px;
+  padding: 0 16px 12px;
+}
+
+.flight-filter-sheet__body {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  margin: 0 12px 12px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(39, 104, 250, 0.06);
+}
+
+.flight-filter-sheet__body-main {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+}
+
+.flight-filter-sheet__sidebar {
+  width: 96px;
+  flex-shrink: 0;
+  align-self: stretch;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  border-right: 1px solid #eef1f6;
+  background: #f8f9fc;
+}
+
+.flight-filter-sheet__content {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.flight-filter-sheet__content-scroll {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.flight-filter-sheet__tab {
+  position: relative;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  padding: 14px 10px 14px 14px;
+  text-align: left;
+  font-size: 13px;
+  line-height: 1.35;
+  color: #666666;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+.flight-filter-sheet__tab--active {
+  background: #ffffff;
+  color: #2768fa;
+  font-weight: 600;
+}
+
+.flight-filter-sheet__tab--active::before {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 3px;
+  height: 18px;
+  border-radius: 0 2px 2px 0;
+  background: linear-gradient(180deg, #2768fa 0%, #33a1f9 100%);
+  content: "";
+  transform: translateY(-50%);
+}
+
+.flight-filter-sheet__tab--dirty::after {
+  position: absolute;
+  top: 10px;
+  right: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #2768fa;
+  box-shadow: 0 0 0 2px #f8f9fc;
+  content: "";
+}
+
+.flight-filter-sheet__row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #f5f6f9;
+  padding: 14px 16px;
+  text-align: left;
+  transition: background-color 120ms ease;
+}
+
+.flight-filter-sheet__row:active {
+  background: #f8faff;
+}
+
+.flight-filter-sheet__row--selected {
+  background: #f5f9ff;
+}
+
+.flight-filter-sheet__row-label {
+  min-width: 0;
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #333333;
+}
+
+.flight-filter-sheet__row--selected .flight-filter-sheet__row-label {
+  color: #2768fa;
+  font-weight: 500;
+}
+
+.flight-filter-sheet__footer {
+  flex-shrink: 0;
+  border-top: 1px solid #eeeeee;
+  background: #ffffff;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+}
+
+.flight-filter-sheet__radio,
+.flight-filter-sheet__checkbox {
+  position: relative;
+  display: flex;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 120ms ease;
+}
+
+.flight-filter-sheet__radio {
+  border: 2px solid #d8dce3;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.flight-filter-sheet__radio--selected {
+  border-color: #2768fa;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(39, 104, 250, 0.12);
+}
+
+.flight-filter-sheet__radio-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2768fa 0%, #33a1f9 100%);
+  opacity: 0;
+  transform: scale(0.4);
+  transition:
+    opacity 180ms ease,
+    transform 180ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.flight-filter-sheet__radio--selected .flight-filter-sheet__radio-dot {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.flight-filter-sheet__checkbox {
+  border: 2px solid #d8dce3;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+.flight-filter-sheet__checkbox--checked {
+  border-color: transparent;
+  background: linear-gradient(135deg, #2768fa 0%, #33a1f9 100%);
+  box-shadow: 0 2px 8px rgba(39, 104, 250, 0.28);
+}
+
+.flight-filter-sheet__checkbox-icon {
+  width: 12px;
+  height: 12px;
+  color: #ffffff;
+  opacity: 0;
+  transform: scale(0.6);
+  transition:
+    opacity 150ms ease,
+    transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.flight-filter-sheet__checkbox--checked .flight-filter-sheet__checkbox-icon {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.flight-filter-sheet__row:active .flight-filter-sheet__radio,
+.flight-filter-sheet__row:active .flight-filter-sheet__checkbox {
+  transform: scale(0.94);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flight-filter-sheet__panel,
+  .flight-filter-sheet__backdrop {
+    transition: none;
+  }
+
+  .flight-filter-sheet--visible .flight-filter-sheet__panel {
+    transform: translateY(0);
+  }
+}

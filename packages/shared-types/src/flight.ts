@@ -102,6 +102,8 @@ export interface FlightFilterOption {
   id: string;
   label: string;
   isChecked: boolean;
+  /** Airline logo URL from `AirlineSrc`. */
+  icon?: string;
 }
 
 export interface FlightFilterCondition {

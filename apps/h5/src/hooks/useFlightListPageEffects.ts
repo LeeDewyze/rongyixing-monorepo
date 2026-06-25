@@ -1,11 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FlightSearchParams, PassengerBookInfo } from "@ryx/shared-types";
 
-import {
-  flightListRouteKey,
-  msUntilFlightListTimeout,
-  passengerSelectionFingerprint,
-} from "@/lib/flight-list-refresh";
+import { useFlightPriceTimeout } from "@/hooks/useFlightPriceTimeout";
+import { flightListRouteKey, passengerSelectionFingerprint } from "@/lib/flight-list-refresh";
 
 interface UseFlightListPageEffectsOptions {
   listParams: FlightSearchParams;
@@ -30,7 +27,6 @@ export function useFlightListPageEffects({
   onFullRefresh,
   stripDoRefresh,
 }: UseFlightListPageEffectsOptions) {
-  const [timeoutOpen, setTimeoutOpen] = useState(false);
   const routeKey = useMemo(() => flightListRouteKey(listParams), [listParams]);
   const passengerFingerprint = useMemo(
     () => passengerSelectionFingerprint(selectedPassengers),
@@ -40,6 +36,20 @@ export function useFlightListPageEffects({
   const routeKeyRef = useRef(routeKey);
   const passengerRef = useRef<string | null>(null);
   const doRefreshHandledRef = useRef(false);
+  const [priceSnapshotAt, setPriceSnapshotAt] = useState(0);
+
+  const bumpPriceSnapshot = useCallback(() => {
+    setPriceSnapshotAt(Date.now());
+  }, []);
+
+  useEffect(() => {
+    setPriceSnapshotAt(0);
+  }, [routeKey]);
+
+  useEffect(() => {
+    if (!hasListQuery || !dataUpdatedAt || priceSnapshotAt !== 0) return;
+    setPriceSnapshotAt(dataUpdatedAt);
+  }, [hasListQuery, dataUpdatedAt, priceSnapshotAt]);
 
   useEffect(() => {
     if (!hasListQuery) return;
@@ -54,7 +64,7 @@ export function useFlightListPageEffects({
       doRefreshHandledRef.current = true;
       stripDoRefresh();
       onFullRefresh();
-      void refetch();
+      void refetch().then(() => bumpPriceSnapshot());
       passengerRef.current = passengerFingerprint;
       return;
     }
@@ -65,7 +75,7 @@ export function useFlightListPageEffects({
       !isFetching
     ) {
       onFullRefresh();
-      void refetch();
+      void refetch().then(() => bumpPriceSnapshot());
     }
     passengerRef.current = passengerFingerprint;
   }, [
@@ -77,24 +87,20 @@ export function useFlightListPageEffects({
     refetch,
     onFullRefresh,
     stripDoRefresh,
+    bumpPriceSnapshot,
   ]);
 
-  useEffect(() => {
-    if (!hasListQuery || !dataUpdatedAt) return;
-
-    const delay = msUntilFlightListTimeout(dataUpdatedAt);
-    const timer = window.setTimeout(() => setTimeoutOpen(true), delay);
-    return () => window.clearTimeout(timer);
-  }, [hasListQuery, dataUpdatedAt, routeKey]);
-
-  function confirmTimeoutRefresh() {
-    setTimeoutOpen(false);
+  const handleTimeoutRefresh = useCallback(() => {
+    // Reset snapshot before closing the dialog so the timer effect does not
+    // immediately reopen it (snapshot would still be past the timeout window).
+    bumpPriceSnapshot();
     onFullRefresh();
     void refetch();
-  }
+  }, [onFullRefresh, refetch, bumpPriceSnapshot]);
 
-  return {
-    timeoutOpen,
-    confirmTimeoutRefresh,
-  };
+  useFlightPriceTimeout({
+    enabled: hasListQuery,
+    snapshotAt: priceSnapshotAt,
+    onRefresh: handleTimeoutRefresh,
+  });
 }
