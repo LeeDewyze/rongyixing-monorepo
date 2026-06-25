@@ -23,17 +23,9 @@ import { CITY_HISTORY_KEYS, hotelCityPickerAdapter } from "@/lib/hotel-search";
 import { loadHomeTravelMode, saveHomeTravelMode } from "@/lib/flight-travel-mode";
 import { trainStationPickerAdapter } from "@/lib/train-search";
 
-function HomeSearchPanelSkeleton() {
-  return (
-    <div className="mx-3 rounded-lg bg-white px-3 py-10 text-center">
-      <p className="text-sm text-[#666666]">加载中…</p>
-    </div>
-  );
-}
-
 function HomeSearchPanelError({ error }: { error: unknown }) {
   return (
-    <div className="mx-3 rounded-lg bg-white px-3 py-10 text-center">
+    <div className="mx-3 mt-2 rounded-lg bg-white px-3 py-3 text-center">
       <p className="text-sm text-destructive">{formatApiError(error)}</p>
     </div>
   );
@@ -48,8 +40,8 @@ export function HomeTabPage() {
   );
   const [keyword, setKeyword] = useState("");
   const hotelForm = useHotelSearchForm();
-  const trainForm = useTrainSearchForm({ enabled: activeProduct === "train" });
-  const flightForm = useFlightSearchForm({ enabled: activeProduct === "flight" });
+  const trainForm = useTrainSearchForm();
+  const flightForm = useFlightSearchForm();
 
   useEffect(() => {
     setActiveProduct(parseHomeProduct(searchParams));
@@ -98,70 +90,55 @@ export function HomeTabPage() {
       {activeProduct === "flight" ? (
         <div className="relative">
           <HomeProductTabPointer product={activeProduct} />
-          {flightForm.isLoading ? (
-            <HomeSearchPanelSkeleton />
-          ) : flightForm.error ? (
-            <HomeSearchPanelError error={flightForm.error} />
-          ) : (
-            <HomeFlightSearchPanel
-              fromCity={flightForm.fromCity}
-              toCity={flightForm.toCity}
-              date={flightForm.date}
-              validationError={flightForm.validationError || undefined}
-              onSelectFrom={() => flightForm.setPicker("from")}
-              onSelectTo={() => flightForm.setPicker("to")}
-              onSwap={flightForm.swapCities}
-              onDateChange={flightForm.setDate}
-              onSearch={handleFlightSearch}
-            />
-          )}
+          {flightForm.error ? <HomeSearchPanelError error={flightForm.error} /> : null}
+          <HomeFlightSearchPanel
+            fromCity={flightForm.fromCity}
+            toCity={flightForm.toCity}
+            date={flightForm.date}
+            validationError={flightForm.validationError || undefined}
+            onSelectFrom={() => flightForm.setPicker("from")}
+            onSelectTo={() => flightForm.setPicker("to")}
+            onSwap={flightForm.swapCities}
+            onDateChange={flightForm.setDate}
+            onSearch={handleFlightSearch}
+          />
         </div>
       ) : null}
 
       {activeProduct === "hotel" ? (
         <div className="relative">
           <HomeProductTabPointer product={activeProduct} />
-          {hotelForm.isLoading ? (
-            <HomeSearchPanelSkeleton />
-          ) : hotelForm.error ? (
-            <HomeSearchPanelError error={hotelForm.error} />
-          ) : (
-            <HomeHotelSearchPanel
-              city={hotelForm.city}
-              keyword={keyword}
-              checkIn={hotelForm.checkIn}
-              checkOut={hotelForm.checkOut}
-              validationError={hotelForm.validationError || undefined}
-              onCitySelect={() => hotelForm.setPicker("city")}
-              onKeywordChange={setKeyword}
-              onCheckInChange={hotelForm.setCheckIn}
-              onCheckOutChange={hotelForm.setCheckOut}
-              onSearch={handleHotelSearch}
-            />
-          )}
+          {hotelForm.error ? <HomeSearchPanelError error={hotelForm.error} /> : null}
+          <HomeHotelSearchPanel
+            city={hotelForm.city}
+            keyword={keyword}
+            checkIn={hotelForm.checkIn}
+            checkOut={hotelForm.checkOut}
+            validationError={hotelForm.validationError || undefined}
+            onCitySelect={() => hotelForm.setPicker("city")}
+            onKeywordChange={setKeyword}
+            onCheckInChange={hotelForm.setCheckIn}
+            onCheckOutChange={hotelForm.setCheckOut}
+            onSearch={handleHotelSearch}
+          />
         </div>
       ) : null}
 
       {activeProduct === "train" ? (
         <div className="relative">
           <HomeProductTabPointer product={activeProduct} />
-          {trainForm.isLoading ? (
-            <HomeSearchPanelSkeleton />
-          ) : trainForm.error ? (
-            <HomeSearchPanelError error={trainForm.error} />
-          ) : (
-            <HomeTrainSearchPanel
-              fromStation={trainForm.fromStation}
-              toStation={trainForm.toStation}
-              date={trainForm.date}
-              validationError={trainForm.validationError || undefined}
-              onSelectFrom={() => trainForm.setPicker("from")}
-              onSelectTo={() => trainForm.setPicker("to")}
-              onSwap={trainForm.swapStations}
-              onDateChange={trainForm.setDate}
-              onSearch={handleTrainSearch}
-            />
-          )}
+          {trainForm.error ? <HomeSearchPanelError error={trainForm.error} /> : null}
+          <HomeTrainSearchPanel
+            fromStation={trainForm.fromStation}
+            toStation={trainForm.toStation}
+            date={trainForm.date}
+            validationError={trainForm.validationError || undefined}
+            onSelectFrom={() => trainForm.setPicker("from")}
+            onSelectTo={() => trainForm.setPicker("to")}
+            onSwap={trainForm.swapStations}
+            onDateChange={trainForm.setDate}
+            onSearch={handleTrainSearch}
+          />
         </div>
       ) : null}
 

@@ -56,9 +56,6 @@ export function FlightListTimeoutDialog({ open, onConfirm }: FlightListTimeoutDi
             >
               温馨提示
             </h2>
-            <p className="mt-1.5 text-center text-[12px] leading-[1.5] text-[#999999]">
-              价格信息可能已发生变化
-            </p>
           </div>
         </div>
 
