@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import type { OrderListItem } from "@ryx/shared-types";
+import type { OrderAction, OrderListItem } from "@ryx/shared-types";
 
 import { ORDER_FONT } from "@/config/order-assets";
 
@@ -100,7 +100,12 @@ export function OrderList({
   return (
     <div className="flex flex-col gap-3 px-3 pb-4">
       {orders.map((item) => (
-        <OrderListCard key={item.OrderId} item={item} onAction={onAction} onCardClick={onCardClick} />
+        <OrderListCard
+          key={item.OrderId}
+          item={item}
+          onAction={onAction}
+          onCardClick={onCardClick}
+        />
       ))}
 
       {hasMore ? (

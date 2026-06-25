@@ -39,5 +39,8 @@ export function createOrderMockHandlers(): Record<string, (data: unknown) => IRe
     [ORDER_FLOW_METHODS.PAY_CREATE]: (data) =>
       getHotelHandlers()[HOTEL_FLOW_METHODS.PAY_CREATE]!(data),
     [ORDER_FLOW_METHODS.PAY_PROCESS]: () => successResponse({ Success: true, Message: "支付成功" }),
+    [ORDER_FLOW_METHODS.SEND_HOTEL_SMS]: () => successResponse(true),
+    [ORDER_FLOW_METHODS.CONFIRM_HOTEL_SMS]: () => successResponse(true),
+    [ORDER_FLOW_METHODS.CHECK_INSPUR_REPUSH]: () => successResponse(false),
   };
 }

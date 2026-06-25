@@ -134,6 +134,7 @@ function renderBody(item: OrderListItem): ReactNode {
 export function OrderListCard({ item, onAction, onCardClick }: OrderListCardProps) {
   const actions = getOrderActions(item);
   const grayPrice = shouldGrayPrice(item);
+  const clickable = Boolean(onCardClick);
 
   return (
     <article
@@ -158,9 +159,20 @@ export function OrderListCard({ item, onAction, onCardClick }: OrderListCardProp
         <OrderStatusBadge label={item.StatusName} variant="order" />
       </header>
 
-      <div className="mt-3 rounded-[8px] p-3" style={{ background: ORDER_CARD_BODY_GRADIENT }}>
-        {renderBody(item)}
-      </div>
+      {clickable ? (
+        <button
+          type="button"
+          className="mt-3 w-full rounded-[8px] p-3 text-left active:opacity-90"
+          style={{ background: ORDER_CARD_BODY_GRADIENT }}
+          onClick={() => onCardClick?.(item)}
+        >
+          {renderBody(item)}
+        </button>
+      ) : (
+        <div className="mt-3 rounded-[8px] p-3" style={{ background: ORDER_CARD_BODY_GRADIENT }}>
+          {renderBody(item)}
+        </div>
+      )}
 
       <footer className="mt-3 flex items-center justify-between gap-3">
         <p
@@ -172,10 +184,7 @@ export function OrderListCard({ item, onAction, onCardClick }: OrderListCardProp
         >
           ¥{item.TotalAmount ?? "-"}
         </p>
-        <OrderActionBar
-          actions={actions}
-          onAction={(action) => onAction?.(action, item)}
-        />
+        <OrderActionBar actions={actions} onAction={(action) => onAction?.(action, item)} />
       </footer>
     </article>
   );

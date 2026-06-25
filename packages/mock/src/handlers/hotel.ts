@@ -5,7 +5,7 @@ import { MOCK_HOTEL_DETAIL, MOCK_HOTEL_LIST, MOCK_HOTEL_POLICY } from "../fixtur
 import {
   createMockOrderDetail,
   MOCK_ORDER_PAYS,
-  resolveOrderDetail,
+  resolveOrderDetailPayload,
   type MockOrderState,
 } from "../fixtures/order.js";
 
@@ -93,10 +93,10 @@ export function createHotelMockHandlers(): Record<string, (data: unknown) => IRe
       });
     },
     [HOTEL_FLOW_METHODS.ORDER_DETAIL]: (data) => {
-      const params = data as { OrderId?: string };
-      const orderId = params?.OrderId ?? "ORD-MOCK";
+      const params = data as { OrderId?: string; Id?: string };
+      const orderId = params?.Id ?? params?.OrderId ?? "ORD-MOCK";
       const state = getOrCreateOrder(orderId);
-      return successResponse(resolveOrderDetail(state));
+      return successResponse(resolveOrderDetailPayload(orderId, state));
     },
     [HOTEL_FLOW_METHODS.CANCEL_HOTEL]: () => successResponse(true),
     [HOTEL_FLOW_METHODS.GET_ORDER_PAYS]: () => successResponse(MOCK_ORDER_PAYS),

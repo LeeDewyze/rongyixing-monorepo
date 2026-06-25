@@ -11,6 +11,7 @@ import { usePageHeader } from "@/components/layout";
 import headerProfileIcon from "@/assets/hotel/header-profile.png";
 import { useHotelCities, useHotelList } from "@/hooks/useHotelList";
 import { formatApiError } from "@/lib/formatApiError";
+import { navigateBack } from "@/lib/navigation";
 import { CITY_HISTORY_KEYS, hotelCityFromQuery, hotelCityPickerAdapter } from "@/lib/hotel-search";
 
 /** Figma hotel list — sky-blue header fading into filter panel (#EEF4FC). */
@@ -164,7 +165,7 @@ export function HotelListPage() {
               type="button"
               className="flex h-11 w-10 shrink-0 items-center justify-center active:opacity-70"
               aria-label="返回"
-              onClick={() => navigate(-1)}
+              onClick={() => navigateBack(navigate, "/hotel")}
             >
               <BackIcon />
             </button>

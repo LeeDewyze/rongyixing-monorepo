@@ -32,6 +32,7 @@ import {
 import { saveHotelGalleryImages } from "@/lib/hotel-gallery-session";
 import { saveHotelBookSelection } from "@/lib/hotel-book-session";
 import { formatApiError } from "@/lib/formatApiError";
+import { navigateBack } from "@/lib/navigation";
 import { hasAgentIdentity } from "@/lib/flight-book-save-order";
 import { buildPassengerSelectPath } from "@/lib/passenger-selection";
 import {
@@ -168,7 +169,7 @@ export function HotelDetailPage() {
       cityCode: query.cityCode,
       cityName: query.cityName,
     });
-    navigate(`/hotel/list?${listParams.toString()}`);
+    navigateBack(navigate, `/hotel/list?${listParams.toString()}`);
   }
 
   function handleOpenGallery(index: number) {
@@ -256,6 +257,8 @@ export function HotelDetailPage() {
       checkOut: query.checkOut,
       cityCode: query.cityCode,
       cityName: query.cityName,
+      hotelAddress: data.Address,
+      hotelPhone: data.Phone,
       room,
       plan,
       policyRules: resolvePlanPolicyRules(plan, policyResults, selectedPassengers),

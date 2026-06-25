@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import type { OrderAction, OrderListItem, OrderListScope } from "@ryx/shared-types";
+import { OrderListTabId } from "@ryx/shared-types";
 
 import {
   OrderCategoryTabs,
@@ -129,6 +130,14 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
           navigate(getOrderPayPath(item));
           return;
         case "cancel":
+          if (item.tabId === OrderListTabId.Hotel) {
+            navigate(`/orders/hotel/${encodeURIComponent(item.OrderId)}`, {
+              state: { action: "cancel" },
+            });
+            return;
+          }
+          setToastMessage("功能即将上线");
+          return;
         case "refund":
         case "exchange":
           setToastMessage("功能即将上线");

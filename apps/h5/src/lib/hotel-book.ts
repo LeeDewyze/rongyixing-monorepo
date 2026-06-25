@@ -5,6 +5,7 @@ import type {
   FlightOutNumberField,
   FlightPassengerBookForm,
   FlightPassengerContactOption,
+  HotelBookLinkmanDto,
   HotelBookPassengerDto,
   HotelBookResponse,
   HotelBookRoomPlanDto,
@@ -19,6 +20,7 @@ import { credentialDisplayNumber, credentialTypeValue } from "@ryx/shared-types"
 
 import { addDays } from "@/lib/date-search";
 import { buildAuthorizedLinkmans, validateAuthorizedContacts } from "@/lib/flight-book-contacts";
+import { resolvePassengerTravelPolicy } from "@/lib/flight-book-cabin";
 import {
   resolvePassengerFormEmail,
   resolvePassengerFormMobile,
@@ -29,8 +31,11 @@ import {
   mergeOutNumberValues,
   validatePassengerOutNumbers,
 } from "@/lib/flight-book-outnumber";
-import { enrichCredentialWithFullNumber } from "@/lib/passenger-select-logic";
+import { resolveFlightTravelType } from "@/lib/flight-travel-mode";
 import type { HotelBookSelection } from "@/lib/hotel-book-session";
+
+/** Legacy `getChannel()` for H5 book submit. */
+export const HOTEL_BOOK_CHANNEL = "客户H5";
 
 /** Legacy OrderHotelType.Domestic */
 export const HOTEL_ORDER_HOTEL_TYPE_DOMESTIC = 1;
@@ -94,7 +99,84 @@ function toLegacyRoomId(roomId: string): number | string {
   return Number.isFinite(parsed) ? parsed : roomId;
 }
 
-export function buildHotelInitRoomPlan(plan: HotelRoomPlan, room: HotelRoom): HotelBookRoomPlanDto {
+function normalizeLegacyRoomPlanPrices(
+  prices: HotelBookRoomPlanDto["RoomPlanPrices"],
+): HotelBookRoomPlanDto["RoomPlanPrices"] {
+  if (!prices?.length) return prices;
+  return prices.map((item) => ({
+    ...item,
+    Date: item.Date ? toLegacyPolicyDate(item.Date.slice(0, 10)) : item.Date,
+  }));
+}
+
+function attachHotelToRoomPlan(
+  dto: HotelBookRoomPlanDto,
+  room: HotelRoom,
+  hotel?: Pick<
+    HotelBookSelection,
+    "hotelId" | "hotelName" | "cityCode" | "hotelAddress" | "hotelPhone"
+  >,
+): HotelBookRoomPlanDto {
+  const roomId = toLegacyRoomId(room.RoomId);
+  const existingRoom = dto.Room ?? {};
+  dto.Room = {
+    ...existingRoom,
+    Id: existingRoom.Id ?? roomId,
+    Name: room.RoomName ?? existingRoom.Name,
+    ...(hotel
+      ? {
+          Hotel: {
+            Id: hotel.hotelId,
+            Name: hotel.hotelName,
+            Address: hotel.hotelAddress,
+            Phone: hotel.hotelPhone,
+            CityCode: hotel.cityCode,
+          },
+        }
+      : {}),
+  };
+  return dto;
+}
+
+function buildHotelInitRoomPlanFromLegacyWire(
+  plan: HotelRoomPlan,
+  room: HotelRoom,
+  hotel?: Pick<
+    HotelBookSelection,
+    "hotelId" | "hotelName" | "cityCode" | "hotelAddress" | "hotelPhone"
+  >,
+): HotelBookRoomPlanDto {
+  const dto = JSON.parse(JSON.stringify(plan.LegacyWire)) as HotelBookRoomPlanDto;
+  if (dto.BeginDate) dto.BeginDate = toLegacyPolicyDate(String(dto.BeginDate).slice(0, 10));
+  if (dto.EndDate) dto.EndDate = toLegacyPolicyDate(String(dto.EndDate).slice(0, 10));
+  if (!dto.Variables && plan.VariablesObj && Object.keys(plan.VariablesObj).length > 0) {
+    dto.Variables = JSON.stringify(plan.VariablesObj);
+  }
+  dto.RoomPlanPrices = normalizeLegacyRoomPlanPrices(dto.RoomPlanPrices ?? plan.RoomPlanPrices);
+  if (!dto.RoomPlanRules?.length && plan.RoomPlanRules?.length) {
+    dto.RoomPlanRules = plan.RoomPlanRules;
+  }
+  if (dto.Id == null || String(dto.Id) === "0") {
+    dto.Id = "0";
+  }
+  if (dto.PaymentType === HOTEL_PAYMENT_PREPAY) {
+    dto.IsPrepay = true;
+  }
+  return attachHotelToRoomPlan(dto, room, hotel);
+}
+
+export function buildHotelInitRoomPlan(
+  plan: HotelRoomPlan,
+  room: HotelRoom,
+  hotel?: Pick<
+    HotelBookSelection,
+    "hotelId" | "hotelName" | "cityCode" | "hotelAddress" | "hotelPhone"
+  >,
+): HotelBookRoomPlanDto {
+  if (plan.LegacyWire && Object.keys(plan.LegacyWire).length > 0) {
+    return buildHotelInitRoomPlanFromLegacyWire(plan, room, hotel);
+  }
+
   const legacyId = plan.LegacyId ?? plan.PlanId;
   const dto: HotelBookRoomPlanDto = {
     Name: plan.PlanName,
@@ -105,22 +187,40 @@ export function buildHotelInitRoomPlan(plan: HotelRoomPlan, room: HotelRoom): Ho
     BeginDate: toLegacyPolicyDate(plan.BeginDate),
     EndDate: toLegacyPolicyDate(plan.EndDate),
     PaymentType: plan.PaymentType,
-    RoomPlanPrices: plan.RoomPlanPrices,
+    RoomPlanPrices: normalizeLegacyRoomPlanPrices(plan.RoomPlanPrices),
+    Key: plan.Key,
+    BookCode: plan.BookCode,
+    BookType: plan.BookType,
     Room: {
       Id: toLegacyRoomId(room.RoomId),
       Name: room.RoomName,
+      ...(hotel
+        ? {
+            Hotel: {
+              Id: hotel.hotelId,
+              Name: hotel.hotelName,
+              Address: hotel.hotelAddress,
+              Phone: hotel.hotelPhone,
+              CityCode: hotel.cityCode,
+            },
+          }
+        : {}),
     },
   };
 
   if (legacyId && legacyId !== "0") {
     dto.Id = legacyId;
+  } else {
+    dto.Id = "0";
   }
 
   if (plan.VariablesObj && Object.keys(plan.VariablesObj).length > 0) {
     dto.Variables = JSON.stringify(plan.VariablesObj);
   }
 
-  if (plan.CancelPolicy) {
+  if (plan.RoomPlanRules?.length) {
+    dto.RoomPlanRules = plan.RoomPlanRules;
+  } else if (plan.CancelPolicy) {
     dto.RoomPlanRules = [{ Description: plan.CancelPolicy }];
   }
 
@@ -131,24 +231,26 @@ export function buildHotelInitRoomPlan(plan: HotelRoomPlan, room: HotelRoom): Ho
   return dto;
 }
 
+/** Legacy `fillBookPassengers` — spread credential with Policy / CredentialsInfo. */
 function buildSubmitCredentials(
   info: PassengerBookInfo,
   accountId: string,
 ): HotelBookPassengerDto["Credentials"] {
-  const credential = enrichCredentialWithFullNumber(info.passenger, info.credential);
-  const credType = credentialTypeValue(credential);
-  const hideNumber =
-    credential.HideNumber ??
-    credential.HideCredentialsNumber ??
-    credentialDisplayNumber(credential);
+  const cred = info.credential;
+  const passengerPolicy = resolvePassengerTravelPolicy(info);
+  const hideNumber = cred.HideNumber ?? cred.HideCredentialsNumber ?? credentialDisplayNumber(cred);
+  const credType = credentialTypeValue(cred);
 
   return {
-    ...credential,
+    ...cred,
     Type: credType,
     CredentialsType: credType,
     AccountId: accountId,
-    ...(accountId ? { Account: { Id: accountId } } : {}),
+    Account: accountId ? { Id: accountId } : cred.Account,
+    ...(passengerPolicy ? { Policy: passengerPolicy } : {}),
+    ...(cred.Name && hideNumber ? { CredentialsInfo: `${cred.Name}|${hideNumber}` } : {}),
     HideNumber: hideNumber,
+    checked: true,
   };
 }
 
@@ -159,7 +261,7 @@ export function buildHotelInitBookDto(input: {
   agentId?: string;
 }): HotelOrderBookDto {
   const { selection, passengers, travelFormId, agentId } = input;
-  const roomPlan = buildHotelInitRoomPlan(selection.plan, selection.room);
+  const roomPlan = buildHotelInitRoomPlan(selection.plan, selection.room, selection);
 
   const passengerDtos: HotelBookPassengerDto[] = passengers.map((info) => {
     const clientId = resolveHotelInitClientId(info);
@@ -196,19 +298,33 @@ export function buildHotelOrderBookDto(input: {
   forms: Record<string, HotelPassengerBookForm>;
   travelFormId?: string;
   travelPayType?: number;
+  travelType?: number;
   authorizedContactsByPassenger?: Record<string, FlightAuthorizedContact[]>;
   agentId?: string;
   globalArrivalTime?: string;
   globalNotifyLanguage?: HotelNotifyLanguage;
   creditCard?: HotelCreditCardForm;
   outNumberFieldsByPassenger?: Record<string, FlightOutNumberField[]>;
+  isFromOffline?: boolean;
+  /** Last Initialize payload — Book must reuse the same RoomPlan wire shape. */
+  initDto?: HotelOrderBookDto;
 }): HotelOrderBookDto {
-  const base = buildHotelInitBookDto({
-    selection: input.selection,
-    passengers: input.passengers,
-    travelFormId: input.travelFormId,
-    agentId: input.agentId,
-  });
+  const base: HotelOrderBookDto = input.initDto
+    ? (JSON.parse(JSON.stringify(input.initDto)) as HotelOrderBookDto)
+    : buildHotelInitBookDto({
+        selection: input.selection,
+        passengers: input.passengers,
+        travelFormId: input.travelFormId,
+        agentId: input.agentId,
+      });
+
+  if (input.agentId) {
+    base.AgentId = input.agentId;
+  }
+
+  const travelPayType = input.travelPayType;
+  const travelType = input.travelType ?? resolveFlightTravelType();
+  const rootLinkmans: HotelBookLinkmanDto[] = [];
 
   base.Passengers = base.Passengers.map((dto, index) => {
     const passenger = input.passengers[index];
@@ -218,7 +334,7 @@ export function buildHotelOrderBookDto(input: {
 
     const customerName = form.roommate.trim()
       ? `${passenger.credential.Name}|${form.roommate.trim()}`
-      : passenger.credential.Name;
+      : (passenger.credential.Name ?? "");
 
     const outNumberFields = input.outNumberFieldsByPassenger?.[passenger.id] ?? [];
     const outNumbers = mergeOutNumberValues(
@@ -230,29 +346,45 @@ export function buildHotelOrderBookDto(input: {
     const mobile = resolvePassengerFormMobile(contactForm);
     const email = resolvePassengerFormEmail(contactForm);
 
+    const initPassenger = input.initDto?.Passengers[index];
+    const roomPlan = initPassenger?.RoomPlan ?? dto.RoomPlan;
+    const baseCredentials = initPassenger?.Credentials ?? dto.Credentials;
+
     const passengerDto: HotelBookPassengerDto = {
       ...dto,
+      RoomPlan: roomPlan,
+      CardName: "",
+      CardNumber: "",
+      TicketNum: "",
       Credentials: {
-        ...dto.Credentials,
+        ...baseCredentials,
         Name: customerName,
-        Mobile: mobile || dto.Credentials.Mobile,
+        Mobile: mobile || baseCredentials.Mobile,
+        ...(email ? { Email: email } : {}),
       },
+      CustomerName: customerName,
       Mobile: mobile || dto.Mobile,
+      Email: email || "",
       CheckinTime: input.globalArrivalTime ?? form.arrivalTime,
       MessageLang: input.globalNotifyLanguage ?? form.notifyLanguage,
-      TravelPayType: input.travelPayType,
+      TravelPayType: travelPayType,
+      TravelType: travelType,
       IllegalReason: form.otherIllegalReason || form.illegalReason,
+      IllegalPolicy: "",
       ExpenseType: form.expenseTypeId || undefined,
       ApprovalId: form.isSkipApprove ? "0" : form.approvalId || "0",
       IsSkipApprove: form.isSkipApprove,
-      OutNumbers: Object.keys(outNumbers).length ? outNumbers : undefined,
+      CostCenterCode: form.otherCostCenterCode || form.costCenter.code || "",
+      CostCenterName: form.otherCostCenterName || form.costCenter.name || "",
+      OrganizationName: form.otherOrganizationName || form.organization.name || "",
+      OrganizationCode: form.otherOrganizationName ? "" : form.organization.code || "",
+      OutNumbers: Object.keys(outNumbers).length ? outNumbers : null,
     };
 
-    if (email) {
-      passengerDto.Credentials = {
-        ...passengerDto.Credentials,
-        Email: email,
-      };
+    const roomContacts = input.authorizedContactsByPassenger?.[passenger.id] ?? [];
+    const linkmans = buildAuthorizedLinkmans(roomContacts);
+    if (linkmans.length) {
+      rootLinkmans.push(...linkmans);
     }
 
     if (index === 0 && input.creditCard) {
@@ -267,16 +399,53 @@ export function buildHotelOrderBookDto(input: {
       }
     }
 
-    const roomContacts = input.authorizedContactsByPassenger?.[passenger.id] ?? [];
-    const linkmans = buildAuthorizedLinkmans(roomContacts);
-    if (linkmans.length) {
-      passengerDto.Linkmans = linkmans;
+    const passengerPolicy = resolvePassengerTravelPolicy(passenger);
+    if (passengerPolicy) {
+      passengerDto.Policy = passengerPolicy;
     }
 
     return passengerDto;
   });
 
+  if (travelPayType != null) {
+    base.TravelPayType = travelPayType;
+  }
+  base.Channel = HOTEL_BOOK_CHANNEL;
+  base.IsFromOffline = input.isFromOffline ?? false;
+  if (rootLinkmans.length) {
+    base.Linkmans = rootLinkmans;
+  }
+
   return base;
+}
+
+/** Legacy `onBook` final transforms before proxy send. */
+export function prepareHotelBookSubmitDto(dto: HotelOrderBookDto): HotelOrderBookDto {
+  const passengers = dto.Passengers.map((passenger) => {
+    const approvalRaw = passenger.ApprovalId;
+    const approvalId =
+      approvalRaw == null || approvalRaw === ""
+        ? 0
+        : Number.isFinite(Number(approvalRaw))
+          ? Number(approvalRaw)
+          : approvalRaw;
+
+    const { Linkmans: _ignored, ...rest } = passenger as HotelBookPassengerDto & {
+      Linkmans?: unknown;
+    };
+
+    return {
+      ...rest,
+      ApprovalId: approvalId,
+    };
+  });
+
+  return {
+    ...dto,
+    Channel: dto.Channel ?? HOTEL_BOOK_CHANNEL,
+    TravelPayType: dto.TravelPayType ?? passengers[0]?.TravelPayType,
+    Passengers: passengers,
+  };
 }
 
 function formatArrivalTimeSlot(datePart: string, hour: number, minute: number): string {

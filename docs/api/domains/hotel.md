@@ -5,19 +5,22 @@
 
 ## Method 清单
 
-| 用途          | Method                                     | `@ryx/api` 方法                                     |
-| ------------- | ------------------------------------------ | --------------------------------------------------- |
-| 国内城市      | `TmcApiHomeUrl-Resource-DomesticHotelCity` | `hotel.getCities()`                                 |
-| 酒店列表      | `TmcApiHotelUrl-Home-List`                 | `hotel.getList()`                                   |
-| 酒店详情      | `TmcApiHotelUrl-Home-Detail`               | `hotel.getDetail()`                                 |
-| 违标策略      | `TmcApiHotelUrl-Home-Policy`               | `hotel.getPolicy()`                                 |
-| 预订初始化    | `TmcApiBookUrl-Hotel-Initialize`           | `hotel.initBook()`                                  |
-| 提交订单      | `TmcApiBookUrl-Hotel-Book`                 | `hotel.submitBook()`                                |
-| 订单详情      | `TmcApiOrderUrl-Order-Detail`              | `order.getDetail()`                                 |
-| 取消酒店订单  | `TmcApiOrderUrl-Order-CancelOrderHotel`    | `order.cancelHotel()`                               |
-| 支付渠道      | `TmcApiOrderUrl-Order-GetOrderPays`        | `pay.getOrderPays()`                                |
-| 发起支付      | `TmcApiOrderUrl-Pay-Create`                | `pay.create()`                                      |
-| 出差单（ryx） | `TmcApiBookUrl-Home-GetTravelUrl`          | `travel.getTravelUrl()` / `travel.getTravelForms()` |
+| 用途          | Method                                                | `@ryx/api` 方法                                         |
+| ------------- | ----------------------------------------------------- | ------------------------------------------------------- |
+| 国内城市      | `TmcApiHomeUrl-Resource-DomesticHotelCity`            | `hotel.getCities()`                                     |
+| 酒店列表      | `TmcApiHotelUrl-Home-List`                            | `hotel.getList()`                                       |
+| 酒店详情      | `TmcApiHotelUrl-Home-Detail`                          | `hotel.getDetail()`                                     |
+| 违标策略      | `TmcApiHotelUrl-Home-Policy`                          | `hotel.getPolicy()`                                     |
+| 预订初始化    | `TmcApiBookUrl-Hotel-Initialize`                      | `hotel.initBook()`                                      |
+| 提交订单      | `TmcApiBookUrl-Hotel-Book`                            | `hotel.submitBook()`                                    |
+| 订单详情      | `TmcApiOrderUrl-Order-Detail`                         | `order.getDetail()` → `normalizeHotelOrderDetail()`     |
+| 取消酒店订单  | `TmcApiOrderUrl-Order-CancelOrderHotel`               | `order.cancelHotel({ OrderId, OrderHotelId, Channel })` |
+| 酒店取消短信  | `TmcApiOrderUrl-Order-SendVerifyOrderHotelSMSCode`    | `order.sendHotelOrderSmsCode()`                         |
+| 短信确认      | `TmcApiOrderUrl-Order-ConfirmVerifyOrderHotelSMSCode` | `order.confirmHotelOrderSmsCode()`                      |
+| 浪潮重推检查  | `TmcApiOrderUrl-Order-CheckInspurRepush`              | `order.checkInspurRepush()`                             |
+| 支付渠道      | `TmcApiOrderUrl-Order-GetOrderPays`                   | `pay.getOrderPays()`                                    |
+| 发起支付      | `TmcApiOrderUrl-Pay-Create`                           | `pay.create()`                                          |
+| 出差单（ryx） | `TmcApiBookUrl-Home-GetTravelUrl`                     | `travel.getTravelUrl()` / `travel.getTravelForms()`     |
 
 常量定义：`packages/api/src/methods/hotel-flow.ts`、`order-flow.ts`、`travel-flow.ts`
 
@@ -60,10 +63,10 @@ const forms = await getApi().travel.getTravelForms({ travelType: "Hotel" });
 
 H5 填单页 [`HotelBookPage`](../../../apps/h5/src/pages/hotel/HotelBookPage.tsx) 使用 session 快照 + 出行人列表构建 legacy `OrderBookDto`：
 
-| 阶段     | Method             | 构建函数                                                        |
-| -------- | ------------------ | --------------------------------------------------------------- |
-| 进入填单 | `Hotel-Initialize` | `buildHotelInitBookDto({ selection, passengers, agentId? })`    |
-| 提交订单 | `Hotel-Book`       | `buildHotelOrderBookDto({ selection, passengers, forms, ... })` |
+| 阶段     | Method             | 构建函数                                                     |
+| -------- | ------------------ | ------------------------------------------------------------ |
+| 进入填单 | `Hotel-Initialize` | `buildHotelInitBookDto({ selection, passengers, agentId? })` |
+| 提交订单 | `Hotel-Book`       | `prepareHotelBookSubmitDto(buildHotelOrderBookDto({ ... }))` |
 
 **关键约定**
 
@@ -83,6 +86,7 @@ const list = await getApi().hotel.getList({ CityCode: '010' })
 const detail = await getApi().hotel.getDetail({ HotelId: 'H10001' })
 const book = await getApi().hotel.submitBook({ ... })
 const order = await getApi().order.getDetail({ OrderId: book.OrderId })
+// Request wire: `{ Id: orderId }` (legacy ryx); client accepts `OrderId` in params.
 ```
 
 ## 相关文档

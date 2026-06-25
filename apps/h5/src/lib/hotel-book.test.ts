@@ -9,6 +9,7 @@ import {
   buildHotelInitBookDto,
   buildHotelInitRoomPlan,
   buildHotelOrderBookDto,
+  prepareHotelBookSubmitDto,
   buildHotelWarmReminderSections,
   resolveHotelRoomPlanRulesDesc,
   calcHotelNights,
@@ -90,6 +91,45 @@ describe("buildHotelInitRoomPlan", () => {
     expect(dto.Variables).toContain("ArrivalTime");
     expect(dto.RoomPlanPrices).toHaveLength(1);
   });
+
+  it("embeds hotel metadata when selection is provided", () => {
+    const dto = buildHotelInitRoomPlan(plan, room, {
+      ...selection,
+      hotelAddress: "测试地址",
+      hotelPhone: "010-12345678",
+    });
+    expect(dto.Room?.Hotel).toMatchObject({
+      Id: "H10001",
+      Name: "测试酒店",
+      Address: "测试地址",
+      Phone: "010-12345678",
+      CityCode: "010",
+    });
+  });
+
+  it("uses legacy wire snapshot when LegacyWire is present", () => {
+    const legacyPlan: HotelRoomPlan = {
+      ...plan,
+      LegacyWire: {
+        Id: "0",
+        Name: "含早（预付）",
+        TotalAmount: 398,
+        SupplierNumber: "RM_TEST_SUPPLIER_KEY",
+        SupplierType: "Dttrip",
+        BookCode: "book-code",
+        BookType: 13,
+        Key: "legacy-key",
+        Variables: JSON.stringify(plan.VariablesObj),
+        RoomPlanRules: [{ Description: "不可取消", Type: 300 }],
+        RoomPlanPrices: [{ Date: "2026-06-20T00:00:00", Price: 398, Breakfast: 2 }],
+      },
+    };
+    const dto = buildHotelInitRoomPlan(legacyPlan, room, selection);
+    expect(dto.Id).toBe("0");
+    expect(dto.SupplierNumber).toBe("RM_TEST_SUPPLIER_KEY");
+    expect(dto.Key).toBe("legacy-key");
+    expect(dto.RoomPlanRules?.[0]).toMatchObject({ Type: 300 });
+  });
 });
 
 describe("buildHotelInitBookDto", () => {
@@ -152,8 +192,73 @@ describe("buildHotelOrderBookDto", () => {
     expect(passenger?.ExpenseType).toBe("1");
     expect(passenger?.ApprovalId).toBe("ap1");
     expect(passenger?.OrderCard?.CardNumber).toBe("4111111111111111");
-    expect(passenger?.Linkmans).toHaveLength(1);
-    expect(dto.Linkmans).toBeUndefined();
+    expect(passenger?.Linkmans).toBeUndefined();
+    expect(dto.Linkmans).toHaveLength(1);
+    expect(dto.Channel).toBe("客户H5");
+    expect(dto.TravelPayType).toBe(1);
+    expect(passenger?.CustomerName).toBe("张三");
+    expect(passenger?.TravelType).toBeDefined();
+  });
+
+  it("coerces ApprovalId to number via prepareHotelBookSubmitDto", () => {
+    const forms = {
+      p1: {
+        ...createHotelPassengerBookForm(passengers[0]!, "2026-06-20 14:00"),
+        approvalId: "ap1",
+      },
+    };
+
+    const prepared = prepareHotelBookSubmitDto(
+      buildHotelOrderBookDto({
+        selection,
+        passengers,
+        forms,
+        travelPayType: 1,
+        globalArrivalTime: "2026-06-20 14:00",
+      }),
+    );
+
+    expect(prepared.Passengers[0]?.ApprovalId).toBe("ap1");
+  });
+
+  it("coerces numeric ApprovalId to number", () => {
+    const forms = {
+      p1: {
+        ...createHotelPassengerBookForm(passengers[0]!, "2026-06-20 14:00"),
+        approvalId: "12345",
+      },
+    };
+
+    const prepared = prepareHotelBookSubmitDto(
+      buildHotelOrderBookDto({
+        selection,
+        passengers,
+        forms,
+        travelPayType: 1,
+        globalArrivalTime: "2026-06-20 14:00",
+      }),
+    );
+
+    expect(prepared.Passengers[0]?.ApprovalId).toBe(12345);
+  });
+
+  it("reuses RoomPlan from initDto on book submit", () => {
+    const initDto = buildHotelInitBookDto({ selection, passengers });
+    const initRoomPlan = initDto.Passengers[0]?.RoomPlan;
+    const forms = {
+      p1: createHotelPassengerBookForm(passengers[0]!, "2026-06-20 14:00"),
+    };
+
+    const bookDto = buildHotelOrderBookDto({
+      selection,
+      passengers,
+      forms,
+      travelPayType: 1,
+      globalArrivalTime: "2026-06-20 14:00",
+      initDto,
+    });
+
+    expect(bookDto.Passengers[0]?.RoomPlan).toEqual(initRoomPlan);
   });
 });
 

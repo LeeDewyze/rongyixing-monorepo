@@ -64,6 +64,10 @@ export interface HotelRoomPlan {
   BeginDate?: string;
   EndDate?: string;
   RoomPlanUniqueId?: string;
+  /** Legacy RoomPlan.Key — used to restore full plan on Book. */
+  Key?: string;
+  BookCode?: string;
+  BookType?: number;
   /** Legacy RoomPlan.PaymentType (1 prepaid, 2 pay at hotel, 4 monthly). */
   PaymentType?: number;
   VariablesObj?: Record<string, unknown>;
@@ -71,6 +75,8 @@ export interface HotelRoomPlan {
   RoomPlanPrices?: { Date?: string; Price?: number }[];
   /** Legacy RoomPlan.RoomPlanRules — used by book-page warm reminder. */
   RoomPlanRules?: { Description?: string }[];
+  /** Raw legacy RoomPlan wire object from Home/Detail — required for Book integrity checks. */
+  LegacyWire?: Record<string, unknown>;
 }
 
 /** Legacy `RoomDetails` row for room detail page. */
@@ -169,10 +175,21 @@ export interface HotelBookRoomPlanDto {
   EndDate?: string;
   PaymentType?: number;
   IsPrepay?: boolean;
+  BookCode?: string;
+  BookType?: number;
+  Key?: string;
   Variables?: string;
   RoomPlanPrices?: { Date?: string; Price?: number }[];
   RoomPlanRules?: { Description?: string }[];
-  Room?: { Id?: number | string; Name?: string };
+  Room?: { Id?: number | string; Name?: string; Hotel?: HotelBookRoomHotelDto };
+}
+
+export interface HotelBookRoomHotelDto {
+  Id?: string | number;
+  Name?: string;
+  Address?: string;
+  Phone?: string;
+  CityCode?: string;
 }
 
 export interface HotelBookCredentialsDto {
@@ -198,14 +215,26 @@ export interface HotelBookPassengerDto {
   TravelPayType?: number;
   IllegalReason?: string;
   ExpenseType?: string;
-  ApprovalId?: string;
+  ApprovalId?: string | number;
   IsSkipApprove?: boolean;
   travelFormId?: string;
   travelNumber?: string;
   OrderHotelType?: number;
-  OutNumbers?: Record<string, string>;
+  OutNumbers?: Record<string, string> | null;
   OrderCard?: HotelOrderCardDto;
-  Linkmans?: HotelBookLinkmanDto[];
+  /** Legacy submit-only fields (not sent on Initialize). */
+  CustomerName?: string;
+  Email?: string;
+  IllegalPolicy?: string;
+  CostCenterCode?: string;
+  CostCenterName?: string;
+  OrganizationName?: string;
+  OrganizationCode?: string;
+  TravelType?: number;
+  CardName?: string;
+  CardNumber?: string;
+  TicketNum?: string;
+  Policy?: unknown;
 }
 
 export interface HotelOrderCardDto {
@@ -229,6 +258,9 @@ export interface HotelOrderBookDto {
   Passengers: HotelBookPassengerDto[];
   Linkmans?: HotelBookLinkmanDto[];
   AgentId?: string;
+  Channel?: string;
+  TravelPayType?: number;
+  IsFromOffline?: boolean;
 }
 
 export type HotelInitBookParams = HotelOrderBookDto;
@@ -269,14 +301,110 @@ export interface OrderDetailParams {
 
 export type OrderDetailProductType = "Flight" | "Hotel" | "Train" | "Car";
 
-export interface OrderDetailResponse {
+export interface HotelCancelParams {
+  OrderId: string;
+  OrderHotelId: string;
+  Channel?: string;
+}
+
+export interface HotelOrderSmsParams {
+  Mobile: string;
+  OrderHotelId: string;
+}
+
+export interface HotelOrderSmsConfirmParams {
+  SmsCode: string;
+  OrderHotelId: string;
+}
+
+export interface HotelOrderBillLine {
+  Name: string;
+  Amount: number;
+  Tag?: string;
+  Key?: string;
+}
+
+export interface HotelOrderRoomVariables {
+  isBtn?: number;
+  btnValue?: string;
+  SMSCodeVerifyResultDesc?: string;
+  VerifySmsCodeMobile?: string;
+  SupplierName?: string;
+  ExceptionMessage?: string;
+}
+
+export interface HotelOrderTraveler {
+  Name?: string;
+  CredentialType?: string;
+  CredentialNumber?: string;
+  Mobile?: string;
+  Email?: string;
+  ExpenseType?: string;
+  CostCenterName?: string;
+  OrganizationName?: string;
+  PolicyName?: string;
+  IllegalReason?: string;
+  OtherGuestNames?: string;
+  OutNumbers?: string;
+}
+
+export interface HotelOrderRoom {
+  Id: string;
+  Key: string;
+  HotelName?: string;
+  RoomName?: string;
+  Breakfast?: string | number;
+  Status?: string;
+  StatusName?: string;
+  BeginDate?: string;
+  EndDate?: string;
+  CheckinTime?: string;
+  CheckoutTime?: string;
+  HotelAddress?: string;
+  PaymentType?: string | number;
+  RoomFee?: number;
+  HotelInvoice?: string;
+  HotelContact?: string;
+  SupplierName?: string;
+  RuleDescription?: string;
+  ExceptionMessage?: string;
+  CustomerName?: string;
+  Variables?: HotelOrderRoomVariables;
+  Traveler?: HotelOrderTraveler;
+}
+
+export interface HotelOrderHistory {
+  TypeName?: string;
+  ApproverName?: string;
+  StatusName?: string;
+  InsertTime?: string;
+  ExpiredTime?: string;
+}
+
+export type HotelOrderSmsAction = "none" | "sendCode" | "confirmCode" | "readOnly";
+
+export interface HotelOrderActionFlags {
+  showPay: boolean;
+  showCancel: boolean;
+  showInspurRepush?: boolean;
+  smsAction: HotelOrderSmsAction;
+  smsReadOnlyText?: string;
+  smsError?: string;
+  smsMobile?: string;
+  cancelOrderHotelId?: string;
+}
+
+export interface HotelOrderDetail {
   OrderId: string;
   OrderNumber?: string;
   Status?: string;
   StatusName?: string;
-  isShowPayButton?: boolean;
+  TravelPayType?: string;
+  InsertTime?: string;
   TotalAmount?: number;
   ProductType?: OrderDetailProductType;
+  SelfPayAmount?: number;
+  isShowPayButton?: boolean;
   HotelName?: string;
   CheckInDate?: string;
   CheckOutDate?: string;
@@ -284,7 +412,15 @@ export interface OrderDetailResponse {
   DepartTime?: string;
   PassengerNames?: string;
   TicketStatusName?: string;
+  Rooms?: HotelOrderRoom[];
+  BillItems?: HotelOrderBillLine[];
+  Histories?: HotelOrderHistory[];
+  Actions?: HotelOrderActionFlags;
+  ShowServiceFee?: boolean;
+  TransactionId?: string;
 }
+
+export type OrderDetailResponse = HotelOrderDetail;
 
 export interface OrderPayChannel {
   PayType: string;

@@ -12,8 +12,10 @@ import { usePageHeader } from "@/components/layout";
 import { useHotelDetail } from "@/hooks/useHotelList";
 import { saveHotelGalleryImages } from "@/lib/hotel-gallery-session";
 import { formatApiError } from "@/lib/formatApiError";
+import { navigateBack } from "@/lib/navigation";
 import {
   buildHotelDetailParams,
+  buildHotelDetailUrl,
   buildHotelShowImagesUrl,
   getRoomDetailSpecItems,
   getRoomGalleryUrls,
@@ -62,6 +64,12 @@ export function HotelRoomDetailPage() {
 
   usePageHeader({ visible: false });
 
+  const detailFallback = buildHotelDetailUrl(hotelId, query);
+
+  function handleBack() {
+    navigateBack(navigate, detailFallback);
+  }
+
   function handleOpenGallery(index: number) {
     if (!room || !galleryUrls.length) return;
     saveHotelGalleryImages(galleryUrls);
@@ -82,7 +90,7 @@ export function HotelRoomDetailPage() {
           <div className="flex h-12 items-center gap-2 px-3">
             <button
               type="button"
-              onClick={() => navigate(-1)}
+              onClick={handleBack}
               className="flex h-12 w-8 shrink-0 items-center justify-center active:opacity-70"
               aria-label="返回"
             >
@@ -127,7 +135,7 @@ export function HotelRoomDetailPage() {
         <div className="flex h-12 items-center gap-2 px-3">
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={handleBack}
             className="flex h-12 w-8 shrink-0 items-center justify-center active:opacity-70"
             aria-label="返回"
           >

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import {
   HOTEL_CHROME,
@@ -8,6 +8,7 @@ import {
 } from "@/components/hotel/hotel-detail-chrome";
 import { usePageHeader } from "@/components/layout";
 import { loadHotelGalleryImages } from "@/lib/hotel-gallery-session";
+import { navigateBack } from "@/lib/navigation";
 
 function BackIcon() {
   return (
@@ -26,11 +27,17 @@ function BackIcon() {
 
 export function HotelShowImagesPage() {
   const navigate = useNavigate();
+  const { hotelId = "" } = useParams();
   const [searchParams] = useSearchParams();
   const hotelName = searchParams.get("hotelName")?.trim() ?? "酒店相册";
   const initPos = Math.max(0, Number.parseInt(searchParams.get("initPos") ?? "0", 10) || 0);
 
   const images = useMemo(() => loadHotelGalleryImages(), []);
+  const detailFallback = hotelId ? `/hotel/${encodeURIComponent(hotelId)}` : "/hotel";
+
+  function handleBack() {
+    navigateBack(navigate, detailFallback);
+  }
   const [activeIndex, setActiveIndex] = useState(() =>
     images.length ? Math.min(initPos, images.length - 1) : 0,
   );
@@ -41,9 +48,9 @@ export function HotelShowImagesPage() {
 
   useEffect(() => {
     if (!images.length) {
-      navigate(-1);
+      navigateBack(navigate, detailFallback);
     }
-  }, [images.length, navigate]);
+  }, [detailFallback, images.length, navigate]);
 
   useEffect(() => {
     const container = scrollRef.current;
@@ -84,7 +91,7 @@ export function HotelShowImagesPage() {
         <div className="flex h-12 items-center gap-2 px-3">
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={handleBack}
             className="flex h-12 w-8 shrink-0 items-center justify-center active:opacity-70"
             aria-label="返回"
           >

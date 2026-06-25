@@ -182,6 +182,9 @@ type LegacyRoomPlan = {
   RoomPlanPrices?: { Date?: string; Price?: number | string }[];
   RoomPlanRules?: { Description?: string }[];
   PaymentType?: number;
+  BookCode?: string;
+  BookType?: number | string;
+  Key?: string;
   Room?: { Id?: string };
 };
 
@@ -773,6 +776,21 @@ function extractRoomImageUrls(roomImageIndex: Map<string, string[]>, room: Legac
   return urls;
 }
 
+function captureLegacyRoomPlanWire(plan: LegacyRoomPlan): Record<string, unknown> {
+  const vars = plan.VariablesObj ?? parseVariablesObject(plan.Variables);
+  const wire: Record<string, unknown> = { ...plan };
+  if (typeof plan.Variables === "string" && plan.Variables.trim()) {
+    wire.Variables = plan.Variables;
+  } else if (vars && Object.keys(vars).length > 0) {
+    wire.Variables = JSON.stringify(vars);
+  }
+  if (plan.Id == null || String(plan.Id) === "0") {
+    wire.Id = "0";
+  }
+  delete wire.VariablesObj;
+  return wire;
+}
+
 function mapLegacyRoomPlan(
   plan: LegacyRoomPlan,
   index: number,
@@ -799,6 +817,12 @@ function mapLegacyRoomPlan(
       typeof plan.PaymentType === "number" && Number.isFinite(plan.PaymentType)
         ? plan.PaymentType
         : undefined,
+    Key: plan.Key,
+    BookCode: plan.BookCode,
+    BookType:
+      plan.BookType != null && !Number.isNaN(Number(plan.BookType))
+        ? Number(plan.BookType)
+        : undefined,
     VariablesObj: vars,
     RoomPlanPrices: (plan.RoomPlanPrices ?? [])
       .map((item) => ({
@@ -809,6 +833,7 @@ function mapLegacyRoomPlan(
     RoomPlanRules: (plan.RoomPlanRules ?? []).map((item) => ({
       Description: item.Description,
     })),
+    LegacyWire: captureLegacyRoomPlanWire(plan),
   };
 }
 

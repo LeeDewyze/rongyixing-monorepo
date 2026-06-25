@@ -17,6 +17,8 @@ export interface HotelBookSelection {
   policyRules?: string[];
   checkInOutTime?: string;
   bookingNotice?: string;
+  hotelAddress?: string;
+  hotelPhone?: string;
   selectedAt: number;
 }
 

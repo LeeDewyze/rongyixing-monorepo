@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ProductType,
@@ -43,6 +43,7 @@ import { usePassengerSelection } from "@/hooks/usePassenger";
 import {
   buildHotelInitBookDto,
   buildHotelOrderBookDto,
+  prepareHotelBookSubmitDto,
   buildHotelPassengerOutNumberFieldsMap,
   buildHotelWarmReminderSections,
   resolveHotelRoomPlanRulesDesc,
@@ -67,10 +68,13 @@ import {
   resolveTotalServiceFee,
 } from "@/lib/hotel-book-pay";
 import { clearHotelBookSelection, buildHotelBookDetailUrl } from "@/lib/hotel-book-session";
+import { navigateBack } from "@/lib/navigation";
+import { TAB_ID_TO_PARAM } from "@/lib/order-list-params";
 import { formatApiError } from "@/lib/formatApiError";
 import { FLIGHT_NOTIFY_LANGUAGE_OPTIONS } from "@/lib/flight-book-notify";
 import { replacePassengerCredential } from "@/lib/passenger-select-logic";
 import { clearPassengerSelection } from "@/lib/passenger-selection";
+import { scrollH5MainToTop } from "@/lib/scroll-h5-main";
 
 function resolveNotifyLanguageLabel(value: HotelNotifyLanguage): string {
   return FLIGHT_NOTIFY_LANGUAGE_OPTIONS.find((item) => item.value === value)?.label ?? "中文";
@@ -123,8 +127,15 @@ export function HotelBookPage() {
   const [costSheetPassengerId, setCostSheetPassengerId] = useState<string | null>(null);
   const [credentialSheetPassenger, setCredentialSheetPassenger] =
     useState<PassengerBookInfo | null>(null);
+  /** Skip guard redirect when leaving after a successful submit. */
+  const leavingAfterSubmitRef = useRef(false);
+
+  useLayoutEffect(() => {
+    scrollH5MainToTop();
+  }, [hotelId]);
 
   useEffect(() => {
+    if (leavingAfterSubmitRef.current) return;
     if (!selection || passengers.length === 0) {
       setRedirecting(true);
       const detailUrl = selection ? buildHotelBookDetailUrl(selection) : null;
@@ -154,6 +165,11 @@ export function HotelBookPage() {
   }, [agentId, passengers, selection]);
 
   const initBook = useHotelInitBook(initParams);
+
+  useLayoutEffect(() => {
+    if (redirecting || !selection || initBook.isLoading || initBook.error) return;
+    scrollH5MainToTop();
+  }, [initBook.error, initBook.isLoading, redirecting, selection]);
 
   const tmcAgents = initBook.data?.TmcServices ?? [];
   const resolvedAgentId =
@@ -241,12 +257,10 @@ export function HotelBookPage() {
   const personHoldMinutes = resolveHotelHoldMinutes(initBook.data);
 
   function handleBack() {
-    const detailUrl = selection ? buildHotelBookDetailUrl(selection) : null;
-    if (detailUrl) {
-      navigate(detailUrl);
-      return;
-    }
-    navigate(-1);
+    const fallback =
+      (selection ? buildHotelBookDetailUrl(selection) : null) ??
+      (hotelId ? `/hotel/${encodeURIComponent(hotelId)}` : "/hotel");
+    navigateBack(navigate, fallback);
   }
 
   async function handleSubmit() {
@@ -273,23 +287,36 @@ export function HotelBookPage() {
     setWarmReminderOpen(true);
   }
 
+  function navigateToHotelOrders(orderId?: string) {
+    leavingAfterSubmitRef.current = true;
+    navigate(`/home/orders?tab=${TAB_ID_TO_PARAM.hotel}`, {
+      replace: true,
+      state: orderId ? { bookedOrderId: orderId, product: "hotel" } : undefined,
+    });
+    clearPassengerSelection(ProductType.Hotel);
+    clearHotelBookSelection();
+  }
+
   async function executeSubmit() {
     if (!selection) return;
     const payType = travelPayType ?? resolveDefaultHotelPayType(payOptions);
 
     try {
-      const orderDto = buildHotelOrderBookDto({
-        selection,
-        passengers,
-        forms,
-        travelPayType: payType,
-        authorizedContactsByPassenger,
-        globalArrivalTime: arrivalTime,
-        globalNotifyLanguage: notifyLanguage,
-        agentId: resolvedAgentId,
-        creditCard: showCreditCard ? creditCard : undefined,
-        outNumberFieldsByPassenger,
-      });
+      const orderDto = prepareHotelBookSubmitDto(
+        buildHotelOrderBookDto({
+          selection,
+          passengers,
+          forms,
+          travelPayType: payType,
+          authorizedContactsByPassenger,
+          globalArrivalTime: arrivalTime,
+          globalNotifyLanguage: notifyLanguage,
+          agentId: resolvedAgentId,
+          creditCard: showCreditCard ? creditCard : undefined,
+          outNumberFieldsByPassenger,
+          initDto: initParams ?? undefined,
+        }),
+      );
 
       const result = await submitBook.mutateAsync(orderDto);
       const orderId = resolveHotelBookOrderId(result);
@@ -297,6 +324,7 @@ export function HotelBookPage() {
       if (result.IsCheckPay && result.TradeNo) {
         const checkPayReady = await pollHotelCheckPay(result.TradeNo);
         if (shouldNavigateToPay({ travelPayType: payType, checkPayReady })) {
+          leavingAfterSubmitRef.current = true;
           clearPassengerSelection(ProductType.Hotel);
           clearHotelBookSelection();
           navigate(`/hotel/pay/${encodeURIComponent(orderId)}`, { replace: true });
@@ -304,9 +332,7 @@ export function HotelBookPage() {
         }
       }
 
-      clearPassengerSelection(ProductType.Hotel);
-      clearHotelBookSelection();
-      navigate(`/hotel/result/${encodeURIComponent(orderId)}`, { replace: true });
+      navigateToHotelOrders(orderId);
     } catch (error) {
       setAlertMessage(formatApiError(error));
     }
