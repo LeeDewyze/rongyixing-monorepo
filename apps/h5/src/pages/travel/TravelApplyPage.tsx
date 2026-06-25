@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useNavigate } from "react-router-dom";
 
-import { CityPicker } from "@/components/search";
+import { CityPicker, ResourcePicker } from "@/components/search";
 import { usePageHeader } from "@/components/layout";
 import { useSubmitTravelApply, useTravelApplyMeta } from "@/hooks/useTravelApply";
 import { useHomeBack } from "@/lib/app-back";
@@ -8,17 +9,17 @@ import { formatDateLabel, parseLocalDate } from "@/lib/date-search";
 import { formatApiError } from "@/lib/formatApiError";
 import { getTicket } from "@/lib/session";
 import {
-  defaultTravelApplyDates,
+  defaultTravelApplySegment,
+  defaultTravelApplyTraveler,
+  staffPickerOptions,
   travelCityPickerAdapter,
   validateTravelApply,
   type TravelApplyCity,
+  type TravelApplySegment,
+  type TravelApplyTraveler,
 } from "@/lib/travel-apply";
 
-type CityPickerTarget = "from" | "to";
-
-function findCity(cities: TravelApplyCity[], name: string, fallback?: TravelApplyCity) {
-  return cities.find((city) => city.label === name) ?? fallback ?? cities[0];
-}
+type CityPickerTarget = { segmentIndex: number; field: "from" | "to" };
 
 function tripDaysBetween(startDate: string, endDate: string): number {
   const start = parseLocalDate(startDate)?.getTime() ?? 0;
@@ -72,6 +73,20 @@ function SwapIcon() {
   );
 }
 
+function PlusIcon() {
+  return (
+    <svg viewBox="0 0 16 16" className="size-4" aria-hidden>
+      <path
+        d="M8 3v10M3 8h10"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 function ApplyPageSkeleton() {
   return (
     <div className="min-h-full bg-[#F5F6F9]">
@@ -97,17 +112,22 @@ function ApplyPageSkeleton() {
 function SectionCard({
   title,
   subtitle,
+  action,
   children,
 }: {
   title: string;
   subtitle?: string;
+  action?: ReactNode;
   children: ReactNode;
 }) {
   return (
     <section className="overflow-hidden rounded-2xl bg-white shadow-[0_4px_20px_rgba(15,23,42,0.06)]">
-      <div className="border-b border-[#F0F2F5] px-4 py-3">
-        <h2 className="text-[15px] font-semibold text-[#111827]">{title}</h2>
-        {subtitle ? <p className="mt-0.5 text-xs text-[#9CA3AF]">{subtitle}</p> : null}
+      <div className="flex items-start justify-between gap-3 border-b border-[#F0F2F5] px-4 py-3">
+        <div>
+          <h2 className="text-[15px] font-semibold text-[#111827]">{title}</h2>
+          {subtitle ? <p className="mt-0.5 text-xs text-[#9CA3AF]">{subtitle}</p> : null}
+        </div>
+        {action}
       </div>
       <div className="px-4">{children}</div>
     </section>
@@ -152,7 +172,74 @@ function DateRow({
   );
 }
 
+function AddRowButton({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-[#C7D7FE] bg-[#F8FAFF] py-3 text-sm font-medium text-[#2768FA] active:bg-[#EEF4FF]"
+      onClick={onClick}
+    >
+      <PlusIcon />
+      {label}
+    </button>
+  );
+}
+
+function SegmentRouteCard({
+  segment,
+  onPickFrom,
+  onPickTo,
+  onSwap,
+}: {
+  segment: TravelApplySegment;
+  onPickFrom: () => void;
+  onPickTo: () => void;
+  onSwap: () => void;
+}) {
+  return (
+    <div className="relative my-3 rounded-xl bg-gradient-to-r from-[#F8FAFF] to-[#F3F8FF] p-4">
+      <button
+        type="button"
+        className="absolute right-3 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-[#DCE8FF] bg-white text-[#2768FA] shadow-sm active:scale-95"
+        aria-label="交换出发与目的城市"
+        onClick={onSwap}
+      >
+        <SwapIcon />
+      </button>
+
+      <button
+        type="button"
+        className="flex w-[calc(100%-2.5rem)] items-center justify-between py-2 text-left"
+        onClick={onPickFrom}
+      >
+        <div>
+          <p className="text-[11px] uppercase tracking-wide text-[#9CA3AF]">出发</p>
+          <p className="mt-0.5 text-[18px] font-semibold text-[#111827]">{segment.fromCity.label}</p>
+        </div>
+        <ChevronRightIcon />
+      </button>
+
+      <div className="my-2 h-px w-[calc(100%-2.5rem)] bg-gradient-to-r from-transparent via-[#DCE8FF] to-transparent" />
+
+      <button
+        type="button"
+        className="flex w-[calc(100%-2.5rem)] items-center justify-between py-2 text-left"
+        onClick={onPickTo}
+      >
+        <div>
+          <p className="text-[11px] uppercase tracking-wide text-[#9CA3AF]">目的</p>
+          <p className="mt-0.5 text-[18px] font-semibold text-[#111827]">{segment.toCity.label}</p>
+        </div>
+        <ChevronRightIcon />
+      </button>
+    </div>
+  );
+}
+
+const TRAVEL_MINE_APPROVAL_PATH = "/travel/approval?tab=mine";
+
 export function TravelApplyPage() {
+  const navigate = useNavigate();
   const goHome = useHomeBack();
   usePageHeader({ title: "出差申请", showBack: true, onBack: goHome });
 
@@ -160,23 +247,31 @@ export function TravelApplyPage() {
   const metaQuery = useTravelApplyMeta();
   const submitApply = useSubmitTravelApply(metaQuery.data);
   const pickerAdapter = useMemo(() => travelCityPickerAdapter(), []);
-  const [dates, setDates] = useState(() => defaultTravelApplyDates());
   const [travelTypes, setTravelTypes] = useState<string[]>([]);
   const [reason, setReason] = useState("");
-  const [fromCity, setFromCity] = useState<TravelApplyCity | null>(null);
-  const [toCity, setToCity] = useState<TravelApplyCity | null>(null);
+  const [travelers, setTravelers] = useState<TravelApplyTraveler[]>([]);
+  const [segments, setSegments] = useState<TravelApplySegment[]>([]);
   const [pickerTarget, setPickerTarget] = useState<CityPickerTarget | null>(null);
+  const [staffPickerIndex, setStaffPickerIndex] = useState<number | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
-  const [successId, setSuccessId] = useState<number | null>(null);
 
   const meta = metaQuery.data;
-  const tripDays = tripDaysBetween(dates.startDate, dates.endDate);
+  const staffOptions = useMemo(
+    () => (meta ? staffPickerOptions(meta.staffOptions) : []),
+    [meta],
+  );
+  const totalTripDays = segments.reduce(
+    (sum, segment) => sum + tripDaysBetween(segment.startDate, segment.endDate),
+    0,
+  );
 
   useEffect(() => {
     if (!meta) return;
     setTravelTypes((prev) => (prev.length ? prev : meta.travelTypes.slice(0, 1).map((it) => it.value)));
-    setFromCity((prev) => prev ?? findCity(meta.cities, "北京"));
-    setToCity((prev) => prev ?? findCity(meta.cities, "上海", meta.cities[1]));
+    setTravelers((prev) =>
+      prev.length ? prev : [defaultTravelApplyTraveler(meta.defaultAccount)],
+    );
+    setSegments((prev) => (prev.length ? prev : [defaultTravelApplySegment(meta.cities)]));
   }, [meta]);
 
   function toggleTravelType(value: string) {
@@ -185,22 +280,39 @@ export function TravelApplyPage() {
     );
   }
 
-  function swapCities() {
-    if (!fromCity || !toCity) return;
-    setFromCity(toCity);
-    setToCity(fromCity);
+  function updateSegment(index: number, patch: Partial<TravelApplySegment>) {
+    setSegments((prev) => prev.map((item, i) => (i === index ? { ...item, ...patch } : item)));
+  }
+
+  function swapSegmentCities(index: number) {
+    setSegments((prev) =>
+      prev.map((item, i) =>
+        i === index ? { ...item, fromCity: item.toCity, toCity: item.fromCity } : item,
+      ),
+    );
+  }
+
+  function addTraveler() {
+    if (!meta) return;
+    setTravelers((prev) => [...prev, defaultTravelApplyTraveler(meta.defaultAccount)]);
+  }
+
+  function removeTraveler(index: number) {
+    setTravelers((prev) => (prev.length <= 1 ? prev : prev.filter((_, i) => i !== index)));
+  }
+
+  function addSegment() {
+    if (!meta) return;
+    setSegments((prev) => [...prev, defaultTravelApplySegment(meta.cities)]);
+  }
+
+  function removeSegment(index: number) {
+    setSegments((prev) => (prev.length <= 1 ? prev : prev.filter((_, i) => i !== index)));
   }
 
   async function handleSubmit() {
-    if (!meta || !fromCity || !toCity) return;
-    const values = {
-      travelTypes,
-      reason,
-      startDate: dates.startDate,
-      endDate: dates.endDate,
-      fromCity,
-      toCity,
-    };
+    if (!meta) return;
+    const values = { travelTypes, reason, travelers, segments };
     const error = validateTravelApply(values);
     if (error) {
       setValidationError(error);
@@ -208,11 +320,10 @@ export function TravelApplyPage() {
     }
 
     setValidationError(null);
-    setSuccessId(null);
     try {
       const result = await submitApply.mutateAsync(values);
       if (result.Status) {
-        setSuccessId(result.Data?.Id ?? null);
+        navigate(TRAVEL_MINE_APPROVAL_PATH, { replace: true });
         return;
       }
       setValidationError(result.Message ?? "提交失败");
@@ -245,7 +356,7 @@ export function TravelApplyPage() {
     );
   }
 
-  if (!meta || !fromCity || !toCity) {
+  if (!meta || travelers.length === 0 || segments.length === 0) {
     return (
       <div className="flex min-h-full items-center justify-center bg-[#F5F6F9] p-6">
         <p className="rounded-2xl bg-[#FFF1F0] px-5 py-4 text-sm text-[#FF4D4F]">
@@ -314,80 +425,122 @@ export function TravelApplyPage() {
               onChange={(event) => setReason(event.target.value)}
             />
           </label>
+        </SectionCard>
 
-          <div className="flex items-center justify-between border-t border-[#F3F4F6] py-3.5">
-            <span className="text-sm text-[#6B7280]">出差人</span>
-            <span className="text-sm font-medium text-[#111827]">{meta.account.label}</span>
+        <SectionCard
+          title="出差人"
+          subtitle={`共 ${travelers.length} 人`}
+          action={
+            <button
+              type="button"
+              className="shrink-0 rounded-full px-3 py-1 text-xs font-medium text-[#2768FA] active:bg-[#EEF4FF]"
+              onClick={addTraveler}
+            >
+              添加
+            </button>
+          }
+        >
+          <div className="divide-y divide-[#F3F4F6]">
+            {travelers.map((traveler, index) => (
+              <div key={`traveler-${index}`} className="flex items-center gap-2 py-3.5">
+                <button
+                  type="button"
+                  className="flex min-w-0 flex-1 items-center justify-between text-left"
+                  onClick={() => setStaffPickerIndex(index)}
+                >
+                  <div>
+                    <p className="text-xs text-[#9CA3AF]">
+                      {travelers.length > 1 ? `出差人 ${index + 1}` : "出差人"}
+                    </p>
+                    <p className="mt-0.5 truncate text-sm font-medium text-[#111827]">
+                      {traveler.account.label || "请选择出差人"}
+                    </p>
+                  </div>
+                  <ChevronRightIcon />
+                </button>
+                {travelers.length > 1 ? (
+                  <button
+                    type="button"
+                    className="shrink-0 rounded-lg px-2 py-1 text-xs text-[#EF4444] active:bg-[#FEF2F2]"
+                    onClick={() => removeTraveler(index)}
+                  >
+                    删除
+                  </button>
+                ) : null}
+              </div>
+            ))}
+          </div>
+          <div className="pb-4">
+            <AddRowButton label="添加出差人" onClick={addTraveler} />
           </div>
         </SectionCard>
 
-        <SectionCard title="行程信息" subtitle={`共 ${tripDays} 天`}>
-          <div className="relative my-3 rounded-xl bg-gradient-to-r from-[#F8FAFF] to-[#F3F8FF] p-4">
+        <SectionCard
+          title="行程信息"
+          subtitle={
+            segments.length > 1
+              ? `共 ${segments.length} 段 · 合计 ${totalTripDays} 天`
+              : `共 ${tripDaysBetween(segments[0]!.startDate, segments[0]!.endDate)} 天`
+          }
+          action={
             <button
               type="button"
-              className="absolute right-3 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-[#DCE8FF] bg-white text-[#2768FA] shadow-sm active:scale-95"
-              aria-label="交换出发与目的城市"
-              onClick={swapCities}
+              className="shrink-0 rounded-full px-3 py-1 text-xs font-medium text-[#2768FA] active:bg-[#EEF4FF]"
+              onClick={addSegment}
             >
-              <SwapIcon />
+              添加
             </button>
-
-            <button
-              type="button"
-              className="flex w-[calc(100%-2.5rem)] items-center justify-between py-2 text-left"
-              onClick={() => setPickerTarget("from")}
+          }
+        >
+          {segments.map((segment, index) => (
+            <div
+              key={`segment-${index}`}
+              className={index > 0 ? "border-t border-[#F0F2F5] pt-1" : undefined}
             >
-              <div>
-                <p className="text-[11px] uppercase tracking-wide text-[#9CA3AF]">出发</p>
-                <p className="mt-0.5 text-[18px] font-semibold text-[#111827]">{fromCity.label}</p>
+              <div className="flex items-center justify-between py-3">
+                <p className="text-sm font-medium text-[#374151]">
+                  {segments.length > 1 ? `行程 ${index + 1}` : "行程"}
+                </p>
+                {segments.length > 1 ? (
+                  <button
+                    type="button"
+                    className="rounded-lg px-2 py-1 text-xs text-[#EF4444] active:bg-[#FEF2F2]"
+                    onClick={() => removeSegment(index)}
+                  >
+                    删除
+                  </button>
+                ) : null}
               </div>
-              <ChevronRightIcon />
-            </button>
 
-            <div className="my-2 h-px w-[calc(100%-2.5rem)] bg-gradient-to-r from-transparent via-[#DCE8FF] to-transparent" />
+              <SegmentRouteCard
+                segment={segment}
+                onPickFrom={() => setPickerTarget({ segmentIndex: index, field: "from" })}
+                onPickTo={() => setPickerTarget({ segmentIndex: index, field: "to" })}
+                onSwap={() => swapSegmentCities(index)}
+              />
 
-            <button
-              type="button"
-              className="flex w-[calc(100%-2.5rem)] items-center justify-between py-2 text-left"
-              onClick={() => setPickerTarget("to")}
-            >
-              <div>
-                <p className="text-[11px] uppercase tracking-wide text-[#9CA3AF]">目的</p>
-                <p className="mt-0.5 text-[18px] font-semibold text-[#111827]">{toCity.label}</p>
-              </div>
-              <ChevronRightIcon />
-            </button>
-          </div>
-
-          <DateRow
-            label="开始日期"
-            value={dates.startDate}
-            onChange={(startDate) =>
-              setDates((prev) => ({
-                startDate,
-                endDate: prev.endDate < startDate ? startDate : prev.endDate,
-              }))
-            }
-          />
-          <DateRow
-            label="结束日期"
-            value={dates.endDate}
-            minDate={dates.startDate}
-            onChange={(endDate) => setDates((prev) => ({ ...prev, endDate }))}
-          />
-        </SectionCard>
-
-        {successId ? (
-          <div className="flex items-start gap-3 rounded-2xl border border-[#ABEFC6] bg-[#ECFDF3] px-4 py-3.5">
-            <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-[#17B26A] text-white">
-              <CheckIcon />
-            </span>
-            <div>
-              <p className="text-sm font-medium text-[#067647]">提交成功</p>
-              <p className="mt-0.5 text-xs text-[#079455]">申请单 ID：{successId}</p>
+              <DateRow
+                label="开始日期"
+                value={segment.startDate}
+                onChange={(startDate) =>
+                  updateSegment(index, {
+                    startDate,
+                    endDate: segment.endDate < startDate ? startDate : segment.endDate,
+                  })
+                }
+              />
+              <DateRow
+                label="结束日期"
+                value={segment.endDate}
+                minDate={segment.startDate}
+                onChange={(endDate) => updateSegment(index, { endDate })}
+              />
             </div>
+          ))}
+          <div className="pb-4 pt-1">
+            <AddRowButton label="添加行程" onClick={addSegment} />
           </div>
-        ) : null}
+        </SectionCard>
 
         {submitError ? (
           <div className="rounded-2xl border border-[#FECACA] bg-[#FFF1F0] px-4 py-3.5 text-sm text-[#DC2626]">
@@ -410,17 +563,45 @@ export function TravelApplyPage() {
       <CityPicker
         open={pickerTarget != null}
         items={meta.cities}
-        title={pickerTarget === "from" ? "选择出发城市" : "选择目的城市"}
+        title={
+          pickerTarget?.field === "from"
+            ? "选择出发城市"
+            : pickerTarget?.field === "to"
+              ? "选择目的城市"
+              : "选择城市"
+        }
         historyKey="ryx_history_travel_cities"
         searchPlaceholder="搜索城市名称"
         hotTitle="热门城市"
         historyTitle="历史记录"
         onClose={() => setPickerTarget(null)}
-        onSelect={(city) => {
-          if (pickerTarget === "from") setFromCity(city);
-          if (pickerTarget === "to") setToCity(city);
+        onSelect={(city: TravelApplyCity) => {
+          if (!pickerTarget) return;
+          const patch =
+            pickerTarget.field === "from" ? { fromCity: city } : { toCity: city };
+          updateSegment(pickerTarget.segmentIndex, patch);
         }}
         {...pickerAdapter}
+      />
+
+      <ResourcePicker
+        open={staffPickerIndex != null}
+        options={staffOptions}
+        title="选择出差人"
+        placeholder="搜索姓名或工号"
+        onClose={() => setStaffPickerIndex(null)}
+        onSelect={(option) => {
+          if (staffPickerIndex == null) return;
+          const account = meta.staffOptions.find((item) => item.value === option.id) ?? {
+            label: option.label,
+            value: option.id,
+          };
+          setTravelers((prev) =>
+            prev.map((item, index) =>
+              index === staffPickerIndex ? { account, policyId: undefined } : item,
+            ),
+          );
+        }}
       />
     </div>
   );

@@ -23,6 +23,18 @@ export interface TravelApplyCity extends TravelApplyOption {
   isHot?: boolean;
 }
 
+export interface TravelApplyTraveler {
+  account: TravelApplyOption;
+  policyId?: string;
+}
+
+export interface TravelApplySegment {
+  startDate: string;
+  endDate: string;
+  fromCity: TravelApplyCity;
+  toCity: TravelApplyCity;
+}
+
 export interface TravelApplyMeta {
   addUrl: string;
   workflowId: string;
@@ -31,8 +43,10 @@ export interface TravelApplyMeta {
   applicant: TravelApplyOption;
   organization: TravelApplyOption;
   position: TravelApplyOption;
-  account: TravelApplyOption;
-  policyId: string;
+  /** Default traveler from StaffCtrl/DefaultData (current user). */
+  defaultAccount: TravelApplyOption;
+  staffOptions: TravelApplyOption[];
+  policyDefaultUrl: string;
   travelTypes: TravelApplyOption[];
   cities: TravelApplyCity[];
 }
@@ -40,10 +54,8 @@ export interface TravelApplyMeta {
 export interface TravelApplyFormValues {
   travelTypes: string[];
   reason: string;
-  startDate: string;
-  endDate: string;
-  fromCity: TravelApplyCity;
-  toCity: TravelApplyCity;
+  travelers: TravelApplyTraveler[];
+  segments: TravelApplySegment[];
 }
 
 export interface TravelApplySubmitResult {
@@ -177,12 +189,62 @@ async function fetchDefault(control: TravelApplyRawControl | undefined): Promise
   }
 }
 
+function appendQueryParam(url: string, key: string, value: string): string {
+  const separator = url.includes("?") ? "&" : "?";
+  return `${url}${separator}${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+}
+
+/** Resolve travel policy id for a staff account (workflow StaffCtrl/GetDefaultPolicy). */
+export async function fetchTravelApplyPolicy(
+  policyDefaultUrl: string,
+  accountId: string,
+): Promise<string> {
+  if (!policyDefaultUrl || !accountId) return "";
+  const candidates = [
+    appendQueryParam(policyDefaultUrl, "value", accountId),
+    appendQueryParam(policyDefaultUrl, "accountId", accountId),
+    policyDefaultUrl,
+  ];
+  for (const url of candidates) {
+    try {
+      const raw = await fetchJson<FlowFormDefaultValue>(url);
+      const picked = normalizeDefaultValue(raw);
+      const id = picked.value || picked.label;
+      if (id) return id;
+    } catch {
+      // try next candidate
+    }
+  }
+  return "";
+}
+
 export function defaultTravelApplyDates() {
   const startDate = todayDateString();
   return {
     startDate,
     endDate: addDays(startDate, 1),
   };
+}
+
+export function findTravelApplyCity(
+  cities: TravelApplyCity[],
+  name: string,
+  fallback?: TravelApplyCity,
+): TravelApplyCity {
+  return cities.find((city) => city.label === name) ?? fallback ?? cities[0];
+}
+
+export function defaultTravelApplySegment(cities: TravelApplyCity[]): TravelApplySegment {
+  const dates = defaultTravelApplyDates();
+  return {
+    ...dates,
+    fromCity: findTravelApplyCity(cities, "北京"),
+    toCity: findTravelApplyCity(cities, "上海", cities[1]),
+  };
+}
+
+export function defaultTravelApplyTraveler(defaultAccount: TravelApplyOption): TravelApplyTraveler {
+  return { account: defaultAccount };
 }
 
 export async function fetchTravelApplyMeta(ticket: string): Promise<TravelApplyMeta> {
@@ -193,14 +255,16 @@ export async function fetchTravelApplyMeta(ticket: string): Promise<TravelApplyM
 
   const travelTypeControl = findControl(controls, (control) => control.tag === "TravelType");
   const cityControl = findControl(controls, (control) => control.tag === "FromCityName");
+  const accountControl = findControl(controls, (control) => control.tag === "AccountId");
+  const policyControl = findControl(controls, (control) => control.tag === "PolicyId");
 
   const [
     travelNumber,
     applicant,
     organization,
     position,
-    account,
-    policy,
+    defaultAccount,
+    staffOptions,
     travelTypes,
     cities,
   ] = await Promise.all([
@@ -208,8 +272,10 @@ export async function fetchTravelApplyMeta(ticket: string): Promise<TravelApplyM
     fetchDefault(findControl(controls, (control) => control.label === "申请人")),
     fetchDefault(findControl(controls, (control) => control.label === "所属部门")),
     fetchDefault(findControl(controls, (control) => control.label === "所属职位")),
-    fetchDefault(findControl(controls, (control) => control.tag === "AccountId")),
-    Promise.resolve({ label: "", value: "" }),
+    fetchDefault(accountControl),
+    accountControl?.dataUrl
+      ? fetchJson<unknown>(accountControl.dataUrl).then(normalizeOptions)
+      : Promise.resolve([]),
     travelTypeControl?.dataUrl
       ? fetchJson<unknown>(travelTypeControl.dataUrl).then(normalizeOptions)
       : Promise.resolve([]),
@@ -217,6 +283,11 @@ export async function fetchTravelApplyMeta(ticket: string): Promise<TravelApplyM
       ? fetchJson<unknown>(cityControl.dataUrl).then(normalizeCities)
       : Promise.resolve([]),
   ]);
+
+  const mergedStaff =
+    defaultAccount.value && !staffOptions.some((item) => item.value === defaultAccount.value)
+      ? [defaultAccount, ...staffOptions]
+      : staffOptions;
 
   return {
     addUrl: toAbsoluteWorkflowUrl(addUrl),
@@ -226,8 +297,9 @@ export async function fetchTravelApplyMeta(ticket: string): Promise<TravelApplyM
     applicant,
     organization,
     position,
-    account,
-    policyId: policy.value || policy.label,
+    defaultAccount,
+    staffOptions: mergedStaff,
+    policyDefaultUrl: policyControl?.defaultUrl ?? "",
     travelTypes,
     cities,
   };
@@ -243,6 +315,28 @@ export function travelCityPickerAdapter() {
     getSearchValues: (city: TravelApplyCity) =>
       [city.value, city.label, city.pinyin, city.searchValue].filter(Boolean) as string[],
   };
+}
+
+export function staffPickerOptions(staff: TravelApplyOption[]) {
+  return staff.map((item) => ({
+    id: item.value,
+    label: item.label,
+    searchText: item.label,
+  }));
+}
+
+async function resolveTravelersWithPolicy(
+  meta: TravelApplyMeta,
+  travelers: TravelApplyTraveler[],
+): Promise<TravelApplyTraveler[]> {
+  if (!meta.policyDefaultUrl) return travelers;
+  return Promise.all(
+    travelers.map(async (traveler) => {
+      if (traveler.policyId) return traveler;
+      const policyId = await fetchTravelApplyPolicy(meta.policyDefaultUrl, traveler.account.value);
+      return { ...traveler, policyId };
+    }),
+  );
 }
 
 export function buildTravelApplyBody(
@@ -261,6 +355,9 @@ export function buildTravelApplyBody(
   let detailIndex = 0;
   let timeIndex = 0;
   let sequence = 0;
+
+  const accountSlave = findControl(meta.controls, (c) => c.tag === "TravelAccount");
+  const detailSlave = findControl(meta.controls, (c) => c.tag === "TravelDetail");
 
   function appendDetail(
     control: TravelApplyRawControl,
@@ -292,62 +389,111 @@ export function buildTravelApplyBody(
     timeIndex += 1;
   }
 
-  function fillControl(control: TravelApplyRawControl, slave = "", slaveRow = 0) {
-    if (control.controlType === "Slave") {
-      for (const child of control.slaves ?? []) {
-        fillControl(child, control.tag ?? "", slaveRow);
-      }
-      return;
-    }
-
+  function fillTravelAccountField(
+    control: TravelApplyRawControl,
+    traveler: TravelApplyTraveler,
+    slaveRow: number,
+  ) {
     switch (control.tag) {
-      case "TravelNumber":
-        appendDetail(control, meta.travelNumber.label || meta.travelNumber.value, "", slave, slaveRow);
-        return;
-      case "TravelType":
-        appendDetail(control, values.travelTypes.join(","), "", slave, slaveRow);
-        return;
       case "AccountId":
-        appendDetail(control, meta.account.label, meta.account.value, slave, slaveRow);
+        appendDetail(
+          control,
+          traveler.account.label,
+          traveler.account.value,
+          "TravelAccount",
+          slaveRow,
+        );
         return;
       case "PolicyId":
-        appendDetail(control, meta.policyId, "", slave, slaveRow);
+        appendDetail(control, traveler.policyId ?? "", "", "TravelAccount", slaveRow);
         return;
+      default:
+        break;
+    }
+  }
+
+  function fillTravelDetailField(
+    control: TravelApplyRawControl,
+    segment: TravelApplySegment,
+    slaveRow: number,
+  ) {
+    switch (control.tag) {
       case "StartDate":
-        appendTime(control, values.startDate, slave, slaveRow);
+        appendTime(control, segment.startDate, "TravelDetail", slaveRow);
         return;
       case "EndDate":
-        appendTime(control, values.endDate, slave, slaveRow);
+        appendTime(control, segment.endDate, "TravelDetail", slaveRow);
         return;
       case "FromCityName":
-        appendDetail(control, values.fromCity.label, values.fromCity.value, slave, slaveRow);
+        appendDetail(
+          control,
+          segment.fromCity.label,
+          segment.fromCity.value,
+          "TravelDetail",
+          slaveRow,
+        );
         return;
       case "ToCityName":
-        appendDetail(control, values.toCity.label, values.toCity.value, slave, slaveRow);
+        appendDetail(
+          control,
+          segment.toCity.label,
+          segment.toCity.value,
+          "TravelDetail",
+          slaveRow,
+        );
+        return;
+      default:
+        break;
+    }
+  }
+
+  function fillMainField(control: TravelApplyRawControl) {
+    switch (control.tag) {
+      case "TravelNumber":
+        appendDetail(control, meta.travelNumber.label || meta.travelNumber.value);
+        return;
+      case "TravelType":
+        appendDetail(control, values.travelTypes.join(","));
         return;
       default:
         break;
     }
 
     if (control.label === "申请人") {
-      appendDetail(control, meta.applicant.label, meta.applicant.value, slave, slaveRow);
+      appendDetail(control, meta.applicant.label, meta.applicant.value);
       return;
     }
     if (control.label === "所属部门") {
-      appendDetail(control, meta.organization.label, meta.organization.value, slave, slaveRow);
+      appendDetail(control, meta.organization.label, meta.organization.value);
       return;
     }
     if (control.label === "所属职位") {
-      appendDetail(control, meta.position.label, meta.position.value, slave, slaveRow);
+      appendDetail(control, meta.position.label, meta.position.value);
       return;
     }
     if (control.label === "出差事由") {
-      appendDetail(control, values.reason.trim(), "", slave, slaveRow);
+      appendDetail(control, values.reason.trim());
     }
   }
 
   for (const control of meta.controls) {
-    fillControl(control);
+    if (control.controlType === "Slave") {
+      if (control.tag === "TravelAccount") {
+        values.travelers.forEach((traveler, row) => {
+          for (const child of accountSlave?.slaves ?? control.slaves ?? []) {
+            fillTravelAccountField(child, traveler, row);
+          }
+        });
+      } else if (control.tag === "TravelDetail") {
+        values.segments.forEach((segment, row) => {
+          for (const child of detailSlave?.slaves ?? control.slaves ?? []) {
+            fillTravelDetailField(child, segment, row);
+          }
+        });
+      }
+      continue;
+    }
+    fillMainField(control);
   }
 
   return body;
@@ -357,7 +503,8 @@ export async function submitTravelApply(
   meta: TravelApplyMeta,
   values: TravelApplyFormValues,
 ): Promise<TravelApplySubmitResult> {
-  const body = buildTravelApplyBody(meta, values);
+  const travelers = await resolveTravelersWithPolicy(meta, values.travelers);
+  const body = buildTravelApplyBody(meta, { ...values, travelers });
   return fetchJson<TravelApplySubmitResult>(meta.addUrl, {
     method: "POST",
     headers: {
@@ -370,10 +517,19 @@ export async function submitTravelApply(
 export function validateTravelApply(values: TravelApplyFormValues): string | null {
   if (values.travelTypes.length === 0) return "请选择出差类型";
   if (!values.reason.trim()) return "请填写出差事由";
-  if (!values.startDate) return "请选择开始日期";
-  if (!values.endDate) return "请选择结束日期";
-  if (values.endDate < values.startDate) return "结束日期不能早于开始日期";
-  if (!values.fromCity.value) return "请选择出发城市";
-  if (!values.toCity.value) return "请选择目的城市";
+  if (values.travelers.length === 0) return "请添加出差人";
+  const travelerIds = values.travelers.map((item) => item.account.value).filter(Boolean);
+  if (new Set(travelerIds).size !== travelerIds.length) return "出差人不能重复";
+  if (values.travelers.some((item) => !item.account.value)) return "请选择出差人";
+  if (values.segments.length === 0) return "请添加行程";
+  for (let index = 0; index < values.segments.length; index += 1) {
+    const segment = values.segments[index];
+    const label = values.segments.length > 1 ? `行程 ${index + 1}` : "行程";
+    if (!segment.startDate) return `请选择${label}开始日期`;
+    if (!segment.endDate) return `请选择${label}结束日期`;
+    if (segment.endDate < segment.startDate) return `${label}结束日期不能早于开始日期`;
+    if (!segment.fromCity.value) return `请选择${label}出发城市`;
+    if (!segment.toCity.value) return `请选择${label}目的城市`;
+  }
   return null;
 }

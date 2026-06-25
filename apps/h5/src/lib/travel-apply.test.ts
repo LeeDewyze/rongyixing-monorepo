@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { buildTravelApplyBody, validateTravelApply, type TravelApplyMeta } from "./travel-apply";
+import {
+  buildTravelApplyBody,
+  validateTravelApply,
+  type TravelApplyMeta,
+} from "./travel-apply";
 
 const meta: TravelApplyMeta = {
   addUrl: "http://workflow.rtesp.com/Form/Add?ticket=test&FlowTag=Travel",
@@ -9,12 +13,17 @@ const meta: TravelApplyMeta = {
   applicant: { label: "姜茗豪", value: "40390000000011" },
   organization: { label: "技术部", value: "A001" },
   position: { label: "", value: "" },
-  account: { label: "1611558-姜茗豪", value: "40390000000011" },
-  policyId: "",
+  defaultAccount: { label: "1611558-姜茗豪", value: "40390000000011" },
+  staffOptions: [
+    { label: "1611558-姜茗豪", value: "40390000000011" },
+    { label: "007-范梦杭", value: "3680000000003" },
+  ],
+  policyDefaultUrl: "http://api-workflow.rtesp.com/StaffCtrl/GetDefaultPolicy?ticket=test",
   travelTypes: [{ label: "国内机票", value: "国内机票" }],
   cities: [
     { label: "北京", value: "1101" },
     { label: "上海", value: "3101" },
+    { label: "广州", value: "4401" },
   ],
   controls: [
     { id: null, label: "差旅单号", tag: "TravelNumber", controlType: "Input" },
@@ -49,14 +58,19 @@ const meta: TravelApplyMeta = {
 };
 
 describe("travel apply form submit", () => {
-  it("encodes flowform controls as FormDetails and FormTimes", () => {
+  it("encodes single traveler and segment as FormDetails and FormTimes", () => {
     const body = buildTravelApplyBody(meta, {
       travelTypes: ["国内机票"],
       reason: "客户拜访",
-      startDate: "2026-06-25",
-      endDate: "2026-06-30",
-      fromCity: { label: "北京", value: "1101" },
-      toCity: { label: "上海", value: "3101" },
+      travelers: [{ account: meta.defaultAccount, policyId: "policy-1" }],
+      segments: [
+        {
+          startDate: "2026-06-25",
+          endDate: "2026-06-30",
+          fromCity: { label: "北京", value: "1101" },
+          toCity: { label: "上海", value: "3101" },
+        },
+      ],
     });
 
     expect(body.get("Workflow.Id")).toBe("318");
@@ -64,13 +78,59 @@ describe("travel apply form submit", () => {
     expect(body.get("FormDetails[4].Tag")).toBe("TravelType");
     expect(body.get("FormDetails[4].Content")).toBe("国内机票");
     expect(body.get("FormDetails[6].Slave")).toBe("TravelAccount");
+    expect(body.get("FormDetails[6].SlaveRow")).toBe("0");
     expect(body.get("FormDetails[6].Tag")).toBe("AccountId");
     expect(body.get("FormDetails[6].Number")).toBe("40390000000011");
+    expect(body.get("FormDetails[7].Tag")).toBe("PolicyId");
+    expect(body.get("FormDetails[7].Content")).toBe("policy-1");
     expect(body.get("FormTimes[0].Slave")).toBe("TravelDetail");
+    expect(body.get("FormTimes[0].SlaveRow")).toBe("0");
     expect(body.get("FormTimes[0].Tag")).toBe("StartDate");
     expect(body.get("FormTimes[0].Time")).toBe("2026-06-25");
     expect(body.get("FormDetails[8].Tag")).toBe("FromCityName");
     expect(body.get("FormDetails[8].Number")).toBe("1101");
+  });
+
+  it("encodes multiple travelers and segments with incrementing SlaveRow", () => {
+    const body = buildTravelApplyBody(meta, {
+      travelTypes: ["国内机票", "火车票"],
+      reason: "多段出差",
+      travelers: [
+        { account: meta.defaultAccount, policyId: "p1" },
+        { account: { label: "007-范梦杭", value: "3680000000003" }, policyId: "p2" },
+      ],
+      segments: [
+        {
+          startDate: "2026-06-25",
+          endDate: "2026-06-26",
+          fromCity: { label: "北京", value: "1101" },
+          toCity: { label: "上海", value: "3101" },
+        },
+        {
+          startDate: "2026-06-27",
+          endDate: "2026-06-28",
+          fromCity: { label: "上海", value: "3101" },
+          toCity: { label: "广州", value: "4401" },
+        },
+      ],
+    });
+
+    expect(body.get("FormDetails[6].SlaveRow")).toBe("0");
+    expect(body.get("FormDetails[6].Number")).toBe("40390000000011");
+    expect(body.get("FormDetails[8].SlaveRow")).toBe("1");
+    expect(body.get("FormDetails[8].Number")).toBe("3680000000003");
+    expect(body.get("FormDetails[8].Content")).toBe("007-范梦杭");
+
+    expect(body.get("FormTimes[0].SlaveRow")).toBe("0");
+    expect(body.get("FormTimes[0].Time")).toBe("2026-06-25");
+    expect(body.get("FormTimes[2].SlaveRow")).toBe("1");
+    expect(body.get("FormTimes[2].Tag")).toBe("StartDate");
+    expect(body.get("FormTimes[2].Time")).toBe("2026-06-27");
+    expect(body.get("FormDetails[12].SlaveRow")).toBe("1");
+    expect(body.get("FormDetails[12].Tag")).toBe("FromCityName");
+    expect(body.get("FormDetails[12].Number")).toBe("3101");
+    expect(body.get("FormDetails[13].Tag")).toBe("ToCityName");
+    expect(body.get("FormDetails[13].Number")).toBe("4401");
   });
 
   it("validates required business fields", () => {
@@ -78,11 +138,37 @@ describe("travel apply form submit", () => {
       validateTravelApply({
         travelTypes: [],
         reason: "",
-        startDate: "2026-06-25",
-        endDate: "2026-06-30",
-        fromCity: { label: "北京", value: "1101" },
-        toCity: { label: "上海", value: "3101" },
+        travelers: [{ account: meta.defaultAccount }],
+        segments: [
+          {
+            startDate: "2026-06-25",
+            endDate: "2026-06-30",
+            fromCity: { label: "北京", value: "1101" },
+            toCity: { label: "上海", value: "3101" },
+          },
+        ],
       }),
     ).toBe("请选择出差类型");
+  });
+
+  it("rejects duplicate travelers", () => {
+    expect(
+      validateTravelApply({
+        travelTypes: ["国内机票"],
+        reason: "测试",
+        travelers: [
+          { account: meta.defaultAccount },
+          { account: meta.defaultAccount },
+        ],
+        segments: [
+          {
+            startDate: "2026-06-25",
+            endDate: "2026-06-30",
+            fromCity: { label: "北京", value: "1101" },
+            toCity: { label: "上海", value: "3101" },
+          },
+        ],
+      }),
+    ).toBe("出差人不能重复");
   });
 });
