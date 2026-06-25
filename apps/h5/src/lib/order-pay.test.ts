@@ -72,7 +72,7 @@ describe("resolvePayFailureMessage", () => {
 });
 
 describe("executeOrderPayFlow", () => {
-  it("processes pay when create returns out trade no", async () => {
+  it("processes pay when create returns out trade no (WeChat)", async () => {
     const createPay = vi.fn().mockResolvedValue({ OutTradeNo: "PAY-1" });
     const processPay = vi.fn().mockResolvedValue({ Success: true });
     const result = await executeOrderPayFlow({
@@ -83,5 +83,19 @@ describe("executeOrderPayFlow", () => {
     });
     expect(result.processed).toBe(true);
     expect(processPay).toHaveBeenCalledWith({ OutTradeNo: "PAY-1", Type: "wechat" });
+  });
+
+  it("processes ICBC (Type 6) pay when create returns out trade no", async () => {
+    const createPay = vi.fn().mockResolvedValue({ OutTradeNo: "PAY-ICBC" });
+    const processPay = vi.fn().mockResolvedValue({ Success: true });
+    const result = await executeOrderPayFlow({
+      orderId: "ORD-2",
+      payType: "6",
+      createPay,
+      processPay,
+    });
+    expect(result.processed).toBe(true);
+    expect(createPay).toHaveBeenCalledWith({ OrderId: "ORD-2", PayType: "6" });
+    expect(processPay).toHaveBeenCalledWith({ OutTradeNo: "PAY-ICBC", Type: "6" });
   });
 });
