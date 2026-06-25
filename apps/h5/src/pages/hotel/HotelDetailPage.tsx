@@ -27,8 +27,10 @@ import {
   resolveHotelPlanBookAlertMessage,
   resolvePlanBookingPolicyColor,
   resolvePlanPolicyColor,
+  resolvePlanPolicyRules,
 } from "@/lib/hotel-book-policy";
 import { saveHotelGalleryImages } from "@/lib/hotel-gallery-session";
+import { saveHotelBookSelection } from "@/lib/hotel-book-session";
 import { formatApiError } from "@/lib/formatApiError";
 import { hasAgentIdentity } from "@/lib/flight-book-save-order";
 import { buildPassengerSelectPath } from "@/lib/passenger-selection";
@@ -222,7 +224,7 @@ export function HotelDetailPage() {
   }
 
   function handleBook(plan: HotelRoomPlan) {
-    if (!requirePassengersBeforeAction()) return;
+    if (!requirePassengersBeforeAction() || !data) return;
     const policyChecked = detailReady && selectedPassengers.length > 0 && !isPolicyChecking;
     const displayColor = resolvePlanPolicyColor(plan, policyColors);
     const bookColor = resolvePlanBookingPolicyColor(plan, policyResults, selectedPassengers);
@@ -242,8 +244,29 @@ export function HotelDetailPage() {
     if (!isHotelPlanBookable(bookColor, isAgent, policyChecked)) {
       return;
     }
+
+    const room =
+      (data.Rooms ?? []).find((item) => item.Plans.some((p) => p.PlanId === plan.PlanId)) ??
+      ({ RoomId: "", RoomName: "", Plans: [plan] } satisfies HotelRoom);
+
+    saveHotelBookSelection({
+      hotelId,
+      hotelName: data.HotelName,
+      checkIn: query.checkIn,
+      checkOut: query.checkOut,
+      cityCode: query.cityCode,
+      cityName: query.cityName,
+      room,
+      plan,
+      policyRules: resolvePlanPolicyRules(plan, policyResults, selectedPassengers),
+      checkInOutTime: data.CheckInOutTime,
+      bookingNotice: data.BookingNotice,
+      selectedAt: Date.now(),
+    });
+
     const bookParams = new URLSearchParams({
       planId: plan.PlanId,
+      roomId: room.RoomId,
       checkIn: query.checkIn,
       checkOut: query.checkOut,
     });

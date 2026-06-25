@@ -12,11 +12,6 @@ import {
   FlightBookCredentialSwitchButton,
   FlightBookExpandableSummaryCard,
 } from "@/components/flight/FlightBookExpandableSummaryCard";
-import {
-  FlightBookPassengerExtras,
-  type FlightBookServiceFeeRow,
-} from "@/components/flight/FlightBookExtras";
-import type { FlightNotifyLanguage } from "@/lib/flight-book-notify";
 import { buildPassengerSelectPath } from "@/lib/passenger-selection";
 
 function DetailRow({
@@ -109,11 +104,6 @@ interface FlightBookPassengersProps {
   forms: FlightPassengerBookForm[];
   showOrganizations: boolean;
   showCostCenter: boolean;
-  showNotifyLanguage?: boolean;
-  showServiceFee?: boolean;
-  notifyLanguage?: FlightNotifyLanguage;
-  serviceFees?: FlightBookServiceFeeRow[];
-  onOpenNotifyLanguage?: () => void;
   onUpdateForm: (passengerId: string, patch: Partial<FlightPassengerBookForm>) => void;
   onOpenOrganization: (passengerId: string) => void;
   onOpenCostCenter: (passengerId: string) => void;
@@ -126,11 +116,6 @@ export function FlightBookPassengers({
   forms,
   showOrganizations,
   showCostCenter,
-  showNotifyLanguage = false,
-  showServiceFee = false,
-  notifyLanguage = "cn",
-  serviceFees = [],
-  onOpenNotifyLanguage,
   onUpdateForm,
   onOpenOrganization,
   onOpenCostCenter,
@@ -140,28 +125,18 @@ export function FlightBookPassengers({
 
   if (passengers.length === 0) {
     return (
-      <section className="rounded-xl bg-white px-3 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
-        <h2 className="text-[16px] font-semibold text-[#222222]">旅客信息</h2>
-        <div className="mt-3 flex items-center justify-between rounded-lg bg-[#f6f8fc] px-3 py-3">
-          <p className="text-[13px] text-[#999999]">请选择乘机人</p>
-          <Link
-            to={selectPath}
-            className="text-[14px] text-[#5099fe]"
-            aria-label="选择乘机人"
-          >
-            去选择
-          </Link>
-        </div>
-      </section>
+      <div className="flex items-center justify-between rounded-xl bg-[#F8F9FC] px-3.5 py-3 ring-1 ring-[#EEF1F6]">
+        <p className="text-[13px] text-[#999999]">请选择乘机人</p>
+        <Link to={selectPath} className="text-[14px] text-[#2768FA]" aria-label="选择乘机人">
+          去选择
+        </Link>
+      </div>
     );
   }
 
   return (
-    <section className="rounded-xl bg-white px-3 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
-      <h2 className="text-[16px] font-semibold text-[#222222]">旅客信息</h2>
-
-      <div className="mt-3 space-y-3">
-        {passengers.map((passenger) => {
+    <div className="space-y-3">
+      {passengers.map((passenger) => {
           const form = forms.find((item) => item.passengerId === passenger.id);
           if (!form) return null;
 
@@ -171,6 +146,8 @@ export function FlightBookPassengers({
           return (
             <FlightBookExpandableSummaryCard
               key={passenger.id}
+              surface="plain"
+              className="overflow-hidden rounded-xl ring-1 ring-[#EEF1F6]"
               name={passenger.credential.Name ?? ""}
               subtitle={credentialLine}
               expanded={form.expanded}
@@ -312,17 +289,6 @@ export function FlightBookPassengers({
             </FlightBookExpandableSummaryCard>
           );
         })}
-      </div>
-
-      {onOpenNotifyLanguage ? (
-        <FlightBookPassengerExtras
-          showNotifyLanguage={showNotifyLanguage}
-          showServiceFee={showServiceFee}
-          notifyLanguage={notifyLanguage}
-          serviceFees={serviceFees}
-          onOpenNotifyLanguage={onOpenNotifyLanguage}
-        />
-      ) : null}
-    </section>
+    </div>
   );
 }

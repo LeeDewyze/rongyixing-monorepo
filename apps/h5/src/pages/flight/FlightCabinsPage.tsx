@@ -37,6 +37,7 @@ import {
   isFlightPolicyBookAllowed,
 } from "@/lib/flight-book-policy";
 import { hasAgentIdentity } from "@/lib/flight-book-save-order";
+import { navigateBack } from "@/lib/navigation";
 import { useIdentity } from "@/hooks/useIdentity";
 
 export function FlightCabinsPage() {
@@ -94,7 +95,7 @@ export function FlightCabinsPage() {
   usePageHeader({ visible: false });
 
   function handleBack() {
-    navigate(listHref);
+    navigateBack(navigate, listHref);
   }
 
   async function proceedToBook(fare: FlightFare) {
@@ -133,15 +134,9 @@ export function FlightCabinsPage() {
     const isAgent = hasAgentIdentity(identity);
     for (const passenger of selectedPassengers) {
       const passengerPolicy = flightPoliciesByPassengerId[passenger.id];
-      if (
-        passengerPolicy &&
-        !isFlightPolicyBookAllowed(passengerPolicy, isAgent)
-      ) {
+      if (passengerPolicy && !isFlightPolicyBookAllowed(passengerPolicy, isAgent)) {
         window.alert(
-          formatFlightPolicyBookBlockMessage(
-            passengerPolicy,
-            passenger.passenger?.Name,
-          ),
+          formatFlightPolicyBookBlockMessage(passengerPolicy, passenger.passenger?.Name),
         );
         return;
       }

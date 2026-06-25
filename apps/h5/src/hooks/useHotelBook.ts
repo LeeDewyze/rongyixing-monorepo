@@ -1,11 +1,41 @@
+import { useCallback, useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { HotelBookParams, HotelInitBookParams } from "@ryx/shared-types";
+import type { HotelBookParams, HotelOrderBookDto } from "@ryx/shared-types";
 
+import {
+  HOTEL_BOOK_SELECTION_EVENT,
+  loadHotelBookSelection,
+  type HotelBookSelection,
+} from "@/lib/hotel-book-session";
 import { getApi } from "@/lib/api";
 
-export function useHotelInitBook() {
-  return useMutation({
-    mutationFn: (params: HotelInitBookParams) => getApi().hotel.initBook(params),
+export function useHotelBookSelection() {
+  const [selection, setSelectionState] = useState<HotelBookSelection | null>(() =>
+    loadHotelBookSelection(),
+  );
+
+  useEffect(() => {
+    function sync() {
+      setSelectionState(loadHotelBookSelection());
+    }
+    window.addEventListener(HOTEL_BOOK_SELECTION_EVENT, sync);
+    return () => window.removeEventListener(HOTEL_BOOK_SELECTION_EVENT, sync);
+  }, []);
+
+  const reload = useCallback(() => {
+    setSelectionState(loadHotelBookSelection());
+  }, []);
+
+  return { selection, reload };
+}
+
+export function useHotelInitBook(params: HotelOrderBookDto | null) {
+  return useQuery({
+    queryKey: ["hotel", "initBook", params],
+    queryFn: () => getApi().hotel.initBook(params!),
+    enabled: Boolean(params?.Passengers?.length),
+    staleTime: 0,
+    retry: false,
   });
 }
 

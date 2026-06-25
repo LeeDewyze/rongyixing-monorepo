@@ -433,6 +433,22 @@ function findPlanPolicyItem(
   return entry?.HotelPolicies?.find((item) => policyItemMatchesPlanUniqueId(item, uniqueId));
 }
 
+export function resolvePlanPolicyRules(
+  plan: HotelRoomPlan,
+  results: HotelPolicyPassengerResult[] | undefined,
+  passengers: PassengerBookInfo[],
+): string[] {
+  const collected = new Set<string>();
+  for (const passenger of passengers) {
+    const policy = findPlanPolicyItem(plan, results, passenger);
+    for (const rule of policy?.Rules ?? []) {
+      const trimmed = rule.trim();
+      if (trimmed) collected.add(trimmed);
+    }
+  }
+  return [...collected];
+}
+
 /**
  * Legacy onBookRoomPlan exceed alert:
  * `Name(maskedId);rule1;rule2` joined by comma, suffix `，超标不可预订`.

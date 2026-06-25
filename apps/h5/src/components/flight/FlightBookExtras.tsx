@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { formatFlightNotifyLanguage, type FlightNotifyLanguage } from "@/lib/flight-book-notify";
 
 export interface FlightBookServiceFeeRow {
@@ -6,67 +7,114 @@ export interface FlightBookServiceFeeRow {
   fee: number;
 }
 
+const rowClass =
+  "flex min-h-[2.5rem] items-center gap-2 border-b border-[#EEF1F6] py-2 last:border-b-0";
+const labelClass = "w-[5.5rem] shrink-0 whitespace-nowrap text-[14px] leading-none text-[#666666]";
+
+function SectionedInsetCard({ children }: { children: ReactNode }) {
+  return (
+    <div className="overflow-hidden rounded-xl bg-[#F8F9FC] px-3.5 py-1 ring-1 ring-[#EEF1F6]">
+      {children}
+    </div>
+  );
+}
+
+interface FlightBookNotifyLanguageRowProps {
+  notifyLanguage: FlightNotifyLanguage;
+  onOpenNotifyLanguage: () => void;
+  /** Inside FlightBookPassengerSection — inset card. */
+  sectioned?: boolean;
+}
+
+export function FlightBookNotifyLanguageRow({
+  notifyLanguage,
+  onOpenNotifyLanguage,
+  sectioned = false,
+}: FlightBookNotifyLanguageRowProps) {
+  const row = (
+    <div className={rowClass}>
+      <span className={labelClass}>通知语言</span>
+      <button
+        type="button"
+        className="flex min-w-0 flex-1 items-center justify-end gap-1 truncate text-[14px] leading-tight text-[#333333]"
+        onClick={onOpenNotifyLanguage}
+      >
+        <span className="truncate">{formatFlightNotifyLanguage(notifyLanguage)}</span>
+        <span className="shrink-0 text-[16px] text-[#bbbbbb]" aria-hidden>
+          ›
+        </span>
+      </button>
+    </div>
+  );
+
+  if (sectioned) return <SectionedInsetCard>{row}</SectionedInsetCard>;
+  return <div className="mt-1 border-t border-[#f0f0f0] pt-1">{row}</div>;
+}
+
+interface FlightBookServiceFeeRowsProps {
+  serviceFees: FlightBookServiceFeeRow[];
+  /** Inside FlightBookPassengerSection — inset card. */
+  sectioned?: boolean;
+}
+
+export function FlightBookServiceFeeRows({
+  serviceFees,
+  sectioned = false,
+}: FlightBookServiceFeeRowsProps) {
+  const feeRows = serviceFees.filter((row) => row.fee > 0);
+  if (feeRows.length === 0) return null;
+
+  const content = feeRows.map((row) => (
+    <div key={row.passengerId} className={rowClass}>
+      <span className={labelClass}>服务费</span>
+      <span className="min-w-0 flex-1 text-right text-[14px] leading-tight text-[#333333]">
+        {feeRows.length > 1 && row.passengerName
+          ? `${row.passengerName} ${row.fee}元`
+          : `${row.fee}元`}
+      </span>
+    </div>
+  ));
+
+  if (sectioned) return <SectionedInsetCard>{content}</SectionedInsetCard>;
+  return <div className="mt-1 border-t border-[#f0f0f0] pt-1">{content}</div>;
+}
+
 interface FlightBookPassengerExtrasProps {
   showNotifyLanguage: boolean;
   showServiceFee: boolean;
   notifyLanguage: FlightNotifyLanguage;
   serviceFees: FlightBookServiceFeeRow[];
   onOpenNotifyLanguage: () => void;
+  /** Inside FlightBookPassengerSection — inset card, no top border. */
+  sectioned?: boolean;
 }
 
-/** Rows embedded under 旅客信息 — matches Legacy notify + service fee placement. */
+/** @deprecated Prefer FlightBookNotifyLanguageRow + FlightBookServiceFeeRows separately. */
 export function FlightBookPassengerExtras({
   showNotifyLanguage,
   showServiceFee,
   notifyLanguage,
   serviceFees,
   onOpenNotifyLanguage,
+  sectioned = false,
 }: FlightBookPassengerExtrasProps) {
-  if (!showNotifyLanguage && !showServiceFee) return null;
-  if (showServiceFee && serviceFees.length === 0) {
-    if (!showNotifyLanguage) return null;
-  }
+  const notify = showNotifyLanguage ? (
+    <FlightBookNotifyLanguageRow
+      sectioned={sectioned}
+      notifyLanguage={notifyLanguage}
+      onOpenNotifyLanguage={onOpenNotifyLanguage}
+    />
+  ) : null;
+  const fees = showServiceFee ? (
+    <FlightBookServiceFeeRows sectioned={sectioned} serviceFees={serviceFees} />
+  ) : null;
 
+  if (!notify && !fees) return null;
   return (
-    <div className="mt-1 border-t border-[#f0f0f0] pt-1">
-      {showNotifyLanguage ? (
-        <div className="flex min-h-[2.5rem] items-center gap-2 border-b border-[#f0f0f0] py-2 last:border-b-0">
-          <span className="w-[5.5rem] shrink-0 whitespace-nowrap text-[14px] leading-none text-[#666666]">
-            通知语言
-          </span>
-          <button
-            type="button"
-            className="flex min-w-0 flex-1 items-center justify-end gap-1 truncate text-[14px] leading-tight text-[#333333]"
-            onClick={onOpenNotifyLanguage}
-          >
-            <span className="truncate">{formatFlightNotifyLanguage(notifyLanguage)}</span>
-            <span className="shrink-0 text-[16px] text-[#bbbbbb]" aria-hidden>
-              ›
-            </span>
-          </button>
-        </div>
-      ) : null}
-
-      {showServiceFee
-        ? serviceFees.map((row, index) => (
-            <div
-              key={row.passengerId}
-              className={`flex min-h-[2.5rem] items-center gap-2 py-2 ${
-                index < serviceFees.length - 1 ? "border-b border-[#f0f0f0]" : ""
-              }`}
-            >
-              <span className="w-[5.5rem] shrink-0 whitespace-nowrap text-[14px] leading-none text-[#666666]">
-                服务费
-              </span>
-              <span className="min-w-0 flex-1 text-right text-[14px] leading-tight text-[#333333]">
-                {serviceFees.length > 1 && row.passengerName
-                  ? `${row.passengerName} ${row.fee}元`
-                  : `${row.fee}元`}
-              </span>
-            </div>
-          ))
-        : null}
-    </div>
+    <>
+      {notify}
+      {fees}
+    </>
   );
 }
 

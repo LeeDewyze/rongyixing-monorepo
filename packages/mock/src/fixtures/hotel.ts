@@ -104,6 +104,14 @@ export const MOCK_HOTEL_DETAIL: HotelDetailResponse = {
           Number: 3,
           SupplierNumber: 1,
           RoomPlanUniqueId: "mock-uniq-p001",
+          PaymentType: 1,
+          BeginDate: "2026-06-20T00:00:00",
+          EndDate: "2026-06-21T00:00:00",
+          VariablesObj: {
+            RoomRateRule: "不可取消",
+            ArrivalTime: ["2026-06-20 14:00", "2026-06-20 16:30", "2026-06-20 18:00"],
+          },
+          RoomPlanPrices: [{ Date: "2026-06-20", Price: 398 }],
         },
         {
           PlanId: "P002",

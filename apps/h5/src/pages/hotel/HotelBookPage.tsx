@@ -1,122 +1,682 @@
-import { useMemo, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Button } from "@ryx/ui/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@ryx/ui/components/ui/card";
-import { ProductType, toHotelBookPassenger } from "@ryx/shared-types";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  ProductType,
+  credentialDisplayNumber,
+  credentialDisplayType,
+  type FlightAuthorizedContact,
+  type FlightOutNumberField,
+  type PassengerBookInfo,
+} from "@ryx/shared-types";
 
-import { PassengerSelectEntry } from "@/components/passenger";
-import { usePageHeader } from "@/components/layout";
-import { useHotelInitBook, useHotelSubmitBook, useTravelForms } from "@/hooks/useHotelBook";
+import { FlightBookAddContactSheet } from "@/components/flight/FlightBookAddContactSheet";
+import { FlightBookAgentPicker } from "@/components/flight/FlightBookAgentPicker";
+import { FlightBookApproverSheet } from "@/components/flight/FlightBookApproverSheet";
+import { FlightBookAuthorizedContacts } from "@/components/flight/FlightBookAuthorizedContacts";
+import { FlightBookCostCenterSheet } from "@/components/flight/FlightBookCostCenterSheet";
+import { FlightBookCredentialSheet } from "@/components/flight/FlightBookCredentialSheet";
+import { FlightBookCredentialSwitchButton } from "@/components/flight/FlightBookExpandableSummaryCard";
+import { FlightBookNotifyLanguageSheet } from "@/components/flight/FlightBookNotifyLanguageSheet";
+import { FlightBookOrganizationSheet } from "@/components/flight/FlightBookOrganizationSheet";
+import { FlightOutNumberPickerSheet } from "@/components/flight/FlightOutNumberPickerSheet";
+import { HotelBookWarmReminderDialog } from "@/components/hotel/HotelBookWarmReminderDialog";
+import { HotelBookArrivalTimeSheet } from "@/components/hotel/HotelBookArrivalTimeSheet";
+import { HotelBookBillSheet } from "@/components/hotel/HotelBookBillSheet";
+import { HotelBookCreditCardSection } from "@/components/hotel/HotelBookCreditCardSection";
+import { HotelBookFooter } from "@/components/hotel/HotelBookFooter";
+import { HotelBookHeader } from "@/components/hotel/HotelBookHeader";
+import { HotelBookNoticeSheet } from "@/components/hotel/HotelBookNoticeSheet";
+import { HotelBookOptionRow } from "@/components/hotel/HotelBookOptionRow";
+import { HotelBookPassengerDetails } from "@/components/hotel/HotelBookPassengerDetails";
+import { HotelBookPayTypes } from "@/components/hotel/HotelBookPayTypes";
+import { HotelBookPolicyBanner } from "@/components/hotel/HotelBookPolicyBanner";
+import { HotelBookReminderBar } from "@/components/hotel/HotelBookReminderBar";
+import { HotelBookRoomCard } from "@/components/hotel/HotelBookRoomCard";
+import { HotelBookRoomSection } from "@/components/hotel/HotelBookRoomSection";
+import { HotelBookServiceFeeRow } from "@/components/hotel/HotelBookServiceFeeRow";
+import { HotelBookSummaryCard } from "@/components/hotel/HotelBookSummaryCard";
+import { PassengerSelectAlertDialog } from "@/components/passenger";
+import { useBookOrgCostVisibility } from "@/hooks/useBookOrgCostVisibility";
+import { useHotelBookPassengerForms } from "@/hooks/useHotelBookPassengerForms";
+import { useHotelBookSelection, useHotelInitBook, useHotelSubmitBook } from "@/hooks/useHotelBook";
 import { usePassengerSelection } from "@/hooks/usePassenger";
+import {
+  buildHotelInitBookDto,
+  buildHotelOrderBookDto,
+  buildHotelPassengerOutNumberFieldsMap,
+  buildHotelWarmReminderSections,
+  resolveHotelRoomPlanRulesDesc,
+  calcHotelNights,
+  createEmptyHotelCreditCardForm,
+  resolveHotelArrivalTimeOptions,
+  resolveHotelBillNights,
+  resolveHotelBookDisplayAmount,
+  resolveHotelBookOrderId,
+  resolveHotelShowCreditCard,
+  resolvePassengerServiceFee,
+  validateHotelBookForms,
+  type HotelCreditCardForm,
+  type HotelNotifyLanguage,
+} from "@/lib/hotel-book";
+import { pollHotelCheckPay, shouldNavigateToPay } from "@/lib/hotel-book-check-pay";
+import {
+  parseHotelPayTypeOptions,
+  resolveDefaultHotelPayType,
+  resolveHotelBookTmcFlags,
+  resolveHotelHoldMinutes,
+  resolveTotalServiceFee,
+} from "@/lib/hotel-book-pay";
+import { clearHotelBookSelection, buildHotelBookDetailUrl } from "@/lib/hotel-book-session";
+import { formatApiError } from "@/lib/formatApiError";
+import { FLIGHT_NOTIFY_LANGUAGE_OPTIONS } from "@/lib/flight-book-notify";
+import { replacePassengerCredential } from "@/lib/passenger-select-logic";
 import { clearPassengerSelection } from "@/lib/passenger-selection";
 
+function resolveNotifyLanguageLabel(value: HotelNotifyLanguage): string {
+  return FLIGHT_NOTIFY_LANGUAGE_OPTIONS.find((item) => item.value === value)?.label ?? "中文";
+}
+
+function resolveStaffAccountId(passenger: PassengerBookInfo): string | undefined {
+  const fromPassenger = passenger.passenger.AccountId;
+  if (fromPassenger) return String(fromPassenger);
+  return passenger.credential.AccountId ? String(passenger.credential.AccountId) : undefined;
+}
+
 export function HotelBookPage() {
-  const { hotelId = "" } = useParams();
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const planId = searchParams.get("planId") ?? "";
-  const checkIn = searchParams.get("checkIn") ?? "";
-  const checkOut = searchParams.get("checkOut") ?? "";
-
-  const returnTo = `/hotel/${hotelId}/book?${searchParams.toString()}`;
-  const { selected } = usePassengerSelection(ProductType.Hotel);
-  const { data: travelFormsData } = useTravelForms("Hotel");
-  const initBook = useHotelInitBook();
+  const { hotelId = "" } = useParams();
+  const { selection } = useHotelBookSelection();
+  const { selected: passengers, setSelected } = usePassengerSelection(ProductType.Hotel);
   const submitBook = useHotelSubmitBook();
+  const { showOrganizations, showCostCenter, organizations } = useBookOrgCostVisibility();
 
-  const [travelFormId, setTravelFormId] = useState("");
+  const [redirecting, setRedirecting] = useState(false);
+  const [agentId, setAgentId] = useState<string | null>(null);
+  const [arrivalTime, setArrivalTime] = useState("");
+  const [notifyLanguage, setNotifyLanguage] = useState<HotelNotifyLanguage>("cn");
+  const [notifyContactId, setNotifyContactId] = useState<string | null>(null);
+  const [notifyContactPassengerId, setNotifyContactPassengerId] = useState<string | null>(null);
+  const [travelPayType, setTravelPayType] = useState<number | null>(null);
+  const [agreed, setAgreed] = useState(false);
+  const [authorizedContactsByPassenger, setAuthorizedContactsByPassenger] = useState<
+    Record<string, FlightAuthorizedContact[]>
+  >({});
+  const [creditCard, setCreditCard] = useState<HotelCreditCardForm>(() =>
+    createEmptyHotelCreditCardForm(),
+  );
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
 
-  const travelForms = travelFormsData?.TravelForms ?? [];
+  const [arrivalSheetOpen, setArrivalSheetOpen] = useState(false);
+  const [notifySheetOpen, setNotifySheetOpen] = useState(false);
+  const [noticeOpen, setNoticeOpen] = useState(false);
+  const [billOpen, setBillOpen] = useState(false);
+  const [warmReminderOpen, setWarmReminderOpen] = useState(false);
+  const [addContactOpen, setAddContactOpen] = useState(false);
+  const [addContactPassengerId, setAddContactPassengerId] = useState<string | null>(null);
+  const [approverSheetOpen, setApproverSheetOpen] = useState(false);
+  const [approverPassengerId, setApproverPassengerId] = useState<string | null>(null);
+  const [outNumberPicker, setOutNumberPicker] = useState<{
+    passengerId: string;
+    field: FlightOutNumberField;
+  } | null>(null);
+  const [orgSheetPassengerId, setOrgSheetPassengerId] = useState<string | null>(null);
+  const [costSheetPassengerId, setCostSheetPassengerId] = useState<string | null>(null);
+  const [credentialSheetPassenger, setCredentialSheetPassenger] =
+    useState<PassengerBookInfo | null>(null);
 
-  const selectedPassengers = useMemo(
-    () => selected.map(toHotelBookPassenger),
-    [selected],
+  useEffect(() => {
+    if (!selection || passengers.length === 0) {
+      setRedirecting(true);
+      const detailUrl = selection ? buildHotelBookDetailUrl(selection) : null;
+      const target = detailUrl ?? (hotelId ? `/hotel/${encodeURIComponent(hotelId)}` : "/home");
+      navigate(target, { replace: true });
+    }
+  }, [hotelId, navigate, passengers.length, selection]);
+
+  const arrivalOptions = useMemo(
+    () => (selection ? resolveHotelArrivalTimeOptions(selection, selection.checkIn) : []),
+    [selection],
   );
 
-  async function handleSubmit() {
-    if (selectedPassengers.length === 0) return;
+  useEffect(() => {
+    if (arrivalOptions.length && !arrivalTime) {
+      setArrivalTime(arrivalOptions[0] ?? "");
+    }
+  }, [arrivalOptions, arrivalTime]);
 
-    await initBook.mutateAsync({
-      HotelId: hotelId,
-      PlanId: planId,
-      CheckInDate: checkIn,
-      CheckOutDate: checkOut,
-      Passengers: selectedPassengers,
-      TravelFormId: travelFormId || undefined,
+  const initParams = useMemo(() => {
+    if (!selection || passengers.length === 0) return null;
+    return buildHotelInitBookDto({
+      selection,
+      passengers,
+      agentId: agentId ?? undefined,
     });
+  }, [agentId, passengers, selection]);
 
-    const result = await submitBook.mutateAsync({
-      HotelId: hotelId,
-      PlanId: planId,
-      CheckInDate: checkIn,
-      CheckOutDate: checkOut,
-      Passengers: selectedPassengers,
-      ContactName: selectedPassengers[0]?.Name,
-      ContactMobile: selectedPassengers[0]?.Mobile,
-      TravelFormId: travelFormId || undefined,
-    });
+  const initBook = useHotelInitBook(initParams);
 
-    clearPassengerSelection(ProductType.Hotel);
-    navigate(`/hotel/result/${result.OrderId}`);
+  const tmcAgents = initBook.data?.TmcServices ?? [];
+  const resolvedAgentId =
+    agentId ?? (tmcAgents.length === 1 ? String(tmcAgents[0]?.Id ?? "") : undefined);
+
+  const outNumberFieldsByPassenger = useMemo(
+    () =>
+      buildHotelPassengerOutNumberFieldsMap({
+        passengers,
+        staffs: initBook.data?.Staffs,
+        init: initBook.data,
+      }),
+    [initBook.data, passengers],
+  );
+
+  const expenseTypeOptions = useMemo(
+    () =>
+      (initBook.data?.ExpenseTypes ?? []).map((item) => ({
+        id: item.Id,
+        name: item.Name,
+      })),
+    [initBook.data?.ExpenseTypes],
+  );
+
+  const { forms, updateForm, toggleExpanded } = useHotelBookPassengerForms(
+    passengers,
+    initBook.data?.Staffs,
+    arrivalTime,
+  );
+
+  const payOptions = useMemo(
+    () => parseHotelPayTypeOptions(initBook.data?.PayTypes),
+    [initBook.data?.PayTypes],
+  );
+
+  useEffect(() => {
+    if (travelPayType == null && payOptions.length) {
+      setTravelPayType(resolveDefaultHotelPayType(payOptions));
+    }
+  }, [payOptions, travelPayType]);
+
+  const tmcFlags = resolveHotelBookTmcFlags(initBook.data);
+  const nights = selection ? calcHotelNights(selection.checkIn, selection.checkOut) : 1;
+  const billNights = selection ? resolveHotelBillNights(selection) : [];
+  const serviceFeeTotal = resolveTotalServiceFee(passengers, initBook.data?.ServiceFees);
+  const displayAmount = selection
+    ? resolveHotelBookDisplayAmount({
+        init: initBook.data,
+        selection,
+        passengers,
+      }) + serviceFeeTotal
+    : 0;
+
+  const cancelRule =
+    (selection?.plan.VariablesObj?.RoomRateRule as string | undefined) ??
+    selection?.plan.CancelPolicy ??
+    "不可取消";
+
+  const roomPlanRulesDesc = useMemo(
+    () => resolveHotelRoomPlanRulesDesc(selection?.plan),
+    [selection?.plan],
+  );
+
+  const warmReminderSections = useMemo(
+    () =>
+      buildHotelWarmReminderSections({
+        cancelRule,
+        roomPlanRulesDesc,
+      }),
+    [cancelRule, roomPlanRulesDesc],
+  );
+
+  const requiresIllegalReason = Boolean(
+    selection?.policyRules?.length || initBook.data?.IllegalReasons?.length,
+  );
+
+  const requiresApprover = Boolean(
+    initBook.data?.Staffs?.some((staff) => staff.isAllowSelectApprove),
+  );
+
+  const showCreditCard = selection
+    ? resolveHotelShowCreditCard(selection, arrivalTime, initBook.data)
+    : false;
+
+  const personHoldMinutes = resolveHotelHoldMinutes(initBook.data);
+
+  function handleBack() {
+    const detailUrl = selection ? buildHotelBookDetailUrl(selection) : null;
+    if (detailUrl) {
+      navigate(detailUrl);
+      return;
+    }
+    navigate(-1);
   }
 
-  const isPending = initBook.isPending || submitBook.isPending;
-  const error = initBook.error ?? submitBook.error;
+  async function handleSubmit() {
+    if (!selection) return;
 
-  usePageHeader({
-    title: "填写订单",
-    subtitle: checkIn && checkOut ? `${checkIn} → ${checkOut}` : undefined,
-    showBack: true,
-  });
+    const validationError = validateHotelBookForms({
+      passengers,
+      forms,
+      arrivalTime,
+      init: initBook.data,
+      requiresIllegalReason,
+      requiresApprover,
+      outNumberFieldsByPassenger,
+      showCreditCard,
+      creditCard,
+      authorizedContactsByPassenger,
+    });
+    if (validationError) {
+      setAlertMessage(validationError);
+      return;
+    }
+
+    setAgreed(false);
+    setWarmReminderOpen(true);
+  }
+
+  async function executeSubmit() {
+    if (!selection) return;
+    const payType = travelPayType ?? resolveDefaultHotelPayType(payOptions);
+
+    try {
+      const orderDto = buildHotelOrderBookDto({
+        selection,
+        passengers,
+        forms,
+        travelPayType: payType,
+        authorizedContactsByPassenger,
+        globalArrivalTime: arrivalTime,
+        globalNotifyLanguage: notifyLanguage,
+        agentId: resolvedAgentId,
+        creditCard: showCreditCard ? creditCard : undefined,
+        outNumberFieldsByPassenger,
+      });
+
+      const result = await submitBook.mutateAsync(orderDto);
+      const orderId = resolveHotelBookOrderId(result);
+
+      if (result.IsCheckPay && result.TradeNo) {
+        const checkPayReady = await pollHotelCheckPay(result.TradeNo);
+        if (shouldNavigateToPay({ travelPayType: payType, checkPayReady })) {
+          clearPassengerSelection(ProductType.Hotel);
+          clearHotelBookSelection();
+          navigate(`/hotel/pay/${encodeURIComponent(orderId)}`, { replace: true });
+          return;
+        }
+      }
+
+      clearPassengerSelection(ProductType.Hotel);
+      clearHotelBookSelection();
+      navigate(`/hotel/result/${encodeURIComponent(orderId)}`, { replace: true });
+    } catch (error) {
+      setAlertMessage(formatApiError(error));
+    }
+  }
+
+  if (redirecting || !selection) {
+    return <div className="min-h-dvh bg-[#F5F6F9]" />;
+  }
+
+  if (initBook.isLoading) {
+    return (
+      <div className="flex min-h-dvh flex-col bg-[#F5F6F9]">
+        <HotelBookHeader onBack={handleBack} />
+        <p className="p-6 text-center text-sm text-[#999999]">加载预订信息…</p>
+      </div>
+    );
+  }
+
+  if (initBook.error) {
+    return (
+      <div className="flex min-h-dvh flex-col bg-[#F5F6F9]">
+        <HotelBookHeader onBack={handleBack} />
+        <p className="p-6 text-center text-sm text-[#ff4d4f]">{formatApiError(initBook.error)}</p>
+      </div>
+    );
+  }
+
+  const resolvedPayType = travelPayType ?? resolveDefaultHotelPayType(payOptions);
 
   return (
-    <div className="space-y-4 p-4 pb-24">
-      {travelForms.length > 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">出差单（可选）</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <select
-              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
-              value={travelFormId}
-              onChange={(e) => setTravelFormId(e.target.value)}
-            >
-              <option value="">不关联出差单（个人支付）</option>
-              {travelForms.map((form) => (
-                <option key={form.Id} value={form.Id}>
-                  {form.TravelNumber ?? form.Id}
-                  {form.Title ? ` · ${form.Title}` : ""}
-                  {form.StartDate && form.EndDate
-                    ? ` (${form.StartDate} ~ ${form.EndDate})`
-                    : ""}
-                </option>
-              ))}
-            </select>
-          </CardContent>
-        </Card>
-      ) : null}
+    <div className="flex min-h-dvh flex-col bg-[#F5F6F9]">
+      <HotelBookHeader onBack={handleBack} />
+      <HotelBookReminderBar />
 
-      <PassengerSelectEntry
-        forType={ProductType.Hotel}
-        returnTo={returnTo}
-        title="选择入住人"
-        emptyHint="请选择入住人"
+      <div className="flex-1 space-y-3 px-3 pb-[calc(8.5rem+env(safe-area-inset-bottom))] pt-2">
+        <HotelBookSummaryCard
+          hotelName={selection.hotelName}
+          checkIn={selection.checkIn}
+          checkOut={selection.checkOut}
+          nights={nights}
+          roomName={selection.room.RoomName}
+          breakfast={selection.plan.Breakfast}
+          cancelRule={cancelRule}
+          onOpenNotice={() => setNoticeOpen(true)}
+        />
+
+        {tmcAgents.length > 1 ? (
+          <FlightBookAgentPicker
+            agents={tmcAgents}
+            value={agentId ?? String(tmcAgents[0]?.Id ?? "")}
+            onChange={(nextAgentId) => setAgentId(nextAgentId)}
+          />
+        ) : null}
+
+        <HotelBookOptionRow
+          label="到店时间"
+          value={arrivalTime || "请选择"}
+          required
+          onClick={() => setArrivalSheetOpen(true)}
+        />
+        {tmcFlags.isDisplayNotifyLanguage ? (
+          <HotelBookOptionRow
+            label="通知语言"
+            value={resolveNotifyLanguageLabel(notifyLanguage)}
+            onClick={() => setNotifySheetOpen(true)}
+          />
+        ) : null}
+
+        {selection.policyRules?.length ? (
+          <HotelBookPolicyBanner rules={selection.policyRules} />
+        ) : null}
+
+        {passengers.map((passenger, index) => {
+          const form = forms[passenger.id];
+          const credentialSubtitle = `${credentialDisplayType(passenger.credential)}：${credentialDisplayNumber(passenger.credential)}`;
+          const canSwitchCredential = Boolean(resolveStaffAccountId(passenger));
+          const fee = resolvePassengerServiceFee(passenger, initBook.data?.ServiceFees);
+          const outNumberFields = outNumberFieldsByPassenger[passenger.id] ?? [];
+
+          const roomAuthorizedContacts = authorizedContactsByPassenger[passenger.id] ?? [];
+          const showServiceFee = tmcFlags.isShowServiceFee && fee > 0;
+
+          return (
+            <HotelBookRoomSection
+              key={passenger.id}
+              roomIndex={index + 1}
+              showAuthorizedLabel={roomAuthorizedContacts.length > 0}
+              serviceFee={
+                showServiceFee ? <HotelBookServiceFeeRow amount={fee} inset /> : undefined
+              }
+              authorizedContacts={
+                <FlightBookAuthorizedContacts
+                  sectioned
+                  embedded
+                  contacts={roomAuthorizedContacts}
+                  onAdd={() => {
+                    setAddContactPassengerId(passenger.id);
+                    setAddContactOpen(true);
+                  }}
+                  onRemove={(accountId) =>
+                    setAuthorizedContactsByPassenger((current) => ({
+                      ...current,
+                      [passenger.id]: (current[passenger.id] ?? []).filter(
+                        (item) => item.accountId !== accountId,
+                      ),
+                    }))
+                  }
+                  onUpdate={(accountId, patch) =>
+                    setAuthorizedContactsByPassenger((current) => ({
+                      ...current,
+                      [passenger.id]: (current[passenger.id] ?? []).map((item) =>
+                        item.accountId === accountId ? { ...item, ...patch } : item,
+                      ),
+                    }))
+                  }
+                  onOpenNotifyLanguage={(accountId) => {
+                    setNotifyContactPassengerId(passenger.id);
+                    setNotifyContactId(accountId);
+                    setNotifySheetOpen(true);
+                  }}
+                />
+              }
+              passenger={
+                <HotelBookRoomCard
+                  passengerName={passenger.credential.Name ?? ""}
+                  credentialSubtitle={credentialSubtitle}
+                  expanded={form?.expanded ?? false}
+                  onToggleExpand={() => toggleExpanded(passenger.id)}
+                  credentialSwitchAction={
+                    canSwitchCredential ? (
+                      <FlightBookCredentialSwitchButton
+                        onClick={() => setCredentialSheetPassenger(passenger)}
+                      />
+                    ) : undefined
+                  }
+                >
+                  {form ? (
+                    <HotelBookPassengerDetails
+                      form={form}
+                      showOrganizations={showOrganizations}
+                      showCostCenter={showCostCenter}
+                      requiresApprover={requiresApprover}
+                      isSkipApproveEnabled={Boolean(initBook.data?.isSkipApprove)}
+                      outNumberFields={outNumberFields}
+                      illegalReasons={initBook.data?.IllegalReasons ?? []}
+                      expenseTypes={expenseTypeOptions}
+                      requiresIllegalReason={requiresIllegalReason}
+                      onUpdateForm={(patch) => updateForm(passenger.id, patch)}
+                      onOpenOrganization={() => setOrgSheetPassengerId(passenger.id)}
+                      onOpenCostCenter={() => setCostSheetPassengerId(passenger.id)}
+                      onOpenApprover={() => {
+                        setApproverPassengerId(passenger.id);
+                        setApproverSheetOpen(true);
+                      }}
+                      onOpenOutNumberPicker={(field) =>
+                        setOutNumberPicker({ passengerId: passenger.id, field })
+                      }
+                    />
+                  ) : null}
+                </HotelBookRoomCard>
+              }
+            />
+          );
+        })}
+
+        {showCreditCard ? (
+          <HotelBookCreditCardSection
+            value={creditCard}
+            onChange={(patch) => setCreditCard((current) => ({ ...current, ...patch }))}
+          />
+        ) : null}
+
+        <HotelBookPayTypes
+          options={payOptions}
+          value={resolvedPayType}
+          personHoldMinutes={personHoldMinutes}
+          onChange={setTravelPayType}
+        />
+      </div>
+
+      <HotelBookFooter
+        amount={displayAmount}
+        disabled={submitBook.isPending}
+        pending={submitBook.isPending}
+        onShowBill={() => setBillOpen(true)}
+        onSubmit={() => void handleSubmit()}
       />
 
-      {error ? (
-        <p className="text-sm text-destructive">
-          {error instanceof Error ? error.message : "提交失败"}
-        </p>
-      ) : null}
+      <HotelBookArrivalTimeSheet
+        open={arrivalSheetOpen}
+        options={arrivalOptions}
+        selected={arrivalTime}
+        onClose={() => setArrivalSheetOpen(false)}
+        onSelect={(value) => {
+          setArrivalTime(value);
+          setArrivalSheetOpen(false);
+        }}
+      />
 
-      <Button
-        className="fixed bottom-4 left-4 right-4"
-        disabled={selectedPassengers.length === 0 || isPending}
-        onClick={() => void handleSubmit()}
-      >
-        {isPending ? "提交中…" : "提交订单"}
-      </Button>
+      <FlightBookNotifyLanguageSheet
+        open={notifySheetOpen}
+        value={
+          notifyContactId && notifyContactPassengerId
+            ? (((authorizedContactsByPassenger[notifyContactPassengerId] ?? []).find(
+                (item) => item.accountId === notifyContactId,
+              )?.notifyLanguage as HotelNotifyLanguage | undefined) ?? "cn")
+            : notifyLanguage
+        }
+        onClose={() => {
+          setNotifySheetOpen(false);
+          setNotifyContactId(null);
+          setNotifyContactPassengerId(null);
+        }}
+        onSelect={(value) => {
+          if (notifyContactId && notifyContactPassengerId) {
+            setAuthorizedContactsByPassenger((current) => ({
+              ...current,
+              [notifyContactPassengerId]: (current[notifyContactPassengerId] ?? []).map((item) =>
+                item.accountId === notifyContactId ? { ...item, notifyLanguage: value } : item,
+              ),
+            }));
+          } else {
+            setNotifyLanguage(value as HotelNotifyLanguage);
+          }
+          setNotifySheetOpen(false);
+          setNotifyContactId(null);
+          setNotifyContactPassengerId(null);
+        }}
+      />
+
+      <HotelBookNoticeSheet
+        open={noticeOpen}
+        cancelRule={cancelRule}
+        checkInOutTime={selection.checkInOutTime}
+        bookingNotice={selection.bookingNotice}
+        onClose={() => setNoticeOpen(false)}
+      />
+
+      <HotelBookBillSheet
+        open={billOpen}
+        nights={billNights}
+        serviceFee={serviceFeeTotal}
+        total={displayAmount}
+        onClose={() => setBillOpen(false)}
+      />
+
+      <HotelBookWarmReminderDialog
+        open={warmReminderOpen}
+        sections={warmReminderSections}
+        agreed={agreed}
+        pending={submitBook.isPending}
+        showCreditCard={showCreditCard}
+        onAgreedChange={setAgreed}
+        onConfirm={() => {
+          if (!agreed) return;
+          setWarmReminderOpen(false);
+          void executeSubmit();
+        }}
+        onClose={() => setWarmReminderOpen(false)}
+      />
+
+      <FlightBookAddContactSheet
+        open={addContactOpen}
+        existingAccountIds={
+          addContactPassengerId
+            ? (authorizedContactsByPassenger[addContactPassengerId] ?? []).map(
+                (item) => item.accountId,
+              )
+            : []
+        }
+        onClose={() => {
+          setAddContactOpen(false);
+          setAddContactPassengerId(null);
+        }}
+        onSelect={(contact) => {
+          if (!addContactPassengerId) return;
+          setAuthorizedContactsByPassenger((current) => ({
+            ...current,
+            [addContactPassengerId]: [...(current[addContactPassengerId] ?? []), contact],
+          }));
+          setAddContactOpen(false);
+          setAddContactPassengerId(null);
+        }}
+      />
+
+      <FlightBookApproverSheet
+        open={approverSheetOpen}
+        onClose={() => setApproverSheetOpen(false)}
+        onSelect={(approver) => {
+          if (approverPassengerId) {
+            updateForm(approverPassengerId, {
+              approvalId: approver.accountId,
+              approvalName: approver.name,
+            });
+          }
+          setApproverSheetOpen(false);
+        }}
+      />
+
+      <FlightOutNumberPickerSheet
+        open={outNumberPicker != null}
+        field={outNumberPicker?.field ?? null}
+        selected={
+          outNumberPicker
+            ? (forms[outNumberPicker.passengerId]?.outNumbers[outNumberPicker.field.key] ??
+              outNumberPicker.field.value)
+            : undefined
+        }
+        onClose={() => setOutNumberPicker(null)}
+        onSelect={(value) => {
+          if (!outNumberPicker) return;
+          const { passengerId, field } = outNumberPicker;
+          updateForm(passengerId, {
+            outNumbers: {
+              ...forms[passengerId]?.outNumbers,
+              [field.key]: value,
+            },
+          });
+          setOutNumberPicker(null);
+        }}
+      />
+
+      <FlightBookCredentialSheet
+        open={credentialSheetPassenger != null}
+        passenger={credentialSheetPassenger}
+        productType={ProductType.Hotel}
+        onClose={() => setCredentialSheetPassenger(null)}
+        onSelect={(credential) => {
+          if (!credentialSheetPassenger) return;
+          setSelected(replacePassengerCredential(passengers, credentialSheetPassenger, credential));
+        }}
+      />
+
+      <FlightBookOrganizationSheet
+        open={orgSheetPassengerId != null}
+        organizations={organizations}
+        selectedCode={
+          orgSheetPassengerId ? forms[orgSheetPassengerId]?.organization.code : undefined
+        }
+        onClose={() => setOrgSheetPassengerId(null)}
+        onSelect={(organization) => {
+          if (!orgSheetPassengerId) return;
+          updateForm(orgSheetPassengerId, {
+            organization,
+            otherOrganizationName: "",
+          });
+        }}
+      />
+
+      <FlightBookCostCenterSheet
+        open={costSheetPassengerId != null}
+        selectedCode={
+          costSheetPassengerId ? forms[costSheetPassengerId]?.costCenter.code : undefined
+        }
+        onClose={() => setCostSheetPassengerId(null)}
+        onSelect={(costCenter) => {
+          if (!costSheetPassengerId) return;
+          updateForm(costSheetPassengerId, {
+            costCenter,
+            otherCostCenterName: "",
+            otherCostCenterCode: "",
+          });
+        }}
+      />
+
+      <PassengerSelectAlertDialog
+        open={alertMessage != null}
+        message={alertMessage ?? ""}
+        onClose={() => setAlertMessage(null)}
+      />
     </div>
   );
 }

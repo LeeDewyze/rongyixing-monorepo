@@ -17,16 +17,22 @@ export type {
 } from "./auth-proxy.js";
 
 export type {
+  HotelBookCredentialsDto,
+  HotelBookLinkmanDto,
   HotelBookParams,
   HotelBookPassenger,
+  HotelBookPassengerDto,
   HotelBookResponse,
+  HotelBookRoomPlanDto,
   HotelDetailParams,
   HotelDetailResponse,
   HotelInitBookParams,
   HotelInitBookResponse,
+  HotelInitStaff,
   HotelListItem,
   HotelListParams,
   HotelListResponse,
+  HotelOrderBookDto,
   HotelType,
   HotelPolicyParams,
   HotelPolicyColor,

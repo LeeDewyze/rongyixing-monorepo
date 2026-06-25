@@ -1,13 +1,11 @@
-import {
-  FLIGHT_NOTIFY_LANGUAGE_OPTIONS,
-  type FlightNotifyLanguage,
-} from "@/lib/flight-book-notify";
+import { HOTEL_DETAIL_FONT } from "@/components/hotel/hotel-detail-chrome";
 
-interface FlightBookNotifyLanguageSheetProps {
+interface HotelBookArrivalTimeSheetProps {
   open: boolean;
-  value: FlightNotifyLanguage;
+  options: string[];
+  selected?: string;
   onClose: () => void;
-  onSelect: (value: FlightNotifyLanguage) => void;
+  onSelect: (value: string) => void;
 }
 
 function SheetCloseButton({ onClose }: { onClose: () => void }) {
@@ -46,30 +44,33 @@ function SelectedCheckIcon() {
   );
 }
 
-export function FlightBookNotifyLanguageSheet({
+export function HotelBookArrivalTimeSheet({
   open,
-  value,
+  options,
+  selected,
   onClose,
   onSelect,
-}: FlightBookNotifyLanguageSheetProps) {
+}: HotelBookArrivalTimeSheetProps) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[70] flex flex-col justify-end bg-black/45">
+    <div
+      className={`fixed inset-0 z-50 flex flex-col justify-end bg-black/45 ${HOTEL_DETAIL_FONT}`}
+    >
       <button type="button" className="flex-1" aria-label="关闭" onClick={onClose} />
       <div
         className="flex max-h-[60vh] flex-col rounded-t-[20px] bg-white shadow-[0_-10px_40px_rgba(0,0,0,0.12)] pb-[max(1rem,env(safe-area-inset-bottom))]"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="flight-notify-language-title"
+        aria-labelledby="hotel-arrival-time-title"
       >
         <div className="flex justify-center pt-2.5" aria-hidden>
           <span className="h-1 w-9 rounded-full bg-[#E0E0E0]" />
         </div>
 
         <div className="relative flex items-center justify-center px-4 pb-3 pt-1">
-          <p id="flight-notify-language-title" className="text-[17px] font-semibold text-[#333333]">
-            通知语言
+          <p id="hotel-arrival-time-title" className="text-[17px] font-semibold text-[#333333]">
+            到店时间
           </p>
           <div className="absolute right-4 top-1">
             <SheetCloseButton onClose={onClose} />
@@ -77,22 +78,22 @@ export function FlightBookNotifyLanguageSheet({
         </div>
 
         <ul className="min-h-0 flex-1 overflow-y-auto px-2 pb-1">
-          {FLIGHT_NOTIFY_LANGUAGE_OPTIONS.map((option) => {
-            const isSelected = option.value === value;
+          {options.map((option) => {
+            const isSelected = selected === option;
 
             return (
-              <li key={option.value || "none"}>
+              <li key={option}>
                 <button
                   type="button"
                   className={`flex w-full items-center justify-between rounded-xl px-3 py-3.5 text-left text-[14px] active:bg-[#F5F6F9] ${
                     isSelected ? "font-medium text-[#2768FA]" : "text-[#333333]"
                   }`}
                   onClick={() => {
-                    onSelect(option.value);
+                    onSelect(option);
                     onClose();
                   }}
                 >
-                  <span>{option.label}</span>
+                  <span>{option}</span>
                   {isSelected ? <SelectedCheckIcon /> : null}
                 </button>
               </li>

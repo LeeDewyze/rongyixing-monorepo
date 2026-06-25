@@ -15,6 +15,7 @@ import { isCredentialAllowed } from "@/lib/passenger-select-logic";
 interface FlightBookCredentialSheetProps {
   open: boolean;
   passenger: PassengerBookInfo | null;
+  productType?: ProductType;
   onClose: () => void;
   onSelect: (credential: PassengerCredential) => void;
 }
@@ -28,6 +29,7 @@ function resolveStaffAccountId(passenger: PassengerBookInfo): string | undefined
 export function FlightBookCredentialSheet({
   open,
   passenger,
+  productType = ProductType.Flight,
   onClose,
   onSelect,
 }: FlightBookCredentialSheetProps) {
@@ -42,8 +44,7 @@ export function FlightBookCredentialSheet({
 
   if (!open || !passenger) return null;
 
-  const items =
-    credentials.data?.filter((item) => isCredentialAllowed(item, ProductType.Flight)) ?? [];
+  const items = credentials.data?.filter((item) => isCredentialAllowed(item, productType)) ?? [];
   const selectedKey = credentialKey(passenger.credential);
 
   return (
@@ -56,7 +57,9 @@ export function FlightBookCredentialSheet({
 
         <div className="px-4 py-2">
           {!accountId ? (
-            <p className="py-8 text-center text-[13px] text-[#999999]">当前出行人暂不支持切换证件</p>
+            <p className="py-8 text-center text-[13px] text-[#999999]">
+              当前出行人暂不支持切换证件
+            </p>
           ) : credentials.isFetching ? (
             <p className="py-8 text-center text-[13px] text-[#999999]">正在加载…</p>
           ) : credentials.error ? (

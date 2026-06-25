@@ -5,7 +5,10 @@ import type {
   PassengerBookInfo,
 } from "@ryx/shared-types";
 
-function splitContactOptions(raw: string | undefined, fallback?: string): FlightPassengerContactOption[] {
+export function splitContactOptions(
+  raw: string | undefined,
+  fallback?: string,
+): FlightPassengerContactOption[] {
   const parts = (raw ?? "")
     .split(",")
     .map((item) => item.trim())
@@ -29,7 +32,8 @@ export function createPassengerBookForm(
   passenger: PassengerBookInfo,
   staff?: FlightInitStaff,
 ): FlightPassengerBookForm {
-  const accountMobile = staff?.Account?.Mobile ?? passenger.credential.Mobile ?? passenger.passenger.Mobile;
+  const accountMobile =
+    staff?.Account?.Mobile ?? passenger.credential.Mobile ?? passenger.passenger.Mobile;
   const mobileOptions = splitContactOptions(accountMobile, passenger.credential.Mobile);
   const emailOptions = splitContactOptions(staff?.Account?.Email ?? undefined);
 

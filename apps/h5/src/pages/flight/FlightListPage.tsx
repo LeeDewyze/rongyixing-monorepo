@@ -47,6 +47,7 @@ import {
   sortByTime,
 } from "@/utils/flight-list";
 import { partitionFlightList, resolveFlightCardVariant } from "@/utils/flight-list-display";
+import { navigateBack } from "@/lib/navigation";
 
 function buildListUrl(base: URLSearchParams, date: string): string {
   const params = new URLSearchParams(base);
@@ -321,7 +322,7 @@ export function FlightListPage() {
           toName={displayCityName(form.toCity) || toName}
           passengerHref={buildPassengerSelectPath(ProductType.Flight, listReturnTo)}
           passengerCount={selectedPassengers.length}
-          onBack={() => navigate(-1)}
+          onBack={() => navigateBack(navigate, "/home?product=flight")}
           onFromClick={() => form.setPicker("from")}
           onToClick={() => form.setPicker("to")}
         />

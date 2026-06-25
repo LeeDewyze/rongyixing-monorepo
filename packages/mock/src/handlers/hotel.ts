@@ -43,16 +43,41 @@ export function createHotelMockHandlers(): Record<string, (data: unknown) => IRe
     },
     [HOTEL_FLOW_METHODS.POLICY]: () => successResponse(MOCK_HOTEL_POLICY),
     [HOTEL_FLOW_METHODS.INIT]: (data) => {
-      const params = data as { PlanId?: string };
+      const params = data as { Passengers?: { ClientId?: string }[] };
+      const clientIds = (params.Passengers ?? [])
+        .map((item) => item.ClientId)
+        .filter((id): id is string => Boolean(id));
+      const serviceFees: Record<string, number> = {};
+      for (const id of clientIds) {
+        serviceFees[id] = 10;
+      }
       const plan = MOCK_HOTEL_DETAIL.Rooms?.flatMap((r) => r.Plans).find(
-        (p) => p.PlanId === params?.PlanId,
+        (p) => p.PlanId === "P001",
       );
       return successResponse({
-        OrderAmount: plan?.Price ?? 398,
-        ServiceFees: { Total: 0 },
-        IllegalReasons: [],
+        OrderAmount: (plan?.Price ?? 398) * Math.max(clientIds.length, 1),
+        ServiceFees: serviceFees,
+        PayTypes: { "1": "公付", "2": "个付（请在20分钟内完成支付）" },
+        IllegalReasons: ["出差紧急", "领导安排", "其他"],
         ExpenseTypes: [{ Id: "1", Name: "住宿费", Tag: "hotel" }],
-        Staffs: [],
+        Staffs: clientIds.map((id, index) => ({
+          Id: id,
+          Name: `旅客${index + 1}`,
+          isAllowSelectApprove: index === 0,
+          Approvers: [{ Id: "ap1", Name: "审批人甲", AccountId: "ap1" }],
+        })),
+        Tmc: {
+          IsShowServiceFee: true,
+          IsDisplayNotifyLanguage: true,
+          OutNumberNameArray: ["TravelNumber"],
+          OutNumberRequiryNameArray: ["TravelNumber"],
+        },
+        OutNumbers: { TravelNumber: ["TR001", "TR002"] },
+        TmcServices: [
+          { Id: "agent1", Name: "默认服务商" },
+          { Id: "agent2", Name: "备用服务商" },
+        ],
+        isSkipApprove: true,
       });
     },
     [HOTEL_FLOW_METHODS.BOOK]: () => {
@@ -62,6 +87,9 @@ export function createHotelMockHandlers(): Record<string, (data: unknown) => IRe
       return successResponse({
         OrderId: orderId,
         OrderNumber: order.OrderNumber,
+        TradeNo: orderId,
+        IsCheckPay: true,
+        HasTasks: false,
       });
     },
     [HOTEL_FLOW_METHODS.ORDER_DETAIL]: (data) => {

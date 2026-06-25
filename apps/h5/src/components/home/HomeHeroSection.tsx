@@ -97,25 +97,38 @@ export function HomeHeroSection({
         </div>
 
         {/* Figma 10:213 — product entries on #F5F6F9, not white */}
-        <div className="my-5 bg-[#F5F6F9]">
-          <div className="grid grid-cols-3">
+        <div className="mt-4 mb-3 bg-[#F5F6F9] px-3">
+          <div className="grid grid-cols-3 gap-1.5">
             {PRODUCTS.map((product) => {
               const active = activeProduct === product.id;
               return (
                 <button
                   key={product.id}
                   type="button"
-                  className="flex flex-col items-center gap-1.5 border-none bg-transparent p-0"
+                  aria-current={active ? "page" : undefined}
+                  className={`relative flex flex-col items-center gap-1.5 rounded-[16px] py-2.5 transition-[background-color,box-shadow] duration-200 ${
+                    active
+                      ? "bg-[#EEF5FF] shadow-[0_3px_10px_rgba(39,104,250,0.12)] ring-1 ring-[#BFD8FF]"
+                      : "bg-transparent text-[#999999] active:bg-white/60"
+                  }`}
                   onClick={() => onProductChange(product.id)}
                 >
-                  <ProductIcon product={product.id} active={active} />
+                  <span className="flex size-[50px] items-center justify-center">
+                    <ProductIcon product={product.id} active={active} />
+                  </span>
                   <span
                     className={`text-[14px] leading-none ${
-                      active ? "font-medium text-[#2768FA]" : "font-normal text-[#666666]"
+                      active ? "font-semibold text-[#2768FA]" : "font-normal text-[#999999]"
                     }`}
                   >
                     {product.label}
                   </span>
+                  <span
+                    className={`h-0.5 w-6 shrink-0 rounded-full ${
+                      active ? "bg-[#2768FA]" : "bg-transparent"
+                    }`}
+                    aria-hidden
+                  />
                 </button>
               );
             })}

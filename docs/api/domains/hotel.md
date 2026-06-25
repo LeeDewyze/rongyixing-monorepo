@@ -5,19 +5,19 @@
 
 ## Method 清单
 
-| 用途 | Method | `@ryx/api` 方法 |
-|------|--------|-----------------|
-| 国内城市 | `TmcApiHomeUrl-Resource-DomesticHotelCity` | `hotel.getCities()` |
-| 酒店列表 | `TmcApiHotelUrl-Home-List` | `hotel.getList()` |
-| 酒店详情 | `TmcApiHotelUrl-Home-Detail` | `hotel.getDetail()` |
-| 违标策略 | `TmcApiHotelUrl-Home-Policy` | `hotel.getPolicy()` |
-| 预订初始化 | `TmcApiBookUrl-Hotel-Initialize` | `hotel.initBook()` |
-| 提交订单 | `TmcApiBookUrl-Hotel-Book` | `hotel.submitBook()` |
-| 订单详情 | `TmcApiOrderUrl-Order-Detail` | `order.getDetail()` |
-| 取消酒店订单 | `TmcApiOrderUrl-Order-CancelOrderHotel` | `order.cancelHotel()` |
-| 支付渠道 | `TmcApiOrderUrl-Order-GetOrderPays` | `pay.getOrderPays()` |
-| 发起支付 | `TmcApiOrderUrl-Pay-Create` | `pay.create()` |
-| 出差单（ryx） | `TmcApiBookUrl-Home-GetTravelUrl` | `travel.getTravelUrl()` / `travel.getTravelForms()` |
+| 用途          | Method                                     | `@ryx/api` 方法                                     |
+| ------------- | ------------------------------------------ | --------------------------------------------------- |
+| 国内城市      | `TmcApiHomeUrl-Resource-DomesticHotelCity` | `hotel.getCities()`                                 |
+| 酒店列表      | `TmcApiHotelUrl-Home-List`                 | `hotel.getList()`                                   |
+| 酒店详情      | `TmcApiHotelUrl-Home-Detail`               | `hotel.getDetail()`                                 |
+| 违标策略      | `TmcApiHotelUrl-Home-Policy`               | `hotel.getPolicy()`                                 |
+| 预订初始化    | `TmcApiBookUrl-Hotel-Initialize`           | `hotel.initBook()`                                  |
+| 提交订单      | `TmcApiBookUrl-Hotel-Book`                 | `hotel.submitBook()`                                |
+| 订单详情      | `TmcApiOrderUrl-Order-Detail`              | `order.getDetail()`                                 |
+| 取消酒店订单  | `TmcApiOrderUrl-Order-CancelOrderHotel`    | `order.cancelHotel()`                               |
+| 支付渠道      | `TmcApiOrderUrl-Order-GetOrderPays`        | `pay.getOrderPays()`                                |
+| 发起支付      | `TmcApiOrderUrl-Pay-Create`                | `pay.create()`                                      |
+| 出差单（ryx） | `TmcApiBookUrl-Home-GetTravelUrl`          | `travel.getTravelUrl()` / `travel.getTravelForms()` |
 
 常量定义：`packages/api/src/methods/hotel-flow.ts`、`order-flow.ts`、`travel-flow.ts`
 
@@ -31,11 +31,11 @@ const raw = await getApi().travel.getTravelUrl({
   staffNumber: null,
   staffOutNumber: null,
   name: null,
-  travelType: 'Hotel',
-})
+  travelType: "Hotel",
+});
 
 // UI 列表（映射 TravelFormDto）
-const forms = await getApi().travel.getTravelForms({ travelType: 'Hotel' })
+const forms = await getApi().travel.getTravelForms({ travelType: "Hotel" });
 ```
 
 预订时传 `TravelFormId`；不选则个人支付。
@@ -48,13 +48,31 @@ const forms = await getApi().travel.getTravelForms({ travelType: 'Hotel' })
 
 ## H5 页面路由
 
-| 路由 | 页面 |
-|------|------|
-| `/hotel` | 列表 |
-| `/hotel/:hotelId` | 详情 |
-| `/hotel/:hotelId/book` | 填单 |
+| 路由                     | 页面         |
+| ------------------------ | ------------ |
+| `/hotel`                 | 列表         |
+| `/hotel/:hotelId`        | 详情         |
+| `/hotel/:hotelId/book`   | 填单         |
 | `/hotel/result/:orderId` | 结果（轮询） |
-| `/hotel/pay/:orderId` | 支付 |
+| `/hotel/pay/:orderId`    | 支付         |
+
+## 填单（Initialize / Book）
+
+H5 填单页 [`HotelBookPage`](../../../apps/h5/src/pages/hotel/HotelBookPage.tsx) 使用 session 快照 + 出行人列表构建 legacy `OrderBookDto`：
+
+| 阶段     | Method             | 构建函数                                                        |
+| -------- | ------------------ | --------------------------------------------------------------- |
+| 进入填单 | `Hotel-Initialize` | `buildHotelInitBookDto({ selection, passengers, agentId? })`    |
+| 提交订单 | `Hotel-Book`       | `buildHotelOrderBookDto({ selection, passengers, forms, ... })` |
+
+**关键约定**
+
+- `RoomPlan` 必须来自详情页 session（`hotel-book-session`），不能仅用 `planId` 重建。
+- `ClientId` 与乘客 `AccountId` / 证件 `AccountId` 对齐（见 `resolveHotelInitClientId`）。
+- `buildHotelInitRoomPlan` 映射 `LegacyId`、`Variables`、`RoomPlanPrices`、`Room` 等 legacy 字段。
+- 提交后若 `IsCheckPay` 为 true，先轮询 `book.checkPay(TradeNo)`（3×5s），再按支付方式跳转 `/hotel/pay/:orderId` 或 `/hotel/result/:orderId`。
+
+**Session 写入**：详情页 `handleBook` 在通过政策校验后调用 `saveHotelBookSelection`，再导航至 `/hotel/:hotelId/book`。
 
 ## 调用示例
 
@@ -69,8 +87,8 @@ const order = await getApi().order.getDetail({ OrderId: book.OrderId })
 
 ## 相关文档
 
-| 文档 | 说明 |
-|------|------|
+| 文档                           | 说明                              |
+| ------------------------------ | --------------------------------- |
 | [passenger.md](./passenger.md) | 出行人 / 常旅客选择（填单入住人） |
 
 ## 环境

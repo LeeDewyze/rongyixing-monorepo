@@ -179,7 +179,7 @@ type LegacyRoomPlan = {
   EndDate?: string;
   Variables?: unknown;
   VariablesObj?: Record<string, unknown>;
-  RoomPlanPrices?: { Price?: number | string }[];
+  RoomPlanPrices?: { Date?: string; Price?: number | string }[];
   RoomPlanRules?: { Description?: string }[];
   PaymentType?: number;
   Room?: { Id?: string };
@@ -800,6 +800,15 @@ function mapLegacyRoomPlan(
         ? plan.PaymentType
         : undefined,
     VariablesObj: vars,
+    RoomPlanPrices: (plan.RoomPlanPrices ?? [])
+      .map((item) => ({
+        Date: item.Date,
+        Price: toPrice(item.Price),
+      }))
+      .filter((item) => item.Price != null),
+    RoomPlanRules: (plan.RoomPlanRules ?? []).map((item) => ({
+      Description: item.Description,
+    })),
   };
 }
 
@@ -1004,6 +1013,37 @@ function normalizeHotelCities(
     .filter((city) => Boolean(city.Code && city.Name));
 }
 
+function normalizeHotelInitBookResponse(res: unknown): HotelInitBookResponse {
+  if (!res || typeof res !== "object") return {};
+  const raw = res as Record<string, unknown>;
+  return {
+    OrderAmount: toPrice(raw.OrderAmount),
+    ServiceFees: raw.ServiceFees as HotelInitBookResponse["ServiceFees"],
+    PayTypes: raw.PayTypes as Record<string, string> | undefined,
+    IllegalReasons: Array.isArray(raw.IllegalReasons) ? raw.IllegalReasons.map(String) : undefined,
+    ExpenseTypes: raw.ExpenseTypes as HotelInitBookResponse["ExpenseTypes"],
+    Staffs: raw.Staffs as HotelInitBookResponse["Staffs"],
+    OutNumbers: raw.OutNumbers as Record<string, string[]> | undefined,
+    Tmc: raw.Tmc as Record<string, unknown> | undefined,
+    isSkipApprove: Boolean(raw.isSkipApprove),
+  };
+}
+
+function normalizeHotelBookResponse(res: unknown): HotelBookResponse {
+  if (!res || typeof res !== "object") {
+    return { OrderId: "" };
+  }
+  const raw = res as Record<string, unknown>;
+  const orderId = String(raw.OrderId ?? raw.TradeNo ?? "");
+  return {
+    OrderId: orderId,
+    OrderNumber: raw.OrderNumber != null ? String(raw.OrderNumber) : undefined,
+    TradeNo: raw.TradeNo != null ? String(raw.TradeNo) : undefined,
+    HasTasks: Boolean(raw.HasTasks),
+    IsCheckPay: Boolean(raw.IsCheckPay),
+  };
+}
+
 export function createHotelApi(proxy: ProxyClient): HotelApi {
   return {
     async getCities() {
@@ -1034,19 +1074,21 @@ export function createHotelApi(proxy: ProxyClient): HotelApi {
       });
       return normalizeHotelPolicyResponse(res);
     },
-    initBook(params) {
-      return proxy.send<HotelInitBookResponse>({
+    async initBook(params) {
+      const res = await proxy.send<unknown>({
         method: HOTEL_FLOW_METHODS.INIT,
         data: params,
         timeoutMs: 60_000,
       });
+      return normalizeHotelInitBookResponse(res);
     },
-    submitBook(params) {
-      return proxy.send<HotelBookResponse>({
+    async submitBook(params) {
+      const res = await proxy.send<unknown>({
         method: HOTEL_FLOW_METHODS.BOOK,
         data: params,
         timeoutMs: 60_000,
       });
+      return normalizeHotelBookResponse(res);
     },
   };
 }

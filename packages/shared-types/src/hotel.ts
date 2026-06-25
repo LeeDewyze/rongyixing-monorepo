@@ -67,6 +67,10 @@ export interface HotelRoomPlan {
   /** Legacy RoomPlan.PaymentType (1 prepaid, 2 pay at hotel, 4 monthly). */
   PaymentType?: number;
   VariablesObj?: Record<string, unknown>;
+  /** Legacy nightly price breakdown for bill sheet. */
+  RoomPlanPrices?: { Date?: string; Price?: number }[];
+  /** Legacy RoomPlan.RoomPlanRules — used by book-page warm reminder. */
+  RoomPlanRules?: { Description?: string }[];
 }
 
 /** Legacy `RoomDetails` row for room detail page. */
@@ -153,33 +157,110 @@ export interface HotelBookPassenger {
   travelFormId?: string;
 }
 
-export interface HotelInitBookParams {
-  HotelId: string;
-  PlanId: string;
-  CheckInDate: string;
-  CheckOutDate: string;
-  RoomCount?: number;
-  Passengers?: HotelBookPassenger[];
+/** Legacy RoomPlan wire shape for Initialize/Book. */
+export interface HotelBookRoomPlanDto {
+  Id?: string;
+  Name?: string;
+  TotalAmount?: number;
+  Number?: string | number;
+  SupplierNumber?: string | number;
+  SupplierType?: number | string;
+  BeginDate?: string;
+  EndDate?: string;
+  PaymentType?: number;
+  IsPrepay?: boolean;
+  Variables?: string;
+  RoomPlanPrices?: { Date?: string; Price?: number }[];
+  RoomPlanRules?: { Description?: string }[];
+  Room?: { Id?: number | string; Name?: string };
+}
+
+export interface HotelBookCredentialsDto {
+  Id?: string;
+  Name?: string;
+  Mobile?: string;
+  Number?: string;
+  Type?: number | string;
+  CredentialsType?: number | string;
+  HideNumber?: string;
+  AccountId?: string;
+  Account?: { Id?: string };
+}
+
+/** Legacy PassengerDto for hotel Initialize/Book. */
+export interface HotelBookPassengerDto {
+  ClientId: string;
+  RoomPlan: HotelBookRoomPlanDto;
+  Credentials: HotelBookCredentialsDto;
+  Mobile?: string;
+  CheckinTime?: string;
+  MessageLang?: string;
+  TravelPayType?: number;
+  IllegalReason?: string;
+  ExpenseType?: string;
+  ApprovalId?: string;
+  IsSkipApprove?: boolean;
+  travelFormId?: string;
+  travelNumber?: string;
+  OrderHotelType?: number;
+  OutNumbers?: Record<string, string>;
+  OrderCard?: HotelOrderCardDto;
+  Linkmans?: HotelBookLinkmanDto[];
+}
+
+export interface HotelOrderCardDto {
+  CardNumber?: string;
+  HolderName?: string;
+  ExpireDate?: string;
+  Cvv?: string;
+}
+
+export interface HotelBookLinkmanDto {
+  Id?: string;
+  Name?: string;
+  Mobile?: string;
+  Email?: string;
+  MessageLang?: string;
+}
+
+/** Legacy OrderBookDto for hotel. */
+export interface HotelOrderBookDto {
   TravelFormId?: string;
+  Passengers: HotelBookPassengerDto[];
+  Linkmans?: HotelBookLinkmanDto[];
+  AgentId?: string;
+}
+
+export type HotelInitBookParams = HotelOrderBookDto;
+
+export interface HotelInitStaff {
+  Id: string;
+  Name: string;
+  isAllowSelectApprove?: boolean;
+  Approvers?: { Id?: string; Name?: string; AccountId?: string }[];
 }
 
 export interface HotelInitBookResponse {
   OrderAmount?: number;
-  ServiceFees?: Record<string, number>;
+  ServiceFees?: Record<string, number | string>;
+  PayTypes?: Record<string, string>;
   IllegalReasons?: string[];
   ExpenseTypes?: { Id: string; Name: string; Tag?: string }[];
-  Staffs?: { Id: string; Name: string }[];
+  Staffs?: HotelInitStaff[];
+  OutNumbers?: Record<string, string[]>;
+  Tmc?: Record<string, unknown>;
+  TmcServices?: { Id?: string | number; Name?: string; LogoFullFileName?: string }[];
+  isSkipApprove?: boolean;
 }
 
-export interface HotelBookParams extends HotelInitBookParams {
-  Passengers: HotelBookPassenger[];
-  ContactName?: string;
-  ContactMobile?: string;
-}
+export type HotelBookParams = HotelOrderBookDto;
 
 export interface HotelBookResponse {
   OrderId: string;
   OrderNumber?: string;
+  TradeNo?: string;
+  HasTasks?: boolean;
+  IsCheckPay?: boolean;
 }
 
 export interface OrderDetailParams {
