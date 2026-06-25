@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import type { ApprovalTask } from "@ryx/shared-types";
 
@@ -12,8 +12,10 @@ import {
 } from "@/hooks/useApprovalTasks";
 import { useHomeBack } from "@/lib/app-back";
 import { buildApprovalTaskOpenUrl } from "@/lib/approval-task-url";
-import { buildTravelFormDetailOpenUrl } from "@/lib/travel-form-list";
+import { buildTravelFormDetailOpenUrl, buildTravelFormEditUrl } from "@/lib/travel-form-list";
 import { formatApiError } from "@/lib/formatApiError";
+import { getTicket } from "@/lib/session";
+import { isTravelFormRevokable, revokeTravelApply } from "@/lib/travel-apply";
 
 type ApprovalTab = "mine" | "pending" | "done";
 
@@ -43,6 +45,8 @@ export function TravelApprovalPage() {
   const goHome = useHomeBack();
   usePageHeader({ title: "审批任务", showBack: true, onBack: goHome });
 
+  const [revokingId, setRevokingId] = useState<string | null>(null);
+
   const activeQuery =
     tab === "mine" ? myApplications : tab === "done" ? doneTasks : pendingTasks;
 
@@ -62,6 +66,75 @@ export function TravelApprovalPage() {
       navigate("/travel/task", { state: { url, title: task.name, returnTab: tab } });
     },
     [navigate, tab],
+  );
+
+  const handleRevoke = useCallback(
+    async (task: ApprovalTask) => {
+      if (revokingId === task.id) return;
+      setRevokingId(task.id);
+      try {
+        const ticket = getTicket();
+        if (!ticket) return;
+        const result = await revokeTravelApply(ticket, task.id);
+        if (result.Status) {
+          void queryClient.invalidateQueries({ queryKey: ["approval"] });
+        } else {
+          alert(result.Message ?? "撤回失败");
+        }
+      } catch {
+        alert("撤回失败，请重试");
+      } finally {
+        setRevokingId(null);
+      }
+    },
+    [queryClient, revokingId],
+  );
+
+  const handleEdit = useCallback(
+    (task: ApprovalTask) => {
+      navigate(buildTravelFormEditUrl(task.id));
+    },
+    [navigate],
+  );
+
+  const renderActions = useCallback(
+    (task: ApprovalTask) => {
+      if (!task.tag || task.tag !== "Travel") return null;
+      const status =
+        typeof task.status === "string" ? Number(task.status) : (task.status ?? 0);
+      const canRevoke = isTravelFormRevokable(status);
+      const canEdit = status === 1 || status === 5;
+      return (
+        <>
+          {canEdit ? (
+            <button
+              type="button"
+              className="rounded-lg border border-[#2768FA] px-3 py-1 text-xs font-medium text-[#2768FA]"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEdit(task);
+              }}
+            >
+              编辑
+            </button>
+          ) : null}
+          {canRevoke ? (
+            <button
+              type="button"
+              disabled={revokingId === task.id}
+              className="rounded-lg border border-[#EF4444] px-3 py-1 text-xs font-medium text-[#EF4444] disabled:opacity-50"
+              onClick={(e) => {
+                e.stopPropagation();
+                void handleRevoke(task);
+              }}
+            >
+              {revokingId === task.id ? "撤回中…" : "撤回"}
+            </button>
+          ) : null}
+        </>
+      );
+    },
+    [handleEdit, handleRevoke, revokingId],
   );
 
   useEffect(() => {
@@ -117,6 +190,7 @@ export function TravelApprovalPage() {
         isFetchingMore={isFetchingMore}
         onLoadMore={loadMore}
         onOpenTask={handleOpenTask}
+        renderActions={tab === "mine" ? renderActions : undefined}
       />
     </div>
   );

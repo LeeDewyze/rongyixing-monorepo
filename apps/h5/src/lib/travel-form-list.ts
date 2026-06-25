@@ -60,6 +60,11 @@ export function buildTravelFormDetailUrl(ticket: string, formId: string): string
 }
 
 /** Legacy open-url iframe params for embedded workflow pages. */
+export function buildTravelFormEditUrl(formId: string): string {
+  return `/travel/apply?editId=${formId}`;
+}
+
+/** Legacy open-url iframe params for embedded workflow pages. */
 export function buildTravelFormDetailOpenUrl(formId: string): string | undefined {
   const ticket = getTicket();
   if (!ticket || !formId) return undefined;

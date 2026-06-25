@@ -514,6 +514,207 @@ export async function submitTravelApply(
   });
 }
 
+// ── Form/Get 解析（编辑反填） ──────────────────────────────────────────
+
+/** Raw form field from Form/Get response. */
+interface FormGetDetail {
+  Name?: string;
+  Tag?: string | null;
+  Content?: string;
+  Number?: string;
+  Slave?: string;
+  SlaveRow?: number;
+}
+
+/** Raw time field from Form/Get response. */
+interface FormGetTime {
+  Tag?: string | null;
+  Time?: string;
+  Slave?: string;
+  SlaveRow?: number;
+}
+
+/** Raw Form/Get response shape. */
+interface FormGetResponse {
+  Id?: number;
+  Name?: string;
+  Tag?: string;
+  Status?: number;
+  FormDetails?: FormGetDetail[];
+  FormTimes?: FormGetTime[];
+}
+
+/** Fetch existing travel form data for editing. */
+export async function fetchTravelFormData(
+  ticket: string,
+  formId: string,
+): Promise<FormGetResponse | null> {
+  const params = new URLSearchParams({ ticket, CheckFlowType: "", FlowTag: "Travel" });
+  const url = `${WORKFLOW_SITE}/Form/Get?${params.toString()}`;
+  const raw = await fetchJson<{ Data?: FormGetResponse; Status: boolean }>(url);
+  if (!raw) return null;
+  const data = raw.Data ?? raw;
+  if (!data || typeof data !== "object") return null;
+  return data as FormGetResponse;
+}
+
+/** Parse Form/Get response into form values for edit re-fill. */
+export function parseFormDataToValues(
+  meta: TravelApplyMeta,
+  formData: FormGetResponse,
+  cities: TravelApplyCity[],
+  staffOptions: TravelApplyOption[],
+): TravelApplyFormValues | null {
+  const details = formData.FormDetails ?? [];
+  const times = formData.FormTimes ?? [];
+
+  function findDetail(tag?: string | null, label?: string): FormGetDetail | undefined {
+    return details.find((d) =>
+      tag ? d.Tag === tag : d.Name === label,
+    );
+  }
+
+  function findTime(tag: string, slaveRow = 0): FormGetTime | undefined {
+    return times.find((t) => t.Tag === tag && (t.SlaveRow ?? 0) === slaveRow);
+  }
+
+  // travelTypes
+  const travelTypeDetail = findDetail("TravelType");
+  const travelTypes = travelTypeDetail?.Content
+    ? travelTypeDetail.Content.split(",").map((s) => s.trim()).filter(Boolean)
+    : [];
+
+  // reason
+  const reasonDetail = findDetail(null, "出差事由");
+  const reason = reasonDetail?.Content ?? "";
+
+  // travelers — group by SlaveRow from TravelAccount slaves
+  const accountDetails = details.filter((d) => d.Slave === "TravelAccount");
+  const travelerRows = new Set(accountDetails.map((d) => d.SlaveRow ?? 0));
+  const travelers: TravelApplyTraveler[] = [];
+  const sortedRows = [...travelerRows].sort((a, b) => a - b);
+  for (const row of sortedRows) {
+    const accountDetail = accountDetails.find(
+      (d) => d.Tag === "AccountId" && (d.SlaveRow ?? 0) === row,
+    );
+    const policyDetail = accountDetails.find(
+      (d) => d.Tag === "PolicyId" && (d.SlaveRow ?? 0) === row,
+    );
+    if (!accountDetail) continue;
+
+    const label = accountDetail.Content ?? "";
+    const value = accountDetail.Number ?? "";
+    // find matching staff option or use raw value
+    const match = staffOptions.find(
+      (s) => s.value === value || s.label === label,
+    );
+    const account = match ?? { label, value };
+    travelers.push({
+      account,
+      policyId: policyDetail?.Content || policyDetail?.Number,
+    });
+  }
+
+  // segments — group by SlaveRow from TravelDetail slaves
+  const detailTimes = times.filter((t) => t.Slave === "TravelDetail");
+  const detailDetails = details.filter((d) => d.Slave === "TravelDetail");
+  const segmentRows = new Set([
+    ...detailTimes.map((t) => t.SlaveRow ?? 0),
+    ...detailDetails.map((d) => d.SlaveRow ?? 0),
+  ]);
+  const segments: TravelApplySegment[] = [];
+  const sortedSegmentRows = [...segmentRows].sort((a, b) => a - b);
+  for (const row of sortedSegmentRows) {
+    const start = findTime("StartDate", row);
+    const end = findTime("EndDate", row);
+    const fromDetail = detailDetails.find(
+      (d) => d.Tag === "FromCityName" && (d.SlaveRow ?? 0) === row,
+    );
+    const toDetail = detailDetails.find(
+      (d) => d.Tag === "ToCityName" && (d.SlaveRow ?? 0) === row,
+    );
+
+    if (!start && !end && !fromDetail && !toDetail) continue;
+
+    const findCity = (label?: string, number?: string): TravelApplyCity => {
+      return (
+        cities.find((c) => c.value === number || c.label === label) ?? {
+          label: label ?? "",
+          value: number ?? "",
+        }
+      );
+    };
+
+    segments.push({
+      startDate: start?.Time ?? "",
+      endDate: end?.Time ?? "",
+      fromCity: findCity(fromDetail?.Content, fromDetail?.Number),
+      toCity: findCity(toDetail?.Content, toDetail?.Number),
+    });
+  }
+
+  if (travelers.length === 0) {
+    travelers.push(defaultTravelApplyTraveler(meta.defaultAccount));
+  }
+  if (segments.length === 0) {
+    segments.push(defaultTravelApplySegment(cities));
+  }
+
+  return { travelTypes, reason, travelers, segments };
+}
+
+// ── 修改（Form/Modify） ────────────────────────────────────────────────
+
+/** Submit travel form edit via Form/Modify. */
+export async function modifyTravelApply(
+  meta: TravelApplyMeta,
+  values: TravelApplyFormValues,
+  formId: string | number,
+): Promise<TravelApplySubmitResult> {
+  const modifyUrl = meta.addUrl.replace("/Form/Add?", "/Form/Modify?");
+  const travelers = await resolveTravelersWithPolicy(meta, values.travelers);
+  const body = buildTravelApplyBody(meta, { ...values, travelers });
+  body.append("Id", String(formId));
+  return fetchJson<TravelApplySubmitResult>(modifyUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+  });
+}
+
+// ── 撤回（FormTask/Revoke） ────────────────────────────────────────────
+
+/** Revoke/withdraw a submitted travel form. */
+export async function revokeTravelApply(
+  ticket: string,
+  formId: string | number,
+): Promise<TravelApplySubmitResult> {
+  const params = new URLSearchParams({
+    ticket,
+    CheckFlowType: "",
+    FlowTag: "Travel",
+  });
+  const url = `${WORKFLOW_SITE}/FormTask/Revoke?${params.toString()}`;
+  const body = new URLSearchParams({ Id: String(formId) });
+  return fetchJson<TravelApplySubmitResult>(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+  });
+}
+
+/** Status values where revoke is allowed: 草稿(1), 审批中(2 or 4). */
+export function isTravelFormRevokable(status?: string | number): boolean {
+  const s = typeof status === "string" ? Number(status) : (status ?? 0);
+  return s === 1 || s === 2 || s === 4;
+}
+
+/** Status values where edit is allowed: 草稿(1), 已驳回(5). */
+export function isTravelFormEditable(status?: string | number): boolean {
+  const s = typeof status === "string" ? Number(status) : (status ?? 0);
+  return s === 1 || s === 5;
+}
+
 export function validateTravelApply(values: TravelApplyFormValues): string | null {
   if (values.travelTypes.length === 0) return "请选择出差类型";
   if (!values.reason.trim()) return "请填写出差事由";
