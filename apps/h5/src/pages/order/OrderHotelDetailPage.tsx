@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { HotelOrderApprovalSection } from "@/components/order/hotel/HotelOrderApprovalSection";
@@ -8,7 +8,6 @@ import {
   HotelOrderSmsSheet,
 } from "@/components/order/hotel/HotelOrderSmsSheet";
 import { HotelOrderDetailFooter } from "@/components/order/hotel/HotelOrderDetailFooter";
-import { HotelOrderDetailHeader } from "@/components/order/hotel/HotelOrderDetailHeader";
 import { HotelOrderHotelInfoCard } from "@/components/order/hotel/HotelOrderHotelInfoCard";
 import { HotelOrderInfoCard } from "@/components/order/hotel/HotelOrderInfoCard";
 import { HotelOrderRoomTabs } from "@/components/order/hotel/HotelOrderRoomTabs";
@@ -28,10 +27,11 @@ import {
   getCancelOrderHotelId,
   getSelectedRoom,
 } from "@/lib/hotel-order-detail";
+import { TAB_ID_TO_PARAM } from "@/lib/order-list-params";
 import { scrollH5MainToTop } from "@/lib/scroll-h5-main";
 
-const HEADER_OFFSET = "calc(3rem + env(safe-area-inset-top) + 0.75rem)";
 const FOOTER_OFFSET = "calc(4.5rem + env(safe-area-inset-bottom))";
+const ORDERS_HOTEL_FALLBACK = `/home/orders?tab=${TAB_ID_TO_PARAM.hotel}`;
 
 interface OrderDetailLocationState {
   action?: "cancel";
@@ -41,7 +41,9 @@ export function OrderHotelDetailPage() {
   const { orderId = "" } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const locationState = (location.state ?? {}) as OrderDetailLocationState;
+  const openCancelOnMountRef = useRef(
+    (location.state as OrderDetailLocationState | null)?.action === "cancel",
+  );
 
   const { data: rawDetail, isLoading, isError, error, refetch } = useHotelOrderDetail(orderId);
   const detail = useMemo(
@@ -58,18 +60,41 @@ export function OrderHotelDetailPage() {
   const [smsOpen, setSmsOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
-  usePageHeader({ visible: false });
+  const leaveDetail = useCallback(() => {
+    navigate(ORDERS_HOTEL_FALLBACK, { replace: true });
+  }, [navigate]);
+
+  const handleBack = useCallback(() => {
+    if (billOpen) {
+      setBillOpen(false);
+      return;
+    }
+    if (smsOpen) {
+      setSmsOpen(false);
+      return;
+    }
+    leaveDetail();
+  }, [billOpen, leaveDetail, smsOpen]);
+
+  usePageHeader({
+    visible: true,
+    title: "订单详情",
+    showBack: true,
+    onBack: handleBack,
+    tone: "hotel",
+  });
 
   useLayoutEffect(() => {
     scrollH5MainToTop();
   }, [orderId]);
 
   useEffect(() => {
-    if (locationState.action === "cancel" && detail?.Actions?.showCancel) {
-      setCancelOpen(true);
-      navigate(location.pathname, { replace: true, state: null });
+    if (!openCancelOnMountRef.current || !detail?.Actions?.showCancel) {
+      return;
     }
-  }, [detail?.Actions?.showCancel, location.pathname, locationState.action, navigate]);
+    openCancelOnMountRef.current = false;
+    setCancelOpen(true);
+  }, [detail?.Actions?.showCancel]);
 
   const selectedRoom = useMemo(
     () => (detail ? getSelectedRoom(detail, selectedRoomIndex) : undefined),
@@ -87,10 +112,6 @@ export function OrderHotelDetailPage() {
     setToast(message);
     window.setTimeout(() => setToast(null), 2500);
   }, []);
-
-  const handleBack = useCallback(() => {
-    navigate(-1);
-  }, [navigate]);
 
   const handlePay = useCallback(() => {
     navigate(`/hotel/pay/${encodeURIComponent(orderId)}`);
@@ -170,19 +191,16 @@ export function OrderHotelDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#F5F6F9] p-4 pt-[var(--header-offset)] text-sm text-[#999999]">
-        <style>{`:root { --header-offset: ${HEADER_OFFSET}; }`}</style>
-        <HotelOrderDetailHeader onBack={handleBack} />
-        <p className="pt-24 text-center">加载中…</p>
+      <div className="min-h-screen bg-[#F5F6F9]">
+        <p className="px-4 pt-3 text-center text-sm text-[#999999]">加载中…</p>
       </div>
     );
   }
 
   if (isError || !detail) {
     return (
-      <div className="min-h-screen bg-[#F5F6F9] p-4">
-        <HotelOrderDetailHeader onBack={handleBack} />
-        <p className="pt-24 text-center text-sm text-[#FF4D4F]">
+      <div className="min-h-screen bg-[#F5F6F9]">
+        <p className="px-4 pt-3 text-center text-sm text-[#FF4D4F]">
           {formatApiError(error ?? new Error("订单不存在"))}
         </p>
       </div>
@@ -195,12 +213,9 @@ export function OrderHotelDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#F5F6F9]">
-      <HotelOrderDetailHeader onBack={handleBack} />
-
       <div
-        className="space-y-3 px-4 pb-6"
+        className="space-y-3 px-4 pb-6 pt-3"
         style={{
-          paddingTop: HEADER_OFFSET,
           paddingBottom: showFooter ? FOOTER_OFFSET : "1.5rem",
         }}
       >

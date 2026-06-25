@@ -87,6 +87,7 @@ export function PageHeaderSlot() {
       onBack={header.onBack ?? (() => navigate(-1))}
       right={header.right}
       extended={extended}
+      tone={header.tone}
     />
   );
 }
@@ -99,6 +100,7 @@ export function usePageHeader({
   right,
   extended,
   visible = true,
+  tone,
 }: PageHeaderState) {
   const store = useContext(PageHeaderStoreContext);
   const onBackRef = useRef(onBack);
@@ -119,10 +121,11 @@ export function usePageHeader({
       right: rightRef.current,
       extended: extendedRef.current,
       visible,
+      tone,
     });
 
     return () => {
       store.resetHeader();
     };
-  }, [store, showBack, subtitle, title, visible]);
+  }, [store, showBack, subtitle, title, tone, visible]);
 }

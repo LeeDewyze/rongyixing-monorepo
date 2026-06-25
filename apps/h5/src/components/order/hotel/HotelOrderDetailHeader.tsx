@@ -26,7 +26,7 @@ function BackIcon() {
 export function HotelOrderDetailHeader({ onBack }: HotelOrderDetailHeaderProps) {
   return (
     <div
-      className={`fixed inset-x-0 top-0 z-30 shadow-[0_2px_12px_rgba(142,200,255,0.35)] ${HOTEL_DETAIL_FONT}`}
+      className={`sticky top-0 z-40 w-full shadow-[0_2px_12px_rgba(142,200,255,0.35)] ${HOTEL_DETAIL_FONT}`}
       style={{ background: HOTEL_HEADER_GRADIENT }}
     >
       <div className="pt-[env(safe-area-inset-top)]">
@@ -34,7 +34,7 @@ export function HotelOrderDetailHeader({ onBack }: HotelOrderDetailHeaderProps) 
           <button
             type="button"
             onClick={onBack}
-            className="flex h-10 w-9 shrink-0 items-center justify-center rounded-full active:bg-white/40"
+            className="flex h-10 w-9 shrink-0 touch-manipulation items-center justify-center rounded-full active:bg-white/40"
             aria-label="返回"
           >
             <BackIcon />
