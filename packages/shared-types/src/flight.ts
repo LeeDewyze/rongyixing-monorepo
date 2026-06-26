@@ -141,6 +141,8 @@ export interface FlightTax {
 
 export interface FlightFareBasic {
   CabinCode?: string;
+  /** Proxy fare basis letter (e.g. I, C, Z). */
+  FareBasic?: string;
   CabinType?: number;
   CabinTypeName?: string;
   CabinTypeAttach?: string;
@@ -169,6 +171,8 @@ export interface FlightFare {
   Id?: string;
   Key?: string;
   Code?: string;
+  /** Proxy Home-Detail cabin code (often used instead of `Code`). */
+  BookCode?: string;
   FlightNumber?: string;
   Type?: number;
   TypeName?: string;

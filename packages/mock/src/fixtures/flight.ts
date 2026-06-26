@@ -1,4 +1,9 @@
-import type { FlightDetailResult, FlightListResult, FlightSegment, Trafficline } from "@ryx/shared-types";
+import type {
+  FlightDetailResult,
+  FlightListResult,
+  FlightSegment,
+  Trafficline,
+} from "@ryx/shared-types";
 
 export const MOCK_AIRPORTS: Trafficline[] = [
   {
@@ -226,76 +231,39 @@ export function createMockFlightList(params: {
 
 function mockCabinsForSegment(seg: FlightSegment) {
   const base = Number(seg.LowestFare ?? 720);
+  const flightNumber = seg.Number || seg.FlightNumber || "";
+  const makeFare = (
+    code: string,
+    salesPrice: string,
+    cabinType: number,
+    cabinTypeName: string,
+    discount: number,
+    count: string,
+  ) => ({
+    Id: `fare-${seg.Id}-${code}`,
+    FlightNumber: flightNumber,
+    Code: code,
+    SalesPrice: salesPrice,
+    Tax: seg.Tax ?? "70",
+    IsAgreement: code === "Y",
+    IsAllowOrder: true,
+    Count: count,
+    FlightFareBasics: [
+      {
+        CabinCode: code,
+        CabinType: cabinType,
+        CabinTypeName: cabinTypeName,
+        Discount: discount,
+      },
+    ],
+    VariablesObj: { Baggage: cabinType === 2 ? "托运行李30KG" : "托运行李20KG" },
+  });
+
   return [
-    {
-      FlightNumber: seg.Number,
-      Code: "Y",
-      SalesPrice: String(base),
-      Tax: seg.Tax ?? "70",
-      IsAgreement: true,
-      IsAllowOrder: true,
-      Count: "9",
-      FlightFareBasics: [
-        {
-          CabinCode: "Y",
-          CabinType: 1,
-          CabinTypeName: "经济舱",
-          Discount: 0.45,
-        },
-      ],
-      VariablesObj: { Baggage: "托运行李20KG" },
-    },
-    {
-      FlightNumber: seg.Number,
-      Code: "T",
-      SalesPrice: "360",
-      Tax: seg.Tax ?? "70",
-      IsAllowOrder: true,
-      Count: "5",
-      FlightFareBasics: [
-        {
-          CabinCode: "T",
-          CabinType: 1,
-          CabinTypeName: "经济舱",
-          Discount: 0.22,
-        },
-      ],
-      VariablesObj: { Baggage: "托运行李20KG" },
-    },
-    {
-      FlightNumber: seg.Number,
-      Code: "M",
-      SalesPrice: String(base + 120),
-      Tax: seg.Tax ?? "70",
-      IsAllowOrder: true,
-      Count: "5",
-      FlightFareBasics: [
-        {
-          CabinCode: "M",
-          CabinType: 1,
-          CabinTypeName: "经济舱",
-          Discount: 0.65,
-        },
-      ],
-      VariablesObj: { Baggage: "托运行李20KG" },
-    },
-    {
-      FlightNumber: seg.Number,
-      Code: "C",
-      SalesPrice: String(base + 800),
-      Tax: seg.Tax ?? "70",
-      IsAllowOrder: true,
-      Count: "2",
-      FlightFareBasics: [
-        {
-          CabinCode: "C",
-          CabinType: 2,
-          CabinTypeName: "公务舱",
-          Discount: 0.85,
-        },
-      ],
-      VariablesObj: { Baggage: "托运行李30KG" },
-    },
+    makeFare("Y", String(base), 1, "经济舱", 0.45, "9"),
+    makeFare("T", "360", 1, "经济舱", 0.22, "5"),
+    makeFare("M", String(base + 120), 1, "经济舱", 0.65, "5"),
+    makeFare("C", String(base + 800), 2, "公务舱", 0.85, "2"),
   ];
 }
 
@@ -312,8 +280,7 @@ export function createMockFlightDetail(params: {
   });
   const segments = list.Result?.FlightSegments ?? [];
   const flightNumber = (params.FlightNumber ?? "").toUpperCase();
-  const segment =
-    segments.find((s) => s.Number.toUpperCase() === flightNumber) ?? segments[0];
+  const segment = segments.find((s) => s.Number.toUpperCase() === flightNumber) ?? segments[0];
   if (!segment) {
     return { FlightSegments: [], FlightFares: [] };
   }

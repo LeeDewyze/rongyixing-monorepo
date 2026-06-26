@@ -28,6 +28,7 @@ export const MOCK_MEMBER_PROFILE = {
   Mobile: "13800138000",
   Email: "demo@rongtrip.cn",
   OrganizationCode: "12344555",
+  BookType: 1,
 };
 
 export const MOCK_PASSENGER_LIST = {

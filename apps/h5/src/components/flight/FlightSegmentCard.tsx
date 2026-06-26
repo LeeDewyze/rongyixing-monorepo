@@ -48,6 +48,7 @@ function DirectLowestBadge() {
 interface FlightSegmentCardProps {
   segment: FlightSegment;
   variant?: FlightCardVariant;
+  loading?: boolean;
   onClick?: () => void;
 }
 
@@ -96,6 +97,7 @@ function formatAirportLabel(
 export function FlightSegmentCard({
   segment,
   variant = "direct",
+  loading = false,
   onClick,
 }: FlightSegmentCardProps) {
   const isDirectLowest = variant === "direct-lowest";
@@ -120,8 +122,9 @@ export function FlightSegmentCard({
   return (
     <button
       type="button"
+      disabled={loading}
       onClick={onClick}
-      className={`relative z-0 min-h-[96px] w-full overflow-hidden rounded-lg text-left shadow-[0_2px_8px_rgba(0,0,0,0.06)] transition active:scale-[0.99] ${topGradient}`}
+      className={`relative z-0 min-h-[96px] w-full overflow-hidden rounded-lg text-left shadow-[0_2px_8px_rgba(0,0,0,0.06)] transition active:scale-[0.99] disabled:pointer-events-none disabled:opacity-60 ${topGradient}`}
     >
       {isDirectLowest ? <DirectLowestBadge /> : null}
 

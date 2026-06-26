@@ -40,4 +40,6 @@ export interface MemberProfile {
   Email?: string;
   /** Legacy Member-Get organization code. */
   OrganizationCode?: string;
+  /** Legacy `StaffBookType` — 1 = self book. */
+  BookType?: number;
 }

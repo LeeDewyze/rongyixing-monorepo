@@ -1,8 +1,64 @@
-import type { IResponse } from "@ryx/shared-types";
+import type { FlightDetailResult, FlightPolicyPassengerResult, IResponse } from "@ryx/shared-types";
 import { BOOK_METHODS, FLIGHT_FLOW_METHODS, successResponse } from "@ryx/api";
 
 import { createMockFlightDetail, createMockFlightList, MOCK_AIRPORTS } from "../fixtures/flight.js";
 import { createMockOrderDetail } from "../fixtures/order.js";
+
+function createMockFlightPolicy(data: unknown): FlightPolicyPassengerResult[] {
+  const params = data as {
+    FlightDetail?: string;
+    Passengers?: string;
+  };
+
+  let detail: FlightDetailResult = { FlightFares: [], FlightSegments: [] };
+  try {
+    if (params.FlightDetail) {
+      detail = JSON.parse(params.FlightDetail) as FlightDetailResult;
+    }
+  } catch {
+    detail = { FlightFares: [], FlightSegments: [] };
+  }
+
+  const passengerKeys = (params.Passengers ?? "acc-1")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  const fares = detail.FlightFares ?? [];
+  const segment = detail.FlightSegments?.[0];
+  const flightNo = segment?.Number ?? segment?.FlightNumber ?? fares[0]?.FlightNumber ?? "";
+
+  return passengerKeys.map((passengerKey) => ({
+    PassengerKey: passengerKey,
+    FlightPolicies: fares.map((fare) => {
+      const basic = fare.FlightFareBasics?.[0];
+      const code = fare.BookCode ?? basic?.CabinCode ?? basic?.FareBasic ?? fare.Code ?? "";
+      const isBusiness = basic?.CabinType === 2;
+      const hasWarning = code === "T" || code === "M";
+      const blocked = isBusiness;
+
+      return {
+        Id: fare.Id ?? code,
+        FlightNo: fare.FlightNumber ?? flightNo,
+        Cabin: {
+          Id: fare.Id,
+          BookCode: code,
+          Code: code,
+          SalesPrice: fare.SalesPrice,
+          FlightNumber: fare.FlightNumber ?? flightNo,
+          FlightFareBasics: fare.FlightFareBasics,
+        },
+        Rules: hasWarning ? ["超出经济舱标准"] : blocked ? ["违反舱位类别政策只能选择经济舱"] : [],
+        Descriptions: hasWarning
+          ? ["建议选择更低价格舱位"]
+          : blocked
+            ? ["违反舱位类别政策只能选择经济舱"]
+            : [],
+        IsAllowBook: !blocked,
+      };
+    }),
+  }));
+}
 
 export function createFlightMockHandlers(): Record<string, (data: unknown) => IResponse<unknown>> {
   return {
@@ -28,24 +84,11 @@ export function createFlightMockHandlers(): Record<string, (data: unknown) => IR
       };
       return successResponse(createMockFlightDetail(params));
     },
-    [FLIGHT_FLOW_METHODS.HOME_POLICY]: () =>
-      successResponse([
-        {
-          PassengerKey: "acc-1",
-          FlightPolicies: [
-            {
-              Id: "fare-1",
-              FlightNo: "KN5977",
-              Rules: ["超出经济舱标准"],
-              Descriptions: ["建议选择更低价格舱位"],
-              color: "warning",
-              IsAllowBook: true,
-            },
-          ],
-        },
-      ]),
+    [FLIGHT_FLOW_METHODS.HOME_POLICY]: (data) => successResponse(createMockFlightPolicy(data)),
     [BOOK_METHODS.FLIGHT_INITIALIZE]: (data) => {
-      const params = data as { Passengers?: { FlightCabin?: { SalesPrice?: string }; ClientId?: string }[] };
+      const params = data as {
+        Passengers?: { FlightCabin?: { SalesPrice?: string }; ClientId?: string }[];
+      };
       const unit = Number(params?.Passengers?.[0]?.FlightCabin?.SalesPrice ?? 680);
       const count = params?.Passengers?.length ?? 1;
       const clientId = params?.Passengers?.[0]?.ClientId ?? "acc-1";

@@ -226,7 +226,10 @@ export function FlightBookPage() {
     }
   }, [navigate, selection]);
 
-  function finishBookNavigation(path: string, state?: { bookedOrderId: string; product: "flight" }) {
+  function finishBookNavigation(
+    path: string,
+    state?: { bookedOrderId: string; product: "flight" },
+  ) {
     skipEmptySelectionRedirectRef.current = true;
     navigate(path, { replace: true, state });
     clearFlightBookSelection();
@@ -322,12 +325,12 @@ export function FlightBookPage() {
     return null;
   }
 
-  const orderAmount = resolveFlightBookDisplayAmount(selection, selected, serviceFees) + totalInsurance;
+  const orderAmount =
+    resolveFlightBookDisplayAmount(selection, selected, serviceFees) + totalInsurance;
   const timedOut = isFlightListTimedOut(selection.priceSnapshotAt);
   const isInitBlocking = initBook.isFetching && !initBook.data;
   const isPending = isSubmitting || submitBook.isPending || isInitBlocking;
-  const submitPendingLabel =
-    submitPhase === "checkPay" ? "等待支付确认…" : "提交中…";
+  const submitPendingLabel = submitPhase === "checkPay" ? "等待支付确认…" : "提交中…";
   const initError = initBook.error;
   const submitError = submitBook.error;
 
@@ -487,7 +490,6 @@ export function FlightBookPage() {
         ) : null}
 
         <FlightBookPassengerSection
-          showAuthorizedLabel={authorizedContacts.length > 0}
           passengers={
             <FlightBookPassengers
               returnTo={returnTo}

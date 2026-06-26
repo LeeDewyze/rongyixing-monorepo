@@ -418,7 +418,6 @@ export function HotelBookPage() {
             <HotelBookRoomSection
               key={passenger.id}
               roomIndex={index + 1}
-              showAuthorizedLabel={roomAuthorizedContacts.length > 0}
               serviceFee={
                 showServiceFee ? <HotelBookServiceFeeRow amount={fee} inset /> : undefined
               }

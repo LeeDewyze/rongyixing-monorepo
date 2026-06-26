@@ -1,21 +1,30 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ProductType, type FlightBookPolicy, type FlightCabinTab, type FlightFare } from "@ryx/shared-types";
+import {
+  ProductType,
+  type FlightBookPolicy,
+  type FlightCabinTab,
+  type FlightFare,
+} from "@ryx/shared-types";
 
 import { FlightCabinCard } from "@/components/flight/FlightCabinCard";
 import { FlightCabinsHeader } from "@/components/flight/FlightCabinsHeader";
+import { FlightCabinsPolicyBanner } from "@/components/flight/FlightCabinsPolicyBanner";
 import { FlightCabinsSummary } from "@/components/flight/FlightCabinsSummary";
 import { FlightFareRulesSheet } from "@/components/flight/FlightFareRulesSheet";
 import { FlightCabinsTabs } from "@/components/flight/FlightCabinsTabs";
+import { FlightPolicyFilterSheet } from "@/components/flight/FlightPolicyFilterSheet";
 import { FLIGHT_CABINS_HEADER_BG, FLIGHT_CABINS_HEADER_GRADIENT } from "@/config/flight-cabins";
 import { formatCabinsDepartTitle } from "@/utils/flight-list-display";
 import { usePageHeader } from "@/components/layout";
-import { useFlightDetail } from "@/hooks/useFlight";
+import { useFlightDetail, useFlightPolicy } from "@/hooks/useFlight";
 import { useFlightPriceTimeout } from "@/hooks/useFlightPriceTimeout";
+import { useMemberProfile } from "@/hooks/useMemberProfile";
 import { usePassengerSelection } from "@/hooks/usePassenger";
 import {
   buildFlightDetailParams,
   filterFaresForFlight,
+  isEconomyFare,
   isFlightFareBookable,
   normalizeFlightDetailData,
   parseFlightCabinsQuery,
@@ -38,6 +47,17 @@ import {
   isFlightPolicyBookAllowed,
   shouldBlockBookingOnPolicyFetchFailure,
 } from "@/lib/flight-book-policy";
+import {
+  attachPolicyToRow,
+  filterFlightFaresByPolicy,
+  formatFlightCabinPolicyHint,
+  isFlightCabinPolicyBlocked,
+  isFlightCabinSoldOut,
+  resolvePolicyForRow,
+  type FlightCabinPolicyRow,
+} from "@/lib/flight-cabin-policy";
+import { buildFlightPolicySessionKey, loadFlightPolicySession } from "@/lib/flight-policy-session";
+import { isSelfBookType, resolveDefaultPolicyFilterPassengerId } from "@/lib/flight-self-book";
 import { hasAgentIdentity } from "@/lib/flight-book-save-order";
 import { navigateBack } from "@/lib/navigation";
 import { useIdentity } from "@/hooks/useIdentity";
@@ -49,44 +69,219 @@ export function FlightCabinsPage() {
   const query = useMemo(() => parseFlightCabinsQuery(searchParams), [searchParams]);
   const { selected: selectedPassengers } = usePassengerSelection(ProductType.Flight);
   const { data: identity } = useIdentity();
+  const { data: memberProfile } = useMemberProfile();
+  const isAgent = hasAgentIdentity(identity);
   const isAuthenticated = getApiMode() === "mock" || Boolean(getTicket());
   const listHref = searchParams.toString()
     ? `/flight/list?${searchParams.toString()}`
     : "/flight/list";
+
+  const listParams = useMemo(
+    () => ({
+      Date: query.date,
+      FromCode: query.fromCode,
+      ToCode: query.toCode,
+      FromAsAirport: query.fromAsAirport,
+      ToAsAirport: query.toAsAirport,
+    }),
+    [query.date, query.fromCode, query.toCode, query.fromAsAirport, query.toAsAirport],
+  );
 
   const detailParams = useMemo(
     () => buildFlightDetailParams(query, selectedPassengers.length),
     [query, selectedPassengers.length],
   );
 
+  const policySessionKey = useMemo(() => {
+    if (!flightId || !query.flightNumber) return null;
+    return buildFlightPolicySessionKey({
+      segmentId: flightId,
+      flightNumber: query.flightNumber,
+      listParams,
+      passengers: selectedPassengers,
+    });
+  }, [flightId, listParams, query.flightNumber, selectedPassengers]);
+
+  const cachedPolicySession = useMemo(
+    () => (policySessionKey ? loadFlightPolicySession(policySessionKey) : null),
+    [policySessionKey],
+  );
+
   const {
     data: rawDetail,
     isLoading,
     isFetching,
+    isSuccess,
     error,
     refetch,
     dataUpdatedAt,
   } = useFlightDetail(detailParams);
 
   const detail = useMemo(() => normalizeFlightDetailData(rawDetail), [rawDetail]);
+  const detailReady = isSuccess && Boolean(detail?.FlightFares?.length) && !isFetching;
 
   const segment = useMemo(
     () => resolveDetailSegment(query, detail?.FlightSegments?.[0]),
     [query, detail?.FlightSegments],
   );
 
-  const groupedCabins = useMemo(() => {
-    const fares = filterFaresForFlight(detail?.FlightFares, query.flightNumber);
-    return partitionCabinsByTab(fares);
-  }, [detail?.FlightFares, query.flightNumber]);
+  const policyParams = useMemo(() => {
+    if (!detailReady || selectedPassengers.length === 0) return null;
+    const listSnapshot = loadFlightListSnapshot(listParams);
+    return buildFlightPolicyParams({
+      listSnapshot: listSnapshot ?? undefined,
+      detailSnapshot: detail ?? undefined,
+      passengers: selectedPassengers,
+    });
+  }, [detail, detailReady, listParams, selectedPassengers]);
+
+  const hasCachedPolicy = Boolean(cachedPolicySession?.policyResults?.length);
+  const {
+    data: policyQueryData,
+    isLoading: isPolicyLoading,
+    isFetching: isPolicyFetching,
+    isError: isPolicyError,
+  } = useFlightPolicy(policyParams, {
+    enabled: detailReady && selectedPassengers.length > 0 && !hasCachedPolicy,
+    initialData: cachedPolicySession?.policyResults,
+  });
+
+  const policyResults = policyQueryData ?? cachedPolicySession?.policyResults;
+  const isPolicyChecking =
+    selectedPassengers.length > 0 &&
+    detailReady &&
+    (isPolicyLoading || isPolicyFetching) &&
+    !policyResults?.length;
+
+  const isSelf = useMemo(
+    () => isSelfBookType({ memberProfile, identity, passengers: selectedPassengers }),
+    [identity, memberProfile, selectedPassengers],
+  );
 
   const [activeTab, setActiveTab] = useState<FlightCabinTab>("economy");
   const [rulesFare, setRulesFare] = useState<FlightFare | null>(null);
   const [priceSnapshotAt, setPriceSnapshotAt] = useState(0);
+  const [policyFilterOpen, setPolicyFilterOpen] = useState(false);
+  const [policyFilterEnabled, setPolicyFilterEnabled] = useState(true);
+  const [filterPassengerId, setFilterPassengerId] = useState<string | null>(null);
+
+  const allFares = useMemo(
+    () => filterFaresForFlight(detail?.FlightFares, query.flightNumber),
+    [detail?.FlightFares, query.flightNumber],
+  );
+
+  const groupedCabins = useMemo(() => partitionCabinsByTab(allFares), [allFares]);
+
+  const policyRows = useMemo(
+    () =>
+      filterFlightFaresByPolicy({
+        fares: allFares,
+        policyResults,
+        passengers: selectedPassengers,
+        filterPassengerId,
+        filterEnabled: policyFilterEnabled,
+        flightNumber: query.flightNumber ?? segment.Number ?? segment.FlightNumber ?? "",
+      }),
+    [
+      allFares,
+      filterPassengerId,
+      policyFilterEnabled,
+      policyResults,
+      query.flightNumber,
+      segment.FlightNumber,
+      segment.Number,
+      selectedPassengers,
+    ],
+  );
+
+  const displayRows = useMemo((): FlightCabinPolicyRow[] => {
+    const policyContext = {
+      policyResults,
+      passengers: selectedPassengers,
+      filterPassengerId,
+      flightNumber: query.flightNumber ?? segment.Number ?? segment.FlightNumber ?? "",
+    };
+
+    const tabRows = policyFilterEnabled
+      ? policyRows
+      : groupedCabins[activeTab].map((fare) => ({
+          fare,
+          color: "default" as const,
+          isAllowBook: true,
+        }));
+
+    return tabRows
+      .filter((row) =>
+        activeTab === "economy" ? isEconomyFare(row.fare) : !isEconomyFare(row.fare),
+      )
+      .map((row) => (policyFilterEnabled ? attachPolicyToRow(row, policyContext) : row));
+  }, [
+    activeTab,
+    filterPassengerId,
+    groupedCabins,
+    policyFilterEnabled,
+    policyResults,
+    policyRows,
+    query.flightNumber,
+    segment.FlightNumber,
+    segment.Number,
+    selectedPassengers,
+  ]);
+
+  const filterPassengerName = useMemo(() => {
+    if (!filterPassengerId) return "";
+    return selectedPassengers.find((item) => item.id === filterPassengerId)?.passenger.Name ?? "";
+  }, [filterPassengerId, selectedPassengers]);
+
+  // TEMP DEBUG (visible console.log): check whether Policy is applied to cabin rows.
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    const passenger = selectedPassengers.find((item) => item.id === filterPassengerId);
+    console.log("[policy-check] inputs", {
+      policyFilterEnabled,
+      filterPassengerId,
+      filterPassengerName: passenger?.passenger.Name,
+      selectedCount: selectedPassengers.length,
+      policyResultsCount: policyResults?.length ?? 0,
+      flightNumber: query.flightNumber ?? segment.Number ?? segment.FlightNumber,
+    });
+    console.log(
+      "[policy-check] policyResults",
+      (policyResults ?? []).map((r) => ({
+        PassengerKey: r.PassengerKey,
+        policyCount: r.FlightPolicies?.length ?? 0,
+        policies: (r.FlightPolicies ?? []).map((p) => ({
+          Id: p.Id,
+          FlightNo: p.FlightNo,
+          IsAllowBook: p.IsAllowBook,
+          cabinCode: p.Cabin?.Code ?? p.Cabin?.BookCode,
+          cabinPrice: p.Cabin?.SalesPrice,
+          rules: p.Rules,
+        })),
+      })),
+    );
+    console.log(
+      "[policy-check] displayRows",
+      displayRows.map((row) => ({
+        code: row.fare.Code ?? row.fare.BookCode,
+        price: row.fare.SalesPrice,
+        color: row.color,
+        matched: Boolean(row.policy),
+      })),
+    );
+  }, [
+    displayRows,
+    filterPassengerId,
+    policyFilterEnabled,
+    policyResults,
+    query.flightNumber,
+    segment.FlightNumber,
+    segment.Number,
+    selectedPassengers,
+  ]);
 
   const detailRouteKey = useMemo(
-    () =>
-      `${flightId}|${query.date}|${query.fromCode}|${query.toCode}|${query.flightNumber ?? ""}`,
+    () => `${flightId}|${query.date}|${query.fromCode}|${query.toCode}|${query.flightNumber ?? ""}`,
     [flightId, query.date, query.fromCode, query.toCode, query.flightNumber],
   );
 
@@ -101,6 +296,27 @@ export function FlightCabinsPage() {
     setPriceSnapshotAt(dataUpdatedAt);
   }, [dataUpdatedAt, detail, priceSnapshotAt]);
 
+  useEffect(() => {
+    if (selectedPassengers.length === 0) {
+      setFilterPassengerId(null);
+      return;
+    }
+    const defaultId = resolveDefaultPolicyFilterPassengerId(selectedPassengers, isSelf);
+    setFilterPassengerId((prev) => {
+      if (prev && selectedPassengers.some((item) => item.id === prev)) return prev;
+      return defaultId;
+    });
+    if (isSelf || selectedPassengers.length === 1) {
+      setPolicyFilterEnabled(true);
+    }
+  }, [isSelf, selectedPassengers]);
+
+  useEffect(() => {
+    if (groupedCabins.economy.length === 0 && groupedCabins.business.length > 0) {
+      setActiveTab("business");
+    }
+  }, [groupedCabins.business.length, groupedCabins.economy.length]);
+
   const handleTimeoutRefresh = useCallback(() => {
     const params = new URLSearchParams(searchParams);
     params.set("doRefresh", "true");
@@ -113,64 +329,62 @@ export function FlightCabinsPage() {
     onRefresh: handleTimeoutRefresh,
   });
 
-  useEffect(() => {
-    if (groupedCabins.economy.length === 0 && groupedCabins.business.length > 0) {
-      setActiveTab("business");
-    }
-  }, [groupedCabins.business.length, groupedCabins.economy.length]);
-
-  const visibleCabins = useMemo(() => groupedCabins[activeTab], [activeTab, groupedCabins]);
-
   usePageHeader({ visible: false });
 
   function handleBack() {
     navigateBack(navigate, listHref);
   }
 
-  async function proceedToBook(fare: FlightFare) {
+  function handlePolicyFilterConfirm(passengerId: string | null) {
+    if (passengerId === null) {
+      setPolicyFilterEnabled(false);
+      return;
+    }
+    setPolicyFilterEnabled(true);
+    setFilterPassengerId(passengerId);
+  }
+
+  async function resolvePolicyResultsForBook() {
+    const timedOut = Boolean(priceSnapshotAt && isFlightListTimedOut(priceSnapshotAt));
+    if (policyResults?.length && !isPolicyError && !timedOut) {
+      return policyResults;
+    }
+    if (!policyParams) return policyResults;
+    try {
+      return await getApi().flight.getFlightPolicy(policyParams);
+    } catch {
+      return undefined;
+    }
+  }
+
+  async function proceedToBook(row: FlightCabinPolicyRow) {
+    const fare = row.fare;
     let flightPoliciesByPassengerId: Record<string, FlightBookPolicy> = {};
     let flightPolicy = undefined;
-    const listSnapshot = loadFlightListSnapshot({
-      Date: query.date,
-      FromCode: query.fromCode,
-      ToCode: query.toCode,
-      FromAsAirport: query.fromAsAirport,
-      ToAsAirport: query.toAsAirport,
-    });
-    const policyParams = buildFlightPolicyParams({
-      listSnapshot: listSnapshot ?? undefined,
-      detailSnapshot: detail ?? undefined,
-      passengers: selectedPassengers,
-    });
-    const isAgent = hasAgentIdentity(identity);
+    const listSnapshot = loadFlightListSnapshot(listParams);
 
-    if (policyParams && selectedPassengers.length > 0) {
-      try {
-        const policyResults = await getApi().flight.getFlightPolicy(policyParams);
-        flightPoliciesByPassengerId = buildPassengerFlightPoliciesMap({
-          results: policyResults,
-          passengers: selectedPassengers,
-          fare,
-          segmentNumber: segment.Number ?? segment.FlightNumber,
-        });
-        flightPolicy = selectedPassengers[0]
-          ? flightPoliciesByPassengerId[selectedPassengers[0].id]
-          : undefined;
-      } catch {
-        if (shouldBlockBookingOnPolicyFetchFailure(isAgent)) {
-          window.alert(FLIGHT_POLICY_FETCH_FAILED_MESSAGE);
-          return;
-        }
-        flightPolicy = undefined;
-        flightPoliciesByPassengerId = {};
+    const policyResultsForBook = await resolvePolicyResultsForBook();
+    if (!policyResultsForBook?.length) {
+      if (shouldBlockBookingOnPolicyFetchFailure(isAgent)) {
+        window.alert(FLIGHT_POLICY_FETCH_FAILED_MESSAGE);
+        return;
       }
+    } else if (policyParams && selectedPassengers.length > 0) {
+      flightPoliciesByPassengerId = buildPassengerFlightPoliciesMap({
+        results: policyResultsForBook,
+        passengers: selectedPassengers,
+        fare,
+        segmentNumber: segment.Number ?? segment.FlightNumber,
+      });
+      flightPolicy = selectedPassengers[0]
+        ? flightPoliciesByPassengerId[selectedPassengers[0].id]
+        : undefined;
     }
+
     for (const passenger of selectedPassengers) {
       const passengerPolicy = flightPoliciesByPassengerId[passenger.id];
       if (passengerPolicy && !isFlightPolicyBookAllowed(passengerPolicy, isAgent)) {
-        window.alert(
-          formatFlightPolicyBookBlockMessage(passengerPolicy, passenger.passenger?.Name),
-        );
+        window.alert(formatFlightPolicyBookBlockMessage(passengerPolicy, passenger));
         return;
       }
     }
@@ -190,7 +404,27 @@ export function FlightCabinsPage() {
     navigate("/flight/book");
   }
 
-  function handleBook(fare: FlightFare) {
+  function handleBook(row: FlightCabinPolicyRow) {
+    const fare = row.fare;
+    const policyContext = {
+      policyResults,
+      passengers: selectedPassengers,
+      filterPassengerId,
+      flightNumber: query.flightNumber ?? segment.Number ?? segment.FlightNumber ?? "",
+    };
+    const resolvedRow = policyFilterEnabled ? attachPolicyToRow(row, policyContext) : row;
+    const policy = resolvePolicyForRow({ row: resolvedRow, ...policyContext });
+
+    if (isFlightCabinSoldOut(resolvedRow)) {
+      window.alert("该舱位已售罄");
+      return;
+    }
+    if (policy && !isFlightPolicyBookAllowed(policy, isAgent)) {
+      const filterPassenger =
+        selectedPassengers.find((item) => item.id === filterPassengerId) ?? selectedPassengers[0];
+      window.alert(formatFlightPolicyBookBlockMessage(policy, filterPassenger));
+      return;
+    }
     if (!isFlightFareBookable(fare)) {
       window.alert("该舱位已售罄");
       return;
@@ -203,7 +437,7 @@ export function FlightCabinsPage() {
       openTimeoutDialog();
       return;
     }
-    void proceedToBook(fare);
+    void proceedToBook({ ...resolvedRow, policy });
   }
 
   function handleShowRules(fare: FlightFare) {
@@ -236,11 +470,29 @@ export function FlightCabinsPage() {
           backgroundImage: FLIGHT_CABINS_HEADER_GRADIENT,
         }}
       >
-        <FlightCabinsHeader title={departTitle} onBack={handleBack} />
+        <FlightCabinsHeader
+          title={departTitle}
+          onBack={handleBack}
+          showPolicyFilter={!isSelf && selectedPassengers.length > 0}
+          onOpenPolicyFilter={() => setPolicyFilterOpen(true)}
+        />
         <div className="px-3 pb-3">
           <FlightCabinsSummary segment={segment} />
         </div>
       </div>
+
+      {policyFilterEnabled && filterPassengerName ? (
+        <FlightCabinsPolicyBanner
+          passengerName={filterPassengerName}
+          onClick={() => setPolicyFilterOpen(true)}
+        />
+      ) : null}
+
+      {isPolicyError && !isAgent && selectedPassengers.length > 0 ? (
+        <div className="mx-3 mt-2 rounded-lg bg-[#fff1f0] px-3 py-2 text-[12px] text-[#ff383c]">
+          差标获取失败，请返回列表重试
+        </div>
+      ) : null}
 
       {!isAuthenticated && (
         <div className="mx-3 mt-3 rounded-xl bg-white p-6 text-center shadow-sm">
@@ -265,6 +517,10 @@ export function FlightCabinsPage() {
         <p className="py-6 text-center text-sm text-[#808080]">正在获取舱位信息…</p>
       )}
 
+      {isAuthenticated && isPolicyChecking && !isLoading && !isFetching && (
+        <p className="py-4 text-center text-sm text-[#808080]">正在校验差旅标准…</p>
+      )}
+
       {isAuthenticated && error && !isFetching && !detail?.FlightFares?.length && (
         <div className="px-3 py-6 text-center">
           <p className="text-sm text-destructive">{formatApiError(error, "flight")}</p>
@@ -278,21 +534,29 @@ export function FlightCabinsPage() {
         </div>
       )}
 
-      {isAuthenticated && !isLoading && !error && (
+      {isAuthenticated && !isLoading && !error && !isPolicyChecking && (
         <>
           <FlightCabinsTabs activeTab={activeTab} onChange={setActiveTab} />
 
           <div className="space-y-3 px-3 py-3">
-            {visibleCabins.length === 0 ? (
+            {displayRows.length === 0 ? (
               <div className="rounded-xl bg-white p-8 text-center text-sm text-[#808080] shadow-sm">
                 {activeTab === "economy" ? "暂无经济/超经舱位" : "暂无商务/头等舱位"}
               </div>
             ) : (
-              visibleCabins.map((fare, index) => (
+              displayRows.map((row, index) => (
                 <FlightCabinCard
-                  key={`${fare.Id ?? fare.Code ?? "fare"}-${fare.SalesPrice}-${index}`}
-                  fare={fare}
-                  onBook={handleBook}
+                  key={`${row.fare.Id ?? row.fare.Code ?? row.fare.BookCode ?? "fare"}-${row.fare.SalesPrice}-${index}`}
+                  fare={row.fare}
+                  policyColor={policyFilterEnabled ? row.color : "default"}
+                  policyHint={
+                    policyFilterEnabled ? formatFlightCabinPolicyHint(row.policy) : undefined
+                  }
+                  policyBlocked={
+                    policyFilterEnabled ? isFlightCabinPolicyBlocked(row, isAgent) : false
+                  }
+                  soldOut={isFlightCabinSoldOut(row)}
+                  onBook={() => handleBook(row)}
                   onShowRules={handleShowRules}
                 />
               ))
@@ -307,6 +571,14 @@ export function FlightCabinsPage() {
         onClose={() => setRulesFare(null)}
       />
 
+      <FlightPolicyFilterSheet
+        open={policyFilterOpen}
+        passengers={selectedPassengers}
+        showAllSelected={!policyFilterEnabled}
+        selectedPassengerId={filterPassengerId}
+        onClose={() => setPolicyFilterOpen(false)}
+        onConfirm={handlePolicyFilterConfirm}
+      />
     </div>
   );
 }

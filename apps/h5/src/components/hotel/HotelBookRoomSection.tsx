@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 
-import { BookSubsectionLabel } from "@/components/book/BookSubsectionLabel";
 import { HOTEL_DETAIL_FONT } from "@/components/hotel/hotel-detail-chrome";
 
 interface HotelBookRoomSectionProps {
@@ -8,8 +7,6 @@ interface HotelBookRoomSectionProps {
   passenger: ReactNode;
   serviceFee?: ReactNode;
   authorizedContacts?: ReactNode;
-  /** Show「授权账号」subsection label — hidden until at least one contact is added. */
-  showAuthorizedLabel?: boolean;
 }
 
 /** One white card per room — passenger, service fee, and authorized contacts as separate blocks. */
@@ -18,7 +15,6 @@ export function HotelBookRoomSection({
   passenger,
   serviceFee,
   authorizedContacts,
-  showAuthorizedLabel = false,
 }: HotelBookRoomSectionProps) {
   return (
     <section
@@ -30,23 +26,12 @@ export function HotelBookRoomSection({
         </span>
       </div>
 
-      <div className="px-3 pb-4 pt-3">
-        <BookSubsectionLabel title="入住人" />
-        {passenger}
-      </div>
+      <div className="px-3 pb-4 pt-3">{passenger}</div>
 
-      {serviceFee ? (
-        <div className="px-3 pb-4">
-          <BookSubsectionLabel title="费用" />
-          {serviceFee}
-        </div>
-      ) : null}
+      {serviceFee ? <div className="px-3 pb-4">{serviceFee}</div> : null}
 
       {authorizedContacts ? (
-        <div className="border-t border-[#EEF1F6] bg-[#FAFBFC] px-3 py-4">
-          {showAuthorizedLabel ? <BookSubsectionLabel title="授权账号" /> : null}
-          {authorizedContacts}
-        </div>
+        <div className="border-t border-[#EEF1F6] bg-[#FAFBFC] px-3 py-4">{authorizedContacts}</div>
       ) : null}
     </section>
   );

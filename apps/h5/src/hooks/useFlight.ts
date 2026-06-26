@@ -1,6 +1,11 @@
 import { ApiError } from "@ryx/api";
 import { useQuery } from "@tanstack/react-query";
-import type { FlightDetailParams, FlightSearchParams } from "@ryx/shared-types";
+import type {
+  FlightDetailParams,
+  FlightPolicyParams,
+  FlightPolicyPassengerResult,
+  FlightSearchParams,
+} from "@ryx/shared-types";
 
 import { FLIGHT_LIST_STALE_MS } from "@/lib/flight-list-refresh";
 import { normalizeFlightDetailResponse } from "@ryx/api";
@@ -64,6 +69,31 @@ export function useFlightDetail(params: FlightDetailParams | null) {
     ),
     staleTime: 0,
     refetchOnMount: "always",
+    refetchOnWindowFocus: false,
+    retry: (failureCount) => failureCount < 1,
+  });
+}
+
+export function useFlightPolicy(
+  params: FlightPolicyParams | null,
+  options?: {
+    enabled?: boolean;
+    initialData?: FlightPolicyPassengerResult[];
+  },
+) {
+  const enabled = options?.enabled ?? true;
+  return useQuery({
+    queryKey: ["flight", "policy", params],
+    queryFn: async () => {
+      const api = getApi();
+      if (getApiMode() !== "mock" && !api.proxy.getApiConfig()?.Token) {
+        await api.proxy.loadApiConfig();
+      }
+      return api.flight.getFlightPolicy(params!);
+    },
+    enabled: enabled && Boolean(params?.Passengers && params.FlightDetail),
+    initialData: options?.initialData,
+    staleTime: FLIGHT_LIST_STALE_MS,
     refetchOnWindowFocus: false,
     retry: (failureCount) => failureCount < 1,
   });

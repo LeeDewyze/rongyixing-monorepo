@@ -18,17 +18,17 @@
 
 ## 2. 现状对照
 
-| 维度 | Legacy | 新 H5 现状 |
-|------|--------|------------|
-| 路由 | `#/tmc-flight-list_ryx` | `/flight/list` |
-| 列表 API | `TmcApiFlightUrl-Home-Index` v2.0，Timeout 60s | ✅ `packages/api` `searchFlights()` |
-| 页面逻辑 | `tmc-flight-list_ryx.base.page.ts` | ✅ `FlightListPage.tsx`（部分） |
-| 客户端筛选/排序 | `FilterConditionModel` + `fly-filter` | ✅ `utils/flight-list.ts` |
-| 出行人 | `bookInfos` + 选乘客弹层 | ⚠️ `/passenger/select` 链接，未联动 refetch |
-| 选航班 → 舱位 | → `tmc-flight-item-cabins_ryx` | ⚠️ `FlightCabinsPage` 占位 |
-| 改签 | `isExchange` + `Home-Exchange` | ❌ |
-| 往返 | 去程/回程 + `FlightJourneyEntity` | ❌ |
-| 10 分钟超时弹窗 | `pagePopTimeout` | ❌ |
+| 维度            | Legacy                                         | 新 H5 现状                                  |
+| --------------- | ---------------------------------------------- | ------------------------------------------- |
+| 路由            | `#/tmc-flight-list_ryx`                        | `/flight/list`                              |
+| 列表 API        | `TmcApiFlightUrl-Home-Index` v2.0，Timeout 60s | ✅ `packages/api` `searchFlights()`         |
+| 页面逻辑        | `tmc-flight-list_ryx.base.page.ts`             | ✅ `FlightListPage.tsx`（部分）             |
+| 客户端筛选/排序 | `FilterConditionModel` + `fly-filter`          | ✅ `utils/flight-list.ts`                   |
+| 出行人          | `bookInfos` + 选乘客弹层                       | ⚠️ `/passenger/select` 链接，未联动 refetch |
+| 选航班 → 舱位   | → `tmc-flight-item-cabins_ryx`                 | ⚠️ `FlightCabinsPage` 占位                  |
+| 改签            | `isExchange` + `Home-Exchange`                 | ❌                                          |
+| 往返            | 去程/回程 + `FlightJourneyEntity`              | ❌                                          |
+| 10 分钟超时弹窗 | `pagePopTimeout`                               | ❌                                          |
 
 矩阵当前标注：**部分，筛选简化**（见 [机票模块.md §6](../../ryx/机票模块.md#6-与新-monorepo-对照)）。
 
@@ -43,11 +43,11 @@ Legacy 行为对照 → Gap 清单 → API 封装/校对（Proxy）
   → H5 页面增量 → Proxy 验收 → Mock 对齐 → 更新矩阵
 ```
 
-| 阶段 | 环境 | 目的 |
-|------|------|------|
-| 开发 / 联调 | `proxy` | 以 Legacy Network / curl 为金标准 |
-| 本地无登录快速浏览 | `mock` | **最后**按 Proxy 实测响应补 handler |
-| CI | `mock` | 依赖最后一轮 Mock 对齐后的稳定 fixture |
+| 阶段               | 环境    | 目的                                   |
+| ------------------ | ------- | -------------------------------------- |
+| 开发 / 联调        | `proxy` | 以 Legacy Network / curl 为金标准      |
+| 本地无登录快速浏览 | `mock`  | **最后**按 Proxy 实测响应补 handler    |
+| CI                 | `mock`  | 依赖最后一轮 Mock 对齐后的稳定 fixture |
 
 **验收顺序**：
 
@@ -91,7 +91,7 @@ flowchart LR
 
 - [x] 封装 / 校对 `Home-Detail`（Proxy 先通）
 - [x] 实现 `FlightCabinsPage`（舱位列表 + 摘要 + 退改签）
-- [ ] Policy 完整色标 / 过滤差标（填单链依赖部分可后置，见填单策略）
+- [x] Policy 完整色标 / 过滤差标（列表点击前置 `Home-Policy` + 舱位页缓存复用）
 
 > Phase B 详情与验收见已完成提交；**填单 Phase C** 见 [flight-book-migration-strategy.md](./flight-book-migration-strategy.md)。
 
@@ -105,12 +105,12 @@ flowchart LR
 
 ### 延期（列表/预订增强，非 Phase C v1）
 
-| 项 | 原因 |
-|----|------|
-| 改签 `isExchange` + `Home-Exchange` | 依赖订单详情入口 |
-| 往返双段 | **产品决策排除**（Legacy ryx 国内往返 UI 已关；见 [flight-book-migration-strategy.md §13](./flight-book-migration-strategy.md#13-已拍板)） |
-| 多人按乘客分别选航班 | 需 bookInfos + 汇总页 |
-| `isClearBookInfos` 路由守卫 | 填单链稳定后再接 |
+| 项                                  | 原因                                                                                                                                       |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| 改签 `isExchange` + `Home-Exchange` | 依赖订单详情入口                                                                                                                           |
+| 往返双段                            | **产品决策排除**（Legacy ryx 国内往返 UI 已关；见 [flight-book-migration-strategy.md §13](./flight-book-migration-strategy.md#13-已拍板)） |
+| 多人按乘客分别选航班                | 需 bookInfos + 汇总页                                                                                                                      |
+| `isClearBookInfos` 路由守卫         | 填单链稳定后再接                                                                                                                           |
 
 ---
 
@@ -118,13 +118,13 @@ flowchart LR
 
 Legacy 用全局 Service + RxJS；新 H5 **不要**搬 2200 行 god service。
 
-| 状态 | 存放 | 说明 |
-|------|------|------|
-| 搜索条件 | URL query | `date/fromCode/toCode/fromAsAirport/...`（已有） |
-| 列表数据 | TanStack Query | `useFlightList(params)`（已有） |
-| 筛选 / 排序 | 页面 `useState` | filterDraft / filterApplied（已有） |
-| 已选出行人 | `usePassengerSelection(Flight)` | 需接 refetch |
-| 预订上下文 bookInfos | Phase B+ 新 hook | 如 `useFlightBookContext`，勿过早引入 |
+| 状态                 | 存放                            | 说明                                             |
+| -------------------- | ------------------------------- | ------------------------------------------------ |
+| 搜索条件             | URL query                       | `date/fromCode/toCode/fromAsAirport/...`（已有） |
+| 列表数据             | TanStack Query                  | `useFlightList(params)`（已有）                  |
+| 筛选 / 排序          | 页面 `useState`                 | filterDraft / filterApplied（已有）              |
+| 已选出行人           | `usePassengerSelection(Flight)` | 需接 refetch                                     |
+| 预订上下文 bookInfos | Phase B+ 新 hook                | 如 `useFlightBookContext`，勿过早引入            |
 
 ---
 
@@ -209,32 +209,32 @@ Legacy 用全局 Service + RxJS；新 H5 **不要**搬 2200 行 god service。
 
 列表页迁移是否 **连带 Phase B（舱位页）** 同一迭代：
 
-| 选项 | 结果 |
-|------|------|
-| 仅 Phase A | 列表浏览完整，点航班仍可能进占位页 → 矩阵 `[~]` |
-| Phase A + B | 可选 `[x]`，并可继续推填单 |
+| 选项        | 结果                                            |
+| ----------- | ----------------------------------------------- |
+| 仅 Phase A  | 列表浏览完整，点航班仍可能进占位页 → 矩阵 `[~]` |
+| Phase A + B | 可选 `[x]`，并可继续推填单                      |
 
 ---
 
 ## 10. 关键文件索引
 
-| 用途 | 路径 |
-|------|------|
+| 用途            | 路径                                                                         |
+| --------------- | ---------------------------------------------------------------------------- |
 | Legacy 列表逻辑 | `beeantmobile-main/projects/ryx/src/app/tmc/tmc-flight/tmc-flight-list_ryx/` |
-| H5 列表页 | `apps/h5/src/pages/flight/FlightListPage.tsx` |
-| 筛选排序 | `apps/h5/src/utils/flight-list.ts` |
-| 列表 hook | `apps/h5/src/hooks/useFlight.ts` |
-| API | `packages/api/src/apis/flight.ts` |
-| Mock（最后改） | `packages/mock/src/handlers/flight.ts` |
-| 舱位占位 | `apps/h5/src/pages/flight/FlightCabinsPage.tsx` |
+| H5 列表页       | `apps/h5/src/pages/flight/FlightListPage.tsx`                                |
+| 筛选排序        | `apps/h5/src/utils/flight-list.ts`                                           |
+| 列表 hook       | `apps/h5/src/hooks/useFlight.ts`                                             |
+| API             | `packages/api/src/apis/flight.ts`                                            |
+| Mock（最后改）  | `packages/mock/src/handlers/flight.ts`                                       |
+| 舱位占位        | `apps/h5/src/pages/flight/FlightCabinsPage.tsx`                              |
 
 ---
 
 ## 11. 相关文档
 
-| 文档 | 说明 |
-|------|------|
-| [机票模块.md](../../ryx/机票模块.md) | Legacy 全流程、API、依赖 |
-| [PAGE-API-MATRIX.md](../PAGE-API-MATRIX.md) | 页面 → Method 矩阵 |
-| [H5-RYX-MIGRATION.md](../H5-RYX-MIGRATION.md) | 迁移总原则 |
+| 文档                                                       | 说明                       |
+| ---------------------------------------------------------- | -------------------------- |
+| [机票模块.md](../../ryx/机票模块.md)                       | Legacy 全流程、API、依赖   |
+| [PAGE-API-MATRIX.md](../PAGE-API-MATRIX.md)                | 页面 → Method 矩阵         |
+| [H5-RYX-MIGRATION.md](../H5-RYX-MIGRATION.md)              | 迁移总原则                 |
 | [passenger-module-design.md](./passenger-module-design.md) | 同系 Picker / 出行人可参考 |

@@ -23,6 +23,10 @@ import {
 } from "@/lib/flight-search";
 import { buildCabinsPath, getFlightListEmptyMessage } from "@/lib/flight-list-refresh";
 import { saveFlightListSnapshot } from "@/lib/flight-list-session";
+import { prefetchFlightCabinsPolicy } from "@/lib/flight-cabins-preflight";
+import { FLIGHT_NO_POLICY_SEATS_MESSAGE } from "@/lib/flight-cabin-policy";
+import { hasAgentIdentity } from "@/lib/flight-book-save-order";
+import { useIdentity } from "@/hooks/useIdentity";
 import { parseLocalDate, todayDateString } from "@/lib/date-search";
 import { FLIGHT_CALENDAR_CONFIG } from "@/lib/calendar-picker";
 import { buildPassengerSelectPath } from "@/lib/passenger-selection";
@@ -57,6 +61,8 @@ export function FlightListPage() {
   const [searchParams] = useSearchParams();
   const form = useFlightSearchForm();
   const { selected: selectedPassengers } = usePassengerSelection(ProductType.Flight);
+  const { data: identity } = useIdentity();
+  const isAgent = hasAgentIdentity(identity);
   const listReturnTo = `/flight/list?${searchParams.toString()}`;
   const isAuthenticated = getApiMode() === "mock" || Boolean(getTicket());
 
@@ -123,6 +129,7 @@ export function FlightListPage() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [headerHeight, setHeaderHeight] = useState(FALLBACK_HEADER_HEIGHT);
   const [passengerAlertOpen, setPassengerAlertOpen] = useState(false);
+  const [openingCabinsId, setOpeningCabinsId] = useState<string | null>(null);
 
   const resolvedListCities = useMemo(
     () =>
@@ -332,14 +339,33 @@ export function FlightListPage() {
     navigateBack(navigate, "/home?product=flight");
   }
 
-  function openCabins(flightId: string) {
+  async function openCabins(flightId: string) {
     const segment = displayed.find((s) => s.Id === flightId);
     if (!segment) return;
     if (selectedPassengers.length === 0) {
       setPassengerAlertOpen(true);
       return;
     }
-    navigate(buildCabinsPath(segment, searchParams));
+    if (openingCabinsId) return;
+
+    setOpeningCabinsId(flightId);
+    try {
+      const { policyResults } = await prefetchFlightCabinsPolicy({
+        segment,
+        listParams,
+        searchParams,
+        passengers: selectedPassengers,
+      });
+      if (!policyResults.length && !isAgent) {
+        window.alert(FLIGHT_NO_POLICY_SEATS_MESSAGE);
+        return;
+      }
+      navigate(buildCabinsPath(segment, searchParams));
+    } catch (error) {
+      window.alert(formatApiError(error, "flight"));
+    } finally {
+      setOpeningCabinsId(null);
+    }
   }
 
   function handlePassengerAlertDismiss() {
@@ -421,12 +447,13 @@ export function FlightListPage() {
           )}
 
           {isAuthenticated &&
-            directFlights.map((seg, index) => (
+            directFlights.map((seg) => (
               <FlightSegmentCard
                 key={seg.Id}
                 segment={seg}
                 variant={resolveFlightCardVariant(seg, "direct")}
-                onClick={() => openCabins(seg.Id)}
+                loading={openingCabinsId === seg.Id}
+                onClick={() => void openCabins(seg.Id)}
               />
             ))}
 
@@ -437,12 +464,13 @@ export function FlightListPage() {
                 <span className="shrink-0 px-2">推荐中转航班</span>
                 <span className="h-px flex-1 bg-[#e5e5e5]" />
               </div>
-              {transferFlights.map((seg, index) => (
+              {transferFlights.map((seg) => (
                 <FlightSegmentCard
                   key={seg.Id}
                   segment={seg}
                   variant={resolveFlightCardVariant(seg, "transfer")}
-                  onClick={() => openCabins(seg.Id)}
+                  loading={openingCabinsId === seg.Id}
+                  onClick={() => void openCabins(seg.Id)}
                 />
               ))}
             </>
