@@ -11,6 +11,7 @@ import { FlightListHeader } from "@/components/flight/FlightListHeader";
 import { FlightListToolbar } from "@/components/flight/FlightListToolbar";
 import { FlightModifySearchSheet } from "@/components/flight/FlightModifySearchSheet";
 import { FlightSegmentCard } from "@/components/flight/FlightSegmentCard";
+import { FlightPolicyLoadingOverlay } from "@/components/flight/FlightPolicyLoadingOverlay";
 import { usePageHeader } from "@/components/layout";
 import { useFlightListPageEffects } from "@/hooks/useFlightListPageEffects";
 import { useFlightList } from "@/hooks/useFlight";
@@ -533,6 +534,8 @@ export function FlightListPage() {
         onClose={handlePassengerAlertDismiss}
         onConfirm={handlePassengerAlertConfirm}
       />
+
+      <FlightPolicyLoadingOverlay open={openingCabinsId != null} />
     </div>
   );
 }

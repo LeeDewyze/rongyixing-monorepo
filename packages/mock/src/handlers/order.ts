@@ -42,5 +42,7 @@ export function createOrderMockHandlers(): Record<string, (data: unknown) => IRe
     [ORDER_FLOW_METHODS.SEND_HOTEL_SMS]: () => successResponse(true),
     [ORDER_FLOW_METHODS.CONFIRM_HOTEL_SMS]: () => successResponse(true),
     [ORDER_FLOW_METHODS.CHECK_INSPUR_REPUSH]: () => successResponse(false),
+    [ORDER_FLOW_METHODS.ABOLISH_ORDER]: () => successResponse(true),
+    [ORDER_FLOW_METHODS.ABOLISH_TICKET]: () => successResponse(true),
   };
 }

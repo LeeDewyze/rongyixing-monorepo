@@ -4,8 +4,7 @@ import {
   HOTEL_DETAIL_FONT,
   HOTEL_ORDER_SECTION_TITLE,
 } from "@/components/hotel/hotel-detail-chrome";
-import { formatTravelerCredentialDisplay } from "@/lib/hotel-order-detail";
-
+import { OrderTravelerCredentialRow } from "../OrderTravelerCredentialRow";
 import { HotelOrderDetailRow } from "./HotelOrderDetailRow";
 
 interface HotelOrderTravelerCardProps {
@@ -26,12 +25,10 @@ export function HotelOrderTravelerCard({
       <h2 className={`mb-3 ${HOTEL_ORDER_SECTION_TITLE}`}>旅客信息</h2>
 
       <HotelOrderDetailRow label="姓名" value={traveler?.Name ?? room.CustomerName ?? "—"} />
-      <HotelOrderDetailRow
+      <OrderTravelerCredentialRow
         label="证件号码"
-        value={formatTravelerCredentialDisplay(
-          traveler?.CredentialNumber,
-          traveler?.CredentialType,
-        )}
+        number={traveler?.CredentialNumber}
+        type={traveler?.CredentialType}
       />
       <HotelOrderDetailRow label="联系电话" value={traveler?.Mobile ?? "—"} />
       <HotelOrderDetailRow label="联系邮箱" value={traveler?.Email ?? "—"} />

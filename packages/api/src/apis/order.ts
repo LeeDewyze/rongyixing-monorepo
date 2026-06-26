@@ -1,4 +1,6 @@
 import type {
+  FlightAbolishTicketParams,
+  FlightCancelParams,
   HotelCancelParams,
   HotelOrderSmsConfirmParams,
   HotelOrderSmsParams,
@@ -11,8 +13,10 @@ import type {
 import { ORDER_FLOW_METHODS } from "../methods/order-flow.js";
 import type { ProxyClient } from "../proxy/proxy-client.js";
 import {
+  normalizeFlightOrderDetail,
   normalizeHotelOrderDetail,
   normalizeOrderDetailResponse,
+  shouldNormalizeFlightDetail,
   shouldNormalizeHotelDetail,
 } from "./order-detail-map.js";
 import {
@@ -27,6 +31,8 @@ export interface OrderApi {
   getList(params: OrderListParams): Promise<OrderListResponse>;
   getDetail(params: OrderDetailParams): Promise<OrderDetailResponse>;
   cancelHotel(params: HotelCancelParams): Promise<boolean>;
+  cancelFlight(params: FlightCancelParams): Promise<boolean>;
+  abolishFlightTicket(params: FlightAbolishTicketParams): Promise<boolean>;
   sendHotelOrderSmsCode(params: HotelOrderSmsParams): Promise<boolean>;
   confirmHotelOrderSmsCode(params: HotelOrderSmsConfirmParams): Promise<boolean>;
   checkInspurRepush(params: OrderDetailParams): Promise<boolean>;
@@ -63,6 +69,9 @@ export function createOrderApi(proxy: ProxyClient): OrderApi {
         data: { Id: orderId, OrderId: orderId },
       });
       const summary = normalizeOrderDetailResponse(raw);
+      if (shouldNormalizeFlightDetail(raw, summary)) {
+        return normalizeFlightOrderDetail(raw);
+      }
       if (shouldNormalizeHotelDetail(raw, summary)) {
         return normalizeHotelOrderDetail(raw);
       }
@@ -71,6 +80,18 @@ export function createOrderApi(proxy: ProxyClient): OrderApi {
     cancelHotel(params) {
       return proxy.send<boolean>({
         method: ORDER_FLOW_METHODS.CANCEL_HOTEL,
+        data: params,
+      });
+    },
+    cancelFlight(params) {
+      return proxy.send<boolean>({
+        method: ORDER_FLOW_METHODS.ABOLISH_ORDER,
+        data: { ...params, Tag: params.Tag ?? "flight" },
+      });
+    },
+    abolishFlightTicket(params) {
+      return proxy.send<boolean>({
+        method: ORDER_FLOW_METHODS.ABOLISH_TICKET,
         data: params,
       });
     },

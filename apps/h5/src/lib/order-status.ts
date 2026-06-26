@@ -15,12 +15,6 @@ const ORDER_STATUS_COLORS: Record<string, string> = {
   交易取消: "#8E8E93",
 };
 
-const TICKET_STATUS_COLORS: Record<string, string> = {
-  待出票: "#FF4D4F",
-  已出票: "#52C41A",
-  已退票: "#9CA3AF",
-};
-
 const GRAY_PRICE_STATUSES = new Set(["Cancelled", "已取消"]);
 const GRAY_PRICE_STATUS_NAMES = new Set(["已取消", "交易取消"]);
 
@@ -28,8 +22,29 @@ export function getOrderStatusStyle(statusName: string): StatusStyle {
   return { color: ORDER_STATUS_COLORS[statusName] ?? "#010101" };
 }
 
+const TICKET_STATUS_COLORS: Record<string, string> = {
+  待出票: "#FF4D4F",
+  预订成功: "#FF4D4F",
+  预订中: "#FF4D4F",
+  出票中: "#FF4D4F",
+  已出票: "#52C41A",
+  已退票: "#9CA3AF",
+  废除: "#9CA3AF",
+};
+
+const TICKET_STATUS_FALLBACK_DEFAULT = "#666666";
+
+function resolveTicketStatusColor(statusName: string): string {
+  const exact = TICKET_STATUS_COLORS[statusName.trim()];
+  if (exact) return exact;
+  if (/待出票|待付款|预订|出票中|改签中|取消中/.test(statusName)) return "#FF4D4F";
+  if (/已出票|成功|完成/.test(statusName)) return "#52C41A";
+  if (/废除|退票|取消|作废/.test(statusName)) return "#9CA3AF";
+  return TICKET_STATUS_FALLBACK_DEFAULT;
+}
+
 export function getTicketStatusStyle(statusName: string): StatusStyle {
-  return { color: TICKET_STATUS_COLORS[statusName] ?? "#666666" };
+  return { color: resolveTicketStatusColor(statusName) };
 }
 
 export function shouldGrayPrice(item: OrderListItem): boolean {

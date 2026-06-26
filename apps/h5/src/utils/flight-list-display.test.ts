@@ -9,6 +9,8 @@ import {
   formatFlightMealLabel,
   formatFlightMetaDuration,
   resolveFlightCardVariant,
+  formatOrderTripAirlineFlightLabel,
+  resolveTripAirlineShortName,
   shortAirlineName,
 } from "./flight-list-display";
 
@@ -60,6 +62,28 @@ describe("flight-list-display cabins helpers", () => {
         Meal: "点心",
       }),
     ).toBe("南方航空 | CZ8899 | 机型 327 | 点心");
+  });
+
+  it("resolves order trip airline label with code-share and IATA fallbacks", () => {
+    expect(
+      formatOrderTripAirlineFlightLabel({
+        AirlineName: "中国国航",
+        CodeShareNumber: "CA1915",
+        FlightNumber: "KN5955",
+      }),
+    ).toBe("国航CA1915");
+    expect(
+      formatOrderTripAirlineFlightLabel({
+        FlightNumber: "KN5955",
+      }),
+    ).toBe("联航KN5955");
+    expect(
+      resolveTripAirlineShortName({
+        CodeShareNumber: "CA1915",
+        CodeShareAirlineName: "中国国航",
+        FlightNumber: "KN5955",
+      }),
+    ).toBe("国航");
   });
 
   it("marks every tied lowest fare as direct-lowest", () => {

@@ -2,6 +2,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -19,8 +20,9 @@ export interface PageHeaderState extends AppHeaderProps {
 
 interface PageHeaderStore {
   getHeader: () => PageHeaderState;
-  setHeader: (state: PageHeaderState) => void;
-  resetHeader: () => void;
+  setHeader: (state: PageHeaderState, ownerId: number) => void;
+  resetHeader: (ownerId: number) => void;
+  allocateOwnerId: () => number;
   subscribe: (listener: () => void) => () => void;
 }
 
@@ -30,16 +32,23 @@ const PageHeaderStoreContext = createContext<PageHeaderStore | null>(null);
 
 export function PageHeaderProvider({ children }: { children: ReactNode }) {
   const headerRef = useRef<PageHeaderState>(EMPTY_HEADER);
+  const ownerRef = useRef(0);
+  const nextOwnerIdRef = useRef(1);
   const listenersRef = useRef(new Set<() => void>());
 
   const store = useMemo<PageHeaderStore>(
     () => ({
       getHeader: () => headerRef.current,
-      setHeader: (state: PageHeaderState) => {
+      allocateOwnerId: () => nextOwnerIdRef.current++,
+      setHeader: (state: PageHeaderState, ownerId: number) => {
+        ownerRef.current = ownerId;
         headerRef.current = state;
         listenersRef.current.forEach((listener) => listener());
       },
-      resetHeader: () => {
+      resetHeader: (ownerId: number) => {
+        if (ownerRef.current !== ownerId) {
+          return;
+        }
         headerRef.current = EMPTY_HEADER;
         listenersRef.current.forEach((listener) => listener());
       },
@@ -103,6 +112,10 @@ export function usePageHeader({
   tone,
 }: PageHeaderState) {
   const store = useContext(PageHeaderStoreContext);
+  const ownerIdRef = useRef<number | null>(null);
+  if (store && ownerIdRef.current == null) {
+    ownerIdRef.current = store.allocateOwnerId();
+  }
   const onBackRef = useRef(onBack);
   onBackRef.current = onBack;
   const rightRef = useRef(right);
@@ -110,22 +123,26 @@ export function usePageHeader({
   const extendedRef = useRef(extended);
   extendedRef.current = extended;
 
-  useEffect(() => {
-    if (!store) return;
+  useLayoutEffect(() => {
+    if (!store || ownerIdRef.current == null) return;
 
-    store.setHeader({
-      title,
-      subtitle,
-      showBack,
-      onBack: () => onBackRef.current?.(),
-      right: rightRef.current,
-      extended: extendedRef.current,
-      visible,
-      tone,
-    });
+    const ownerId = ownerIdRef.current;
+    store.setHeader(
+      {
+        title,
+        subtitle,
+        showBack,
+        onBack: () => onBackRef.current?.(),
+        right: rightRef.current,
+        extended: extendedRef.current,
+        visible,
+        tone,
+      },
+      ownerId,
+    );
 
     return () => {
-      store.resetHeader();
+      store.resetHeader(ownerId);
     };
   }, [store, showBack, subtitle, title, tone, visible]);
 }

@@ -136,6 +136,12 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
             });
             return;
           }
+          if (item.tabId === OrderListTabId.Flight) {
+            navigate(`/orders/flight/${encodeURIComponent(item.OrderId)}`, {
+              state: { action: "cancel" },
+            });
+            return;
+          }
           setToastMessage("功能即将上线");
           return;
         case "refund":

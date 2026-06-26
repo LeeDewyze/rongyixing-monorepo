@@ -57,7 +57,7 @@ export {
 } from "./apis/flight-detail-adapter.js";
 export { stripFlightOrderBookDto } from "./apis/flight-book-adapter.js";
 export { createOrderApi, type OrderApi } from "./apis/order.js";
-export { normalizeHotelOrderDetail } from "./apis/order-detail-map.js";
+export { normalizeFlightOrderDetail, normalizeHotelOrderDetail } from "./apis/order-detail-map.js";
 export { createPayApi, type PayApi } from "./apis/pay.js";
 export { createPassengerApi, type PassengerApi } from "./apis/passenger.js";
 export { createMemberApi, type MemberApi } from "./apis/member.js";

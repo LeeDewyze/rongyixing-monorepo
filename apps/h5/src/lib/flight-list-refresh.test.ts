@@ -4,6 +4,7 @@ import {
   FLIGHT_LIST_STALE_MS,
   FLIGHT_LIST_TIMEOUT_MS,
   buildCabinsPath,
+  buildFlightListRefreshHref,
   getFlightListEmptyMessage,
   isFlightListStale,
   isFlightListTimedOut,
@@ -53,6 +54,22 @@ describe("flight-list-refresh", () => {
     expect(path).toContain("fromAirport=PEK");
     expect(path).toContain("detailKey=dk-1");
     expect(path).toContain("date=2026-06-20");
+  });
+
+  it("buildFlightListRefreshHref adds doRefresh for list refetch", () => {
+    expect(
+      buildFlightListRefreshHref({
+        date: "2026-06-20",
+        fromCode: "BJS",
+        toCode: "SHA",
+        fromName: "北京",
+        toName: "上海",
+        fromAsAirport: false,
+        toAsAirport: false,
+      }),
+    ).toBe(
+      "/flight/list?date=2026-06-20&fromCode=BJS&toCode=SHA&fromName=%E5%8C%97%E4%BA%AC&toName=%E4%B8%8A%E6%B5%B7&doRefresh=true",
+    );
   });
 
   it("buildCabinsPath forwards BookType for Home-Detail", () => {

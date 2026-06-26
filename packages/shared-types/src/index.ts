@@ -204,6 +204,14 @@ export type {
 } from "./flight-book.js";
 
 export type {
+  FlightAbolishTicketParams,
+  FlightCancelParams,
+  FlightOrderTicket,
+  FlightOrderTrip,
+  OrderContact,
+} from "./flight-order.js";
+
+export type {
   FlightBookPolicy,
   FlightPolicyParams,
   FlightPolicyPassengerResult,

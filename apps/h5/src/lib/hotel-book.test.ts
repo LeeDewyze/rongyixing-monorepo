@@ -173,17 +173,15 @@ describe("buildHotelOrderBookDto", () => {
         expireDate: "12/28",
         cvv: "123",
       },
-      authorizedContactsByPassenger: {
-        p1: [
-          {
-            accountId: "link1",
-            name: "李四",
-            mobile: "13900000000",
-            email: "a@b.com",
-            notifyLanguage: "cn",
-          },
-        ],
-      },
+      authorizedContacts: [
+        {
+          accountId: "link1",
+          name: "李四",
+          mobile: "13900000000",
+          email: "a@b.com",
+          notifyLanguage: "cn",
+        },
+      ],
     });
 
     const passenger = dto.Passengers[0];

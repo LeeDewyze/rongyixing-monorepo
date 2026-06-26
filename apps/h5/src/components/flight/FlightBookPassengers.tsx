@@ -12,6 +12,7 @@ import {
   FlightBookCredentialSwitchButton,
   FlightBookExpandableSummaryCard,
 } from "@/components/flight/FlightBookExpandableSummaryCard";
+import { BookContactCheckboxMark } from "@/components/book/BookContactCheckbox";
 import { buildPassengerSelectPath } from "@/lib/passenger-selection";
 
 function DetailRow({
@@ -55,7 +56,7 @@ function ContactCheckboxList({
       {options.map((option, index) => (
         <label
           key={`${option.value}-${index}`}
-          className="flex items-center justify-end gap-2 text-[14px] leading-tight text-[#333333]"
+          className="flex cursor-pointer items-center justify-end gap-2 text-[14px] leading-tight text-[#333333]"
         >
           <span className="truncate">{option.value}</span>
           <input
@@ -67,8 +68,9 @@ function ContactCheckboxList({
               );
               onChange(next);
             }}
-            className="size-4 shrink-0 accent-[#5099fe]"
+            className="sr-only"
           />
+          <BookContactCheckboxMark checked={option.checked} />
         </label>
       ))}
     </div>
@@ -96,6 +98,174 @@ function resolveStaffAccountId(passenger: PassengerBookInfo): string | undefined
   const fromPassenger = passenger.passenger.AccountId;
   if (fromPassenger) return String(fromPassenger);
   return passenger.credential.AccountId ? String(passenger.credential.AccountId) : undefined;
+}
+
+interface FlightBookPassengerCardProps {
+  passenger: PassengerBookInfo;
+  form: FlightPassengerBookForm;
+  showOrganizations: boolean;
+  showCostCenter: boolean;
+  onUpdateForm: (passengerId: string, patch: Partial<FlightPassengerBookForm>) => void;
+  onOpenOrganization: (passengerId: string) => void;
+  onOpenCostCenter: (passengerId: string) => void;
+  onChangeCredential: (passenger: PassengerBookInfo) => void;
+}
+
+export function FlightBookPassengerCard({
+  passenger,
+  form,
+  showOrganizations,
+  showCostCenter,
+  onUpdateForm,
+  onOpenOrganization,
+  onOpenCostCenter,
+  onChangeCredential,
+}: FlightBookPassengerCardProps) {
+  const canSwitchCredential = Boolean(resolveStaffAccountId(passenger));
+  const credentialLine = `${credentialDisplayType(passenger.credential)}：${credentialDisplayNumber(passenger.credential)}`;
+
+  return (
+    <FlightBookExpandableSummaryCard
+      surface="plain"
+      className="overflow-hidden rounded-xl ring-1 ring-[#EEF1F6]"
+      name={passenger.credential.Name ?? ""}
+      subtitle={credentialLine}
+      expanded={form.expanded}
+      onToggleExpanded={() => onUpdateForm(passenger.id, { expanded: !form.expanded })}
+      footerAction={
+        canSwitchCredential ? (
+          <FlightBookCredentialSwitchButton onClick={() => onChangeCredential(passenger)} />
+        ) : null
+      }
+    >
+      <DetailRow label="联系电话">
+        <ContactCheckboxList
+          options={form.mobileOptions}
+          onChange={(mobileOptions) => onUpdateForm(passenger.id, { mobileOptions })}
+        />
+      </DetailRow>
+
+      <DetailRow label="联系邮箱">
+        <ContactCheckboxList
+          options={form.emailOptions}
+          onChange={(emailOptions) => onUpdateForm(passenger.id, { emailOptions })}
+        />
+      </DetailRow>
+
+      {showOrganizations ? (
+        <DetailRow label="部门">
+          <button
+            type="button"
+            className={detailActionClass}
+            disabled={hasOtherOrganizationInput(form)}
+            onClick={() => onOpenOrganization(passenger.id)}
+          >
+            <span className="truncate">
+              {hasOtherOrganizationInput(form)
+                ? "已填写其他部门"
+                : form.organization.name || "请选择"}
+            </span>
+            <span className="shrink-0 text-[16px] text-[#bbbbbb]" aria-hidden>
+              ›
+            </span>
+          </button>
+        </DetailRow>
+      ) : null}
+
+      {showCostCenter ? (
+        <DetailRow label="成本中心">
+          <button
+            type="button"
+            className={detailActionClass}
+            disabled={hasOtherCostCenterInput(form)}
+            onClick={() => onOpenCostCenter(passenger.id)}
+          >
+            <span className="truncate">
+              {hasOtherCostCenterInput(form)
+                ? "已填写其他成本中心"
+                : formatCostCenterDisplay(form.costCenter)}
+            </span>
+            <span className="shrink-0 text-[16px] text-[#bbbbbb]" aria-hidden>
+              ›
+            </span>
+          </button>
+        </DetailRow>
+      ) : null}
+
+      <DetailRow label="其他电话">
+        <input
+          type="tel"
+          value={form.otherMobile}
+          placeholder="请输入"
+          onChange={(event) => onUpdateForm(passenger.id, { otherMobile: event.target.value })}
+          className={detailValueClass}
+        />
+      </DetailRow>
+
+      <DetailRow label="其他邮箱">
+        <input
+          type="email"
+          value={form.otherEmail}
+          placeholder="请输入"
+          onChange={(event) => onUpdateForm(passenger.id, { otherEmail: event.target.value })}
+          className={detailValueClass}
+        />
+      </DetailRow>
+
+      {showOrganizations ? (
+        <DetailRow label="其他部门">
+          <input
+            type="text"
+            value={form.otherOrganizationName}
+            placeholder="请输入名称"
+            onChange={(event) => {
+              const value = event.target.value;
+              onUpdateForm(passenger.id, {
+                otherOrganizationName: value,
+                ...(value.trim() ? { organization: emptyOrgCost } : {}),
+              });
+            }}
+            className={detailValueClass}
+          />
+        </DetailRow>
+      ) : null}
+
+      {showCostCenter ? (
+        <>
+          <DetailRow label="其他成本中心名称">
+            <input
+              type="text"
+              value={form.otherCostCenterName}
+              placeholder="请输入名称"
+              onChange={(event) => {
+                const value = event.target.value;
+                onUpdateForm(passenger.id, {
+                  otherCostCenterName: value,
+                  ...(value.trim() ? { costCenter: emptyOrgCost } : {}),
+                });
+              }}
+              className={detailValueClass}
+            />
+          </DetailRow>
+          <DetailRow label="其他成本中心代码">
+            <input
+              type="text"
+              value={form.otherCostCenterCode}
+              placeholder="请输入代码"
+              onChange={(event) => {
+                const value = event.target.value;
+                onUpdateForm(passenger.id, {
+                  otherCostCenterCode: value,
+                  ...(value.trim() ? { costCenter: emptyOrgCost } : {}),
+                });
+              }}
+              className={detailValueClass}
+            />
+          </DetailRow>
+        </>
+      ) : null}
+    </FlightBookExpandableSummaryCard>
+  );
 }
 
 interface FlightBookPassengersProps {
@@ -137,158 +307,23 @@ export function FlightBookPassengers({
   return (
     <div className="space-y-3">
       {passengers.map((passenger) => {
-          const form = forms.find((item) => item.passengerId === passenger.id);
-          if (!form) return null;
+        const form = forms.find((item) => item.passengerId === passenger.id);
+        if (!form) return null;
 
-          const canSwitchCredential = Boolean(resolveStaffAccountId(passenger));
-          const credentialLine = `${credentialDisplayType(passenger.credential)}：${credentialDisplayNumber(passenger.credential)}`;
-
-          return (
-            <FlightBookExpandableSummaryCard
-              key={passenger.id}
-              surface="plain"
-              className="overflow-hidden rounded-xl ring-1 ring-[#EEF1F6]"
-              name={passenger.credential.Name ?? ""}
-              subtitle={credentialLine}
-              expanded={form.expanded}
-              onToggleExpanded={() => onUpdateForm(passenger.id, { expanded: !form.expanded })}
-              footerAction={
-                canSwitchCredential ? (
-                  <FlightBookCredentialSwitchButton
-                    onClick={() => onChangeCredential(passenger)}
-                  />
-                ) : null
-              }
-            >
-              <DetailRow label="联系电话">
-                <ContactCheckboxList
-                  options={form.mobileOptions}
-                  onChange={(mobileOptions) => onUpdateForm(passenger.id, { mobileOptions })}
-                />
-              </DetailRow>
-
-              <DetailRow label="联系邮箱">
-                <ContactCheckboxList
-                  options={form.emailOptions}
-                  onChange={(emailOptions) => onUpdateForm(passenger.id, { emailOptions })}
-                />
-              </DetailRow>
-
-              {showOrganizations ? (
-                <DetailRow label="部门">
-                  <button
-                    type="button"
-                    className={detailActionClass}
-                    disabled={hasOtherOrganizationInput(form)}
-                    onClick={() => onOpenOrganization(passenger.id)}
-                  >
-                    <span className="truncate">
-                      {hasOtherOrganizationInput(form)
-                        ? "已填写其他部门"
-                        : form.organization.name || "请选择"}
-                    </span>
-                    <span className="shrink-0 text-[16px] text-[#bbbbbb]" aria-hidden>
-                      ›
-                    </span>
-                  </button>
-                </DetailRow>
-              ) : null}
-
-              {showCostCenter ? (
-                <DetailRow label="成本中心">
-                  <button
-                    type="button"
-                    className={detailActionClass}
-                    disabled={hasOtherCostCenterInput(form)}
-                    onClick={() => onOpenCostCenter(passenger.id)}
-                  >
-                    <span className="truncate">
-                      {hasOtherCostCenterInput(form)
-                        ? "已填写其他成本中心"
-                        : formatCostCenterDisplay(form.costCenter)}
-                    </span>
-                    <span className="shrink-0 text-[16px] text-[#bbbbbb]" aria-hidden>
-                      ›
-                    </span>
-                  </button>
-                </DetailRow>
-              ) : null}
-
-              <DetailRow label="其他电话">
-                <input
-                  type="tel"
-                  value={form.otherMobile}
-                  placeholder="请输入"
-                  onChange={(event) => onUpdateForm(passenger.id, { otherMobile: event.target.value })}
-                  className={detailValueClass}
-                />
-              </DetailRow>
-
-              <DetailRow label="其他邮箱">
-                <input
-                  type="email"
-                  value={form.otherEmail}
-                  placeholder="请输入"
-                  onChange={(event) => onUpdateForm(passenger.id, { otherEmail: event.target.value })}
-                  className={detailValueClass}
-                />
-              </DetailRow>
-
-              {showOrganizations ? (
-                <DetailRow label="其他部门">
-                  <input
-                    type="text"
-                    value={form.otherOrganizationName}
-                    placeholder="请输入名称"
-                    onChange={(event) => {
-                      const value = event.target.value;
-                      onUpdateForm(passenger.id, {
-                        otherOrganizationName: value,
-                        ...(value.trim() ? { organization: emptyOrgCost } : {}),
-                      });
-                    }}
-                    className={detailValueClass}
-                  />
-                </DetailRow>
-              ) : null}
-
-              {showCostCenter ? (
-                <>
-                  <DetailRow label="其他成本中心名称">
-                    <input
-                      type="text"
-                      value={form.otherCostCenterName}
-                      placeholder="请输入名称"
-                      onChange={(event) => {
-                        const value = event.target.value;
-                        onUpdateForm(passenger.id, {
-                          otherCostCenterName: value,
-                          ...(value.trim() ? { costCenter: emptyOrgCost } : {}),
-                        });
-                      }}
-                      className={detailValueClass}
-                    />
-                  </DetailRow>
-                  <DetailRow label="其他成本中心代码">
-                    <input
-                      type="text"
-                      value={form.otherCostCenterCode}
-                      placeholder="请输入代码"
-                      onChange={(event) => {
-                        const value = event.target.value;
-                        onUpdateForm(passenger.id, {
-                          otherCostCenterCode: value,
-                          ...(value.trim() ? { costCenter: emptyOrgCost } : {}),
-                        });
-                      }}
-                      className={detailValueClass}
-                    />
-                  </DetailRow>
-                </>
-              ) : null}
-            </FlightBookExpandableSummaryCard>
-          );
-        })}
+        return (
+          <FlightBookPassengerCard
+            key={passenger.id}
+            passenger={passenger}
+            form={form}
+            showOrganizations={showOrganizations}
+            showCostCenter={showCostCenter}
+            onUpdateForm={onUpdateForm}
+            onOpenOrganization={onOpenOrganization}
+            onOpenCostCenter={onOpenCostCenter}
+            onChangeCredential={onChangeCredential}
+          />
+        );
+      })}
     </div>
   );
 }

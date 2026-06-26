@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ProductType,
@@ -11,7 +11,6 @@ import { FlightBookApproverSheet } from "@/components/flight/FlightBookApproverS
 import { FlightBookCostCenterSheet } from "@/components/flight/FlightBookCostCenterSheet";
 import { FlightBookCredentialSheet } from "@/components/flight/FlightBookCredentialSheet";
 import { FlightBookAddContactSheet } from "@/components/flight/FlightBookAddContactSheet";
-import { FlightBookBillSheet } from "@/components/flight/FlightBookBillSheet";
 import { FlightBookOrganizationSheet } from "@/components/flight/FlightBookOrganizationSheet";
 import { FlightBookAuthorizedContacts } from "@/components/flight/FlightBookAuthorizedContacts";
 import { FlightBookFooter } from "@/components/flight/FlightBookFooter";
@@ -25,7 +24,10 @@ import {
   FlightBookNotifyLanguageRow,
   FlightBookServiceFeeRows,
 } from "@/components/flight/FlightBookExtras";
-import { FlightBookPassengers } from "@/components/flight/FlightBookPassengers";
+import {
+  FlightBookPassengers,
+  FlightBookPassengerCard,
+} from "@/components/flight/FlightBookPassengers";
 import { FlightBookPassengerSection } from "@/components/flight/FlightBookPassengerSection";
 import { FlightBookPayTypes } from "@/components/flight/FlightBookPayTypes";
 import { FlightOutNumberPickerSheet } from "@/components/flight/FlightOutNumberPickerSheet";
@@ -41,6 +43,8 @@ import { FlightBookTicketNoticeSheet } from "@/components/flight/FlightBookTicke
 import { FlightFareRulesSheet } from "@/components/flight/FlightFareRulesSheet";
 import { usePageHeader } from "@/components/layout";
 import { FLIGHT_CABINS_HEADER_BG } from "@/config/flight-cabins";
+import { HOTEL_DETAIL_FONT } from "@/components/hotel/hotel-detail-chrome";
+import { useFlightPriceTimeout } from "@/hooks/useFlightPriceTimeout";
 import { useBookOrgCostVisibility } from "@/hooks/useBookOrgCostVisibility";
 import { useFlightBookPassengerForms } from "@/hooks/useFlightBookPassengerForms";
 import { useIdentity } from "@/hooks/useIdentity";
@@ -50,7 +54,6 @@ import {
   useFlightSubmitBook,
 } from "@/hooks/useFlightBook";
 import { shouldShowApproverPicker } from "@/lib/flight-book-approval";
-import { pollFlightCheckPay, shouldNavigateToPay } from "@/lib/flight-book-check-pay";
 import {
   buildFlightInitBookDto,
   buildFlightOrderBookDto,
@@ -100,13 +103,17 @@ import {
   validatePassengerBookForms,
   resolvePassengerFormMobile,
 } from "@/lib/flight-book-passenger-form";
-import { isFlightListTimedOut } from "@/lib/flight-list-refresh";
+import { isFlightListTimedOut, buildFlightListRefreshHref } from "@/lib/flight-list-refresh";
 import { formatApiError } from "@/lib/formatApiError";
 import { clearPassengerSelection } from "@/lib/passenger-selection";
+
+const FALLBACK_BOOK_HEADER_HEIGHT = 56;
 
 export function FlightBookPage() {
   const navigate = useNavigate();
   const skipEmptySelectionRedirectRef = useRef(false);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [headerHeight, setHeaderHeight] = useState(FALLBACK_BOOK_HEADER_HEIGHT);
   const { selection } = useFlightBookSelection();
   const { selected, setSelected } = usePassengerSelection(ProductType.Flight);
   const submitBook = useFlightSubmitBook();
@@ -114,7 +121,6 @@ export function FlightBookPage() {
   const [travelPayType, setTravelPayType] = useState<number | null>(null);
   const [agentId, setAgentId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitPhase, setSubmitPhase] = useState<"book" | "checkPay">("book");
   const [agreed, setAgreed] = useState(false);
   const [rulesOpen, setRulesOpen] = useState(false);
   const [ticketNoticeOpen, setTicketNoticeOpen] = useState(false);
@@ -199,6 +205,7 @@ export function FlightBookPage() {
         init: initBook.data,
         policy: passengerPolicy,
         staff,
+        passenger,
       });
     }
     return map;
@@ -225,6 +232,18 @@ export function FlightBookPage() {
       navigate("/flight/list", { replace: true });
     }
   }, [navigate, selection]);
+
+  useLayoutEffect(() => {
+    if (!selection) return;
+    const header = headerRef.current;
+    if (!header) return;
+
+    const updateHeight = () => setHeaderHeight(header.offsetHeight);
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, [selection]);
 
   function finishBookNavigation(
     path: string,
@@ -260,6 +279,21 @@ export function FlightBookPage() {
   }, [expenseTypes, forms, primaryTravelPassenger, updateForm]);
 
   usePageHeader({ visible: false });
+
+  const handleTimeoutRefresh = useCallback(() => {
+    if (selection) {
+      clearFlightBookSelection();
+      navigate(buildFlightListRefreshHref(selection.cabinsQuery));
+      return;
+    }
+    navigate("/flight/list?doRefresh=true");
+  }, [navigate, selection]);
+
+  const { openTimeoutDialog } = useFlightPriceTimeout({
+    enabled: Boolean(selection?.priceSnapshotAt),
+    snapshotAt: selection?.priceSnapshotAt ?? 0,
+    onRefresh: handleTimeoutRefresh,
+  });
 
   const serviceFees = initBook.data?.ServiceFees;
   const tmcFlags = resolveFlightBookTmcFlags(initBook.data);
@@ -330,7 +364,7 @@ export function FlightBookPage() {
   const timedOut = isFlightListTimedOut(selection.priceSnapshotAt);
   const isInitBlocking = initBook.isFetching && !initBook.data;
   const isPending = isSubmitting || submitBook.isPending || isInitBlocking;
-  const submitPendingLabel = submitPhase === "checkPay" ? "等待支付确认…" : "提交中…";
+  const submitPendingLabel = "提交中…";
   const initError = initBook.error;
   const submitError = submitBook.error;
 
@@ -352,8 +386,7 @@ export function FlightBookPage() {
       return;
     }
     if (timedOut) {
-      window.alert("您的停留时间过长，价格信息可能发生变动，请重新查询");
-      navigate(buildCabinsHref(selection));
+      openTimeoutDialog();
       return;
     }
     if (tmcAgents.length > 1 && !resolvedAgentId) {
@@ -362,7 +395,6 @@ export function FlightBookPage() {
     }
 
     setIsSubmitting(true);
-    setSubmitPhase("book");
 
     try {
       const passengerValidationError = validatePassengerBookForms(selected, forms);
@@ -439,15 +471,6 @@ export function FlightBookPage() {
         return;
       }
 
-      if (result.IsCheckPay && orderId) {
-        setSubmitPhase("checkPay");
-        const checkPayReady = await pollFlightCheckPay(orderId);
-        if (shouldNavigateToPay({ travelPayType: resolvedPayType, checkPayReady })) {
-          finishBookNavigation(`/flight/pay/${orderId}`);
-          return;
-        }
-      }
-
       if (orderId) {
         finishBookNavigation(`/orders/flight/${orderId}`, {
           bookedOrderId: orderId,
@@ -461,71 +484,134 @@ export function FlightBookPage() {
       window.alert(formatApiError(error));
     } finally {
       setIsSubmitting(false);
-      setSubmitPhase("book");
     }
   }
 
   return (
-    <div className="flex min-h-full flex-col bg-[#f2f4f8] pb-[calc(8.75rem+env(safe-area-inset-bottom))]">
+    <div className="relative min-h-full bg-[#f2f4f8] pb-[calc(8.75rem+env(safe-area-inset-bottom))]">
       <div
-        className="sticky top-0 z-20 shrink-0 pt-[env(safe-area-inset-top)]"
+        ref={headerRef}
+        className="fixed inset-x-0 top-0 z-30 mx-auto w-full max-w-lg overflow-hidden pt-[env(safe-area-inset-top)] shadow-[0_2px_12px_rgba(142,200,255,0.35)]"
         style={{
           backgroundColor: FLIGHT_CABINS_HEADER_BG,
-          backgroundImage: "linear-gradient(180deg, #8fc5ff 0%, #cfe3ff 58%, #f2f4f8 100%)",
+          backgroundImage: "linear-gradient(180deg, #8fc5ff 0%, #cfe3ff 100%)",
         }}
       >
         <FlightCabinsHeader title="确认信息及预订" onBack={handleBack} />
-        <FlightBookSummary selection={selection} onShowRules={() => setRulesOpen(true)} />
       </div>
 
-      <div className="space-y-3 px-3 py-3">
-        <FlightBookPolicyBanner policy={flightPolicy} airline={selection.segment.Airline} />
+      <div style={{ paddingTop: headerHeight }}>
+        <div
+          className="px-3 pb-3"
+          style={{
+            backgroundColor: FLIGHT_CABINS_HEADER_BG,
+            backgroundImage: "linear-gradient(180deg, #cfe3ff 0%, #f2f4f8 100%)",
+          }}
+        >
+          <FlightBookSummary selection={selection} onShowRules={() => setRulesOpen(true)} />
+        </div>
 
-        {!initBook.isFetching ? (
-          <FlightBookAgentPicker
-            agents={tmcAgents}
-            value={agentId ?? ""}
-            onChange={(nextAgentId) => setAgentId(nextAgentId)}
-          />
-        ) : null}
+        <div className="space-y-3 px-3 py-3">
+          <FlightBookPolicyBanner policy={flightPolicy} airline={selection.segment.Airline} />
 
-        <FlightBookPassengerSection
-          passengers={
-            <FlightBookPassengers
-              returnTo={returnTo}
-              passengers={selected}
-              forms={orderedForms}
-              showOrganizations={showOrganizations}
-              showCostCenter={showCostCenter}
-              onUpdateForm={updateForm}
-              onOpenOrganization={setOrgSheetPassengerId}
-              onOpenCostCenter={setCostSheetPassengerId}
-              onChangeCredential={setCredentialSheetPassenger}
+          {!initBook.isFetching ? (
+            <FlightBookAgentPicker
+              agents={tmcAgents}
+              value={agentId ?? ""}
+              onChange={(nextAgentId) => setAgentId(nextAgentId)}
             />
-          }
-          notifyLanguage={
-            !initBook.isFetching && tmcFlags.isDisplayNotifyLanguage ? (
-              <FlightBookNotifyLanguageRow
-                sectioned
-                notifyLanguage={notifyLanguage}
-                onOpenNotifyLanguage={() => {
-                  setNotifyLanguageTarget("order");
-                  setNotifyLanguageOpen(true);
-                }}
-              />
-            ) : undefined
-          }
-          serviceFee={
-            !initBook.isFetching &&
-            tmcFlags.isShowServiceFee &&
-            passengerServiceFeeRows.some((row) => row.fee > 0) ? (
-              <FlightBookServiceFeeRows sectioned serviceFees={passengerServiceFeeRows} />
-            ) : undefined
-          }
-          authorizedContacts={
+          ) : null}
+
+          {selected.length <= 1 ? (
+            <FlightBookPassengerSection
+              passengers={
+                <FlightBookPassengers
+                  returnTo={returnTo}
+                  passengers={selected}
+                  forms={orderedForms}
+                  showOrganizations={showOrganizations}
+                  showCostCenter={showCostCenter}
+                  onUpdateForm={updateForm}
+                  onOpenOrganization={setOrgSheetPassengerId}
+                  onOpenCostCenter={setCostSheetPassengerId}
+                  onChangeCredential={setCredentialSheetPassenger}
+                />
+              }
+              notifyLanguage={
+                !initBook.isFetching && tmcFlags.isDisplayNotifyLanguage ? (
+                  <FlightBookNotifyLanguageRow
+                    sectioned
+                    notifyLanguage={notifyLanguage}
+                    onOpenNotifyLanguage={() => {
+                      setNotifyLanguageTarget("order");
+                      setNotifyLanguageOpen(true);
+                    }}
+                  />
+                ) : undefined
+              }
+              serviceFee={
+                !initBook.isFetching &&
+                tmcFlags.isShowServiceFee &&
+                passengerServiceFeeRows.some((row) => row.fee > 0) ? (
+                  <FlightBookServiceFeeRows sectioned serviceFees={passengerServiceFeeRows} />
+                ) : undefined
+              }
+            />
+          ) : (
+            <>
+              {selected.map((passenger, index) => {
+                const form = forms[passenger.id];
+                if (!form) return null;
+                const feeRow = passengerServiceFeeRows.find(
+                  (row) => row.passengerId === passenger.id,
+                );
+                const showPassengerServiceFee =
+                  !initBook.isFetching && tmcFlags.isShowServiceFee && feeRow && feeRow.fee > 0;
+
+                return (
+                  <FlightBookPassengerSection
+                    key={passenger.id}
+                    passengerIndex={index + 1}
+                    passengers={
+                      <FlightBookPassengerCard
+                        passenger={passenger}
+                        form={form}
+                        showOrganizations={showOrganizations}
+                        showCostCenter={showCostCenter}
+                        onUpdateForm={updateForm}
+                        onOpenOrganization={setOrgSheetPassengerId}
+                        onOpenCostCenter={setCostSheetPassengerId}
+                        onChangeCredential={setCredentialSheetPassenger}
+                      />
+                    }
+                    serviceFee={
+                      showPassengerServiceFee && feeRow ? (
+                        <FlightBookServiceFeeRows sectioned serviceFees={[feeRow]} />
+                      ) : undefined
+                    }
+                  />
+                );
+              })}
+
+              {!initBook.isFetching && tmcFlags.isDisplayNotifyLanguage ? (
+                <section
+                  className={`overflow-hidden rounded-xl bg-white px-3 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ${HOTEL_DETAIL_FONT}`}
+                >
+                  <FlightBookNotifyLanguageRow
+                    sectioned
+                    notifyLanguage={notifyLanguage}
+                    onOpenNotifyLanguage={() => {
+                      setNotifyLanguageTarget("order");
+                      setNotifyLanguageOpen(true);
+                    }}
+                  />
+                </section>
+              ) : null}
+            </>
+          )}
+
+          {!initBook.isFetching ? (
             <FlightBookAuthorizedContacts
-              sectioned
-              embedded
               contacts={authorizedContacts}
               onAdd={() => setAddContactOpen(true)}
               onRemove={(accountId) =>
@@ -545,71 +631,67 @@ export function FlightBookPage() {
                 setNotifyLanguageOpen(true);
               }}
             />
-          }
-        />
+          ) : null}
 
-        {selected.map((passenger) => {
-          const form = forms[passenger.id];
-          if (!form) return null;
-          const insuranceProducts = insurancesByPassenger[passenger.id] ?? [];
-          return tmcHasInsurance ? (
-            <FlightBookInsurance
-              key={passenger.id}
-              products={insuranceProducts}
-              selectedId={form.selectedInsuranceId}
-              mandatory={isMandatoryFlightInsurance(passenger, tmcInsuranceFlags)}
-              selectionLocked={isMandatoryFlightInsurance(passenger, tmcInsuranceFlags)}
-              onSelect={(selectedInsuranceId) => updateForm(passenger.id, { selectedInsuranceId })}
+          {selected.map((passenger) => {
+            const form = forms[passenger.id];
+            if (!form) return null;
+            const insuranceProducts = insurancesByPassenger[passenger.id] ?? [];
+            return tmcHasInsurance ? (
+              <FlightBookInsurance
+                key={passenger.id}
+                products={insuranceProducts}
+                selectedId={form.selectedInsuranceId}
+                mandatory={isMandatoryFlightInsurance(passenger, tmcInsuranceFlags)}
+                selectionLocked={isMandatoryFlightInsurance(passenger, tmcInsuranceFlags)}
+                onSelect={(selectedInsuranceId) =>
+                  updateForm(passenger.id, { selectedInsuranceId })
+                }
+              />
+            ) : null;
+          })}
+
+          {primaryTravelPassenger && forms[primaryTravelPassenger.id] ? (
+            <FlightBookTravelSection
+              passenger={primaryTravelPassenger}
+              form={forms[primaryTravelPassenger.id]!}
+              passengerCount={selected.length}
+              staff={findInitStaffForPassenger(primaryTravelPassenger, initStaffs)}
+              init={initBook.data}
+              policy={
+                selection
+                  ? resolvePassengerPolicyFromSelection(selection, primaryTravelPassenger)
+                  : flightPolicy
+              }
+              onUpdate={(patch) => updateForm(primaryTravelPassenger.id, patch)}
+              onOpenApprover={() => setApproverPassengerId(primaryTravelPassenger.id)}
+              onOpenIllegalReason={() => setIllegalReasonPassengerId(primaryTravelPassenger.id)}
+              onOpenExpenseType={() => setExpensePassengerId(primaryTravelPassenger.id)}
+              onOpenOutNumber={(field) =>
+                setOutNumberPicker({ passengerId: primaryTravelPassenger.id, field })
+              }
             />
-          ) : null;
-        })}
+          ) : null}
 
-        {primaryTravelPassenger && forms[primaryTravelPassenger.id] ? (
-          <FlightBookTravelSection
-            passenger={primaryTravelPassenger}
-            form={forms[primaryTravelPassenger.id]!}
-            passengerCount={selected.length}
-            staff={findInitStaffForPassenger(primaryTravelPassenger, initStaffs)}
-            init={initBook.data}
-            policy={
-              selection
-                ? resolvePassengerPolicyFromSelection(selection, primaryTravelPassenger)
-                : flightPolicy
-            }
-            onUpdate={(patch) => updateForm(primaryTravelPassenger.id, patch)}
-            onOpenApprover={() => setApproverPassengerId(primaryTravelPassenger.id)}
-            onOpenIllegalReason={() => setIllegalReasonPassengerId(primaryTravelPassenger.id)}
-            onOpenExpenseType={() => setExpensePassengerId(primaryTravelPassenger.id)}
-            onOpenOutNumber={(field) =>
-              setOutNumberPicker({ passengerId: primaryTravelPassenger.id, field })
-            }
-          />
-        ) : null}
+          {!initBook.isFetching ? (
+            <FlightBookPayTypes
+              options={payOptions}
+              value={resolvedPayType}
+              personHoldMinutes={personHoldMinutes}
+              onChange={setTravelPayType}
+            />
+          ) : null}
 
-        {!initBook.isFetching ? (
-          <FlightBookPayTypes
-            options={payOptions}
-            value={resolvedPayType}
-            personHoldMinutes={personHoldMinutes}
-            onChange={setTravelPayType}
-          />
-        ) : null}
+          {initError ? (
+            <p className="text-[13px] text-destructive">
+              订单初始化失败：{formatApiError(initError)}
+            </p>
+          ) : null}
 
-        {timedOut ? (
-          <p className="text-[13px] text-[#ff8d1a]">
-            价格信息可能已过期，提交前请返回舱位页重新查询。
-          </p>
-        ) : null}
-
-        {initError ? (
-          <p className="text-[13px] text-destructive">
-            订单初始化失败：{formatApiError(initError)}
-          </p>
-        ) : null}
-
-        {submitError ? (
-          <p className="text-[13px] text-destructive">{formatApiError(submitError)}</p>
-        ) : null}
+          {submitError ? (
+            <p className="text-[13px] text-destructive">{formatApiError(submitError)}</p>
+          ) : null}
+        </div>
       </div>
 
       <FlightBookFooter
@@ -620,8 +702,10 @@ export function FlightBookPage() {
         disabled={selected.length === 0 || isPending || initBook.isError}
         showTicketNotice={ticketNoticeRules.length > 0}
         showSaveOrder={showSaveOrder}
+        billOpen={billOpen}
+        billBreakdown={billBreakdown}
         onAgreedChange={setAgreed}
-        onShowBill={() => setBillOpen(true)}
+        onBillToggle={() => setBillOpen((open) => !open)}
         onShowTicketNotice={() => setTicketNoticeOpen(true)}
         onSubmit={() => void submitOrder(false)}
         onSave={() => void submitOrder(true)}
@@ -637,12 +721,6 @@ export function FlightBookPage() {
         open={rulesOpen}
         fare={selection.fare}
         onClose={() => setRulesOpen(false)}
-      />
-
-      <FlightBookBillSheet
-        open={billOpen}
-        breakdown={billBreakdown}
-        onClose={() => setBillOpen(false)}
       />
 
       <FlightBookPickerSheet

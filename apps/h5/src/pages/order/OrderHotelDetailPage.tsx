@@ -2,6 +2,10 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { HotelOrderApprovalSection } from "@/components/order/hotel/HotelOrderApprovalSection";
+import {
+  HotelOrderDetailHeader,
+  ORDER_DETAIL_HEADER_FALLBACK_HEIGHT,
+} from "@/components/order/hotel/HotelOrderDetailHeader";
 import { HotelOrderBillSheet } from "@/components/order/hotel/HotelOrderBillSheet";
 import {
   HotelOrderCancelDialog,
@@ -44,6 +48,8 @@ export function OrderHotelDetailPage() {
   const openCancelOnMountRef = useRef(
     (location.state as OrderDetailLocationState | null)?.action === "cancel",
   );
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [headerHeight, setHeaderHeight] = useState(ORDER_DETAIL_HEADER_FALLBACK_HEIGHT);
 
   const { data: rawDetail, isLoading, isError, error, refetch } = useHotelOrderDetail(orderId);
   const detail = useMemo(
@@ -76,17 +82,27 @@ export function OrderHotelDetailPage() {
     leaveDetail();
   }, [billOpen, leaveDetail, smsOpen]);
 
-  usePageHeader({
-    visible: true,
-    title: "订单详情",
-    showBack: true,
-    onBack: handleBack,
-    tone: "hotel",
-  });
+  usePageHeader({ visible: false });
 
   useLayoutEffect(() => {
     scrollH5MainToTop();
   }, [orderId]);
+
+  useLayoutEffect(() => {
+    const header = headerRef.current;
+    if (!header) {
+      return;
+    }
+
+    const updateHeight = () => {
+      setHeaderHeight(header.offsetHeight);
+    };
+
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!openCancelOnMountRef.current || !detail?.Actions?.showCancel) {
@@ -189,30 +205,22 @@ export function OrderHotelDetailPage() {
     [detail, orderId, showToast, sms.confirm],
   );
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[#F5F6F9]">
-        <p className="px-4 pt-3 text-center text-sm text-[#999999]">加载中…</p>
-      </div>
-    );
-  }
-
-  if (isError || !detail) {
-    return (
-      <div className="min-h-screen bg-[#F5F6F9]">
-        <p className="px-4 pt-3 text-center text-sm text-[#FF4D4F]">
-          {formatApiError(error ?? new Error("订单不存在"))}
-        </p>
-      </div>
-    );
-  }
-
-  const smsMode = detail.Actions.smsAction === "confirmCode" ? "confirmCode" : "sendCode";
-  const showFooter = detail.Actions.showPay || detail.Actions.showCancel;
+  const smsMode = detail?.Actions.smsAction === "confirmCode" ? "confirmCode" : "sendCode";
+  const showFooter = Boolean(detail?.Actions.showPay || detail?.Actions.showCancel);
   const pending = cancelMutation.isPending || sms.send.isPending || sms.confirm.isPending;
 
   return (
     <div className="min-h-screen bg-[#F5F6F9]">
+      <HotelOrderDetailHeader ref={headerRef} onBack={handleBack} />
+
+      <div style={{ paddingTop: headerHeight }}>
+        {isLoading ? (
+          <p className="px-4 pt-3 text-center text-sm text-[#999999]">加载中…</p>
+        ) : isError || !detail ? (
+          <p className="px-4 pt-3 text-center text-sm text-[#FF4D4F]">
+            {formatApiError(error ?? new Error("订单不存在"))}
+          </p>
+        ) : (
       <div
         className="space-y-3 px-4 pb-6 pt-3"
         style={{
@@ -257,35 +265,41 @@ export function OrderHotelDetailPage() {
           </button>
         ) : null}
       </div>
+        )}
+      </div>
 
-      <HotelOrderDetailFooter
-        actions={detail.Actions}
-        pending={pending}
-        onCancel={handleCancelClick}
-        onPay={handlePay}
-      />
+      {detail ? (
+        <>
+          <HotelOrderDetailFooter
+            actions={detail.Actions}
+            pending={pending}
+            onCancel={handleCancelClick}
+            onPay={handlePay}
+          />
 
-      <HotelOrderBillSheet open={billOpen} lines={billLines} onClose={() => setBillOpen(false)} />
+          <HotelOrderBillSheet open={billOpen} lines={billLines} onClose={() => setBillOpen(false)} />
 
-      <HotelOrderCancelDialog
-        open={cancelOpen}
-        pending={cancelMutation.isPending}
-        onConfirm={() => void runCancel()}
-        onClose={() => setCancelOpen(false)}
-      />
+          <HotelOrderCancelDialog
+            open={cancelOpen}
+            pending={cancelMutation.isPending}
+            onConfirm={() => void runCancel()}
+            onClose={() => setCancelOpen(false)}
+          />
 
-      {(detail.Actions.smsAction === "sendCode" || detail.Actions.smsAction === "confirmCode") && (
-        <HotelOrderSmsSheet
-          open={smsOpen}
-          mode={smsMode}
-          mobile={detail.Actions.smsMobile}
-          pending={sms.send.isPending || sms.confirm.isPending}
-          error={detail.Actions.smsError}
-          onSend={(mobile) => void handleSmsSend(mobile)}
-          onConfirm={(code) => void handleSmsConfirm(code)}
-          onClose={() => setSmsOpen(false)}
-        />
-      )}
+          {(detail.Actions.smsAction === "sendCode" || detail.Actions.smsAction === "confirmCode") && (
+            <HotelOrderSmsSheet
+              open={smsOpen}
+              mode={smsMode}
+              mobile={detail.Actions.smsMobile}
+              pending={sms.send.isPending || sms.confirm.isPending}
+              error={detail.Actions.smsError}
+              onSend={(mobile) => void handleSmsSend(mobile)}
+              onConfirm={(code) => void handleSmsConfirm(code)}
+              onClose={() => setSmsOpen(false)}
+            />
+          )}
+        </>
+      ) : null}
 
       {toast ? (
         <div className="pointer-events-none fixed inset-x-0 bottom-24 z-50 flex justify-center px-4">

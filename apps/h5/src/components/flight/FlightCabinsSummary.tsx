@@ -1,6 +1,7 @@
 import type { FlightSegment } from "@ryx/shared-types";
 
 import { FlightRoutePlaneIcon } from "@/components/flight/FlightRoutePlaneIcon";
+import { FLIGHT_CABINS_FONT } from "@/components/flight/flight-cabins-chrome";
 import { formatFlightTime } from "@/utils/flight-list";
 import {
   formatArrivalDateBadge,
@@ -13,8 +14,37 @@ interface FlightCabinsSummaryProps {
   segment: FlightSegment;
 }
 
-function MetaDivider() {
-  return <span className="text-[#dddddd]">|</span>;
+function AirlineLogo({ segment }: { segment: FlightSegment }) {
+  if (segment.AirlineSrc) {
+    return <img src={segment.AirlineSrc} alt="" className="size-[18px] shrink-0 object-contain" />;
+  }
+
+  return (
+    <span className="flex size-[18px] shrink-0 items-center justify-center rounded-full bg-[#EEF4FF] text-[9px] font-bold text-[#2768FA]">
+      {(segment.Airline ?? segment.AirlineName ?? "航").slice(0, 1)}
+    </span>
+  );
+}
+
+function MetaChip({
+  children,
+  variant = "default",
+}: {
+  children: string;
+  variant?: "default" | "accent";
+}) {
+  const className =
+    variant === "accent"
+      ? "bg-[#EEF4FF] text-[#2768FA] ring-[#D6E4FF]"
+      : "bg-[#F5F6F9] text-[#666666] ring-[#ECEEF2]";
+
+  return (
+    <span
+      className={`inline-flex max-w-full items-center rounded-full px-2 py-0.5 text-[11px] leading-none ring-1 ${className}`}
+    >
+      <span className="truncate">{children}</span>
+    </span>
+  );
 }
 
 export function FlightCabinsSummary({ segment }: FlightCabinsSummaryProps) {
@@ -32,10 +62,18 @@ export function FlightCabinsSummary({ segment }: FlightCabinsSummaryProps) {
   const planeLabel = segment.PlaneTypeDescribe || segment.PlaneType || "";
   const durationLabel = formatFlightMetaDuration(segment.FlyTimeName);
   const mealLabel = formatFlightMealLabel(segment.Meal);
-  const flightNo = `${segment.AirlineName ?? ""}${segment.Number ?? segment.FlightNumber ?? ""}`;
+  const airlineName = segment.AirlineName?.trim() ?? "";
+  const flightNo = (segment.Number ?? segment.FlightNumber ?? "").trim();
+  const flightTitle = [airlineName, flightNo].filter(Boolean).join(" ");
+
+  const metaChips = [planeLabel, durationLabel, mealLabel].filter((value): value is string =>
+    Boolean(value),
+  );
 
   return (
-    <div className="overflow-hidden rounded-xl bg-white px-4 py-4 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
+    <div
+      className={`overflow-hidden rounded-xl bg-white/95 px-4 py-4 shadow-[0_2px_12px_rgba(39,104,250,0.08)] ring-1 ring-white/80 backdrop-blur-[2px] ${FLIGHT_CABINS_FONT}`}
+    >
       <div className="grid grid-cols-[minmax(0,1fr)_5.5rem_minmax(0,1fr)] items-center gap-x-3">
         <p className="text-[28px] font-semibold leading-none tracking-tight tabular-nums text-[#1a1a1a]">
           {formatFlightTime(segment.TakeoffTime)}
@@ -63,34 +101,28 @@ export function FlightCabinsSummary({ segment }: FlightCabinsSummaryProps) {
         <p className="mt-2 text-right text-[13px] leading-snug text-[#666666]">{toLabel}</p>
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[12px] text-[#999999]">
-        {segment.AirlineSrc ? (
-          <img src={segment.AirlineSrc} alt="" className="size-4 shrink-0 object-contain" />
-        ) : (
-          <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#eef3ff] text-[8px] font-bold text-[#5099fe]">
-            {(segment.Airline ?? segment.AirlineName ?? "航").slice(0, 1)}
-          </span>
-        )}
-        {flightNo ? <span>{flightNo}</span> : null}
-        {planeLabel ? (
-          <>
-            <MetaDivider />
-            <span>{planeLabel}</span>
-          </>
-        ) : null}
-        {durationLabel ? (
-          <>
-            <MetaDivider />
-            <span>{durationLabel}</span>
-          </>
-        ) : null}
-        {mealLabel ? (
-          <>
-            <MetaDivider />
-            <span className="text-[#5099fe]">{mealLabel}</span>
-          </>
-        ) : null}
-      </div>
+      {flightTitle || metaChips.length > 0 ? (
+        <div className="mt-4 border-t border-[#EEF1F6] pt-3">
+          {flightTitle ? (
+            <div className="flex min-w-0 items-center gap-2">
+              <AirlineLogo segment={segment} />
+              <p className="min-w-0 flex-1 truncate text-[13px] font-medium leading-snug text-[#333333]">
+                {flightTitle}
+              </p>
+            </div>
+          ) : null}
+
+          {metaChips.length > 0 ? (
+            <div
+              className={`flex flex-wrap items-center gap-1.5 ${flightTitle ? "mt-2 pl-[26px]" : ""}`}
+            >
+              {planeLabel ? <MetaChip>{planeLabel}</MetaChip> : null}
+              {durationLabel ? <MetaChip>{durationLabel}</MetaChip> : null}
+              {mealLabel ? <MetaChip variant="accent">{mealLabel}</MetaChip> : null}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

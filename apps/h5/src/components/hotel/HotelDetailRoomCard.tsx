@@ -243,13 +243,3 @@ export function HotelDetailRoomCard({
     </div>
   );
 }
-
-export function useExpandedRoomState() {
-  const [expandedRoomId, setExpandedRoomId] = useState<string | null>(null);
-  return {
-    expandedRoomId,
-    toggleRoom: (roomId: string) => {
-      setExpandedRoomId((current) => (current === roomId ? null : roomId));
-    },
-  };
-}

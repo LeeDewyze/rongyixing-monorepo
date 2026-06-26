@@ -19,7 +19,9 @@ export function HotelOrderDetailRow({
   return (
     <div className="flex items-start justify-between gap-4 py-1.5">
       <span className={`shrink-0 ${HOTEL_ORDER_ROW_LABEL}`}>{label}</span>
-      <span className={`min-w-0 ${HOTEL_ORDER_ROW_VALUE} ${valueClassName}`}>{value}</span>
+      <span className={`min-w-0 break-all ${HOTEL_ORDER_ROW_VALUE} ${valueClassName}`}>
+        {value}
+      </span>
     </div>
   );
 }

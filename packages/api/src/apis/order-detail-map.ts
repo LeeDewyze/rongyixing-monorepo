@@ -1,4 +1,6 @@
 import type {
+  FlightOrderTicket,
+  FlightOrderTrip,
   HotelOrderActionFlags,
   HotelOrderBillLine,
   HotelOrderDetail,
@@ -9,7 +11,7 @@ import type {
   OrderDetailProductType,
   OrderDetailResponse,
 } from "@ryx/shared-types";
-import { maskCredentialNumber } from "@ryx/shared-types";
+import { CREDENTIAL_TYPE_LABELS, maskCredentialNumber } from "@ryx/shared-types";
 
 import {
   asArray,
@@ -237,6 +239,7 @@ function joinTravelField(travels: LegacyRecord[], roomKey: string, field: string
 function resolveOrderPassenger(
   hotel: LegacyRecord,
   orderPassengers: LegacyRecord[],
+  roomKey?: string,
 ): LegacyRecord | null {
   const hotelPassenger = asRecord(hotel.Passenger);
   const passengerId = readString(hotelPassenger?.Id);
@@ -246,7 +249,59 @@ function resolveOrderPassenger(
       return matched;
     }
   }
+  if (roomKey) {
+    const matched = orderPassengers.find((item) => readString(item.Key) === roomKey);
+    if (matched) {
+      return matched;
+    }
+  }
   return orderPassengers[0] ?? hotelPassenger;
+}
+
+const CREDENTIAL_TYPE_ENUM_LABELS: Record<string, string> = {
+  IdCard: "身份证",
+  Passport: "护照",
+  HmPass: "港澳通行证",
+  TwPass: "台湾通行证",
+  Taiwan: "台胞证",
+  HvPass: "回乡证",
+  TaiwanEp: "入台证",
+  Other: "其他",
+  ResidencePermit: "港澳台居民居住证",
+  AlienPermanentResidenceIdCard: "外国人永久居留身份证",
+  MilitaryCard: "军人证",
+};
+
+function resolveCredentialTypeName(
+  passenger: LegacyRecord,
+  credential?: LegacyRecord,
+): string | undefined {
+  const typeName = readString(
+    passenger.CredentialsTypeName ??
+      passenger.CredentialTypeName ??
+      credential?.CredentialsTypeName ??
+      credential?.TypeName,
+  );
+  if (typeName) {
+    return typeName;
+  }
+
+  const rawType =
+    passenger.CredentialsType ??
+    passenger.CredentialType ??
+    credential?.CredentialsType ??
+    credential?.Type;
+  const typeCode = readNumber(rawType);
+  if (typeCode != null && CREDENTIAL_TYPE_LABELS[typeCode]) {
+    return CREDENTIAL_TYPE_LABELS[typeCode];
+  }
+
+  const typeKey = readString(rawType);
+  if (typeKey && CREDENTIAL_TYPE_ENUM_LABELS[typeKey]) {
+    return CREDENTIAL_TYPE_ENUM_LABELS[typeKey];
+  }
+
+  return typeKey || undefined;
 }
 
 function resolveCredentialNumber(passenger: LegacyRecord): string | undefined {
@@ -298,7 +353,7 @@ function mapTraveler(
   orderNumbers: LegacyRecord[],
 ): HotelOrderTraveler | undefined {
   const hotelPassenger = asRecord(hotel.Passenger);
-  const passenger = resolveOrderPassenger(hotel, orderPassengers);
+  const passenger = resolveOrderPassenger(hotel, orderPassengers, roomKey);
   if (!passenger) {
     return undefined;
   }
@@ -319,15 +374,7 @@ function mapTraveler(
 
   return {
     Name: readString(passenger.Name ?? hotelPassenger?.Name) || undefined,
-    CredentialType:
-      readString(
-        passenger.CredentialsTypeName ??
-          passenger.CredentialTypeName ??
-          credential?.TypeName ??
-          credential?.Type ??
-          passenger.CredentialType ??
-          hotelPassenger?.CredentialType,
-      ) || undefined,
+    CredentialType: resolveCredentialTypeName(passenger, credential),
     CredentialNumber:
       resolveCredentialNumber(passenger) ??
       (hotelPassenger ? resolveCredentialNumber(hotelPassenger) : undefined),
@@ -359,6 +406,54 @@ function mapBillItem(item: LegacyRecord): HotelOrderBillLine {
     Tag: readString(item.Tag) || undefined,
     Key: readString(item.Key) || undefined,
   };
+}
+
+function normalizePersonName(name?: string): string | undefined {
+  if (!name) return undefined;
+  const normalized = name.replace(/\//g, "").trim();
+  return normalized || undefined;
+}
+
+function mapOrderContact(payload: LegacyRecord, order: LegacyRecord) {
+  const linkmanRecords = [
+    ...asArray<LegacyRecord>(payload.OrderLinkmans),
+    ...asArray<LegacyRecord>(order.OrderLinkmans),
+    ...asArray<LegacyRecord>(payload.Linkmans),
+    ...asArray<LegacyRecord>(order.Linkmans),
+  ];
+
+  for (const record of linkmanRecords) {
+    const contact = {
+      Name: normalizePersonName(readString(record.Name)),
+      Mobile: readString(record.Mobile ?? record.Phone) || undefined,
+      Email: readString(record.Email) || undefined,
+    };
+    if (contact.Name || contact.Mobile || contact.Email) {
+      return contact;
+    }
+  }
+
+  const name = normalizePersonName(
+    readString(
+      order.ContactName ??
+        order.BookContactName ??
+        order.BookerName ??
+        order.LinkmanName ??
+        payload.ContactName,
+    ),
+  );
+  const mobile =
+    readString(
+      order.ContactMobile ?? order.LinkmanMobile ?? order.MessageMobile ?? payload.ContactMobile,
+    ) || undefined;
+  const email =
+    readString(order.ContactEmail ?? order.LinkmanEmail ?? payload.ContactEmail) || undefined;
+
+  if (name || mobile || email) {
+    return { Name: name, Mobile: mobile, Email: email };
+  }
+
+  return undefined;
 }
 
 function computeRoomFee(items: HotelOrderBillLine[], roomKey: string): number | undefined {
@@ -567,6 +662,231 @@ function mapLegacyHotelDetail(payload: LegacyRecord): HotelOrderDetail {
 
 function variablesSelfPay(order: LegacyRecord): number | undefined {
   return readNumber(parseVariablesObj(order)?.SelfPayAmount);
+}
+
+const FLIGHT_PAY_TYPE_PERSON = 2;
+const FLIGHT_PAY_TYPE_CREDIT = 4;
+
+function mapFlightTrip(trip: LegacyRecord): FlightOrderTrip {
+  return {
+    FromCityName: readString(trip.FromCityName) || undefined,
+    ToCityName: readString(trip.ToCityName) || undefined,
+    FromAirportName: readString(trip.FromAirportName) || undefined,
+    ToAirportName: readString(trip.ToAirportName) || undefined,
+    FromTerminal: readString(trip.FromTerminal) || undefined,
+    ToTerminal: readString(trip.ToTerminal) || undefined,
+    TakeoffTime: formatDateTime(trip.TakeoffTime ?? trip.DepartTime) || undefined,
+    ArrivalTime: formatDateTime(trip.ArrivalTime) || undefined,
+    FlightNumber: readString(trip.FlightNumber ?? trip.Number) || undefined,
+    CodeShareNumber: readString(trip.CodeShareNumber) || undefined,
+    PlaneType: readString(trip.PlaneType ?? trip.AirplaneType) || undefined,
+    PlaneTypeDescribe:
+      readString(trip.PlaneTypeDescribe ?? trip.AirplaneTypeDescribe ?? trip.PlaneDescribe) ||
+      undefined,
+    CabinType: readString(trip.CabinType ?? trip.Cabin) || undefined,
+    FlyTime: readString(trip.FlyTime ?? trip.Duration) || undefined,
+    IsStop: Boolean(trip.IsStop),
+    StopCities: readString(trip.StopCities) || undefined,
+    Airline: readString(trip.Airline ?? trip.Carrier) || undefined,
+    AirlineName: readString(trip.AirlineName) || undefined,
+    AirlineSrc: readString(trip.AirlineSrc ?? trip.AirlineLogo) || undefined,
+    CodeShareAirlineName:
+      readString(trip.CodeShareAirlineName ?? trip.ShareAirlineName) || undefined,
+  };
+}
+
+function enrichFlightTripFromTicket(trip: FlightOrderTrip, ticket: LegacyRecord): FlightOrderTrip {
+  return {
+    ...trip,
+    Airline: trip.Airline ?? (readString(ticket.Airline ?? ticket.Carrier) || undefined),
+    AirlineName: trip.AirlineName ?? (readString(ticket.AirlineName) || undefined),
+    AirlineSrc:
+      trip.AirlineSrc ?? (readString(ticket.AirlineSrc ?? ticket.AirlineLogo) || undefined),
+    CodeShareAirlineName:
+      trip.CodeShareAirlineName ?? (readString(ticket.CodeShareAirlineName) || undefined),
+    CodeShareNumber: trip.CodeShareNumber ?? (readString(ticket.CodeShareNumber) || undefined),
+    PlaneTypeDescribe:
+      trip.PlaneTypeDescribe ??
+      (readString(ticket.PlaneTypeDescribe ?? ticket.AirplaneTypeDescribe) || undefined),
+  };
+}
+
+function resolveFlightTravelPayTypeCode(
+  payload: LegacyRecord,
+  order: LegacyRecord,
+  orderVariables?: LegacyRecord,
+): number | undefined {
+  const raw =
+    orderVariables?.TravelPayType ??
+    payload.TravelPayType ??
+    order.TravelPayType ??
+    parseVariablesObj(order)?.TravelPayType;
+  const code = readNumber(raw);
+  return code ?? undefined;
+}
+
+function ticketHasBookedSuccess(ticket: FlightOrderTicket): boolean {
+  return Boolean(ticket.StatusName?.includes("预订成功"));
+}
+
+function sortFlightTicketsForTabs(tickets: FlightOrderTicket[]): FlightOrderTicket[] {
+  const active = tickets.filter((ticket) => !ticket.IsOriginal);
+  const original = tickets.filter((ticket) => ticket.IsOriginal);
+  const byIdDesc = (a: FlightOrderTicket, b: FlightOrderTicket) =>
+    Number(b.Id) - Number(a.Id) || b.Id.localeCompare(a.Id);
+  return [...active.sort(byIdDesc), ...original.sort(byIdDesc)];
+}
+
+function mapFlightTicket(
+  ticket: LegacyRecord,
+  orderPassengers: LegacyRecord[],
+  orderTravels: LegacyRecord[],
+  orderNumbers: LegacyRecord[],
+): FlightOrderTicket {
+  const key = readString(ticket.Key ?? ticket.Id);
+  const ticketVariables = parseVariablesObj(ticket);
+  const passenger = asRecord(ticket.Passenger);
+  const pseudoHotel = { Passenger: passenger };
+  const traveler = mapTraveler(pseudoHotel, key, orderPassengers, orderTravels, orderNumbers);
+  const trips = asArray<LegacyRecord>(ticket.OrderFlightTrips).map((trip) =>
+    enrichFlightTripFromTicket(mapFlightTrip(trip), ticket),
+  );
+  const passengerRecord =
+    orderPassengers.find((item) => readString(item.Id) === readString(passenger?.Id)) ?? passenger;
+
+  return {
+    Id: readString(ticket.Id),
+    Key: key,
+    Status: readString(ticket.Status) || undefined,
+    StatusName: readString(ticket.StatusName ?? ticket.Status) || undefined,
+    FullTicketNo: readString(ticket.FullTicketNo ?? ticket.TicketNo) || undefined,
+    Explain: readString(ticket.Explain) || undefined,
+    IsOriginal: Boolean(ticketVariables?.OriginalTicketId),
+    Trips: trips,
+    Traveler: traveler,
+    PassengerTypeName:
+      readString(passengerRecord?.PassengerTypeName ?? passenger?.PassengerTypeName) || undefined,
+  };
+}
+
+function buildFlightActionFlags(
+  tickets: FlightOrderTicket[],
+  payHoldMinutes: number,
+  travelPayTypeCode?: number,
+): HotelOrderActionFlags {
+  const hasBookedSuccess = tickets.some(ticketHasBookedSuccess);
+  const hasHoldWindow = payHoldMinutes > 0;
+  const isPersonalPay =
+    travelPayTypeCode === FLIGHT_PAY_TYPE_PERSON || travelPayTypeCode === FLIGHT_PAY_TYPE_CREDIT;
+
+  return {
+    showPay: hasBookedSuccess && hasHoldWindow && isPersonalPay,
+    showCancel: hasBookedSuccess && hasHoldWindow,
+    smsAction: "none",
+  };
+}
+
+function isNormalizedFlightDetail(data: LegacyRecord): boolean {
+  if (typeof data.OrderId !== "string") {
+    return false;
+  }
+  return Array.isArray(data.Tickets) && data.Tickets.length > 0;
+}
+
+function mapLegacyFlightDetail(payload: LegacyRecord): HotelOrderDetail {
+  const order = asRecord(payload.Order) ?? payload;
+  const orderVariables = parseVariablesObj(order);
+  const rawTickets = asArray<LegacyRecord>(order.OrderFlightTickets);
+  const orderPassengers = [
+    ...asArray<LegacyRecord>(payload.OrderPassengers),
+    ...asArray<LegacyRecord>(order.OrderPassengers),
+  ];
+  const orderTravels = [
+    ...asArray<LegacyRecord>(payload.OrderTravels),
+    ...asArray<LegacyRecord>(order.OrderTravels),
+  ];
+  const orderNumbers = [
+    ...asArray<LegacyRecord>(payload.OrderNumbers),
+    ...asArray<LegacyRecord>(order.OrderNumbers),
+  ];
+  const rawBillItems = asArray<LegacyRecord>(order.OrderItems).map(mapBillItem);
+  const tickets = sortFlightTicketsForTabs(
+    rawTickets.map((ticket) =>
+      mapFlightTicket(ticket, orderPassengers, orderTravels, orderNumbers),
+    ),
+  );
+  const firstTicket = tickets[0];
+  const firstTrip = firstTicket?.Trips[0];
+  const payHoldMinutes = readNumber(orderVariables?.OrderPayHoldTime) ?? 0;
+  const travelPayTypeCode = resolveFlightTravelPayTypeCode(payload, order, orderVariables);
+  const actions = buildFlightActionFlags(tickets, payHoldMinutes, travelPayTypeCode);
+  const statusName = mapStatusName(readString(order.StatusName ?? order.Status));
+  const orderId = readString(order.Id ?? order.OrderId ?? payload.OrderId);
+  const passengerNames =
+    joinNames(tickets.map((ticket) => ticket.Traveler?.Name)) ||
+    joinNames(orderPassengers.map((item) => readString(item.Name)));
+
+  return {
+    OrderId: orderId,
+    OrderNumber: readString(order.Id ?? order.OrderNumber ?? orderId) || undefined,
+    Status: readString(order.Status) || undefined,
+    StatusName: statusName || undefined,
+    TravelPayType: readString(payload.TravelPayType ?? order.TravelPayType) || undefined,
+    TravelPayTypeCode: travelPayTypeCode,
+    InsertTime:
+      formatDateTime(order.InsertTime ?? order.InsertDateTime ?? order.CreateTime) || undefined,
+    TotalAmount: readNumber(order.TotalAmount),
+    SelfPayAmount: readNumber(orderVariables?.SelfPayAmount ?? variablesSelfPay(order)),
+    isShowPayButton: actions.showPay,
+    ProductType: "Flight",
+    RouteTitle: firstTrip
+      ? `${readString(firstTrip.FlightNumber)} ${readString(firstTrip.FromCityName)}—${readString(firstTrip.ToCityName)}`.trim()
+      : undefined,
+    DepartTime: firstTrip?.TakeoffTime,
+    PassengerNames: passengerNames,
+    TicketStatusName: firstTicket?.StatusName,
+    Tickets: tickets,
+    BillItems: rawBillItems,
+    Histories: asArray<LegacyRecord>(payload.Histories).map(mapHistory),
+    Actions: actions,
+    PayHoldMinutes: payHoldMinutes > 0 ? payHoldMinutes : undefined,
+    ShowServiceFee: true,
+    TransactionId: firstTicket?.Id,
+    Contact: mapOrderContact(payload, order),
+  };
+}
+
+export function shouldNormalizeFlightDetail(data: unknown, summary?: OrderDetailResponse): boolean {
+  if (summary?.ProductType === "Flight") {
+    return true;
+  }
+  const payload = extractPayload(data);
+  const order = asRecord(payload.Order) ?? payload;
+  return asArray(order.OrderFlightTickets).length > 0;
+}
+
+/** Full flight order detail for the flight detail page. */
+export function normalizeFlightOrderDetail(data: unknown): OrderDetailResponse {
+  const payload = extractPayload(data);
+  if (isNormalizedFlightDetail(payload)) {
+    const detail = payload as unknown as HotelOrderDetail;
+    return {
+      ...detail,
+      Tickets: detail.Tickets ?? [],
+      BillItems: detail.BillItems ?? [],
+      Histories: detail.Histories ?? [],
+      Actions:
+        detail.Actions ??
+        buildFlightActionFlags(
+          detail.Tickets ?? [],
+          detail.PayHoldMinutes ?? 0,
+          detail.TravelPayTypeCode,
+        ),
+      ShowServiceFee: detail.ShowServiceFee ?? true,
+      ProductType: "Flight",
+    };
+  }
+  return mapLegacyFlightDetail(payload);
 }
 
 export function shouldNormalizeHotelDetail(data: unknown, summary?: OrderDetailResponse): boolean {

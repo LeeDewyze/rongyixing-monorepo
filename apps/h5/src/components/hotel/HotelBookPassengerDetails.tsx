@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { FlightOutNumberField } from "@ryx/shared-types";
 
 import { HotelBookTravelFields } from "@/components/hotel/HotelBookTravelFields";
+import { BookContactCheckboxMark } from "@/components/book/BookContactCheckbox";
 import type { HotelPassengerBookForm } from "@/lib/hotel-book";
 
 function DetailSection({ title, children }: { title: string; children: ReactNode }) {
@@ -59,7 +60,7 @@ function ContactCheckboxList({
       {options.map((option, index) => (
         <label
           key={`${option.value}-${index}`}
-          className="flex items-center justify-end gap-2 text-[14px] leading-tight text-[#333333]"
+          className="flex cursor-pointer items-center justify-end gap-2 text-[14px] leading-tight text-[#333333]"
         >
           <span className="truncate">{option.value}</span>
           <input
@@ -71,8 +72,9 @@ function ContactCheckboxList({
               );
               onChange(next);
             }}
-            className="size-4 shrink-0 accent-[#2768FA]"
+            className="sr-only"
           />
+          <BookContactCheckboxMark checked={option.checked} />
         </label>
       ))}
     </div>

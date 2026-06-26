@@ -137,6 +137,116 @@ export function createMockHotelOrderDetailLegacy(orderId: string) {
   };
 }
 
+function isFlightOrderId(orderId: string): boolean {
+  return /FLT/i.test(orderId) || orderId.startsWith("ORD-FLT");
+}
+
+/** Legacy-shaped flight order detail for adapter integration tests and dev QA. */
+export function createMockFlightOrderDetailLegacy(orderId: string) {
+  const isWaitPay = orderId === "ORD-FLT-001" || /FLT\d+$/i.test(orderId);
+  const ticketKeys = ["ticket-key-1", "ticket-key-2"];
+  const passengers = [
+    {
+      Id: "passenger-1",
+      Key: ticketKeys[0],
+      Name: "郭某某",
+      PassengerTypeName: "成人",
+      Mobile: "123456789000",
+      Email: "8997782299@qq.com",
+      HideCredentialsNumber: "410889******999999",
+      CredentialsTypeName: "身份证",
+    },
+    {
+      Id: "passenger-2",
+      Key: ticketKeys[1],
+      Name: "申晓杰",
+      PassengerTypeName: "成人",
+      Mobile: "13800138000",
+      Email: "test@example.com",
+      HideCredentialsNumber: "410928********5121",
+      CredentialsTypeName: "身份证",
+    },
+  ];
+
+  const buildTrips = (flightNumber: string) => [
+    {
+      FlightNumber: flightNumber,
+      FromCityName: "上海",
+      ToCityName: "北京",
+      FromAirportName: "大兴",
+      ToAirportName: "成都天府",
+      TakeoffTime: "2026-06-10T08:00:00",
+      ArrivalTime: "2026-06-10T12:00:00",
+      FlyTime: "2h10m",
+      PlaneType: "73E",
+      PlaneTypeDescribe: "空客321 (中)",
+      CabinType: "经济舱",
+      AirlineName: "中国国航",
+      AirlineSrc: "http://shared.rtesp.com/img/airlines/ca.png",
+      CodeShareNumber: "CA1915",
+    },
+  ];
+
+  const orderFlightTickets = ticketKeys.map((key, index) => ({
+    Id: `2086000000${index + 1}`,
+    Key: key,
+    StatusName: isWaitPay ? "预订成功" : "已出票",
+    FullTicketNo: isWaitPay ? "" : `999-${index + 1}0000000001`,
+    Explain:
+      "退票费\n2026年06月19日 16:30前 ￥33/人\n2026年06月23日 16:30前 ￥66/人\n2026年06月26日 12:30前 ￥231/人\n2026年06月26日 12:30后 ￥297/人\n改期费\n2026年06月19日 16:30前 ￥17/人\n2026年06月23日 16:30前 ￥50/人\n2026年06月26日 12:30前 ￥66/人\n2026年06月26日 12:30后 ￥99/人\n托运行李额\n1件,每件23KG,体积不超过40*60*100cm\n手提行李额\n0KG\n附加信息\n经济舱;\n签转条件\n不得签转",
+    Passenger: { Id: passengers[index]?.Id, Name: passengers[index]?.Name },
+    OrderFlightTrips: buildTrips(index === 0 ? "KN6777" : "KN5955"),
+  }));
+
+  const orderItems = ticketKeys.flatMap((key, index) => [
+    { Key: key, Tag: "Flight", Name: "机票票价", Amount: 330 + index * 50 },
+    { Key: key, Tag: "FlightTax", Name: "机场建设费", Amount: 50 },
+    { Key: key, Tag: "FlightTax", Name: "燃油费", Amount: 170 },
+    { Key: key, Tag: "ServiceFee", Name: "服务费", Amount: 10 },
+  ]);
+
+  return {
+    Order: {
+      Id: orderId,
+      Status: isWaitPay ? "WaitPay" : "Completed",
+      StatusName: isWaitPay ? "待付款" : "已完成",
+      TotalAmount: isWaitPay ? 1120 : 560,
+      InsertTime: "2026-07-01T23:23:00",
+      Variables: JSON.stringify({
+        OrderPayHoldTime: isWaitPay ? 8 : 0,
+        isPay: isWaitPay,
+        TravelPayType: isWaitPay ? 2 : 1,
+        SelfPayAmount: isWaitPay ? 1120 : 0,
+      }),
+      OrderFlightTickets: orderFlightTickets,
+      OrderItems: orderItems,
+      OrderPassengers: passengers,
+      OrderLinkmans: [{ Name: "申晓杰", Mobile: "", Email: "" }],
+      OrderTravels: ticketKeys.map((key) => ({
+        Key: key,
+        CostCenterCode: "",
+        CostCenterName: "默认",
+        OrganizationCode: "A001",
+        OrganizationName: "技术部",
+        ExpenseType: "",
+        IllegalPolicy: "",
+        IllegalReason: "",
+      })),
+    },
+    TravelPayType: isWaitPay ? "个付" : "公付",
+    Histories: [
+      {
+        StatusName: "已通过",
+        InsertTime: "2026-07-01T10:00:00",
+        ExpiredTime: "2026-07-02T10:00:00",
+        Account: { RealName: "审批人甲" },
+        Variables: JSON.stringify({ TypeName: "一级审批" }),
+      },
+    ],
+    Tmc: { IsShowServiceFee: true },
+  };
+}
+
 export function resolveOrderDetail(state: MockOrderState): OrderDetailResponse {
   const elapsed = Date.now() - state.createdAt;
   state.pollCount += 1;
@@ -154,7 +264,9 @@ export function resolveOrderDetailPayload(orderId: string, state: MockOrderState
   if (orderId === "ORD-HTL-001" || orderId === "ORD-HTL-002") {
     return createMockHotelOrderDetailLegacy(orderId);
   }
-  // Book-flow dynamic ids: return legacy shape so the detail adapter is exercised.
+  if (isFlightOrderId(orderId)) {
+    return createMockFlightOrderDetailLegacy(orderId);
+  }
   if (orderId.startsWith("ORD")) {
     return createMockHotelOrderDetailLegacy(orderId);
   }

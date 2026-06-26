@@ -1,3 +1,8 @@
+import type { FlightBookBillBreakdown } from "@/lib/flight-book";
+
+import { FlightBookBillSheet } from "@/components/flight/FlightBookBillSheet";
+import { HOTEL_DETAIL_FONT } from "@/components/hotel/hotel-detail-chrome";
+
 interface FlightBookFooterProps {
   amount: number;
   agreed: boolean;
@@ -6,11 +11,32 @@ interface FlightBookFooterProps {
   pendingLabel?: string;
   showTicketNotice?: boolean;
   showSaveOrder?: boolean;
+  billOpen: boolean;
+  billBreakdown: FlightBookBillBreakdown | null;
   onAgreedChange: (agreed: boolean) => void;
-  onShowBill: () => void;
+  onBillToggle: () => void;
   onShowTicketNotice?: () => void;
   onSubmit: () => void;
   onSave?: () => void;
+}
+
+function BillChevron({ open }: { open: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 12 8"
+      className={`h-2 w-3 shrink-0 text-[#2768FA] transition-transform duration-200 ${open ? "" : "rotate-180"}`}
+      aria-hidden
+    >
+      <path
+        d="M1 1.5 6 6.5 11 1.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
 }
 
 export function FlightBookFooter({
@@ -21,82 +47,102 @@ export function FlightBookFooter({
   pendingLabel,
   showTicketNotice = false,
   showSaveOrder = false,
+  billOpen,
+  billBreakdown,
   onAgreedChange,
-  onShowBill,
+  onBillToggle,
   onShowTicketNotice,
   onSubmit,
   onSave,
 }: FlightBookFooterProps) {
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-30 bg-white px-4 pt-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
-      <label className="mb-2.5 flex cursor-pointer items-center gap-2 text-[12px] leading-snug text-[#666666]">
-        <span className="relative flex size-5 shrink-0 items-center justify-center">
-          <input
-            type="checkbox"
-            checked={agreed}
-            onChange={(e) => onAgreedChange(e.target.checked)}
-            className="peer absolute inset-0 opacity-0"
-          />
-          <span className="size-5 rounded-full border border-[#b8b8b8] peer-checked:border-[#5099fe] peer-checked:bg-[#5099fe]" />
-          <span className="pointer-events-none absolute hidden text-[13px] leading-none text-white peer-checked:block">
-            ✓
-          </span>
-        </span>
-        <span>
-          我已阅读并同意
-          {showTicketNotice ? (
-            <button
-              type="button"
-              className="text-[#5099fe]"
-              onClick={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                onShowTicketNotice?.();
-              }}
-            >
-              购票须知
-            </button>
-          ) : (
-            <span className="text-[#5099fe]">购票须知</span>
-          )}
-        </span>
-      </label>
+    <>
+      {billOpen ? (
+        <button
+          type="button"
+          className="fixed inset-0 z-20 bg-black/25"
+          aria-label="关闭费用明细"
+          onClick={onBillToggle}
+        />
+      ) : null}
 
-      <div className="flex items-center gap-3">
-        <div className="flex min-w-0 flex-1 items-end gap-3">
-          <p className="text-[25px] font-semibold leading-none text-[#ff4d4f]">
-            ¥{Number.isFinite(amount) ? amount : "—"}
-          </p>
-          <button
-            type="button"
-            className="pb-0.5 text-[13px] text-[#5099fe]"
-            onClick={onShowBill}
-          >
-            明细
-          </button>
-        </div>
+      <div className={`fixed inset-x-0 bottom-0 z-30 flex flex-col ${HOTEL_DETAIL_FONT}`}>
+        {billOpen && billBreakdown ? <FlightBookBillSheet breakdown={billBreakdown} /> : null}
 
-        <div className="flex shrink-0 items-center gap-2">
-          {showSaveOrder ? (
-            <button
-              type="button"
-              disabled={disabled || !agreed}
-              className="rounded-full border border-[#5099fe] px-4 py-3 text-[14px] text-[#5099fe] disabled:border-[#cccccc] disabled:text-[#cccccc]"
-              onClick={onSave}
-            >
-              保存订单
-            </button>
-          ) : null}
-          <button
-            type="button"
-            disabled={disabled || !agreed}
-            className="min-w-[9rem] rounded-full bg-[linear-gradient(90deg,#24a8ff_0%,#2468f7_100%)] px-6 py-3 text-[15px] font-medium text-white shadow-[0_6px_14px_rgba(36,104,247,0.24)] disabled:bg-none disabled:bg-[#cccccc] disabled:shadow-none active:opacity-90"
-            onClick={onSubmit}
-          >
-            {pending ? (pendingLabel ?? "提交中…") : "生成订单"}
-          </button>
+        <div className="bg-white px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
+          <label className="mb-2.5 flex cursor-pointer items-center gap-2 text-[12px] leading-snug text-[#666666]">
+            <span className="relative flex size-5 shrink-0 items-center justify-center">
+              <input
+                type="checkbox"
+                checked={agreed}
+                onChange={(e) => onAgreedChange(e.target.checked)}
+                className="peer absolute inset-0 opacity-0"
+              />
+              <span className="size-5 rounded-full border border-[#b8b8b8] peer-checked:border-[#5099fe] peer-checked:bg-[#5099fe]" />
+              <span className="pointer-events-none absolute hidden text-[13px] leading-none text-white peer-checked:block">
+                ✓
+              </span>
+            </span>
+            <span>
+              我已阅读并同意
+              {showTicketNotice ? (
+                <button
+                  type="button"
+                  className="text-[#5099fe]"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    onShowTicketNotice?.();
+                  }}
+                >
+                  购票须知
+                </button>
+              ) : (
+                <span className="text-[#5099fe]">购票须知</span>
+              )}
+            </span>
+          </label>
+
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 min-w-0 flex-1 items-center gap-2">
+              <p className="m-0 shrink-0 text-[13px] leading-none text-[#666666]">总计</p>
+              <p className="m-0 text-[25px] font-semibold leading-none text-[#FF4D4F]">
+                ¥{Number.isFinite(amount) ? amount : "—"}
+              </p>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 text-[13px] leading-none text-[#2768FA]"
+                aria-expanded={billOpen}
+                onClick={onBillToggle}
+              >
+                明细
+                <BillChevron open={billOpen} />
+              </button>
+            </div>
+
+            <div className="flex shrink-0 items-center gap-2">
+              {showSaveOrder ? (
+                <button
+                  type="button"
+                  disabled={disabled || !agreed}
+                  className="flex h-9 items-center justify-center rounded-[24px] border border-[#2768FA] px-4 text-[14px] leading-none text-[#2768FA] disabled:border-[#CCCCCC] disabled:text-[#CCCCCC]"
+                  onClick={onSave}
+                >
+                  保存订单
+                </button>
+              ) : null}
+              <button
+                type="button"
+                disabled={disabled || !agreed}
+                className="flex h-9 w-[120px] shrink-0 items-center justify-center rounded-[24px] bg-[linear-gradient(270deg,#2768FA_0%,#33A1F9_100%)] text-[14px] font-medium leading-none text-white disabled:bg-none disabled:bg-[#CCCCCC] active:opacity-90"
+                onClick={onSubmit}
+              >
+                {pending ? (pendingLabel ?? "提交中…") : "生成订单"}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

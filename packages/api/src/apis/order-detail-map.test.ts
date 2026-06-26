@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  normalizeFlightOrderDetail,
   normalizeHotelOrderDetail,
   normalizeOrderDetailResponse,
+  shouldNormalizeFlightDetail,
   shouldNormalizeHotelDetail,
 } from "./order-detail-map.js";
 
@@ -254,6 +256,198 @@ describe("normalizeHotelOrderDetail", () => {
 
     expect(detail.Rooms).toHaveLength(1);
     expect(detail.Rooms[0]?.HotelName).toBe("亚朵酒店");
+  });
+});
+
+describe("normalizeFlightOrderDetail", () => {
+  it("maps legacy flight order with tickets, travelers, and pay actions", () => {
+    const detail = normalizeFlightOrderDetail({
+      Order: {
+        Id: "ORD-FLT-001",
+        Status: "WaitPay",
+        StatusName: "待付款",
+        TotalAmount: 560,
+        InsertTime: "2026-07-01T23:23:00",
+        Variables: JSON.stringify({ OrderPayHoldTime: 8, TravelPayType: 2 }),
+        OrderFlightTickets: [
+          {
+            Id: "T1",
+            Key: "k1",
+            StatusName: "预订成功",
+            Passenger: { Id: "p1", Name: "郭某某" },
+            OrderFlightTrips: [
+              {
+                FlightNumber: "KN6777",
+                FromCityName: "上海",
+                ToCityName: "北京",
+                TakeoffTime: "2026-06-10T08:00:00",
+                ArrivalTime: "2026-06-10T12:00:00",
+                FlyTime: "12小时5分钟",
+              },
+            ],
+          },
+          {
+            Id: "T2",
+            Key: "k2",
+            StatusName: "预订成功",
+            Passenger: { Id: "p2", Name: "申晓杰" },
+            OrderFlightTrips: [
+              {
+                FlightNumber: "KN5955",
+                FromCityName: "北京",
+                ToCityName: "上海",
+                TakeoffTime: "2026-06-11T09:00:00",
+              },
+            ],
+          },
+        ],
+        OrderItems: [
+          { Key: "k1", Name: "机票票价", Amount: 330 },
+          { Key: "k2", Name: "机票票价", Amount: 380 },
+        ],
+        OrderPassengers: [
+          {
+            Id: "p1",
+            Key: "k1",
+            Name: "郭某某",
+            PassengerTypeName: "成人",
+            HideCredentialsNumber: "410889******999999",
+            CredentialsTypeName: "身份证",
+            Mobile: "123456789000",
+          },
+          {
+            Id: "p2",
+            Key: "k2",
+            Name: "申晓杰",
+            Mobile: "13800138000",
+            HideCredentialsNumber: "EB68***94",
+            CredentialsType: 2,
+          },
+        ],
+        OrderTravels: [
+          {
+            Key: "k1",
+            CostCenterName: "默认",
+            OrganizationCode: "A001",
+            OrganizationName: "技术部",
+          },
+        ],
+      },
+      TravelPayType: "个付",
+      Histories: [
+        {
+          StatusName: "已通过",
+          Account: { RealName: "审批人甲" },
+          Variables: JSON.stringify({ TypeName: "一级审批" }),
+        },
+      ],
+    });
+
+    expect(detail.ProductType).toBe("Flight");
+    expect(detail.Tickets).toHaveLength(2);
+    expect(detail.Tickets?.[0]?.Id).toBe("T2");
+    expect(detail.Tickets?.[0]?.Traveler?.Name).toBe("申晓杰");
+    expect(detail.Tickets?.[0]?.Traveler?.CredentialType).toBe("护照");
+    expect(detail.Tickets?.[0]?.Traveler?.CredentialNumber).toBe("EB68***94");
+    expect(detail.Tickets?.[1]?.Traveler?.Name).toBe("郭某某");
+    expect(detail.Tickets?.[0]?.Trips[0]?.FlightNumber).toBe("KN5955");
+    expect(detail.PayHoldMinutes).toBe(8);
+    expect(detail.Actions?.showPay).toBe(true);
+    expect(detail.Actions?.showCancel).toBe(true);
+    expect(detail.Histories).toHaveLength(1);
+  });
+
+  it("maps airline fields on flight trips including ticket fallbacks", () => {
+    const detail = normalizeFlightOrderDetail({
+      Order: {
+        Id: "ORD-FLT-AIR",
+        OrderFlightTickets: [
+          {
+            Id: "T1",
+            Key: "k1",
+            AirlineName: "中国国航",
+            CodeShareNumber: "CA1915",
+            PlaneTypeDescribe: "空客321 (中)",
+            OrderFlightTrips: [
+              {
+                FlightNumber: "KN5955",
+                PlaneType: "73E",
+                Airline: "KN",
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    expect(detail.Tickets?.[0]?.Trips[0]).toMatchObject({
+      FlightNumber: "KN5955",
+      CodeShareNumber: "CA1915",
+      AirlineName: "中国国航",
+      Airline: "KN",
+      PlaneType: "73E",
+      PlaneTypeDescribe: "空客321 (中)",
+    });
+  });
+
+  it("maps order linkmans to contact", () => {
+    const detail = normalizeFlightOrderDetail({
+      Order: {
+        Id: "ORD-FLT-LINK",
+        OrderFlightTickets: [
+          {
+            Id: "T1",
+            Key: "k1",
+            OrderFlightTrips: [
+              { FlightNumber: "MU5101", FromCityName: "上海", ToCityName: "北京" },
+            ],
+          },
+        ],
+        OrderLinkmans: [{ Name: "申/晓杰", Mobile: "19528280621", Email: "test@example.com" }],
+      },
+    });
+
+    expect(detail.Contact).toEqual({
+      Name: "申晓杰",
+      Mobile: "19528280621",
+      Email: "test@example.com",
+    });
+  });
+
+  it("hides pay for company travel pay type", () => {
+    const detail = normalizeFlightOrderDetail({
+      Order: {
+        Id: "ORD-FLT-CO",
+        Variables: JSON.stringify({ OrderPayHoldTime: 10, TravelPayType: 1 }),
+        OrderFlightTickets: [
+          {
+            Id: "T1",
+            Key: "k1",
+            StatusName: "预订成功",
+            OrderFlightTrips: [
+              { FlightNumber: "MU5101", FromCityName: "上海", ToCityName: "北京" },
+            ],
+          },
+        ],
+      },
+      TravelPayType: "公付",
+    });
+
+    expect(detail.Actions?.showPay).toBe(false);
+    expect(detail.Actions?.showCancel).toBe(true);
+  });
+});
+
+describe("shouldNormalizeFlightDetail", () => {
+  it("detects flight from OrderFlightTickets", () => {
+    const payload = {
+      Order: {
+        Id: "ORD-FLT-001",
+        OrderFlightTickets: [{ Id: "T1", Key: "k1", OrderFlightTrips: [{}] }],
+      },
+    };
+    expect(shouldNormalizeFlightDetail(payload)).toBe(true);
+    expect(shouldNormalizeHotelDetail(payload)).toBe(false);
   });
 });
 

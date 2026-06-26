@@ -1,3 +1,5 @@
+import type { FlightOrderDetailFields } from "./flight-order.js";
+
 /** Legacy TMC hotel type filter (list page segment). */
 export type HotelType = "Normal" | "Tmc" | "Agent";
 
@@ -394,7 +396,7 @@ export interface HotelOrderActionFlags {
   cancelOrderHotelId?: string;
 }
 
-export interface HotelOrderDetail {
+export interface HotelOrderDetail extends FlightOrderDetailFields {
   OrderId: string;
   OrderNumber?: string;
   Status?: string;
@@ -413,8 +415,6 @@ export interface HotelOrderDetail {
   PassengerNames?: string;
   TicketStatusName?: string;
   Rooms?: HotelOrderRoom[];
-  BillItems?: HotelOrderBillLine[];
-  Histories?: HotelOrderHistory[];
   Actions?: HotelOrderActionFlags;
   ShowServiceFee?: boolean;
   TransactionId?: string;
