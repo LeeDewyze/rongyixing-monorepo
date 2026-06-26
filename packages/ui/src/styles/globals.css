@@ -34,6 +34,16 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
+  /* ===== RYX Brand Color Tokens ===== */
+  --color-brand-title: var(--brand-title);
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-btn-start: var(--brand-btn-start);
+  --color-brand-btn-end: var(--brand-btn-end);
+  --color-brand-form-start: var(--brand-form-header-start);
+  --color-brand-form-end: var(--brand-form-header-end);
+  --color-brand-header-start: var(--brand-header-start);
+  --color-brand-header-end: var(--brand-header-end);
 }
 
 :root {
@@ -56,6 +66,28 @@
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
+
+  /* ===== RYX Brand Tokens ===== */
+
+  /* 主品牌蓝 — 文字/边框/对焦环等交互态 */
+  --brand-primary: #2768FA;
+
+  /* 标题文字 — 用于浅色背景上的标题 */
+  --brand-title: #010101;
+
+  /* 主按钮渐变 — 左浅右深 */
+  --brand-btn-start: #33A1F9;
+  --brand-btn-end: #2768FA;
+  --brand-btn-gradient: linear-gradient(90deg, var(--brand-btn-start), var(--brand-btn-end));
+
+  /* 页面 header 渐变 — 用于顶部导航栏 */
+  --brand-header-start: #5099fe;
+  --brand-header-end: #6aabff;
+
+  /* 表单页头部渐变 — 顶部 ~200px 从 brand-blue 渐变到页面底色 */
+  --brand-form-header-start: #7AB1FF;
+  --brand-form-header-end: #F5F6F9;
+  --brand-form-header-gradient: linear-gradient(180deg, var(--brand-form-header-start) 0px, var(--brand-form-header-end) 200px);
 }
 
 .dark {

@@ -14,6 +14,9 @@ export const CREDENTIAL_NAME_RULES = [
 
 export const CREDENTIAL_NAME_MAX_UNITS = 30;
 
+/** Legacy IdCardReg — 18-digit with last digit X/x allowed. */
+const ID_CARD_PATTERN = /^\d{17}[\dxX]$/;
+
 const MIDDLE_DOT_PATTERN = /[\u00b7\u2022\u2024\u2027\u30fb\u0387\u2219\u22c5\u25cf]/g;
 const SMART_QUOTE_PATTERN = /[\u201c\u201d\u2018\u2019\u300c\u300d\u300e\u300f]/g;
 
@@ -84,4 +87,46 @@ export function validateCredentialName(name: string, credentialType: number): st
   }
 
   return null;
+}
+
+/** Check if the 8-digit birthday substring is a valid date. */
+function isValidBirthdaySegment(yyyymmdd: string): boolean {
+  const y = Number(yyyymmdd.substring(0, 4));
+  const m = Number(yyyymmdd.substring(4, 6));
+  const d = Number(yyyymmdd.substring(6, 8));
+  if (y < 1900 || y > 2099 || m < 1 || m > 12 || d < 1 || d > 31) return false;
+  const date = new Date(y, m - 1, d);
+  return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d;
+}
+
+/**
+ * Legacy `IdCardReg` validation — 18-digit Chinese ID card number.
+ * Checks format (18 chars, first 17 digits, last digit or X/x) and birthday validity.
+ */
+export function validateCredentialNumber(
+  number: string,
+  credentialType: number,
+): string | null {
+  const trimmed = number.trim();
+  if (!trimmed) return "请输入证件号码";
+
+  if (credentialType === CredentialType.IdCard) {
+    if (!ID_CARD_PATTERN.test(trimmed)) {
+      return "身份证号码格式不正确，请输入18位有效身份证号";
+    }
+    if (!isValidBirthdaySegment(trimmed.substring(6, 14))) {
+      return "身份证号码中出生日期无效";
+    }
+  }
+
+  return null;
+}
+
+/** Legacy ID card gender auto-detection: odd 17th digit = M, even = F. */
+export function detectIdCardGender(idCardNumber: string): string | null {
+  const trimmed = idCardNumber.trim();
+  if (!ID_CARD_PATTERN.test(trimmed)) return null;
+  const genderDigit = Number(trimmed.charAt(16));
+  if (Number.isNaN(genderDigit)) return null;
+  return genderDigit % 2 === 1 ? "M" : "F";
 }

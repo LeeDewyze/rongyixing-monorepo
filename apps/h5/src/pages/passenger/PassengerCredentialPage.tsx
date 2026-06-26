@@ -120,14 +120,11 @@ export function PassengerCredentialPage() {
         title={title}
         onBack={() => navigate(returnTo)}
         footer={
-          <div className="mx-auto max-w-lg space-y-3">
-            <p className="text-center text-xs leading-relaxed text-[#5099fe]">
-              点击保存即表示您已阅读并接受个人信息授权声明。
-            </p>
+            <div className="mx-auto max-w-lg space-y-3">
             <button
               type="button"
               disabled={isSaving}
-              className="flex h-11 w-full items-center justify-center rounded-lg bg-[#5099fe] text-sm font-medium text-white active:opacity-90 disabled:opacity-50"
+              className="flex h-11 w-full items-center justify-center rounded-lg bg-gradient-to-r from-brand-btn-start to-brand-btn-end text-sm font-medium text-white active:opacity-90 disabled:opacity-50"
               onClick={() => void handleSave()}
             >
               {isSaving ? "保存中…" : "保存并使用该证件"}

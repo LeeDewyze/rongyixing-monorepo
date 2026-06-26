@@ -96,7 +96,7 @@ function PlusIcon() {
 function ApplyPageSkeleton() {
   return (
     <div className="min-h-full bg-[#F5F6F9]">
-      <div className="h-36 bg-gradient-to-br from-[#2768FA] to-[#33A1F9]" />
+      <div className="h-36 bg-gradient-to-br from-brand-btn-end to-brand-btn-start" />
       <div className="-mt-6 space-y-3 px-4 pb-24">
         {[1, 2, 3].map((key) => (
           <div
@@ -182,7 +182,7 @@ function AddRowButton({ label, onClick }: { label: string; onClick: () => void }
   return (
     <button
       type="button"
-      className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-[#C7D7FE] bg-[#F8FAFF] py-3 text-sm font-medium text-[#2768FA] active:bg-[#EEF4FF]"
+      className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-[#C7D7FE] bg-[#F8FAFF] py-3 text-sm font-medium text-brand-primary active:bg-[#EEF4FF]"
       onClick={onClick}
     >
       <PlusIcon />
@@ -206,7 +206,7 @@ function SegmentRouteCard({
     <div className="relative my-3 rounded-xl bg-gradient-to-r from-[#F8FAFF] to-[#F3F8FF] p-4">
       <button
         type="button"
-        className="absolute right-3 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-[#DCE8FF] bg-white text-[#2768FA] shadow-sm active:scale-95"
+        className="absolute right-3 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-full border border-[#DCE8FF] bg-white text-brand-primary shadow-sm active:scale-95"
         aria-label="交换出发与目的城市"
         onClick={onSwap}
       >
@@ -422,7 +422,7 @@ export function TravelApplyPage() {
   return (
     <div className="min-h-full bg-[#F5F6F9]">
       {/* header hasn't changed but let's at least show title */}
-      <div className="bg-gradient-to-b from-[#5099fe] to-[#6aabff] pt-[env(safe-area-inset-top)] pb-10 px-4">
+      <div className="bg-gradient-to-b from-brand-header-start to-brand-header-end pt-[env(safe-area-inset-top)] pb-10 px-4">
         <div className="flex items-center px-1 pb-2 pt-1">
           <button
             type="button"
@@ -463,7 +463,7 @@ export function TravelApplyPage() {
                     type="button"
                     className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm transition-colors ${
                       active
-                        ? "border-[#2768FA] bg-[#EEF4FF] font-medium text-[#2768FA] shadow-[0_2px_8px_rgba(39,104,250,0.12)]"
+                        ? "border-brand-primary bg-[#EEF4FF] font-medium text-brand-primary shadow-[0_2px_8px_rgba(39,104,250,0.12)]"
                         : "border-[#E8ECF2] bg-[#FAFBFC] text-[#4B5563] hover:bg-[#F3F4F6] hover:border-[#D1D5DB] active:bg-[#E8ECF2]"
                     }`}
                     onClick={() => toggleTravelType(type.value)}
@@ -486,7 +486,7 @@ export function TravelApplyPage() {
               rows={3}
               maxLength={200}
               placeholder="请简要说明出差目的，如项目支持、客户拜访等"
-              className="w-full resize-none rounded-xl border border-[#E8ECF2] bg-[#FAFBFC] px-3.5 py-3 text-sm leading-relaxed text-[#111827] outline-none transition-colors placeholder:text-[#C4C9D4] focus:border-[#2768FA] focus:bg-white focus:ring-2 focus:ring-[#2768FA]/10"
+              className="w-full resize-none rounded-xl border border-[#E8ECF2] bg-[#FAFBFC] px-3.5 py-3 text-sm leading-relaxed text-[#111827] outline-none transition-colors placeholder:text-[#C4C9D4] focus:border-brand-primary focus:bg-white focus:ring-2 focus:ring-brand-primary/10"
               onChange={(event) => setReason(event.target.value)}
             />
           </label>
@@ -498,7 +498,7 @@ export function TravelApplyPage() {
           action={
             <button
               type="button"
-              className="shrink-0 rounded-full px-3 py-1 text-xs font-medium text-[#2768FA] active:bg-[#EEF4FF]"
+              className="shrink-0 rounded-full px-3 py-1 text-xs font-medium text-brand-primary active:bg-[#EEF4FF]"
               onClick={addTraveler}
             >
               添加
@@ -550,7 +550,7 @@ export function TravelApplyPage() {
           action={
             <button
               type="button"
-              className="shrink-0 rounded-full px-3 py-1 text-xs font-medium text-[#2768FA] active:bg-[#EEF4FF]"
+              className="shrink-0 rounded-full px-3 py-1 text-xs font-medium text-brand-primary active:bg-[#EEF4FF]"
               onClick={addSegment}
             >
               添加
@@ -618,7 +618,7 @@ export function TravelApplyPage() {
         <button
           type="button"
           disabled={submitApply.isPending || modifyApply.isPending}
-          className="flex h-[50px] w-full items-center justify-center rounded-full bg-gradient-to-r from-[#2768FA] to-[#5099FE] text-[16px] font-medium text-white shadow-[0_8px_24px_rgba(39,104,250,0.28)] transition-opacity disabled:opacity-60 active:opacity-90"
+          className="flex h-[50px] w-full items-center justify-center rounded-full bg-gradient-to-r from-brand-btn-end to-brand-header-start text-[16px] font-medium text-white shadow-[0_8px_24px_rgba(39,104,250,0.28)] transition-opacity disabled:opacity-60 active:opacity-90"
           onClick={() => void handleSubmit()}
         >
           {submitApply.isPending || modifyApply.isPending

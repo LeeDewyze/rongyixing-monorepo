@@ -62,7 +62,7 @@ export function TravelIframeView({ title, url, onWorkflowBack }: TravelIframeVie
   return (
     <div className="flex min-h-full flex-1 flex-col bg-white">
       <div className="flex items-center justify-end gap-3 border-b border-[#ECECEC] px-3 py-2">
-        <a href={url} target="_blank" rel="noreferrer" className="text-sm text-[#2768FA]">
+        <a href={url} target="_blank" rel="noreferrer" className="text-sm text-brand-primary">
           浏览器打开
         </a>
       </div>

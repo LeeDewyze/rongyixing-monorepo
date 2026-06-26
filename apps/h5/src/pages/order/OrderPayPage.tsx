@@ -22,6 +22,8 @@ export interface OrderPayPageProps {
   orderId: string;
   successPath: string;
   subtitle?: string;
+  /** If set, overrides the API-derived amount — for testing. */
+  amountOverride?: number;
 }
 
 export function OrderPayPage({
@@ -29,6 +31,7 @@ export function OrderPayPage({
   orderId,
   successPath,
   subtitle,
+  amountOverride,
 }: OrderPayPageProps) {
   const navigate = useNavigate();
   const { data: order } = useOrderDetail(orderId, 0);
@@ -47,7 +50,7 @@ export function OrderPayPage({
     }
   }, [pays, selected]);
 
-  const amount = payTotal?.TotalPayAmount ?? order?.TotalAmount;
+  const amount = amountOverride ?? payTotal?.TotalPayAmount ?? order?.TotalAmount;
   const isLoading = totalLoading || paysLoading;
   const isPending = payCreate.isPending || payProcess.isPending;
   const channels = pays ?? [];

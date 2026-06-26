@@ -49,9 +49,11 @@ function PersonalCenterButton() {
 interface ProfileHeaderProps {
   profile: MemberProfile;
   displayName: string;
+  balance?: number;
+  messageCount?: number;
 }
 
-export function ProfileHeader({ profile, displayName }: ProfileHeaderProps) {
+export function ProfileHeader({ profile, displayName, balance, messageCount }: ProfileHeaderProps) {
   const orgCode = profile.OrganizationCode ?? profile.Id;
 
   return (
@@ -69,6 +71,23 @@ export function ProfileHeader({ profile, displayName }: ProfileHeaderProps) {
             <BuildingIcon />
             <span>组织编码：{orgCode}</span>
           </p>
+          {(balance != null && balance > 0) || (messageCount != null && messageCount > 0) ? (
+            <div className="mt-2 flex items-center gap-3">
+              {balance != null && balance > 0 ? (
+                <span className="text-xs text-[#666666]">
+                  积分：<span className="font-medium text-[#5099fe]">{balance}</span>
+                </span>
+              ) : null}
+              {messageCount != null && messageCount > 0 ? (
+                <span className="text-xs text-[#666666]">
+                  消息：
+                  <span className="inline-flex min-w-[18px] items-center justify-center rounded-full bg-[#ff4d4f] px-1.5 py-0.5 text-[11px] font-medium text-white">
+                    {messageCount}
+                  </span>
+                </span>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </div>
     </header>

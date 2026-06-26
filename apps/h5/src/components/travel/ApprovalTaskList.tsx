@@ -49,9 +49,9 @@ export function ApprovalTaskList({
             className="block w-full p-4 text-left"
             onClick={() => onOpenTask(task)}
           >
-            <p className="text-base font-medium text-[#010101]">{task.name}</p>
+            <p className="text-base font-medium text-brand-title">{task.name}</p>
             {task.statusName ? (
-              <p className="mt-2 text-sm text-[#2768FA]">{task.statusName}</p>
+              <p className="mt-2 text-sm text-brand-primary">{task.statusName}</p>
             ) : null}
             {task.expiredTime ? (
               <p className="mt-1 text-xs text-[#999999]">过期时间：{task.expiredTime}</p>
@@ -71,7 +71,7 @@ export function ApprovalTaskList({
       {hasMore ? (
         <button
           type="button"
-          className="w-full rounded-full border border-[#2768FA] py-2.5 text-sm text-[#2768FA]"
+          className="w-full rounded-full border border-brand-primary py-2.5 text-sm text-brand-primary"
           disabled={isFetchingMore}
           onClick={onLoadMore}
         >

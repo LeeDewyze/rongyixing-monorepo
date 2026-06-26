@@ -31,6 +31,8 @@ import { TrainListPage } from "@/pages/train/TrainListPage";
 import { TravelApplyPage } from "@/pages/travel/TravelApplyPage";
 import { TravelApprovalPage } from "@/pages/travel/TravelApprovalPage";
 import { TravelTaskPage } from "@/pages/travel/TravelTaskPage";
+import { CredentialListPage } from "@/pages/credential/CredentialListPage";
+import { PayTestPage } from "@/pages/dev/PayTestPage";
 
 export const router = createBrowserRouter([
   {
@@ -90,6 +92,13 @@ export const router = createBrowserRouter([
     ],
   },
   {
+    path: "/credentials",
+    element: <RootLayout />,
+    children: [
+      { index: true, element: <CredentialListPage /> },
+    ],
+  },
+  {
     path: "/passenger",
     element: <RootLayout />,
     children: [
@@ -125,6 +134,13 @@ export const router = createBrowserRouter([
       { path: "approval", element: <TravelApprovalPage /> },
       { path: "workflow", element: <Navigate to="/travel/approval?tab=mine" replace /> },
       { path: "task", element: <TravelTaskPage /> },
+    ],
+  },
+  {
+    path: "/dev",
+    element: <RootLayout />,
+    children: [
+      { path: "pay", element: <PayTestPage /> },
     ],
   },
 ]);

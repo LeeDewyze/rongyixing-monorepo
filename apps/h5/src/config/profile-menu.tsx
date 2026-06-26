@@ -10,7 +10,7 @@ export const PROFILE_MENU_ITEMS: ProfileMenuItem[] = [
   {
     id: "credentials",
     label: "证件管理",
-    comingSoon: true,
+    to: "/credentials",
     icon: <MenuIcon src={PROFILE_ASSETS.menu.credentials} />,
   },
   {

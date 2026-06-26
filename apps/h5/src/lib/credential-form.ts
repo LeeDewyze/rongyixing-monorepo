@@ -10,7 +10,7 @@ import {
   type StaffCredentialApiPayload,
 } from "@ryx/shared-types";
 
-import { normalizeCredentialName, validateCredentialName } from "./credential-name";
+import { normalizeCredentialName, validateCredentialName, validateCredentialNumber } from "./credential-name";
 
 /** Legacy `member-credential-management` onAddCredential defaults. */
 const LEGACY_CN_COUNTRY = {
@@ -64,8 +64,8 @@ export function toExternalPassengerApiPayload(
     Name: normalizeCredentialName(values.Name),
     isNotTypeIdCard: !idCard,
     isTypePassport: type === CredentialType.Passport,
-    Surname: "",
-    Givenname: "",
+    Surname: values.Surname ?? "",
+    Givenname: values.Givenname ?? "",
   };
 
   if (!idCard) {
@@ -94,6 +94,8 @@ export function toStaffCredentialApiPayload(
     ...sharedCredentialFields(values, type, idCard),
     Mobile: values.Mobile?.trim() ?? "",
     StaffId: values.StaffId,
+    Surname: values.Surname ?? "",
+    Givenname: values.Givenname ?? "",
   };
   if (isModify) payload.CredentialsType = type;
   if (isModify && values.Id) payload.Id = values.Id;
@@ -111,6 +113,8 @@ export function emptyCredentialForm(staffId?: string): CredentialFormValues {
     ExpirationDate: "",
     PassengerType: PASSENGER_TYPE_ADULT,
     StaffId: staffId,
+    Surname: "",
+    Givenname: "",
   };
 }
 
@@ -167,7 +171,8 @@ export function validateCredentialForm(
 ): string | null {
   const nameError = validateCredentialName(values.Name, values.Type);
   if (nameError) return nameError;
-  if (!values.Number.trim()) return "请输入证件号码";
+  const numberError = validateCredentialNumber(values.Number, values.Type);
+  if (numberError) return numberError;
   if (mode === "external" && !values.Mobile?.trim()) return "请输入手机号";
 
   if (!isIdCardType(values.Type)) {

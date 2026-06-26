@@ -16,6 +16,9 @@ export interface CredentialFormValues {
   AccountId?: string;
   /** Round-trip from list; defaults to Adult when absent. Not shown in form UI. */
   PassengerType?: number;
+  /** Passport English name fields (legacy member-credential-management). */
+  Surname?: string;
+  Givenname?: string;
 }
 
 export interface CredentialPayload extends CredentialFormValues {

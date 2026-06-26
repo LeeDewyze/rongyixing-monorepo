@@ -29,7 +29,7 @@ export function CredentialNameRulesDialog({ open, onClose }: CredentialNameRules
               <h2 id="credential-name-rules-title" className="text-base font-semibold text-[#333333]">
                 姓名填写规则
               </h2>
-              <div className="mx-auto mt-1.5 h-0.5 w-10 rounded-full bg-[#5099fe]" aria-hidden />
+              <div className="mx-auto mt-1.5 h-0.5 w-10 rounded-full bg-gradient-to-r from-brand-btn-start to-brand-btn-end" aria-hidden />
             </div>
             <div className="h-px flex-1 bg-[#eeeeee]" aria-hidden />
           </div>
@@ -46,7 +46,7 @@ export function CredentialNameRulesDialog({ open, onClose }: CredentialNameRules
         <div className="shrink-0 px-5 pb-5">
           <button
             type="button"
-            className="flex h-11 w-full items-center justify-center rounded-full bg-[#5099fe] text-sm font-medium text-white active:opacity-90"
+            className="flex h-11 w-full items-center justify-center rounded-full bg-gradient-to-r from-brand-btn-start to-brand-btn-end text-sm font-medium text-white active:opacity-90"
             onClick={onClose}
           >
             我知道了

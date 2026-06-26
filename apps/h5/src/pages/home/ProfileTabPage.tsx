@@ -3,11 +3,14 @@ import { ProfileMenuList } from "@/components/profile/ProfileMenuSection";
 import { ProfileServiceGrid } from "@/components/profile/ProfileServiceGrid";
 import { PROFILE_MENU_ITEMS } from "@/config/profile-menu";
 import { useMemberProfile } from "@/hooks/useMemberProfile";
+import { useAccountBalance, useMessageCount } from "@/hooks/useAccount";
 import { formatApiError } from "@/lib/formatApiError";
 import { getLoginUserName } from "@/lib/session";
 
 export function ProfileTabPage() {
   const { data: profile, isLoading, error } = useMemberProfile();
+  const { data: balance } = useAccountBalance();
+  const { data: messageCount } = useMessageCount();
 
   if (isLoading) {
     return (
@@ -29,7 +32,12 @@ export function ProfileTabPage() {
 
   return (
     <div className="min-h-full bg-[#F5F6F9]">
-      <ProfileHeader profile={profile} displayName={displayName} />
+      <ProfileHeader
+        profile={profile}
+        displayName={displayName}
+        balance={balance}
+        messageCount={messageCount}
+      />
       <ProfileServiceGrid />
       <ProfileMenuList items={PROFILE_MENU_ITEMS} />
     </div>

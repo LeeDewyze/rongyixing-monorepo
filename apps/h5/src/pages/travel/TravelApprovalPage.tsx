@@ -109,7 +109,7 @@ export function TravelApprovalPage() {
           {canEdit ? (
             <button
               type="button"
-              className="rounded-lg border border-[#2768FA] px-3 py-1 text-xs font-medium text-[#2768FA]"
+              className="rounded-lg border border-brand-primary px-3 py-1 text-xs font-medium text-brand-primary"
               onClick={(e) => {
                 e.stopPropagation();
                 handleEdit(task);
@@ -167,7 +167,7 @@ export function TravelApprovalPage() {
             key={value}
             type="button"
             className={`flex-1 py-3 text-sm ${
-              tab === value ? "font-medium text-[#2768FA]" : "text-[#666666]"
+              tab === value ? "font-medium text-brand-primary" : "text-[#666666]"
             }`}
             onClick={() => setSearchParams({ tab: value }, { replace: true })}
           >
