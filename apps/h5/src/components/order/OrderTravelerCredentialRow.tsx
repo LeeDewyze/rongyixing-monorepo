@@ -28,10 +28,12 @@ export function OrderTravelerCredentialRow({
         <span className={`min-w-0 ${HOTEL_ORDER_ROW_VALUE}`}>—</span>
       ) : (
         <span
-          className={`flex min-w-0 flex-1 items-center justify-end gap-2 ${HOTEL_ORDER_ROW_VALUE}`}
+          className={`flex min-w-0 flex-1 items-center justify-end gap-1 ${HOTEL_ORDER_ROW_VALUE}`}
         >
           <span className="min-w-0 break-all">{number}</span>
-          {showType && typeLabel ? <span className="shrink-0">{typeLabel}</span> : null}
+          {showType && typeLabel ? (
+            <span className="shrink-0 whitespace-nowrap">{typeLabel}</span>
+          ) : null}
         </span>
       )}
     </div>

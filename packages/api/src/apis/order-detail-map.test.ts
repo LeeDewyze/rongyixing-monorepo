@@ -4,8 +4,10 @@ import {
   normalizeFlightOrderDetail,
   normalizeHotelOrderDetail,
   normalizeOrderDetailResponse,
+  normalizeTrainOrderDetail,
   shouldNormalizeFlightDetail,
   shouldNormalizeHotelDetail,
+  shouldNormalizeTrainDetail,
 } from "./order-detail-map.js";
 
 describe("normalizeOrderDetailResponse", () => {
@@ -461,5 +463,253 @@ describe("shouldNormalizeHotelDetail", () => {
     };
     expect(shouldNormalizeHotelDetail(payload)).toBe(true);
     expect(shouldNormalizeHotelDetail(payload, { OrderId: "ORD-HTL-001" })).toBe(true);
+  });
+});
+
+describe("normalizeTrainOrderDetail", () => {
+  it("maps legacy train order with multi-passenger tickets and pay actions", () => {
+    const detail = normalizeTrainOrderDetail({
+      Order: {
+        Id: "ORD-TRN-001",
+        Status: "WaitPay",
+        StatusName: "待付款",
+        TotalAmount: 476,
+        InsertTime: "2026-07-01T23:23:00",
+        Variables: JSON.stringify({
+          OrderPayHoldTime: 8,
+          isPay: true,
+          isShowCancelButton: true,
+          TravelPayType: 2,
+        }),
+        OrderTrainTickets: [
+          {
+            Id: "207600000001",
+            Key: "train-key-1",
+            StatusName: "待出票",
+            Passenger: { Id: "p1", Name: "郭某某", PassengerTypeName: "成人" },
+            OrderTrainTrips: [
+              {
+                TrainCode: "D79",
+                FromStationName: "北京南",
+                ToStationName: "上海虹桥",
+                StartTime: "2026-06-27T00:10:00",
+                ArrivalTime: "2026-06-27T11:30:00",
+                RunTime: "11h20m",
+                SeatTypeName: "二等座",
+                Price: 233,
+              },
+            ],
+          },
+          {
+            Id: "207600000002",
+            Key: "train-key-2",
+            StatusName: "待出票",
+            Passenger: { Id: "p2", Name: "申晓杰", PassengerTypeName: "成人" },
+            OrderTrainTrips: [
+              {
+                TrainCode: "D7889",
+                FromStationName: "北京南",
+                ToStationName: "上海虹桥",
+                StartTime: "2026-06-27T00:10:00",
+                ArrivalTime: "2026-06-27T11:30:00",
+                SeatTypeName: "二等座",
+                Price: 253,
+              },
+            ],
+          },
+        ],
+        OrderPassengers: [
+          { Id: "p1", Key: "train-key-1", Name: "郭某某", PassengerTypeName: "成人" },
+          { Id: "p2", Key: "train-key-2", Name: "申晓杰", PassengerTypeName: "成人" },
+        ],
+        OrderTravels: [
+          { Key: "train-key-1", CostCenterName: "默认", OrganizationName: "技术部" },
+          { Key: "train-key-2", CostCenterName: "默认", OrganizationName: "技术部" },
+        ],
+        OrderItems: [
+          { Key: "train-key-1", Tag: "Train", Name: "火车票票价", Amount: 233 },
+          { Key: "train-key-2", Tag: "Train", Name: "火车票票价", Amount: 253 },
+        ],
+      },
+      TravelPayType: "个付",
+    });
+
+    expect(detail.ProductType).toBe("Train");
+    expect(detail.Tickets).toHaveLength(2);
+    expect(detail.PassengerNames).toBe("申晓杰、郭某某");
+    expect(detail.Actions?.showPay).toBe(true);
+    expect(detail.Actions?.showCancel).toBe(true);
+    expect(detail.Tickets?.[0]?.Trips[0]?.TrainCode).toBe("D7889");
+  });
+
+  it("maps pending issue actions", () => {
+    const detail = normalizeTrainOrderDetail({
+      Order: {
+        Id: "ORD-TRN-pending-issue",
+        Status: "WaitIssue",
+        StatusName: "待出票",
+        Variables: JSON.stringify({
+          OrderPayHoldTime: 6,
+          isShowCancelButton: true,
+          isShowIssueButton: true,
+          TravelPayType: 1,
+        }),
+        OrderTrainTickets: [
+          {
+            Id: "207600000001",
+            Key: "train-key-1",
+            StatusName: "待出票",
+            Passenger: { Name: "申晓杰" },
+            OrderTrainTrips: [
+              {
+                TrainCode: "D79",
+                FromStationName: "北京南",
+                ToStationName: "上海虹桥",
+                CoachNo: "06",
+                SeatNo: "001A",
+              },
+            ],
+          },
+        ],
+      },
+      TravelPayType: "公付",
+    });
+
+    expect(detail.Actions?.showIssue).toBe(true);
+    expect(detail.Actions?.showPay).toBe(false);
+    expect(detail.Tickets?.[0]?.Trips[0]?.CoachNo).toBe("06");
+  });
+
+  it("maps ticket-level seat fields from legacy OrderTrainTicket", () => {
+    const detail = normalizeTrainOrderDetail({
+      Order: {
+        Id: "ORD-TRN-issued",
+        OrderTrainTickets: [
+          {
+            Id: "20760000000198",
+            Key: "train-key-1",
+            StatusName: "废除",
+            SeatType: 10,
+            SeatTypeName: "二等座",
+            Detail: "06车01A号",
+            Passenger: { Name: "测试" },
+            OrderTrainTrips: [
+              {
+                TrainCode: "D79",
+                FromStationName: "北京南",
+                ToStationName: "上海虹桥",
+                StartTime: "2026-06-27T00:10:00",
+                ArrivalTime: "2026-06-27T11:30:00",
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    const ticket = detail.Tickets?.[0];
+    expect(ticket?.SeatTypeName).toBe("二等座");
+    expect(ticket?.Detail).toBe("06车01A号");
+    expect(ticket?.Trips[0]?.SeatTypeName).toBe("二等座");
+    expect(ticket?.Trips[0]?.SeatName).toBe("06车01A号");
+  });
+
+  it("maps TravelMinutes to RunTime on train trips", () => {
+    const detail = normalizeTrainOrderDetail({
+      Order: {
+        Id: "ORD-TRN-duration",
+        OrderTrainTickets: [
+          {
+            Id: "1",
+            Key: "k1",
+            Passenger: { Name: "测试" },
+            OrderTrainTrips: [
+              {
+                TrainCode: "D79",
+                FromStationName: "北京南",
+                ToStationName: "上海虹桥",
+                TravelMinutes: "680",
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    expect(detail.Tickets?.[0]?.Trips[0]?.RunTime).toBe("11时20分");
+  });
+
+  it("maps ticket-level refund and exchange actions from Variables", () => {
+    const detail = normalizeTrainOrderDetail({
+      Order: {
+        Id: "ORD-TRN-002",
+        Status: "WaitTravel",
+        StatusName: "待出行",
+        TotalAmount: 238,
+        OrderTrainTickets: [
+          {
+            Id: "207600000001",
+            Key: "train-key-1",
+            StatusName: "已出票",
+            Variables: JSON.stringify({
+              isShowRefundButton: true,
+              isShowExchangeButton: true,
+            }),
+            OrderTrainTrips: [
+              {
+                TrainCode: "D79",
+                FromStationName: "北京南",
+                ToStationName: "上海虹桥",
+                StartTime: "2026-06-27T00:10:00",
+              },
+            ],
+          },
+        ],
+      },
+      Tmc: { IsShowServiceFee: false },
+    });
+
+    expect(detail.ShowServiceFee).toBe(false);
+    expect(detail.Tickets?.[0]?.Actions).toEqual({
+      showRefund: true,
+      showExchange: true,
+    });
+    expect(detail.Tickets?.[0]?.Traveler?.OutNumbers).toBeUndefined();
+  });
+
+  it("maps out numbers from OrderNumbers for train tickets", () => {
+    const detail = normalizeTrainOrderDetail({
+      Order: {
+        Id: "ORD-TRN-OUT",
+        OrderTrainTickets: [
+          {
+            Id: "ticket-1",
+            Key: "train-key-1",
+            Passenger: { Name: "孙雪" },
+            OrderTrainTrips: [
+              { TrainCode: "G1", FromStationName: "北京南", ToStationName: "上海虹桥" },
+            ],
+          },
+        ],
+        OrderNumbers: [
+          { Tag: "TmcOutNumber", Key: "train-key-1", Name: "出差单号", Number: "TR20260001" },
+        ],
+      },
+    });
+
+    expect(detail.Tickets?.[0]?.Traveler?.OutNumbers).toBe("出差单号:TR20260001");
+  });
+});
+
+describe("shouldNormalizeTrainDetail", () => {
+  it("detects train from OrderTrainTickets", () => {
+    const payload = {
+      Order: {
+        Id: "ORD-TRN-001",
+        OrderTrainTickets: [{ Id: "T1", Key: "k1", OrderTrainTrips: [{}] }],
+      },
+    };
+    expect(shouldNormalizeTrainDetail(payload)).toBe(true);
+    expect(shouldNormalizeFlightDetail(payload)).toBe(false);
   });
 });

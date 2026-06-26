@@ -13,83 +13,71 @@ interface HotelPolicyAlertDialogProps {
   onClose: () => void;
 }
 
-function AlertIcon() {
-  return (
-    <svg viewBox="0 0 20 20" className="size-5" aria-hidden>
-      <path
-        d="M10 2.2 17.4 16.2a1.2 1.2 0 0 1-1.05 1.8H3.65a1.2 1.2 0 0 1-1.05-1.8L10 2.2Z"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinejoin="round"
-      />
-      <path d="M10 7.5v4.2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-      <circle cx="10" cy="14.2" r="0.9" fill="currentColor" />
-    </svg>
-  );
+const AGENT_PREFIX = "超标:";
+
+function formatPolicyAlertChunk(chunk: string): string {
+  const parts = chunk
+    .split(";")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  // Legacy train copy: Name;credential;rule → Name(credential);rule
+  if (parts.length >= 3 && !chunk.includes("(")) {
+    const [name, credential, ...rules] = parts;
+    return `${name}(${credential});${rules.join(";")}`;
+  }
+
+  return chunk;
 }
 
-function parsePolicyAlertMessage(message: string): {
-  entries: { identity: string; rule?: string }[];
-  suffix?: string;
-  plain?: string;
-} {
+/** Format legacy policy alert copy — `Name(id);rule` chunks joined by comma. */
+export function formatPolicyAlertDisplayMessage(message: string): string {
   const trimmed = message.trim();
-  if (!trimmed) return { entries: [], plain: "" };
+  if (!trimmed) return "";
 
-  const hasExceedSuffix = trimmed.endsWith(EXCEED_SUFFIX);
-  const core = hasExceedSuffix ? trimmed.slice(0, -EXCEED_SUFFIX.length) : trimmed;
+  let agentPrefix = "";
+  let body = trimmed;
+  if (body.startsWith(AGENT_PREFIX)) {
+    agentPrefix = AGENT_PREFIX;
+    body = body.slice(AGENT_PREFIX.length);
+  }
+
+  const hasExceedSuffix = body.endsWith(EXCEED_SUFFIX);
+  const core = hasExceedSuffix ? body.slice(0, -EXCEED_SUFFIX.length) : body;
+  const suffix = hasExceedSuffix ? EXCEED_SUFFIX : "";
+
   const chunks = core
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
 
-  if (!chunks.length) {
-    return { entries: [], plain: trimmed };
-  }
+  if (!chunks.length) return trimmed;
 
-  const entries = chunks.map((chunk) => {
-    const semicolonIndex = chunk.indexOf(";");
-    if (semicolonIndex === -1) {
-      return { identity: chunk };
-    }
-    return {
-      identity: chunk.slice(0, semicolonIndex).trim(),
-      rule: chunk.slice(semicolonIndex + 1).trim() || undefined,
-    };
-  });
-
-  return {
-    entries,
-    suffix: hasExceedSuffix ? "超标不可预订" : undefined,
-  };
+  return `${agentPrefix}${chunks.map(formatPolicyAlertChunk).join(",")}${suffix}`;
 }
 
-function PolicyAlertBody({ message }: { message: string }) {
-  const parsed = parsePolicyAlertMessage(message);
-
-  if (parsed.plain != null && parsed.entries.length === 0) {
-    return <p className="hotel-policy-alert__plain">{parsed.plain}</p>;
-  }
-
+function DialogTitle() {
   return (
-    <>
-      <div className="hotel-policy-alert__content">
-        {parsed.entries.map((entry, index) => (
-          <div key={`${entry.identity}-${index}`} className="hotel-policy-alert__entry">
-            <p className="hotel-policy-alert__identity">{entry.identity}</p>
-            {entry.rule ? <p className="hotel-policy-alert__rule">{entry.rule}</p> : null}
-          </div>
-        ))}
-      </div>
-      {parsed.suffix ? <span className="hotel-policy-alert__tag">{parsed.suffix}</span> : null}
-    </>
+    <div className="hotel-policy-alert__title-row">
+      <span
+        className="hotel-policy-alert__title-line hotel-policy-alert__title-line--left"
+        aria-hidden
+      />
+      <h2 id="hotel-policy-alert-title" className="hotel-policy-alert__title">
+        温馨提示
+      </h2>
+      <span
+        className="hotel-policy-alert__title-line hotel-policy-alert__title-line--right"
+        aria-hidden
+      />
+    </div>
   );
 }
 
-/** Legacy CoreHelper.alert — polished policy exceed / block prompt. */
+/** Legacy CoreHelper.alert — simplified warm-reminder style policy prompt. */
 export function HotelPolicyAlertDialog({ open, message, onClose }: HotelPolicyAlertDialogProps) {
   const [visible, setVisible] = useState(false);
+  const displayMessage = formatPolicyAlertDisplayMessage(message);
 
   useEffect(() => {
     if (open) {
@@ -127,20 +115,15 @@ export function HotelPolicyAlertDialog({ open, message, onClose }: HotelPolicyAl
         className="hotel-policy-alert__panel"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="hotel-policy-alert__accent" aria-hidden />
+        <DialogTitle />
 
-        <div className="hotel-policy-alert__header">
-          <span className="hotel-policy-alert__icon">
-            <AlertIcon />
-          </span>
-          <h2 id="hotel-policy-alert-title" className="hotel-policy-alert__title">
-            提示
-          </h2>
-        </div>
+        <div className="hotel-policy-alert__divider" aria-hidden />
 
         <div id="hotel-policy-alert-message" className="hotel-policy-alert__body">
-          <PolicyAlertBody message={message} />
+          <p className="hotel-policy-alert__message">{displayMessage}</p>
         </div>
+
+        <div className="hotel-policy-alert__divider" aria-hidden />
 
         <div className="hotel-policy-alert__footer">
           <button type="button" className="hotel-policy-alert__confirm" onClick={handleClose}>

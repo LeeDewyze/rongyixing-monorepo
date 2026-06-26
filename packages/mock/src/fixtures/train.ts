@@ -1,4 +1,5 @@
 import type { TrainItem, TrainSearchParams } from "@ryx/shared-types";
+import { TrainSeatType } from "@ryx/shared-types";
 
 export const MOCK_TRAIN_STATIONS = [
   {
@@ -71,44 +72,90 @@ export function createMockTrainList(params: TrainSearchParams): TrainItem[] {
   return [
     {
       Id: "T1",
+      TrainNo: "G1",
       TrainCode: "G1",
       StartTime: `${params.Date} 09:00`,
       ArrivalTime: `${params.Date} 13:28`,
       FromStation: params.FromName ?? params.FromStation,
       ToStation: params.ToName ?? params.ToStation,
+      FromStationCode: params.FromStation,
+      ToStationCode: params.ToStation,
       Duration: "4小时28分",
       LowestPrice: 553,
       Seats: [
-        { SeatTypeName: "二等座", Price: 553, Count: 99 },
-        { SeatTypeName: "一等座", Price: 933, Count: 20 },
+        {
+          SeatType: TrainSeatType.SecondClassSeat,
+          SeatTypeName: "二等座",
+          Price: 553,
+          Count: 99,
+        },
+        {
+          SeatType: TrainSeatType.FirstClassSeat,
+          SeatTypeName: "一等座",
+          Price: 933,
+          Count: 20,
+        },
       ],
     },
     {
       Id: "T2",
+      TrainNo: "G3",
       TrainCode: "G3",
       StartTime: `${params.Date} 14:00`,
       ArrivalTime: `${params.Date} 18:28`,
       FromStation: params.FromName ?? params.FromStation,
       ToStation: params.ToName ?? params.ToStation,
+      FromStationCode: params.FromStation,
+      ToStationCode: params.ToStation,
       Duration: "4小时28分",
       LowestPrice: 553,
       Seats: [
-        { SeatTypeName: "二等座", Price: 553, Count: 50 },
-        { SeatTypeName: "商务座", Price: 1748, Count: 5 },
+        {
+          SeatType: TrainSeatType.SecondClassSeat,
+          SeatTypeName: "二等座",
+          Price: 553,
+          Count: 50,
+        },
+        {
+          SeatType: TrainSeatType.BusinessSeat,
+          SeatTypeName: "商务座",
+          Price: 1748,
+          Count: 5,
+        },
+        {
+          SeatType: TrainSeatType.BusinessBerthDown,
+          SeatTypeName: "动卧",
+          Price: 713.5,
+          Count: 8,
+          BedInfos: [
+            { BedTypeName: "上铺", Price: 713.5 },
+            { BedTypeName: "下铺", Price: 802.5 },
+          ],
+        },
       ],
     },
     {
       Id: "T3",
-      TrainCode: "K101",
+      TrainNo: "K1999",
+      TrainCode: "K1999",
       StartTime: `${params.Date} 22:30`,
       ArrivalTime: `${params.Date} 14:15`,
       FromStation: params.FromName ?? params.FromStation,
       ToStation: params.ToName ?? params.ToStation,
+      FromStationCode: params.FromStation,
+      ToStationCode: params.ToStation,
       Duration: "15小时45分",
+      ArriveDays: 1,
       LowestPrice: 189,
       Seats: [
-        { SeatTypeName: "硬座", Price: 189, Count: 99 },
         {
+          SeatType: TrainSeatType.HardSeat,
+          SeatTypeName: "硬座",
+          Price: 189,
+          Count: 99,
+        },
+        {
+          SeatType: TrainSeatType.HardBerth,
           SeatTypeName: "硬卧",
           Price: 322,
           Count: 12,
@@ -119,6 +166,7 @@ export function createMockTrainList(params: TrainSearchParams): TrainItem[] {
           ],
         },
         {
+          SeatType: TrainSeatType.SoftBerth,
           SeatTypeName: "软卧",
           Price: 504,
           Count: 2,
@@ -127,7 +175,12 @@ export function createMockTrainList(params: TrainSearchParams): TrainItem[] {
             { BedTypeName: "下铺", Price: 504 },
           ],
         },
-        { SeatTypeName: "无座", Price: 189, Count: 99 },
+        {
+          SeatType: TrainSeatType.NoSeat,
+          SeatTypeName: "无座",
+          Price: 189,
+          Count: 99,
+        },
       ],
     },
   ];

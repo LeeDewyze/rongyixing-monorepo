@@ -1,7 +1,12 @@
 import type { IResponse, OrderListParams } from "@ryx/shared-types";
 import { HOTEL_FLOW_METHODS, ORDER_FLOW_METHODS, successResponse } from "@ryx/api";
 
-import { buildOrderListResponse } from "../fixtures/order.js";
+import {
+  buildOrderListResponse,
+  markMockTrainOrderCancelled,
+  markMockTrainOrderIssued,
+  markMockTrainTicketRefunded,
+} from "../fixtures/order.js";
 import { createHotelMockHandlers } from "./hotel.js";
 
 let hotelHandlers: ReturnType<typeof createHotelMockHandlers> | null = null;
@@ -44,5 +49,27 @@ export function createOrderMockHandlers(): Record<string, (data: unknown) => IRe
     [ORDER_FLOW_METHODS.CHECK_INSPUR_REPUSH]: () => successResponse(false),
     [ORDER_FLOW_METHODS.ABOLISH_ORDER]: () => successResponse(true),
     [ORDER_FLOW_METHODS.ABOLISH_TICKET]: () => successResponse(true),
+    [ORDER_FLOW_METHODS.CANCEL_TRAIN]: (data) => {
+      const params = data as { OrderId?: string };
+      if (params?.OrderId) {
+        markMockTrainOrderCancelled(params.OrderId);
+      }
+      return successResponse(true);
+    },
+    [ORDER_FLOW_METHODS.ISSUE_TRAIN]: (data) => {
+      const params = data as { OrderId?: string; Id?: string };
+      const orderId = params?.OrderId ?? params?.Id;
+      if (orderId) {
+        markMockTrainOrderIssued(orderId);
+      }
+      return successResponse(true);
+    },
+    [ORDER_FLOW_METHODS.TRAIN_REFUND]: (data) => {
+      const params = data as { TicketId?: string };
+      if (params?.TicketId) {
+        markMockTrainTicketRefunded(params.TicketId);
+      }
+      return successResponse(true);
+    },
   };
 }

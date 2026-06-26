@@ -4,7 +4,20 @@ import bookOptionChevronIcon from "@/assets/hotel/book-option-chevron.png";
 export function BookOptionChevron({ inCircle = true }: { inCircle?: boolean }) {
   if (!inCircle) {
     return (
-      <img src={bookOptionChevronIcon} alt="" className="size-3 shrink-0 opacity-80" aria-hidden />
+      <svg
+        viewBox="0 0 16 16"
+        className="size-4 shrink-0 text-[#999999]"
+        fill="none"
+        aria-hidden
+      >
+        <path
+          d="M6 4.5 10 8 6 11.5"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
     );
   }
 

@@ -4,6 +4,7 @@ import { HOTEL_DETAIL_FONT } from "@/components/hotel/hotel-detail-chrome";
 
 interface FlightBookPassengerSectionProps {
   passengers: ReactNode;
+  seatPicker?: ReactNode;
   notifyLanguage?: ReactNode;
   serviceFee?: ReactNode;
   /** When multiple passengers — badge shows 旅客1, 旅客2, … */
@@ -13,6 +14,7 @@ interface FlightBookPassengerSectionProps {
 /** Flight book passenger block — mirrors hotel room section layout. */
 export function FlightBookPassengerSection({
   passengers,
+  seatPicker,
   notifyLanguage,
   serviceFee,
   passengerIndex,
@@ -30,6 +32,8 @@ export function FlightBookPassengerSection({
       </div>
 
       <div className="px-3 pb-4 pt-3">{passengers}</div>
+
+      {seatPicker ? <div className="px-3 pb-4">{seatPicker}</div> : null}
 
       {notifyLanguage ? <div className="px-3 pb-4">{notifyLanguage}</div> : null}
 

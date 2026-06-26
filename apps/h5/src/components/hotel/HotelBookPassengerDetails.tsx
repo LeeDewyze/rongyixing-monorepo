@@ -5,6 +5,8 @@ import { HotelBookTravelFields } from "@/components/hotel/HotelBookTravelFields"
 import { BookContactCheckboxMark } from "@/components/book/BookContactCheckbox";
 import type { HotelPassengerBookForm } from "@/lib/hotel-book";
 
+export type BookPassengerDetailsForm = Omit<HotelPassengerBookForm, "arrivalTime">;
+
 function DetailSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="overflow-hidden rounded-lg bg-white ring-1 ring-[#EEF1F6]">
@@ -48,8 +50,8 @@ function ContactCheckboxList({
   options,
   onChange,
 }: {
-  options: HotelPassengerBookForm["mobileOptions"];
-  onChange: (next: HotelPassengerBookForm["mobileOptions"]) => void;
+  options: BookPassengerDetailsForm["mobileOptions"];
+  onChange: (next: BookPassengerDetailsForm["mobileOptions"]) => void;
 }) {
   if (!options.length) {
     return <p className="text-right text-[14px] text-[#999999]">暂无</p>;
@@ -81,23 +83,23 @@ function ContactCheckboxList({
   );
 }
 
-function formatCostCenterDisplay(costCenter: HotelPassengerBookForm["costCenter"]): string {
+function formatCostCenterDisplay(costCenter: BookPassengerDetailsForm["costCenter"]): string {
   if (costCenter.code && costCenter.name) {
     return `${costCenter.code}-${costCenter.name}`;
   }
   return costCenter.name || costCenter.code || "请选择";
 }
 
-function hasOtherCostCenterInput(form: HotelPassengerBookForm): boolean {
+function hasOtherCostCenterInput(form: BookPassengerDetailsForm): boolean {
   return Boolean(form.otherCostCenterName.trim() || form.otherCostCenterCode.trim());
 }
 
-function hasOtherOrganizationInput(form: HotelPassengerBookForm): boolean {
+function hasOtherOrganizationInput(form: BookPassengerDetailsForm): boolean {
   return Boolean(form.otherOrganizationName.trim());
 }
 
 interface HotelBookPassengerDetailsProps {
-  form: HotelPassengerBookForm;
+  form: BookPassengerDetailsForm;
   showOrganizations: boolean;
   showCostCenter: boolean;
   requiresApprover: boolean;
@@ -106,7 +108,7 @@ interface HotelBookPassengerDetailsProps {
   illegalReasons: string[];
   expenseTypes: { id: string; name: string }[];
   requiresIllegalReason: boolean;
-  onUpdateForm: (patch: Partial<HotelPassengerBookForm>) => void;
+  onUpdateForm: (patch: Partial<BookPassengerDetailsForm>) => void;
   onOpenOrganization: () => void;
   onOpenCostCenter: () => void;
   onOpenApprover: () => void;

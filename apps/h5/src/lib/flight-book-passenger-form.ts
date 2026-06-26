@@ -24,8 +24,13 @@ export function findInitStaffForPassenger(
   staffs: FlightInitStaff[] | undefined,
 ): FlightInitStaff | undefined {
   if (!staffs?.length) return undefined;
-  const accountId = String(passenger.passenger.AccountId ?? passenger.id);
-  return staffs.find((staff) => String(staff.Account?.Id ?? "") === accountId);
+  const accountId = String(
+    passenger.passenger.AccountId ?? passenger.credential.AccountId ?? passenger.id,
+  );
+  return staffs.find((staff) => {
+    const staffAccountId = String(staff.Account?.Id ?? staff.Id ?? "");
+    return staffAccountId === accountId;
+  });
 }
 
 export function createPassengerBookForm(

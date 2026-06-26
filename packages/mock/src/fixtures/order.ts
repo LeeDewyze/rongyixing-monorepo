@@ -141,6 +141,196 @@ function isFlightOrderId(orderId: string): boolean {
   return /FLT/i.test(orderId) || orderId.startsWith("ORD-FLT");
 }
 
+function isTrainOrderId(orderId: string): boolean {
+  return /TRN/i.test(orderId) || orderId.startsWith("mock-train-order");
+}
+
+const issuedTrainOrders = new Set<string>();
+const cancelledTrainOrders = new Set<string>();
+
+export function markMockTrainOrderIssued(orderId: string): void {
+  issuedTrainOrders.add(orderId);
+}
+
+export function markMockTrainOrderCancelled(orderId: string): void {
+  cancelledTrainOrders.add(orderId);
+}
+
+const refundedTrainTickets = new Set<string>();
+
+export function markMockTrainTicketRefunded(ticketId: string): void {
+  refundedTrainTickets.add(ticketId);
+}
+
+export function resetMockTrainOrderMutations(): void {
+  issuedTrainOrders.clear();
+  cancelledTrainOrders.clear();
+  refundedTrainTickets.clear();
+}
+
+/** Legacy-shaped train order detail for adapter integration tests and dev QA. */
+export function createMockTrainOrderDetailLegacy(orderId: string) {
+  const isWaitPay = orderId === "ORD-TRN-001";
+  const isPendingIssue =
+    orderId === "ORD-TRN-pending-issue" ||
+    orderId === "mock-train-order-001" ||
+    orderId.startsWith("mock-train-order");
+  const isIssued = issuedTrainOrders.has(orderId) || orderId === "ORD-TRN-002";
+  const isCancelled = cancelledTrainOrders.has(orderId);
+
+  const ticketKeys = isWaitPay || isPendingIssue ? ["train-key-1", "train-key-2"] : ["train-key-1"];
+  const passengers = [
+    {
+      Id: "train-passenger-1",
+      Key: ticketKeys[0],
+      Name: "郭某某",
+      PassengerTypeName: "成人",
+      Mobile: "123456789000",
+      Email: "8997782299@qq.com",
+      HideCredentialsNumber: "410889******999999",
+      CredentialsTypeName: "身份证",
+    },
+    {
+      Id: "train-passenger-2",
+      Key: ticketKeys[1],
+      Name: "申晓杰",
+      PassengerTypeName: "成人",
+      Mobile: "19528280621",
+      Email: "",
+      HideCredentialsNumber: "410928********5121",
+      CredentialsTypeName: "身份证",
+    },
+  ];
+
+  const buildTrips = (trainCode: string) => [
+    {
+      TrainCode: trainCode,
+      FromStationName: "北京南",
+      ToStationName: "上海虹桥",
+      StartTime: "2026-06-27T00:10:00",
+      ArrivalTime: "2026-06-27T11:30:00",
+      RunTime: "11h20m",
+      CoachNo: "06",
+      SeatNo: "001A",
+      SeatName: "01A号 二等座",
+      SeatTypeName: "二等座",
+      Price: 233,
+      Explain:
+        "改签：开车前48小时（不含）以上，可改签预售期内的其他列车；开车前48小时以内，可改签开车前的其他列车，也可改签开车后至票面日期当日24:00之间的其他列车。",
+    },
+  ];
+
+  const ticketStatusName = isCancelled
+    ? "已取消"
+    : isIssued
+      ? "已出票"
+      : isPendingIssue
+        ? "待出票"
+        : isWaitPay
+          ? "待出票"
+          : "已出票";
+
+  const orderTrainTickets = ticketKeys.map((key, index) => {
+    const ticketId = `20760000000${index + 1}`;
+    const isRefunded = refundedTrainTickets.has(ticketId);
+    const ticketVariables =
+      isIssued && !isCancelled && !isRefunded
+        ? {
+            isShowRefundButton: true,
+            isShowExchangeButton: true,
+          }
+        : undefined;
+
+    return {
+      Id: ticketId,
+      Key: key,
+      StatusName: isRefunded ? "已退票" : ticketStatusName,
+      FullTicketNo: isIssued && !isRefunded ? `E${index + 1}0000000001` : "",
+      Explain: buildTrips("D79")[0]?.Explain,
+      Passenger: { Id: passengers[index]?.Id, Name: passengers[index]?.Name },
+      OrderTrainTrips: buildTrips(index === 0 ? "D79" : "D7889"),
+      Variables: ticketVariables ? JSON.stringify(ticketVariables) : undefined,
+    };
+  });
+
+  const orderItems = ticketKeys.flatMap((key, index) => [
+    { Key: key, Tag: "Train", Name: "火车票票价", Amount: 233 + index * 20 },
+    { Key: key, Tag: "ServiceFee", Name: "服务费", Amount: 5 },
+  ]);
+
+  const orderStatus = isCancelled
+    ? { Status: "Cancelled", StatusName: "已取消" }
+    : isWaitPay
+      ? { Status: "WaitPay", StatusName: "待付款" }
+      : isPendingIssue && !isIssued
+        ? { Status: "WaitIssue", StatusName: "待出票" }
+        : { Status: "WaitTravel", StatusName: "待出行" };
+
+  const variables = isWaitPay
+    ? {
+        OrderPayHoldTime: 8,
+        isPay: true,
+        isShowCancelButton: true,
+        TravelPayType: 2,
+        SelfPayAmount: 476,
+      }
+    : isPendingIssue && !isIssued
+      ? {
+          OrderPayHoldTime: 6,
+          isShowCancelButton: true,
+          isShowIssueButton: true,
+          isBtn: 1,
+          btnValue: "确认出票",
+          TravelPayType: 1,
+        }
+      : {
+          OrderPayHoldTime: 0,
+          isShowCancelButton: false,
+          TravelPayType: 1,
+        };
+
+  return {
+    Order: {
+      Id: orderId,
+      ...orderStatus,
+      TotalAmount: isWaitPay ? 476 : 233 * ticketKeys.length + 5,
+      InsertTime: "2026-07-01T23:23:00",
+      Variables: JSON.stringify(variables),
+      OrderTrainTickets: orderTrainTickets,
+      OrderItems: orderItems,
+      OrderPassengers: passengers.slice(0, ticketKeys.length),
+      OrderLinkmans: [{ Name: "申晓杰", Mobile: "19528280621", Email: "" }],
+      OrderNumbers: ticketKeys.map((key, index) => ({
+        Tag: "TmcOutNumber",
+        Key: key,
+        Name: "出差单号",
+        Number: `TR2026${String(index + 1).padStart(4, "0")}`,
+      })),
+      OrderTravels: ticketKeys.map((key) => ({
+        Key: key,
+        CostCenterCode: "",
+        CostCenterName: "默认",
+        OrganizationCode: "A001",
+        OrganizationName: "技术部",
+        ExpenseType: "",
+        IllegalPolicy: "",
+        IllegalReason: "",
+      })),
+    },
+    TravelPayType: isWaitPay ? "个付" : "公付",
+    Histories: [
+      {
+        StatusName: "已通过",
+        InsertTime: "2026-07-01T10:00:00",
+        ExpiredTime: "2026-07-02T10:00:00",
+        Account: { RealName: "审批人甲" },
+        Variables: JSON.stringify({ TypeName: "一级审批" }),
+      },
+    ],
+    Tmc: { IsShowServiceFee: true },
+  };
+}
+
 /** Legacy-shaped flight order detail for adapter integration tests and dev QA. */
 export function createMockFlightOrderDetailLegacy(orderId: string) {
   const isWaitPay = orderId === "ORD-FLT-001" || /FLT\d+$/i.test(orderId);
@@ -266,6 +456,9 @@ export function resolveOrderDetailPayload(orderId: string, state: MockOrderState
   }
   if (isFlightOrderId(orderId)) {
     return createMockFlightOrderDetailLegacy(orderId);
+  }
+  if (isTrainOrderId(orderId) || orderId.startsWith("ORD-TRN")) {
+    return createMockTrainOrderDetailLegacy(orderId);
   }
   if (orderId.startsWith("ORD")) {
     return createMockHotelOrderDetailLegacy(orderId);

@@ -113,8 +113,7 @@ export function normalizeTravelerCredentialTypeLabel(type?: string): string | un
 }
 
 export function shouldShowTravelerCredentialType(type?: string): boolean {
-  const label = normalizeTravelerCredentialTypeLabel(type);
-  return Boolean(label && label !== "身份证");
+  return Boolean(normalizeTravelerCredentialTypeLabel(type));
 }
 
 export function formatTravelerCredentialDisplay(number?: string, typeName?: string): string {

@@ -1,4 +1,5 @@
 import type { HotelOrderBillLine, HotelOrderHistory, HotelOrderTraveler } from "./hotel.js";
+import type { TrainOrderTicket } from "./train-order.js";
 
 export interface FlightOrderTrip {
   FromCityName?: string;
@@ -55,8 +56,10 @@ export interface OrderContact {
   Email?: string;
 }
 
+export type OrderDetailTicket = FlightOrderTicket | TrainOrderTicket;
+
 export interface FlightOrderDetailFields {
-  Tickets?: FlightOrderTicket[];
+  Tickets?: OrderDetailTicket[];
   BillItems?: HotelOrderBillLine[];
   Histories?: HotelOrderHistory[];
   PayHoldMinutes?: number;

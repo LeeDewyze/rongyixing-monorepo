@@ -1,31 +1,49 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import type { TrainItem } from "@ryx/shared-types";
+import type { TrainItem, TrainSeat } from "@ryx/shared-types";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ProductType } from "@ryx/shared-types";
 import type {
   TrainDurationSortMode,
   TrainFilterCondition,
   TrainPriceSortMode,
+  TrainScheduleParams,
   TrainSortTab,
   TrainTypeFilter,
 } from "@ryx/shared-types";
 
 import { CalendarPickerSheet } from "@/components/calendar/CalendarPickerSheet";
+import { FlightPolicyLoadingOverlay } from "@/components/flight/FlightPolicyLoadingOverlay";
+import { HotelPolicyAlertDialog } from "@/components/hotel/HotelPolicyAlertDialog";
 import { usePageHeader } from "@/components/layout";
 import { TrainFilterSheet } from "@/components/train/TrainFilterSheet";
+import { TrainListEmptyState } from "@/components/train/TrainListEmptyState";
 import { TrainListDateStrip } from "@/components/train/TrainListDateStrip";
 import { TrainListHeader } from "@/components/train/TrainListHeader";
 import { TrainListItemCard } from "@/components/train/TrainListItemCard";
 import { TrainListToolbar } from "@/components/train/TrainListToolbar";
 import { TrainModifySearchSheet } from "@/components/train/TrainModifySearchSheet";
+import { TrainScheduleSheet } from "@/components/train/TrainScheduleSheet";
 import { TrainTypeFilterBar } from "@/components/train/TrainTypeFilterBar";
 import { useTrainList } from "@/hooks/useTrainSearchForm";
+import { useTrainSchedule } from "@/hooks/useTrainSchedule";
+import { useTrainPolicy } from "@/hooks/useTrainBook";
 import { usePassengerSelection } from "@/hooks/usePassenger";
+import { useIdentity } from "@/hooks/useIdentity";
 import { TRAIN_CALENDAR_CONFIG } from "@/lib/calendar-picker";
 import { parseLocalDate, todayDateString } from "@/lib/date-search";
 import { getApiMode } from "@/lib/env";
 import { formatApiError } from "@/lib/formatApiError";
 import { buildPassengerSelectPath } from "@/lib/passenger-selection";
+import { hasAgentIdentity } from "@/lib/flight-book-save-order";
+import {
+  applyTrainPolicyColors,
+  buildTrainPolicyExceedAlertMessage,
+  buildTrainPolicyParams,
+  isTrainSeatBookable,
+} from "@/lib/train-book-policy";
+import { saveTrainBookSelection } from "@/lib/train-book-session";
+import { buildTrainScheduleParamsFromItem } from "@/lib/train-schedule";
+import { loadTrainExchangeSession } from "@/lib/train-exchange-session";
 import { getTicket } from "@/lib/session";
 import {
   applyTrainFilters,
@@ -53,6 +71,8 @@ export function TrainListPage() {
   const [searchParams] = useSearchParams();
   const [modifyOpen, setModifyOpen] = useState(false);
   const { selected: selectedPassengers } = usePassengerSelection(ProductType.Train);
+  const { data: identity } = useIdentity();
+  const isAgent = hasAgentIdentity(identity);
   const listReturnTo = `/train/list?${searchParams.toString()}`;
   const isAuthenticated = getApiMode() === "mock" || Boolean(getTicket());
 
@@ -66,6 +86,8 @@ export function TrainListPage() {
 
   const fromName = listParams.FromName ?? listParams.FromStation;
   const toName = listParams.ToName ?? listParams.ToStation;
+  const isExchangeMode =
+    searchParams.get("exchange") === "1" || Boolean(loadTrainExchangeSession());
 
   const hasListQuery = Boolean(
     parseLocalDate(listParams.Date) && listParams.FromStation && listParams.ToStation,
@@ -95,7 +117,8 @@ export function TrainListPage() {
   const [timeEarlyToLate, setTimeEarlyToLate] = useState(true);
   const [priceSortMode, setPriceSortMode] = useState<TrainPriceSortMode>("off");
   const [expandedTrainId, setExpandedTrainId] = useState<string | null>(null);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [policyAlertMessage, setPolicyAlertMessage] = useState<string | null>(null);
+  const [scheduleParams, setScheduleParams] = useState<TrainScheduleParams | null>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [headerHeight, setHeaderHeight] = useState(FALLBACK_HEADER_HEIGHT);
@@ -103,8 +126,33 @@ export function TrainListPage() {
   const { data, isLoading, isFetching, error, refetch } = useTrainList(
     hasListQuery ? listParams : null,
   );
+  const scheduleQuery = useTrainSchedule(scheduleParams);
 
   const rawTrains = useMemo(() => normalizeTrains(data?.Trains), [data]);
+
+  const policyParams = useMemo(
+    () =>
+      buildTrainPolicyParams({
+        trains: rawTrains,
+        passengers: selectedPassengers,
+      }),
+    [rawTrains, selectedPassengers],
+  );
+
+  const {
+    data: policyResults,
+    isLoading: isPolicyLoading,
+    isFetching: isPolicyFetching,
+    isError: isPolicyError,
+  } = useTrainPolicy(isAuthenticated && rawTrains.length ? policyParams : null);
+
+  const isPolicyChecking =
+    isAuthenticated &&
+    rawTrains.length > 0 &&
+    selectedPassengers.length > 0 &&
+    (isPolicyLoading || isPolicyFetching);
+
+  const policyChecked = !isPolicyFetching && !isPolicyError && Boolean(policyResults);
 
   useEffect(() => {
     if (!rawTrains.length) return;
@@ -171,10 +219,16 @@ export function TrainListPage() {
 
   const displayed = useMemo(() => {
     const trains = resolveTrainListOrder(getFilteredTrains(), listOrderState);
-    return markLowestPrice(trains);
-  }, [getFilteredTrains, listOrderState]);
+    const marked = markLowestPrice(trains);
+    if (!policyResults) return marked;
+    return applyTrainPolicyColors(marked, policyResults, selectedPassengers);
+  }, [getFilteredTrains, listOrderState, policyResults, selectedPassengers]);
 
   const filtered = isTrainFilterActive(filterApplied);
+  const showListLoading = isAuthenticated && (isLoading || isFetching) && displayed.length === 0;
+  const showListError = isAuthenticated && Boolean(error) && !isFetching && displayed.length === 0;
+  const showListEmpty =
+    isAuthenticated && !isLoading && !isFetching && !error && displayed.length === 0;
 
   usePageHeader({ visible: false });
 
@@ -210,11 +264,40 @@ export function TrainListPage() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!toastMessage) return;
-    const timer = window.setTimeout(() => setToastMessage(null), 2000);
-    return () => window.clearTimeout(timer);
-  }, [toastMessage]);
+  const handleBookAttempt = useCallback(
+    (train: TrainItem, seat: TrainSeat) => {
+      if (!selectedPassengers.length) {
+        navigate(buildPassengerSelectPath(ProductType.Train, listReturnTo));
+        return;
+      }
+
+      const bookable = isTrainSeatBookable(seat.policyColor, isAgent, policyChecked);
+      if (!bookable) {
+        setPolicyAlertMessage(
+          buildTrainPolicyExceedAlertMessage(train, seat, selectedPassengers, isAgent),
+        );
+        return;
+      }
+
+      if (seat.policyColor === "danger" && isAgent) {
+        setPolicyAlertMessage(
+          buildTrainPolicyExceedAlertMessage(train, seat, selectedPassengers, true),
+        );
+      }
+
+      saveTrainBookSelection({
+        searchParams: listParams,
+        train,
+        seat,
+        trainSnapshot: train.searchSnapshot,
+        policy: seat.policy,
+        passengers: selectedPassengers,
+        selectedAt: Date.now(),
+      });
+      navigate("/train/book");
+    },
+    [selectedPassengers, isAgent, policyChecked, navigate, listReturnTo, listParams],
+  );
 
   if (!hasListQuery) return null;
 
@@ -306,12 +389,16 @@ export function TrainListPage() {
         }`}
         style={{ paddingTop: headerHeight }}
       >
+        {isExchangeMode ? (
+          <div className="mx-3 mt-2 rounded-lg bg-[#FFF7E6] px-3 py-2 text-[13px] text-[#AD6800]">
+            改签模式：请选择新的车次与席别
+          </div>
+        ) : null}
         <div className="sticky top-0 z-20 shrink-0">
           <TrainListDateStrip
             selectedDate={listParams.Date}
             onSelect={handleDateSelect}
             onOpenCalendar={() => setCalendarOpen(true)}
-            days={7}
           />
           <TrainTypeFilterBar
             value={trainTypeFilter}
@@ -341,28 +428,25 @@ export function TrainListPage() {
             </div>
           )}
 
-          {isAuthenticated && (isLoading || isFetching) && (
-            <p className="py-4 text-center text-sm text-[#808080]">正在获取车次列表…</p>
+          {isAuthenticated && (isLoading || isFetching) && displayed.length > 0 && (
+            <p className="py-2 text-center text-xs text-[#9CA3AF]">更新中…</p>
           )}
 
-          {isAuthenticated && error && !isFetching && displayed.length === 0 && (
-            <div className="py-4 text-center">
-              <p className="text-sm text-destructive">{formatApiError(error, "train")}</p>
-              <button
-                type="button"
-                className="mt-2 text-sm font-medium text-[#5099fe]"
-                onClick={() => refetch()}
-              >
-                重试
-              </button>
-            </div>
-          )}
+          {showListLoading ? <TrainListEmptyState variant="loading" /> : null}
 
-          {isAuthenticated && !isLoading && !error && displayed.length === 0 && (
-            <div className="rounded-xl bg-white p-8 text-center text-sm text-[#808080] shadow-sm">
-              {filtered || trainTypeFilter !== "all" ? "没有符合条件的车次" : "暂无车次"}
-            </div>
-          )}
+          {showListError ? (
+            <TrainListEmptyState
+              variant="error"
+              message={formatApiError(error, "train")}
+              onRetry={() => void refetch()}
+            />
+          ) : null}
+
+          {showListEmpty ? (
+            <TrainListEmptyState
+              variant={filtered || trainTypeFilter !== "all" ? "no-match" : "no-trains"}
+            />
+          ) : null}
 
           {isAuthenticated &&
             displayed.map((train, index) => (
@@ -370,8 +454,13 @@ export function TrainListPage() {
                 key={getTrainListItemKey(train, index)}
                 train={train}
                 expanded={expandedTrainId === train.Id}
+                isAgent={isAgent}
+                policyChecked={policyChecked}
                 onToggle={() => toggleTrainCard(train.Id)}
-                onBookAttempt={() => setToastMessage("功能开发中")}
+                onBookAttempt={(seat) => handleBookAttempt(train, seat)}
+                onShowSchedule={(item) =>
+                  setScheduleParams(buildTrainScheduleParamsFromItem(item, listParams.Date))
+                }
               />
             ))}
         </div>
@@ -426,13 +515,22 @@ export function TrainListPage() {
         onSearch={handleModifySearch}
       />
 
-      {toastMessage ? (
-        <div className="pointer-events-none fixed inset-x-0 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-50 flex justify-center px-4">
-          <div className="rounded-lg bg-[#333333]/90 px-4 py-2 text-sm text-white shadow-lg">
-            {toastMessage}
-          </div>
-        </div>
-      ) : null}
+      <HotelPolicyAlertDialog
+        open={Boolean(policyAlertMessage)}
+        message={policyAlertMessage ?? ""}
+        onClose={() => setPolicyAlertMessage(null)}
+      />
+
+      <TrainScheduleSheet
+        open={Boolean(scheduleParams)}
+        title={scheduleParams ? `${scheduleParams.TrainCode} 经停站` : "经停站"}
+        loading={scheduleQuery.isLoading}
+        error={scheduleQuery.isError ? formatApiError(scheduleQuery.error, "train") : null}
+        stops={scheduleQuery.data?.Stops}
+        onClose={() => setScheduleParams(null)}
+      />
+
+      <FlightPolicyLoadingOverlay open={isPolicyChecking} />
     </div>
   );
 }

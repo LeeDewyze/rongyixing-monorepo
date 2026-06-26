@@ -35,7 +35,7 @@ const TRANSITIONAL_ORDER_STATUSES = new Set(["Booking", "WaitHandle", "WaitPay"]
 export function coerceFlightOrderDetail(detail: HotelOrderDetail): CoercedFlightOrderDetail {
   return {
     ...detail,
-    Tickets: detail.Tickets ?? [],
+    Tickets: (detail.Tickets ?? []) as FlightOrderTicket[],
     BillItems: detail.BillItems ?? [],
     Actions:
       detail.Actions ??

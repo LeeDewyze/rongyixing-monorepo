@@ -388,6 +388,12 @@ export type HotelOrderSmsAction = "none" | "sendCode" | "confirmCode" | "readOnl
 export interface HotelOrderActionFlags {
   showPay: boolean;
   showCancel: boolean;
+  /** Train order detail: show 确认出票 (IssueTrain). */
+  showIssue?: boolean;
+  /** Train ticket-level refund (merged on detail footer for selected ticket). */
+  showRefund?: boolean;
+  /** Train ticket-level exchange (merged on detail footer for selected ticket). */
+  showExchange?: boolean;
   showInspurRepush?: boolean;
   smsAction: HotelOrderSmsAction;
   smsReadOnlyText?: string;

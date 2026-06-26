@@ -423,6 +423,19 @@ export function formatExpandedSeatAvailability(count?: number): SeatAvailability
   return { text: `${count}张`, scarce: false };
 }
 
+/** Whether a seat has remaining inventory for list/book UI (Count > 0). */
+export function isTrainSeatAvailable(seat: TrainSeat): boolean {
+  return (seat.Count ?? 0) > 0;
+}
+
+export function hasAvailableTrainSeats(seats: TrainSeat[] | undefined): boolean {
+  return (seats ?? []).some(isTrainSeatAvailable);
+}
+
+export function filterAvailableTrainSeats(seats: TrainSeat[]): TrainSeat[] {
+  return seats.filter(isTrainSeatAvailable);
+}
+
 export function minSeatCount(train: TrainItem): number | undefined {
   const counts = (train.Seats ?? [])
     .map((seat) => seat.Count)

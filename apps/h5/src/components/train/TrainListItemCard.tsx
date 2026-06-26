@@ -5,6 +5,7 @@ import {
   formatTrainClock,
   formatTrainDuration,
   getTrainArrivalDayTip,
+  hasAvailableTrainSeats,
   minSeatCount,
   shouldShowScarceTrainBadge,
 } from "@/utils/train-list";
@@ -35,11 +36,20 @@ const TRAIN_SCARCE_BADGE_CLASS =
 interface TrainListItemCardProps {
   train: TrainItem;
   expanded: boolean;
+  isAgent?: boolean;
+  policyChecked?: boolean;
   onToggle: () => void;
-  onBookAttempt: () => void;
+  onBookAttempt: (seat: import("@ryx/shared-types").TrainSeat) => void;
+  onShowSchedule?: (train: TrainItem) => void;
 }
 
-function TrainRouteMiddle({ trainCode }: { trainCode: string }) {
+function TrainRouteMiddle({
+  trainCode,
+  onShowSchedule,
+}: {
+  trainCode: string;
+  onShowSchedule?: () => void;
+}) {
   return (
     <div className="flex flex-col items-center gap-0.5">
       <img
@@ -51,6 +61,18 @@ function TrainRouteMiddle({ trainCode }: { trainCode: string }) {
         aria-hidden
       />
       <span className={TRAIN_CODE_CLASS}>{trainCode}</span>
+      {onShowSchedule ? (
+        <button
+          type="button"
+          className="text-[10px] leading-none text-[#2768FA]"
+          onClick={(event) => {
+            event.stopPropagation();
+            onShowSchedule();
+          }}
+        >
+          经停
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -66,19 +88,28 @@ function LowestPriceBadge() {
 export function TrainListItemCard({
   train,
   expanded,
+  isAgent = false,
+  policyChecked = true,
   onToggle,
   onBookAttempt,
+  onShowSchedule,
 }: TrainListItemCardProps) {
   const isLowest = Boolean(train.isLowestPrice);
   const priceColor = isLowest ? "text-[#16a34a]" : "text-[#FF383C]";
   const arrivalDayTip = getTrainArrivalDayTip(train);
   const durationLabel = formatTrainDuration(train);
+  const canExpand = hasAvailableTrainSeats(train.Seats);
+
+  function handleCardClick() {
+    if (!canExpand && !expanded) return;
+    onToggle();
+  }
 
   return (
     <button
       type="button"
-      onClick={onToggle}
-      className={`relative z-0 w-full overflow-hidden rounded-lg text-left shadow-[0_2px_8px_rgba(0,0,0,0.06)] transition active:scale-[0.99] ${expanded ? "" : "min-h-[96px]"} ${
+      onClick={handleCardClick}
+      className={`relative z-0 w-full overflow-hidden rounded-lg text-left shadow-[0_2px_8px_rgba(0,0,0,0.06)] transition ${canExpand || expanded ? "active:scale-[0.99]" : ""} ${expanded ? "" : "min-h-[96px]"} ${
         isLowest
           ? "bg-white bg-[linear-gradient(184.36deg,#D7FFF0_5.34%,#FFFFFF_98.28%)] bg-[length:100%_48px] bg-top bg-no-repeat"
           : "bg-white"
@@ -100,7 +131,10 @@ export function TrainListItemCard({
               ) : (
                 <span className="h-3" aria-hidden />
               )}
-              <TrainRouteMiddle trainCode={train.TrainCode} />
+              <TrainRouteMiddle
+                trainCode={train.TrainCode}
+                onShowSchedule={onShowSchedule ? () => onShowSchedule(train) : undefined}
+              />
             </div>
 
             <div className="flex shrink-0 flex-col gap-2">
@@ -122,7 +156,13 @@ export function TrainListItemCard({
           </div>
         </div>
 
-        <TrainSeatRow seats={train.Seats ?? []} expanded={expanded} onBookAttempt={onBookAttempt} />
+        <TrainSeatRow
+          seats={train.Seats ?? []}
+          expanded={expanded}
+          isAgent={isAgent}
+          policyChecked={policyChecked}
+          onBookAttempt={onBookAttempt}
+        />
       </div>
     </button>
   );

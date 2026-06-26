@@ -2,18 +2,23 @@ import type { TrainBedInfo, TrainSeat } from "@ryx/shared-types";
 
 import {
   COLLAPSED_SEAT_PREVIEW_LIMIT,
+  filterAvailableTrainSeats,
   formatExpandedSeatAvailability,
   formatSeatAvailability,
   formatSeatDiscountRate,
   formatSeatPriceLabel,
   formatSeatTypeDisplayName,
   formatSeatTypeShortName,
+  isTrainSeatAvailable,
 } from "@/utils/train-list";
+import { isTrainSeatBookable, trainPolicyButtonClassName } from "@/lib/train-book-policy";
 
 interface TrainSeatRowProps {
   seats: TrainSeat[];
   expanded: boolean;
-  onBookAttempt: () => void;
+  isAgent?: boolean;
+  policyChecked?: boolean;
+  onBookAttempt: (seat: TrainSeat) => void;
 }
 
 const FONT = "[font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
@@ -35,6 +40,14 @@ const SEAT_AVAILABILITY_AVAILABLE_CLASS = `text-[12px] font-normal leading-[100%
 const SEAT_AVAILABILITY_SCARCE_CLASS = `text-[12px] font-normal leading-[100%] tracking-[0] text-[#FF383C] ${FONT}`;
 
 const SEAT_AVAILABILITY_NONE_CLASS = `text-[12px] font-normal leading-[100%] tracking-[0] text-[#999999] ${FONT}`;
+
+function getPreviewAvailabilityClass(
+  availability: ReturnType<typeof formatSeatAvailability>,
+): string {
+  if (availability.text === "无票") return SEAT_AVAILABILITY_NONE_CLASS;
+  if (availability.scarce) return SEAT_SCARCE_PREVIEW_CLASS;
+  return SEAT_AVAILABILITY_PREVIEW_CLASS;
+}
 
 function getExpandedAvailabilityClass(
   availability: ReturnType<typeof formatExpandedSeatAvailability>,
@@ -67,11 +80,23 @@ function BerthPriceLine({ bedInfos }: { bedInfos: TrainBedInfo[] }) {
   );
 }
 
-function ExpandedSeatRow({ seat, onBookAttempt }: { seat: TrainSeat; onBookAttempt: () => void }) {
+function ExpandedSeatRow({
+  seat,
+  isAgent = false,
+  policyChecked = true,
+  onBookAttempt,
+}: {
+  seat: TrainSeat;
+  isAgent?: boolean;
+  policyChecked?: boolean;
+  onBookAttempt: (seat: TrainSeat) => void;
+}) {
   const availability = formatExpandedSeatAvailability(seat.Count);
-  const hasTickets = seat.Count === undefined || seat.Count > 0;
+  const hasTickets = isTrainSeatAvailable(seat);
   const discountLabel = formatSeatDiscountRate(seat.Price, seat.TicketPrice);
   const isUnavailable = !hasTickets;
+  const bookable = isTrainSeatBookable(seat.policyColor, isAgent, policyChecked);
+  const buttonClass = trainPolicyButtonClassName(seat.policyColor);
 
   return (
     <div className={`px-3 py-3 ${isUnavailable ? "opacity-60" : ""}`}>
@@ -94,11 +119,11 @@ function ExpandedSeatRow({ seat, onBookAttempt }: { seat: TrainSeat; onBookAttem
           disabled={!hasTickets}
           onClick={(event) => {
             event.stopPropagation();
-            onBookAttempt();
+            onBookAttempt(seat);
           }}
           className={`h-7 shrink-0 justify-self-end rounded px-3 text-[12px] font-medium leading-[100%] tracking-[0] ${FONT} ${
-            hasTickets ? "bg-[#5099fe] text-white active:opacity-90" : "bg-[#EEEEEE] text-[#999999]"
-          }`}
+            hasTickets ? buttonClass : "bg-[#EEEEEE] text-[#999999]"
+          } ${hasTickets && !bookable ? "cursor-pointer" : ""}`}
         >
           预订
         </button>
@@ -111,15 +136,17 @@ function ExpandedSeatRow({ seat, onBookAttempt }: { seat: TrainSeat; onBookAttem
   );
 }
 
-export function TrainSeatRow({ seats, expanded, onBookAttempt }: TrainSeatRowProps) {
+export function TrainSeatRow({
+  seats,
+  expanded,
+  isAgent = false,
+  policyChecked = true,
+  onBookAttempt,
+}: TrainSeatRowProps) {
   if (!seats.length) return null;
 
   if (!expanded) {
-    const previewSeats = seats
-      .filter((seat) => (seat.Count ?? 0) > 0)
-      .slice(0, COLLAPSED_SEAT_PREVIEW_LIMIT);
-
-    if (!previewSeats.length) return null;
+    const previewSeats = seats.slice(0, COLLAPSED_SEAT_PREVIEW_LIMIT);
 
     return (
       <div className="mt-2 grid grid-cols-4 gap-x-5 gap-y-1 border-t border-[#f0f0f0] pt-2">
@@ -130,11 +157,7 @@ export function TrainSeatRow({ seats, expanded, onBookAttempt }: TrainSeatRowPro
               <span className={SEAT_TYPE_PREVIEW_CLASS}>
                 {formatSeatTypeDisplayName(seat.SeatTypeName)}
               </span>{" "}
-              <span
-                className={
-                  availability.scarce ? SEAT_SCARCE_PREVIEW_CLASS : SEAT_AVAILABILITY_PREVIEW_CLASS
-                }
-              >
+              <span className={getPreviewAvailabilityClass(availability)}>
                 {availability.text}
               </span>
             </span>
@@ -144,14 +167,19 @@ export function TrainSeatRow({ seats, expanded, onBookAttempt }: TrainSeatRowPro
     );
   }
 
-  const availableSeats = seats.filter((seat) => (seat.Count ?? 0) > 0);
+  const availableSeats = filterAvailableTrainSeats(seats);
   if (!availableSeats.length) return null;
 
   return (
     <div className="mt-3 overflow-hidden rounded-md bg-[#F5F6F9]">
       {availableSeats.map((seat, index) => (
         <div key={seat.SeatTypeName} className={index > 0 ? "border-t border-[#E8E8E8]" : ""}>
-          <ExpandedSeatRow seat={seat} onBookAttempt={onBookAttempt} />
+          <ExpandedSeatRow
+            seat={seat}
+            isAgent={isAgent}
+            policyChecked={policyChecked}
+            onBookAttempt={onBookAttempt}
+          />
         </div>
       ))}
     </div>

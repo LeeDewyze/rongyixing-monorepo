@@ -52,6 +52,8 @@ export interface OrderTrainListItem extends OrderListItemBase {
   DepartTime: string;
   PassengerNames: string;
   TicketStatusName?: string;
+  /** First ticket id — used for refund/exchange from list. */
+  TicketId?: string;
 }
 
 export interface OrderHotelListItem extends OrderListItemBase {

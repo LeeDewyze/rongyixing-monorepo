@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import type { FlightBookSelection } from "@/lib/flight-book-session";
-import summaryCollapseIcon from "@/assets/flight/summary-collapse-icon.png";
+import { SummaryCollapseButton } from "@/components/book/SummaryCollapseButton";
 import summaryRouteArrow from "@/assets/flight/summary-route-arrow.png";
 import { formatFlightBookDuration, formatFlightBookRouteSubtitle } from "@/lib/flight-book-display";
 import { FlightRoutePlaneIcon } from "@/components/flight/FlightRoutePlaneIcon";
@@ -17,33 +17,6 @@ const SUMMARY_FONT = "[font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFan
 interface FlightBookSummaryProps {
   selection: FlightBookSelection;
   onShowRules: () => void;
-}
-
-function SummaryCollapseButton({
-  expanded,
-  onToggle,
-}: {
-  expanded: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      className="flex size-4 shrink-0 items-center justify-center active:opacity-80"
-      onClick={onToggle}
-      aria-expanded={expanded}
-      aria-label={expanded ? "收起航班详情" : "展开航班详情"}
-    >
-      <img
-        src={summaryCollapseIcon}
-        alt=""
-        width={16}
-        height={16}
-        className={`size-4 transition-transform duration-200 ${expanded ? "" : "rotate-180"}`}
-        aria-hidden
-      />
-    </button>
-  );
 }
 
 export function FlightBookSummary({ selection, onShowRules }: FlightBookSummaryProps) {
@@ -94,6 +67,7 @@ export function FlightBookSummary({ selection, onShowRules }: FlightBookSummaryP
           </div>
           <SummaryCollapseButton
             expanded={expanded}
+            detailLabel="航班详情"
             onToggle={() => setExpanded((value) => !value)}
           />
         </div>

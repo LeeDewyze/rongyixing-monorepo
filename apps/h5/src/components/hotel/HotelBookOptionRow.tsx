@@ -1,17 +1,7 @@
 import type { ReactNode } from "react";
 
-import bookOptionChevronIcon from "@/assets/hotel/book-option-chevron.png";
 import { HOTEL_DETAIL_FONT } from "@/components/hotel/hotel-detail-chrome";
-
-function ChevronRightIcon({ inCircle = true }: { inCircle?: boolean }) {
-  if (!inCircle) {
-    return (
-      <img src={bookOptionChevronIcon} alt="" className="size-3 shrink-0 opacity-80" aria-hidden />
-    );
-  }
-
-  return <img src={bookOptionChevronIcon} alt="" className="size-5 shrink-0" aria-hidden />;
-}
+import { BookOptionChevron } from "@/components/book/BookOptionChevron";
 
 interface HotelBookOptionRowProps {
   label: string;
@@ -52,12 +42,12 @@ export function HotelBookOptionRow({
       {variant === "card" ? (
         <span className="flex min-w-0 items-center gap-2">
           <span className="truncate text-[14px] text-[#999999]">{value}</span>
-          <ChevronRightIcon />
+          <BookOptionChevron />
         </span>
       ) : (
         <>
           <span className="min-w-0 flex-1 truncate text-[14px] text-[#333333]">{value}</span>
-          <ChevronRightIcon inCircle={false} />
+          <BookOptionChevron inCircle={false} />
         </>
       )}
     </button>

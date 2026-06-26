@@ -36,12 +36,12 @@ describe("traveler credential display", () => {
     expect(normalizeTravelerCredentialTypeLabel("2")).toBe("护照");
   });
 
-  it("shows non-ID credential types beside masked numbers", () => {
+  it("shows credential type beside masked numbers", () => {
     expect(shouldShowTravelerCredentialType("护照")).toBe(true);
-    expect(shouldShowTravelerCredentialType("身份证")).toBe(false);
+    expect(shouldShowTravelerCredentialType("身份证")).toBe(true);
     expect(formatTravelerCredentialDisplay("EB68***94", "护照")).toBe("EB68***94 护照");
     expect(formatTravelerCredentialDisplay("410928********5121", "身份证")).toBe(
-      "410928********5121",
+      "410928********5121 身份证",
     );
   });
 });

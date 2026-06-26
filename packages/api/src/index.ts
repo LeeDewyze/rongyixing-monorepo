@@ -57,11 +57,21 @@ export {
 } from "./apis/flight-detail-adapter.js";
 export { stripFlightOrderBookDto } from "./apis/flight-book-adapter.js";
 export { createOrderApi, type OrderApi } from "./apis/order.js";
-export { normalizeFlightOrderDetail, normalizeHotelOrderDetail } from "./apis/order-detail-map.js";
+export { normalizeFlightOrderDetail, normalizeHotelOrderDetail, normalizeTrainOrderDetail } from "./apis/order-detail-map.js";
 export { createPayApi, type PayApi } from "./apis/pay.js";
 export { createPassengerApi, type PassengerApi } from "./apis/passenger.js";
 export { createMemberApi, type MemberApi } from "./apis/member.js";
-export { createTrainApi, type TrainApi } from "./apis/train.js";
+export { createTrainApi, type TrainApi, buildTrainPolicyTrainsPayload } from "./apis/train.js";
+export {
+  buildOriginalSearchResultSeats,
+  formatBookSeatLocation,
+  prepareTrainBookSubmitDto,
+  sanitizeTrainPolicyForWire,
+  stripStaffTravelPolicyForWire,
+  stripTrainBookOrderDto,
+  stripTrainInitBookDto,
+  stripTrainOrderBookDto,
+} from "./apis/train-book-adapter.js";
 export { createTravelApi, type TravelApi } from "./apis/travel.js";
 export { createTmcApi, type TmcApi } from "./apis/tmc.js";
 export * from "./methods/approval-flow.js";
