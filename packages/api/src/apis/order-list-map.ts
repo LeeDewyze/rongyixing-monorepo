@@ -266,6 +266,7 @@ function mapLegacyTrainOrder(order: LegacyRecord): OrderListItem | null {
     DepartTime: formatDateTime(trip.StartTime ?? trip.DepartureTime ?? trip.GoDate),
     PassengerNames: passengerNames,
     TicketStatusName: readString(ticket?.StatusName ?? ticket?.Status) || undefined,
+    TicketId: readString(ticket?.Id) || undefined,
     Actions: buildFlightTrainActions(ticketVariables ?? variables, "train"),
   };
 }

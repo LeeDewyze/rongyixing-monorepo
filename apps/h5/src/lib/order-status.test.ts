@@ -22,8 +22,10 @@ describe("getOrderStatusStyle", () => {
 describe("getTicketStatusStyle", () => {
   it("maps ticket sub-status colors", () => {
     expect(getTicketStatusStyle("待出票").color).toBe("#FF4D4F");
+    expect(getTicketStatusStyle("预订成功").color).toBe("#FF4D4F");
     expect(getTicketStatusStyle("已出票").color).toBe("#52C41A");
     expect(getTicketStatusStyle("已退票").color).toBe("#9CA3AF");
+    expect(getTicketStatusStyle("废除").color).toBe("#9CA3AF");
   });
 });
 

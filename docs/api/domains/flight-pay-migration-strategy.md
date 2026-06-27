@@ -24,16 +24,16 @@
 
 ## 2. 现状对照
 
-| 维度 | Legacy（ryx TMC 国内机票） | 新 H5 现状 |
-|------|---------------------------|------------|
-| 支付 UI | `TmcOrderService.payOrder` → `PayComponent` 弹层 | ⚠️ `FlightPayPage` 骨架，未接 Legacy 请求体 |
-| 支付金额/倒计时 | `Pay-GetTotalPayAmount` | ❌ 未封装 |
-| 支付渠道 | `Order-GetOrderPays` → `{ key: label }` | ⚠️ API 有，未 normalize 对象响应 |
-| 发起支付 | `Pay-Create`（Channel/Type/OrderId/CreateType） | ⚠️ 当前传 PayType/Amount，与 Legacy 不一致 |
-| 支付回调 | `Pay-Process`（OutTradeNo + Type） | ❌ H5 未接 |
-| 下单后 | checkPay → payOrder → **订单详情** | ⚠️ 部分 checkPay；落订单列表 |
-| 个付判定 | `OrderTravelPayType.Person \| Credit` | ⚠️ 仅 Person(2) |
-| 审批+自订 | 弹窗提示，不立即 payOrder | ❌ 未区分 |
+| 维度            | Legacy（ryx TMC 国内机票）                       | 新 H5 现状                                  |
+| --------------- | ------------------------------------------------ | ------------------------------------------- |
+| 支付 UI         | `TmcOrderService.payOrder` → `PayComponent` 弹层 | ⚠️ `FlightPayPage` 骨架，未接 Legacy 请求体 |
+| 支付金额/倒计时 | `Pay-GetTotalPayAmount`                          | ❌ 未封装                                   |
+| 支付渠道        | `Order-GetOrderPays` → `{ key: label }`          | ⚠️ API 有，未 normalize 对象响应            |
+| 发起支付        | `Pay-Create`（Channel/Type/OrderId/CreateType）  | ⚠️ 当前传 PayType/Amount，与 Legacy 不一致  |
+| 支付回调        | `Pay-Process`（OutTradeNo + Type）               | ❌ H5 未接                                  |
+| 下单后          | checkPay → payOrder → **订单详情**               | ⚠️ 部分 checkPay；落订单列表                |
+| 个付判定        | `OrderTravelPayType.Person \| Credit`            | ⚠️ 仅 Person(2)                             |
+| 审批+自订       | 弹窗提示，不立即 payOrder                        | ❌ 未区分                                   |
 
 ---
 
@@ -69,39 +69,41 @@ Legacy 对照 → Gap 清单 → API 封装/校对（Proxy）
   → 共享 pay hook → FlightPayPage → 填单/详情分支 → Proxy 验收 → Mock → 更新矩阵
 ```
 
-| 阶段 | 环境 | 目的 |
-|------|------|------|
+| 阶段 | 环境    | 目的                                             |
+| ---- | ------- | ------------------------------------------------ |
 | 联调 | `proxy` | 以 Legacy Network / verify-flight-proxy 为金标准 |
-| 离线 | `mock` | GetTotalPayAmount / Pay-Process 补齐 |
-| CI | `mock` | verify:mock 覆盖 pay 链 |
+| 离线 | `mock`  | GetTotalPayAmount / Pay-Process 补齐             |
+| CI   | `mock`  | verify:mock 覆盖 pay 链                          |
 
 ---
 
 ## 5. API 映射
 
-| 用途 | Method | `@ryx/api` |
-|------|--------|------------|
-| 是否可支付 | `TmcApiBookUrl-Home-CheckPay` | `book.checkPay()` |
-| 应付金额 | `TmcApiOrderUrl-Pay-GetTotalPayAmount` | `pay.getTotalPayAmount()` |
-| 支付渠道 | `TmcApiOrderUrl-Order-GetOrderPays` | `pay.getOrderPays()` |
-| 发起支付 | `TmcApiOrderUrl-Pay-Create` | `pay.create()` |
-| 支付处理 | `TmcApiOrderUrl-Pay-Process` | `pay.process()` |
-| 订单详情 | `TmcApiOrderUrl-Order-Detail` | `order.getDetail()` |
+| 用途       | Method                                 | `@ryx/api`                |
+| ---------- | -------------------------------------- | ------------------------- |
+| 是否可支付 | `TmcApiBookUrl-Home-CheckPay`          | `book.checkPay()`         |
+| 应付金额   | `TmcApiOrderUrl-Pay-GetTotalPayAmount` | `pay.getTotalPayAmount()` |
+| 支付渠道   | `TmcApiOrderUrl-Order-GetOrderPays`    | `pay.getOrderPays()`      |
+| 发起支付   | `TmcApiOrderUrl-Pay-Create`            | `pay.create()`            |
+| 支付处理   | `TmcApiOrderUrl-Pay-Process`           | `pay.process()`           |
+| 订单详情   | `TmcApiOrderUrl-Order-Detail`          | `order.getDetail()`       |
 
 ---
 
 ## 6. H5 路由与页面
 
-| 路由 | 职责 |
-|------|------|
-| `/flight/pay/:orderId` | 金额/倒计时、选渠道、Pay-Create、Process 或 H5 跳转 |
-| `/flight/result/:orderId` | 轮询订单（酒店同源，机票可选） |
-| `/orders/flight/:orderId` | 下单后默认落点 + 「去支付」入口 |
+| 路由                      | 职责                                                |
+| ------------------------- | --------------------------------------------------- |
+| `/flight/pay/:orderId`    | 金额/倒计时、选渠道、Pay-Create、Process 或 H5 跳转 |
+| `/flight/result/:orderId` | 轮询订单（酒店同源，机票可选）                      |
+| `/orders/flight/:orderId` | 下单后默认落点 + 「去支付」入口                     |
 
 填单提交后：
 
-- 个付/授信 + checkPay 就绪 → `/flight/pay/:orderId`
-- 其他 → `/orders/flight/:orderId`
+- **统一** → `/orders/flight/:orderId`（Legacy 默认落点；支付/取消在详情页底栏）
+- 列表/详情「支付」→ `/flight/pay/:orderId`
+
+填单页不再调用 `checkPay` 轮询后直跳支付页；详情页 `useFlightOrderDetail` 负责状态轮询。
 
 ---
 
@@ -128,8 +130,8 @@ Legacy 对照 → Gap 清单 → API 封装/校对（Proxy）
 
 ## 9. 相关文档
 
-| 文档 | 说明 |
-|------|------|
+| 文档                                                                     | 说明            |
+| ------------------------------------------------------------------------ | --------------- |
 | [flight-book-migration-strategy.md](./flight-book-migration-strategy.md) | 填单与 checkPay |
-| [hotel.md](./hotel.md) | 酒店支付参考 |
-| [PAGE-API-MATRIX.md](../PAGE-API-MATRIX.md) | Wave 5 矩阵 |
+| [hotel.md](./hotel.md)                                                   | 酒店支付参考    |
+| [PAGE-API-MATRIX.md](../PAGE-API-MATRIX.md)                              | Wave 5 矩阵     |

@@ -1,22 +1,83 @@
 import type {
+  TrainInitBookParams,
+  TrainInitBookResponse,
+  TrainBookParams,
+  TrainBookResponse,
+  TrainExchangeInfo,
+  TrainExchangeInfoParams,
   TrainItem,
+  TrainPassengerInfo,
+  TrainPassengerInfoParams,
+  TrainPolicyParams,
+  TrainPolicyPassengerResult,
+  TrainPolicyResponse,
+  TrainScheduleParams,
+  TrainScheduleResponse,
+  TrainScheduleStop,
   TrainSearchParams,
   TrainSearchResponse,
   TrainSeat,
   TrainStation,
   TrainStationResourceResponse,
 } from "@ryx/shared-types";
-import { parseTrainDurationMinutes, parseTravelTimeMinutes } from "@ryx/shared-types";
+import { TrainSeatType, parseTrainDurationMinutes, parseTravelTimeMinutes } from "@ryx/shared-types";
 
 import { TRAIN_FLOW_METHODS } from "../methods/train-flow.js";
 import type { ProxyClient } from "../proxy/proxy-client.js";
+import {
+  prepareTrainBookSubmitDto,
+  stripTrainInitBookDto,
+} from "./train-book-adapter.js";
 
 export interface TrainApi {
   getStations(): Promise<TrainStation[]>;
   searchTrains(params: TrainSearchParams): Promise<TrainSearchResponse>;
+  getPolicy(params: TrainPolicyParams): Promise<TrainPolicyResponse>;
+  getExchangeInfo(params: TrainExchangeInfoParams): Promise<TrainExchangeInfo>;
+  getTrainPassenger(params: TrainPassengerInfoParams): Promise<TrainPassengerInfo>;
+  getSchedule(params: TrainScheduleParams): Promise<TrainScheduleResponse>;
+  initializeBook(params: TrainInitBookParams): Promise<TrainInitBookResponse>;
+  submitBook(params: TrainBookParams): Promise<TrainBookResponse>;
+  submitExchangeBook(params: TrainBookParams): Promise<TrainBookResponse>;
 }
 
+export { buildTrainPolicyTrainsPayload } from "./train-book-adapter.js";
+
 type LegacyRecord = Record<string, unknown>;
+
+const SEAT_TYPE_NAME_MAP: Record<string, TrainSeatType> = {
+  无座: TrainSeatType.NoSeat,
+  硬座: TrainSeatType.HardSeat,
+  软座: TrainSeatType.SoftSeat,
+  硬卧上: TrainSeatType.HardBerthUp,
+  硬卧中: TrainSeatType.HardBerth,
+  硬卧下: TrainSeatType.HardBerthDown,
+  硬卧: TrainSeatType.HardBerth,
+  软卧上: TrainSeatType.SoftBerthUp,
+  软卧下: TrainSeatType.SoftBerth,
+  软卧: TrainSeatType.SoftBerth,
+  高级软卧: TrainSeatType.HighGradeSoftBerth,
+  二等座: TrainSeatType.SecondClassSeat,
+  一等座: TrainSeatType.FirstClassSeat,
+  特等座: TrainSeatType.SpecialSeat,
+  商务座: TrainSeatType.BusinessSeat,
+  动卧上: TrainSeatType.BusinessBerthUp,
+  动卧下: TrainSeatType.BusinessBerthDown,
+  动卧: TrainSeatType.BusinessBerthDown,
+  一等卧: TrainSeatType.FirstClassBerth,
+  一等卧下: TrainSeatType.FirstClassBerthDown,
+  二等卧: TrainSeatType.SecondClassBerth,
+  二等卧中: TrainSeatType.SecondClassBerthMiddle,
+  二等卧下: TrainSeatType.SecondClassBerthDown,
+};
+
+export function inferSeatTypeFromName(seatTypeName: string | undefined): number | undefined {
+  if (!seatTypeName?.trim()) return undefined;
+  const direct = SEAT_TYPE_NAME_MAP[seatTypeName.trim()];
+  if (direct != null) return direct;
+  const stripped = seatTypeName.replace(/[上中下]$/, "").trim();
+  return SEAT_TYPE_NAME_MAP[stripped];
+}
 
 function normalizeTrainStations(
   res: TrainStation[] | TrainStationResourceResponse | null | undefined,
@@ -58,15 +119,25 @@ function normalizeBedInfos(value: unknown): TrainSeat["BedInfos"] {
   return beds.length ? beds : undefined;
 }
 
+function parseSeatType(value: unknown, seatTypeName: string | undefined): number | undefined {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return inferSeatTypeFromName(seatTypeName);
+}
+
 function normalizeTrainSeat(seat: LegacyRecord): TrainSeat {
-  // Legacy list UI uses seat.SalesPrice only (see train-list-item_ryx.base getLowestSeatPrice).
-  const price = parseSeatPrice(seat.SalesPrice);
+  const price = parseSeatPrice(seat.SalesPrice) ?? parseSeatPrice(seat.Price);
   const ticketPrice = parseSeatPrice(seat.TicketPrice);
   const count = typeof seat.Count === "number" ? seat.Count : undefined;
   const seatTypeName = typeof seat.SeatTypeName === "string" ? seat.SeatTypeName : undefined;
   const bedInfos = normalizeBedInfos(seat.BedInfos);
+  const seatType = parseSeatType(seat.SeatType, seatTypeName);
 
   return {
+    SeatType: seatType,
     SeatTypeName: seatTypeName,
     Price: price,
     TicketPrice: ticketPrice,
@@ -122,11 +193,14 @@ function normalizeTrainItem(train: LegacyRecord): TrainItem {
   const trainCode = typeof train.TrainCode === "string" ? train.TrainCode : "";
   const trainNo = typeof train.TrainNo === "string" ? train.TrainNo : "";
   const fromStationCode = typeof train.FromStationCode === "string" ? train.FromStationCode : "";
+  const toStationCode = typeof train.ToStationCode === "string" ? train.ToStationCode : "";
   const startTime = typeof train.StartTime === "string" ? train.StartTime : "";
   const id = buildTrainItemId(train);
 
   return {
     Id: id,
+    searchSnapshot: { ...train },
+    TrainNo: trainNo || trainCode,
     TrainCode: trainCode || trainNo,
     StartTime: startTime,
     ArrivalTime: typeof train.ArrivalTime === "string" ? train.ArrivalTime : "",
@@ -137,7 +211,9 @@ function normalizeTrainItem(train: LegacyRecord): TrainItem {
     ToStation:
       (typeof train.ToStationName === "string" && train.ToStationName) ||
       (typeof train.ToStation === "string" && train.ToStation) ||
-      (typeof train.ToStationCode === "string" ? train.ToStationCode : ""),
+      toStationCode,
+    FromStationCode: fromStationCode || undefined,
+    ToStationCode: toStationCode || undefined,
     Duration:
       normalizeTrainDuration(train.TravelTimeName) ??
       (typeof train.Duration === "string" ? train.Duration : undefined),
@@ -159,6 +235,196 @@ function parseArriveDays(value: unknown): number | undefined {
     return Number.isFinite(parsed) ? parsed : undefined;
   }
   return undefined;
+}
+
+function normalizeTrainPolicyItem(item: LegacyRecord) {
+  const seatType =
+    typeof item.SeatType === "number"
+      ? item.SeatType
+      : typeof item.SeatType === "string"
+        ? Number(item.SeatType)
+        : undefined;
+
+  return {
+    TrainNo: typeof item.TrainNo === "string" ? item.TrainNo : undefined,
+    SeatType: Number.isFinite(seatType) ? seatType : undefined,
+    IsAllowBook: typeof item.IsAllowBook === "boolean" ? item.IsAllowBook : undefined,
+    IsForceBook: typeof item.IsForceBook === "boolean" ? item.IsForceBook : undefined,
+    Rules: Array.isArray(item.Rules)
+      ? item.Rules.filter((rule): rule is string => typeof rule === "string")
+      : undefined,
+    Descriptions: Array.isArray(item.Descriptions)
+      ? item.Descriptions.filter((desc): desc is string => typeof desc === "string")
+      : undefined,
+  };
+}
+
+export function normalizeTrainPolicyResponse(res: unknown): TrainPolicyResponse {
+  if (!Array.isArray(res)) return [];
+  return res.map((entry) => {
+    const row = entry as LegacyRecord;
+    const policies = Array.isArray(row.TrainPolicies)
+      ? row.TrainPolicies.map((policy) => normalizeTrainPolicyItem(policy as LegacyRecord))
+      : undefined;
+    return {
+      PassengerKey: typeof row.PassengerKey === "string" ? row.PassengerKey : undefined,
+      TrainPolicies: policies,
+    } satisfies TrainPolicyPassengerResult;
+  });
+}
+
+function normalizeTrainInitBookResponse(res: unknown): TrainInitBookResponse {
+  if (!res || typeof res !== "object") return {};
+  const payload = res as LegacyRecord;
+  return {
+    OrderAmount: typeof payload.OrderAmount === "number" ? payload.OrderAmount : undefined,
+    ServiceFees:
+      payload.ServiceFees && typeof payload.ServiceFees === "object"
+        ? (payload.ServiceFees as Record<string, number | string>)
+        : undefined,
+    PayTypes:
+      payload.PayTypes && typeof payload.PayTypes === "object"
+        ? (payload.PayTypes as Record<string, string>)
+        : undefined,
+    IllegalReasons: Array.isArray(payload.IllegalReasons)
+      ? payload.IllegalReasons.filter((item): item is string => typeof item === "string")
+      : undefined,
+    ExpenseTypes: Array.isArray(payload.ExpenseTypes)
+      ? payload.ExpenseTypes.map((item) => {
+          const row = item as LegacyRecord;
+          return {
+            Id: String(row.Id ?? ""),
+            Name: String(row.Name ?? ""),
+            Tag: typeof row.Tag === "string" ? row.Tag : undefined,
+          };
+        })
+      : undefined,
+    Staffs: Array.isArray(payload.Staffs)
+      ? (payload.Staffs as TrainInitBookResponse["Staffs"])
+      : undefined,
+    OutNumbers:
+      payload.OutNumbers && typeof payload.OutNumbers === "object"
+        ? (payload.OutNumbers as Record<string, string[]>)
+        : undefined,
+    Tmc:
+      payload.Tmc && typeof payload.Tmc === "object"
+        ? (payload.Tmc as Record<string, unknown>)
+        : undefined,
+    TmcServices: Array.isArray(payload.TmcServices)
+      ? payload.TmcServices.map((item) => item as TrainInitBookResponse["TmcServices"] extends (infer U)[] | undefined ? U : never)
+      : undefined,
+    isSkipApprove:
+      typeof payload.isSkipApprove === "boolean" ? payload.isSkipApprove : undefined,
+    IsShowOfficalBooked:
+      typeof payload.IsShowOfficalBooked === "boolean" ? payload.IsShowOfficalBooked : undefined,
+    IsShowDirectBooked:
+      typeof payload.IsShowDirectBooked === "boolean" ? payload.IsShowDirectBooked : undefined,
+    AccountNumber12306:
+      payload.AccountNumber12306 && typeof payload.AccountNumber12306 === "object"
+        ? {
+            Name:
+              typeof (payload.AccountNumber12306 as LegacyRecord).Name === "string"
+                ? ((payload.AccountNumber12306 as LegacyRecord).Name as string)
+                : undefined,
+            IsIdentity:
+              typeof (payload.AccountNumber12306 as LegacyRecord).IsIdentity === "boolean"
+                ? ((payload.AccountNumber12306 as LegacyRecord).IsIdentity as boolean)
+                : undefined,
+          }
+        : undefined,
+  };
+}
+
+function normalizeTrainBookResponse(res: unknown): TrainBookResponse {
+  if (!res || typeof res !== "object") {
+    return { OrderId: "" };
+  }
+  const payload = res as LegacyRecord;
+  return {
+    OrderId: String(payload.OrderId ?? payload.Id ?? ""),
+    OrderNumber: typeof payload.OrderNumber === "string" ? payload.OrderNumber : undefined,
+    TradeNo: typeof payload.TradeNo === "string" ? payload.TradeNo : undefined,
+    HasTasks: typeof payload.HasTasks === "boolean" ? payload.HasTasks : undefined,
+    IsCheckPay: typeof payload.IsCheckPay === "boolean" ? payload.IsCheckPay : undefined,
+  };
+}
+
+function readExchangeString(payload: LegacyRecord, ...keys: string[]): string | undefined {
+  for (const key of keys) {
+    const value = payload[key];
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+  return undefined;
+}
+
+export function normalizeTrainExchangeInfo(res: unknown): TrainExchangeInfo {
+  if (!res || typeof res !== "object") {
+    return {};
+  }
+  const payload = res as LegacyRecord;
+  return {
+    TicketId: readExchangeString(payload, "TicketId", "Id"),
+    OrderId: readExchangeString(payload, "OrderId"),
+    Date: readExchangeString(payload, "Date", "GoDate", "DepartDate"),
+    FromStation: readExchangeString(payload, "FromStation", "FromStationCode"),
+    ToStation: readExchangeString(payload, "ToStation", "ToStationCode"),
+    FromStationName: readExchangeString(payload, "FromStationName", "FromStation"),
+    ToStationName: readExchangeString(payload, "ToStationName", "ToStation"),
+  };
+}
+
+export function normalizeTrainPassengerInfo(res: unknown): TrainPassengerInfo {
+  if (!res || typeof res !== "object") {
+    return {};
+  }
+  const payload = res as LegacyRecord;
+  const passenger = (payload.Passenger as LegacyRecord | undefined) ?? payload;
+  const trip = (payload.Trip as LegacyRecord | undefined) ?? (payload.Train as LegacyRecord | undefined);
+  return {
+    Name: readExchangeString(passenger, "Name"),
+    Mobile: readExchangeString(passenger, "Mobile"),
+    CredentialsTypeName: readExchangeString(passenger, "CredentialsTypeName", "CredentialTypeName"),
+    HideCredentialsNumber: readExchangeString(
+      passenger,
+      "HideCredentialsNumber",
+      "CredentialsNumber",
+    ),
+    TrainCode: readExchangeString(trip ?? payload, "TrainCode", "TrainNo", "Number"),
+    FromStationName: readExchangeString(trip ?? payload, "FromStationName", "FromStation"),
+    ToStationName: readExchangeString(trip ?? payload, "ToStationName", "ToStation"),
+    StartTime: readExchangeString(trip ?? payload, "StartTime", "DepartureTime", "GoDate"),
+  };
+}
+
+function normalizeTrainScheduleStop(stop: LegacyRecord): TrainScheduleStop {
+  return {
+    StationName: readExchangeString(stop, "StationName", "Name", "Station"),
+    ArriveTime: readExchangeString(stop, "ArriveTime", "ArrivalTime"),
+    DepartTime: readExchangeString(stop, "DepartTime", "StartTime", "DepartureTime"),
+    StopoverTime: readExchangeString(stop, "StopoverTime", "StayTime", "RunTime"),
+    Sequence:
+      typeof stop.Sequence === "number"
+        ? stop.Sequence
+        : typeof stop.Sequence === "string"
+          ? Number(stop.Sequence)
+          : undefined,
+  };
+}
+
+export function normalizeTrainScheduleResponse(res: unknown): TrainScheduleResponse {
+  if (Array.isArray(res)) {
+    return { Stops: res.map((item) => normalizeTrainScheduleStop(item as LegacyRecord)) };
+  }
+  if (res && typeof res === "object") {
+    const payload = res as LegacyRecord;
+    const stops = payload.Stops ?? payload.TrainStops ?? payload.Schedule;
+    if (Array.isArray(stops)) {
+      return { Stops: stops.map((item) => normalizeTrainScheduleStop(item as LegacyRecord)) };
+    }
+  }
+  return { Stops: [] };
 }
 
 /** Legacy Home-Search returns TrainEntity[] in Data; mock uses { Trains }. */
@@ -201,6 +467,65 @@ export function createTrainApi(proxy: ProxyClient): TrainApi {
         timeoutMs: 60_000,
       });
       return normalizeTrainSearchResponse(res);
+    },
+    async getPolicy(params) {
+      const res = await proxy.send<unknown>({
+        method: TRAIN_FLOW_METHODS.POLICY,
+        data: params,
+        version: "2.0",
+        requestTimeout: 60,
+        timeoutMs: 60_000,
+      });
+      return normalizeTrainPolicyResponse(res);
+    },
+    async getExchangeInfo(params) {
+      const res = await proxy.send<unknown>({
+        method: TRAIN_FLOW_METHODS.GET_EXCHANGE_INFO,
+        data: params,
+      });
+      return normalizeTrainExchangeInfo(res);
+    },
+    async getTrainPassenger(params) {
+      const res = await proxy.send<unknown>({
+        method: TRAIN_FLOW_METHODS.GET_TRAIN_PASSENGER,
+        data: params,
+      });
+      return normalizeTrainPassengerInfo(res);
+    },
+    async getSchedule(params) {
+      const res = await proxy.send<unknown>({
+        method: TRAIN_FLOW_METHODS.SCHEDULE,
+        data: params,
+        version: "1.0",
+      });
+      return normalizeTrainScheduleResponse(res);
+    },
+    async initializeBook(params) {
+      const res = await proxy.send<unknown>({
+        method: TRAIN_FLOW_METHODS.INIT,
+        data: stripTrainInitBookDto(params),
+        timeoutMs: 60_000,
+      });
+      return normalizeTrainInitBookResponse(res);
+    },
+    async submitBook(params) {
+      const res = await proxy.send<unknown>({
+        method: TRAIN_FLOW_METHODS.BOOK,
+        data: prepareTrainBookSubmitDto(params),
+        timeoutMs: 60_000,
+      });
+      return normalizeTrainBookResponse(res);
+    },
+    async submitExchangeBook(params) {
+      const res = await proxy.send<unknown>({
+        method: TRAIN_FLOW_METHODS.EXCHANGE_BOOK,
+        data: prepareTrainBookSubmitDto({
+          ...params,
+          IsExchange: true,
+        }),
+        timeoutMs: 60_000,
+      });
+      return normalizeTrainBookResponse(res);
     },
   };
 }

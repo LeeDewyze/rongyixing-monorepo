@@ -14,15 +14,18 @@ import {
   formatTrainClock,
   formatTrainDuration,
   formatTrainDurationMinutes,
+  filterAvailableTrainSeats,
   getTrainArrivalDayTip,
   getDefaultSortedTrains,
   getTrainListItemKey,
   getTrainTravelMinutes,
   enrichTrainItem,
+  hasAvailableTrainSeats,
   isHighSpeedTrain,
   isRegularTrain,
   isSleeperSeat,
   isTrainFilterActive,
+  isTrainSeatAvailable,
   markLowestPrice,
   parseDurationMinutes,
   reorderTrainsByIds,
@@ -362,6 +365,20 @@ describe("train-list utils", () => {
     expect(formatSeatAvailability(99)).toEqual({ text: "有票", scarce: false });
     expect(formatSeatAvailability(2)).toEqual({ text: "剩2张", scarce: true });
     expect(formatSeatAvailability(0)).toEqual({ text: "无票", scarce: false });
+    expect(isTrainSeatAvailable({ SeatTypeName: "硬座", Price: 61, Count: 5 })).toBe(true);
+    expect(isTrainSeatAvailable({ SeatTypeName: "硬座", Price: 61, Count: 0 })).toBe(false);
+    expect(
+      hasAvailableTrainSeats([
+        { SeatTypeName: "硬座", Price: 61, Count: 0 },
+        { SeatTypeName: "硬卧", Price: 120, Count: 0 },
+      ]),
+    ).toBe(false);
+    expect(
+      filterAvailableTrainSeats([
+        { SeatTypeName: "硬座", Price: 61, Count: 0 },
+        { SeatTypeName: "二等座", Price: 553, Count: 3 },
+      ]),
+    ).toHaveLength(1);
     expect(formatSeatTypeDisplayName("硬座")).toBe("硬座");
     expect(formatSeatTypeDisplayName("硬")).toBe("硬座");
     expect(formatSeatTypeShortName("二等座")).toBe("二等");

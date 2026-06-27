@@ -6,15 +6,13 @@ interface HotelBookRoomSectionProps {
   roomIndex: number;
   passenger: ReactNode;
   serviceFee?: ReactNode;
-  authorizedContacts?: ReactNode;
 }
 
-/** One white card per room — passenger, service fee, and authorized contacts as separate blocks. */
+/** One white card per room — passenger and service fee as separate blocks. */
 export function HotelBookRoomSection({
   roomIndex,
   passenger,
   serviceFee,
-  authorizedContacts,
 }: HotelBookRoomSectionProps) {
   return (
     <section
@@ -29,10 +27,6 @@ export function HotelBookRoomSection({
       <div className="px-3 pb-4 pt-3">{passenger}</div>
 
       {serviceFee ? <div className="px-3 pb-4">{serviceFee}</div> : null}
-
-      {authorizedContacts ? (
-        <div className="border-t border-[#EEF1F6] bg-[#FAFBFC] px-3 py-4">{authorizedContacts}</div>
-      ) : null}
     </section>
   );
 }

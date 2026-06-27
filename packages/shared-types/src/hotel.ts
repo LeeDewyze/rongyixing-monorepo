@@ -1,3 +1,5 @@
+import type { FlightOrderDetailFields } from "./flight-order.js";
+
 /** Legacy TMC hotel type filter (list page segment). */
 export type HotelType = "Normal" | "Tmc" | "Agent";
 
@@ -386,6 +388,12 @@ export type HotelOrderSmsAction = "none" | "sendCode" | "confirmCode" | "readOnl
 export interface HotelOrderActionFlags {
   showPay: boolean;
   showCancel: boolean;
+  /** Train order detail: show 确认出票 (IssueTrain). */
+  showIssue?: boolean;
+  /** Train ticket-level refund (merged on detail footer for selected ticket). */
+  showRefund?: boolean;
+  /** Train ticket-level exchange (merged on detail footer for selected ticket). */
+  showExchange?: boolean;
   showInspurRepush?: boolean;
   smsAction: HotelOrderSmsAction;
   smsReadOnlyText?: string;
@@ -394,7 +402,7 @@ export interface HotelOrderActionFlags {
   cancelOrderHotelId?: string;
 }
 
-export interface HotelOrderDetail {
+export interface HotelOrderDetail extends FlightOrderDetailFields {
   OrderId: string;
   OrderNumber?: string;
   Status?: string;
@@ -413,8 +421,6 @@ export interface HotelOrderDetail {
   PassengerNames?: string;
   TicketStatusName?: string;
   Rooms?: HotelOrderRoom[];
-  BillItems?: HotelOrderBillLine[];
-  Histories?: HotelOrderHistory[];
   Actions?: HotelOrderActionFlags;
   ShowServiceFee?: boolean;
   TransactionId?: string;

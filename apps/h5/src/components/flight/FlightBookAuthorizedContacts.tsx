@@ -2,8 +2,8 @@ import { useState, type ReactNode } from "react";
 import type { FlightAuthorizedContact } from "@ryx/shared-types";
 
 import credentialSwitchPlusIcon from "@/assets/hotel/credential-switch-plus.png";
+import { BookOptionChevron } from "@/components/book/BookOptionChevron";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { FlightBookSectionAddButton } from "@/components/flight/FlightBookExpandableSummaryCard";
 import { HOTEL_DETAIL_FONT } from "@/components/hotel/hotel-detail-chrome";
 import {
   formatFlightNotifyLanguage,
@@ -20,10 +20,8 @@ interface FlightBookAuthorizedContactsProps {
     patch: Partial<Pick<FlightAuthorizedContact, "name" | "mobile" | "email" | "notifyLanguage">>,
   ) => void;
   onOpenNotifyLanguage: (accountId: string) => void;
-  /** Render inside a room section card without its own shadow. */
-  embedded?: boolean;
-  /** Render under a labeled room subsection (no extra top divider). */
-  sectioned?: boolean;
+  /** Order-level card (default). Use `embedded` only when nested inside another panel. */
+  variant?: "standalone" | "embedded";
 }
 
 function ContactFieldRow({
@@ -48,6 +46,43 @@ function ContactFieldRow({
 
 const contactFieldValueClass =
   "w-full min-w-0 bg-transparent text-right text-[14px] leading-tight text-[#333333] outline-none placeholder:text-[#cccccc]";
+
+const authorizedContactAddButtonClass = `flex h-[42px] w-full items-center justify-center gap-1.5 rounded-lg bg-white text-[12px] font-normal leading-none text-brand-primary active:opacity-70 ${HOTEL_DETAIL_FONT}`;
+const authorizedContactAddButtonInsetClass = `${authorizedContactAddButtonClass} ring-1 ring-[#EEF1F6]`;
+
+function AuthorizedContactAddButton({
+  inset = false,
+  onClick,
+}: {
+  inset?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className={inset ? authorizedContactAddButtonInsetClass : authorizedContactAddButtonClass}
+      onClick={onClick}
+    >
+      <img src={credentialSwitchPlusIcon} alt="" className="size-4" aria-hidden />
+      授权账号查看订单
+    </button>
+  );
+}
+
+function AuthorizedContactsStandaloneSection({ children }: { children: ReactNode }) {
+  return (
+    <section
+      className={`overflow-hidden rounded-xl bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] ${HOTEL_DETAIL_FONT}`}
+    >
+      <div className="flex items-center border-b border-[#F0F2F5] bg-[#FAFBFC] px-3.5 py-2.5">
+        <span className="inline-flex h-[22px] items-center rounded-[4px] bg-brand-primary px-2 text-[12px] font-medium leading-none text-white">
+          授权账号
+        </span>
+      </div>
+      <div className="px-3 pb-4 pt-3">{children}</div>
+    </section>
+  );
+}
 
 function DeleteContactButton({ onClick }: { onClick: () => void }) {
   return (
@@ -83,7 +118,6 @@ function AuthorizedContactCard({
   onUpdate,
   onOpenNotifyLanguage,
   embedded,
-  sectioned = false,
 }: {
   contact: FlightAuthorizedContact;
   onRemove: () => void;
@@ -92,7 +126,6 @@ function AuthorizedContactCard({
   ) => void;
   onOpenNotifyLanguage: () => void;
   embedded: boolean;
-  sectioned?: boolean;
 }) {
   const notifyLanguage = (
     isValidFlightNotifyLanguage(contact.notifyLanguage ?? "cn") ? contact.notifyLanguage : "cn"
@@ -101,11 +134,9 @@ function AuthorizedContactCard({
   return (
     <div
       className={
-        sectioned
-          ? "overflow-hidden rounded-xl bg-white px-3 ring-1 ring-[#EEF1F6]"
-          : embedded
-            ? "overflow-hidden rounded-lg border border-[#F0F2F5] bg-white px-3"
-            : "overflow-hidden rounded-lg bg-[#f6f8fc] px-3"
+        embedded
+          ? "overflow-hidden rounded-lg border border-[#F0F2F5] bg-white px-3"
+          : "overflow-hidden rounded-xl bg-[#F8F9FC] px-3 ring-1 ring-[#EEF1F6]"
       }
     >
       <ContactFieldRow label="旅客名称：" action={<DeleteContactButton onClick={onRemove} />}>
@@ -145,9 +176,7 @@ function AuthorizedContactCard({
           onClick={onOpenNotifyLanguage}
         >
           {formatFlightNotifyLanguage(notifyLanguage)}
-          <span className="shrink-0 text-[16px] text-[#bbbbbb]" aria-hidden>
-            ›
-          </span>
+          <BookOptionChevron inCircle={false} />
         </button>
       </ContactFieldRow>
     </div>
@@ -160,9 +189,9 @@ export function FlightBookAuthorizedContacts({
   onRemove,
   onUpdate,
   onOpenNotifyLanguage,
-  embedded = false,
-  sectioned = false,
+  variant = "standalone",
 }: FlightBookAuthorizedContactsProps) {
+  const embedded = variant === "embedded";
   const [deleteTarget, setDeleteTarget] = useState<FlightAuthorizedContact | null>(null);
 
   function confirmRemove() {
@@ -187,61 +216,43 @@ export function FlightBookAuthorizedContacts({
   );
 
   if (contacts.length === 0) {
-    return (
-      <section
-        className={
-          sectioned
-            ? HOTEL_DETAIL_FONT
-            : embedded
-              ? `border-t border-[#F0F2F5] ${HOTEL_DETAIL_FONT}`
-              : `h-[42px] rounded-lg bg-white ${HOTEL_DETAIL_FONT}`
-        }
-      >
-        <button
-          type="button"
-          className={
-            sectioned
-              ? "flex h-[42px] w-full items-center justify-center gap-1.5 rounded-xl bg-white text-[12px] font-normal leading-none text-brand-primary ring-1 ring-[#EEF1F6] active:opacity-70"
-              : "flex h-[42px] w-full items-center justify-center gap-1.5 text-[12px] font-normal leading-none text-brand-primary active:opacity-70"
-          }
-          onClick={onAdd}
-        >
-          <img src={credentialSwitchPlusIcon} alt="" className="size-4" aria-hidden />
-          授权账号查看订单
-        </button>
-      </section>
-    );
+    const addButton = <AuthorizedContactAddButton onClick={onAdd} />;
+
+    if (embedded) {
+      return (
+        <div className={`border-t border-[#F0F2F5] pt-3 ${HOTEL_DETAIL_FONT}`}>{addButton}</div>
+      );
+    }
+
+    return addButton;
   }
+
+  const contactList = (
+    <div className={`space-y-3 ${HOTEL_DETAIL_FONT}`}>
+      {contacts.map((contact) => (
+        <AuthorizedContactCard
+          key={contact.accountId}
+          contact={contact}
+          embedded={embedded}
+          onRemove={() => setDeleteTarget(contact)}
+          onUpdate={(patch) => onUpdate(contact.accountId, patch)}
+          onOpenNotifyLanguage={() => onOpenNotifyLanguage(contact.accountId)}
+        />
+      ))}
+
+      <AuthorizedContactAddButton inset onClick={onAdd} />
+    </div>
+  );
+
+  const content = embedded ? (
+    <div className="border-t border-[#F0F2F5] pt-3">{contactList}</div>
+  ) : (
+    <AuthorizedContactsStandaloneSection>{contactList}</AuthorizedContactsStandaloneSection>
+  );
 
   return (
     <>
-      <section
-        className={
-          sectioned
-            ? HOTEL_DETAIL_FONT
-            : embedded
-              ? `border-t border-[#F0F2F5] pt-3 ${HOTEL_DETAIL_FONT}`
-              : `rounded-lg bg-white px-3 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)]`
-        }
-      >
-        {contacts.length > 0 ? (
-          <div className="space-y-3">
-            {contacts.map((contact) => (
-              <AuthorizedContactCard
-                key={contact.accountId}
-                contact={contact}
-                embedded={embedded}
-                sectioned={sectioned}
-                onRemove={() => setDeleteTarget(contact)}
-                onUpdate={(patch) => onUpdate(contact.accountId, patch)}
-                onOpenNotifyLanguage={() => onOpenNotifyLanguage(contact.accountId)}
-              />
-            ))}
-          </div>
-        ) : null}
-
-        <FlightBookSectionAddButton label="授权账号查看订单" onClick={onAdd} />
-      </section>
+      {content}
       {deleteDialog}
     </>
   );

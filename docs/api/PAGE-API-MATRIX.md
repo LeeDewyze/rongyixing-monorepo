@@ -73,15 +73,15 @@
 | 3    | 支付          | 支付子页                      | `/hotel/pay/:orderId`    | GetOrderPays, Pay-Create, Pay-Process                    | [~] | [x]  | [x] | OrderPayPage                                                                                                                              |
 | 4    | 订单列表      | `tmc-order-list_ryx`          | `/orders`                | Order-List                                               | [x] | [x]  | [x] | OrderListPage                                                                                                                             |
 | 4    | 酒店订单详情  | `tmc-order-hotel-detail_ryx`  | `/orders/hotel/:id`      | Detail, CancelOrderHotel, SMS 验证                       | [x] | [~]  | [x] | OrderHotelDetailPage；`normalizeHotelOrderDetail`                                                                                         |
-| 4    | 机票订单详情  | `tmc-order-flight-detail_ryx` | `/orders/flight/:id`     | Detail, RefundFlight, Exchange…                          | [ ] | [ ]  | [ ] |                                                                                                                                           |
-| 4    | 火车订单详情  | `tmc-order-train-detail_ryx`  | `/orders/train/:id`      | Detail, IssueTrain, CancelTrain                          | [ ] | [ ]  | [ ] |                                                                                                                                           |
+| 4    | 机票订单详情  | `tmc-order-flight-detail_ryx` | `/orders/flight/:id`     | Detail, AbolishOrder, AbolishTicket, RefundFlight…       | [x] | [~]  | [x] | OrderFlightDetailPage；`normalizeFlightOrderDetail`；列表退票/改签待接                                                                    |
+| 4    | 火车订单详情  | `tmc-order-train-detail_ryx`  | `/orders/train/:id`      | Detail, IssueTrain, CancelTrain, Train-Refund, GetExchangeInfo, GetTrainPassenger, Schedule | [x] | [x]  | [x] | OrderTrainDetailPage；列表/详情退票改签已接                                                                                                |
 | 5    | 机票搜索      | `tmc-flight-search_ryx`       | `/flight`                | Home-Index, Policy                                       | [ ] | [ ]  | [ ] |                                                                                                                                           |
 | 5    | 机票列表      | `tmc-flight-list_ryx`         | `/flight/list`           | Home-Detail, Home-Exchange                               | [ ] | [ ]  | [ ] |                                                                                                                                           |
 | 5    | 机票填单      | `tmc-flight-book_ryx`         | `/flight/book`           | Initialize, Book, GetTravelUrl                           | [~] | [~]  | [~] | FlightBookPage                                                                                                                            |
 | 5    | 机票支付      | payOrder 弹层                 | `/flight/pay/:orderId`   | GetTotalPayAmount, GetOrderPays, Pay-Create, Pay-Process | [~] | [x]  | [x] | OrderPayPage                                                                                                                              |
 | 6    | 火车搜索      | `tmc-train-search_ryx`        | `/train`                 | TrainStation, Search                                     | [ ] | [ ]  | [ ] |                                                                                                                                           |
-| 6    | 火车车次      | `tmc-train-list_ryx`          | `/train/list`            | Schedule, Policy                                         | [ ] | [ ]  | [ ] |                                                                                                                                           |
-| 6    | 火车填单      | `tmc-train-book_ryx`          | `/train/book`            | Initialize, Book                                         | [ ] | [ ]  | [ ] |                                                                                                                                           |
+| 6    | 火车车次      | `tmc-train-list_ryx`          | `/train/list`            | Schedule, Policy, GetExchangeInfo                        | [~] | [~]  | [x] | 列表经停站、改签模式已接                                                                                                                  |
+| 6    | 火车填单      | `tmc-train-book_ryx`          | `/train/book`            | Initialize, Book, ExchangeBook, checkPay                 | [~] | [~]  | [x] | TrainBookPage；改签下单、个付轮询已接                                                                                                     |
 | 7    | 出差申请      | `goBusiness` / Workbench      | `/travel/apply`          | Workbench-Load → workflow Form/Flow                      | [~] | [x]  | [~] | iframe；申请 API 待抓包                                                                                                                   |
 | 7    | 待我审批/已审 | `tmc-approval-task`           | `/travel/approval`       | Task-List, GetAccountWaitingTasks                        | [~] | [~]  | [x] | TravelApprovalPage                                                                                                                        |
 | 7    | 我的审批      | Workbench                     | `/travel/workflow`       | Workbench-Load → Task/Index                              | [~] | [x]  | [~] | iframe                                                                                                                                    |
@@ -150,6 +150,13 @@
 | `TmcApiOrderUrl-Order-CancelOrderHotel`               | 取消酒店 | [x] | [x]  | [x]            |
 | `TmcApiOrderUrl-Order-SendVerifyOrderHotelSMSCode`    | 取消短信 | [x] | [~]  | [x]            |
 | `TmcApiOrderUrl-Order-ConfirmVerifyOrderHotelSMSCode` | 短信确认 | [x] | [~]  | [x]            |
+| `TmcApiOrderUrl-Order-CancelTrain`                    | 取消火车 | [x] | [x]  | [x]            |
+| `TmcApiOrderUrl-Order-IssueTrain`                     | 确认出票 | [x] | [x]  | [x]            |
+| `TmcApiOrderUrl-Train-Refund`                         | 退票     | [x] | [x]  | [x]            |
+| `TmcApiTrainUrl-Home-GetExchangeInfo`                 | 改签信息 | [x] | [x]  | [x]            |
+| `TmcApiTrainUrl-Home-GetTrainPassenger`               | 退票确认 | [x] | [x]  | [x]            |
+| `TmcApiTrainUrl-Home-Schedule`                        | 经停站   | [x] | [x]  | [x]            |
+| `TmcApiBookUrl-Train-ExchangeBook`                    | 改签下单 | [x] | [x]  | [x]            |
 
 ### Wave 5 · 机票（待封装）
 
@@ -165,13 +172,19 @@
 | `TmcApiOrderUrl-Order-GetOrderPays`         | 支付渠道     |
 | `TmcApiOrderUrl-Pay-Create` / `Pay-Process` | 支付         |
 
-### Wave 6 · 火车（待封装）
+### Wave 6 · 火车
 
-| Method                                | 用途           |
-| ------------------------------------- | -------------- |
-| `TmcApiHomeUrl-Resource-TrainStation` | 车站           |
-| `TmcApiTrainUrl-*`                    | 搜索/车次/政策 |
-| `TmcApiBookUrl-Train-*`               | 初始化/下单    |
+| Method                                | 用途                         | API | Mock | H5  |
+| ------------------------------------- | ---------------------------- | --- | ---- | --- |
+| `TmcApiHomeUrl-Resource-TrainStation` | 车站                         | [x] | [x]  | [x] |
+| `TmcApiTrainUrl-Home-Search`          | 车次列表                     | [x] | [x]  | [x] |
+| `TmcApiTrainUrl-Home-Policy`          | 差标                         | [x] | [x]  | [x] |
+| `TmcApiTrainUrl-Home-Schedule`        | 经停站                       | [x] | [x]  | [x] |
+| `TmcApiTrainUrl-Home-GetExchangeInfo` | 改签信息                   | [x] | [x]  | [x] |
+| `TmcApiBookUrl-Train-Initialize`      | 填单初始化                   | [x] | [x]  | [x] |
+| `TmcApiBookUrl-Train-Book`            | 下单                         | [x] | [x]  | [x] |
+| `TmcApiBookUrl-Train-ExchangeBook`    | 改签下单                     | [x] | [x]  | [x] |
+| `TmcApiBookUrl-Home-CheckPay`         | 下单后可支付（内部轮询）     | [x] | [~]  | [x] |
 
 ### Wave 7 · 出差申请（待抓包）
 

@@ -1,5 +1,7 @@
 import type { FlightSegment, PassengerBookInfo } from "@ryx/shared-types";
 
+import type { FlightCabinsQuery } from "@/lib/flight-detail";
+
 /** Legacy: refetch when returning after 2+ minutes. */
 export const FLIGHT_LIST_STALE_MS = 2 * 60 * 1000;
 
@@ -65,4 +67,23 @@ export function buildCabinsPath(segment: FlightSegment, searchParams: URLSearchP
     params.set("bookType", String(segment.BookType));
   }
   return `/flight/${encodeURIComponent(segment.Id)}/cabins?${params.toString()}`;
+}
+
+/** List route with `doRefresh=true` — Legacy timeout dialog confirm action. */
+export function buildFlightListRefreshHref(
+  query: Pick<
+    FlightCabinsQuery,
+    "date" | "fromCode" | "toCode" | "fromName" | "toName" | "fromAsAirport" | "toAsAirport"
+  >,
+): string {
+  const params = new URLSearchParams();
+  if (query.date) params.set("date", query.date);
+  if (query.fromCode) params.set("fromCode", query.fromCode);
+  if (query.toCode) params.set("toCode", query.toCode);
+  if (query.fromName) params.set("fromName", query.fromName);
+  if (query.toName) params.set("toName", query.toName);
+  if (query.fromAsAirport) params.set("fromAsAirport", "true");
+  if (query.toAsAirport) params.set("toAsAirport", "true");
+  params.set("doRefresh", "true");
+  return `/flight/list?${params.toString()}`;
 }

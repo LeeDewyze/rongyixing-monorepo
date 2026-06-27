@@ -119,6 +119,87 @@ export function formatFlightMetaDuration(flyTimeName: string | undefined): strin
   return flyTimeName.startsWith("飞") ? flyTimeName : `飞${flyTimeName}`;
 }
 
+const CHINA_AIRLINE_IATA_NAMES: Record<string, string> = {
+  CA: "中国国航",
+  MU: "东方航空",
+  CZ: "南方航空",
+  KN: "联合航空",
+  HU: "海南航空",
+  MF: "厦门航空",
+  FM: "上海航空",
+  "3U": "四川航空",
+  SC: "山东航空",
+  ZH: "深圳航空",
+  HO: "吉祥航空",
+  G5: "华夏航空",
+  JD: "首都航空",
+  PN: "西部航空",
+  AQ: "九元航空",
+  GJ: "长龙航空",
+  KY: "昆明航空",
+  NS: "河北航空",
+  EU: "成都航空",
+  TV: "西藏航空",
+  DR: "瑞丽航空",
+  QW: "青岛航空",
+  UQ: "乌鲁木齐航空",
+  Y8: "金鹏航空",
+  BK: "奥凯航空",
+  JR: "幸福航空",
+  DZ: "东海航空",
+  GT: "桂林航空",
+  RY: "江西航空",
+  "9C": "春秋航空",
+  "8L": "祥鹏航空",
+};
+
+function extractAirlineIataCode(flightNumber: string | undefined): string | undefined {
+  const value = flightNumber?.trim().toUpperCase();
+  if (!value) return undefined;
+  const match = value.match(/^([A-Z]{2}|\d[A-Z]|[A-Z]\d)/);
+  return match?.[1];
+}
+
+function lookupAirlineNameByIataCode(code: string | undefined): string | undefined {
+  if (!code) return undefined;
+  return CHINA_AIRLINE_IATA_NAMES[code.toUpperCase()];
+}
+
+export type TripAirlineDisplayInput = {
+  Airline?: string;
+  AirlineName?: string;
+  CodeShareNumber?: string;
+  CodeShareAirlineName?: string;
+  FlightNumber?: string;
+};
+
+/** Order / book footer airline short name with code-share and IATA fallbacks. */
+export function resolveTripAirlineShortName(trip: TripAirlineDisplayInput): string {
+  const codeShareNumber = trip.CodeShareNumber?.trim();
+  const primaryName = codeShareNumber
+    ? trip.CodeShareAirlineName ?? trip.AirlineName
+    : trip.AirlineName;
+  const short = shortAirlineName(primaryName);
+  if (short) return short;
+
+  const airlineField = trip.Airline?.trim();
+  if (airlineField && /[\u4e00-\u9fff]/.test(airlineField)) {
+    return shortAirlineName(airlineField);
+  }
+
+  const iataCode =
+    extractAirlineIataCode(codeShareNumber) ??
+    extractAirlineIataCode(trip.FlightNumber) ??
+    (airlineField && airlineField.length <= 3 ? airlineField.toUpperCase() : undefined);
+  return shortAirlineName(lookupAirlineNameByIataCode(iataCode));
+}
+
+export function formatOrderTripAirlineFlightLabel(trip: TripAirlineDisplayInput): string {
+  const flightNo = (trip.CodeShareNumber ?? trip.FlightNumber ?? "").trim();
+  const airlineShort = resolveTripAirlineShortName(trip);
+  return [airlineShort, flightNo].filter(Boolean).join("");
+}
+
 /** List card airline short name, e.g. 东方航空 → 东航, 中国国航 → 国航 */
 export function shortAirlineName(name: string | undefined): string {
   if (!name) return "";

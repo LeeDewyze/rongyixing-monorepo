@@ -98,12 +98,9 @@ export function HotelBookPage() {
   const [arrivalTime, setArrivalTime] = useState("");
   const [notifyLanguage, setNotifyLanguage] = useState<HotelNotifyLanguage>("cn");
   const [notifyContactId, setNotifyContactId] = useState<string | null>(null);
-  const [notifyContactPassengerId, setNotifyContactPassengerId] = useState<string | null>(null);
   const [travelPayType, setTravelPayType] = useState<number | null>(null);
   const [agreed, setAgreed] = useState(false);
-  const [authorizedContactsByPassenger, setAuthorizedContactsByPassenger] = useState<
-    Record<string, FlightAuthorizedContact[]>
-  >({});
+  const [authorizedContacts, setAuthorizedContacts] = useState<FlightAuthorizedContact[]>([]);
   const [creditCard, setCreditCard] = useState<HotelCreditCardForm>(() =>
     createEmptyHotelCreditCardForm(),
   );
@@ -115,7 +112,6 @@ export function HotelBookPage() {
   const [billOpen, setBillOpen] = useState(false);
   const [warmReminderOpen, setWarmReminderOpen] = useState(false);
   const [addContactOpen, setAddContactOpen] = useState(false);
-  const [addContactPassengerId, setAddContactPassengerId] = useState<string | null>(null);
   const [approverSheetOpen, setApproverSheetOpen] = useState(false);
   const [approverPassengerId, setApproverPassengerId] = useState<string | null>(null);
   const [outNumberPicker, setOutNumberPicker] = useState<{
@@ -275,7 +271,7 @@ export function HotelBookPage() {
       outNumberFieldsByPassenger,
       showCreditCard,
       creditCard,
-      authorizedContactsByPassenger,
+      authorizedContacts,
     });
     if (validationError) {
       setAlertMessage(validationError);
@@ -307,7 +303,7 @@ export function HotelBookPage() {
           passengers,
           forms,
           travelPayType: payType,
-          authorizedContactsByPassenger,
+          authorizedContacts,
           globalArrivalTime: arrivalTime,
           globalNotifyLanguage: notifyLanguage,
           agentId: resolvedAgentId,
@@ -411,7 +407,6 @@ export function HotelBookPage() {
           const fee = resolvePassengerServiceFee(passenger, initBook.data?.ServiceFees);
           const outNumberFields = outNumberFieldsByPassenger[passenger.id] ?? [];
 
-          const roomAuthorizedContacts = authorizedContactsByPassenger[passenger.id] ?? [];
           const showServiceFee = tmcFlags.isShowServiceFee && fee > 0;
 
           return (
@@ -420,38 +415,6 @@ export function HotelBookPage() {
               roomIndex={index + 1}
               serviceFee={
                 showServiceFee ? <HotelBookServiceFeeRow amount={fee} inset /> : undefined
-              }
-              authorizedContacts={
-                <FlightBookAuthorizedContacts
-                  sectioned
-                  embedded
-                  contacts={roomAuthorizedContacts}
-                  onAdd={() => {
-                    setAddContactPassengerId(passenger.id);
-                    setAddContactOpen(true);
-                  }}
-                  onRemove={(accountId) =>
-                    setAuthorizedContactsByPassenger((current) => ({
-                      ...current,
-                      [passenger.id]: (current[passenger.id] ?? []).filter(
-                        (item) => item.accountId !== accountId,
-                      ),
-                    }))
-                  }
-                  onUpdate={(accountId, patch) =>
-                    setAuthorizedContactsByPassenger((current) => ({
-                      ...current,
-                      [passenger.id]: (current[passenger.id] ?? []).map((item) =>
-                        item.accountId === accountId ? { ...item, ...patch } : item,
-                      ),
-                    }))
-                  }
-                  onOpenNotifyLanguage={(accountId) => {
-                    setNotifyContactPassengerId(passenger.id);
-                    setNotifyContactId(accountId);
-                    setNotifySheetOpen(true);
-                  }}
-                />
               }
               passenger={
                 <HotelBookRoomCard
@@ -496,6 +459,27 @@ export function HotelBookPage() {
           );
         })}
 
+        <FlightBookAuthorizedContacts
+          contacts={authorizedContacts}
+          onAdd={() => setAddContactOpen(true)}
+          onRemove={(accountId) =>
+            setAuthorizedContacts((current) =>
+              current.filter((item) => item.accountId !== accountId),
+            )
+          }
+          onUpdate={(accountId, patch) =>
+            setAuthorizedContacts((current) =>
+              current.map((item) =>
+                item.accountId === accountId ? { ...item, ...patch } : item,
+              ),
+            )
+          }
+          onOpenNotifyLanguage={(accountId) => {
+            setNotifyContactId(accountId);
+            setNotifySheetOpen(true);
+          }}
+        />
+
         {showCreditCard ? (
           <HotelBookCreditCardSection
             value={creditCard}
@@ -537,31 +521,27 @@ export function HotelBookPage() {
       <FlightBookNotifyLanguageSheet
         open={notifySheetOpen}
         value={
-          notifyContactId && notifyContactPassengerId
-            ? (((authorizedContactsByPassenger[notifyContactPassengerId] ?? []).find(
-                (item) => item.accountId === notifyContactId,
-              )?.notifyLanguage as HotelNotifyLanguage | undefined) ?? "cn")
+          notifyContactId
+            ? ((authorizedContacts.find((item) => item.accountId === notifyContactId)
+                ?.notifyLanguage as HotelNotifyLanguage | undefined) ?? "cn")
             : notifyLanguage
         }
         onClose={() => {
           setNotifySheetOpen(false);
           setNotifyContactId(null);
-          setNotifyContactPassengerId(null);
         }}
         onSelect={(value) => {
-          if (notifyContactId && notifyContactPassengerId) {
-            setAuthorizedContactsByPassenger((current) => ({
-              ...current,
-              [notifyContactPassengerId]: (current[notifyContactPassengerId] ?? []).map((item) =>
+          if (notifyContactId) {
+            setAuthorizedContacts((current) =>
+              current.map((item) =>
                 item.accountId === notifyContactId ? { ...item, notifyLanguage: value } : item,
               ),
-            }));
+            );
           } else {
             setNotifyLanguage(value as HotelNotifyLanguage);
           }
           setNotifySheetOpen(false);
           setNotifyContactId(null);
-          setNotifyContactPassengerId(null);
         }}
       />
 
@@ -590,25 +570,11 @@ export function HotelBookPage() {
 
       <FlightBookAddContactSheet
         open={addContactOpen}
-        existingAccountIds={
-          addContactPassengerId
-            ? (authorizedContactsByPassenger[addContactPassengerId] ?? []).map(
-                (item) => item.accountId,
-              )
-            : []
-        }
-        onClose={() => {
-          setAddContactOpen(false);
-          setAddContactPassengerId(null);
-        }}
+        existingAccountIds={authorizedContacts.map((item) => item.accountId)}
+        onClose={() => setAddContactOpen(false)}
         onSelect={(contact) => {
-          if (!addContactPassengerId) return;
-          setAuthorizedContactsByPassenger((current) => ({
-            ...current,
-            [addContactPassengerId]: [...(current[addContactPassengerId] ?? []), contact],
-          }));
+          setAuthorizedContacts((current) => [...current, contact]);
           setAddContactOpen(false);
-          setAddContactPassengerId(null);
         }}
       />
 

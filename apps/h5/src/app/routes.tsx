@@ -13,6 +13,7 @@ import { OrdersTabPage } from "@/pages/home/OrdersTabPage";
 import { ProfileTabPage } from "@/pages/home/ProfileTabPage";
 import { OrderHotelDetailPage } from "@/pages/order/OrderHotelDetailPage";
 import { OrderFlightDetailPage } from "@/pages/order/OrderFlightDetailPage";
+import { OrderTrainDetailPage } from "@/pages/order/OrderTrainDetailPage";
 import { OrderListPage } from "@/pages/order/OrderListPage";
 import { OrderListRedirect } from "@/app/routes/OrderListRedirect";
 import { HotelBookPage } from "@/pages/hotel/HotelBookPage";
@@ -28,11 +29,12 @@ import { PassengerCredentialPage } from "@/pages/passenger/PassengerCredentialPa
 import { PasswordLoginPage } from "@/pages/PasswordLoginPage";
 import { SplashPage } from "@/pages/SplashPage";
 import { TrainListPage } from "@/pages/train/TrainListPage";
+import { TrainBookPage } from "@/pages/train/TrainBookPage";
+import { TrainPayPage } from "@/pages/train/TrainPayPage";
 import { TravelApplyPage } from "@/pages/travel/TravelApplyPage";
 import { TravelApprovalPage } from "@/pages/travel/TravelApprovalPage";
 import { TravelTaskPage } from "@/pages/travel/TravelTaskPage";
 import { CredentialListPage } from "@/pages/credential/CredentialListPage";
-import { PayTestPage } from "@/pages/dev/PayTestPage";
 
 export const router = createBrowserRouter([
   {
@@ -71,6 +73,7 @@ export const router = createBrowserRouter([
       { index: true, element: <OrderListPage /> },
       { path: "hotel/:orderId", element: <OrderHotelDetailPage /> },
       { path: "flight/:orderId", element: <OrderFlightDetailPage /> },
+      { path: "train/:orderId", element: <OrderTrainDetailPage /> },
     ],
   },
   {
@@ -94,9 +97,7 @@ export const router = createBrowserRouter([
   {
     path: "/credentials",
     element: <RootLayout />,
-    children: [
-      { index: true, element: <CredentialListPage /> },
-    ],
+    children: [{ index: true, element: <CredentialListPage /> }],
   },
   {
     path: "/passenger",
@@ -124,6 +125,8 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to="/home?product=train" replace /> },
       { path: "list", element: <TrainListPage /> },
+      { path: "book", element: <TrainBookPage /> },
+      { path: "pay/:orderId", element: <TrainPayPage /> },
     ],
   },
   {
@@ -134,13 +137,6 @@ export const router = createBrowserRouter([
       { path: "approval", element: <TravelApprovalPage /> },
       { path: "workflow", element: <Navigate to="/travel/approval?tab=mine" replace /> },
       { path: "task", element: <TravelTaskPage /> },
-    ],
-  },
-  {
-    path: "/dev",
-    element: <RootLayout />,
-    children: [
-      { path: "pay", element: <PayTestPage /> },
     ],
   },
 ]);

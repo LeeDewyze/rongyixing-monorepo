@@ -1,4 +1,6 @@
 /** Train station from TmcApiHomeUrl-Resource-TrainStation. */
+import type { TrainBookPolicy, TrainPolicyColor } from "./train-policy.js";
+
 export interface TrainStation {
   Id: string;
   Code: string;
@@ -23,6 +25,8 @@ export interface TrainBedInfo {
 }
 
 export interface TrainSeat {
+  /** Legacy numeric seat type enum (TrainSeatType). */
+  SeatType?: number;
   SeatTypeName?: string;
   Price?: number;
   /** Original ticket price before discount; used for discount badge when lower than Price. */
@@ -30,15 +34,21 @@ export interface TrainSeat {
   Count?: number;
   /** Sleeper berth prices (legacy BedInfos). */
   BedInfos?: TrainBedInfo[];
+  /** Client-side policy from Home-Policy. */
+  policy?: TrainBookPolicy;
+  policyColor?: TrainPolicyColor;
 }
 
 export interface TrainItem {
   Id: string;
+  TrainNo?: string;
   TrainCode: string;
   StartTime: string;
   ArrivalTime: string;
   FromStation: string;
   ToStation: string;
+  FromStationCode?: string;
+  ToStationCode?: string;
   Duration?: string;
   Seats?: TrainSeat[];
   LowestPrice?: number;
@@ -51,6 +61,8 @@ export interface TrainItem {
   DurationMinutes?: number;
   /** Days after departure when train arrives; 0 = same day. */
   ArriveDays?: number;
+  /** Raw Home-Search train entity — preserved for Initialize/Book wire payloads. */
+  searchSnapshot?: Record<string, unknown>;
 }
 
 /**
@@ -95,6 +107,26 @@ export function parseTravelTimeMinutes(value: unknown): number | undefined {
 
 export interface TrainSearchResponse {
   Trains: TrainItem[];
+}
+
+export interface TrainScheduleParams {
+  Date: string;
+  TrainCode: string;
+  TrainNo?: string;
+  FromStation?: string;
+  ToStation?: string;
+}
+
+export interface TrainScheduleStop {
+  StationName?: string;
+  ArriveTime?: string;
+  DepartTime?: string;
+  StopoverTime?: string;
+  Sequence?: number;
+}
+
+export interface TrainScheduleResponse {
+  Stops: TrainScheduleStop[];
 }
 
 export type TrainTypeFilter = "all" | "highSpeed" | "regular";

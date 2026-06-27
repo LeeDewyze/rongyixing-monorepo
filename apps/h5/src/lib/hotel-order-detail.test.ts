@@ -4,6 +4,9 @@ import {
   filterBillLinesForRoom,
   formatOrderBreakfastLabel,
   formatOrderDateTime,
+  formatTravelerCredentialDisplay,
+  normalizeTravelerCredentialTypeLabel,
+  shouldShowTravelerCredentialType,
 } from "./hotel-order-detail.js";
 
 describe("formatOrderBreakfastLabel", () => {
@@ -24,6 +27,22 @@ describe("formatOrderDateTime", () => {
   it("drops seconds from datetime strings", () => {
     expect(formatOrderDateTime("2026-06-25 14:25:58")).toBe("2026-06-25 14:25");
     expect(formatOrderDateTime("2026-06-25T14:25:58")).toBe("2026-06-25 14:25");
+  });
+});
+
+describe("traveler credential display", () => {
+  it("normalizes enum and numeric credential types", () => {
+    expect(normalizeTravelerCredentialTypeLabel("Passport")).toBe("护照");
+    expect(normalizeTravelerCredentialTypeLabel("2")).toBe("护照");
+  });
+
+  it("shows credential type beside masked numbers", () => {
+    expect(shouldShowTravelerCredentialType("护照")).toBe(true);
+    expect(shouldShowTravelerCredentialType("身份证")).toBe(true);
+    expect(formatTravelerCredentialDisplay("EB68***94", "护照")).toBe("EB68***94 护照");
+    expect(formatTravelerCredentialDisplay("410928********5121", "身份证")).toBe(
+      "410928********5121 身份证",
+    );
   });
 });
 

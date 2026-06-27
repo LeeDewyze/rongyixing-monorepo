@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { TRAIN_FLOW_METHODS } from "../methods/train-flow.js";
 import { createProxyClient } from "../proxy/proxy-client.js";
 import { successResponse } from "../proxy/response-adapter.js";
-import { createTrainApi, normalizeTrainSearchResponse } from "./train.js";
+import { createTrainApi, normalizeTrainSearchResponse, normalizeTrainExchangeInfo, normalizeTrainPassengerInfo, normalizeTrainScheduleResponse } from "./train.js";
 
 describe("normalizeTrainSearchResponse", () => {
   it("normalizes legacy TrainEntity[] payload", () => {
@@ -212,6 +212,62 @@ describe("normalizeTrainSearchResponse", () => {
 
     expect(result.Trains).toHaveLength(1);
     expect(result.Trains[0]?.TrainCode).toBe("G3");
+  });
+});
+
+describe("normalizeTrainExchangeInfo", () => {
+  it("maps exchange search context", () => {
+    expect(
+      normalizeTrainExchangeInfo({
+        TicketId: "207600000001",
+        OrderId: "ORD-TRN-002",
+        Date: "2026-06-28",
+        FromStation: "VNP",
+        ToStation: "AOH",
+        FromStationName: "北京南",
+        ToStationName: "上海虹桥",
+      }),
+    ).toMatchObject({
+      TicketId: "207600000001",
+      FromStationName: "北京南",
+      ToStationName: "上海虹桥",
+    });
+  });
+});
+
+describe("normalizeTrainPassengerInfo", () => {
+  it("maps refund passenger snapshot", () => {
+    expect(
+      normalizeTrainPassengerInfo({
+        Passenger: { Name: "郭某某", Mobile: "13800000000" },
+        Trip: { TrainCode: "D79", FromStationName: "北京南", ToStationName: "上海虹桥" },
+      }),
+    ).toMatchObject({
+      Name: "郭某某",
+      TrainCode: "D79",
+      FromStationName: "北京南",
+    });
+  });
+});
+
+describe("normalizeTrainScheduleResponse", () => {
+  it("normalizes legacy stop array", () => {
+    const result = normalizeTrainScheduleResponse([
+      {
+        StationName: "北京南",
+        ArriveTime: "09:00",
+        DepartTime: "09:00",
+        StopoverTime: "—",
+      },
+      {
+        StationName: "上海虹桥",
+        ArriveTime: "13:28",
+        DepartTime: "13:28",
+      },
+    ]);
+
+    expect(result.Stops).toHaveLength(2);
+    expect(result.Stops[0]?.StationName).toBe("北京南");
   });
 });
 

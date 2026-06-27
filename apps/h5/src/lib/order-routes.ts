@@ -21,6 +21,8 @@ export function getOrderPayPath(item: OrderListItem): string {
   switch (item.tabId) {
     case OrderListTabId.Flight:
       return `/flight/pay/${item.OrderId}`;
+    case OrderListTabId.Train:
+      return `/train/pay/${item.OrderId}`;
     case OrderListTabId.Hotel:
       return `/hotel/pay/${item.OrderId}`;
     default:

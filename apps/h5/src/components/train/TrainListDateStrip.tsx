@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 
 import calendarIcon from "@/assets/train/calendar-icon.png";
 import {
-  buildDateRange,
+  buildTrainListDateStripRange,
   parseLocalDate,
   relativeDayLabel,
   todayDateString,
@@ -12,7 +12,6 @@ interface TrainListDateStripProps {
   selectedDate: string;
   onSelect: (date: string) => void;
   onOpenCalendar: () => void;
-  days?: number;
 }
 
 const DATE_MMDD_CLASS =
@@ -29,11 +28,10 @@ export function TrainListDateStrip({
   selectedDate,
   onSelect,
   onOpenCalendar,
-  days = 7,
 }: TrainListDateStripProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const anchorDate = parseLocalDate(selectedDate) ? selectedDate : todayDateString();
-  const dates = buildDateRange(anchorDate, days);
+  const dates = buildTrainListDateStripRange(anchorDate);
 
   useEffect(() => {
     const el = scrollRef.current?.querySelector(`[data-date="${selectedDate}"]`);

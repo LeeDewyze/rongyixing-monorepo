@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import type { OrderAction, OrderListItem, OrderListScope } from "@ryx/shared-types";
+import type { OrderAction, OrderListItem, OrderListScope, OrderTrainListItem } from "@ryx/shared-types";
 import { OrderListTabId } from "@ryx/shared-types";
 
 import {
@@ -14,6 +14,7 @@ import { ORDER_FONT, ORDER_HEADER_GRADIENT } from "@/config/order-assets";
 import { useOrderList } from "@/hooks/useOrderList";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { formatApiError } from "@/lib/formatApiError";
+import { startTrainExchangeFlow } from "@/lib/train-order-actions";
 import {
   CATEGORY_TO_TAB_ID,
   DEFAULT_ORDER_CATEGORY,
@@ -136,10 +137,43 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
             });
             return;
           }
+          if (item.tabId === OrderListTabId.Flight) {
+            navigate(`/orders/flight/${encodeURIComponent(item.OrderId)}`, {
+              state: { action: "cancel" },
+            });
+            return;
+          }
+          if (item.tabId === OrderListTabId.Train) {
+            navigate(`/orders/train/${encodeURIComponent(item.OrderId)}`, {
+              state: { action: "cancel" },
+            });
+            return;
+          }
           setToastMessage("功能即将上线");
           return;
         case "refund":
+          if (item.tabId === OrderListTabId.Train) {
+            navigate(`/orders/train/${encodeURIComponent(item.OrderId)}`, {
+              state: { action: "refund" },
+            });
+            return;
+          }
+          setToastMessage("功能即将上线");
+          return;
         case "exchange":
+          if (item.tabId === OrderListTabId.Train) {
+            const trainItem = item as OrderTrainListItem;
+            if (!trainItem.TicketId) {
+              setToastMessage("无法获取车票信息");
+              return;
+            }
+            void startTrainExchangeFlow({
+              ticketId: trainItem.TicketId,
+              orderId: trainItem.OrderId,
+              navigate,
+            }).catch((error) => setToastMessage(formatApiError(error)));
+            return;
+          }
           setToastMessage("功能即将上线");
           return;
         default:

@@ -1,4 +1,6 @@
 import type {
+  FlightAbolishTicketParams,
+  FlightCancelParams,
   HotelCancelParams,
   HotelOrderSmsConfirmParams,
   HotelOrderSmsParams,
@@ -6,14 +8,21 @@ import type {
   OrderDetailResponse,
   OrderListParams,
   OrderListResponse,
+  TrainCancelParams,
+  TrainIssueParams,
+  TrainRefundParams,
 } from "@ryx/shared-types";
 
 import { ORDER_FLOW_METHODS } from "../methods/order-flow.js";
 import type { ProxyClient } from "../proxy/proxy-client.js";
 import {
+  normalizeFlightOrderDetail,
   normalizeHotelOrderDetail,
   normalizeOrderDetailResponse,
+  normalizeTrainOrderDetail,
+  shouldNormalizeFlightDetail,
   shouldNormalizeHotelDetail,
+  shouldNormalizeTrainDetail,
 } from "./order-detail-map.js";
 import {
   buildOrderListRequest,
@@ -27,9 +36,14 @@ export interface OrderApi {
   getList(params: OrderListParams): Promise<OrderListResponse>;
   getDetail(params: OrderDetailParams): Promise<OrderDetailResponse>;
   cancelHotel(params: HotelCancelParams): Promise<boolean>;
+  cancelFlight(params: FlightCancelParams): Promise<boolean>;
+  abolishFlightTicket(params: FlightAbolishTicketParams): Promise<boolean>;
   sendHotelOrderSmsCode(params: HotelOrderSmsParams): Promise<boolean>;
   confirmHotelOrderSmsCode(params: HotelOrderSmsConfirmParams): Promise<boolean>;
   checkInspurRepush(params: OrderDetailParams): Promise<boolean>;
+  cancelTrain(params: TrainCancelParams): Promise<boolean>;
+  issueTrain(params: TrainIssueParams): Promise<boolean>;
+  refundTrain(params: TrainRefundParams): Promise<boolean>;
 }
 
 export function createOrderApi(proxy: ProxyClient): OrderApi {
@@ -63,6 +77,12 @@ export function createOrderApi(proxy: ProxyClient): OrderApi {
         data: { Id: orderId, OrderId: orderId },
       });
       const summary = normalizeOrderDetailResponse(raw);
+      if (shouldNormalizeTrainDetail(raw, summary)) {
+        return normalizeTrainOrderDetail(raw);
+      }
+      if (shouldNormalizeFlightDetail(raw, summary)) {
+        return normalizeFlightOrderDetail(raw);
+      }
       if (shouldNormalizeHotelDetail(raw, summary)) {
         return normalizeHotelOrderDetail(raw);
       }
@@ -71,6 +91,18 @@ export function createOrderApi(proxy: ProxyClient): OrderApi {
     cancelHotel(params) {
       return proxy.send<boolean>({
         method: ORDER_FLOW_METHODS.CANCEL_HOTEL,
+        data: params,
+      });
+    },
+    cancelFlight(params) {
+      return proxy.send<boolean>({
+        method: ORDER_FLOW_METHODS.ABOLISH_ORDER,
+        data: { ...params, Tag: params.Tag ?? "flight" },
+      });
+    },
+    abolishFlightTicket(params) {
+      return proxy.send<boolean>({
+        method: ORDER_FLOW_METHODS.ABOLISH_TICKET,
         data: params,
       });
     },
@@ -90,6 +122,24 @@ export function createOrderApi(proxy: ProxyClient): OrderApi {
       return proxy.send<boolean>({
         method: ORDER_FLOW_METHODS.CHECK_INSPUR_REPUSH,
         data: { Id: params.OrderId, OrderId: params.OrderId },
+      });
+    },
+    cancelTrain(params) {
+      return proxy.send<boolean>({
+        method: ORDER_FLOW_METHODS.CANCEL_TRAIN,
+        data: params,
+      });
+    },
+    issueTrain(params) {
+      return proxy.send<boolean>({
+        method: ORDER_FLOW_METHODS.ISSUE_TRAIN,
+        data: { Id: params.OrderId, OrderId: params.OrderId },
+      });
+    },
+    refundTrain(params) {
+      return proxy.send<boolean>({
+        method: ORDER_FLOW_METHODS.TRAIN_REFUND,
+        data: params,
       });
     },
   };

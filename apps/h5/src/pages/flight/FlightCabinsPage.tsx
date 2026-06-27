@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   ProductType,
@@ -14,7 +14,11 @@ import { FlightCabinsSummary } from "@/components/flight/FlightCabinsSummary";
 import { FlightFareRulesSheet } from "@/components/flight/FlightFareRulesSheet";
 import { FlightCabinsTabs } from "@/components/flight/FlightCabinsTabs";
 import { FlightPolicyFilterSheet } from "@/components/flight/FlightPolicyFilterSheet";
-import { FLIGHT_CABINS_HEADER_BG, FLIGHT_CABINS_HEADER_GRADIENT } from "@/config/flight-cabins";
+import { FlightCabinsSkeleton } from "@/components/flight/FlightCabinsSkeleton";
+import {
+  FLIGHT_CABINS_CHROME,
+  FLIGHT_CABINS_HEADER_GRADIENT,
+} from "@/components/flight/flight-cabins-chrome";
 import { formatCabinsDepartTitle } from "@/utils/flight-list-display";
 import { usePageHeader } from "@/components/layout";
 import { useFlightDetail, useFlightPolicy } from "@/hooks/useFlight";
@@ -61,6 +65,8 @@ import { isSelfBookType, resolveDefaultPolicyFilterPassengerId } from "@/lib/fli
 import { hasAgentIdentity } from "@/lib/flight-book-save-order";
 import { navigateBack } from "@/lib/navigation";
 import { useIdentity } from "@/hooks/useIdentity";
+
+const FALLBACK_HEADER_HEIGHT = 56;
 
 export function FlightCabinsPage() {
   const navigate = useNavigate();
@@ -164,6 +170,19 @@ export function FlightCabinsPage() {
   const [policyFilterOpen, setPolicyFilterOpen] = useState(false);
   const [policyFilterEnabled, setPolicyFilterEnabled] = useState(true);
   const [filterPassengerId, setFilterPassengerId] = useState<string | null>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [headerHeight, setHeaderHeight] = useState(FALLBACK_HEADER_HEIGHT);
+
+  useLayoutEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+
+    const updateHeight = () => setHeaderHeight(header.offsetHeight);
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
 
   const allFares = useMemo(
     () => filterFaresForFlight(detail?.FlightFares, query.flightNumber),
@@ -232,53 +251,6 @@ export function FlightCabinsPage() {
     if (!filterPassengerId) return "";
     return selectedPassengers.find((item) => item.id === filterPassengerId)?.passenger.Name ?? "";
   }, [filterPassengerId, selectedPassengers]);
-
-  // TEMP DEBUG (visible console.log): check whether Policy is applied to cabin rows.
-  useEffect(() => {
-    if (!import.meta.env.DEV) return;
-    const passenger = selectedPassengers.find((item) => item.id === filterPassengerId);
-    console.log("[policy-check] inputs", {
-      policyFilterEnabled,
-      filterPassengerId,
-      filterPassengerName: passenger?.passenger.Name,
-      selectedCount: selectedPassengers.length,
-      policyResultsCount: policyResults?.length ?? 0,
-      flightNumber: query.flightNumber ?? segment.Number ?? segment.FlightNumber,
-    });
-    console.log(
-      "[policy-check] policyResults",
-      (policyResults ?? []).map((r) => ({
-        PassengerKey: r.PassengerKey,
-        policyCount: r.FlightPolicies?.length ?? 0,
-        policies: (r.FlightPolicies ?? []).map((p) => ({
-          Id: p.Id,
-          FlightNo: p.FlightNo,
-          IsAllowBook: p.IsAllowBook,
-          cabinCode: p.Cabin?.Code ?? p.Cabin?.BookCode,
-          cabinPrice: p.Cabin?.SalesPrice,
-          rules: p.Rules,
-        })),
-      })),
-    );
-    console.log(
-      "[policy-check] displayRows",
-      displayRows.map((row) => ({
-        code: row.fare.Code ?? row.fare.BookCode,
-        price: row.fare.SalesPrice,
-        color: row.color,
-        matched: Boolean(row.policy),
-      })),
-    );
-  }, [
-    displayRows,
-    filterPassengerId,
-    policyFilterEnabled,
-    policyResults,
-    query.flightNumber,
-    segment.FlightNumber,
-    segment.Number,
-    selectedPassengers,
-  ]);
 
   const detailRouteKey = useMemo(
     () => `${flightId}|${query.date}|${query.fromCode}|${query.toCode}|${query.flightNumber ?? ""}`,
@@ -448,11 +420,14 @@ export function FlightCabinsPage() {
 
   if (!detailParams) {
     return (
-      <div className="flex min-h-full flex-col bg-[#f2f4f8] p-4">
+      <div
+        className="flex min-h-full flex-col p-4"
+        style={{ backgroundColor: FLIGHT_CABINS_CHROME.pageBg }}
+      >
         <p className="text-sm text-[#808080]">舱位查询参数不完整，请从航班列表重新选择。</p>
         <button
           type="button"
-          className="mt-3 text-sm font-medium text-[#5099fe]"
+          className="mt-3 text-sm font-medium text-[#2768FA]"
           onClick={handleBack}
         >
           返回列表
@@ -461,14 +436,18 @@ export function FlightCabinsPage() {
     );
   }
 
+  const showCabinSkeleton =
+    isAuthenticated && (isLoading || isFetching || isPolicyChecking) && !error;
+
   return (
-    <div className="flex min-h-full flex-col bg-[#f2f4f8] pb-[max(1rem,env(safe-area-inset-bottom))]">
+    <div
+      className="relative min-h-full pb-[max(1rem,env(safe-area-inset-bottom))]"
+      style={{ backgroundColor: FLIGHT_CABINS_CHROME.pageBg }}
+    >
       <div
-        className="sticky top-0 z-20 shrink-0 pt-[env(safe-area-inset-top)]"
-        style={{
-          backgroundColor: FLIGHT_CABINS_HEADER_BG,
-          backgroundImage: FLIGHT_CABINS_HEADER_GRADIENT,
-        }}
+        ref={headerRef}
+        className="fixed inset-x-0 top-0 z-30 mx-auto w-full max-w-lg overflow-hidden pt-[env(safe-area-inset-top)] shadow-[0_2px_12px_rgba(142,200,255,0.35)]"
+        style={{ background: FLIGHT_CABINS_HEADER_GRADIENT }}
       >
         <FlightCabinsHeader
           title={departTitle}
@@ -476,109 +455,115 @@ export function FlightCabinsPage() {
           showPolicyFilter={!isSelf && selectedPassengers.length > 0}
           onOpenPolicyFilter={() => setPolicyFilterOpen(true)}
         />
-        <div className="px-3 pb-3">
-          <FlightCabinsSummary segment={segment} />
-        </div>
       </div>
 
-      {policyFilterEnabled && filterPassengerName ? (
-        <FlightCabinsPolicyBanner
-          passengerName={filterPassengerName}
-          onClick={() => setPolicyFilterOpen(true)}
-        />
-      ) : null}
-
-      {isPolicyError && !isAgent && selectedPassengers.length > 0 ? (
-        <div className="mx-3 mt-2 rounded-lg bg-[#fff1f0] px-3 py-2 text-[12px] text-[#ff383c]">
-          差标获取失败，请返回列表重试
+      <div style={{ paddingTop: headerHeight }}>
+        <div
+          className="px-3 pb-3 pt-3"
+          style={{
+            background: `linear-gradient(180deg, #DCE9FA 0%, ${FLIGHT_CABINS_CHROME.pageBg} 100%)`,
+          }}
+        >
+          <FlightCabinsSummary segment={segment} />
         </div>
-      ) : null}
 
-      {!isAuthenticated && (
-        <div className="mx-3 mt-3 rounded-xl bg-white p-6 text-center shadow-sm">
-          <p className="text-sm text-[#808080]">请先登录后再查看舱位</p>
-          <button
-            type="button"
-            className="mt-3 text-sm font-medium text-[#5099fe]"
-            onClick={() =>
-              navigate(
-                `/login/password?returnTo=${encodeURIComponent(
-                  `/flight/${encodeURIComponent(flightId)}/cabins?${searchParams.toString()}`,
-                )}`,
-              )
-            }
-          >
-            去登录
-          </button>
-        </div>
-      )}
+        {policyFilterEnabled && filterPassengerName ? (
+          <FlightCabinsPolicyBanner
+            passengerName={filterPassengerName}
+            onClick={() => setPolicyFilterOpen(true)}
+          />
+        ) : null}
 
-      {isAuthenticated && (isLoading || isFetching) && (
-        <p className="py-6 text-center text-sm text-[#808080]">正在获取舱位信息…</p>
-      )}
-
-      {isAuthenticated && isPolicyChecking && !isLoading && !isFetching && (
-        <p className="py-4 text-center text-sm text-[#808080]">正在校验差旅标准…</p>
-      )}
-
-      {isAuthenticated && error && !isFetching && !detail?.FlightFares?.length && (
-        <div className="px-3 py-6 text-center">
-          <p className="text-sm text-destructive">{formatApiError(error, "flight")}</p>
-          <button
-            type="button"
-            className="mt-2 text-sm font-medium text-[#5099fe]"
-            onClick={() => refetch()}
-          >
-            重试
-          </button>
-        </div>
-      )}
-
-      {isAuthenticated && !isLoading && !error && !isPolicyChecking && (
-        <>
-          <FlightCabinsTabs activeTab={activeTab} onChange={setActiveTab} />
-
-          <div className="space-y-3 px-3 py-3">
-            {displayRows.length === 0 ? (
-              <div className="rounded-xl bg-white p-8 text-center text-sm text-[#808080] shadow-sm">
-                {activeTab === "economy" ? "暂无经济/超经舱位" : "暂无商务/头等舱位"}
-              </div>
-            ) : (
-              displayRows.map((row, index) => (
-                <FlightCabinCard
-                  key={`${row.fare.Id ?? row.fare.Code ?? row.fare.BookCode ?? "fare"}-${row.fare.SalesPrice}-${index}`}
-                  fare={row.fare}
-                  policyColor={policyFilterEnabled ? row.color : "default"}
-                  policyHint={
-                    policyFilterEnabled ? formatFlightCabinPolicyHint(row.policy) : undefined
-                  }
-                  policyBlocked={
-                    policyFilterEnabled ? isFlightCabinPolicyBlocked(row, isAgent) : false
-                  }
-                  soldOut={isFlightCabinSoldOut(row)}
-                  onBook={() => handleBook(row)}
-                  onShowRules={handleShowRules}
-                />
-              ))
-            )}
+        {isPolicyError && !isAgent && selectedPassengers.length > 0 ? (
+          <div className="mx-3 mt-2 rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3 py-2.5 text-[12px] leading-snug text-[#DC2626]">
+            差标获取失败，请返回列表重试
           </div>
-        </>
-      )}
+        ) : null}
 
-      <FlightFareRulesSheet
-        open={rulesFare != null}
-        fare={rulesFare}
-        onClose={() => setRulesFare(null)}
-      />
+        {!isAuthenticated && (
+          <div className="mx-3 mt-3 rounded-xl bg-white p-6 text-center shadow-[0_1px_4px_rgba(0,0,0,0.03)] ring-1 ring-[#ECEEF2]">
+            <p className="text-sm text-[#808080]">请先登录后再查看舱位</p>
+            <button
+              type="button"
+              className="mt-3 text-sm font-medium text-[#2768FA]"
+              onClick={() =>
+                navigate(
+                  `/login/password?returnTo=${encodeURIComponent(
+                    `/flight/${encodeURIComponent(flightId)}/cabins?${searchParams.toString()}`,
+                  )}`,
+                )
+              }
+            >
+              去登录
+            </button>
+          </div>
+        )}
 
-      <FlightPolicyFilterSheet
-        open={policyFilterOpen}
-        passengers={selectedPassengers}
-        showAllSelected={!policyFilterEnabled}
-        selectedPassengerId={filterPassengerId}
-        onClose={() => setPolicyFilterOpen(false)}
-        onConfirm={handlePolicyFilterConfirm}
-      />
+        {showCabinSkeleton ? <FlightCabinsSkeleton /> : null}
+
+        {isAuthenticated && error && !isFetching && !detail?.FlightFares?.length ? (
+          <div className="px-3 py-6 text-center">
+            <p className="text-sm text-destructive">{formatApiError(error, "flight")}</p>
+            <button
+              type="button"
+              className="mt-3 rounded-full bg-[linear-gradient(270deg,#2768FA_0%,#33A1F9_100%)] px-6 py-2 text-sm font-medium text-white"
+              onClick={() => refetch()}
+            >
+              重试
+            </button>
+          </div>
+        ) : null}
+
+        {isAuthenticated && !showCabinSkeleton && !error ? (
+          <section className="mx-3 mt-2 pb-3">
+            {isFetching ? (
+              <p className="pb-1 text-right text-[12px] text-[#999999]">更新中…</p>
+            ) : null}
+
+            <FlightCabinsTabs activeTab={activeTab} onChange={setActiveTab} />
+
+            <div className="mt-2 space-y-2">
+              {displayRows.length === 0 ? (
+                <div className="rounded-xl bg-white p-8 text-center text-sm text-[#808080] ring-1 ring-[#ECEEF2] shadow-[0_1px_4px_rgba(0,0,0,0.03)]">
+                  {activeTab === "economy" ? "暂无经济/超经舱位" : "暂无商务/头等舱位"}
+                </div>
+              ) : (
+                displayRows.map((row, index) => (
+                  <FlightCabinCard
+                    key={`${row.fare.Id ?? row.fare.Code ?? row.fare.BookCode ?? "fare"}-${row.fare.SalesPrice}-${index}`}
+                    fare={row.fare}
+                    policyColor={policyFilterEnabled ? row.color : "default"}
+                    policyHint={
+                      policyFilterEnabled ? formatFlightCabinPolicyHint(row.policy) : undefined
+                    }
+                    policyBlocked={
+                      policyFilterEnabled ? isFlightCabinPolicyBlocked(row, isAgent) : false
+                    }
+                    soldOut={isFlightCabinSoldOut(row)}
+                    onBook={() => handleBook(row)}
+                    onShowRules={handleShowRules}
+                  />
+                ))
+              )}
+            </div>
+          </section>
+        ) : null}
+
+        <FlightFareRulesSheet
+          open={rulesFare != null}
+          fare={rulesFare}
+          onClose={() => setRulesFare(null)}
+        />
+
+        <FlightPolicyFilterSheet
+          open={policyFilterOpen}
+          passengers={selectedPassengers}
+          showAllSelected={!policyFilterEnabled}
+          selectedPassengerId={filterPassengerId}
+          onClose={() => setPolicyFilterOpen(false)}
+          onConfirm={handlePolicyFilterConfirm}
+        />
+      </div>
     </div>
   );
 }

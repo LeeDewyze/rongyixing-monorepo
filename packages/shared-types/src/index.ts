@@ -165,11 +165,15 @@ export type {
 } from "./travel.js";
 
 export type {
+  TrainBedInfo,
   TrainFilterCondition,
   TrainFilterOption,
   TrainItem,
   TrainSearchParams,
   TrainSearchResponse,
+  TrainScheduleParams,
+  TrainScheduleResponse,
+  TrainScheduleStop,
   TrainSeat,
   TrainSortKind,
   TrainSortTab,
@@ -180,6 +184,34 @@ export type {
   TrainTypeFilter,
 } from "./train.js";
 export { parseTrainDurationMinutes, parseTravelTimeMinutes } from "./train.js";
+
+export {
+  TrainSeatType,
+  TRAIN_SELECTABLE_SEAT_TYPES,
+  canSelectTrainSeatType,
+} from "./train-policy.js";
+export type {
+  TrainBookPolicy,
+  TrainPolicyColor,
+  TrainPolicyParams,
+  TrainPolicyPassengerResult,
+  TrainPolicyResponse,
+} from "./train-policy.js";
+
+export type {
+  TrainAccountNumber12306,
+  TrainBookCredential,
+  TrainBookEntityDto,
+  TrainBookLinkmanDto,
+  TrainBookParams,
+  TrainBookPassengerDto,
+  TrainBookResponse,
+  TrainBookSeatDto,
+  TrainBookSelectionPolicy,
+  TrainInitBookParams,
+  TrainInitBookResponse,
+  TrainOrderBookDto,
+} from "./train-book.js";
 
 export type {
   BookCostCenterOption,
@@ -202,6 +234,28 @@ export type {
   SearchApprovalOption,
   SearchLinkmanOption,
 } from "./flight-book.js";
+
+export type {
+  FlightAbolishTicketParams,
+  FlightCancelParams,
+  FlightOrderTicket,
+  FlightOrderTrip,
+  OrderContact,
+  OrderDetailTicket,
+} from "./flight-order.js";
+
+export type {
+  TrainCancelParams,
+  TrainExchangeInfo,
+  TrainExchangeInfoParams,
+  TrainIssueParams,
+  TrainOrderTicket,
+  TrainOrderTrip,
+  TrainPassengerInfo,
+  TrainPassengerInfoParams,
+  TrainRefundParams,
+  TrainTicketActionFlags,
+} from "./train-order.js";
 
 export type {
   FlightBookPolicy,

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { BookOptionChevron } from "@/components/book/BookOptionChevron";
 import { formatFlightNotifyLanguage, type FlightNotifyLanguage } from "@/lib/flight-book-notify";
 
 export interface FlightBookServiceFeeRow {
@@ -9,7 +10,8 @@ export interface FlightBookServiceFeeRow {
 
 const rowClass =
   "flex min-h-[2.5rem] items-center gap-2 border-b border-[#EEF1F6] py-2 last:border-b-0";
-const labelClass = "w-[5.5rem] shrink-0 whitespace-nowrap text-[14px] leading-none text-[#666666]";
+const insetLabelClass =
+  "w-[5.5rem] shrink-0 whitespace-nowrap text-[16px] font-medium leading-none text-[#010101] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
 
 function SectionedInsetCard({ children }: { children: ReactNode }) {
   return (
@@ -33,16 +35,14 @@ export function FlightBookNotifyLanguageRow({
 }: FlightBookNotifyLanguageRowProps) {
   const row = (
     <div className={rowClass}>
-      <span className={labelClass}>通知语言</span>
+      <span className={insetLabelClass}>通知语言</span>
       <button
         type="button"
         className="flex min-w-0 flex-1 items-center justify-end gap-1 truncate text-[14px] leading-tight text-[#333333]"
         onClick={onOpenNotifyLanguage}
       >
         <span className="truncate">{formatFlightNotifyLanguage(notifyLanguage)}</span>
-        <span className="shrink-0 text-[16px] text-[#bbbbbb]" aria-hidden>
-          ›
-        </span>
+        <BookOptionChevron inCircle={false} />
       </button>
     </div>
   );
@@ -66,7 +66,7 @@ export function FlightBookServiceFeeRows({
 
   const content = feeRows.map((row) => (
     <div key={row.passengerId} className={rowClass}>
-      <span className={labelClass}>服务费</span>
+      <span className={insetLabelClass}>服务费</span>
       <span className="min-w-0 flex-1 text-right text-[14px] leading-tight text-[#333333]">
         {feeRows.length > 1 && row.passengerName
           ? `${row.passengerName} ${row.fee}元`

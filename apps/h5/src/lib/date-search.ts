@@ -79,6 +79,23 @@ export function buildListDateStripRange(
   return dates;
 }
 
+/** Legacy days-calendar_ryx: include today when a near-future date is selected. */
+export function buildTrainListDateStripRange(selectedDate: string): string[] {
+  const today = todayDateString();
+  const anchor = parseLocalDate(selectedDate) ? selectedDate : today;
+
+  const todayMs = parseLocalDate(today)?.getTime() ?? 0;
+  const anchorMs = parseLocalDate(anchor)?.getTime() ?? todayMs;
+  const diffDays = Math.max(0, Math.round((anchorMs - todayMs) / 86400000));
+  const idx = Math.min(diffDays, 7);
+
+  const dates: string[] = [];
+  for (let offset = -idx; offset < 7 + idx; offset += 1) {
+    dates.push(addDays(anchor, offset));
+  }
+  return dates;
+}
+
 export function nightsBetween(checkIn: string, checkOut: string): number {
   const a = parseLocalDate(checkIn)?.getTime() ?? NaN;
   const b = parseLocalDate(checkOut)?.getTime() ?? NaN;

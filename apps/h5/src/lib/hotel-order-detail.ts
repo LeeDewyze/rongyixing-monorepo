@@ -5,6 +5,7 @@ import type {
   HotelOrderHistory,
   HotelOrderRoom,
 } from "@ryx/shared-types";
+import { CREDENTIAL_TYPE_LABELS } from "@ryx/shared-types";
 
 const DEFAULT_HOTEL_ACTIONS: HotelOrderActionFlags = {
   showPay: false,
@@ -84,9 +85,44 @@ export function formatOrderRoomName(roomName?: string, breakfast?: string | numb
   return parts.join(" ") || "—";
 }
 
+const CREDENTIAL_TYPE_ENUM_LABELS: Record<string, string> = {
+  IdCard: "身份证",
+  Passport: "护照",
+  HmPass: "港澳通行证",
+  TwPass: "台湾通行证",
+  Taiwan: "台胞证",
+  HvPass: "回乡证",
+  TaiwanEp: "入台证",
+  Other: "其他",
+  ResidencePermit: "港澳台居民居住证",
+  AlienPermanentResidenceIdCard: "外国人永久居留身份证",
+  MilitaryCard: "军人证",
+};
+
+export function normalizeTravelerCredentialTypeLabel(type?: string): string | undefined {
+  const trimmed = type?.trim();
+  if (!trimmed) return undefined;
+  if (trimmed === "身份证") return trimmed;
+
+  const typeCode = Number(trimmed);
+  if (!Number.isNaN(typeCode) && CREDENTIAL_TYPE_LABELS[typeCode]) {
+    return CREDENTIAL_TYPE_LABELS[typeCode];
+  }
+
+  return CREDENTIAL_TYPE_ENUM_LABELS[trimmed] ?? trimmed;
+}
+
+export function shouldShowTravelerCredentialType(type?: string): boolean {
+  return Boolean(normalizeTravelerCredentialTypeLabel(type));
+}
+
 export function formatTravelerCredentialDisplay(number?: string, typeName?: string): string {
   if (!number) return "—";
-  return typeName ? `${number} ${typeName}` : number;
+  const label = normalizeTravelerCredentialTypeLabel(typeName);
+  if (shouldShowTravelerCredentialType(typeName) && label) {
+    return `${number} ${label}`;
+  }
+  return number;
 }
 
 export function computeStayNights(begin?: string, end?: string): number | undefined {

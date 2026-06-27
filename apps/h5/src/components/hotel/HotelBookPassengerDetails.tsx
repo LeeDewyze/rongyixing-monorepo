@@ -2,7 +2,10 @@ import type { ReactNode } from "react";
 import type { FlightOutNumberField } from "@ryx/shared-types";
 
 import { HotelBookTravelFields } from "@/components/hotel/HotelBookTravelFields";
+import { BookContactCheckboxMark } from "@/components/book/BookContactCheckbox";
 import type { HotelPassengerBookForm } from "@/lib/hotel-book";
+
+export type BookPassengerDetailsForm = Omit<HotelPassengerBookForm, "arrivalTime">;
 
 function DetailSection({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -47,8 +50,8 @@ function ContactCheckboxList({
   options,
   onChange,
 }: {
-  options: HotelPassengerBookForm["mobileOptions"];
-  onChange: (next: HotelPassengerBookForm["mobileOptions"]) => void;
+  options: BookPassengerDetailsForm["mobileOptions"];
+  onChange: (next: BookPassengerDetailsForm["mobileOptions"]) => void;
 }) {
   if (!options.length) {
     return <p className="text-right text-[14px] text-[#999999]">暂无</p>;
@@ -59,7 +62,7 @@ function ContactCheckboxList({
       {options.map((option, index) => (
         <label
           key={`${option.value}-${index}`}
-          className="flex items-center justify-end gap-2 text-[14px] leading-tight text-[#333333]"
+          className="flex cursor-pointer items-center justify-end gap-2 text-[14px] leading-tight text-[#333333]"
         >
           <span className="truncate">{option.value}</span>
           <input
@@ -71,31 +74,32 @@ function ContactCheckboxList({
               );
               onChange(next);
             }}
-            className="size-4 shrink-0 accent-brand-primary"
+            className="sr-only"
           />
+          <BookContactCheckboxMark checked={option.checked} />
         </label>
       ))}
     </div>
   );
 }
 
-function formatCostCenterDisplay(costCenter: HotelPassengerBookForm["costCenter"]): string {
+function formatCostCenterDisplay(costCenter: BookPassengerDetailsForm["costCenter"]): string {
   if (costCenter.code && costCenter.name) {
     return `${costCenter.code}-${costCenter.name}`;
   }
   return costCenter.name || costCenter.code || "请选择";
 }
 
-function hasOtherCostCenterInput(form: HotelPassengerBookForm): boolean {
+function hasOtherCostCenterInput(form: BookPassengerDetailsForm): boolean {
   return Boolean(form.otherCostCenterName.trim() || form.otherCostCenterCode.trim());
 }
 
-function hasOtherOrganizationInput(form: HotelPassengerBookForm): boolean {
+function hasOtherOrganizationInput(form: BookPassengerDetailsForm): boolean {
   return Boolean(form.otherOrganizationName.trim());
 }
 
 interface HotelBookPassengerDetailsProps {
-  form: HotelPassengerBookForm;
+  form: BookPassengerDetailsForm;
   showOrganizations: boolean;
   showCostCenter: boolean;
   requiresApprover: boolean;
@@ -104,7 +108,7 @@ interface HotelBookPassengerDetailsProps {
   illegalReasons: string[];
   expenseTypes: { id: string; name: string }[];
   requiresIllegalReason: boolean;
-  onUpdateForm: (patch: Partial<HotelPassengerBookForm>) => void;
+  onUpdateForm: (patch: Partial<BookPassengerDetailsForm>) => void;
   onOpenOrganization: () => void;
   onOpenCostCenter: () => void;
   onOpenApprover: () => void;

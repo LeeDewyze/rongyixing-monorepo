@@ -1,8 +1,13 @@
+import { forwardRef } from "react";
+
 import {
   HOTEL_CHROME,
   HOTEL_DETAIL_FONT,
   HOTEL_HEADER_GRADIENT,
 } from "@/components/hotel/hotel-detail-chrome";
+
+/** Toolbar row only; add safe-area via pt on the outer shell. */
+export const ORDER_DETAIL_HEADER_FALLBACK_HEIGHT = 48;
 
 interface HotelOrderDetailHeaderProps {
   onBack: () => void;
@@ -23,31 +28,34 @@ function BackIcon() {
   );
 }
 
-export function HotelOrderDetailHeader({ onBack }: HotelOrderDetailHeaderProps) {
-  return (
-    <div
-      className={`sticky top-0 z-40 w-full shadow-[0_2px_12px_rgba(142,200,255,0.35)] ${HOTEL_DETAIL_FONT}`}
-      style={{ background: HOTEL_HEADER_GRADIENT }}
-    >
-      <div className="pt-[env(safe-area-inset-top)]">
-        <div className="flex h-12 items-center px-2.5">
-          <button
-            type="button"
-            onClick={onBack}
-            className="flex h-10 w-9 shrink-0 touch-manipulation items-center justify-center rounded-full active:bg-white/40"
-            aria-label="返回"
-          >
-            <BackIcon />
-          </button>
-          <h1
-            className="min-w-0 flex-1 text-center text-[16px] font-semibold leading-tight tracking-tight"
-            style={{ color: HOTEL_CHROME.title }}
-          >
-            订单详情
-          </h1>
-          <span className="w-9 shrink-0" aria-hidden />
+export const HotelOrderDetailHeader = forwardRef<HTMLDivElement, HotelOrderDetailHeaderProps>(
+  function HotelOrderDetailHeader({ onBack }, ref) {
+    return (
+      <div
+        ref={ref}
+        className={`fixed inset-x-0 top-0 z-30 mx-auto w-full max-w-lg shadow-[0_2px_12px_rgba(142,200,255,0.35)] ${HOTEL_DETAIL_FONT}`}
+        style={{ background: HOTEL_HEADER_GRADIENT }}
+      >
+        <div className="pt-[env(safe-area-inset-top)]">
+          <div className="flex h-12 items-center px-2.5">
+            <button
+              type="button"
+              onClick={onBack}
+              className="flex h-10 w-9 shrink-0 touch-manipulation items-center justify-center rounded-full active:bg-white/40"
+              aria-label="返回"
+            >
+              <BackIcon />
+            </button>
+            <h1
+              className="min-w-0 flex-1 text-center text-[16px] font-semibold leading-tight tracking-tight"
+              style={{ color: HOTEL_CHROME.title }}
+            >
+              订单详情
+            </h1>
+            <span className="w-9 shrink-0" aria-hidden />
+          </div>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  },
+);

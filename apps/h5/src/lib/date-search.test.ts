@@ -4,6 +4,7 @@ import {
   addDays,
   buildDateRange,
   buildListDateStripRange,
+  buildTrainListDateStripRange,
   parseLocalDate,
   relativeDayLabel,
   todayDateString,
@@ -36,6 +37,22 @@ describe("date-search", () => {
     const range = buildListDateStripRange(selected, 7, 13);
     expect(range[0]).toBe(today);
     expect(range.at(-1)).toBe(addDays(selected, 13));
+  });
+
+  it("buildTrainListDateStripRange includes today when tomorrow is selected", () => {
+    const today = todayDateString();
+    const tomorrow = addDays(today, 1);
+    const range = buildTrainListDateStripRange(tomorrow);
+    expect(range[0]).toBe(today);
+    expect(range).toContain(tomorrow);
+    expect(range).toHaveLength(9);
+  });
+
+  it("buildTrainListDateStripRange shows 7 days when today is selected", () => {
+    const today = todayDateString();
+    const range = buildTrainListDateStripRange(today);
+    expect(range).toHaveLength(7);
+    expect(range[0]).toBe(today);
   });
 
   it("relativeDayLabel handles invalid date", () => {

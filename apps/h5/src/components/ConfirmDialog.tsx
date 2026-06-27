@@ -7,6 +7,8 @@ interface ConfirmDialogProps {
   confirmLabel?: string;
   cancelLabel?: string;
   loading?: boolean;
+  /** Show top-right close control. Defaults to true. */
+  showCloseButton?: boolean;
   /** Visual tone for icon and primary action. Defaults to destructive when confirmLabel is「删除」. */
   variant?: "default" | "destructive";
   onConfirm: () => void;
@@ -103,6 +105,7 @@ export function ConfirmDialog({
   confirmLabel = "确定",
   cancelLabel = "取消",
   loading = false,
+  showCloseButton = true,
   variant,
   onConfirm,
   onCancel,
@@ -128,9 +131,11 @@ export function ConfirmDialog({
         onClick={(event) => event.stopPropagation()}
       >
         <div className="relative px-5 pb-4 pt-5">
-          <div className="absolute right-3 top-3">
-            <DialogCloseButton onClose={onCancel} />
-          </div>
+          {showCloseButton ? (
+            <div className="absolute right-3 top-3">
+              <DialogCloseButton onClose={onCancel} />
+            </div>
+          ) : null}
 
           {resolvedVariant === "destructive" ? <DestructiveIcon /> : <DefaultIcon />}
 

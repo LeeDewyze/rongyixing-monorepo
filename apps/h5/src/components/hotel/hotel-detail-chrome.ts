@@ -7,13 +7,13 @@ export const HOTEL_HEADER_GRADIENT =
   "linear-gradient(180deg, #8EC8FF 0%, #B8DBFF 42%, #DCE9FA 78%, #EEF4FC 100%)";
 
 /** Section card title on hotel order detail (16px / medium / #010101). */
-export const HOTEL_ORDER_SECTION_TITLE = "text-[16px] font-medium leading-none text-brand-title";
+export const HOTEL_ORDER_SECTION_TITLE = `${HOTEL_DETAIL_FONT} text-[16px] font-medium leading-none tracking-normal text-brand-title`;
 
 /** Detail row label on hotel order detail (14px / regular / #333333). */
 export const HOTEL_ORDER_ROW_LABEL = `${HOTEL_DETAIL_FONT} text-[14px] font-normal leading-none tracking-normal text-[#333333]`;
 
 /** Detail row value on hotel order detail (14px / regular / #666666). */
-export const HOTEL_ORDER_ROW_VALUE = `${HOTEL_DETAIL_FONT} text-[14px] font-normal leading-none tracking-normal text-right text-[#666666]`;
+export const HOTEL_ORDER_ROW_VALUE = `${HOTEL_DETAIL_FONT} text-[14px] font-normal leading-none tracking-normal text-right tabular-nums text-[#666666]`;
 
 /** Order amount on hotel order detail (14px / regular / #FF0000). */
 export const HOTEL_ORDER_AMOUNT_VALUE = `${HOTEL_DETAIL_FONT} text-[14px] font-normal leading-none tracking-normal text-right text-[#FF0000]`;

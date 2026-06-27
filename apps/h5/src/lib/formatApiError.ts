@@ -39,11 +39,29 @@ export function formatApiError(error: unknown, context: ApiErrorContext = "gener
     if (error.code === "MOCK_NOT_FOUND") {
       return `${error.message}。请重启 dev 服务或执行 pnpm build:workspace。`;
     }
+    if (
+      error.status === 502 ||
+      error.status === 504 ||
+      error.message.includes("502") ||
+      error.message.includes("504")
+    ) {
+      return `测试环境接口不可达（HTTP ${error.status ?? "代理错误"}）。请检查网络/VPN，或在控制台执行 sessionStorage.setItem('ryx_api_mode','mock') 后刷新页面使用 Mock。`;
+    }
     return error.message || "请求失败";
   }
   if (error instanceof Error) {
     if (error.message.includes("flight")) {
       return `${error.message}。请执行 pnpm build:workspace 后重启 dev 服务。`;
+    }
+    if (
+      error.name === "AbortError" ||
+      error.message.includes("Failed to fetch") ||
+      error.message.includes("NetworkError") ||
+      error.message.includes("ETIMEDOUT") ||
+      error.message.includes("Unexpected token")
+    ) {
+      const mode = getApiMode();
+      return `网络请求失败（${error.message}）。当前为 ${mode} 模式；若无法访问 rtesp 测试环境，请切到 Mock：sessionStorage.setItem('ryx_api_mode','mock') 后刷新。`;
     }
     return error.message;
   }

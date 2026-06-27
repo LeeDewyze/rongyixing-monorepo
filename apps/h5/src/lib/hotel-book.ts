@@ -299,7 +299,7 @@ export function buildHotelOrderBookDto(input: {
   travelFormId?: string;
   travelPayType?: number;
   travelType?: number;
-  authorizedContactsByPassenger?: Record<string, FlightAuthorizedContact[]>;
+  authorizedContacts?: FlightAuthorizedContact[];
   agentId?: string;
   globalArrivalTime?: string;
   globalNotifyLanguage?: HotelNotifyLanguage;
@@ -324,7 +324,6 @@ export function buildHotelOrderBookDto(input: {
 
   const travelPayType = input.travelPayType;
   const travelType = input.travelType ?? resolveFlightTravelType();
-  const rootLinkmans: HotelBookLinkmanDto[] = [];
 
   base.Passengers = base.Passengers.map((dto, index) => {
     const passenger = input.passengers[index];
@@ -381,12 +380,6 @@ export function buildHotelOrderBookDto(input: {
       OutNumbers: Object.keys(outNumbers).length ? outNumbers : null,
     };
 
-    const roomContacts = input.authorizedContactsByPassenger?.[passenger.id] ?? [];
-    const linkmans = buildAuthorizedLinkmans(roomContacts);
-    if (linkmans.length) {
-      rootLinkmans.push(...linkmans);
-    }
-
     if (index === 0 && input.creditCard) {
       const card = input.creditCard;
       if (card.cardNumber.trim() || card.holderName.trim()) {
@@ -412,8 +405,8 @@ export function buildHotelOrderBookDto(input: {
   }
   base.Channel = HOTEL_BOOK_CHANNEL;
   base.IsFromOffline = input.isFromOffline ?? false;
-  if (rootLinkmans.length) {
-    base.Linkmans = rootLinkmans;
+  if (input.authorizedContacts?.length) {
+    base.Linkmans = buildAuthorizedLinkmans(input.authorizedContacts);
   }
 
   return base;
@@ -661,7 +654,7 @@ export function validateHotelBookForms(input: {
   outNumberFieldsByPassenger?: Record<string, FlightOutNumberField[]>;
   showCreditCard?: boolean;
   creditCard?: HotelCreditCardForm;
-  authorizedContactsByPassenger?: Record<string, FlightAuthorizedContact[]>;
+  authorizedContacts?: FlightAuthorizedContact[];
 }): string | null {
   if (!input.arrivalTime.trim()) {
     return "请选择到店时间";
@@ -693,14 +686,10 @@ export function validateHotelBookForms(input: {
     const outNumberFields = input.outNumberFieldsByPassenger?.[passenger.id] ?? [];
     const outNumberError = validatePassengerOutNumbers(outNumberFields, form.outNumbers);
     if (outNumberError) return outNumberError;
-
-    const roomContacts = input.authorizedContactsByPassenger?.[passenger.id] ?? [];
-    const contactError = validateAuthorizedContacts(roomContacts);
-    if (contactError) {
-      const roomIndex = input.passengers.indexOf(passenger) + 1;
-      return `房间${roomIndex}${contactError}`;
-    }
   }
+
+  const contactError = validateAuthorizedContacts(input.authorizedContacts ?? []);
+  if (contactError) return contactError;
 
   return null;
 }
