@@ -95,8 +95,8 @@ function PlusIcon() {
 
 function ApplyPageSkeleton() {
   return (
-    <div className="min-h-full bg-[#F5F6F9]">
-      <div className="h-36 bg-gradient-to-br from-brand-btn-end to-brand-btn-start" />
+    <div className="min-h-full" style={{ background: "var(--brand-form-header-gradient)" }}>
+      <div className="h-40" />
       <div className="-mt-6 space-y-3 px-4 pb-24">
         {[1, 2, 3].map((key) => (
           <div
@@ -130,7 +130,7 @@ function SectionCard({
     <section className="overflow-hidden rounded-2xl bg-white shadow-[0_4px_20px_rgba(15,23,42,0.06)]">
       <div className="flex items-start justify-between gap-3 border-b border-[#F0F2F5] px-4 py-3">
         <div>
-          <h2 className="text-[15px] font-semibold text-[#111827]">{title}</h2>
+          <h2 className="text-[15px] font-semibold text-brand-title">{title}</h2>
           {subtitle ? <p className="mt-0.5 text-xs text-[#9CA3AF]">{subtitle}</p> : null}
         </div>
         {action}
@@ -143,9 +143,9 @@ function SectionCard({
 function MetaChip({ label, value }: { label: string; value: string }) {
   if (!value) return null;
   return (
-    <div className="min-w-0 flex-1 rounded-xl bg-white/10 px-3 py-2">
-      <p className="truncate text-[11px] text-white/75">{label}</p>
-      <p className="truncate text-sm font-medium text-white">{value}</p>
+    <div className="min-w-0 flex-1 rounded-xl bg-white/35 px-3 py-2 shadow-[0_4px_18px_rgba(39,104,250,0.10)] ring-1 ring-white/35">
+      <p className="truncate text-[11px] text-brand-title/55">{label}</p>
+      <p className="truncate text-sm font-medium text-brand-title">{value}</p>
     </div>
   );
 }
@@ -170,7 +170,7 @@ function DateRow({
           value={value}
           min={minDate}
           onChange={(event) => onChange(event.target.value)}
-          className="border-0 bg-transparent p-0 text-right text-[15px] font-semibold text-[#111827] outline-none [color-scheme:light]"
+          className="border-0 bg-transparent p-0 text-right text-[15px] font-semibold text-brand-title outline-none [color-scheme:light]"
         />
         <p className="mt-0.5 text-xs text-[#9CA3AF]">{formatDateLabel(value)}</p>
       </div>
@@ -220,7 +220,7 @@ function SegmentRouteCard({
       >
         <div>
           <p className="text-[11px] uppercase tracking-wide text-[#9CA3AF]">出发</p>
-          <p className="mt-0.5 text-[18px] font-semibold text-[#111827]">{segment.fromCity.label}</p>
+          <p className="mt-0.5 text-[18px] font-semibold text-brand-title">{segment.fromCity.label}</p>
         </div>
         <ChevronRightIcon />
       </button>
@@ -234,7 +234,7 @@ function SegmentRouteCard({
       >
         <div>
           <p className="text-[11px] uppercase tracking-wide text-[#9CA3AF]">目的</p>
-          <p className="mt-0.5 text-[18px] font-semibold text-[#111827]">{segment.toCity.label}</p>
+          <p className="mt-0.5 text-[18px] font-semibold text-brand-title">{segment.toCity.label}</p>
         </div>
         <ChevronRightIcon />
       </button>
@@ -420,37 +420,40 @@ export function TravelApplyPage() {
   const travelNumber = meta.travelNumber.label || meta.travelNumber.value;
 
   return (
-    <div className="min-h-full bg-[#F5F6F9]">
-      {/* header hasn't changed but let's at least show title */}
-      <div className="bg-gradient-to-b from-brand-header-start to-brand-header-end pt-[env(safe-area-inset-top)] pb-10 px-4">
-        <div className="flex items-center px-1 pb-2 pt-1">
+    <div className="min-h-full" style={{ background: "var(--brand-form-header-gradient)" }}>
+      <div className="relative pb-10 pt-[env(safe-area-inset-top)]">
+        <div className="flex items-center px-1">
           <button
             type="button"
-            className="flex h-11 w-10 shrink-0 items-center justify-center text-[26px] font-light leading-none text-white active:opacity-70"
+            className="flex h-11 w-10 shrink-0 items-center justify-center text-[26px] font-light leading-none text-brand-title active:opacity-70"
             aria-label="返回"
             onClick={goHome}
           >
             ‹
           </button>
-          <h1 className="min-w-0 flex-1 truncate text-center text-[17px] font-medium text-white">
+          <h1 className="min-w-0 flex-1 truncate text-center text-[17px] font-medium text-brand-title">
             {isEditing ? "编辑出差申请" : "出差申请"}
           </h1>
           <span className="w-10 shrink-0" />
         </div>
-        <p className="text-xs text-white/70">差旅单号</p>
-        <p className="mt-1 truncate text-[20px] font-semibold tracking-wide text-white">
-          {travelNumber || (isEditing ? editId! : "—")}
-        </p>
-        <div className="mt-4 flex gap-2">
-          <MetaChip label="申请人" value={meta.applicant.label} />
-          <MetaChip label="所属部门" value={meta.organization.label} />
+
+        <div className="mt-3 px-4">
+          <p className="text-[11px] text-brand-title/60">差旅单号</p>
+          <p className="mt-0.5 truncate text-[20px] font-semibold tracking-wide text-brand-title">
+            {travelNumber || (isEditing ? editId! : "—")}
+          </p>
+          <div className="mt-3 flex gap-2">
+            <MetaChip label="申请人" value={meta.applicant.label} />
+            <MetaChip label="所属部门" value={meta.organization.label} />
+          </div>
+          {meta.position.label ? (
+            <p className="mt-2 text-[11px] text-brand-title/50">{meta.position.label}</p>
+          ) : null}
         </div>
-        {meta.position.label ? (
-          <p className="mt-2 text-xs text-white/65">职位 · {meta.position.label}</p>
-        ) : null}
+
       </div>
 
-      <div className="-mt-5 space-y-3 px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
+      <div className="-mt-6 space-y-3 px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
         <SectionCard title="出差信息" subtitle="选择类型并填写事由">
           <div className="py-3.5">
             <p className="mb-2.5 text-sm text-[#6B7280]">出差类型</p>
@@ -486,7 +489,7 @@ export function TravelApplyPage() {
               rows={3}
               maxLength={200}
               placeholder="请简要说明出差目的，如项目支持、客户拜访等"
-              className="w-full resize-none rounded-xl border border-[#E8ECF2] bg-[#FAFBFC] px-3.5 py-3 text-sm leading-relaxed text-[#111827] outline-none transition-colors placeholder:text-[#C4C9D4] focus:border-brand-primary focus:bg-white focus:ring-2 focus:ring-brand-primary/10"
+              className="w-full resize-none rounded-xl border border-[#E8ECF2] bg-[#FAFBFC] px-3.5 py-3 text-sm leading-relaxed text-brand-title outline-none transition-colors placeholder:text-[#C4C9D4] focus:border-brand-primary focus:bg-white focus:ring-2 focus:ring-brand-primary/10"
               onChange={(event) => setReason(event.target.value)}
             />
           </label>
@@ -517,7 +520,7 @@ export function TravelApplyPage() {
                     <p className="text-xs text-[#9CA3AF]">
                       {travelers.length > 1 ? `出差人 ${index + 1}` : "出差人"}
                     </p>
-                    <p className="mt-0.5 truncate text-sm font-medium text-[#111827]">
+                    <p className="mt-0.5 truncate text-sm font-medium text-brand-title">
                       {traveler.account.label || "请选择出差人"}
                     </p>
                   </div>
@@ -563,7 +566,7 @@ export function TravelApplyPage() {
               className={index > 0 ? "border-t border-[#F0F2F5] pt-1" : undefined}
             >
               <div className="flex items-center justify-between py-3">
-                <p className="text-sm font-medium text-[#374151]">
+                <p className="text-sm font-medium text-brand-title">
                   {segments.length > 1 ? `行程 ${index + 1}` : "行程"}
                 </p>
                 {segments.length > 1 ? (
@@ -618,7 +621,7 @@ export function TravelApplyPage() {
         <button
           type="button"
           disabled={submitApply.isPending || modifyApply.isPending}
-          className="flex h-[50px] w-full items-center justify-center rounded-full bg-gradient-to-r from-brand-btn-end to-brand-header-start text-[16px] font-medium text-white shadow-[0_8px_24px_rgba(39,104,250,0.28)] transition-opacity disabled:opacity-60 active:opacity-90"
+          className="flex h-[50px] w-full items-center justify-center rounded-full bg-gradient-to-r from-brand-btn-start to-brand-btn-end text-[16px] font-medium text-white shadow-[0_8px_24px_rgba(39,104,250,0.28)] transition-opacity disabled:opacity-60 active:opacity-90"
           onClick={() => void handleSubmit()}
         >
           {submitApply.isPending || modifyApply.isPending
