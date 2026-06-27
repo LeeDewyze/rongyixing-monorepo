@@ -10,6 +10,7 @@ import {
 
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { usePageHeader } from "@/components/layout";
+import { PassengerCredentialActionButton } from "@/components/passenger/PassengerCredentialActionButton";
 import { useCredentialList } from "@/hooks/useCredentialList";
 import { useRemoveStaffCredential } from "@/hooks/usePassengerCredential";
 import { credentialFormFromCredential } from "@/lib/credential-form";
@@ -37,39 +38,16 @@ function CredentialCard({
       <div className="flex gap-3">
         <div className="min-w-0 flex-1">
           <p className="text-base font-semibold text-[#333333]">{name}</p>
-          {orgName ? (
-            <p className="mt-1 truncate text-sm text-[#666666]">{orgName}</p>
-          ) : null}
+          {orgName ? <p className="mt-1 truncate text-sm text-[#666666]">{orgName}</p> : null}
           <p className="mt-1 text-sm text-[#333333]">
             <span className="text-[#999999]">{typeLabel} </span>
             {number}
           </p>
-          {mobile ? (
-            <p className="mt-0.5 text-sm text-[#666666]">{mobile}</p>
-          ) : null}
+          {mobile ? <p className="mt-0.5 text-sm text-[#666666]">{mobile}</p> : null}
         </div>
-        <div className="flex shrink-0 items-start gap-1">
-          <button
-            type="button"
-            className="flex size-8 items-center justify-center text-[#999999] active:opacity-70"
-            aria-label="编辑"
-            onClick={onEdit}
-          >
-            <svg viewBox="0 0 20 20" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M4 14.5V16h1.5L14 7.5 12.5 6 4 14.5z" />
-              <path d="M11 5l2 2" />
-            </svg>
-          </button>
-          <button
-            type="button"
-            className="flex size-8 items-center justify-center text-[#ff4d4f] active:opacity-70"
-            aria-label="删除"
-            onClick={onDelete}
-          >
-            <svg viewBox="0 0 20 20" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M5 6h10M8 6V4h4v2M7 6v9h6V6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
+        <div className="flex shrink-0 items-start gap-1.5">
+          <PassengerCredentialActionButton label="编辑" tone="edit" onClick={onEdit} />
+          <PassengerCredentialActionButton label="删除" tone="delete" onClick={onDelete} />
         </div>
       </div>
     </div>
@@ -90,7 +68,9 @@ export function CredentialListPage() {
 
   const queryClient = useQueryClient();
   const credentialQuery = useCredentialList();
-  const [deleteTargetCredential, setDeleteTargetCredential] = useState<PassengerCredential | null>(null);
+  const [deleteTargetCredential, setDeleteTargetCredential] = useState<PassengerCredential | null>(
+    null,
+  );
   const [pageError, setPageError] = useState("");
 
   const removeStaff = useRemoveStaffCredential();
@@ -108,14 +88,11 @@ export function CredentialListPage() {
   }
 
   function navigateEditCredential(credential: PassengerCredential) {
-    navigate(
-      "/passenger/credential?mode=self&returnTo=/credentials",
-      {
-        state: {
-          credential,
-        },
+    navigate("/passenger/credential?mode=self&returnTo=/credentials", {
+      state: {
+        credential,
       },
-    );
+    });
   }
 
   async function handleStaffRemove() {
@@ -131,7 +108,10 @@ export function CredentialListPage() {
   const isRemoving = removeStaff.isPending;
 
   return (
-    <div className="flex min-h-full flex-col" style={{ background: "var(--brand-form-header-gradient)" }}>
+    <div
+      className="flex min-h-full flex-col"
+      style={{ background: "var(--brand-form-header-gradient)" }}
+    >
       <div className="shrink-0 pt-[env(safe-area-inset-top)]">
         <div className="flex items-center px-1 pb-2 pt-1">
           <button
@@ -140,7 +120,13 @@ export function CredentialListPage() {
             aria-label="返回"
             onClick={() => navigate("/home/mine", { replace: true })}
           >
-            <svg viewBox="0 0 20 20" className="size-5" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              viewBox="0 0 20 20"
+              className="size-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <path d="M12 5l-5 5 5 5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
@@ -155,8 +141,17 @@ export function CredentialListPage() {
               void queryClient.invalidateQueries({ queryKey: ["credential"] });
             }}
           >
-            <svg viewBox="0 0 20 20" className="size-5" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M17 10a7 7 0 01-7 7 7 7 0 01-5.16-2.26M3 10a7 7 0 017-7 7 7 0 015.16 2.26" strokeLinecap="round" />
+            <svg
+              viewBox="0 0 20 20"
+              className="size-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path
+                d="M17 10a7 7 0 01-7 7 7 7 0 01-5.16-2.26M3 10a7 7 0 017-7 7 7 0 015.16 2.26"
+                strokeLinecap="round"
+              />
               <path d="M16 2v3h-3M4 18v-3h3" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
@@ -169,12 +164,12 @@ export function CredentialListPage() {
         ) : null}
 
         {credentialQuery.error ? (
-          <p className="mx-4 py-4 text-sm text-[#ff4d4f]">{formatApiError(credentialQuery.error)}</p>
+          <p className="mx-4 py-4 text-sm text-[#ff4d4f]">
+            {formatApiError(credentialQuery.error)}
+          </p>
         ) : null}
 
-        {pageError ? (
-          <p className="mx-4 py-2 text-sm text-[#ff4d4f]">{pageError}</p>
-        ) : null}
+        {pageError ? <p className="mx-4 py-2 text-sm text-[#ff4d4f]">{pageError}</p> : null}
 
         {!credentialQuery.isLoading ? (
           <>

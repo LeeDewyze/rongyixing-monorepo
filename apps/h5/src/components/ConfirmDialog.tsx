@@ -21,13 +21,13 @@ function DialogCloseButton({ onClose }: { onClose: () => void }) {
   return (
     <button
       type="button"
-      className="flex size-8 items-center justify-center rounded-full bg-[#F5F6F9] text-[#999999] active:bg-[#EBEDF0]"
+      className="flex size-7 items-center justify-center rounded-full bg-[#F5F6F9] text-[#999999] active:bg-[#EBEDF0]"
       aria-label="关闭"
       onClick={onClose}
     >
       <svg
         viewBox="0 0 20 20"
-        className="size-4"
+        className="size-3.5"
         fill="none"
         stroke="currentColor"
         strokeWidth="1.5"
@@ -40,10 +40,10 @@ function DialogCloseButton({ onClose }: { onClose: () => void }) {
 
 function DestructiveIcon() {
   return (
-    <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-[#FFF1F0] text-[#FF4D4F]">
+    <div className="mx-auto flex size-9 items-center justify-center rounded-full bg-[#FFF1F0] text-[#FF4D4F]">
       <svg
         viewBox="0 0 24 24"
-        className="size-6"
+        className="size-5"
         fill="none"
         stroke="currentColor"
         strokeWidth="1.75"
@@ -63,10 +63,10 @@ function DestructiveIcon() {
 
 function DefaultIcon() {
   return (
-    <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-[#EEF5FF] text-brand-primary">
+    <div className="mx-auto flex size-9 items-center justify-center rounded-full bg-[#EEF5FF] text-brand-primary">
       <svg
         viewBox="0 0 24 24"
-        className="size-6"
+        className="size-5"
         fill="none"
         stroke="currentColor"
         strokeWidth="1.75"
@@ -130,7 +130,7 @@ export function ConfirmDialog({
         className="w-full max-w-[320px] overflow-hidden rounded-2xl bg-white shadow-[0_12px_40px_rgba(0,0,0,0.14)]"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="relative px-5 pb-4 pt-5">
+        <div className="relative px-5 pb-3.5 pt-4">
           {showCloseButton ? (
             <div className="absolute right-3 top-3">
               <DialogCloseButton onClose={onCancel} />
@@ -141,14 +141,11 @@ export function ConfirmDialog({
 
           <h2
             id={titleId}
-            className="mt-4 text-center text-[17px] font-semibold leading-tight text-[#333333]"
+            className="mt-3 text-center text-[17px] font-semibold leading-tight text-[#333333]"
           >
             {title}
           </h2>
-          <p
-            id={messageId}
-            className="mt-2.5 text-center text-[14px] leading-[1.65] text-[#666666]"
-          >
+          <p id={messageId} className="mt-2 text-center text-[14px] leading-[1.55] text-[#666666]">
             {formatMessage(message)}
           </p>
         </div>

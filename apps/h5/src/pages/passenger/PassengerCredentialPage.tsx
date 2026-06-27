@@ -31,6 +31,32 @@ interface CredentialLocationState {
   staffId?: string;
 }
 
+const DISCARD_WATCH_FIELDS: Array<keyof CredentialFormValues> = [
+  "Name",
+  "Number",
+  "Mobile",
+  "Birthday",
+  "ExpirationDate",
+  "Surname",
+  "Givenname",
+];
+
+function normalizeDirtyValue(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function hasCredentialFormChanges(
+  values: CredentialFormValues,
+  initialValues: CredentialFormValues,
+): boolean {
+  if (values.Type !== initialValues.Type) return true;
+  if ((values.Gender ?? "M") !== (initialValues.Gender ?? "M")) return true;
+
+  return DISCARD_WATCH_FIELDS.some(
+    (field) => normalizeDirtyValue(values[field]) !== normalizeDirtyValue(initialValues[field]),
+  );
+}
+
 export function PassengerCredentialPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -51,11 +77,19 @@ export function PassengerCredentialPage() {
     if (state.passenger) return credentialFormFromPassenger(state.passenger, staffId);
     if (state.credential) return credentialFormFromCredential(state.credential, staffId);
     return emptyCredentialForm(staffId);
-  }, [memberProfile?.Name, memberProfile?.RealName, mode, state.credential, state.passenger, staffId]);
+  }, [
+    memberProfile?.Name,
+    memberProfile?.RealName,
+    mode,
+    state.credential,
+    state.passenger,
+    staffId,
+  ]);
 
   const [values, setValues] = useState<CredentialFormValues>(initialValues);
   const [error, setError] = useState("");
   const [showExternalDeleteConfirm, setShowExternalDeleteConfirm] = useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
   const saveExternal = useSaveExternalCredential();
   const saveStaff = useSaveStaffCredential();
@@ -66,7 +100,12 @@ export function PassengerCredentialPage() {
   const isSaving = saveExternal.isPending || saveStaff.isPending;
   const isRemoving = removeExternal.isPending || removeStaff.isPending;
   const isCredentialOnlyMode = mode === "self" || mode === "staff";
-  const fixedName = mode === "self" ? normalizeCredentialName(memberProfile?.RealName ?? memberProfile?.Name ?? "") : "";
+  const shouldConfirmDiscard =
+    mode !== "self" && addNew && hasCredentialFormChanges(values, initialValues);
+  const fixedName =
+    mode === "self"
+      ? normalizeCredentialName(memberProfile?.RealName ?? memberProfile?.Name ?? "")
+      : "";
   const title = isExternalMode
     ? isEdit
       ? "编辑出行人"
@@ -91,7 +130,8 @@ export function PassengerCredentialPage() {
   usePageHeader({ visible: false });
 
   async function handleSave() {
-    const submitValues = mode === "self" && fixedName ? credentialFormWithFixedName(values, fixedName) : values;
+    const submitValues =
+      mode === "self" && fixedName ? credentialFormWithFixedName(values, fixedName) : values;
     if (mode === "self" && !fixedName) {
       setError("未获取到真实姓名");
       return;
@@ -112,6 +152,14 @@ export function PassengerCredentialPage() {
     } catch (err) {
       setError(formatApiError(err));
     }
+  }
+
+  function handleBack() {
+    if (shouldConfirmDiscard && !isSaving) {
+      setShowDiscardConfirm(true);
+      return;
+    }
+    navigate(backTo);
   }
 
   function handleRemoveClick() {
@@ -149,7 +197,7 @@ export function PassengerCredentialPage() {
     <>
       <CredentialFormShell
         title={title}
-        onBack={() => navigate(backTo)}
+        onBack={handleBack}
         footer={
           <div className="mx-auto max-w-lg space-y-3">
             <button
@@ -195,6 +243,17 @@ export function PassengerCredentialPage() {
           onCancel={() => setShowExternalDeleteConfirm(false)}
         />
       ) : null}
+
+      <ConfirmDialog
+        open={showDiscardConfirm}
+        title="放弃填写"
+        message="当前出行人信息尚未保存，确定返回吗？"
+        confirmLabel="返回"
+        cancelLabel="继续填写"
+        variant="default"
+        onConfirm={() => navigate(backTo)}
+        onCancel={() => setShowDiscardConfirm(false)}
+      />
     </>
   );
 }

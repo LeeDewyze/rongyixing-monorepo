@@ -5,13 +5,10 @@ import {
   memberToCredential,
 } from "@ryx/shared-types";
 
-import {
-  createBookInfo,
-  isCredentialAllowed,
-  isSelected,
-} from "@/lib/passenger-select-logic";
+import { createBookInfo, isCredentialAllowed, isSelected } from "@/lib/passenger-select-logic";
 
 import { PassengerSelectCircle } from "./PassengerSelectCircle";
+import { PassengerCredentialActionButton } from "./PassengerCredentialActionButton";
 
 interface ExternalPassengerCardProps {
   passenger: MemberPassenger;
@@ -20,6 +17,24 @@ interface ExternalPassengerCardProps {
   onToggle: (info: PassengerBookInfo, checked: boolean) => void;
   onEdit: (passenger: MemberPassenger) => void;
   onRemove: (passenger: MemberPassenger) => void;
+}
+
+function PassengerMeta({
+  credential,
+  mobile,
+}: {
+  credential: ReturnType<typeof memberToCredential>;
+  mobile?: string;
+}) {
+  return (
+    <div className="mt-1.5 space-y-1 text-sm leading-5">
+      <p className="text-[#4b5563]">
+        <span className="mr-1 text-[#9aa1ad]">{credentialDisplayType(credential)}</span>
+        {credentialDisplayNumber(credential)}
+      </p>
+      {mobile ? <p className="text-[#6b7280]">{mobile}</p> : null}
+    </div>
+  );
 }
 
 export function ExternalPassengerCard({
@@ -53,41 +68,24 @@ export function ExternalPassengerCard({
         <div className="min-w-0 flex-1">
           <button
             type="button"
-            className="text-left text-base font-semibold text-[#333333]"
+            className="text-left text-base font-semibold leading-5 text-[#2f343d]"
             onClick={() => handleToggle(!checked)}
           >
             {passenger.Name}
           </button>
-          <p className="mt-1 text-sm text-[#333333]">
-            <span className="text-[#999999]">{credentialDisplayType(cred)} </span>
-            {credentialDisplayNumber(cred)}
-          </p>
-          {passenger.Mobile ? (
-            <p className="mt-0.5 text-sm text-[#666666]">{passenger.Mobile}</p>
-          ) : null}
+          <PassengerMeta credential={cred} mobile={passenger.Mobile} />
         </div>
-        <div className="flex shrink-0 items-start gap-1">
-          <button
-            type="button"
-            className="flex size-8 items-center justify-center text-[#999999] active:opacity-70"
-            aria-label="编辑"
+        <div className="flex shrink-0 items-start gap-1.5">
+          <PassengerCredentialActionButton
+            label="编辑"
+            tone="edit"
             onClick={() => onEdit(passenger)}
-          >
-            <svg viewBox="0 0 20 20" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M4 14.5V16h1.5L14 7.5 12.5 6 4 14.5z" />
-              <path d="M11 5l2 2" />
-            </svg>
-          </button>
-          <button
-            type="button"
-            className="flex size-8 items-center justify-center text-[#ff4d4f] active:opacity-70"
-            aria-label="删除"
+          />
+          <PassengerCredentialActionButton
+            label="删除"
+            tone="delete"
             onClick={() => onRemove(passenger)}
-          >
-            <svg viewBox="0 0 20 20" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M5 6h10M8 6V4h4v2M7 6v9h6V6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
+          />
         </div>
       </div>
     </div>

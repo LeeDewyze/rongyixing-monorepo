@@ -1,14 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type {
   PassengerBookInfo,
   PassengerCredential,
   ProductType,
   StaffPassenger,
 } from "@ryx/shared-types";
-import {
-  credentialDisplayNumber,
-  credentialDisplayType,
-} from "@ryx/shared-types";
+import { credentialDisplayNumber, credentialDisplayType } from "@ryx/shared-types";
 
 import {
   createBookInfo,
@@ -17,6 +14,7 @@ import {
 } from "@/lib/passenger-select-logic";
 
 import { PassengerSelectCircle } from "./PassengerSelectCircle";
+import { PassengerCredentialActionButton } from "./PassengerCredentialActionButton";
 
 interface EmployeePassengerCardProps {
   staff: StaffPassenger;
@@ -28,36 +26,36 @@ interface EmployeePassengerCardProps {
   onRemoveCredential: (staffId: string, credential: PassengerCredential) => void;
 }
 
-function CredentialActions({
-  onEdit,
-  onRemove,
+function CredentialActions({ onEdit, onRemove }: { onEdit: () => void; onRemove: () => void }) {
+  return (
+    <div className="flex shrink-0 items-start gap-1.5">
+      <PassengerCredentialActionButton label="编辑证件" tone="edit" onClick={onEdit} />
+      <PassengerCredentialActionButton label="删除证件" tone="delete" onClick={onRemove} />
+    </div>
+  );
+}
+
+function PassengerMeta({
+  orgName,
+  credential,
+  mobile,
+  showType = true,
 }: {
-  onEdit: () => void;
-  onRemove: () => void;
+  orgName?: string;
+  credential: PassengerCredential;
+  mobile?: string;
+  showType?: boolean;
 }) {
   return (
-    <div className="flex shrink-0 items-center gap-1">
-      <button
-        type="button"
-        className="flex size-8 items-center justify-center text-[#999999] active:opacity-70"
-        aria-label="编辑证件"
-        onClick={onEdit}
-      >
-        <svg viewBox="0 0 20 20" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <path d="M4 14.5V16h1.5L14 7.5 12.5 6 4 14.5z" />
-          <path d="M11 5l2 2" />
-        </svg>
-      </button>
-      <button
-        type="button"
-        className="flex size-8 items-center justify-center text-[#ff4d4f] active:opacity-70"
-        aria-label="删除证件"
-        onClick={onRemove}
-      >
-        <svg viewBox="0 0 20 20" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.5">
-          <path d="M5 6h10M8 6V4h4v2M7 6v9h6V6" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
+    <div className="mt-1.5 space-y-1 text-sm leading-5">
+      {orgName ? <p className="truncate text-xs leading-4 text-[#8a8f99]">{orgName}</p> : null}
+      <p className="text-[#4b5563]">
+        {showType ? (
+          <span className="mr-1 text-[#9aa1ad]">{credentialDisplayType(credential)}</span>
+        ) : null}
+        {credentialDisplayNumber(credential)}
+      </p>
+      {mobile ? <p className="text-[#6b7280]">{mobile}</p> : null}
     </div>
   );
 }
@@ -83,6 +81,7 @@ function CredentialRow({
 }) {
   const disabled = !credential.Number && !credential.HideNumber;
   const checked = isSelected(selected, credential);
+  const title = isPrimary ? staff.Name : credentialDisplayType(credential);
 
   function handleToggle(next: boolean) {
     onToggle(createBookInfo(staff, credential), next);
@@ -99,25 +98,19 @@ function CredentialRow({
       <div className="min-w-0 flex-1">
         <button
           type="button"
-          className="text-left text-base font-semibold text-[#333333]"
+          className={`text-left leading-5 text-[#2f343d] ${isPrimary ? "text-base font-semibold" : "text-sm font-medium"}`}
           onClick={() => {
             if (!disabled) handleToggle(!checked);
           }}
         >
-          {isPrimary ? staff.Name : credential.Name}
+          {title}
         </button>
-        {isPrimary && staff.OrgName ? (
-          <p className="mt-0.5 text-xs text-[#666666]">{staff.OrgName}</p>
-        ) : null}
-        <p className="mt-1 text-sm text-[#333333]">
-          <span className="text-[#999999]">{credentialDisplayType(credential)} </span>
-          {credentialDisplayNumber(credential)}
-        </p>
-        {(isPrimary ? staff.Mobile : credential.Mobile) ? (
-          <p className="mt-0.5 text-sm text-[#666666]">
-            {isPrimary ? staff.Mobile : credential.Mobile}
-          </p>
-        ) : null}
+        <PassengerMeta
+          orgName={isPrimary ? staff.OrgName : undefined}
+          credential={credential}
+          mobile={isPrimary ? staff.Mobile : credential.Mobile}
+          showType={isPrimary}
+        />
       </div>
       {showActions && onEdit && onRemove ? (
         <CredentialActions onEdit={onEdit} onRemove={onRemove} />
@@ -136,11 +129,30 @@ export function EmployeePassengerCard({
   onRemoveCredential,
 }: EmployeePassengerCardProps) {
   const [expanded, setExpanded] = useState(false);
+  const [selectedOtherCollapsed, setSelectedOtherCollapsed] = useState(false);
   const credentials = staffSelectableCredentials(staff, forType);
   const primary = credentials[0];
   const others = credentials.slice(1);
+  const hasSelectedOtherCredential = others.some((credential) => isSelected(selected, credential));
+  const showOtherCredentials = expanded || (hasSelectedOtherCredential && !selectedOtherCollapsed);
+
+  useEffect(() => {
+    if (!hasSelectedOtherCredential) {
+      setSelectedOtherCollapsed(false);
+    }
+  }, [hasSelectedOtherCredential]);
 
   if (!primary) return null;
+
+  function toggleOtherCredentials() {
+    if (showOtherCredentials) {
+      setExpanded(false);
+      setSelectedOtherCollapsed(hasSelectedOtherCredential);
+      return;
+    }
+    setExpanded(true);
+    setSelectedOtherCollapsed(false);
+  }
 
   return (
     <div className="mx-4 mb-3 rounded-xl bg-white p-4 shadow-sm">
@@ -167,14 +179,14 @@ export function EmployeePassengerCard({
           <button
             type="button"
             className="text-sm text-[#999999] active:opacity-70"
-            onClick={() => setExpanded((v) => !v)}
+            onClick={toggleOtherCredentials}
           >
-            {expanded ? "收起" : `其他证件 (${others.length})`}
+            {showOtherCredentials ? "收起" : `其他证件 (${others.length})`}
           </button>
         ) : null}
       </div>
 
-      {expanded && others.length > 0 ? (
+      {showOtherCredentials && others.length > 0 ? (
         <div className="mt-3 space-y-3 pl-8">
           {others.map((c) => (
             <CredentialRow
