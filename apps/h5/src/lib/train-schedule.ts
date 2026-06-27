@@ -1,4 +1,32 @@
-import type { TrainItem, TrainOrderTrip, TrainScheduleParams } from "@ryx/shared-types";
+import type {
+  TrainItem,
+  TrainOrderTrip,
+  TrainScheduleParams,
+  TrainScheduleStop,
+} from "@ryx/shared-types";
+
+/** Legacy ryx: row active when stop matches train FromStationName or ToStationName. */
+export function isScheduleRowActive(
+  stop: TrainScheduleStop,
+  fromStation?: string,
+  toStation?: string,
+): boolean {
+  const from = fromStation?.trim();
+  const to = toStation?.trim();
+  const name = stop.StationName?.trim();
+  if (!from || !to || !name) return false;
+  return name === from || name === to;
+}
+
+/** Legacy ryx displays API time strings without extra formatting. */
+export function formatScheduleDisplayTime(value?: string): string {
+  return value?.trim() ?? "";
+}
+
+/** Legacy StayTime column — show API value as-is. */
+export function formatScheduleStayTime(value?: string): string {
+  return value?.trim() ?? "";
+}
 
 export function buildTrainScheduleParamsFromItem(
   train: TrainItem,
@@ -27,12 +55,19 @@ export function buildTrainScheduleParamsFromTrip(
 }
 
 export function formatScheduleClock(value?: string): string {
-  if (!value?.trim()) return "—";
+  if (!value?.trim()) return "";
   const trimmed = value.trim();
-  const timePart = trimmed.includes("T")
-    ? trimmed.split("T")[1]?.slice(0, 5)
-    : trimmed.length >= 5
-      ? trimmed.slice(-5)
-      : trimmed;
-  return timePart ?? "—";
+
+  const clockMatch = trimmed.match(/(\d{1,2}:\d{2})(?::\d{2})?$/);
+  if (clockMatch) {
+    const [hours, minutes] = clockMatch[1].split(":");
+    return `${hours.padStart(2, "0")}:${minutes}`;
+  }
+
+  if (trimmed.includes("T")) {
+    const timePart = trimmed.split("T")[1]?.slice(0, 5);
+    return timePart ?? "—";
+  }
+
+  return trimmed.length >= 5 ? trimmed.slice(-5) : trimmed;
 }

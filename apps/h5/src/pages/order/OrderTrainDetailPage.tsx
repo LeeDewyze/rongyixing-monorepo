@@ -235,17 +235,14 @@ export function OrderTrainDetailPage() {
     }
   }, [detail?.OrderId, navigate, selectedTicket, showToast]);
 
-  const showFooter = detail
-    ? shouldShowTrainFooter(footerActions, payHoldSecondsRemaining)
-    : false;
+  const showFooter = detail ? shouldShowTrainFooter(footerActions, payHoldSecondsRemaining) : false;
   const contentBottomPadding =
     showFooter && (footerActions.showRefund || footerActions.showExchange)
       ? FOOTER_OFFSET_WITH_SECONDARY
       : showFooter
         ? FOOTER_OFFSET
         : "1.5rem";
-  const pending =
-    cancelMutation.isPending || issueMutation.isPending || refundMutation.isPending;
+  const pending = cancelMutation.isPending || issueMutation.isPending || refundMutation.isPending;
 
   return (
     <div className="min-h-screen bg-[#F5F6F9]">
@@ -259,10 +256,7 @@ export function OrderTrainDetailPage() {
             {formatApiError(error ?? new Error("订单不存在"))}
           </p>
         ) : (
-          <div
-            className="space-y-3 px-4 pb-6 pt-3"
-            style={{ paddingBottom: contentBottomPadding }}
-          >
+          <div className="space-y-3 px-4 pb-6 pt-3" style={{ paddingBottom: contentBottomPadding }}>
             <TrainOrderInfoCard
               detail={detail}
               transactionId={selectedTicket?.Id}
@@ -352,6 +346,8 @@ export function OrderTrainDetailPage() {
             loading={scheduleQuery.isLoading}
             error={scheduleQuery.isError ? formatApiError(scheduleQuery.error) : null}
             stops={scheduleQuery.data?.Stops}
+            fromStation={selectedTicket?.Trips[0]?.FromStationName}
+            toStation={selectedTicket?.Trips[0]?.ToStationName}
             onClose={() => setScheduleParams(null)}
           />
         </>
