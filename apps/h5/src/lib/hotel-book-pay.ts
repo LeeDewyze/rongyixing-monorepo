@@ -5,6 +5,9 @@ import { resolvePassengerServiceFee } from "@/lib/hotel-book";
 export const HOTEL_PAY_TYPE_COMPANY = 1;
 export const HOTEL_PAY_TYPE_PERSON = 2;
 
+/** Legacy pay types not offered on ryx hotel book page. */
+const HIDDEN_HOTEL_PAY_TYPE_LABEL_PATTERN = /^(实时扣款|信用付)/;
+
 export interface HotelPayTypeOption {
   value: number;
   label: string;
@@ -15,14 +18,24 @@ const DEFAULT_PAY_OPTIONS: HotelPayTypeOption[] = [
   { value: HOTEL_PAY_TYPE_PERSON, label: "个付（请在20分钟内完成支付）" },
 ];
 
+export function isHiddenHotelPayTypeOption(option: HotelPayTypeOption): boolean {
+  const coreLabel = option.label.replace(/（[^）]*）/g, "").trim();
+  return HIDDEN_HOTEL_PAY_TYPE_LABEL_PATTERN.test(coreLabel);
+}
+
 export function parseHotelPayTypeOptions(
   payTypes: Record<string, string> | undefined,
 ): HotelPayTypeOption[] {
-  if (!payTypes || !Object.keys(payTypes).length) return DEFAULT_PAY_OPTIONS;
-  return Object.entries(payTypes)
-    .map(([key, label]) => ({ value: Number(key), label }))
-    .filter((item) => Number.isFinite(item.value) && item.label)
-    .sort((a, b) => a.value - b.value);
+  const parsed =
+    !payTypes || !Object.keys(payTypes).length
+      ? DEFAULT_PAY_OPTIONS
+      : Object.entries(payTypes)
+          .map(([key, label]) => ({ value: Number(key), label }))
+          .filter((item) => Number.isFinite(item.value) && item.label)
+          .sort((a, b) => a.value - b.value);
+
+  const visible = parsed.filter((item) => !isHiddenHotelPayTypeOption(item));
+  return visible.length ? visible : DEFAULT_PAY_OPTIONS;
 }
 
 export function resolveDefaultHotelPayType(options: HotelPayTypeOption[]): number {

@@ -5,11 +5,12 @@ import type { HotelBookSelection } from "@/lib/hotel-book-session";
 import {
   HOTEL_PAYMENT_PREPAY,
   HOTEL_PAYMENT_SELF_PAY,
-  HOTEL_WARM_REMINDER_CANCEL_NON_REFUNDABLE,
+  HOTEL_WARM_REMINDER_BOOKING_DEFAULT,
   buildHotelInitBookDto,
   buildHotelInitRoomPlan,
   buildHotelOrderBookDto,
   prepareHotelBookSubmitDto,
+  buildHotelWarmReminderParagraphs,
   buildHotelWarmReminderSections,
   resolveHotelRoomPlanRulesDesc,
   calcHotelNights,
@@ -319,44 +320,27 @@ describe("resolveHotelRoomPlanRulesDesc", () => {
   });
 });
 
-describe("buildHotelWarmReminderSections", () => {
-  it("splits legacy warm-reminder copy into labeled sections", () => {
-    const sections = buildHotelWarmReminderSections({
-      cancelRule: "不可取消",
-      roomPlanRulesDesc: "入住前18:00可免费取消",
-    });
+describe("buildHotelWarmReminderParagraphs", () => {
+  it("returns legacy warranty copy without cancel policy", () => {
+    expect(buildHotelWarmReminderParagraphs()).toEqual([HOTEL_WARM_REMINDER_BOOKING_DEFAULT]);
+  });
+});
 
-    expect(sections).toHaveLength(3);
+describe("buildHotelWarmReminderSections", () => {
+  it("splits legacy warm-reminder copy into booking and payment sections only", () => {
+    const sections = buildHotelWarmReminderSections();
+
+    expect(sections).toHaveLength(2);
     expect(sections[0]).toMatchObject({
-      id: "cancel",
-      title: "取消政策",
-      content: "入住前18:00可免费取消",
-    });
-    expect(sections[1]).toMatchObject({
       id: "booking",
       title: "预订提示",
     });
-    expect(sections[1]?.content).toContain("确认结果以短信");
-    expect(sections[2]).toMatchObject({
+    expect(sections[0]?.content).toContain("确认结果以短信");
+    expect(sections[1]).toMatchObject({
       id: "payment",
       title: "在线支付说明",
     });
-    expect(sections[2]?.content).toContain("原路退还");
-  });
-
-  it("uses legacy non-refundable copy when no room plan rules exist", () => {
-    const sections = buildHotelWarmReminderSections("不可取消");
-
-    expect(sections[0]?.content).toBe(HOTEL_WARM_REMINDER_CANCEL_NON_REFUNDABLE);
-  });
-
-  it("expands short non-refundable RoomRateRule to legacy copy", () => {
-    const sections = buildHotelWarmReminderSections({
-      cancelRule: "不可取消",
-      roomPlanRulesDesc: "不可取消",
-    });
-
-    expect(sections[0]?.content).toBe(HOTEL_WARM_REMINDER_CANCEL_NON_REFUNDABLE);
+    expect(sections[1]?.content).toContain("原路退还");
   });
 });
 

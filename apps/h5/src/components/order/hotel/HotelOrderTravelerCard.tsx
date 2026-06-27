@@ -12,6 +12,11 @@ interface HotelOrderTravelerCardProps {
   hideViolation?: boolean;
 }
 
+function displayOrEmpty(value?: string): string {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : "";
+}
+
 export function HotelOrderTravelerCard({
   room,
   hideViolation = false,
@@ -24,16 +29,19 @@ export function HotelOrderTravelerCard({
     >
       <h2 className={`mb-3 ${HOTEL_ORDER_SECTION_TITLE}`}>旅客信息</h2>
 
-      <HotelOrderDetailRow label="姓名" value={traveler?.Name ?? room.CustomerName ?? "—"} />
+      <HotelOrderDetailRow
+        label="姓名"
+        value={displayOrEmpty(traveler?.Name ?? room.CustomerName)}
+      />
       <OrderTravelerCredentialRow
         label="证件号码"
         number={traveler?.CredentialNumber}
         type={traveler?.CredentialType}
       />
-      <HotelOrderDetailRow label="联系电话" value={traveler?.Mobile ?? "—"} />
-      <HotelOrderDetailRow label="联系邮箱" value={traveler?.Email ?? "—"} />
-      <HotelOrderDetailRow label="成本中心" value={traveler?.CostCenterName ?? "—"} />
-      <HotelOrderDetailRow label="组织架构" value={traveler?.OrganizationName ?? "—"} />
+      <HotelOrderDetailRow label="联系电话" value={displayOrEmpty(traveler?.Mobile)} />
+      <HotelOrderDetailRow label="联系邮箱" value={displayOrEmpty(traveler?.Email)} />
+      <HotelOrderDetailRow label="成本中心" value={displayOrEmpty(traveler?.CostCenterName)} />
+      <HotelOrderDetailRow label="组织架构" value={displayOrEmpty(traveler?.OrganizationName)} />
       {traveler?.ExpenseType ? (
         <HotelOrderDetailRow label="费用类别" value={traveler.ExpenseType} />
       ) : null}
@@ -46,11 +54,7 @@ export function HotelOrderTravelerCard({
       {traveler?.OtherGuestNames ? (
         <HotelOrderDetailRow label="其他入住人" value={traveler.OtherGuestNames} />
       ) : null}
-      {traveler?.OutNumbers ? (
-        <HotelOrderDetailRow label="外部编号" value={traveler.OutNumbers} />
-      ) : (
-        <HotelOrderDetailRow label="外部编号" value="—" />
-      )}
+      <HotelOrderDetailRow label="外部编号" value={displayOrEmpty(traveler?.OutNumbers)} />
     </section>
   );
 }

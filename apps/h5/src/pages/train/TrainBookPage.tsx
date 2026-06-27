@@ -461,7 +461,7 @@ export function TrainBookPage() {
         pending={submitBook.isPending || submitExchangeBook.isPending}
         billOpen={billOpen}
         billBreakdown={billBreakdown}
-        showOfficialBook={initBook.data?.IsShowOfficalBooked !== false}
+        showOfficialBook={false}
         showDirectBook={initBook.data?.IsShowDirectBooked !== false}
         onBillToggle={() => setBillOpen((open) => !open)}
         onOfficialBook={() => handleSubmitClick(true)}

@@ -12,6 +12,12 @@ import "./order-category-tabs.css";
 export type { OrderCategoryId };
 export { ORDER_CATEGORY_TABS };
 
+export function orderCategoryPointerLeft(activeId: OrderCategoryId): string {
+  const index = ORDER_CATEGORY_TABS.findIndex((tab) => tab.id === activeId);
+  const safeIndex = index >= 0 ? index : 0;
+  return `${((safeIndex + 0.5) / ORDER_CATEGORY_TABS.length) * 100}%`;
+}
+
 interface OrderCategoryTabsProps {
   activeId: OrderCategoryId;
   onChange: (id: OrderCategoryId) => void;

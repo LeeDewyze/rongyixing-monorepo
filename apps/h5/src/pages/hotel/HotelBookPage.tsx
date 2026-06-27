@@ -44,8 +44,7 @@ import {
   buildHotelOrderBookDto,
   prepareHotelBookSubmitDto,
   buildHotelPassengerOutNumberFieldsMap,
-  buildHotelWarmReminderSections,
-  resolveHotelRoomPlanRulesDesc,
+  buildHotelWarmReminderParagraphs,
   calcHotelNights,
   createEmptyHotelCreditCardForm,
   resolveHotelArrivalTimeOptions,
@@ -201,7 +200,8 @@ export function HotelBookPage() {
   );
 
   useEffect(() => {
-    if (travelPayType == null && payOptions.length) {
+    if (!payOptions.length) return;
+    if (travelPayType == null || !payOptions.some((option) => option.value === travelPayType)) {
       setTravelPayType(resolveDefaultHotelPayType(payOptions));
     }
   }, [payOptions, travelPayType]);
@@ -218,24 +218,7 @@ export function HotelBookPage() {
       }) + serviceFeeTotal
     : 0;
 
-  const cancelRule =
-    (selection?.plan.VariablesObj?.RoomRateRule as string | undefined) ??
-    selection?.plan.CancelPolicy ??
-    "不可取消";
-
-  const roomPlanRulesDesc = useMemo(
-    () => resolveHotelRoomPlanRulesDesc(selection?.plan),
-    [selection?.plan],
-  );
-
-  const warmReminderSections = useMemo(
-    () =>
-      buildHotelWarmReminderSections({
-        cancelRule,
-        roomPlanRulesDesc,
-      }),
-    [cancelRule, roomPlanRulesDesc],
-  );
+  const warmReminderParagraphs = useMemo(() => buildHotelWarmReminderParagraphs(), []);
 
   const requiresIllegalReason = Boolean(
     selection?.policyRules?.length || initBook.data?.IllegalReasons?.length,
@@ -250,6 +233,10 @@ export function HotelBookPage() {
     : false;
 
   const personHoldMinutes = resolveHotelHoldMinutes(initBook.data);
+
+  const cancelRule =
+    (selection?.plan.VariablesObj?.RoomRateRule as string | undefined) ??
+    selection?.plan.CancelPolicy;
 
   function handleBack() {
     const fallback =
@@ -282,14 +269,20 @@ export function HotelBookPage() {
     setWarmReminderOpen(true);
   }
 
-  function navigateToHotelOrders(orderId?: string) {
+  function finishBookNavigation(orderId?: string) {
     leavingAfterSubmitRef.current = true;
-    navigate(`/home/orders?tab=${TAB_ID_TO_PARAM.hotel}`, {
-      replace: true,
-      state: orderId ? { bookedOrderId: orderId, product: "hotel" } : undefined,
-    });
     clearPassengerSelection(ProductType.Hotel);
     clearHotelBookSelection();
+
+    if (orderId) {
+      navigate(`/orders/hotel/${encodeURIComponent(orderId)}`, {
+        replace: true,
+        state: { bookedOrderId: orderId, product: "hotel" },
+      });
+      return;
+    }
+
+    navigate(`/home/orders?tab=${TAB_ID_TO_PARAM.hotel}`, { replace: true });
   }
 
   async function executeSubmit() {
@@ -327,7 +320,7 @@ export function HotelBookPage() {
         }
       }
 
-      navigateToHotelOrders(orderId);
+      finishBookNavigation(orderId);
     } catch (error) {
       setAlertMessage(formatApiError(error));
     }
@@ -469,9 +462,7 @@ export function HotelBookPage() {
           }
           onUpdate={(accountId, patch) =>
             setAuthorizedContacts((current) =>
-              current.map((item) =>
-                item.accountId === accountId ? { ...item, ...patch } : item,
-              ),
+              current.map((item) => (item.accountId === accountId ? { ...item, ...patch } : item)),
             )
           }
           onOpenNotifyLanguage={(accountId) => {
@@ -547,7 +538,6 @@ export function HotelBookPage() {
 
       <HotelBookNoticeSheet
         open={noticeOpen}
-        cancelRule={cancelRule}
         checkInOutTime={selection.checkInOutTime}
         bookingNotice={selection.bookingNotice}
         onClose={() => setNoticeOpen(false)}
@@ -555,7 +545,7 @@ export function HotelBookPage() {
 
       <HotelBookWarmReminderDialog
         open={warmReminderOpen}
-        sections={warmReminderSections}
+        paragraphs={warmReminderParagraphs}
         agreed={agreed}
         pending={submitBook.isPending}
         showCreditCard={showCreditCard}

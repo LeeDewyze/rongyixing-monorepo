@@ -11,6 +11,7 @@ import { OrderListTabId } from "@ryx/shared-types";
 import {
   OrderCategoryTabs,
   OrderScopeTabs,
+  orderCategoryPointerLeft,
   type OrderCategoryId,
 } from "@/components/order/OrderCategoryTabs";
 import { OrderList } from "@/components/order/OrderList";
@@ -289,11 +290,12 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
           <OrderCategoryTabs activeId={categoryId} onChange={(id) => updateParams({ tab: id })} />
         </div>
         <div
-          className="relative z-0 flex h-[72px] items-center px-3"
+          className="order-scope-shell relative z-0 flex h-[72px] items-center px-3"
           style={{
             background: ORDER_SCOPE_TABS_SHELL_GRADIENT,
             borderTopLeftRadius: 16,
             borderTopRightRadius: 16,
+            ["--order-category-pointer-left" as string]: orderCategoryPointerLeft(categoryId),
           }}
         >
           <OrderScopeTabs scope={scope} onChange={(next) => updateParams({ scope: next })} />

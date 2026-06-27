@@ -24,7 +24,7 @@ export function OrderTravelerCredentialRow({
     <div className="flex items-start justify-between gap-4 py-1.5">
       <span className={`shrink-0 ${HOTEL_ORDER_ROW_LABEL}`}>{label}</span>
       {!number?.trim() ? (
-        <span className={`min-w-0 ${HOTEL_ORDER_ROW_VALUE}`}>—</span>
+        <span className={`min-w-0 ${HOTEL_ORDER_ROW_VALUE}`} />
       ) : (
         <span
           className={`flex min-w-0 flex-1 items-center justify-end gap-2 ${HOTEL_ORDER_ROW_VALUE}`}

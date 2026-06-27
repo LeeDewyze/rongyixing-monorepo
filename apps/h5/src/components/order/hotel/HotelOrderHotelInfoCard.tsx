@@ -20,6 +20,10 @@ interface HotelOrderHotelInfoCardProps {
 
 export function HotelOrderHotelInfoCard({ room }: HotelOrderHotelInfoCardProps) {
   const nights = computeStayNights(room.BeginDate, room.EndDate);
+  const breakfastLabel = formatOrderBreakfastLabel(room.Breakfast);
+  const roomNameWithBreakfast = room.RoomName
+    ? [room.RoomName, breakfastLabel].filter(Boolean).join(" ")
+    : null;
 
   return (
     <section
@@ -31,11 +35,8 @@ export function HotelOrderHotelInfoCard({ room }: HotelOrderHotelInfoCardProps) 
       <HotelOrderDetailRow
         label="房型名称"
         value={
-          room.RoomName ? (
-            <span className="flex max-h-[36px] w-full flex-col items-end overflow-hidden text-right leading-[18px]">
-              <span className="line-clamp-1 w-full break-all">{room.RoomName}</span>
-              <span className="shrink-0">{formatOrderBreakfastLabel(room.Breakfast)}</span>
-            </span>
+          roomNameWithBreakfast ? (
+            <span className="line-clamp-1 w-full break-all text-right">{roomNameWithBreakfast}</span>
           ) : (
             "—"
           )

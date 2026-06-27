@@ -694,11 +694,7 @@ export function validateHotelBookForms(input: {
   return null;
 }
 
-/** Legacy `warranty` — non-refundable cancel copy shown in the warm-reminder dialog. */
-export const HOTEL_WARM_REMINDER_CANCEL_NON_REFUNDABLE =
-  "您的订单一经确认，不可取消；如未能如约入住，将收取全额房费作为违约费用。";
-
-/** Legacy `warranty` — default booking / prepay notice when API text is absent. */
+/** Legacy `warranty` — default booking / prepay notice (ryx shows this only; no cancel-policy block). */
 export const HOTEL_WARM_REMINDER_BOOKING_DEFAULT =
   "预订提示：您的订单需等酒店或供应商确认后才能生效，确认结果以短信或本应用显示的订单状态为准，请在订单预订成功后再至酒店前台办理入住。在线支付说明：本产品为向酒店或供应商申请的特殊价格，无法确保预订成功，完成支付后若预订不成功，房费将原路退还至付款账户中。";
 
@@ -707,22 +703,6 @@ export interface HotelWarmReminderSection {
   title: string;
   accentClass: string;
   content: string;
-}
-
-function splitWarmReminderBookingCopy(raw: string): { booking: string; payment?: string } {
-  const paymentMatch = raw.match(/在线支付说明[：:]\s*(.+)$/);
-  const bookingMatch = raw.match(/预订提示[：:]\s*(.+?)(?=在线支付说明|$)/s);
-
-  return {
-    booking: bookingMatch?.[1]?.trim() || raw.trim(),
-    payment: paymentMatch?.[1]?.trim(),
-  };
-}
-
-export interface BuildHotelWarmReminderInput {
-  cancelRule?: string;
-  /** Legacy `getRoomPlanRulesDesc` — joined RoomPlanRules descriptions. */
-  roomPlanRulesDesc?: string;
 }
 
 /** Legacy `getRoomPlanRulesDesc` — prefer RoomPlanRules, then RoomRateRule / CancelPolicy. */
@@ -738,28 +718,26 @@ export function resolveHotelRoomPlanRulesDesc(
   return plan?.CancelPolicy?.trim() ?? "";
 }
 
-export function buildHotelWarmReminderSections(
-  input?: BuildHotelWarmReminderInput | string,
-): HotelWarmReminderSection[] {
-  const resolved = typeof input === "string" ? { cancelRule: input } : (input ?? {});
-  const rulesDesc = resolved.roomPlanRulesDesc?.trim();
-  const cancelRule = resolved.cancelRule?.trim();
+/** Legacy `warranty` dialog copy — booking + online payment notice only. */
+export function buildHotelWarmReminderParagraphs(): string[] {
+  return [HOTEL_WARM_REMINDER_BOOKING_DEFAULT];
+}
 
-  const rawCancel = rulesDesc || cancelRule || "";
-  const cancelContent =
-    !rawCancel || /不可取消|预订后不可|不可退/.test(rawCancel)
-      ? HOTEL_WARM_REMINDER_CANCEL_NON_REFUNDABLE
-      : rawCancel;
+function splitWarmReminderBookingCopy(raw: string): { booking: string; payment?: string } {
+  const paymentMatch = raw.match(/在线支付说明[：:]\s*(.+)$/);
+  const bookingMatch = raw.match(/预订提示[：:]\s*(.+?)(?=在线支付说明|$)/s);
 
+  return {
+    booking: bookingMatch?.[1]?.trim() || raw.trim(),
+    payment: paymentMatch?.[1]?.trim(),
+  };
+}
+
+/** Structured sections for optional UI; excludes cancel policy (shown on summary card). */
+export function buildHotelWarmReminderSections(): HotelWarmReminderSection[] {
   const { booking, payment } = splitWarmReminderBookingCopy(HOTEL_WARM_REMINDER_BOOKING_DEFAULT);
 
   const sections: HotelWarmReminderSection[] = [
-    {
-      id: "cancel",
-      title: "取消政策",
-      accentClass: "bg-[#FF4D4F]",
-      content: cancelContent,
-    },
     {
       id: "booking",
       title: "预订提示",
@@ -778,11 +756,6 @@ export function buildHotelWarmReminderSections(
   }
 
   return sections;
-}
-
-/** @deprecated Use `buildHotelWarmReminderSections` for structured dialog content. */
-export function buildHotelWarmReminderParagraphs(cancelRule?: string): string[] {
-  return buildHotelWarmReminderSections(cancelRule).map((section) => section.content);
 }
 
 export function resolveHotelBookOrderId(response: HotelBookResponse): string {

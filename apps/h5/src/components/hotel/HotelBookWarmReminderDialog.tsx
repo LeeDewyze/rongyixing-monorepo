@@ -1,6 +1,5 @@
 import { useState } from "react";
 
-import type { HotelWarmReminderSection } from "@/lib/hotel-book";
 import { HotelBookGuaranteeAgreementSheet } from "@/components/hotel/HotelBookGuaranteeAgreementSheet";
 import { HOTEL_DETAIL_FONT } from "@/components/hotel/hotel-detail-chrome";
 
@@ -8,7 +7,7 @@ import "./hotel-book-warm-reminder-dialog.css";
 
 interface HotelBookWarmReminderDialogProps {
   open: boolean;
-  sections: HotelWarmReminderSection[];
+  paragraphs: string[];
   agreed: boolean;
   pending?: boolean;
   /** Legacy warranty `isShowCreditCard` — show guarantee agreement link. */
@@ -39,22 +38,10 @@ function DialogCloseButton({ onClose }: { onClose: () => void }) {
   );
 }
 
-function ReminderSectionCard({ section }: { section: HotelWarmReminderSection }) {
-  return (
-    <section className="overflow-hidden rounded-xl bg-[#F8F9FC] ring-1 ring-[#EEF1F6]">
-      <div className="flex items-center gap-2 border-b border-[#EEF1F6] bg-white/70 px-3.5 py-2.5">
-        <span className={`h-3.5 w-[3px] shrink-0 rounded-full ${section.accentClass}`} />
-        <h3 className="text-[14px] font-semibold text-[#333333]">{section.title}</h3>
-      </div>
-      <p className="px-3.5 py-3 text-[13px] leading-[1.65] text-[#666666]">{section.content}</p>
-    </section>
-  );
-}
-
 /** Legacy `warranty` component — centered warm reminder before hotel book submit. */
 export function HotelBookWarmReminderDialog({
   open,
-  sections,
+  paragraphs,
   agreed,
   pending = false,
   showCreditCard = false,
@@ -106,8 +93,13 @@ export function HotelBookWarmReminderDialog({
 
           <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-2">
             <div className="space-y-3">
-              {sections.map((section) => (
-                <ReminderSectionCard key={section.id} section={section} />
+              {paragraphs.map((paragraph, index) => (
+                <p
+                  key={index}
+                  className="text-[13px] leading-[1.65] text-[#333333]"
+                >
+                  {paragraph}
+                </p>
               ))}
             </div>
           </div>

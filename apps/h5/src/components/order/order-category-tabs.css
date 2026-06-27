@@ -41,19 +41,21 @@
   color: #010101;
 }
 
-.order-category-tab--active::after {
+/* Scope shell: white upward notch (::before) merges 1px into the top edge. */
+.order-scope-shell {
+  overflow: visible;
+}
+
+.order-scope-shell::before {
   content: "";
   position: absolute;
-  left: 50%;
-  bottom: -6px;
-  z-index: 2;
+  left: var(--order-category-pointer-left, 12.5%);
+  top: -9px;
+  z-index: 1;
   transform: translateX(-50%);
-  width: 0;
-  height: 0;
   border-left: 11px solid transparent;
   border-right: 11px solid transparent;
   border-bottom: 10px solid #ffffff;
-  filter: drop-shadow(0 1px 3px rgba(39, 104, 250, 0.18));
   pointer-events: none;
 }
 

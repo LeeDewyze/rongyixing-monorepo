@@ -25,10 +25,9 @@ export function FlightBookPassengerSection({
     <section
       className={`overflow-hidden rounded-xl bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] ${HOTEL_DETAIL_FONT}`}
     >
-      <div className="flex items-center border-b border-[#F0F2F5] bg-[#FAFBFC] px-3.5 py-2.5">
-        <span className="inline-flex h-[22px] items-center rounded-[4px] bg-brand-primary px-2 text-[12px] font-medium leading-none text-white">
-          {badgeLabel}
-        </span>
+      <div className="flex items-center gap-2 border-b border-[#F0F2F5] bg-[#FAFBFC] px-3.5 py-2.5">
+        <span className="h-3 w-[3px] shrink-0 rounded-full bg-brand-primary" aria-hidden />
+        <h3 className="text-[13px] font-medium leading-none text-[#333333]">{badgeLabel}</h3>
       </div>
 
       <div className="px-3 pb-4 pt-3">{passengers}</div>

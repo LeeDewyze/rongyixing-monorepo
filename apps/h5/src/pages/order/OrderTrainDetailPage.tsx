@@ -42,7 +42,7 @@ import {
 } from "@/lib/train-order-detail";
 import { buildTrainScheduleParamsFromTrip } from "@/lib/train-schedule";
 import { TAB_ID_TO_PARAM } from "@/lib/order-list-params";
-import { scrollH5MainToTop } from "@/lib/scroll-h5-main";
+import { scrollH5MainToTopAfterLayout } from "@/lib/scroll-h5-main";
 
 const FOOTER_OFFSET = "calc(4.5rem + env(safe-area-inset-bottom))";
 const FOOTER_OFFSET_WITH_SECONDARY = "calc(7rem + env(safe-area-inset-bottom))";
@@ -70,6 +70,11 @@ export function OrderTrainDetailPage() {
   const issueMutation = useIssueTrainOrder();
   const refundMutation = useRefundTrainOrder();
   const payHoldSecondsRemaining = useTrainPayHoldCountdown(detail?.PayHoldMinutes);
+
+  const showHoldBanner = useMemo(
+    () => detail != null && shouldShowTrainOrderHoldBanner(payHoldSecondsRemaining, detail.Actions),
+    [detail, payHoldSecondsRemaining],
+  );
 
   const [selectedTicketIndex, setSelectedTicketIndex] = useState(0);
   const [billOpen, setBillOpen] = useState(false);
@@ -101,8 +106,13 @@ export function OrderTrainDetailPage() {
   usePageHeader({ visible: false });
 
   useLayoutEffect(() => {
-    scrollH5MainToTop();
-  }, [orderId]);
+    scrollH5MainToTopAfterLayout();
+  }, [orderId, location.pathname]);
+
+  useLayoutEffect(() => {
+    if (!detail) return;
+    scrollH5MainToTopAfterLayout();
+  }, [detail?.OrderId, showHoldBanner]);
 
   useLayoutEffect(() => {
     const header = headerRef.current;
@@ -237,9 +247,6 @@ export function OrderTrainDetailPage() {
     }
   }, [detail?.OrderId, navigate, selectedTicket, showToast]);
 
-  const showHoldBanner =
-    detail != null &&
-    shouldShowTrainOrderHoldBanner(payHoldSecondsRemaining, detail.Actions);
   const showFooter = detail ? shouldShowTrainFooter(footerActions, payHoldSecondsRemaining) : false;
   const contentBottomPadding =
     showFooter && (footerActions.showRefund || footerActions.showExchange)

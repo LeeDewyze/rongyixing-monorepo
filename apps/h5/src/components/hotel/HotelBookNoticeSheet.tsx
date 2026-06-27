@@ -1,43 +1,44 @@
-import type { ReactNode } from "react";
-
 import { HOTEL_DETAIL_FONT } from "@/components/hotel/hotel-detail-chrome";
 
 interface HotelBookNoticeSheetProps {
   open: boolean;
-  cancelRule?: string;
   checkInOutTime?: string;
   bookingNotice?: string;
   onClose: () => void;
 }
 
 interface ParsedCheckInOut {
-  checkIn?: string;
-  checkOut?: string;
+  line?: string;
   fallback?: string;
 }
 
-function parseCheckInOutTime(raw?: string): ParsedCheckInOut | null {
+/** Legacy book-notice sheet — hotel-level copy from Home/Detail only (varies per hotel). */
+export function splitHotelBookingNoticeParagraphs(content?: string): string[] {
+  if (!content?.trim()) return [];
+  return content
+    .split(/[;；]\s*/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+export function formatHotelCheckInOutNoticeLine(raw?: string): ParsedCheckInOut | null {
   if (!raw?.trim()) return null;
 
   const checkInMatch = raw.match(/入住时间[：:]\s*([^离]+)/);
   const checkOutMatch = raw.match(/离店时间[：:]\s*(.+)/);
 
   if (checkInMatch || checkOutMatch) {
-    return {
-      checkIn: checkInMatch?.[1]?.trim(),
-      checkOut: checkOutMatch?.[1]?.trim(),
-    };
+    const parts: string[] = [];
+    if (checkInMatch?.[1]?.trim()) {
+      parts.push(`入住时间：${checkInMatch[1].trim()}`);
+    }
+    if (checkOutMatch?.[1]?.trim()) {
+      parts.push(`离店时间：${checkOutMatch[1].trim()}`);
+    }
+    return { line: parts.join(" ") };
   }
 
   return { fallback: raw.trim() };
-}
-
-function splitNoticeParagraphs(content?: string): string[] {
-  if (!content?.trim()) return [];
-  return content
-    .split(/[;；]\s*/)
-    .map((item) => item.trim())
-    .filter(Boolean);
 }
 
 function SheetCloseButton({ onClose }: { onClose: () => void }) {
@@ -61,65 +62,17 @@ function SheetCloseButton({ onClose }: { onClose: () => void }) {
   );
 }
 
-function NoticeSectionCard({
-  title,
-  accentClass,
-  children,
-}: {
-  title: string;
-  accentClass: string;
-  children: ReactNode;
-}) {
-  return (
-    <section className="overflow-hidden rounded-xl bg-[#F8F9FC] ring-1 ring-[#EEF1F6]">
-      <div className="flex items-center gap-2 border-b border-[#EEF1F6] bg-white/70 px-3.5 py-2.5">
-        <span className={`h-3.5 w-[3px] shrink-0 rounded-full ${accentClass}`} />
-        <h3 className="text-[14px] font-semibold text-[#333333]">{title}</h3>
-      </div>
-      <div className="px-3.5 py-3">{children}</div>
-    </section>
-  );
-}
-
-function CheckInOutContent({ parsed }: { parsed: ParsedCheckInOut }) {
-  if (parsed.fallback) {
-    return <p className="text-[13px] leading-[1.65] text-[#666666]">{parsed.fallback}</p>;
-  }
-
-  return (
-    <div className="space-y-2.5">
-      {parsed.checkIn ? (
-        <div className="flex items-start gap-3">
-          <span className="mt-0.5 shrink-0 rounded-md bg-[#EEF4FF] px-2 py-0.5 text-[11px] font-medium text-brand-primary">
-            入住
-          </span>
-          <p className="text-[13px] leading-[1.55] text-[#666666]">{parsed.checkIn}</p>
-        </div>
-      ) : null}
-      {parsed.checkOut ? (
-        <div className="flex items-start gap-3">
-          <span className="mt-0.5 shrink-0 rounded-md bg-[#FFF4E8] px-2 py-0.5 text-[11px] font-medium text-[#EA580C]">
-            离店
-          </span>
-          <p className="text-[13px] leading-[1.55] text-[#666666]">{parsed.checkOut}</p>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
 export function HotelBookNoticeSheet({
   open,
-  cancelRule,
   checkInOutTime,
   bookingNotice,
   onClose,
 }: HotelBookNoticeSheetProps) {
   if (!open) return null;
 
-  const parsedCheckInOut = parseCheckInOutTime(checkInOutTime);
-  const noticeParagraphs = splitNoticeParagraphs(bookingNotice);
-  const hasContent = Boolean(cancelRule?.trim() || parsedCheckInOut || noticeParagraphs.length);
+  const noticeParagraphs = splitHotelBookingNoticeParagraphs(bookingNotice);
+  const parsedCheckInOut = formatHotelCheckInOutNoticeLine(checkInOutTime);
+  const hasContent = noticeParagraphs.length > 0 || parsedCheckInOut != null;
 
   return (
     <div
@@ -140,32 +93,27 @@ export function HotelBookNoticeSheet({
 
         <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 pt-1">
           {hasContent ? (
-            <div className="space-y-3">
-              {cancelRule?.trim() ? (
-                <NoticeSectionCard title="取消政策" accentClass="bg-[#FF4D4F]">
-                  <p className="text-[13px] leading-[1.65] text-[#666666]">{cancelRule.trim()}</p>
-                </NoticeSectionCard>
+            <div className="space-y-5">
+              {noticeParagraphs.length > 0 ? (
+                <div className="space-y-3">
+                  {noticeParagraphs.map((paragraph, index) => (
+                    <p
+                      key={`${index}-${paragraph.slice(0, 12)}`}
+                      className="text-[13px] leading-[1.65] text-[#666666]"
+                    >
+                      {paragraph}
+                    </p>
+                  ))}
+                </div>
               ) : null}
 
               {parsedCheckInOut ? (
-                <NoticeSectionCard title="入离时间" accentClass="bg-brand-primary">
-                  <CheckInOutContent parsed={parsedCheckInOut} />
-                </NoticeSectionCard>
-              ) : null}
-
-              {noticeParagraphs.length > 0 ? (
-                <NoticeSectionCard title="预订须知" accentClass="bg-[#52C41A]">
-                  <div className="space-y-2.5">
-                    {noticeParagraphs.map((paragraph, index) => (
-                      <p
-                        key={`${index}-${paragraph.slice(0, 12)}`}
-                        className="text-[13px] leading-[1.65] text-[#666666]"
-                      >
-                        {paragraph}
-                      </p>
-                    ))}
-                  </div>
-                </NoticeSectionCard>
+                <section>
+                  <h3 className="text-[15px] font-semibold text-[#333333]">入离时间</h3>
+                  <p className="mt-2 text-[13px] leading-[1.65] text-[#666666]">
+                    {parsedCheckInOut.line ?? parsedCheckInOut.fallback}
+                  </p>
+                </section>
               ) : null}
             </div>
           ) : (
