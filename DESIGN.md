@@ -138,6 +138,8 @@ Rules:
 - 2026-06-27 - TravelApplyPage header: aligned the page-level header background with `--brand-form-header-gradient`, overlapped the first form card into the gradient area, and changed metadata chips to light glass surfaces for contrast.
 - 2026-06-27 - RYX Blue design contract: promoted `docs/融易蓝设计规范.md` into this project-level `DESIGN.md`; CSS token values remain in `packages/ui/src/styles/globals.css`.
 - 2026-06-27 - Form gradient layout principle: documented why form pages must use root-level `--brand-form-header-gradient` plus card overlap instead of a tall `brand-header-start` to `brand-header-end` block.
+- 2026-06-27 - TravelApprovalPage list shell: replaced the flat white tab strip with a page-level form gradient header, segmented approval tabs, lifted task cards, and tokenized task status treatments while preserving remote approval workflows.
+- 2026-06-27 - TravelApprovalPage header simplification: removed duplicate approval summary copy and the standalone pending counter from the gradient header; kept pending count only inside the tab badge.
 
 ## Components
 
@@ -145,6 +147,8 @@ Rules:
 - `apps/h5/src/components/layout/AppHeader.tsx` - shared app header, supports brand and hotel tones.
 - `apps/h5/src/pages/credential/CredentialListPage.tsx` - reference implementation for form-page gradient background.
 - `apps/h5/src/pages/travel/TravelApplyPage.tsx` - travel application form page using page-level form gradient.
+- `apps/h5/src/pages/travel/TravelApprovalPage.tsx` - travel approval list shell using page-level gradient header and segmented tabs.
+- `apps/h5/src/components/travel/ApprovalTaskList.tsx` - approval task list cards with status pills, skeleton, error, empty, and load-more states.
 
 ## Non-Goals
 
