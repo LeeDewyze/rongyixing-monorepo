@@ -1,45 +1,34 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import type { MemberPassenger, PassengerCredential } from "@ryx/shared-types";
+import type { PassengerCredential } from "@ryx/shared-types";
 import {
-  credentialDisplayNumber,
   credentialDisplayType,
+  credentialTypeValue,
   maskCredentialNumber,
 } from "@ryx/shared-types";
 
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { usePageHeader } from "@/components/layout";
-import { useStaffCredentials, useExternalPassengerListForManagement } from "@/hooks/useCredentialList";
-import {
-  useRemoveExternalPassenger,
-  useRemoveStaffCredential,
-} from "@/hooks/usePassengerCredential";
+import { useCredentialList } from "@/hooks/useCredentialList";
+import { useRemoveStaffCredential } from "@/hooks/usePassengerCredential";
 import { credentialFormFromCredential } from "@/lib/credential-form";
 import { formatApiError } from "@/lib/formatApiError";
-import { getLoginUserId } from "@/lib/session";
-import type { PassengerTabKey } from "@/components/passenger";
-
-/** Legacy member-credential-list + member-credential-management style tab labels. */
-const TAB_LABELS: Record<PassengerTabKey, string> = {
-  employee: "员工证件",
-  external: "常旅客证件",
-};
 
 function CredentialCard({
-  id,
   name,
   typeLabel,
   number,
   mobile,
+  orgName,
   onEdit,
   onDelete,
 }: {
-  id: string;
   name: string;
   typeLabel: string;
   number: string;
   mobile?: string;
+  orgName?: string;
   onEdit: () => void;
   onDelete: () => void;
 }) {
@@ -48,9 +37,12 @@ function CredentialCard({
       <div className="flex gap-3">
         <div className="min-w-0 flex-1">
           <p className="text-base font-semibold text-[#333333]">{name}</p>
+          {orgName ? (
+            <p className="mt-1 truncate text-sm text-[#666666]">{orgName}</p>
+          ) : null}
           <p className="mt-1 text-sm text-[#333333]">
             <span className="text-[#999999]">{typeLabel} </span>
-            {maskCredentialNumber(number)}
+            {number}
           </p>
           {mobile ? (
             <p className="mt-0.5 text-sm text-[#666666]">{mobile}</p>
@@ -84,80 +76,59 @@ function CredentialCard({
   );
 }
 
+function displayCredentialNumber(credential: PassengerCredential): string {
+  return (
+    credential.HideNumber ??
+    credential.HideCredentialsNumber ??
+    maskCredentialNumber(credential.Number ?? "")
+  );
+}
+
 export function CredentialListPage() {
   const navigate = useNavigate();
   usePageHeader({ visible: false });
 
   const queryClient = useQueryClient();
-  const accountId = getLoginUserId();
-
-  const [tab, setTab] = useState<PassengerTabKey>("employee");
-  const [deleteTargetStaff, setDeleteTargetStaff] = useState<PassengerCredential | null>(null);
-  const [deleteTargetExternal, setDeleteTargetExternal] = useState<MemberPassenger | null>(null);
+  const credentialQuery = useCredentialList();
+  const [deleteTargetCredential, setDeleteTargetCredential] = useState<PassengerCredential | null>(null);
   const [pageError, setPageError] = useState("");
 
-  const staffQuery = useStaffCredentials();
-  const externalQuery = useExternalPassengerListForManagement();
   const removeStaff = useRemoveStaffCredential();
-  const removeExternal = useRemoveExternalPassenger();
 
-  const staffCredentials = staffQuery.data ?? [];
-  const externalPassengers = externalQuery.data ?? [];
-
-  const isLoading = tab === "employee" ? staffQuery.isLoading : externalQuery.isLoading;
-  const queryError = tab === "employee" ? staffQuery.error : externalQuery.error;
+  const credentials = useMemo(
+    () =>
+      [...(credentialQuery.data ?? [])].sort(
+        (a, b) => credentialTypeValue(a) - credentialTypeValue(b),
+      ),
+    [credentialQuery.data],
+  );
 
   function navigateAdd() {
-    const mode = tab === "external" ? "external" : "staff";
-    navigate(
-      `/passenger/credential?mode=${mode}&addNew=1${tab === "staff" && accountId ? `&staffId=${accountId}` : ""}&returnTo=/credentials`,
-    );
+    navigate("/passenger/credential?mode=self&addNew=1&returnTo=/credentials");
   }
 
-  function navigateEditStaff(credential: PassengerCredential) {
+  function navigateEditCredential(credential: PassengerCredential) {
     navigate(
-      `/passenger/credential?mode=staff&staffId=${accountId ?? credential.AccountId ?? ""}&returnTo=/credentials`,
+      "/passenger/credential?mode=self&returnTo=/credentials",
       {
         state: {
           credential,
-          staffId: accountId ?? credential.AccountId,
         },
       },
     );
   }
 
-  function navigateEditExternal(passenger: MemberPassenger) {
-    navigate(
-      `/passenger/credential?mode=external&returnTo=/credentials`,
-      {
-        state: { passenger },
-      },
-    );
-  }
-
   async function handleStaffRemove() {
-    if (!deleteTargetStaff) return;
+    if (!deleteTargetCredential) return;
     try {
-      await removeStaff.mutateAsync(
-        credentialFormFromCredential(deleteTargetStaff, accountId ?? deleteTargetStaff.AccountId),
-      );
-      setDeleteTargetStaff(null);
+      await removeStaff.mutateAsync(credentialFormFromCredential(deleteTargetCredential));
+      setDeleteTargetCredential(null);
     } catch (err) {
       setPageError(formatApiError(err));
     }
   }
 
-  async function handleExternalRemove() {
-    if (!deleteTargetExternal) return;
-    try {
-      await removeExternal.mutateAsync(deleteTargetExternal.Id);
-      setDeleteTargetExternal(null);
-    } catch (err) {
-      setPageError(formatApiError(err));
-    }
-  }
-
-  const isRemoving = removeStaff.isPending || removeExternal.isPending;
+  const isRemoving = removeStaff.isPending;
 
   return (
     <div className="flex min-h-full flex-col" style={{ background: "var(--brand-form-header-gradient)" }}>
@@ -174,7 +145,7 @@ export function CredentialListPage() {
             </svg>
           </button>
           <h1 className="min-w-0 flex-1 text-center text-[17px] font-medium text-brand-title">
-            证件管理
+            证件列表
           </h1>
           <button
             type="button"
@@ -190,75 +161,37 @@ export function CredentialListPage() {
             </svg>
           </button>
         </div>
-
-        {/* Segment tabs */}
-        <div className="flex justify-center pb-2">
-          <div className="inline-flex rounded-full bg-white/20 p-0.5">
-            {(["employee", "external"] as const).map((key) => (
-              <button
-                key={key}
-                type="button"
-                className={`rounded-full px-4 py-1.5 text-[13px] font-medium transition-colors ${
-                  tab === key ? "bg-white text-[#5099fe] shadow-sm" : "text-brand-title/60"
-                }`}
-                onClick={() => setTab(key)}
-              >
-                {TAB_LABELS[key]}
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
 
       <div className="flex-1 pb-4 pt-3">
-        {isLoading ? (
+        {credentialQuery.isLoading ? (
           <p className="py-10 text-center text-sm text-[#999999]">加载中…</p>
         ) : null}
 
-        {queryError ? (
-          <p className="mx-4 py-4 text-sm text-[#ff4d4f]">{formatApiError(queryError)}</p>
+        {credentialQuery.error ? (
+          <p className="mx-4 py-4 text-sm text-[#ff4d4f]">{formatApiError(credentialQuery.error)}</p>
         ) : null}
 
         {pageError ? (
           <p className="mx-4 py-2 text-sm text-[#ff4d4f]">{pageError}</p>
         ) : null}
 
-        {!isLoading && tab === "employee" ? (
+        {!credentialQuery.isLoading ? (
           <>
-            {staffCredentials.map((c) => (
+            {credentials.map((c) => (
               <CredentialCard
                 key={c.Id}
-                id={c.Id}
                 name={c.Name}
                 typeLabel={credentialDisplayType(c)}
-                number={c.Number ?? ""}
+                number={displayCredentialNumber(c)}
                 mobile={c.Mobile}
-                onEdit={() => navigateEditStaff(c)}
-                onDelete={() => setDeleteTargetStaff(c)}
+                orgName={c.OrgName}
+                onEdit={() => navigateEditCredential(c)}
+                onDelete={() => setDeleteTargetCredential(c)}
               />
             ))}
-            {staffCredentials.length === 0 ? (
-              <p className="py-10 text-center text-sm text-[#999999]">暂无员工证件</p>
-            ) : null}
-          </>
-        ) : null}
-
-        {!isLoading && tab === "external" ? (
-          <>
-            {externalPassengers.map((p) => (
-              <CredentialCard
-                key={p.Id}
-                id={p.Id}
-                name={p.Name}
-                typeLabel={p.CredentialTypeName ?? p.CredentialsTypeName ?? "证件"}
-                number={p.CredentialNo ?? p.Number ?? ""}
-                mobile={p.Mobile}
-                onEdit={() => navigateEditExternal(p)}
-                onDelete={() => setDeleteTargetExternal(p)}
-              />
-            ))}
-            {externalPassengers.length === 0 ? (
-              <p className="py-10 text-center text-sm text-[#999999]">暂无常旅客</p>
+            {credentials.length === 0 ? (
+              <p className="py-10 text-center text-sm text-[#999999]">暂无证件</p>
             ) : null}
           </>
         ) : null}
@@ -272,38 +205,23 @@ export function CredentialListPage() {
           disabled={isRemoving}
           onClick={navigateAdd}
         >
-          新增{TAB_LABELS[tab]}
+          添加证件
         </button>
       </div>
 
       {/* Staff delete confirm */}
       <ConfirmDialog
-        open={deleteTargetStaff != null}
+        open={deleteTargetCredential != null}
         title="删除证件"
         message={
-          deleteTargetStaff
-            ? `确定删除「${deleteTargetStaff.Name}」的${credentialDisplayType(deleteTargetStaff)}？删除后将无法恢复。`
+          deleteTargetCredential
+            ? `确定删除「${deleteTargetCredential.Name}」的${credentialDisplayType(deleteTargetCredential)}？删除后将无法恢复。`
             : ""
         }
         confirmLabel="删除"
         loading={removeStaff.isPending}
         onConfirm={() => void handleStaffRemove()}
-        onCancel={() => setDeleteTargetStaff(null)}
-      />
-
-      {/* External delete confirm */}
-      <ConfirmDialog
-        open={deleteTargetExternal != null}
-        title="删除出行人"
-        message={
-          deleteTargetExternal
-            ? `确定删除非公司员工「${deleteTargetExternal.Name}」？删除后将无法恢复。`
-            : ""
-        }
-        confirmLabel="删除"
-        loading={removeExternal.isPending}
-        onConfirm={() => void handleExternalRemove()}
-        onCancel={() => setDeleteTargetExternal(null)}
+        onCancel={() => setDeleteTargetCredential(null)}
       />
     </div>
   );

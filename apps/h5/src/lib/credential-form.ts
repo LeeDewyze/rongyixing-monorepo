@@ -139,12 +139,37 @@ export function credentialFormFromPassenger(
   };
 }
 
+export function credentialNameMatches(values: CredentialFormValues, actualName?: string): boolean {
+  const expected = normalizeCredentialName(actualName ?? "");
+  const current = normalizeCredentialName(values.Name);
+  return Boolean(expected) && current === expected;
+}
+
+export function credentialFormWithFixedName(
+  values: CredentialFormValues,
+  actualName?: string,
+): CredentialFormValues {
+  const fixedName = normalizeCredentialName(actualName ?? "");
+  if (!fixedName) return values;
+  return { ...values, Name: fixedName };
+}
+
+export function resolveCredentialDisplayName(actualName?: string): string {
+  return normalizeCredentialName(actualName ?? "");
+}
+
 export function credentialFormFromCredential(
   credential: {
     Id: string;
     Name?: string;
     Number?: string;
     Mobile?: string;
+    Gender?: string;
+    Birthday?: string;
+    ExpirationDate?: string;
+    Surname?: string;
+    Givenname?: string;
+    AccountId?: string;
     Type?: number | string;
     CredentialsType?: number | string;
   },
@@ -159,7 +184,12 @@ export function credentialFormFromCredential(
     Name: credential.Name ?? "",
     Number: credential.Number ?? "",
     Mobile: credential.Mobile ?? "",
-    Gender: "M",
+    Gender: credential.Gender ?? "M",
+    Birthday: credential.Birthday ?? "",
+    ExpirationDate: credential.ExpirationDate ?? "",
+    Surname: credential.Surname,
+    Givenname: credential.Givenname,
+    AccountId: credential.AccountId,
     PassengerType: PASSENGER_TYPE_ADULT,
     StaffId: staffId,
   };
@@ -169,6 +199,9 @@ export function validateCredentialForm(
   values: CredentialFormValues,
   mode: CredentialFormMode,
 ): string | null {
+  if (mode === "self" && !normalizeCredentialName(values.Name)) {
+    return "请输入真实姓名";
+  }
   const nameError = validateCredentialName(values.Name, values.Type);
   if (nameError) return nameError;
   const numberError = validateCredentialNumber(values.Number, values.Type);

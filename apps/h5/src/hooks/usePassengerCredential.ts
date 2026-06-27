@@ -9,6 +9,7 @@ import {
 
 function invalidatePassengerLists(queryClient: ReturnType<typeof useQueryClient>) {
   void queryClient.invalidateQueries({ queryKey: ["passenger"] });
+  void queryClient.invalidateQueries({ queryKey: ["credential"] });
 }
 
 export function useSaveExternalCredential() {

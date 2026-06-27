@@ -20,6 +20,8 @@ import {
   validateCredentialForm,
 } from "@/lib/credential-form";
 import { formatApiError } from "@/lib/formatApiError";
+import { useMemberProfile } from "@/hooks/useMemberProfile";
+import { normalizeCredentialName } from "@/lib/credential-name";
 import type { MemberPassenger, PassengerCredential } from "@ryx/shared-types";
 
 interface CredentialLocationState {
@@ -33,6 +35,7 @@ export function PassengerCredentialPage() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const state = (location.state ?? {}) as CredentialLocationState;
+  const { data: memberProfile } = useMemberProfile();
 
   const mode = (searchParams.get("mode") ?? "external") as CredentialFormMode;
   const addNew = searchParams.get("addNew") === "1";
@@ -46,7 +49,7 @@ export function PassengerCredentialPage() {
     if (state.passenger) return credentialFormFromPassenger(state.passenger, staffId);
     if (state.credential) return credentialFormFromCredential(state.credential, staffId);
     return emptyCredentialForm(staffId);
-  }, [state.credential, state.passenger, staffId]);
+  }, [memberProfile?.Name, memberProfile?.RealName, mode, state.credential, state.passenger, staffId]);
 
   const [values, setValues] = useState<CredentialFormValues>(initialValues);
   const [error, setError] = useState("");
@@ -58,13 +61,32 @@ export function PassengerCredentialPage() {
   const removeStaff = useRemoveStaffCredential();
 
   const isEdit = Boolean(values.Id) && !addNew;
-  const title = isEdit ? "编辑乘机人信息" : "新增乘机人信息";
   const isSaving = saveExternal.isPending || saveStaff.isPending;
   const isRemoving = removeExternal.isPending || removeStaff.isPending;
+  const isCredentialOnlyMode = mode === "self" || mode === "staff";
+  const fixedName = mode === "self" ? normalizeCredentialName(memberProfile?.RealName ?? memberProfile?.Name ?? "") : "";
+  const title = isCredentialOnlyMode
+    ? isEdit
+      ? "编辑证件"
+      : "新增证件"
+    : isEdit
+      ? "编辑乘机人信息"
+      : "新增乘机人信息";
+  const primaryLabel = isSaving
+    ? "保存中…"
+    : isCredentialOnlyMode
+      ? isEdit
+        ? "修改信息"
+        : "保存"
+      : "保存并使用该证件";
 
   usePageHeader({ visible: false });
 
   async function handleSave() {
+    if (mode === "self" && normalizeCredentialName(values.Name) !== fixedName) {
+      setError("证件姓名必须与真实姓名一致");
+      return;
+    }
     const validationError = validateCredentialForm(values, mode);
     if (validationError) {
       setError(validationError);
@@ -120,14 +142,14 @@ export function PassengerCredentialPage() {
         title={title}
         onBack={() => navigate(returnTo)}
         footer={
-            <div className="mx-auto max-w-lg space-y-3">
+          <div className="mx-auto max-w-lg space-y-3">
             <button
               type="button"
               disabled={isSaving}
               className="flex h-11 w-full items-center justify-center rounded-lg bg-gradient-to-r from-brand-btn-start to-brand-btn-end text-sm font-medium text-white active:opacity-90 disabled:opacity-50"
               onClick={() => void handleSave()}
             >
-              {isSaving ? "保存中…" : "保存并使用该证件"}
+              {primaryLabel}
             </button>
             {isEdit ? (
               <button
@@ -136,13 +158,19 @@ export function PassengerCredentialPage() {
                 className="flex h-10 w-full items-center justify-center text-sm text-[#ff4d4f] active:opacity-80 disabled:opacity-50"
                 onClick={() => handleRemoveClick()}
               >
-                {isRemoving ? "删除中…" : "删除该证件"}
+                {isRemoving ? "删除中…" : "删除证件"}
               </button>
             ) : null}
           </div>
         }
       >
-        <PassengerCredentialForm mode={mode} values={values} onChange={setValues} error={error} />
+        <PassengerCredentialForm
+          mode={mode}
+          values={values}
+          onChange={setValues}
+          error={error}
+          fixedName={fixedName}
+        />
       </CredentialFormShell>
 
       {forType ? <input type="hidden" value={forType} readOnly /> : null}

@@ -36,6 +36,8 @@ export interface PassengerListResponse {
 export interface MemberProfile {
   Id: string;
   Name: string;
+  /** Legacy Member-Get real-name field used by credential management. */
+  RealName?: string;
   Mobile?: string;
   Email?: string;
   /** Legacy Member-Get organization code. */

@@ -18,6 +18,7 @@ import type { ProxyClient } from "../proxy/proxy-client.js";
 export interface PassengerApi {
   getStaffList(params?: StaffListParams): Promise<StaffListResponse>;
   getPassengerList(params?: PassengerListParams): Promise<PassengerListResponse>;
+  getCredentials(accountId: string): Promise<PassengerCredential[]>;
   getStaffCredentials(params: StaffCredentialsParams): Promise<PassengerCredential[]>;
   addPassenger(payload: ExternalPassengerApiPayload): Promise<MemberPassenger | string>;
   modifyPassenger(payload: ExternalPassengerApiPayload): Promise<MemberPassenger>;
@@ -69,6 +70,18 @@ function normalizeStaffCredentials(
   return res ?? [];
 }
 
+function normalizeCredentialsList(
+  res:
+    | PassengerCredential[]
+    | { Credentials?: PassengerCredential[] }
+    | null
+    | undefined,
+): PassengerCredential[] {
+  if (!res) return [];
+  if (Array.isArray(res)) return res;
+  return res.Credentials ?? [];
+}
+
 export function createPassengerApi(proxy: ProxyClient): PassengerApi {
   return {
     async getStaffList(params = {}) {
@@ -84,6 +97,13 @@ export function createPassengerApi(proxy: ProxyClient): PassengerApi {
         data: params,
       });
       return normalizePassengerListResponse(res);
+    },
+    async getCredentials(accountId) {
+      const res = await proxy.send<PassengerCredential[] | { Credentials?: PassengerCredential[] }>({
+        method: TMC_METHODS.CREDENTIALS_LIST,
+        data: { accountId },
+      });
+      return normalizeCredentialsList(res);
     },
     async getStaffCredentials(params) {
       const res = await proxy.send<PassengerCredential[]>({

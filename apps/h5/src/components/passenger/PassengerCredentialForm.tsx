@@ -16,6 +16,7 @@ interface PassengerCredentialFormProps {
   values: CredentialFormValues;
   onChange: (values: CredentialFormValues) => void;
   error?: string;
+  fixedName?: string;
 }
 
 function FormRow({
@@ -139,6 +140,7 @@ export function PassengerCredentialForm({
   values,
   onChange,
   error,
+  fixedName,
 }: PassengerCredentialFormProps) {
   const [typeSheetOpen, setTypeSheetOpen] = useState(false);
   const [nameRulesOpen, setNameRulesOpen] = useState(false);
@@ -146,12 +148,14 @@ export function PassengerCredentialForm({
   const requireMobile = mode === "external";
   const isPassport = values.Type === CredentialType.Passport;
   const showPassportEnglish = isPassport && values.Surname !== undefined;
+  const isFixedNameMode = Boolean(fixedName);
 
   function patch(partial: Partial<CredentialFormValues>) {
     onChange({ ...values, ...partial });
   }
 
   function handleNameChange(raw: string) {
+    if (isFixedNameMode) return;
     onChange({ ...values, Name: normalizeCredentialName(raw) });
   }
 
@@ -252,23 +256,31 @@ export function PassengerCredentialForm({
                 </>
               ) : (
                 <FormRow label="姓名">
-                  <ClearableFieldInput
-                    value={values.Name}
-                    placeholder="输入姓名（与证件一致）"
-                    onChange={(e) => handleNameChange(e.target.value)}
-                    onClear={() => handleNameChange("")}
-                  />
+                  {isFixedNameMode ? (
+                    <span className="text-sm text-[#333333]">{fixedName}</span>
+                  ) : (
+                    <ClearableFieldInput
+                      value={values.Name}
+                      placeholder="输入姓名（与证件一致）"
+                      onChange={(e) => handleNameChange(e.target.value)}
+                      onClear={() => handleNameChange("")}
+                    />
+                  )}
                 </FormRow>
               )}
             </>
           ) : (
             <FormRow label="姓名">
-              <ClearableFieldInput
-                value={values.Name}
-                placeholder="输入姓名（与证件一致）"
-                onChange={(e) => handleNameChange(e.target.value)}
-                onClear={() => handleNameChange("")}
-              />
+              {isFixedNameMode ? (
+                <span className="text-sm text-[#333333]">{fixedName}</span>
+              ) : (
+                <ClearableFieldInput
+                  value={values.Name}
+                  placeholder="输入姓名（与证件一致）"
+                  onChange={(e) => handleNameChange(e.target.value)}
+                  onClear={() => handleNameChange("")}
+                />
+              )}
             </FormRow>
           )}
 

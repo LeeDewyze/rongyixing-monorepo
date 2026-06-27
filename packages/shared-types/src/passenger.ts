@@ -38,6 +38,7 @@ export interface PassengerCredential {
   Name: string;
   Mobile?: string;
   OrgName?: string;
+  Gender?: string;
   Type?: number | string;
   TypeName?: string;
   CredentialsType?: number | string;
@@ -45,6 +46,12 @@ export interface PassengerCredential {
   Number?: string;
   HideNumber?: string;
   HideCredentialsNumber?: string;
+  Surname?: string;
+  Givenname?: string;
+  Birthday?: string;
+  ExpirationDate?: string;
+  Country?: string;
+  IssueCountry?: string;
 }
 
 export interface StaffPassenger {
