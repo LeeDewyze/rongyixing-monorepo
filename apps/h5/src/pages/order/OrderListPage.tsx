@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import type { OrderAction, OrderListItem, OrderListScope, OrderTrainListItem } from "@ryx/shared-types";
+import type {
+  OrderAction,
+  OrderListItem,
+  OrderListScope,
+  OrderTrainListItem,
+} from "@ryx/shared-types";
 import { OrderListTabId } from "@ryx/shared-types";
 
 import {
@@ -10,7 +15,11 @@ import {
 } from "@/components/order/OrderCategoryTabs";
 import { OrderList } from "@/components/order/OrderList";
 import { usePageHeader } from "@/components/layout";
-import { ORDER_FONT, ORDER_HEADER_GRADIENT } from "@/config/order-assets";
+import {
+  ORDER_FONT,
+  ORDER_HEADER_GRADIENT,
+  ORDER_SCOPE_TABS_SHELL_GRADIENT,
+} from "@/config/order-assets";
 import { useOrderList } from "@/hooks/useOrderList";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { formatApiError } from "@/lib/formatApiError";
@@ -256,7 +265,11 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
             backgroundRepeat: "no-repeat",
             backgroundSize: "100% 100%",
           }}
-          className={embeddedInTab ? "pt-[calc(env(safe-area-inset-top)+12px)]" : undefined}
+          className={
+            embeddedInTab
+              ? "overflow-visible pt-[calc(env(safe-area-inset-top)+12px)]"
+              : "overflow-visible"
+          }
         >
           {!embeddedInTab ? (
             <div className="flex h-11 items-center px-3 pt-[env(safe-area-inset-top)]">
@@ -275,7 +288,14 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
           ) : null}
           <OrderCategoryTabs activeId={categoryId} onChange={(id) => updateParams({ tab: id })} />
         </div>
-        <div className="bg-[#F5F6F9]">
+        <div
+          className="relative z-0 flex h-[72px] items-center px-3"
+          style={{
+            background: ORDER_SCOPE_TABS_SHELL_GRADIENT,
+            borderTopLeftRadius: 16,
+            borderTopRightRadius: 16,
+          }}
+        >
           <OrderScopeTabs scope={scope} onChange={(next) => updateParams({ scope: next })} />
         </div>
       </header>
