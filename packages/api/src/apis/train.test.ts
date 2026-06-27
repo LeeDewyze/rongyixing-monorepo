@@ -3,7 +3,13 @@ import { describe, expect, it } from "vitest";
 import { TRAIN_FLOW_METHODS } from "../methods/train-flow.js";
 import { createProxyClient } from "../proxy/proxy-client.js";
 import { successResponse } from "../proxy/response-adapter.js";
-import { createTrainApi, normalizeTrainSearchResponse, normalizeTrainExchangeInfo, normalizeTrainPassengerInfo, normalizeTrainScheduleResponse } from "./train.js";
+import {
+  createTrainApi,
+  normalizeTrainSearchResponse,
+  normalizeTrainExchangeInfo,
+  normalizeTrainPassengerInfo,
+  normalizeTrainScheduleResponse,
+} from "./train.js";
 
 describe("normalizeTrainSearchResponse", () => {
   it("normalizes legacy TrainEntity[] payload", () => {
@@ -267,6 +273,35 @@ describe("normalizeTrainScheduleResponse", () => {
     ]);
 
     expect(result.Stops).toHaveLength(2);
+    expect(result.Stops[0]?.StationName).toBe("北京南");
+  });
+
+  it("unwraps legacy TrainEntity[].Schedules payload", () => {
+    const result = normalizeTrainScheduleResponse([
+      {
+        TrainCode: "D1061",
+        Schedules: [
+          { StationName: "北京南", ArriveTime: "00:10", StartTime: "00:10", StayTime: "—" },
+          { StationName: "上海虹桥", ArriveTime: "11:30", StartTime: "11:30", StayTime: "—" },
+        ],
+      },
+    ]);
+
+    expect(result.Stops).toHaveLength(2);
+    expect(result.Stops[0]).toMatchObject({
+      StationName: "北京南",
+      ArriveTime: "00:10",
+      DepartTime: "00:10",
+    });
+    expect(result.Stops[1]?.StationName).toBe("上海虹桥");
+  });
+
+  it("normalizes mock Stops envelope", () => {
+    const result = normalizeTrainScheduleResponse({
+      Stops: [{ StationName: "北京南", DepartTime: "09:00", ArriveTime: "09:00" }],
+    });
+
+    expect(result.Stops).toHaveLength(1);
     expect(result.Stops[0]?.StationName).toBe("北京南");
   });
 });

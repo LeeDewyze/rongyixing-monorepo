@@ -20,14 +20,15 @@ import type {
   TrainStation,
   TrainStationResourceResponse,
 } from "@ryx/shared-types";
-import { TrainSeatType, parseTrainDurationMinutes, parseTravelTimeMinutes } from "@ryx/shared-types";
+import {
+  TrainSeatType,
+  parseTrainDurationMinutes,
+  parseTravelTimeMinutes,
+} from "@ryx/shared-types";
 
 import { TRAIN_FLOW_METHODS } from "../methods/train-flow.js";
 import type { ProxyClient } from "../proxy/proxy-client.js";
-import {
-  prepareTrainBookSubmitDto,
-  stripTrainInitBookDto,
-} from "./train-book-adapter.js";
+import { prepareTrainBookSubmitDto, stripTrainInitBookDto } from "./train-book-adapter.js";
 
 export interface TrainApi {
   getStations(): Promise<TrainStation[]>;
@@ -311,10 +312,14 @@ function normalizeTrainInitBookResponse(res: unknown): TrainInitBookResponse {
         ? (payload.Tmc as Record<string, unknown>)
         : undefined,
     TmcServices: Array.isArray(payload.TmcServices)
-      ? payload.TmcServices.map((item) => item as TrainInitBookResponse["TmcServices"] extends (infer U)[] | undefined ? U : never)
+      ? payload.TmcServices.map(
+          (item) =>
+            item as TrainInitBookResponse["TmcServices"] extends (infer U)[] | undefined
+              ? U
+              : never,
+        )
       : undefined,
-    isSkipApprove:
-      typeof payload.isSkipApprove === "boolean" ? payload.isSkipApprove : undefined,
+    isSkipApprove: typeof payload.isSkipApprove === "boolean" ? payload.isSkipApprove : undefined,
     IsShowOfficalBooked:
       typeof payload.IsShowOfficalBooked === "boolean" ? payload.IsShowOfficalBooked : undefined,
     IsShowDirectBooked:
@@ -381,7 +386,8 @@ export function normalizeTrainPassengerInfo(res: unknown): TrainPassengerInfo {
   }
   const payload = res as LegacyRecord;
   const passenger = (payload.Passenger as LegacyRecord | undefined) ?? payload;
-  const trip = (payload.Trip as LegacyRecord | undefined) ?? (payload.Train as LegacyRecord | undefined);
+  const trip =
+    (payload.Trip as LegacyRecord | undefined) ?? (payload.Train as LegacyRecord | undefined);
   return {
     Name: readExchangeString(passenger, "Name"),
     Mobile: readExchangeString(passenger, "Mobile"),
@@ -398,6 +404,19 @@ export function normalizeTrainPassengerInfo(res: unknown): TrainPassengerInfo {
   };
 }
 
+function isScheduleStopRecord(record: LegacyRecord): boolean {
+  return (
+    typeof record.StationName === "string" ||
+    typeof record.Name === "string" ||
+    typeof record.Station === "string"
+  );
+}
+
+function extractScheduleStops(value: unknown): LegacyRecord[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  return value as LegacyRecord[];
+}
+
 function normalizeTrainScheduleStop(stop: LegacyRecord): TrainScheduleStop {
   return {
     StationName: readExchangeString(stop, "StationName", "Name", "Station"),
@@ -409,21 +428,43 @@ function normalizeTrainScheduleStop(stop: LegacyRecord): TrainScheduleStop {
         ? stop.Sequence
         : typeof stop.Sequence === "string"
           ? Number(stop.Sequence)
-          : undefined,
+          : typeof stop.StationNo === "string"
+            ? Number(stop.StationNo)
+            : undefined,
   };
 }
 
 export function normalizeTrainScheduleResponse(res: unknown): TrainScheduleResponse {
   if (Array.isArray(res)) {
-    return { Stops: res.map((item) => normalizeTrainScheduleStop(item as LegacyRecord)) };
+    if (res.length === 0) return { Stops: [] };
+
+    const first = res[0] as LegacyRecord;
+    const nestedStops = extractScheduleStops(first.Schedules ?? first.TrainSchedules);
+    if (nestedStops?.length) {
+      return { Stops: nestedStops.map((item) => normalizeTrainScheduleStop(item)) };
+    }
+
+    if (isScheduleStopRecord(first)) {
+      return { Stops: res.map((item) => normalizeTrainScheduleStop(item as LegacyRecord)) };
+    }
+
+    return { Stops: [] };
   }
+
   if (res && typeof res === "object") {
     const payload = res as LegacyRecord;
-    const stops = payload.Stops ?? payload.TrainStops ?? payload.Schedule;
-    if (Array.isArray(stops)) {
-      return { Stops: stops.map((item) => normalizeTrainScheduleStop(item as LegacyRecord)) };
+    const nestedStops = extractScheduleStops(
+      payload.Schedules ??
+        payload.TrainSchedules ??
+        payload.Stops ??
+        payload.TrainStops ??
+        payload.Schedule,
+    );
+    if (nestedStops?.length) {
+      return { Stops: nestedStops.map((item) => normalizeTrainScheduleStop(item)) };
     }
   }
+
   return { Stops: [] };
 }
 

@@ -1,0 +1,175 @@
+/* Inline train schedule — flat panel inside list card. */
+
+.train-schedule-panel {
+  padding: 10px 14px 4px;
+}
+
+.train-schedule {
+  overflow: hidden;
+  border-radius: 10px;
+  background: #f8f9fd;
+  font-family: "PingFang SC", "HarmonyOS_Sans_SC", "HarmonyOS_Sans", sans-serif;
+}
+
+.train-schedule--state {
+  min-height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.train-schedule__message {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #999999;
+}
+
+.train-schedule__message--error {
+  color: #ff4d4f;
+}
+
+.train-schedule__header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) repeat(3, minmax(0, 1fr));
+  min-height: 30px;
+  background: rgba(39, 104, 250, 0.1);
+}
+
+.train-schedule__header-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 7px 4px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  color: #5c6578;
+}
+
+.train-schedule__header-station {
+  justify-content: flex-start;
+  padding-left: calc(10px + 12px + 8px);
+}
+
+.train-schedule__body {
+  max-height: min(48vh, 300px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 2px 0 6px;
+}
+
+.train-schedule__body--message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 72px;
+  padding: 12px 8px;
+}
+
+.train-schedule__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) repeat(3, minmax(0, 1fr));
+  min-height: 2.32rem;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: #333333;
+}
+
+.train-schedule__row--active {
+  color: #2768fa;
+}
+
+.train-schedule__station {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  min-height: 2.32rem;
+  padding: 0 4px 0 10px;
+}
+
+.train-schedule__timeline {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  width: 12px;
+  flex-shrink: 0;
+}
+
+.train-schedule__timeline::before,
+.train-schedule__timeline::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  background: #eeeeee;
+  z-index: 0;
+}
+
+.train-schedule__timeline::before {
+  top: 0;
+  height: calc(50% - 5px);
+}
+
+.train-schedule__timeline::after {
+  bottom: 0;
+  height: calc(50% - 5px);
+}
+
+.train-schedule__timeline--first::before {
+  display: none;
+}
+
+.train-schedule__timeline--last::after {
+  display: none;
+}
+
+.train-schedule__timeline-segment {
+  display: none;
+}
+
+.train-schedule__station-name {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex: 1;
+  text-align: left;
+}
+
+.train-schedule__cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.32rem;
+  padding: 0 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.train-schedule__icon {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #f8f9fd;
+}
+
+.train-schedule__icon--active {
+  border: none;
+  background: #2768fa;
+}
+
+.train-schedule__icon--inactive {
+  border: 1px solid #b8bfd0;
+  background: #f8f9fd;
+}

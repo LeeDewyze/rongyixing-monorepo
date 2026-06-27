@@ -6,7 +6,6 @@ import type {
   TrainDurationSortMode,
   TrainFilterCondition,
   TrainPriceSortMode,
-  TrainScheduleParams,
   TrainSortTab,
   TrainTypeFilter,
 } from "@ryx/shared-types";
@@ -22,10 +21,8 @@ import { TrainListHeader } from "@/components/train/TrainListHeader";
 import { TrainListItemCard } from "@/components/train/TrainListItemCard";
 import { TrainListToolbar } from "@/components/train/TrainListToolbar";
 import { TrainModifySearchSheet } from "@/components/train/TrainModifySearchSheet";
-import { TrainScheduleSheet } from "@/components/train/TrainScheduleSheet";
 import { TrainTypeFilterBar } from "@/components/train/TrainTypeFilterBar";
 import { useTrainList } from "@/hooks/useTrainSearchForm";
-import { useTrainSchedule } from "@/hooks/useTrainSchedule";
 import { useTrainPolicy } from "@/hooks/useTrainBook";
 import { usePassengerSelection } from "@/hooks/usePassenger";
 import { useIdentity } from "@/hooks/useIdentity";
@@ -42,7 +39,6 @@ import {
   isTrainSeatBookable,
 } from "@/lib/train-book-policy";
 import { saveTrainBookSelection } from "@/lib/train-book-session";
-import { buildTrainScheduleParamsFromItem } from "@/lib/train-schedule";
 import { loadTrainExchangeSession } from "@/lib/train-exchange-session";
 import { getTicket } from "@/lib/session";
 import {
@@ -118,7 +114,6 @@ export function TrainListPage() {
   const [priceSortMode, setPriceSortMode] = useState<TrainPriceSortMode>("off");
   const [expandedTrainId, setExpandedTrainId] = useState<string | null>(null);
   const [policyAlertMessage, setPolicyAlertMessage] = useState<string | null>(null);
-  const [scheduleParams, setScheduleParams] = useState<TrainScheduleParams | null>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [headerHeight, setHeaderHeight] = useState(FALLBACK_HEADER_HEIGHT);
@@ -126,7 +121,6 @@ export function TrainListPage() {
   const { data, isLoading, isFetching, error, refetch } = useTrainList(
     hasListQuery ? listParams : null,
   );
-  const scheduleQuery = useTrainSchedule(scheduleParams);
 
   const rawTrains = useMemo(() => normalizeTrains(data?.Trains), [data]);
 
@@ -453,14 +447,12 @@ export function TrainListPage() {
               <TrainListItemCard
                 key={getTrainListItemKey(train, index)}
                 train={train}
+                searchDate={listParams.Date}
                 expanded={expandedTrainId === train.Id}
                 isAgent={isAgent}
                 policyChecked={policyChecked}
                 onToggle={() => toggleTrainCard(train.Id)}
                 onBookAttempt={(seat) => handleBookAttempt(train, seat)}
-                onShowSchedule={(item) =>
-                  setScheduleParams(buildTrainScheduleParamsFromItem(item, listParams.Date))
-                }
               />
             ))}
         </div>
@@ -519,15 +511,6 @@ export function TrainListPage() {
         open={Boolean(policyAlertMessage)}
         message={policyAlertMessage ?? ""}
         onClose={() => setPolicyAlertMessage(null)}
-      />
-
-      <TrainScheduleSheet
-        open={Boolean(scheduleParams)}
-        title={scheduleParams ? `${scheduleParams.TrainCode} 经停站` : "经停站"}
-        loading={scheduleQuery.isLoading}
-        error={scheduleQuery.isError ? formatApiError(scheduleQuery.error, "train") : null}
-        stops={scheduleQuery.data?.Stops}
-        onClose={() => setScheduleParams(null)}
       />
 
       <FlightPolicyLoadingOverlay open={isPolicyChecking} />
