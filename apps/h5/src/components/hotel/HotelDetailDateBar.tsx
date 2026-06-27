@@ -35,7 +35,7 @@ function DateColumn({
         {formatHotelDateShort(date)}
       </span>
       {hint ? (
-        <span className="mt-1 text-[12px] leading-none text-[#2768FA]">{hint}</span>
+        <span className="mt-1 text-[12px] leading-none text-brand-primary">{hint}</span>
       ) : (
         <span className="mt-1 h-3" aria-hidden />
       )}
@@ -56,12 +56,12 @@ export function HotelDetailDateBar({ checkIn, checkOut, onOpenPicker }: HotelDet
         <DateColumn label="入住" date={checkIn} hint={relativeDayLabel(checkIn)} align="start" />
 
         <div className="flex shrink-0 flex-col items-center px-1">
-          <span className="rounded-full bg-[#EEF4FF] px-2.5 py-1 text-[11px] font-semibold leading-none text-[#2768FA] ring-1 ring-[#D6E4FF]">
+          <span className="rounded-full bg-[#EEF4FF] px-2.5 py-1 text-[11px] font-semibold leading-none text-brand-primary ring-1 ring-[#D6E4FF]">
             {nights}晚
           </span>
           <div className="mt-1.5 flex w-14 items-center gap-0.5" aria-hidden>
             <span className="h-px flex-1 bg-[#D6E4FF]" />
-            <span className="size-1 rounded-full bg-[#2768FA]/40" />
+            <span className="size-1 rounded-full bg-brand-primary/40" />
             <span className="h-px flex-1 bg-[#D6E4FF]" />
           </div>
         </div>

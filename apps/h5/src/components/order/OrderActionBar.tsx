@@ -22,8 +22,8 @@ export function OrderActionBar({ actions, onAction }: OrderActionBarProps) {
             type="button"
             className={`min-w-[64px] rounded-full px-4 py-1.5 text-[14px] leading-none ${ORDER_FONT} ${
               isPrimary
-                ? "border border-transparent bg-[#2768FA] font-medium text-white"
-                : "border border-[#2768FA] bg-white font-normal text-[#2768FA]"
+                ? "border border-transparent bg-brand-primary font-medium text-white"
+                : "border border-brand-primary bg-white font-normal text-brand-primary"
             }`}
             onClick={(event) => {
               event.stopPropagation();

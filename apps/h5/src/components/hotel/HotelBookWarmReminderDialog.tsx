@@ -125,7 +125,7 @@ export function HotelBookWarmReminderDialog({
                     onChange={(event) => onAgreedChange(event.target.checked)}
                     className="peer absolute inset-0 opacity-0"
                   />
-                  <span className="size-5 rounded-[4px] border border-[#CCCCCC] bg-white peer-checked:border-[#2768FA] peer-checked:bg-[#2768FA]" />
+                  <span className="size-5 rounded-[4px] border border-[#CCCCCC] bg-white peer-checked:border-brand-primary peer-checked:bg-brand-primary" />
                   <svg
                     viewBox="0 0 12 12"
                     className="pointer-events-none absolute hidden size-3 text-white peer-checked:block"
@@ -148,7 +148,7 @@ export function HotelBookWarmReminderDialog({
                       和
                       <button
                         type="button"
-                        className="ml-0.5 text-[#2768FA] underline-offset-2 active:opacity-70"
+                        className="ml-0.5 text-brand-primary underline-offset-2 active:opacity-70"
                         onClick={(event) => {
                           event.preventDefault();
                           event.stopPropagation();
@@ -166,7 +166,7 @@ export function HotelBookWarmReminderDialog({
             <button
               type="button"
               disabled={pending}
-              className="mt-3 flex h-10 w-full items-center justify-center rounded-[24px] bg-[linear-gradient(270deg,#2768FA_0%,#33A1F9_100%)] text-[15px] font-medium text-white shadow-[0_4px_12px_rgba(39,104,250,0.24)] active:opacity-90 disabled:opacity-50"
+              className="mt-3 flex h-10 w-full items-center justify-center rounded-[24px] bg-[linear-gradient(270deg,var(--brand-btn-end)_0%,var(--brand-btn-start)_100%)] text-[15px] font-medium text-white shadow-[0_4px_12px_rgba(39,104,250,0.24)] active:opacity-90 disabled:opacity-50"
               onClick={handleConfirm}
             >
               {pending ? "提交中…" : "确定"}

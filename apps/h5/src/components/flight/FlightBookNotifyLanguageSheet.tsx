@@ -35,7 +35,7 @@ function SelectedCheckIcon() {
   return (
     <svg
       viewBox="0 0 20 20"
-      className="size-4 shrink-0 text-[#2768FA]"
+      className="size-4 shrink-0 text-brand-primary"
       fill="none"
       stroke="currentColor"
       strokeWidth="2"
@@ -85,7 +85,7 @@ export function FlightBookNotifyLanguageSheet({
                 <button
                   type="button"
                   className={`flex w-full items-center justify-between rounded-xl px-3 py-3.5 text-left text-[14px] active:bg-[#F5F6F9] ${
-                    isSelected ? "font-medium text-[#2768FA]" : "text-[#333333]"
+                    isSelected ? "font-medium text-brand-primary" : "text-[#333333]"
                   }`}
                   onClick={() => {
                     onSelect(option.value);

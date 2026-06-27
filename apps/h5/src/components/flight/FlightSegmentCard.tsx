@@ -12,13 +12,13 @@ import {
 
 const FONT = "[font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
 
-const FLIGHT_TIME_CLASS = `whitespace-nowrap text-[16px] font-[500] not-italic leading-[100%] tracking-[0] text-[#010101] ${FONT}`;
+const FLIGHT_TIME_CLASS = `whitespace-nowrap text-[16px] font-[500] not-italic leading-[100%] tracking-[0] text-brand-title ${FONT}`;
 
 const FLIGHT_AIRPORT_CLASS = `truncate text-[14px] font-[400] not-italic leading-[100%] tracking-[0] text-[#666666] ${FONT}`;
 
 const FLIGHT_META_CLASS = `text-[11px] font-[400] not-italic leading-[100%] tracking-[0] text-[#666666] ${FONT}`;
 
-const FLIGHT_DAY_TIP_CLASS = `absolute right-0 bottom-full mb-0.5 whitespace-nowrap text-[10px] font-normal leading-[100%] tracking-[0] text-[#010101] ${FONT}`;
+const FLIGHT_DAY_TIP_CLASS = `absolute right-0 bottom-full mb-0.5 whitespace-nowrap text-[10px] font-normal leading-[100%] tracking-[0] text-brand-title ${FONT}`;
 
 const FLIGHT_PRICE_CLASS = `whitespace-nowrap text-[24px] font-[500] not-italic leading-[100%] tracking-[0] ${FONT}`;
 
@@ -65,7 +65,7 @@ function FlightRouteMiddle({ transfer = false }: { transfer?: boolean }) {
       />
       {transfer ? (
         <span
-          className={`text-[10px] font-medium leading-[100%] tracking-[0] text-[#5099fe] ${FONT}`}
+          className={`text-[10px] font-medium leading-[100%] tracking-[0] text-brand-accent ${FONT}`}
         >
           转
         </span>
@@ -178,7 +178,7 @@ export function FlightSegmentCard({
           {segment.AirlineSrc ? (
             <img src={segment.AirlineSrc} alt="" className="size-4 shrink-0 object-contain" />
           ) : (
-            <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#eef3ff] text-[8px] font-bold text-[#5099fe]">
+            <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#EEF3FF] text-[8px] font-bold text-brand-accent">
               {(segment.Airline ?? segment.AirlineName ?? "航").slice(0, 1)}
             </span>
           )}

@@ -250,7 +250,7 @@ export function OrderHotelDetailPage() {
         {showInspurRepush ? (
           <button
             type="button"
-            className="w-full rounded-xl bg-white py-3 text-[14px] font-medium text-[#2768FA] shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
+            className="w-full rounded-xl bg-white py-3 text-[14px] font-medium text-brand-primary shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
             onClick={() => showToast("重推浪潮功能即将上线")}
           >
             重推浪潮

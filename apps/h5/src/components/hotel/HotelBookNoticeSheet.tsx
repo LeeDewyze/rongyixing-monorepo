@@ -90,7 +90,7 @@ function CheckInOutContent({ parsed }: { parsed: ParsedCheckInOut }) {
     <div className="space-y-2.5">
       {parsed.checkIn ? (
         <div className="flex items-start gap-3">
-          <span className="mt-0.5 shrink-0 rounded-md bg-[#EEF4FF] px-2 py-0.5 text-[11px] font-medium text-[#2768FA]">
+          <span className="mt-0.5 shrink-0 rounded-md bg-[#EEF4FF] px-2 py-0.5 text-[11px] font-medium text-brand-primary">
             入住
           </span>
           <p className="text-[13px] leading-[1.55] text-[#666666]">{parsed.checkIn}</p>
@@ -148,7 +148,7 @@ export function HotelBookNoticeSheet({
               ) : null}
 
               {parsedCheckInOut ? (
-                <NoticeSectionCard title="入离时间" accentClass="bg-[#2768FA]">
+                <NoticeSectionCard title="入离时间" accentClass="bg-brand-primary">
                   <CheckInOutContent parsed={parsedCheckInOut} />
                 </NoticeSectionCard>
               ) : null}

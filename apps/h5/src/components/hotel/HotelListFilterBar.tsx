@@ -37,7 +37,7 @@ export function HotelListFilterBar({ activeId, onSelect }: HotelListFilterBarPro
             key={tab.id}
             type="button"
             className={`flex items-center justify-center gap-0.5 text-center text-[14px] font-medium leading-none tracking-normal ${FILTER_FONT} ${
-              active ? "text-[#2768FA]" : "text-[#010101]"
+              active ? "text-brand-primary" : "text-brand-title"
             }`}
             onClick={() => onSelect?.(tab.id)}
           >

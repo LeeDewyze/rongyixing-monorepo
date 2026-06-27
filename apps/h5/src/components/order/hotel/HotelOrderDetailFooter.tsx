@@ -29,7 +29,7 @@ export function HotelOrderDetailFooter({
           type="button"
           disabled={pending}
           onClick={onCancel}
-          className="flex h-11 flex-1 items-center justify-center rounded-[24px] border border-[#2768FA] bg-white text-[15px] font-medium text-[#2768FA] disabled:opacity-50"
+          className="flex h-11 flex-1 items-center justify-center rounded-[24px] border border-brand-primary bg-white text-[15px] font-medium text-brand-primary disabled:opacity-50"
         >
           取消
         </button>
@@ -39,7 +39,7 @@ export function HotelOrderDetailFooter({
           type="button"
           disabled={pending}
           onClick={onPay}
-          className="flex h-11 flex-1 items-center justify-center rounded-[24px] bg-[linear-gradient(270deg,#2768FA_0%,#33A1F9_100%)] text-[15px] font-medium text-white disabled:opacity-50"
+          className="flex h-11 flex-1 items-center justify-center rounded-[24px] bg-[linear-gradient(270deg,var(--brand-btn-end)_0%,var(--brand-btn-start)_100%)] text-[15px] font-medium text-white disabled:opacity-50"
         >
           立即支付
         </button>

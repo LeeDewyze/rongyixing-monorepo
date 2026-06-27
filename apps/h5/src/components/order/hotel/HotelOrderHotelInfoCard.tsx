@@ -64,7 +64,7 @@ export function HotelOrderHotelInfoCard({ room }: HotelOrderHotelInfoCardProps) 
         label="酒店电话"
         value={
           room.HotelContact ? (
-            <a href={`tel:${room.HotelContact}`} className="text-[#2768FA]">
+            <a href={`tel:${room.HotelContact}`} className="text-brand-primary">
               {room.HotelContact}
             </a>
           ) : (

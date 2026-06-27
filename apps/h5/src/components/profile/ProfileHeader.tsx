@@ -62,12 +62,12 @@ export function ProfileHeader({ profile, displayName, balance, messageCount }: P
         <ProfileAvatar />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <p className="min-w-0 flex-1 truncate text-[18px] font-semibold leading-[25px] text-[#010101]">
+            <p className="min-w-0 flex-1 truncate text-[18px] font-semibold leading-[25px] text-brand-title">
               {displayName}
             </p>
             <PersonalCenterButton />
           </div>
-          <p className="mt-2 flex items-center gap-1 text-[14px] font-normal leading-none tracking-normal text-[#2768FA] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]">
+          <p className="mt-2 flex items-center gap-1 text-[14px] font-normal leading-none tracking-normal text-brand-primary [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]">
             <BuildingIcon />
             <span>组织编码：{orgCode}</span>
           </p>

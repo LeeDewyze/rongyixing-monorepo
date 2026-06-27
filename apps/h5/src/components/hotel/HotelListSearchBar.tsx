@@ -47,7 +47,7 @@ export function HotelListSearchBar({
       <LocationPinIcon />
       <button
         type="button"
-        className="ml-1 shrink-0 text-[14px] font-medium leading-none tracking-normal text-[#010101] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]"
+        className="ml-1 shrink-0 text-[14px] font-medium leading-none tracking-normal text-brand-title [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]"
         onClick={onCityClick}
       >
         {cityName}
@@ -62,11 +62,11 @@ export function HotelListSearchBar({
       >
         <div className="flex items-center gap-1 text-[11px] text-[#808080]">
           <span>住</span>
-          <span className="font-medium text-[#2768FA]">{formatHotelStayDate(checkIn)}</span>
+          <span className="font-medium text-brand-primary">{formatHotelStayDate(checkIn)}</span>
         </div>
         <div className="mt-0.5 flex items-center gap-1 text-[11px] text-[#808080]">
           <span>离</span>
-          <span className="font-medium text-[#2768FA]">{formatHotelStayDate(checkOut)}</span>
+          <span className="font-medium text-brand-primary">{formatHotelStayDate(checkOut)}</span>
         </div>
       </button>
 

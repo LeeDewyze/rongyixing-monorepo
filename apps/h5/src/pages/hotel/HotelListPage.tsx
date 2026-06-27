@@ -169,7 +169,7 @@ export function HotelListPage() {
             >
               <BackIcon />
             </button>
-            <h1 className="pointer-events-none absolute inset-x-0 text-center text-[17px] font-semibold text-[#010101] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]">
+            <h1 className="pointer-events-none absolute inset-x-0 text-center text-[17px] font-semibold text-brand-title [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]">
               酒店查询
             </h1>
             <button
@@ -211,7 +211,7 @@ export function HotelListPage() {
             <p className="text-sm text-destructive">{formatApiError(error, "hotel")}</p>
             <button
               type="button"
-              className="mt-3 text-sm font-medium text-[#2768FA]"
+              className="mt-3 text-sm font-medium text-brand-primary"
               onClick={() => refetch()}
             >
               重试

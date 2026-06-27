@@ -55,7 +55,7 @@ export function TrainListHeader({
   onModifyClose,
 }: TrainListHeaderProps) {
   return (
-    <div className="shrink-0 bg-gradient-to-b from-[#5099fe] to-[#6aabff] pt-[env(safe-area-inset-top)]">
+    <div className="shrink-0 bg-gradient-to-b from-brand-header-start to-brand-header-end pt-[env(safe-area-inset-top)]">
       <div className="flex items-center px-1 pb-2 pt-1">
         <button
           type="button"

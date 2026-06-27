@@ -75,7 +75,7 @@ export function HotelDetailPlanRow({
           <p className="text-[14px] font-semibold leading-snug text-[#1A1A1A]">{plan.PlanName}</p>
 
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            <span className="inline-flex h-[20px] items-center rounded-full bg-[#EEF4FF] px-2 text-[10px] font-medium leading-none text-[#2768FA] ring-1 ring-[#D6E4FF]">
+            <span className="inline-flex h-[20px] items-center rounded-full bg-[#EEF4FF] px-2 text-[10px] font-medium leading-none text-brand-primary ring-1 ring-[#D6E4FF]">
               专票
             </span>
             <span

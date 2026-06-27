@@ -61,7 +61,7 @@ export function FlightListDateStrip({
               onClick={() => onSelect(date)}
               className={`flex h-11 w-[47px] shrink-0 flex-col items-center justify-center gap-1 rounded-lg transition ${
                 active
-                  ? "bg-[linear-gradient(270deg,#2768FA_0%,#33A1F9_100%)] text-white shadow-sm"
+                  ? "bg-[linear-gradient(270deg,var(--brand-btn-end)_0%,var(--brand-btn-start)_100%)] text-white shadow-sm"
                   : "bg-transparent"
               }`}
             >

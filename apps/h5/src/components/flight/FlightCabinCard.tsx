@@ -36,7 +36,7 @@ function resolveBookButtonClass(
         ? "bg-[#f5a8a8] active:opacity-90"
         : "bg-[#ff383c] active:opacity-90";
     default:
-      return "bg-[#5099fe] active:opacity-90";
+      return "bg-brand-header-start active:opacity-90";
   }
 }
 

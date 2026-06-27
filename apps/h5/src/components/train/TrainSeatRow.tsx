@@ -20,7 +20,7 @@ const FONT = "[font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sa
 
 const SEAT_TYPE_PREVIEW_CLASS = `text-[12px] font-normal leading-[100%] tracking-[0] text-[#666666] ${FONT}`;
 
-const SEAT_AVAILABILITY_PREVIEW_CLASS = `text-[12px] font-normal leading-[100%] tracking-[0] text-[#2768FA] ${FONT}`;
+const SEAT_AVAILABILITY_PREVIEW_CLASS = `text-[12px] font-normal leading-[100%] tracking-[0] text-brand-primary ${FONT}`;
 
 const SEAT_SCARCE_PREVIEW_CLASS = `text-[12px] font-normal leading-[100%] tracking-[0] text-[#ff4d4f] ${FONT}`;
 
@@ -97,7 +97,7 @@ function ExpandedSeatRow({ seat, onBookAttempt }: { seat: TrainSeat; onBookAttem
             onBookAttempt();
           }}
           className={`h-7 shrink-0 justify-self-end rounded px-3 text-[12px] font-medium leading-[100%] tracking-[0] ${FONT} ${
-            hasTickets ? "bg-[#5099fe] text-white active:opacity-90" : "bg-[#EEEEEE] text-[#999999]"
+            hasTickets ? "bg-brand-header-start text-white active:opacity-90" : "bg-[#EEEEEE] text-[#999999]"
           }`}
         >
           预订

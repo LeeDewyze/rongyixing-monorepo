@@ -24,7 +24,7 @@ import {
 
 function BackIcon() {
   return (
-    <svg viewBox="0 0 10 17" className="h-[17px] w-[10px] shrink-0 text-[#010101]" aria-hidden>
+    <svg viewBox="0 0 10 17" className="h-[17px] w-[10px] shrink-0 text-brand-title" aria-hidden>
       <path
         d="M9 1.5 2.5 8.5 9 15.5"
         fill="none"
@@ -167,7 +167,7 @@ export function HotelRoomDetailPage() {
               {room.Tags.map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex h-[20px] items-center rounded-full bg-[#EEF4FF] px-2 text-[10px] leading-none text-[#2768FA] ring-1 ring-[#D6E4FF]"
+                  className="inline-flex h-[20px] items-center rounded-full bg-[#EEF4FF] px-2 text-[10px] leading-none text-brand-primary ring-1 ring-[#D6E4FF]"
                 >
                   {tag}
                 </span>

@@ -19,7 +19,7 @@ function BillChevron({ open }: { open: boolean }) {
   return (
     <svg
       viewBox="0 0 12 8"
-      className={`h-2 w-3 shrink-0 text-[#2768FA] transition-transform duration-200 ${open ? "" : "rotate-180"}`}
+      className={`h-2 w-3 shrink-0 text-brand-primary transition-transform duration-200 ${open ? "" : "rotate-180"}`}
       aria-hidden
     >
       <path
@@ -80,7 +80,7 @@ export function HotelBookFooter({
               </p>
               <button
                 type="button"
-                className="inline-flex items-center gap-1 text-[13px] leading-none text-[#2768FA]"
+                className="inline-flex items-center gap-1 text-[13px] leading-none text-brand-primary"
                 aria-expanded={billOpen}
                 onClick={onBillToggle}
               >
@@ -92,7 +92,7 @@ export function HotelBookFooter({
             <button
               type="button"
               disabled={disabled}
-              className="flex h-9 w-[120px] shrink-0 items-center justify-center rounded-[24px] bg-[linear-gradient(270deg,#2768FA_0%,#33A1F9_100%)] text-[14px] font-medium leading-none text-white disabled:bg-none disabled:bg-[#CCCCCC] active:opacity-90"
+              className="flex h-9 w-[120px] shrink-0 items-center justify-center rounded-[24px] bg-[linear-gradient(270deg,var(--brand-btn-end)_0%,var(--brand-btn-start)_100%)] text-[14px] font-medium leading-none text-white disabled:bg-none disabled:bg-[#CCCCCC] active:opacity-90"
               onClick={onSubmit}
             >
               {pending ? "提交中…" : "生成订单"}

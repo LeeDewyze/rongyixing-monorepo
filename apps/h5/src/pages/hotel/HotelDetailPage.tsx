@@ -296,7 +296,7 @@ export function HotelDetailPage() {
         <button
           type="button"
           onClick={() => refetch()}
-          className="rounded-lg bg-[#2768FA] px-6 py-2 text-sm text-white"
+          className="rounded-lg bg-brand-primary px-6 py-2 text-sm text-white"
         >
           重试
         </button>

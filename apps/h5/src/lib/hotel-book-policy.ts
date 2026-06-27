@@ -510,7 +510,7 @@ export function resolveHotelPlanBookAlertMessage(
 export function policyButtonClassName(color: HotelPolicyColor | undefined): string {
   switch (color) {
     case "success":
-      return "bg-[#2768FA] text-white active:opacity-90";
+      return "bg-brand-primary text-white active:opacity-90";
     case "warning":
       return "bg-[#FF8C00] text-white active:opacity-90";
     case "danger_disabled":
@@ -518,7 +518,7 @@ export function policyButtonClassName(color: HotelPolicyColor | undefined): stri
     case "danger_nopermission":
       return "bg-[#CCCCCC] text-white cursor-not-allowed";
     default:
-      return "bg-[#2768FA] text-white active:opacity-90";
+      return "bg-brand-primary text-white active:opacity-90";
   }
 }
 
@@ -630,9 +630,9 @@ export function getHotelPlanBookButtonPresentation(
     bottomLabel: payTypeLabel,
     shellClass: "border-[#22C55E]",
     topClass: "bg-[#22C55E] text-white",
-    bottomClass: "bg-white text-[#2768FA]",
+    bottomClass: "bg-white text-brand-primary",
     topLabelClass: "text-[13px] font-semibold",
     disabled: false,
-    priceClass: "text-[#2768FA]",
+    priceClass: "text-brand-primary",
   };
 }

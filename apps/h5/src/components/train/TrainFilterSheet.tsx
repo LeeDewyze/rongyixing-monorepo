@@ -34,7 +34,7 @@ function FilterChip({
       onClick={onClick}
       className={`flex h-9 w-full items-center justify-center rounded-lg px-2 text-[13px] transition-colors [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif] ${
         selected
-          ? "bg-gradient-to-r from-[#2768FA] to-[#33A1F9] font-medium text-white shadow-[0_2px_8px_rgba(39,104,250,0.28)]"
+          ? "bg-gradient-to-r from-brand-btn-end to-brand-btn-start font-medium text-white shadow-[0_2px_8px_rgba(39,104,250,0.28)]"
           : "border border-[#E8ECF3] bg-white text-[#333333] active:bg-[#F0F4FA]"
       }`}
     >
@@ -134,7 +134,7 @@ export function TrainFilterSheet({
       />
       <div className="train-filter-sheet__panel mx-auto w-full max-w-lg">
         <header className="train-filter-sheet__header px-4 pb-3 pt-4">
-          <h2 className="text-center text-[17px] font-semibold text-[#010101] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]">
+          <h2 className="text-center text-[17px] font-semibold text-brand-title [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]">
             筛选
           </h2>
         </header>
@@ -191,7 +191,7 @@ export function TrainFilterSheet({
             </button>
             <button
               type="button"
-              className="flex h-10 flex-[2] items-center justify-center rounded-lg bg-gradient-to-r from-[#2768FA] to-[#33A1F9] text-[15px] font-medium text-white shadow-[0_4px_12px_rgba(39,104,250,0.32)] active:opacity-90 [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]"
+              className="flex h-10 flex-[2] items-center justify-center rounded-lg bg-gradient-to-r from-brand-btn-end to-brand-btn-start text-[15px] font-medium text-white shadow-[0_4px_12px_rgba(39,104,250,0.32)] active:opacity-90 [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]"
               onClick={onConfirm}
             >
               确定

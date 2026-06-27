@@ -50,7 +50,7 @@ export function HotelDetailTrafficSection({ address, mapUrl }: HotelDetailTraffi
 
       {mapUrl ? (
         <div className={`${address ? "mt-3 border-t border-[#F0F2F5] pt-3" : ""}`}>
-          <span className="flex items-center justify-between text-[14px] text-[#2768FA]">
+          <span className="flex items-center justify-between text-[14px] text-brand-primary">
             <span className="font-medium">打开地图查看</span>
             <ChevronRightIcon />
           </span>
@@ -64,7 +64,7 @@ export function HotelDetailTrafficSection({ address, mapUrl }: HotelDetailTraffi
       className={`mx-3 mt-3 overflow-hidden rounded-lg bg-white shadow-[0_2px_12px_rgba(0,0,0,0.06)] ${HOTEL_DETAIL_FONT}`}
     >
       <div className="flex items-center gap-2 border-b border-[#F0F2F5] px-4 py-3.5">
-        <span className="h-3.5 w-0.5 shrink-0 rounded-full bg-[#2768FA]" aria-hidden />
+        <span className="h-3.5 w-0.5 shrink-0 rounded-full bg-brand-primary" aria-hidden />
         <h2 className="text-[15px] font-semibold text-[#333333]">交通信息</h2>
       </div>
 

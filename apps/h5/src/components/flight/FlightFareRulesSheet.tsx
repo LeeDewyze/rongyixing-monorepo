@@ -43,7 +43,7 @@ function resolveRuleAccent(name?: string): string {
   if (label.includes("退票")) return "bg-[#FF4D4F]";
   if (label.includes("改期") || label.includes("改签")) return "bg-[#EA580C]";
   if (label.includes("行李") || label.includes("托运")) return "bg-[#52C41A]";
-  return "bg-[#2768FA]";
+  return "bg-brand-primary";
 }
 
 function isFreeFeeValue(value: string): boolean {

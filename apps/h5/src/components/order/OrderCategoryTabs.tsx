@@ -165,7 +165,7 @@ export function OrderCategoryTabs({ activeId, onChange }: OrderCategoryTabsProps
               <svg width="28" height="6" viewBox="0 0 28 6" className="mt-3 shrink-0" aria-hidden>
                 <path
                   d="M2 1.5 Q14 6 26 1.5"
-                  stroke={active ? "#2768FA" : "transparent"}
+                  stroke={active ? "var(--brand-primary)" : "transparent"}
                   strokeWidth="3"
                   fill="none"
                   strokeLinecap="round"

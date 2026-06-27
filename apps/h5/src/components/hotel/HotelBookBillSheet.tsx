@@ -30,7 +30,7 @@ export function HotelBookBillSheet({
       aria-label="房费明细"
     >
       <div className="flex items-center justify-between px-4 py-3">
-        <p className="text-[15px] font-medium text-[#010101]">房费明细</p>
+        <p className="text-[15px] font-medium text-brand-title">房费明细</p>
         <p className="text-[13px] text-[#666666]">
           <span>{nightCount}晚,共 </span>
           <span className="font-medium text-[#FF4D4F]">¥{formatBillAmount(roomSubtotal)}</span>

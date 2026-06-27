@@ -46,7 +46,7 @@ export function HotelBookSummaryCard({
       className={`overflow-hidden rounded-xl bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] ${HOTEL_DETAIL_FONT}`}
     >
       <div className="px-2 pt-3.5 pb-3">
-        <h2 className="text-[16px] font-medium leading-none text-[#010101]">{hotelName}</h2>
+        <h2 className="text-[16px] font-medium leading-none text-brand-title">{hotelName}</h2>
 
         <div className="mt-3 flex h-[60px] w-full flex-col justify-center gap-4 rounded-lg bg-[#F5F6F9] px-3">
           <div className="flex items-center justify-start">
@@ -73,7 +73,7 @@ export function HotelBookSummaryCard({
           <button
             type="button"
             onClick={onOpenNotice}
-            className="text-right text-[12px] font-normal leading-none text-[#2768FA]"
+            className="text-right text-[12px] font-normal leading-none text-brand-primary"
           >
             订房必读
           </button>

@@ -190,7 +190,7 @@ export function HotelSearchCard({
             type="button"
             className="mt-4 flex aspect-[640/90] w-full items-center justify-center text-lg font-medium text-white active:opacity-90 [border-radius:calc(100cqw*24/640)]"
             style={{
-              background: "linear-gradient(270deg, #2768FA 0%, #33A1F9 100%)",
+              background: "linear-gradient(270deg, var(--brand-btn-end) 0%, var(--brand-btn-start) 100%)",
               boxShadow: "0px 2px 16px 0px rgba(175, 175, 175, 0.2)",
             }}
             onClick={onSearch}

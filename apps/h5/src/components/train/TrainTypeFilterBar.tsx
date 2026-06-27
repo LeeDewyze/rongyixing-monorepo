@@ -15,7 +15,7 @@ function Checkbox({ checked }: { checked: boolean }) {
   return (
     <span
       className={`flex size-4 shrink-0 items-center justify-center rounded border ${
-        checked ? "border-[#5099fe] bg-[#5099fe]" : "border-[#cccccc] bg-white"
+        checked ? "border-[#5099fe] bg-brand-header-start" : "border-[#cccccc] bg-white"
       }`}
       aria-hidden
     >

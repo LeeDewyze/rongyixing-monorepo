@@ -130,7 +130,7 @@ function InfoRowValue({ row }: { row: InfoRow }) {
 function InfoRowCard({ row }: { row: InfoRow }) {
   return (
     <article className="rounded-lg bg-[#F8F9FD] px-3.5 py-3">
-      <h3 className="mb-2 text-[13px] font-medium text-[#2768FA]">{row.label}</h3>
+      <h3 className="mb-2 text-[13px] font-medium text-brand-primary">{row.label}</h3>
       <InfoRowValue row={row} />
     </article>
   );
@@ -162,7 +162,7 @@ export function HotelDetailHotelInfoSection(props: HotelDetailHotelInfoSectionPr
         aria-expanded={expanded}
       >
         <div className="flex min-w-0 items-center gap-2">
-          <span className="h-3.5 w-0.5 shrink-0 rounded-full bg-[#2768FA]" aria-hidden />
+          <span className="h-3.5 w-0.5 shrink-0 rounded-full bg-brand-primary" aria-hidden />
           <h2 className="text-[15px] font-semibold text-[#333333]">酒店信息</h2>
           {!expanded ? (
             <span className="truncate text-[12px] font-normal text-[#9CA3AF]">

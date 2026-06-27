@@ -39,7 +39,7 @@ function TransportBody({
     <>
       <div className="flex items-start justify-between gap-2">
         <p
-          className={`min-w-0 flex-1 text-[15px] font-medium leading-none text-[#010101] ${ORDER_FONT}`}
+          className={`min-w-0 flex-1 text-[15px] font-medium leading-none text-brand-title ${ORDER_FONT}`}
         >
           {routeTitle}
         </p>
@@ -68,7 +68,7 @@ function TrainBody({
     <>
       <div className="flex items-start justify-between gap-2">
         <p
-          className={`min-w-0 flex-1 text-[15px] font-medium leading-none text-[#010101] ${ORDER_FONT}`}
+          className={`min-w-0 flex-1 text-[15px] font-medium leading-none text-brand-title ${ORDER_FONT}`}
         >
           {routeTitle}
         </p>
@@ -105,7 +105,7 @@ function renderBody(item: OrderListItem): ReactNode {
     case OrderListTabId.Hotel:
       return (
         <>
-          <p className={`text-[15px] font-medium leading-snug text-[#010101] ${ORDER_FONT}`}>
+          <p className={`text-[15px] font-medium leading-snug text-brand-title ${ORDER_FONT}`}>
             {item.HotelName}
           </p>
           <div className="mt-2 space-y-1">
@@ -120,7 +120,7 @@ function renderBody(item: OrderListItem): ReactNode {
       );
     case OrderListTabId.Car:
       return (
-        <p className={`text-[15px] font-medium text-[#010101] ${ORDER_FONT}`}>
+        <p className={`text-[15px] font-medium text-brand-title ${ORDER_FONT}`}>
           {item.ServiceTitle ?? "用车订单"}
         </p>
       );
@@ -152,7 +152,7 @@ export function OrderListCard({ item, onAction, onCardClick }: OrderListCardProp
       <header className="flex items-center gap-2">
         <OrderProductIcon tabId={item.tabId} />
         <p
-          className={`min-w-0 flex-1 truncate text-[14px] font-medium leading-none text-[#010101] ${ORDER_FONT}`}
+          className={`min-w-0 flex-1 truncate text-[14px] font-medium leading-none text-brand-title ${ORDER_FONT}`}
         >
           订单编号：{item.OrderNumber ?? item.OrderId}
         </p>

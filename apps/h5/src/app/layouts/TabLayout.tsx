@@ -3,7 +3,7 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 
 import { HOME_ASSETS } from "@/config/home-assets";
 
-const TAB_ACTIVE = "#2768FA";
+const TAB_ACTIVE = "var(--brand-primary)";
 const TAB_INACTIVE = "#9CA3AF";
 
 interface TabItem {

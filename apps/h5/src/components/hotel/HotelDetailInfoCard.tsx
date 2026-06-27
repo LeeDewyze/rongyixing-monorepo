@@ -32,7 +32,7 @@ function PinIcon() {
 
 function PhoneIcon() {
   return (
-    <svg viewBox="0 0 16 16" className="size-4 text-[#2768FA]" aria-hidden>
+    <svg viewBox="0 0 16 16" className="size-4 text-brand-primary" aria-hidden>
       <path
         fill="currentColor"
         d="M3.5 2h2.1c.3 0 .6.2.7.5l.6 2.1c.1.3 0 .6-.3.8l-1.2.9c.8 1.6 2.1 2.9 3.7 3.7l.9-1.2c.2-.2.5-.3.8-.2l2.1.6c.3.1.5.4.5.7v2.1c0 .6-.5 1-1.1 1C6.8 13.5 2.5 9.2 2.5 3.6c0-.6.4-1.1 1-1.1z"
@@ -43,7 +43,7 @@ function PhoneIcon() {
 
 function MapIcon() {
   return (
-    <svg viewBox="0 0 16 16" className="size-4 text-[#2768FA]" aria-hidden>
+    <svg viewBox="0 0 16 16" className="size-4 text-brand-primary" aria-hidden>
       <path
         fill="currentColor"
         d="M8 1.5a4.5 4.5 0 0 0-4.5 4.5c0 3.2 4.5 8.5 4.5 8.5s4.5-5.3 4.5-8.5A4.5 4.5 0 0 0 8 1.5zm0 6a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"

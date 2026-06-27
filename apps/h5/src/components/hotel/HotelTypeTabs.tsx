@@ -14,7 +14,7 @@ const TRACK_STYLE = {
 } as const;
 
 const ACTIVE_INDICATOR_STYLE = {
-  background: "linear-gradient(270deg, #2768FA 0%, #33A1F9 100%)",
+  background: "linear-gradient(270deg, var(--brand-btn-end) 0%, var(--brand-btn-start) 100%)",
   boxShadow: "0px 2px 16px 0px rgba(175, 175, 175, 0.2)",
 } as const;
 

@@ -37,7 +37,7 @@ export function HomeBusinessPanel() {
         className="overflow-hidden rounded-lg px-3 pb-3 pt-3"
         style={{ background: BUSINESS_PANEL_GRADIENT }}
       >
-        <h2 className="mb-3 text-[16px] font-medium leading-[22px]" style={{ color: "#010101" }}>
+        <h2 className="mb-3 text-[16px] font-medium leading-[22px]" style={{ color: "var(--brand-title)" }}>
           出差申请
         </h2>
         <div className="grid grid-cols-4 rounded-lg bg-white px-2 py-4">

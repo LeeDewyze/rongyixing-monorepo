@@ -201,8 +201,8 @@ export function FlightBookAuthorizedContacts({
           type="button"
           className={
             sectioned
-              ? "flex h-[42px] w-full items-center justify-center gap-1.5 rounded-xl bg-white text-[12px] font-normal leading-none text-[#2768FA] ring-1 ring-[#EEF1F6] active:opacity-70"
-              : "flex h-[42px] w-full items-center justify-center gap-1.5 text-[12px] font-normal leading-none text-[#2768FA] active:opacity-70"
+              ? "flex h-[42px] w-full items-center justify-center gap-1.5 rounded-xl bg-white text-[12px] font-normal leading-none text-brand-primary ring-1 ring-[#EEF1F6] active:opacity-70"
+              : "flex h-[42px] w-full items-center justify-center gap-1.5 text-[12px] font-normal leading-none text-brand-primary active:opacity-70"
           }
           onClick={onAdd}
         >

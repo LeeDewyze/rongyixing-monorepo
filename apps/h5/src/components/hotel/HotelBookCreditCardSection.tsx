@@ -7,7 +7,7 @@ interface HotelBookCreditCardSectionProps {
 }
 
 const inputClass =
-  "min-w-0 flex-1 rounded-lg border border-[#EEEEEE] px-3 py-2 text-[14px] text-[#333333] outline-none focus:border-[#2768FA]";
+  "min-w-0 flex-1 rounded-lg border border-[#EEEEEE] px-3 py-2 text-[14px] text-[#333333] outline-none focus:border-brand-primary";
 
 export function HotelBookCreditCardSection({ value, onChange }: HotelBookCreditCardSectionProps) {
   return (

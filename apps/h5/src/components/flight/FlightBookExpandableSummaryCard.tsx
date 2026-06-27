@@ -56,7 +56,7 @@ export function FlightBookExpandableSummaryCard({
         </p>
         <button
           type="button"
-          className="flex shrink-0 items-center gap-0.5 pt-0.5 text-[13px] font-medium text-[#2768FA] active:opacity-70"
+          className="flex shrink-0 items-center gap-0.5 pt-0.5 text-[13px] font-medium text-brand-primary active:opacity-70"
           onClick={onToggleExpanded}
           aria-expanded={expanded}
         >
@@ -102,7 +102,7 @@ export function FlightBookSectionAddButton({
   return (
     <button
       type="button"
-      className="mt-3 flex h-[42px] w-full items-center justify-center gap-1.5 text-[12px] font-normal leading-none text-[#2768FA] active:opacity-70"
+      className="mt-3 flex h-[42px] w-full items-center justify-center gap-1.5 text-[12px] font-normal leading-none text-brand-primary active:opacity-70"
       onClick={onClick}
     >
       <img src={credentialSwitchPlusIcon} alt="" className="size-4" aria-hidden />

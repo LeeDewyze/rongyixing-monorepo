@@ -64,14 +64,14 @@ function QuickToggle({
       onClick={() => onChange(!checked)}
       className={`flex flex-1 items-center justify-between rounded-xl px-3.5 py-3 text-left transition-all ${FONT} ${
         checked
-          ? "bg-white text-[#2768FA] shadow-[0_2px_10px_rgba(39,104,250,0.14)] ring-1 ring-[#D6E4FF]"
+          ? "bg-white text-brand-primary shadow-[0_2px_10px_rgba(39,104,250,0.14)] ring-1 ring-[#D6E4FF]"
           : "bg-white/70 text-[#333333] ring-1 ring-[#E8ECF3] active:bg-white"
       }`}
     >
       <span className="text-[14px] font-medium">{label}</span>
       <span
         className={`relative inline-flex h-[22px] w-[38px] shrink-0 items-center rounded-full transition-colors ${
-          checked ? "bg-[#2768FA]" : "bg-[#E0E0E0]"
+          checked ? "bg-brand-primary" : "bg-[#E0E0E0]"
         }`}
         aria-hidden
       >
@@ -157,7 +157,7 @@ function AirlineLogo({ icon, code, name }: { icon?: string; code: string; name: 
 
   return (
     <span
-      className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#EEF4FF] to-[#F7FAFF] text-[11px] font-semibold text-[#2768FA] ring-1 ring-[#D6E4FF]"
+      className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#EEF4FF] to-[#F7FAFF] text-[11px] font-semibold text-brand-primary ring-1 ring-[#D6E4FF]"
       aria-hidden
     >
       {name.slice(0, 1) || code.slice(0, 2)}
@@ -361,7 +361,7 @@ export function FlightFilterSheet({
         <header className={`flight-filter-sheet__header relative px-4 pb-2 pt-5 ${FONT}`}>
           <div className="mb-3 flex items-center justify-between">
             <CloseButton onClose={onClose} />
-            <h2 className="text-[17px] font-semibold text-[#010101]">航班筛选</h2>
+            <h2 className="text-[17px] font-semibold text-brand-title">航班筛选</h2>
             <span className="size-8" aria-hidden />
           </div>
         </header>
@@ -438,7 +438,7 @@ export function FlightFilterSheet({
               </button>
               <button
                 type="button"
-                className="flex h-11 flex-[2] items-center justify-center rounded-xl bg-gradient-to-r from-[#2768FA] to-[#33A1F9] text-[15px] font-medium text-white shadow-[0_4px_12px_rgba(39,104,250,0.32)] active:opacity-90"
+                className="flex h-11 flex-[2] items-center justify-center rounded-xl bg-gradient-to-r from-brand-btn-end to-brand-btn-start text-[15px] font-medium text-white shadow-[0_4px_12px_rgba(39,104,250,0.32)] active:opacity-90"
                 onClick={onConfirm}
               >
                 确定

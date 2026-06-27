@@ -8,7 +8,7 @@ function DetailSection({ title, children }: { title: string; children: ReactNode
   return (
     <section className="overflow-hidden rounded-lg bg-white ring-1 ring-[#EEF1F6]">
       <div className="flex items-center gap-2 border-b border-[#F0F2F5] bg-[#FAFBFC] px-3 py-2">
-        <span className="h-3 w-[3px] shrink-0 rounded-full bg-[#2768FA]" aria-hidden />
+        <span className="h-3 w-[3px] shrink-0 rounded-full bg-brand-primary" aria-hidden />
         <h4 className="text-[13px] font-medium leading-none text-[#333333]">{title}</h4>
       </div>
       <div className="px-3">{children}</div>
@@ -71,7 +71,7 @@ function ContactCheckboxList({
               );
               onChange(next);
             }}
-            className="size-4 shrink-0 accent-[#2768FA]"
+            className="size-4 shrink-0 accent-brand-primary"
           />
         </label>
       ))}
@@ -332,7 +332,7 @@ export function HotelBookPassengerDetails({
                 type="checkbox"
                 checked={form.isSkipApprove}
                 onChange={(event) => onUpdateForm({ isSkipApprove: event.target.checked })}
-                className="size-4 accent-[#2768FA]"
+                className="size-4 accent-brand-primary"
               />
             </label>
           ) : null}

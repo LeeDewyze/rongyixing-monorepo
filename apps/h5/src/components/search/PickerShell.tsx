@@ -64,7 +64,7 @@ export function PickerShell({
             />
             <button
               type="button"
-              className="shrink-0 rounded-full px-3 py-1 text-sm font-medium text-[#5099fe] active:opacity-80"
+              className="shrink-0 rounded-full px-3 py-1 text-sm font-medium text-brand-accent active:opacity-80"
               style={{ backgroundColor: "#e8eeff" }}
               onClick={onSearchClick}
             >

@@ -17,7 +17,7 @@ export function HotelDetailToolbar({
     <div className="mx-3 mt-3 flex items-center justify-between rounded-lg bg-white px-4 py-3 shadow-[0_1px_6px_rgba(0,0,0,0.04)]">
       <Link
         to={passengerHref}
-        className="relative inline-flex items-center gap-2 text-[14px] text-[#2768FA]"
+        className="relative inline-flex items-center gap-2 text-[14px] text-brand-primary"
       >
         <span>添加旅客</span>
         {passengerCount > 0 ? (
@@ -31,7 +31,7 @@ export function HotelDetailToolbar({
         type="button"
         disabled={!canFilterPolicy}
         onClick={onOpenPolicyFilter}
-        className="text-[14px] text-[#2768FA] disabled:text-[#CCCCCC]"
+        className="text-[14px] text-brand-primary disabled:text-[#CCCCCC]"
       >
         过滤差标
       </button>

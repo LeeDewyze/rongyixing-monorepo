@@ -37,7 +37,7 @@ export function HotelOrderCancelDialog({
           </button>
           <button
             type="button"
-            className="flex h-10 flex-1 items-center justify-center rounded-full bg-[#2768FA] text-[14px] text-white disabled:opacity-50"
+            className="flex h-10 flex-1 items-center justify-center rounded-full bg-brand-primary text-[14px] text-white disabled:opacity-50"
             onClick={onConfirm}
             disabled={pending}
           >
@@ -89,7 +89,7 @@ export function HotelOrderSmsSheet({
             value={mobile}
             onChange={(event) => setMobile(event.target.value)}
             placeholder="请输入手机号"
-            className="mt-4 w-full rounded-lg border border-[#EEEEEE] px-3 py-2.5 text-[14px] outline-none focus:border-[#2768FA]"
+            className="mt-4 w-full rounded-lg border border-[#EEEEEE] px-3 py-2.5 text-[14px] outline-none focus:border-brand-primary"
           />
         ) : (
           <input
@@ -98,7 +98,7 @@ export function HotelOrderSmsSheet({
             value={code}
             onChange={(event) => setCode(event.target.value)}
             placeholder="请输入验证码"
-            className="mt-4 w-full rounded-lg border border-[#EEEEEE] px-3 py-2.5 text-[14px] outline-none focus:border-[#2768FA]"
+            className="mt-4 w-full rounded-lg border border-[#EEEEEE] px-3 py-2.5 text-[14px] outline-none focus:border-brand-primary"
           />
         )}
         {error ? <p className="mt-2 text-center text-[13px] text-[#FF4D4F]">{error}</p> : null}
@@ -113,7 +113,7 @@ export function HotelOrderSmsSheet({
           </button>
           <button
             type="button"
-            className="flex h-10 flex-1 items-center justify-center rounded-full bg-[#2768FA] text-[14px] text-white disabled:opacity-50"
+            className="flex h-10 flex-1 items-center justify-center rounded-full bg-brand-primary text-[14px] text-white disabled:opacity-50"
             disabled={pending}
             onClick={() => {
               if (mode === "sendCode") {

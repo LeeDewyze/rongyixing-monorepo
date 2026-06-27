@@ -12,7 +12,7 @@ export function FlightCabinsTabs({ activeTab, onChange }: FlightCabinsTabsProps)
         type="button"
         className={`rounded-md py-2 text-[13px] font-medium transition ${
           activeTab === "economy"
-            ? "bg-[#5099fe] text-white shadow-sm"
+            ? "bg-brand-header-start text-white shadow-sm"
             : "text-[#666666]"
         }`}
         onClick={() => onChange("economy")}
@@ -23,7 +23,7 @@ export function FlightCabinsTabs({ activeTab, onChange }: FlightCabinsTabsProps)
         type="button"
         className={`rounded-md py-2 text-[13px] font-medium transition ${
           activeTab === "business"
-            ? "bg-[#5099fe] text-white shadow-sm"
+            ? "bg-brand-header-start text-white shadow-sm"
             : "text-[#666666]"
         }`}
         onClick={() => onChange("business")}

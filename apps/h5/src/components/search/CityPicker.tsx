@@ -232,7 +232,7 @@ export function CityPicker<T>({
               <button
                 key={letter}
                 type="button"
-                className="pointer-events-auto text-[11px] leading-3 text-[#999999] active:text-[#5099fe]"
+                className="pointer-events-auto text-[11px] leading-3 text-[#999999] active:text-brand-accent"
                 onClick={() => scrollToLetter(letter)}
               >
                 {letter}

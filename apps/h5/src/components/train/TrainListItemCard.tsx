@@ -12,7 +12,7 @@ import {
 import { TrainSeatRow } from "./TrainSeatRow";
 
 const TRAIN_TIME_CLASS =
-  "text-[16px] font-medium leading-[100%] tracking-[0] text-[#010101] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
+  "text-[16px] font-medium leading-[100%] tracking-[0] text-brand-title [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
 
 const TRAIN_STATION_CLASS =
   "truncate text-[14px] font-normal leading-[100%] tracking-[0] text-[#666666] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
@@ -24,7 +24,7 @@ const TRAIN_CODE_CLASS =
   "text-[11px] font-normal leading-[100%] tracking-[0] text-[#666666] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
 
 const TRAIN_DAY_TIP_CLASS =
-  "absolute right-0 bottom-full mb-0.5 whitespace-nowrap text-[10px] font-normal leading-[100%] tracking-[0] text-[#010101] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
+  "absolute right-0 bottom-full mb-0.5 whitespace-nowrap text-[10px] font-normal leading-[100%] tracking-[0] text-brand-title [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
 
 const TRAIN_PRICE_CLASS =
   "text-[24px] font-medium leading-[100%] tracking-[0] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";

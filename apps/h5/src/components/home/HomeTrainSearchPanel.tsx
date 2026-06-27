@@ -8,7 +8,7 @@ import { displayStationName } from "@/lib/train-search";
 import { HOME_ASSETS } from "@/config/home-assets";
 
 const HOME_PANEL_PRIMARY_TEXT =
-  "text-[17px] font-medium leading-none tracking-normal text-[#010101] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
+  "text-[17px] font-medium leading-none tracking-normal text-brand-title [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
 
 const HOME_PANEL_SECONDARY_TEXT =
   "text-[14px] font-[400] leading-[100%] tracking-[0] text-[#666666] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
@@ -96,7 +96,7 @@ export function HomeTrainSearchPanel({
           type="button"
           className="mt-4 flex h-10 w-full items-center justify-center rounded-[24px] text-[17px] font-medium text-white active:opacity-90"
           style={{
-            background: "linear-gradient(270deg, #2768FA 0%, #33A1F9 100%)",
+            background: "linear-gradient(270deg, var(--brand-btn-end) 0%, var(--brand-btn-start) 100%)",
             boxShadow: "0px 2px 16px 0px rgba(175, 175, 175, 0.2)",
           }}
           onClick={onSearch}

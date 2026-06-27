@@ -11,7 +11,7 @@ interface SearchPageLayoutProps {
 }
 
 const THEMES = {
-  sky: "from-[#5099fe] to-[#5099fe]/85",
+  sky: "from-brand-header-start to-brand-header-start/85",
   amber: "from-amber-600 to-amber-600/80",
   emerald: "from-emerald-600 to-emerald-600/80",
 } as const;

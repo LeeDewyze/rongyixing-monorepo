@@ -48,7 +48,7 @@ export function FlightBookInsurance({
                 checked={!selectedId}
                 disabled={selectionLocked}
                 onChange={() => onSelect("")}
-                className="size-4 accent-[#5099fe]"
+                className="size-4 accent-brand-accent"
               />
               <span className="text-[14px] text-[#666666]">不购买</span>
             </label>
@@ -70,7 +70,7 @@ export function FlightBookInsurance({
                       checked={selectedId === id}
                       disabled={selectionLocked}
                       onChange={() => onSelect(id)}
-                      className="mt-0.5 size-4 accent-[#5099fe]"
+                      className="mt-0.5 size-4 accent-brand-accent"
                     />
                     <span className="min-w-0 flex-1 text-[14px] text-[#333333]">
                       {product.Name}
@@ -82,7 +82,7 @@ export function FlightBookInsurance({
                   {hasDetail ? (
                     <button
                       type="button"
-                      className="shrink-0 text-[13px] text-[#5099fe]"
+                      className="shrink-0 text-[13px] text-brand-accent"
                       onClick={() => toggleDetail(id)}
                     >
                       详情{expanded ? " ▴" : " ▾"}
@@ -102,7 +102,7 @@ export function FlightBookInsurance({
                     {product.DetailUrl ? (
                       <button
                         type="button"
-                        className="mt-2 flex w-full items-center justify-between text-[13px] text-[#5099fe]"
+                        className="mt-2 flex w-full items-center justify-between text-[13px] text-brand-accent"
                         onClick={() => setDetailUrlProduct(product)}
                       >
                         <span>显示更多</span>

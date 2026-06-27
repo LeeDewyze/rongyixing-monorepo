@@ -37,14 +37,14 @@ export function HomeRecentTripPanel() {
   return (
     <section className="mx-3 mt-4 mb-4">
       <div className="overflow-hidden rounded-lg bg-white p-3">
-        <h2 className="mb-2 text-[16px] font-medium leading-6 text-[#010101]">近期出行</h2>
+        <h2 className="mb-2 text-[16px] font-medium leading-6 text-brand-title">近期出行</h2>
         <div
           className="flex items-center gap-3 overflow-hidden rounded-lg p-4"
           style={{ background: RECENT_TRIP_CARD_GRADIENT }}
         >
           <TripProductIcon type={RECENT_TRIP.type} />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[14px] font-medium leading-none tracking-normal text-[#010101] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]">
+            <p className="truncate text-[14px] font-medium leading-none tracking-normal text-brand-title [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]">
               {RECENT_TRIP.title}
             </p>
             <p className="mt-1.5 text-[14px] font-normal leading-none tracking-normal text-[#666666] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]">

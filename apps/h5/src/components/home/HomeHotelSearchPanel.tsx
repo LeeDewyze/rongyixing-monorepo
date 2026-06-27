@@ -64,7 +64,7 @@ export function HomeHotelSearchPanel({
         <div className="flex h-12 items-center gap-2 rounded-lg bg-[#F5F6F9] px-3">
           <button
             type="button"
-            className="flex shrink-0 items-center gap-0.5 text-[17px] font-medium text-[#010101]"
+            className="flex shrink-0 items-center gap-0.5 text-[17px] font-medium text-brand-title"
             onClick={onCitySelect}
           >
             {displayHotelCity(city)}
@@ -75,7 +75,7 @@ export function HomeHotelSearchPanel({
             value={keyword}
             placeholder="位置/品牌/酒店"
             onChange={(e) => onKeywordChange(e.target.value)}
-            className="min-w-0 flex-1 border-0 bg-transparent text-[17px] font-medium text-[#010101] outline-none placeholder:font-normal placeholder:text-[#999999]"
+            className="min-w-0 flex-1 border-0 bg-transparent text-[17px] font-medium text-brand-title outline-none placeholder:font-normal placeholder:text-[#999999]"
           />
           <button
             type="button"
@@ -95,14 +95,14 @@ export function HomeHotelSearchPanel({
           onClick={() => setDatePickerOpen(true)}
         >
           <span className="flex items-baseline gap-1">
-            <span className="text-[17px] font-medium text-[#010101]">
+            <span className="text-[17px] font-medium text-brand-title">
               {formatHotelDateShort(checkIn)}
             </span>
             <span className="text-[14px] text-[#666666]">{relativeDayLabel(checkIn)}</span>
           </span>
           <span className="mx-2 shrink-0 text-[14px] text-[#666666]">——</span>
           <span className="flex items-baseline gap-1">
-            <span className="text-[17px] font-medium text-[#010101]">
+            <span className="text-[17px] font-medium text-brand-title">
               {formatHotelDateShort(checkOut)}
             </span>
             <span className="text-[14px] text-[#666666]">{relativeDayLabel(checkOut)}</span>
@@ -118,7 +118,7 @@ export function HomeHotelSearchPanel({
           type="button"
           className="mt-4 flex h-10 w-full items-center justify-center rounded-[24px] text-[17px] font-medium text-white active:opacity-90"
           style={{
-            background: "linear-gradient(270deg, #2768FA 0%, #33A1F9 100%)",
+            background: "linear-gradient(270deg, var(--brand-btn-end) 0%, var(--brand-btn-start) 100%)",
             boxShadow: "0px 2px 16px 0px rgba(175, 175, 175, 0.2)",
           }}
           onClick={onSearch}

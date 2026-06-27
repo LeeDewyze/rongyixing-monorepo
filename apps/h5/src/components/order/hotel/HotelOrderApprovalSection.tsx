@@ -24,7 +24,7 @@ export function HotelOrderApprovalSection({ histories }: HotelOrderApprovalSecti
             className="rounded-lg bg-[#F8FAFC] px-3 py-2.5"
           >
             {item.TypeName ? (
-              <p className="text-[13px] font-medium text-[#2768FA]">{item.TypeName}</p>
+              <p className="text-[13px] font-medium text-brand-primary">{item.TypeName}</p>
             ) : null}
             <p className="mt-1 text-[14px] text-[#333333]">
               {[item.ApproverName, item.StatusName].filter(Boolean).join(" · ") || "—"}

@@ -22,7 +22,7 @@ function TravelTabIndicator({ active }: { active: boolean }) {
     <svg width="32" height="7" viewBox="0 0 32 7" className="shrink-0" aria-hidden>
       <path
         d="M4 2 Q16 7 28 2"
-        stroke={active ? "#2768FA" : "transparent"}
+        stroke={active ? "var(--brand-primary)" : "transparent"}
         strokeWidth="3"
         fill="none"
         strokeLinecap="round"
@@ -75,7 +75,7 @@ export function HomeHeroSection({
               <button
                 type="button"
                 className={`flex h-full flex-col items-center justify-center gap-1.5 text-[17px] leading-none ${
-                  isBusiness ? "font-semibold text-[#010101]" : "font-medium text-[#666666]"
+                  isBusiness ? "font-semibold text-brand-title" : "font-medium text-[#666666]"
                 }`}
                 onClick={() => onTravelModeChange("business")}
               >
@@ -85,7 +85,7 @@ export function HomeHeroSection({
               <button
                 type="button"
                 className={`flex h-full flex-col items-center justify-center gap-1.5 text-[17px] leading-none ${
-                  !isBusiness ? "font-semibold text-[#010101]" : "font-medium text-[#666666]"
+                  !isBusiness ? "font-semibold text-brand-title" : "font-medium text-[#666666]"
                 }`}
                 onClick={() => onTravelModeChange("personal")}
               >
@@ -118,14 +118,14 @@ export function HomeHeroSection({
                   </span>
                   <span
                     className={`text-[14px] leading-none ${
-                      active ? "font-semibold text-[#2768FA]" : "font-normal text-[#999999]"
+                      active ? "font-semibold text-brand-primary" : "font-normal text-[#999999]"
                     }`}
                   >
                     {product.label}
                   </span>
                   <span
                     className={`h-0.5 w-6 shrink-0 rounded-full ${
-                      active ? "bg-[#2768FA]" : "bg-transparent"
+                      active ? "bg-brand-primary" : "bg-transparent"
                     }`}
                     aria-hidden
                   />

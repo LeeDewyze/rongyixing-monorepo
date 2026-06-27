@@ -42,9 +42,9 @@ export function FlightCabinsSummary({ segment }: FlightCabinsSummaryProps) {
         </p>
 
         <div className="flex items-center">
-          <div className="h-px flex-1 bg-[#5099fe]/30" />
+          <div className="h-px flex-1 bg-brand-header-start/30" />
           <FlightRoutePlaneIcon className="mx-1 h-4 w-5 shrink-0" />
-          <div className="h-px flex-1 bg-[#5099fe]/30" />
+          <div className="h-px flex-1 bg-brand-header-start/30" />
         </div>
 
         <div className="relative min-w-0 text-right">

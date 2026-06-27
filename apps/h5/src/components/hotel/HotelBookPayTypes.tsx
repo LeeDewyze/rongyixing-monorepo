@@ -69,7 +69,7 @@ export function HotelBookPayTypes({
                 name="hotelPayType"
                 checked={value === option.value}
                 onChange={() => onChange(option.value)}
-                className="size-5 shrink-0 accent-[#2768FA]"
+                className="size-5 shrink-0 accent-brand-primary"
               />
             </label>
           ))}

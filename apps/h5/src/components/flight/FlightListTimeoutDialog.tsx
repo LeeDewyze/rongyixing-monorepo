@@ -13,7 +13,7 @@ function TimeoutClockIcon() {
       className="mx-auto flex size-[52px] items-center justify-center rounded-full bg-[linear-gradient(145deg,#EEF4FF_0%,#F7FAFF_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_6px_16px_rgba(39,104,250,0.12)] ring-1 ring-[#D6E4FF]"
       aria-hidden
     >
-      <svg viewBox="0 0 24 24" className="size-7 text-[#2768FA]" fill="none">
+      <svg viewBox="0 0 24 24" className="size-7 text-brand-primary" fill="none">
         <circle cx="12" cy="12" r="8.25" stroke="currentColor" strokeWidth="1.5" />
         <path
           d="M12 7.5V12l3 2.25"
@@ -71,7 +71,7 @@ export function FlightListTimeoutDialog({ open, onConfirm }: FlightListTimeoutDi
 
           <button
             type="button"
-            className="mt-4 flex h-11 w-full items-center justify-center rounded-[24px] bg-[linear-gradient(270deg,#2768FA_0%,#33A1F9_100%)] text-[15px] font-medium text-white shadow-[0_4px_12px_rgba(39,104,250,0.24)] active:scale-[0.99] active:opacity-95"
+            className="mt-4 flex h-11 w-full items-center justify-center rounded-[24px] bg-[linear-gradient(270deg,var(--brand-btn-end)_0%,var(--brand-btn-start)_100%)] text-[15px] font-medium text-white shadow-[0_4px_12px_rgba(39,104,250,0.24)] active:scale-[0.99] active:opacity-95"
             onClick={onConfirm}
           >
             我知道了

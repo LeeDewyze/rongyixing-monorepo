@@ -61,7 +61,7 @@ function DestructiveIcon() {
 
 function DefaultIcon() {
   return (
-    <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-[#EEF5FF] text-[#2768FA]">
+    <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-[#EEF5FF] text-brand-primary">
       <svg
         viewBox="0 0 24 24"
         className="size-6"
@@ -164,7 +164,7 @@ export function ConfirmDialog({
               className={
                 resolvedVariant === "destructive"
                   ? "flex h-11 flex-1 items-center justify-center rounded-full bg-[#FF4D4F] text-[14px] font-medium text-white shadow-[0_4px_12px_rgba(255,77,79,0.28)] active:opacity-90 disabled:opacity-50"
-                  : "flex h-11 flex-1 items-center justify-center rounded-full bg-[#2768FA] text-[14px] font-medium text-white shadow-[0_4px_12px_rgba(39,104,250,0.28)] active:opacity-90 disabled:opacity-50"
+                  : "flex h-11 flex-1 items-center justify-center rounded-full bg-brand-primary text-[14px] font-medium text-white shadow-[0_4px_12px_rgba(39,104,250,0.28)] active:opacity-90 disabled:opacity-50"
               }
               onClick={onConfirm}
             >

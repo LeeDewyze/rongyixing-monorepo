@@ -50,7 +50,7 @@ export const PASSWORD_LOGIN_LAYOUT = {
     height: 84,
     borderRadius: 12,
     fontSize: 32,
-    gradient: "linear-gradient(270deg, #2768fa 0%, #33a1f9 100%)",
+    gradient: "linear-gradient(270deg, var(--brand-btn-end) 0%, var(--brand-btn-start) 100%)",
     text: "登录",
   },
   forgotPasswordLink: {
@@ -66,7 +66,7 @@ export const PASSWORD_LOGIN_LAYOUT = {
     top: 708,
     fontSize: 24,
     checkboxSize: 28,
-    checkboxCheckedBg: "#33a1f9",
+    checkboxCheckedBg: "var(--brand-btn-start)",
     color: "#FFFFFF",
     text: "记住密码",
   },

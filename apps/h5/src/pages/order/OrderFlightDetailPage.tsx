@@ -26,36 +26,36 @@ export function OrderFlightDetailView({ orderId }: OrderFlightDetailViewProps) {
   return (
     <div className="space-y-4 p-4 pb-24">
       <section className="rounded-lg bg-white p-4">
-        <h2 className="text-base font-semibold text-[#010101]">
+        <h2 className="text-base font-semibold text-brand-title">
           {data.RouteTitle ?? "机票订单"}
         </h2>
         <dl className="mt-3 space-y-2 text-sm text-[#666666]">
           <div className="flex justify-between gap-3">
             <dt>订单号</dt>
-            <dd className="text-right text-[#010101]">{data.OrderNumber ?? data.OrderId}</dd>
+            <dd className="text-right text-brand-title">{data.OrderNumber ?? data.OrderId}</dd>
           </div>
           <div className="flex justify-between gap-3">
             <dt>状态</dt>
-            <dd className="text-right font-medium text-[#010101]">
+            <dd className="text-right font-medium text-brand-title">
               {data.StatusName ?? data.Status ?? "-"}
             </dd>
           </div>
           {data.TicketStatusName ? (
             <div className="flex justify-between gap-3">
               <dt>客票状态</dt>
-              <dd className="text-right text-[#010101]">{data.TicketStatusName}</dd>
+              <dd className="text-right text-brand-title">{data.TicketStatusName}</dd>
             </div>
           ) : null}
           {data.DepartTime ? (
             <div className="flex justify-between gap-3">
               <dt>起飞时间</dt>
-              <dd className="text-right text-[#010101]">{data.DepartTime}</dd>
+              <dd className="text-right text-brand-title">{data.DepartTime}</dd>
             </div>
           ) : null}
           {data.PassengerNames ? (
             <div className="flex justify-between gap-3">
               <dt>旅客姓名</dt>
-              <dd className="text-right text-[#010101]">{data.PassengerNames}</dd>
+              <dd className="text-right text-brand-title">{data.PassengerNames}</dd>
             </div>
           ) : null}
           <div className="flex justify-between gap-3">
@@ -70,7 +70,7 @@ export function OrderFlightDetailView({ orderId }: OrderFlightDetailViewProps) {
       {data.isShowPayButton ? (
         <Link
           to={`/flight/pay/${orderId}`}
-          className="fixed inset-x-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] block rounded-full bg-[#2768FA] py-3 text-center text-base font-medium text-white"
+          className="fixed inset-x-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] block rounded-full bg-brand-primary py-3 text-center text-base font-medium text-white"
         >
           去支付
         </Link>

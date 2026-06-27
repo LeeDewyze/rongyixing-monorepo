@@ -6,7 +6,7 @@ interface HotelListItemProps {
 }
 
 /** Figma — contracted hotel badge on list thumbnail. */
-const CONTRACT_HOTEL_BADGE_GRADIENT = "linear-gradient(270deg, #2768FA 0%, #33A1F9 100%)";
+const CONTRACT_HOTEL_BADGE_GRADIENT = "linear-gradient(270deg, var(--brand-btn-end) 0%, var(--brand-btn-start) 100%)";
 
 function StarRating({ count }: { count: number }) {
   return (
@@ -30,7 +30,7 @@ function StarRating({ count }: { count: number }) {
 
 function LocationIcon() {
   return (
-    <svg viewBox="0 0 16 16" className="h-[14px] w-[11px] shrink-0 text-[#2768FA]" aria-hidden>
+    <svg viewBox="0 0 16 16" className="h-[14px] w-[11px] shrink-0 text-brand-primary" aria-hidden>
       <path
         fill="currentColor"
         d="M8 1.5a4.5 4.5 0 0 0-4.5 4.5c0 3.2 4.5 8.5 4.5 8.5s4.5-5.3 4.5-8.5A4.5 4.5 0 0 0 8 1.5zm0 6a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"

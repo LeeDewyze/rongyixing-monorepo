@@ -774,7 +774,7 @@ export function buildHotelWarmReminderSections(
     {
       id: "booking",
       title: "预订提示",
-      accentClass: "bg-[#2768FA]",
+      accentClass: "bg-brand-primary",
       content: booking,
     },
   ];

@@ -10,7 +10,7 @@ interface HotelOrderDetailHeaderProps {
 
 function BackIcon() {
   return (
-    <svg viewBox="0 0 10 17" className="h-[17px] w-[10px] shrink-0 text-[#010101]" aria-hidden>
+    <svg viewBox="0 0 10 17" className="h-[17px] w-[10px] shrink-0 text-brand-title" aria-hidden>
       <path
         d="M9 1.5 2.5 8.5 9 15.5"
         fill="none"

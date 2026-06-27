@@ -27,8 +27,8 @@ export function HotelOrderRoomTabs({
             onClick={() => onSelect(index)}
             className={`flex h-9 w-20 shrink-0 items-center justify-center rounded-[24px] text-[14px] font-medium transition-colors ${
               active
-                ? "bg-[linear-gradient(270deg,#2768FA_0%,#33A1F9_100%)] text-white"
-                : "border border-[#2768FA] bg-white text-[#2768FA]"
+                ? "bg-[linear-gradient(270deg,var(--brand-btn-end)_0%,var(--brand-btn-start)_100%)] text-white"
+                : "border border-brand-primary bg-white text-brand-primary"
             }`}
           >
             {formatRoomLabel(index)}

@@ -23,7 +23,7 @@ function ExpandToggleButton({ expanded }: { expanded: boolean }) {
     <span
       className={`flex size-7 shrink-0 items-center justify-center rounded-full border transition-colors ${
         expanded
-          ? "border-[#D6E4FF] bg-[#EEF4FF] text-[#2768FA]"
+          ? "border-[#D6E4FF] bg-[#EEF4FF] text-brand-primary"
           : "border-[#E5E7EB] bg-[#FAFBFC] text-[#666666]"
       }`}
       aria-hidden
@@ -198,7 +198,7 @@ export function HotelDetailRoomCard({
                 event.stopPropagation();
                 onOpenRoomDetail();
               }}
-              className="inline-flex items-center gap-0.5 text-[12px] font-medium text-[#2768FA] active:opacity-70"
+              className="inline-flex items-center gap-0.5 text-[12px] font-medium text-brand-primary active:opacity-70"
             >
               房型详情
               <ChevronRightIcon />
@@ -209,12 +209,12 @@ export function HotelDetailRoomCard({
                 已满房
               </span>
             ) : lowestPrice != null ? (
-              <div className="flex items-baseline text-[#2768FA]">
+              <div className="flex items-baseline text-brand-primary">
                 <span className="text-[11px] font-medium">¥</span>
                 <span className="text-[24px] font-semibold leading-none tracking-tight">
                   {Math.round(lowestPrice)}
                 </span>
-                <span className="ml-0.5 text-[11px] font-medium text-[#2768FA]/80">起</span>
+                <span className="ml-0.5 text-[11px] font-medium text-brand-primary/80">起</span>
               </div>
             ) : null}
           </div>

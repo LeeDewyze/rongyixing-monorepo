@@ -43,7 +43,7 @@ export function HotelPassengerRequiredDialog({
         <div className="border-t border-[#E8ECF3]">
           <button
             type="button"
-            className="flex h-11 w-full items-center justify-center text-[17px] font-medium text-[#2768FA] transition-colors active:bg-[#F5F8FF]"
+            className="flex h-11 w-full items-center justify-center text-[17px] font-medium text-brand-primary transition-colors active:bg-[#F5F8FF]"
             onClick={onConfirm}
           >
             确定

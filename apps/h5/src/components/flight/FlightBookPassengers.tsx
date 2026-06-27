@@ -127,7 +127,7 @@ export function FlightBookPassengers({
     return (
       <div className="flex items-center justify-between rounded-xl bg-[#F8F9FC] px-3.5 py-3 ring-1 ring-[#EEF1F6]">
         <p className="text-[13px] text-[#999999]">请选择乘机人</p>
-        <Link to={selectPath} className="text-[14px] text-[#2768FA]" aria-label="选择乘机人">
+        <Link to={selectPath} className="text-[14px] text-brand-primary" aria-label="选择乘机人">
           去选择
         </Link>
       </div>

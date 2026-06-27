@@ -37,7 +37,7 @@ export function FlightBookFooter({
             onChange={(e) => onAgreedChange(e.target.checked)}
             className="peer absolute inset-0 opacity-0"
           />
-          <span className="size-5 rounded-full border border-[#b8b8b8] peer-checked:border-[#5099fe] peer-checked:bg-[#5099fe]" />
+          <span className="size-5 rounded-full border border-[#b8b8b8] peer-checked:border-[#5099fe] peer-checked:bg-brand-header-start" />
           <span className="pointer-events-none absolute hidden text-[13px] leading-none text-white peer-checked:block">
             ✓
           </span>

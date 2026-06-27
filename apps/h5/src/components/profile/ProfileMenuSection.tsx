@@ -33,7 +33,7 @@ function MenuRowContent({ item }: { item: ProfileMenuItem }) {
   return (
     <>
       <span className="flex size-[42px] shrink-0 items-center justify-center">{item.icon}</span>
-      <span className="min-w-0 flex-1 text-[16px] font-medium leading-none tracking-normal text-[#010101] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]">
+      <span className="min-w-0 flex-1 text-[16px] font-medium leading-none tracking-normal text-brand-title [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]">
         {item.label}
       </span>
       <ChevronRightIcon />
