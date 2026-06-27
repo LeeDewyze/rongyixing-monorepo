@@ -22,13 +22,13 @@ export const PROFILE_MENU_ITEMS: ProfileMenuItem[] = [
   {
     id: "contact",
     label: "联系我们",
-    comingSoon: true,
+    to: "/contact",
     icon: <MenuIcon src={PROFILE_ASSETS.menu.contact} />,
   },
   {
     id: "settings",
     label: "设置",
-    comingSoon: true,
+    to: "/settings",
     icon: <MenuIcon src={PROFILE_ASSETS.menu.settings} />,
   },
 ];

@@ -13,6 +13,8 @@ interface ImportMetaEnv {
   readonly VITE_PROXY_EXTRA_FIELDS?: string;
 }
 
+declare const __APP_VERSION__: string;
+
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }

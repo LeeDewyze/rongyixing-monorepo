@@ -1,11 +1,15 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { readFileSync } from "node:fs";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig, loadEnv } from "vite";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const monorepoRoot = path.resolve(__dirname, "../..");
+const appPackage = JSON.parse(readFileSync(path.resolve(__dirname, "package.json"), "utf8")) as {
+  version?: string;
+};
 
 /** Vite `/Jyx` dev proxy origin — must match `/Home/Setting` LoginUrl host for rtesp test. */
 const DEV_JYX_PROXY_TARGET = "http://ronglv-feature.rtesp.com";
@@ -26,6 +30,9 @@ const DEV_RYX_SERVICE_TARGETS: Record<string, string> = {
   TmcApiOrderUrl: "http://order-api-tmc.rtesp.com",
   WorkflowApiUrl: "http://api-workflow.rtesp.com",
   ApiMemberUrl: "http://member-api.rtesp.com",
+  ApiAccountUrl: "http://account-api.rtesp.com",
+  ApiPasswordUrl: "http://pass-api.rtesp.com",
+  ApiLoginUrl: "http://login-api.rtesp.com",
   ApiHomeUrl: DEV_API_HOME_TARGET,
 };
 
@@ -48,6 +55,9 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react(), tailwindcss()],
+    define: {
+      __APP_VERSION__: JSON.stringify(appPackage.version ?? "0.0.0"),
+    },
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),

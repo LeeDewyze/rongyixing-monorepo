@@ -1,0 +1,12 @@
+@keyframes legal-document-sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.legal-document-sheet-panel {
+  animation: legal-document-sheet-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}

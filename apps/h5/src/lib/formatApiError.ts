@@ -47,6 +47,9 @@ export function formatApiError(error: unknown, context: ApiErrorContext = "gener
     ) {
       return `测试环境接口不可达（HTTP ${error.status ?? "代理错误"}）。请检查网络/VPN，或在控制台执行 sessionStorage.setItem('ryx_api_mode','mock') 后刷新页面使用 Mock。`;
     }
+    if (error.message === "Request failed") {
+      return "请求失败，请稍后重试";
+    }
     return error.message || "请求失败";
   }
   if (error instanceof Error) {

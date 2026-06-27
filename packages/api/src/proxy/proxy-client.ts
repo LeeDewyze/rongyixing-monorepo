@@ -73,7 +73,8 @@ export function createProxyClient(config: ProxyClientConfig): ProxyClient {
     return apiConfig;
   }
 
-  function handleErrorCode(code: string, message: string): void {
+  function handleErrorCode(code: string | null | undefined, message: string): void {
+    if (!code) return;
     const normalized = code.toLowerCase();
     if (normalized === "nologin") {
       config.onUnauthorized?.();

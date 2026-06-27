@@ -24,6 +24,8 @@ export type {
 } from "./workbench.js";
 export { normalizeWorkbenchResponse } from "./workbench.js";
 
+export type { TmcData } from "./tmc-data.js";
+
 export type {
   DeviceLoginParams,
   IdentityDto,
@@ -111,6 +113,23 @@ export type {
   PassengerListParams,
   PassengerListResponse,
 } from "./member.js";
+
+export type {
+  AccountHomeSummary,
+  AccountSettingsItem,
+  AccountSettingsItemsResponse,
+  EmailSecurityActionParams,
+  EmailSecurityLoad,
+  EmailSecuritySendCodeParams,
+  MobileSecurityActionParams,
+  MobileSecurityLoad,
+  MobileSecuritySendCodeParams,
+  ModifyPasswordParams,
+  LoginDeviceItem,
+  RemoveLoginDeviceParams,
+  SettingsMenuActionKind,
+  SettingsMenuItem,
+} from "./account.js";
 
 export {
   CredentialType,

@@ -79,4 +79,21 @@ describe("createProxyClient mock mode", () => {
       client.send({ method: "Unknown-Method-Here", data: {} }),
     ).rejects.toMatchObject({ message: "missing", code: "MOCK_NOT_FOUND" });
   });
+
+  it("throws ApiError when response Code is null", async () => {
+    const client = createProxyClient({
+      baseUrl: "https://example.com",
+      mode: "mock",
+      mockHandler: async () => ({
+        Status: false,
+        Code: null as unknown as string,
+        Message: "验证码错误",
+        Data: null,
+      }),
+    });
+
+    await expect(client.send({ method: "Mobile-Action", data: {} })).rejects.toMatchObject({
+      message: "验证码错误",
+    });
+  });
 });

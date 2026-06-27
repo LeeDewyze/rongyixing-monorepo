@@ -35,6 +35,13 @@ import { TravelApplyPage } from "@/pages/travel/TravelApplyPage";
 import { TravelApprovalPage } from "@/pages/travel/TravelApprovalPage";
 import { TravelTaskPage } from "@/pages/travel/TravelTaskPage";
 import { CredentialListPage } from "@/pages/credential/CredentialListPage";
+import { AccountSecurityPage } from "@/pages/settings/AccountSecurityPage";
+import { BindMobilePage } from "@/pages/settings/BindMobilePage";
+import { ChangePasswordPage } from "@/pages/settings/ChangePasswordPage";
+import { MessageNotificationPage } from "@/pages/settings/MessageNotificationPage";
+import { LoginDevicesPage } from "@/pages/settings/LoginDevicesPage";
+import { SettingsPage } from "@/pages/settings/SettingsPage";
+import { ContactUsPage } from "@/pages/contact/ContactUsPage";
 
 export const router = createBrowserRouter([
   {
@@ -98,6 +105,27 @@ export const router = createBrowserRouter([
     path: "/credentials",
     element: <RootLayout />,
     children: [{ index: true, element: <CredentialListPage /> }],
+  },
+  {
+    path: "/settings",
+    element: <RootLayout />,
+    children: [
+      { index: true, element: <SettingsPage /> },
+      { path: "security", element: <AccountSecurityPage /> },
+      { path: "mobile", element: <BindMobilePage /> },
+      { path: "password", element: <ChangePasswordPage /> },
+      { path: "devices", element: <LoginDevicesPage /> },
+      { path: "notifications", element: <MessageNotificationPage /> },
+    ],
+  },
+  {
+    path: "/me/settings",
+    element: <Navigate to="/settings" replace />,
+  },
+  {
+    path: "/contact",
+    element: <RootLayout />,
+    children: [{ index: true, element: <ContactUsPage /> }],
   },
   {
     path: "/passenger",

@@ -6,6 +6,8 @@ import {
   type AuthProxyApi,
   type IdentityApi,
 } from "./apis/auth-proxy.js";
+import { createAccountApi, type AccountApi } from "./apis/account.js";
+import { createAccountSecurityApi, type AccountSecurityApi } from "./apis/account-security.js";
 import { createApprovalApi, type ApprovalApi } from "./apis/approval.js";
 import { createAuthApi } from "./apis/auth.js";
 import { createBookApi, type BookApi } from "./apis/book.js";
@@ -29,6 +31,12 @@ import {
 
 export { ApiError } from "./errors.js";
 export { createApiClient, type ApiClient, type ApiClientConfig } from "./client.js";
+export { createAccountApi, type AccountApi } from "./apis/account.js";
+export { createAccountSecurityApi, type AccountSecurityApi } from "./apis/account-security.js";
+export {
+  adaptAccountSettingsItems,
+  DEFAULT_SETTINGS_MENU,
+} from "./apis/account-settings-adapter.js";
 export { createApprovalApi, type ApprovalApi } from "./apis/approval.js";
 export {
   normalizeApprovalTask,
@@ -57,7 +65,11 @@ export {
 } from "./apis/flight-detail-adapter.js";
 export { stripFlightOrderBookDto } from "./apis/flight-book-adapter.js";
 export { createOrderApi, type OrderApi } from "./apis/order.js";
-export { normalizeFlightOrderDetail, normalizeHotelOrderDetail, normalizeTrainOrderDetail } from "./apis/order-detail-map.js";
+export {
+  normalizeFlightOrderDetail,
+  normalizeHotelOrderDetail,
+  normalizeTrainOrderDetail,
+} from "./apis/order-detail-map.js";
 export { createPayApi, type PayApi } from "./apis/pay.js";
 export { createPassengerApi, type PassengerApi } from "./apis/passenger.js";
 export { createMemberApi, type MemberApi } from "./apis/member.js";
@@ -74,6 +86,8 @@ export {
 } from "./apis/train-book-adapter.js";
 export { createTravelApi, type TravelApi } from "./apis/travel.js";
 export { createTmcApi, type TmcApi } from "./apis/tmc.js";
+export * from "./methods/account-flow.js";
+export * from "./methods/password-flow.js";
 export * from "./methods/approval-flow.js";
 export * from "./methods/auth-flow.js";
 export * from "./methods/flight-flow.js";
@@ -118,6 +132,8 @@ export interface Api {
   order: OrderApi;
   pay: PayApi;
   member: MemberApi;
+  account: AccountApi;
+  accountSecurity: AccountSecurityApi;
   passenger: PassengerApi;
   travel: TravelApi;
   train: TrainApi;
@@ -167,6 +183,8 @@ export function createApi(config: CreateApiConfig): Api {
     order: createOrderApi(proxy),
     pay: createPayApi(proxy),
     member: createMemberApi(proxy),
+    account: createAccountApi(proxy),
+    accountSecurity: createAccountSecurityApi(proxy),
     passenger: createPassengerApi(proxy),
     travel: createTravelApi(proxy),
     train: createTrainApi(proxy),

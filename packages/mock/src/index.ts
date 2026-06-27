@@ -1,3 +1,4 @@
+import { createAccountMockHandlers } from "./handlers/account.js";
 import { createApprovalMockHandlers } from "./handlers/approval.js";
 import { createAuthMockHandlers } from "./handlers/auth.js";
 import { createFlightMockHandlers } from "./handlers/flight.js";
@@ -35,6 +36,7 @@ export function createDefaultMockRegistry() {
   return createMockRegistry(
     mergeHandlers(
       createApprovalMockHandlers(),
+      createAccountMockHandlers(),
       createAuthMockHandlers(),
       createHotelMockHandlers(),
       createOrderMockHandlers(),
@@ -57,6 +59,7 @@ export function listDefaultMockMethods(): string[] {
   return Object.keys(
     mergeHandlers(
       createApprovalMockHandlers(),
+      createAccountMockHandlers(),
       createAuthMockHandlers(),
       createHotelMockHandlers(),
       createOrderMockHandlers(),

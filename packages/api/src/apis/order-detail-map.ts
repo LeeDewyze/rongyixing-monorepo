@@ -934,7 +934,7 @@ function mapLegacyFlightDetail(payload: LegacyRecord): HotelOrderDetail {
       : undefined,
     DepartTime: firstTrip?.TakeoffTime,
     PassengerNames: passengerNames,
-    TicketStatusName: firstTicket?.AppStatusName ?? firstTicket?.StatusName,
+    TicketStatusName: firstTicket?.StatusName,
     Tickets: tickets,
     BillItems: rawBillItems,
     Histories: asArray<LegacyRecord>(payload.Histories).map(mapHistory),
