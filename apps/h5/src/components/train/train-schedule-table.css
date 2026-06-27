@@ -57,9 +57,6 @@
 }
 
 .train-schedule__body {
-  max-height: min(48vh, 300px);
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
   padding: 2px 0 6px;
 }
 
