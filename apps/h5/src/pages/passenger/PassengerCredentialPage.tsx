@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import type { CredentialFormMode, CredentialFormValues } from "@ryx/shared-types";
 
@@ -16,6 +16,7 @@ import {
   buildCredentialReturnPath,
   credentialFormFromCredential,
   credentialFormFromPassenger,
+  credentialFormWithFixedName,
   emptyCredentialForm,
   validateCredentialForm,
 } from "@/lib/credential-form";
@@ -39,6 +40,7 @@ export function PassengerCredentialPage() {
 
   const mode = (searchParams.get("mode") ?? "external") as CredentialFormMode;
   const addNew = searchParams.get("addNew") === "1";
+  const isExternalMode = mode === "external";
   const staffId = searchParams.get("staffId") ?? state.staffId;
   const returnTo =
     searchParams.get("returnTo") ??
@@ -65,13 +67,13 @@ export function PassengerCredentialPage() {
   const isRemoving = removeExternal.isPending || removeStaff.isPending;
   const isCredentialOnlyMode = mode === "self" || mode === "staff";
   const fixedName = mode === "self" ? normalizeCredentialName(memberProfile?.RealName ?? memberProfile?.Name ?? "") : "";
-  const title = isCredentialOnlyMode
+  const title = isExternalMode
     ? isEdit
-      ? "编辑证件"
-      : "新增证件"
+      ? "编辑出行人"
+      : "新增出行人"
     : isEdit
-      ? "编辑乘机人信息"
-      : "新增乘机人信息";
+      ? "编辑证件"
+      : "新增证件";
   const primaryLabel = isSaving
     ? "保存中…"
     : isCredentialOnlyMode
@@ -79,15 +81,22 @@ export function PassengerCredentialPage() {
         ? "修改信息"
         : "保存"
       : "保存并使用该证件";
+  const backTo = isExternalMode ? "/passenger/select?forType=1" : returnTo;
+
+  useEffect(() => {
+    if (mode !== "self" || !fixedName) return;
+    setValues((current) => credentialFormWithFixedName(current, fixedName));
+  }, [fixedName, mode]);
 
   usePageHeader({ visible: false });
 
   async function handleSave() {
-    if (mode === "self" && normalizeCredentialName(values.Name) !== fixedName) {
-      setError("证件姓名必须与真实姓名一致");
+    const submitValues = mode === "self" && fixedName ? credentialFormWithFixedName(values, fixedName) : values;
+    if (mode === "self" && !fixedName) {
+      setError("未获取到真实姓名");
       return;
     }
-    const validationError = validateCredentialForm(values, mode);
+    const validationError = validateCredentialForm(submitValues, mode);
     if (validationError) {
       setError(validationError);
       return;
@@ -95,9 +104,9 @@ export function PassengerCredentialPage() {
     setError("");
     try {
       if (mode === "external") {
-        await saveExternal.mutateAsync(values);
+        await saveExternal.mutateAsync(submitValues);
       } else {
-        await saveStaff.mutateAsync({ ...values, StaffId: staffId ?? values.StaffId });
+        await saveStaff.mutateAsync({ ...submitValues, StaffId: staffId ?? submitValues.StaffId });
       }
       navigate(returnTo, { replace: true });
     } catch (err) {
@@ -140,7 +149,7 @@ export function PassengerCredentialPage() {
     <>
       <CredentialFormShell
         title={title}
-        onBack={() => navigate(returnTo)}
+        onBack={() => navigate(backTo)}
         footer={
           <div className="mx-auto max-w-lg space-y-3">
             <button
