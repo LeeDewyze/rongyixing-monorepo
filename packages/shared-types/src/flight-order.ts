@@ -17,6 +17,7 @@ export interface FlightOrderTrip {
   CabinType?: string;
   FlyTime?: string;
   IsStop?: boolean;
+  IsTransfer?: boolean;
   StopCities?: string;
   Airline?: string;
   AirlineName?: string;

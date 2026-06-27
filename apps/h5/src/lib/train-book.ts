@@ -443,8 +443,13 @@ export function resolveTrainBookDisplayAmount(
   return resolveTrainBookBillBreakdown({ selection, passengers, serviceFees }).total;
 }
 
-export function resolveTrainBookOrderId(response: { OrderId?: string } | undefined): string {
-  return response?.OrderId?.trim() ?? "";
+export function resolveTrainBookOrderId(
+  response: { TradeNo?: string; OrderId?: string } | undefined,
+): string {
+  if (!response) return "";
+  const tradeNo = response.TradeNo?.trim();
+  if (tradeNo && tradeNo !== "0") return tradeNo;
+  return response.OrderId?.trim() ?? "";
 }
 
 export function createTrainPassengerBookForm(passenger: PassengerBookInfo): TrainPassengerBookForm {

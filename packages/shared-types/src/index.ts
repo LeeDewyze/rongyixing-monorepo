@@ -94,6 +94,7 @@ export {
   CREDENTIAL_TYPE_OPTIONS,
   LEGACY_MEMBER_CREDENTIAL_TYPE_OPTIONS,
   isIdCardType,
+  inferCredentialTypeLabelFromMaskedNumber,
   PASSENGER_TYPE_ADULT,
   PASSENGER_TYPE_LABELS,
   PassengerType,

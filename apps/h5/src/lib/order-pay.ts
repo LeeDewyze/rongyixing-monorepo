@@ -7,7 +7,7 @@ export function requiresPersonalPayment(travelPayType: number | null | undefined
 }
 
 export function formatPayHoldCountdown(totalSeconds: number): string {
-  const safe = Math.max(0, totalSeconds);
+  const safe = Math.max(0, Math.floor(totalSeconds));
   const minutes = Math.floor(safe / 60);
   const seconds = safe % 60;
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
@@ -15,7 +15,7 @@ export function formatPayHoldCountdown(totalSeconds: number): string {
 
 export function resolvePayHoldSeconds(payHoldTime?: number): number | null {
   if (typeof payHoldTime !== "number" || payHoldTime <= 0) return null;
-  return payHoldTime * 60;
+  return Math.floor(payHoldTime * 60);
 }
 
 export function resolveCheckoutSuccessMessage(input: {

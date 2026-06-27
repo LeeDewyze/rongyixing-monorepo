@@ -11,8 +11,8 @@ import { formatFlightBookRouteSubtitle, formatFlightBookDuration } from "@/lib/f
 import { formatFlightTime } from "@/utils/flight-list";
 import {
   formatArrivalDateBadge,
-  formatFlightListPlaneLabel,
   formatFlightLocationLabel,
+  formatFlightOrderTripMetaLine,
   formatOrderTripAirlineFlightLabel,
 } from "@/utils/flight-list-display";
 
@@ -45,9 +45,9 @@ function AirlineLogo({ trip }: { trip: FlightOrderTrip }) {
 
 function TripMetaFooter({ trip }: { trip: FlightOrderTrip }) {
   const airlineFlightLabel = formatOrderTripAirlineFlightLabel(trip);
-  const planeLabel = formatFlightListPlaneLabel(trip.PlaneTypeDescribe, trip.PlaneType);
+  const metaLine = formatFlightOrderTripMetaLine(trip);
 
-  if (!trip.AirlineSrc && !airlineFlightLabel && !planeLabel) {
+  if (!trip.AirlineSrc && !airlineFlightLabel && !metaLine) {
     return null;
   }
 
@@ -59,9 +59,9 @@ function TripMetaFooter({ trip }: { trip: FlightOrderTrip }) {
           {airlineFlightLabel}
         </span>
       ) : null}
-      {planeLabel ? (
-        <span className="ml-5 shrink-0 text-[12px] font-normal leading-none text-[#666666]">
-          {planeLabel}
+      {metaLine ? (
+        <span className="ml-5 min-w-0 shrink text-[12px] font-normal leading-snug text-[#666666]">
+          {metaLine}
         </span>
       ) : null}
     </div>

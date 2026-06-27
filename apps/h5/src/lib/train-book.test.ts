@@ -7,6 +7,7 @@ import {
   buildTrainOrderBookDto,
   createTrainPassengerBookForm,
   resolveTrainBookBillBreakdown,
+  resolveTrainBookOrderId,
   validateTrainBookForms,
 } from "./train-book";
 import type { TrainBookSelection } from "./train-book-session";
@@ -209,5 +210,17 @@ describe("validateTrainBookForms", () => {
         requireIllegalReason: false,
       }),
     ).toBeNull();
+  });
+});
+
+describe("resolveTrainBookOrderId", () => {
+  it("prefers TradeNo over OrderId", () => {
+    expect(resolveTrainBookOrderId({ TradeNo: "20760000000204", OrderId: "ORD-1" })).toBe(
+      "20760000000204",
+    );
+  });
+
+  it("falls back to OrderId when TradeNo is missing", () => {
+    expect(resolveTrainBookOrderId({ OrderId: "ORD-1" })).toBe("ORD-1");
   });
 });

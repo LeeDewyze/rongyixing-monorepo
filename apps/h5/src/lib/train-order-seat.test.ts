@@ -76,5 +76,12 @@ describe("train-order-seat", () => {
         ticket: { Detail: "06车01A号" },
       }),
     ).toBe("06车01A号");
+
+    expect(
+      formatTrainOrderSeatAssignment({
+        trip: baseTrip,
+        ticket: { Detail: "车厢号：05,座位号：003F,座位名称：03F号" },
+      }),
+    ).toBe("车厢号：05,座位号：003F,座位名称：03F号");
   });
 });

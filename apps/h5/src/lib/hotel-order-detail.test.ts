@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { inferCredentialTypeLabelFromMaskedNumber } from "@ryx/shared-types";
 
 import {
   filterBillLinesForRoom,
@@ -39,10 +40,14 @@ describe("traveler credential display", () => {
   it("shows credential type beside masked numbers", () => {
     expect(shouldShowTravelerCredentialType("护照")).toBe(true);
     expect(shouldShowTravelerCredentialType("身份证")).toBe(true);
+    expect(shouldShowTravelerCredentialType("0")).toBe(false);
+    expect(normalizeTravelerCredentialTypeLabel("0")).toBeUndefined();
     expect(formatTravelerCredentialDisplay("EB68***94", "护照")).toBe("EB68***94 护照");
     expect(formatTravelerCredentialDisplay("410928********5121", "身份证")).toBe(
       "410928********5121 身份证",
     );
+    expect(inferCredentialTypeLabelFromMaskedNumber("410928********5121")).toBe("身份证");
+    expect(inferCredentialTypeLabelFromMaskedNumber("EB68***94")).toBe("护照");
   });
 });
 

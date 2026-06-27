@@ -15,6 +15,7 @@ import type {
 } from "@ryx/shared-types";
 import {
   CREDENTIAL_TYPE_LABELS,
+  inferCredentialTypeLabelFromMaskedNumber,
   maskCredentialNumber,
   parseTravelTimeMinutes,
 } from "@ryx/shared-types";
@@ -30,6 +31,7 @@ import {
   readString,
   type LegacyRecord,
 } from "./legacy-parse.js";
+import { formatCabinTypeName } from "./flight-detail-adapter.js";
 
 function joinNames(values: Array<string | undefined>): string {
   return values.filter((name): name is string => Boolean(name)).join("、");
@@ -78,7 +80,8 @@ function mapFlightDetail(order: LegacyRecord): OrderDetailResponse | null {
       `${readString(trip.FlightNumber)} ${readString(trip.FromCityName)}—${readString(trip.ToCityName)}`.trim(),
     DepartTime: formatDateTime(trip.TakeoffTime ?? trip.DepartTime),
     PassengerNames: passengerNames,
-    TicketStatusName: readString(ticket?.StatusName ?? ticket?.Status) || undefined,
+    TicketStatusName:
+      readString(ticket?.AppStatusName ?? ticket?.StatusName ?? ticket?.Status) || undefined,
     isShowPayButton: readPayButton(ticketVariables ?? variables),
   };
 }
@@ -142,7 +145,8 @@ function mapTrainDetail(order: LegacyRecord): OrderDetailResponse | null {
       `${readString(trip.TrainCode)} ${readString(trip.FromStationName)}—${readString(trip.ToStationName)}`.trim(),
     DepartTime: formatDateTime(trip.StartTime ?? trip.DepartureTime ?? trip.GoDate),
     PassengerNames: passengerNames,
-    TicketStatusName: readString(ticket?.StatusName ?? ticket?.Status) || undefined,
+    TicketStatusName:
+      readString(ticket?.AppStatusName ?? ticket?.StatusName ?? ticket?.Status) || undefined,
     isShowPayButton: readPayButton(ticketVariables ?? variables),
   };
 }
@@ -249,19 +253,38 @@ function resolveOrderPassenger(
 ): LegacyRecord | null {
   const hotelPassenger = asRecord(hotel.Passenger);
   const passengerId = readString(hotelPassenger?.Id);
+  let matched: LegacyRecord | null = null;
   if (passengerId) {
-    const matched = orderPassengers.find((item) => readString(item.Id) === passengerId);
-    if (matched) {
-      return matched;
-    }
+    matched = orderPassengers.find((item) => readString(item.Id) === passengerId) ?? null;
   }
-  if (roomKey) {
-    const matched = orderPassengers.find((item) => readString(item.Key) === roomKey);
-    if (matched) {
-      return matched;
-    }
+  if (!matched && roomKey) {
+    matched = orderPassengers.find((item) => readString(item.Key) === roomKey) ?? null;
   }
-  return orderPassengers[0] ?? hotelPassenger;
+  const resolved = matched ?? orderPassengers[0] ?? hotelPassenger;
+  if (!resolved && !hotelPassenger) {
+    return null;
+  }
+  return { ...hotelPassenger, ...resolved };
+}
+
+function resolvePassengerCredential(passenger: LegacyRecord): LegacyRecord | null {
+  const credential = passenger.Credential;
+  if (credential && typeof credential === "object" && !Array.isArray(credential)) {
+    return asRecord(credential);
+  }
+
+  const credentials = passenger.Credentials;
+  if (Array.isArray(credentials)) {
+    const first = credentials.find(
+      (item) => item && typeof item === "object" && !Array.isArray(item),
+    );
+    return first ? asRecord(first) : null;
+  }
+  if (credentials && typeof credentials === "object") {
+    return asRecord(credentials);
+  }
+
+  return null;
 }
 
 const CREDENTIAL_TYPE_ENUM_LABELS: Record<string, string> = {
@@ -281,14 +304,16 @@ const CREDENTIAL_TYPE_ENUM_LABELS: Record<string, string> = {
 function resolveCredentialTypeName(
   passenger: LegacyRecord,
   credential?: LegacyRecord,
+  maskedNumber?: string,
 ): string | undefined {
   const typeName = readString(
     passenger.CredentialsTypeName ??
       passenger.CredentialTypeName ??
+      passenger.TypeName ??
       credential?.CredentialsTypeName ??
       credential?.TypeName,
   );
-  if (typeName) {
+  if (typeName && !/^\d+$/.test(typeName)) {
     return typeName;
   }
 
@@ -298,7 +323,7 @@ function resolveCredentialTypeName(
     credential?.CredentialsType ??
     credential?.Type;
   const typeCode = readNumber(rawType);
-  if (typeCode != null && CREDENTIAL_TYPE_LABELS[typeCode]) {
+  if (typeCode != null && typeCode > 0 && CREDENTIAL_TYPE_LABELS[typeCode]) {
     return CREDENTIAL_TYPE_LABELS[typeCode];
   }
 
@@ -307,11 +332,11 @@ function resolveCredentialTypeName(
     return CREDENTIAL_TYPE_ENUM_LABELS[typeKey];
   }
 
-  return typeKey || undefined;
+  return inferCredentialTypeLabelFromMaskedNumber(maskedNumber);
 }
 
 function resolveCredentialNumber(passenger: LegacyRecord): string | undefined {
-  const credential = asRecord(passenger.Credential) ?? asRecord(passenger.Credentials);
+  const credential = resolvePassengerCredential(passenger);
   const hideNumber = readString(
     passenger.HideCredentialsNumber ?? passenger.HideNumber ?? credential?.HideNumber,
   );
@@ -383,10 +408,9 @@ function mapTraveler(
   }
 
   const credential =
-    asRecord(passenger.Credential) ??
-    asRecord(passenger.Credentials) ??
+    resolvePassengerCredential(passenger) ??
     asRecord(hotelPassenger?.Credential) ??
-    asRecord(hotelPassenger?.Credentials);
+    resolvePassengerCredential(hotelPassenger ?? {});
   const costCenterCode = joinTravelField(orderTravels, roomKey, "CostCenterCode");
   const costCenterName = joinTravelField(orderTravels, roomKey, "CostCenterName");
   const organizationCode = joinTravelField(orderTravels, roomKey, "OrganizationCode");
@@ -395,13 +419,14 @@ function mapTraveler(
   const illegalPolicy = joinTravelField(orderTravels, roomKey, "IllegalPolicy");
   const illegalReason = joinTravelField(orderTravels, roomKey, "IllegalReason");
   const passengerKey = readString(passenger.Key);
+  const credentialNumber =
+    resolveCredentialNumber(passenger) ??
+    (hotelPassenger ? resolveCredentialNumber(hotelPassenger) : undefined);
 
   return {
     Name: readString(passenger.Name ?? hotelPassenger?.Name) || undefined,
-    CredentialType: resolveCredentialTypeName(passenger, credential ?? undefined),
-    CredentialNumber:
-      resolveCredentialNumber(passenger) ??
-      (hotelPassenger ? resolveCredentialNumber(hotelPassenger) : undefined),
+    CredentialType: resolveCredentialTypeName(passenger, credential ?? undefined, credentialNumber),
+    CredentialNumber: credentialNumber,
     Mobile:
       readString(
         passenger.Mobile ?? passenger.Phone ?? hotelPassenger?.Mobile ?? hotelPassenger?.Phone,
@@ -694,6 +719,37 @@ function variablesSelfPay(order: LegacyRecord): number | undefined {
 const FLIGHT_PAY_TYPE_PERSON = 2;
 const FLIGHT_PAY_TYPE_CREDIT = 4;
 
+function resolveFlightCabinTypeLabel(
+  ...sources: Array<LegacyRecord | undefined>
+): string | undefined {
+  for (const source of sources) {
+    if (!source) continue;
+    const name = readString(
+      source.CabinTypeName ?? source.CabinTypeAttach ?? source.CabinName ?? source.SeatTypeName,
+    );
+    if (name && !/^\d+$/.test(name)) {
+      return name;
+    }
+  }
+
+  for (const source of sources) {
+    if (!source) continue;
+    const text = readString(source.CabinType ?? source.Cabin);
+    if (text && !/^\d+$/.test(text)) {
+      return text;
+    }
+    const code = readNumber(source.CabinType ?? source.Cabin);
+    if (code != null) {
+      const labeled = formatCabinTypeName(code);
+      if (labeled) {
+        return labeled;
+      }
+    }
+  }
+
+  return undefined;
+}
+
 function mapFlightTrip(trip: LegacyRecord): FlightOrderTrip {
   return {
     FromCityName: readString(trip.FromCityName) || undefined,
@@ -710,9 +766,10 @@ function mapFlightTrip(trip: LegacyRecord): FlightOrderTrip {
     PlaneTypeDescribe:
       readString(trip.PlaneTypeDescribe ?? trip.AirplaneTypeDescribe ?? trip.PlaneDescribe) ||
       undefined,
-    CabinType: readString(trip.CabinType ?? trip.Cabin) || undefined,
+    CabinType: resolveFlightCabinTypeLabel(trip),
     FlyTime: readString(trip.FlyTime ?? trip.Duration) || undefined,
     IsStop: Boolean(trip.IsStop),
+    IsTransfer: Boolean(trip.IsTransfer),
     StopCities: readString(trip.StopCities) || undefined,
     Airline: readString(trip.Airline ?? trip.Carrier) || undefined,
     AirlineName: readString(trip.AirlineName) || undefined,
@@ -723,6 +780,7 @@ function mapFlightTrip(trip: LegacyRecord): FlightOrderTrip {
 }
 
 function enrichFlightTripFromTicket(trip: FlightOrderTrip, ticket: LegacyRecord): FlightOrderTrip {
+  const ticketVariables = parseVariablesObj(ticket);
   return {
     ...trip,
     Airline: trip.Airline ?? (readString(ticket.Airline ?? ticket.Carrier) || undefined),
@@ -732,9 +790,14 @@ function enrichFlightTripFromTicket(trip: FlightOrderTrip, ticket: LegacyRecord)
     CodeShareAirlineName:
       trip.CodeShareAirlineName ?? (readString(ticket.CodeShareAirlineName) || undefined),
     CodeShareNumber: trip.CodeShareNumber ?? (readString(ticket.CodeShareNumber) || undefined),
+    PlaneType: trip.PlaneType ?? (readString(ticket.PlaneType ?? ticket.AirplaneType) || undefined),
     PlaneTypeDescribe:
       trip.PlaneTypeDescribe ??
       (readString(ticket.PlaneTypeDescribe ?? ticket.AirplaneTypeDescribe) || undefined),
+    CabinType: trip.CabinType ?? resolveFlightCabinTypeLabel(ticket, ticketVariables),
+    IsStop: trip.IsStop || Boolean(ticket.IsStop ?? ticketVariables?.IsStop),
+    IsTransfer: trip.IsTransfer || Boolean(ticket.IsTransfer ?? ticketVariables?.IsTransfer),
+    StopCities: trip.StopCities ?? (readString(ticket.StopCities) || undefined),
   };
 }
 
@@ -871,7 +934,7 @@ function mapLegacyFlightDetail(payload: LegacyRecord): HotelOrderDetail {
       : undefined,
     DepartTime: firstTrip?.TakeoffTime,
     PassengerNames: passengerNames,
-    TicketStatusName: firstTicket?.StatusName,
+    TicketStatusName: firstTicket?.AppStatusName ?? firstTicket?.StatusName,
     Tickets: tickets,
     BillItems: rawBillItems,
     Histories: asArray<LegacyRecord>(payload.Histories).map(mapHistory),
@@ -938,8 +1001,10 @@ function mapTrainTicket(
   orderNumbers: LegacyRecord[],
 ): TrainOrderTicket {
   const key = readString(ticket.Key ?? ticket.Id);
+  const ticketVariables = parseVariablesObj(ticket);
   const passenger = asRecord(ticket.Passenger);
-  const pseudoHotel = { Passenger: passenger };
+  const enrichedPassenger = passenger ? { ...passenger, ...ticketVariables } : passenger;
+  const pseudoHotel = { Passenger: enrichedPassenger };
   const traveler = mapTraveler(pseudoHotel, key, orderPassengers, orderTravels, orderNumbers);
   const trips = asArray<LegacyRecord>(ticket.OrderTrainTrips).map((trip) =>
     mapTrainTrip(trip, ticket),
@@ -952,6 +1017,7 @@ function mapTrainTicket(
     Key: key,
     Status: readString(ticket.Status) || undefined,
     StatusName: readString(ticket.StatusName ?? ticket.Status) || undefined,
+    AppStatusName: readString(ticket.AppStatusName ?? ticketVariables?.AppStatusName) || undefined,
     FullTicketNo: readString(ticket.FullTicketNo ?? ticket.TicketNo) || undefined,
     Explain: readString(ticket.Explain) || undefined,
     SeatTypeName: readString(ticket.SeatTypeName) || undefined,
@@ -971,21 +1037,40 @@ function sortTrainTicketsForTabs(tickets: TrainOrderTicket[]): TrainOrderTicket[
   return [...tickets].sort(byIdDesc);
 }
 
-function resolveTrainIssueFlag(variables?: LegacyRecord, tickets?: TrainOrderTicket[]): boolean {
-  if (!variables) {
+function isTrainTicketPendingIssue(ticket: TrainOrderTicket): boolean {
+  const label = (ticket.AppStatusName ?? ticket.StatusName ?? "").trim();
+  return label.includes("待出票");
+}
+
+function isTrainOrderPendingIssue(order: LegacyRecord): boolean {
+  const status = readString(order.Status);
+  const statusName = readString(order.StatusName ?? order.Status);
+  return status === "WaitIssue" || statusName.includes("待出票");
+}
+
+function resolveTrainIssueFlag(
+  variables: LegacyRecord | undefined,
+  tickets: TrainOrderTicket[] | undefined,
+  order: LegacyRecord,
+): boolean {
+  if (variables?.isShowIssueButton === true || variables?.isShowIssueTrainButton === true) {
+    return true;
+  }
+  const btnValue = readString(variables?.btnValue);
+  if (readNumber(variables?.isBtn) === 1 && btnValue === "确认出票") {
+    return true;
+  }
+
+  const pendingIssue =
+    isTrainOrderPendingIssue(order) || Boolean(tickets?.some(isTrainTicketPendingIssue));
+  if (!pendingIssue) {
     return false;
   }
-  if (variables.isShowIssueButton === true || variables.isShowIssueTrainButton === true) {
-    return true;
+  if (variables?.isShowIssueButton === false) {
+    return false;
   }
-  const btnValue = readString(variables.btnValue);
-  if (readNumber(variables.isBtn) === 1 && btnValue === "确认出票") {
-    return true;
-  }
-  const hasPendingIssue = tickets?.some((ticket) => ticket.StatusName?.includes("待出票"));
-  return Boolean(
-    hasPendingIssue && variables.isShowIssueButton !== false && btnValue === "确认出票",
-  );
+
+  return btnValue === "确认出票" || variables?.isShowIssueButton !== false;
 }
 
 function buildTrainActionFlags(
@@ -1001,7 +1086,7 @@ function buildTrainActionFlags(
     travelPayTypeCode === FLIGHT_PAY_TYPE_PERSON || travelPayTypeCode === FLIGHT_PAY_TYPE_CREDIT;
   const showPay =
     Boolean(orderVariables?.isPay) && status !== "WaitHandle" && isPersonalPay && hasHoldWindow;
-  const showIssue = resolveTrainIssueFlag(orderVariables, tickets);
+  const showIssue = resolveTrainIssueFlag(orderVariables, tickets, order);
   const showCancel =
     Boolean(orderVariables?.isShowCancelButton) || showPay || showIssue || hasHoldWindow;
 
@@ -1078,7 +1163,7 @@ function mapLegacyTrainDetail(payload: LegacyRecord): HotelOrderDetail {
       : undefined,
     DepartTime: firstTrip?.StartTime,
     PassengerNames: passengerNames,
-    TicketStatusName: firstTicket?.StatusName,
+    TicketStatusName: firstTicket?.AppStatusName ?? firstTicket?.StatusName,
     Tickets: tickets,
     BillItems: rawBillItems,
     Histories: asArray<LegacyRecord>(payload.Histories).map(mapHistory),

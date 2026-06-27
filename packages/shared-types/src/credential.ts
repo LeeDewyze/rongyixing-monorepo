@@ -79,6 +79,22 @@ export function isIdCardType(type: number): boolean {
   return type === CredentialType.IdCard;
 }
 
+/** Infer credential type label from a masked number when API omits type metadata. */
+export function inferCredentialTypeLabelFromMaskedNumber(number?: string): string | undefined {
+  const value = number?.trim();
+  if (!value) return undefined;
+
+  if (/^\d{6}\*+\d{3}[\dXx]$/.test(value) || /^\d{6}\*+\d{4}$/.test(value)) {
+    return CREDENTIAL_TYPE_LABELS[CredentialType.IdCard];
+  }
+
+  if (/^[A-Za-z][A-Za-z0-9]*\*+/.test(value)) {
+    return CREDENTIAL_TYPE_LABELS[CredentialType.Passport];
+  }
+
+  return undefined;
+}
+
 /** Legacy PassengerType.Adult — used in booking flows, not credential CRUD. */
 export const PASSENGER_TYPE_ADULT = 1;
 

@@ -6,7 +6,7 @@ export interface TrainOrderTrip {
   ToStationName?: string;
   StartTime?: string;
   ArrivalTime?: string;
-  RunTime?: string;
+  RunTime?: string | number;
   CoachNo?: string;
   SeatNo?: string;
   SeatName?: string;
@@ -25,6 +25,8 @@ export interface TrainOrderTicket {
   Key: string;
   Status?: string;
   StatusName?: string;
+  /** User-facing ticket status from legacy App (preferred over StatusName). */
+  AppStatusName?: string;
   FullTicketNo?: string;
   Explain?: string;
   /** Legacy ticket-level seat class name (e.g. 二等座). */
@@ -41,7 +43,7 @@ export interface TrainOrderTicket {
 
 export interface TrainCancelParams {
   OrderId: string;
-  Channel: string;
+  Channel?: string;
 }
 
 export interface TrainIssueParams {

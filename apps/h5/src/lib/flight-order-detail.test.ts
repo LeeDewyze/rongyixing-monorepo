@@ -39,6 +39,10 @@ describe("formatPayHoldCountdownZh", () => {
     expect(formatPayHoldCountdownZh(481)).toBe("08分01秒");
     expect(formatPayHoldCountdownZh(0)).toBe("00分00秒");
   });
+
+  it("floors fractional seconds", () => {
+    expect(formatPayHoldCountdownZh(167.9921585)).toBe("02分47秒");
+  });
 });
 
 describe("shouldShowFlightFooter", () => {

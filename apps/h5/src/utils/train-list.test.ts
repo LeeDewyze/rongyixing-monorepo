@@ -14,8 +14,11 @@ import {
   formatTrainClock,
   formatTrainDuration,
   formatTrainDurationMinutes,
+  formatTrainTripDateLabel,
   filterAvailableTrainSeats,
   getTrainArrivalDayTip,
+  getTrainTripArrivalDayTip,
+  resolveTrainTripArrivalDateLabel,
   getDefaultSortedTrains,
   getTrainListItemKey,
   getTrainTravelMinutes,
@@ -414,6 +417,34 @@ describe("train-list utils", () => {
         ToStation: "上海虹桥",
       }),
     ).toBeNull();
+  });
+
+  it("infers cross-day tip from runtime when arrival date is missing", () => {
+    expect(
+      getTrainTripArrivalDayTip({
+        StartTime: "2026-06-27 11:54:00",
+        ArrivalTime: "2026-06-27 08:08:00",
+        RunTime: "44时14分",
+      }),
+    ).toBe("+2天");
+    expect(
+      getTrainTripArrivalDayTip({
+        StartTime: "2026-06-27 11:54:00",
+        ArrivalTime: "2026-06-27 08:08:00",
+        RunTime: 2654,
+      }),
+    ).toBe("+2天");
+    expect(
+      resolveTrainTripArrivalDateLabel({
+        StartTime: "2026-06-27 11:54:00",
+        ArrivalTime: "2026-06-27 08:08:00",
+        RunTime: "44时14分",
+      }),
+    ).toBe("6月29日");
+  });
+
+  it("formats train trip date labels", () => {
+    expect(formatTrainTripDateLabel("2026-06-27 11:54:00")).toBe("6月27日");
   });
 
   it("parses Chinese duration strings", () => {

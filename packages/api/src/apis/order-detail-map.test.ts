@@ -392,6 +392,35 @@ describe("normalizeFlightOrderDetail", () => {
     });
   });
 
+  it("maps cabin type name from numeric CabinType on flight trips", () => {
+    const detail = normalizeFlightOrderDetail({
+      Order: {
+        Id: "ORD-FLT-CABIN",
+        OrderFlightTickets: [
+          {
+            Id: "T1",
+            Key: "k1",
+            OrderFlightTrips: [
+              {
+                FlightNumber: "MU5101",
+                PlaneType: "324",
+                CabinType: 1,
+                FromCityName: "上海",
+                ToCityName: "北京",
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    expect(detail.Tickets?.[0]?.Trips[0]).toMatchObject({
+      PlaneType: "324",
+      CabinType: "经济舱",
+      IsTransfer: false,
+    });
+  });
+
   it("maps order linkmans to contact", () => {
     const detail = normalizeFlightOrderDetail({
       Order: {
@@ -542,6 +571,135 @@ describe("normalizeTrainOrderDetail", () => {
     expect(detail.Tickets?.[0]?.Trips[0]?.TrainCode).toBe("D7889");
   });
 
+  it("prefers AppStatusName for ticket display status", () => {
+    const detail = normalizeTrainOrderDetail({
+      Order: {
+        Id: "ORD-TRN-app-status",
+        OrderTrainTickets: [
+          {
+            Id: "207600000001",
+            Key: "train-key-1",
+            StatusName: "预订成功",
+            AppStatusName: "待出票",
+            Passenger: { Id: "p1", Name: "郭某某" },
+            OrderTrainTrips: [
+              {
+                TrainCode: "D79",
+                FromStationName: "北京南",
+                ToStationName: "上海虹桥",
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    expect(detail.Tickets?.[0]?.AppStatusName).toBe("待出票");
+    expect(detail.Tickets?.[0]?.StatusName).toBe("预订成功");
+    expect(detail.TicketStatusName).toBe("待出票");
+  });
+
+  it("maps traveler credential type including id card", () => {
+    const detail = normalizeTrainOrderDetail({
+      Order: {
+        Id: "ORD-TRN-credential",
+        OrderTrainTickets: [
+          {
+            Id: "207600000002",
+            Key: "train-key-2",
+            Passenger: { Id: "train-passenger-2", Name: "申晓杰" },
+            OrderTrainTrips: [
+              {
+                TrainCode: "D7889",
+                FromStationName: "北京南",
+                ToStationName: "上海虹桥",
+              },
+            ],
+          },
+        ],
+        OrderPassengers: [
+          {
+            Id: "train-passenger-2",
+            Key: "train-key-2",
+            Name: "申晓杰",
+            HideCredentialsNumber: "410928********5121",
+            CredentialsTypeName: "身份证",
+          },
+        ],
+      },
+    });
+
+    expect(detail.Tickets?.[0]?.Traveler?.CredentialNumber).toBe("410928********5121");
+    expect(detail.Tickets?.[0]?.Traveler?.CredentialType).toBe("身份证");
+  });
+
+  it("infers id card label when credential type code is invalid", () => {
+    const detail = normalizeTrainOrderDetail({
+      Order: {
+        Id: "ORD-TRN-credential-zero",
+        OrderTrainTickets: [
+          {
+            Id: "207600000002",
+            Key: "train-key-2",
+            Passenger: {
+              Id: "train-passenger-2",
+              Name: "申晓杰",
+              HideCredentialsNumber: "410928********5121",
+              CredentialsType: 0,
+            },
+            OrderTrainTrips: [
+              {
+                TrainCode: "D7889",
+                FromStationName: "北京南",
+                ToStationName: "上海虹桥",
+              },
+            ],
+          },
+        ],
+        OrderPassengers: [
+          {
+            Id: "train-passenger-2",
+            Key: "train-key-2",
+            Name: "申晓杰",
+            HideCredentialsNumber: "410928********5121",
+            CredentialsType: 0,
+          },
+        ],
+      },
+    });
+
+    expect(detail.Tickets?.[0]?.Traveler?.CredentialNumber).toBe("410928********5121");
+    expect(detail.Tickets?.[0]?.Traveler?.CredentialType).toBe("身份证");
+  });
+
+  it("infers id card type from masked credential number", () => {
+    const detail = normalizeTrainOrderDetail({
+      Order: {
+        Id: "ORD-TRN-credential-infer",
+        OrderTrainTickets: [
+          {
+            Id: "207600000002",
+            Key: "train-key-2",
+            Passenger: {
+              Name: "申晓杰",
+              HideCredentialsNumber: "410928********5121",
+              CredentialsType: 0,
+            },
+            OrderTrainTrips: [
+              {
+                TrainCode: "D7889",
+                FromStationName: "北京南",
+                ToStationName: "上海虹桥",
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    expect(detail.Tickets?.[0]?.Traveler?.CredentialType).toBe("身份证");
+  });
+
   it("maps pending issue actions", () => {
     const detail = normalizeTrainOrderDetail({
       Order: {
@@ -578,6 +736,37 @@ describe("normalizeTrainOrderDetail", () => {
     expect(detail.Actions?.showIssue).toBe(true);
     expect(detail.Actions?.showPay).toBe(false);
     expect(detail.Tickets?.[0]?.Trips[0]?.CoachNo).toBe("06");
+  });
+
+  it("shows issue actions when ticket AppStatusName is pending issue", () => {
+    const detail = normalizeTrainOrderDetail({
+      Order: {
+        Id: "ORD-TRN-app-status-issue",
+        Status: "WaitIssue",
+        StatusName: "待出票",
+        Variables: JSON.stringify({ isShowCancelButton: true }),
+        OrderTrainTickets: [
+          {
+            Id: "207600000001",
+            Key: "train-key-1",
+            StatusName: "预订成功",
+            AppStatusName: "待出票",
+            Passenger: { Name: "申晓杰" },
+            OrderTrainTrips: [
+              {
+                TrainCode: "D79",
+                FromStationName: "北京南",
+                ToStationName: "上海虹桥",
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    expect(detail.Actions?.showIssue).toBe(true);
+    expect(detail.Actions?.showCancel).toBe(true);
+    expect(detail.Actions?.showPay).toBe(false);
   });
 
   it("maps ticket-level seat fields from legacy OrderTrainTicket", () => {

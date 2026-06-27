@@ -340,15 +340,28 @@ function normalizeTrainInitBookResponse(res: unknown): TrainInitBookResponse {
   };
 }
 
-function normalizeTrainBookResponse(res: unknown): TrainBookResponse {
+function readResponseId(value: unknown): string {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed && trimmed !== "0" ? trimmed : "";
+  }
+  if (typeof value === "number" && Number.isFinite(value) && value !== 0) {
+    return String(Math.trunc(value));
+  }
+  return "";
+}
+
+export function normalizeTrainBookResponse(res: unknown): TrainBookResponse {
   if (!res || typeof res !== "object") {
     return { OrderId: "" };
   }
   const payload = res as LegacyRecord;
+  const tradeNo = readResponseId(payload.TradeNo);
+  const orderId = readResponseId(payload.OrderId) || readResponseId(payload.Id) || tradeNo;
   return {
-    OrderId: String(payload.OrderId ?? payload.Id ?? ""),
+    OrderId: orderId,
     OrderNumber: typeof payload.OrderNumber === "string" ? payload.OrderNumber : undefined,
-    TradeNo: typeof payload.TradeNo === "string" ? payload.TradeNo : undefined,
+    TradeNo: tradeNo || undefined,
     HasTasks: typeof payload.HasTasks === "boolean" ? payload.HasTasks : undefined,
     IsCheckPay: typeof payload.IsCheckPay === "boolean" ? payload.IsCheckPay : undefined,
   };

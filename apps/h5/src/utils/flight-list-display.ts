@@ -177,7 +177,7 @@ export type TripAirlineDisplayInput = {
 export function resolveTripAirlineShortName(trip: TripAirlineDisplayInput): string {
   const codeShareNumber = trip.CodeShareNumber?.trim();
   const primaryName = codeShareNumber
-    ? trip.CodeShareAirlineName ?? trip.AirlineName
+    ? (trip.CodeShareAirlineName ?? trip.AirlineName)
     : trip.AirlineName;
   const short = shortAirlineName(primaryName);
   if (short) return short;
@@ -192,6 +192,51 @@ export function resolveTripAirlineShortName(trip: TripAirlineDisplayInput): stri
     extractAirlineIataCode(trip.FlightNumber) ??
     (airlineField && airlineField.length <= 3 ? airlineField.toUpperCase() : undefined);
   return shortAirlineName(lookupAirlineNameByIataCode(iataCode));
+}
+
+export type FlightOrderTripMetaInput = {
+  PlaneType?: string;
+  PlaneTypeDescribe?: string;
+  CabinType?: string;
+  IsStop?: boolean;
+  IsTransfer?: boolean;
+  StopCities?: string;
+};
+
+function buildFlightOrderPlaneCabinSegment(trip: FlightOrderTripMetaInput): string {
+  const cabin = trip.CabinType?.trim() ?? "";
+  const planeCode = trip.PlaneType?.trim();
+  if (planeCode) {
+    return `机型 ${planeCode}${cabin}`;
+  }
+
+  const describe = formatFlightListPlaneLabel(trip.PlaneTypeDescribe, undefined);
+  if (describe) {
+    return cabin ? `机型 ${describe}${cabin}` : `机型 ${describe}`;
+  }
+
+  return cabin;
+}
+
+function formatFlightOrderRouteLabel(trip: FlightOrderTripMetaInput): string {
+  if (trip.IsTransfer) {
+    return "中转";
+  }
+  if (trip.IsStop) {
+    const stop = trip.StopCities?.trim();
+    return stop ? `经停${stop}` : "经停";
+  }
+  return "直飞";
+}
+
+/** Legacy order detail trip footer: 机型 324经济舱 | 直飞 */
+export function formatFlightOrderTripMetaLine(trip: FlightOrderTripMetaInput): string {
+  const planeCabin = buildFlightOrderPlaneCabinSegment(trip);
+  const routeLabel = formatFlightOrderRouteLabel(trip);
+  if (!planeCabin) {
+    return routeLabel;
+  }
+  return `${planeCabin} | ${routeLabel}`;
 }
 
 export function formatOrderTripAirlineFlightLabel(trip: TripAirlineDisplayInput): string {

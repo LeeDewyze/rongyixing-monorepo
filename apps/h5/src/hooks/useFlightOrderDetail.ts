@@ -60,7 +60,7 @@ export function useFlightPayHoldCountdown(payHoldMinutes?: number) {
     const timer = window.setInterval(() => {
       setRemainingSeconds((current) => {
         if (current == null || current <= 1) return 0;
-        return current - 1;
+        return Math.max(0, Math.floor(current) - 1);
       });
     }, 1000);
     return () => window.clearInterval(timer);

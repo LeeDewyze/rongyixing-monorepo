@@ -8,13 +8,13 @@ export interface TrainOrderSeatSource {
   ticket?: Pick<TrainOrderTicket, "SeatTypeName" | "Detail">;
 }
 
-function isSeatSource(value: TrainOrderTrip | TrainOrderSeatSource | undefined): value is TrainOrderSeatSource {
+function isSeatSource(
+  value: TrainOrderTrip | TrainOrderSeatSource | undefined,
+): value is TrainOrderSeatSource {
   return value != null && ("trip" in value || "ticket" in value);
 }
 
-function normalizeSeatSource(
-  source?: TrainOrderTrip | TrainOrderSeatSource,
-): TrainOrderSeatSource {
+function normalizeSeatSource(source?: TrainOrderTrip | TrainOrderSeatSource): TrainOrderSeatSource {
   if (!source) return {};
   if (isSeatSource(source)) return source;
   return { trip: source };
@@ -80,7 +80,7 @@ export function resolveTrainOrderSeatLetter(
   return undefined;
 }
 
-/** Coach + seat assignment when ticket is issued (e.g. 06车01A号). */
+/** Assigned coach/seat text — ticket Detail is shown as returned by the API. */
 export function formatTrainOrderSeatAssignment(
   source?: TrainOrderTrip | TrainOrderSeatSource,
 ): string | undefined {

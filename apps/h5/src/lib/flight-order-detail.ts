@@ -114,7 +114,7 @@ export function shouldShowFlightFooter(
 }
 
 export function formatPayHoldCountdownZh(totalSeconds: number): string {
-  const safe = Math.max(0, totalSeconds);
+  const safe = Math.max(0, Math.floor(totalSeconds));
   const minutes = Math.floor(safe / 60);
   const seconds = safe % 60;
   return `${String(minutes).padStart(2, "0")}分${String(seconds).padStart(2, "0")}秒`;
@@ -122,7 +122,7 @@ export function formatPayHoldCountdownZh(totalSeconds: number): string {
 
 export function resolvePayHoldSeconds(payHoldMinutes?: number): number | null {
   if (typeof payHoldMinutes !== "number" || payHoldMinutes <= 0) return null;
-  return payHoldMinutes * 60;
+  return Math.floor(payHoldMinutes * 60);
 }
 
 export function requiresPersonalPaymentCode(travelPayTypeCode?: number): boolean {

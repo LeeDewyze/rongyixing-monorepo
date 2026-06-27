@@ -13,6 +13,7 @@ import { TrainOrderBillSheet } from "@/components/order/train/TrainOrderBillShee
 import { TrainOrderCancelDialog } from "@/components/order/train/TrainOrderCancelDialog";
 import { TrainOrderDetailFooter } from "@/components/order/train/TrainOrderDetailFooter";
 import { TrainOrderExplainSheet } from "@/components/order/train/TrainOrderExplainSheet";
+import { TrainOrderHoldBanner } from "@/components/order/train/TrainOrderHoldBanner";
 import { TrainOrderInfoCard } from "@/components/order/train/TrainOrderInfoCard";
 import { TrainOrderIssueDialog } from "@/components/order/train/TrainOrderIssueDialog";
 import { TrainOrderJourneyCard } from "@/components/order/train/TrainOrderJourneyCard";
@@ -37,6 +38,7 @@ import {
   getSelectedTicket,
   mergeTrainFooterActions,
   shouldShowTrainFooter,
+  shouldShowTrainOrderHoldBanner,
 } from "@/lib/train-order-detail";
 import { buildTrainScheduleParamsFromTrip } from "@/lib/train-schedule";
 import { TAB_ID_TO_PARAM } from "@/lib/order-list-params";
@@ -167,7 +169,7 @@ export function OrderTrainDetailPage() {
       });
       setCancelOpen(false);
       showToast("订单已取消");
-      void refetch();
+      await refetch();
     } catch (err) {
       showToast(formatApiError(err));
     }
@@ -179,7 +181,7 @@ export function OrderTrainDetailPage() {
       await issueMutation.mutateAsync({ OrderId: detail.OrderId });
       setIssueOpen(false);
       showToast("出票请求已提交");
-      void refetch();
+      await refetch();
     } catch (err) {
       showToast(formatApiError(err));
     }
@@ -216,7 +218,7 @@ export function OrderTrainDetailPage() {
       });
       setRefundOpen(false);
       showToast("退票请求已提交");
-      void refetch();
+      await refetch();
     } catch (err) {
       showToast(formatApiError(err));
     }
@@ -235,6 +237,9 @@ export function OrderTrainDetailPage() {
     }
   }, [detail?.OrderId, navigate, selectedTicket, showToast]);
 
+  const showHoldBanner =
+    detail != null &&
+    shouldShowTrainOrderHoldBanner(payHoldSecondsRemaining, detail.Actions);
   const showFooter = detail ? shouldShowTrainFooter(footerActions, payHoldSecondsRemaining) : false;
   const contentBottomPadding =
     showFooter && (footerActions.showRefund || footerActions.showExchange)
@@ -249,6 +254,12 @@ export function OrderTrainDetailPage() {
       <HotelOrderDetailHeader ref={headerRef} onBack={handleBack} />
 
       <div style={{ paddingTop: headerHeight }}>
+        {showHoldBanner && payHoldSecondsRemaining != null ? (
+          <TrainOrderHoldBanner
+            payHoldSecondsRemaining={payHoldSecondsRemaining}
+            actions={detail?.Actions}
+          />
+        ) : null}
         {isLoading ? (
           <p className="px-4 pt-3 text-center text-sm text-[#999999]">加载中…</p>
         ) : isError || !detail ? (
@@ -261,7 +272,6 @@ export function OrderTrainDetailPage() {
               detail={detail}
               transactionId={selectedTicket?.Id}
               outNumbers={selectedTicket?.Traveler?.OutNumbers}
-              payHoldSecondsRemaining={payHoldSecondsRemaining}
               onShowBill={() => setBillOpen(true)}
             />
 

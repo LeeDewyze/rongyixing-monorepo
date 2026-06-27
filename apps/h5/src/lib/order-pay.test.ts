@@ -32,6 +32,7 @@ describe("formatPayHoldCountdown", () => {
   it("formats mm:ss", () => {
     expect(formatPayHoldCountdown(125)).toBe("02:05");
     expect(formatPayHoldCountdown(0)).toBe("00:00");
+    expect(formatPayHoldCountdown(167.99)).toBe("02:47");
   });
 });
 

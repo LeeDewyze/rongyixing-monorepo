@@ -8,6 +8,7 @@ import {
   formatFlightLocationLabel,
   formatFlightMealLabel,
   formatFlightMetaDuration,
+  formatFlightOrderTripMetaLine,
   resolveFlightCardVariant,
   formatOrderTripAirlineFlightLabel,
   resolveTripAirlineShortName,
@@ -62,6 +63,29 @@ describe("flight-list-display cabins helpers", () => {
         Meal: "点心",
       }),
     ).toBe("南方航空 | CZ8899 | 机型 327 | 点心");
+  });
+
+  it("formats order detail trip meta footer like legacy ryx", () => {
+    expect(
+      formatFlightOrderTripMetaLine({
+        PlaneType: "324",
+        CabinType: "经济舱",
+      }),
+    ).toBe("机型 324经济舱 | 直飞");
+    expect(
+      formatFlightOrderTripMetaLine({
+        PlaneType: "73E",
+        CabinType: "经济舱",
+        IsStop: true,
+        StopCities: "武汉",
+      }),
+    ).toBe("机型 73E经济舱 | 经停武汉");
+    expect(
+      formatFlightOrderTripMetaLine({
+        PlaneType: "320",
+        IsTransfer: true,
+      }),
+    ).toBe("机型 320 | 中转");
   });
 
   it("resolves order trip airline label with code-share and IATA fallbacks", () => {

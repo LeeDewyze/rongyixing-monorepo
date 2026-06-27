@@ -10,9 +10,7 @@ import {
 import { OrderStatusBadge } from "@/components/order/OrderStatusBadge";
 import {
   formatOrderDateTime,
-  formatPayHoldCountdownZh,
   formatTravelPayType,
-  resolveTrainCountdownLabel,
 } from "@/lib/train-order-detail";
 
 import { HotelOrderDetailRow } from "../hotel/HotelOrderDetailRow";
@@ -21,7 +19,6 @@ interface TrainOrderInfoCardProps {
   detail: HotelOrderDetail;
   transactionId?: string;
   outNumbers?: string;
-  payHoldSecondsRemaining: number | null;
   onShowBill: () => void;
 }
 
@@ -29,33 +26,17 @@ export function TrainOrderInfoCard({
   detail,
   transactionId,
   outNumbers,
-  payHoldSecondsRemaining,
   onShowBill,
 }: TrainOrderInfoCardProps) {
-  const showCountdown =
-    payHoldSecondsRemaining != null &&
-    payHoldSecondsRemaining > 0 &&
-    (detail.Actions?.showPay || detail.Actions?.showCancel);
-  const countdownLabel = resolveTrainCountdownLabel(detail.Actions);
-
   return (
     <section
       className={`overflow-hidden rounded-xl bg-white px-4 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ${HOTEL_DETAIL_FONT}`}
     >
       <div className="mb-3 flex items-start justify-between gap-2">
         <h2 className={HOTEL_ORDER_SECTION_TITLE}>订单信息</h2>
-        <div className="flex shrink-0 flex-col items-end gap-1">
-          {showCountdown ? (
-            <span className="text-[12px] font-medium leading-none text-[#FF383C]">
-              {countdownLabel.prefix}
-              {formatPayHoldCountdownZh(payHoldSecondsRemaining)}
-              {countdownLabel.suffix}
-            </span>
-          ) : null}
-          {detail.StatusName ? (
-            <OrderStatusBadge label={detail.StatusName} variant="order" />
-          ) : null}
-        </div>
+        {detail.StatusName ? (
+          <OrderStatusBadge label={detail.StatusName} variant="order" />
+        ) : null}
       </div>
 
       <HotelOrderDetailRow label="订单编号" value={detail.OrderNumber ?? detail.OrderId} />

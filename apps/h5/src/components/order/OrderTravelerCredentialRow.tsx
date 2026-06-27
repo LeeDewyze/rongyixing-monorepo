@@ -1,11 +1,10 @@
+import { inferCredentialTypeLabelFromMaskedNumber } from "@ryx/shared-types";
+
 import {
   HOTEL_ORDER_ROW_LABEL,
   HOTEL_ORDER_ROW_VALUE,
 } from "@/components/hotel/hotel-detail-chrome";
-import {
-  normalizeTravelerCredentialTypeLabel,
-  shouldShowTravelerCredentialType,
-} from "@/lib/hotel-order-detail";
+import { normalizeTravelerCredentialTypeLabel } from "@/lib/hotel-order-detail";
 
 interface OrderTravelerCredentialRowProps {
   label?: string;
@@ -18,8 +17,8 @@ export function OrderTravelerCredentialRow({
   number,
   type,
 }: OrderTravelerCredentialRowProps) {
-  const typeLabel = normalizeTravelerCredentialTypeLabel(type);
-  const showType = shouldShowTravelerCredentialType(type);
+  const typeLabel =
+    normalizeTravelerCredentialTypeLabel(type) ?? inferCredentialTypeLabelFromMaskedNumber(number);
 
   return (
     <div className="flex items-start justify-between gap-4 py-1.5">
@@ -28,12 +27,10 @@ export function OrderTravelerCredentialRow({
         <span className={`min-w-0 ${HOTEL_ORDER_ROW_VALUE}`}>—</span>
       ) : (
         <span
-          className={`flex min-w-0 flex-1 items-center justify-end gap-1 ${HOTEL_ORDER_ROW_VALUE}`}
+          className={`flex min-w-0 flex-1 items-center justify-end gap-2 ${HOTEL_ORDER_ROW_VALUE}`}
         >
-          <span className="min-w-0 break-all">{number}</span>
-          {showType && typeLabel ? (
-            <span className="shrink-0 whitespace-nowrap">{typeLabel}</span>
-          ) : null}
+          <span className="min-w-0 break-all text-right">{number}</span>
+          {typeLabel ? <span className="shrink-0 whitespace-nowrap">{typeLabel}</span> : null}
         </span>
       )}
     </div>

@@ -29,6 +29,7 @@ export function TrainOrderDetailFooter({
   }
 
   const cancelLabel = actions.showIssue ? "取消订单" : "取消";
+  const isIssueMode = actions.showIssue && !actions.showPay;
   const hasSecondaryRow = actions.showRefund || actions.showExchange;
   const hasPrimaryRow = actions.showCancel || actions.showPay || actions.showIssue;
 
@@ -68,7 +69,11 @@ export function TrainOrderDetailFooter({
               type="button"
               disabled={pending}
               onClick={onCancel}
-              className="flex h-11 flex-1 items-center justify-center rounded-[24px] border border-[#2768FA] bg-white text-[15px] font-medium text-[#2768FA] disabled:opacity-50"
+              className={
+                isIssueMode
+                  ? "flex h-9 flex-1 items-center justify-center rounded-[24px] border border-[#2768FA] bg-white text-[15px] font-medium text-[#2768FA] disabled:opacity-50"
+                  : "flex h-11 flex-1 items-center justify-center rounded-[24px] border border-[#2768FA] bg-white text-[15px] font-medium text-[#2768FA] disabled:opacity-50"
+              }
             >
               {cancelLabel}
             </button>
@@ -88,7 +93,7 @@ export function TrainOrderDetailFooter({
               type="button"
               disabled={pending}
               onClick={onIssue}
-              className="flex h-11 flex-1 items-center justify-center rounded-[24px] bg-[linear-gradient(270deg,#2768FA_0%,#33A1F9_100%)] text-[15px] font-medium text-white disabled:opacity-50"
+              className="flex h-9 flex-1 items-center justify-center rounded-[24px] bg-[linear-gradient(270deg,#2768FA_0%,#33A1F9_100%)] text-[15px] font-medium text-white disabled:opacity-50"
             >
               确认出票
             </button>

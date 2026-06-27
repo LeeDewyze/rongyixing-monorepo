@@ -29,24 +29,112 @@ function calendarDayIndex(timestamp: number): number {
   return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
 }
 
-/** Legacy-aligned "+N天" tip when arrival is on a later calendar day. */
-export function getTrainArrivalDayTip(train: TrainItem): string | null {
-  const arriveDays = train.ArriveDays;
+function resolveTrainCalendarDayDiff(
+  startTime?: string,
+  arrivalTime?: string,
+  arriveDays?: number,
+): number {
   if (typeof arriveDays === "number" && arriveDays > 0) {
-    return `+${arriveDays}天`;
+    return arriveDays;
   }
+  if (!startTime || !arrivalTime) return 0;
 
-  const startTs = train.StartTimeStamp ?? parseTrainTimestamp(train.StartTime);
-  const arrivalTs = train.ArrivalTimeStamp ?? parseTrainTimestamp(train.ArrivalTime);
-  if (!startTs || !arrivalTs) return null;
+  const startTs = parseTrainTimestamp(startTime);
+  const arrivalTs = parseTrainTimestamp(arrivalTime);
+  if (!startTs || !arrivalTs) return 0;
 
-  const dayDiff = Math.round(
+  const calendarDiff = Math.round(
     (calendarDayIndex(arrivalTs) - calendarDayIndex(startTs)) / 86_400_000,
   );
+  if (calendarDiff > 0) return calendarDiff;
+
+  const startClock = parseTimeToMinutes(startTime);
+  const arrivalClock = parseTimeToMinutes(arrivalTime);
+  if (startClock !== null && arrivalClock !== null && arrivalClock <= startClock) {
+    return 1;
+  }
+
+  return 0;
+}
+
+/** Legacy-aligned "+N天" tip when arrival is on a later calendar day. */
+export function getTrainArrivalDayTipFromTimes(
+  startTime?: string,
+  arrivalTime?: string,
+  options?: { arriveDays?: number; runTime?: string },
+): string | null {
+  let dayDiff = resolveTrainCalendarDayDiff(startTime, arrivalTime, options?.arriveDays);
+
+  if (options?.runTime) {
+    const durationMin = parseDurationMinutes(options.runTime);
+    const startTs = parseTrainTimestamp(startTime ?? "");
+    if (startTs && durationMin > 0) {
+      const inferredDiff = Math.max(
+        0,
+        Math.round(
+          (calendarDayIndex(startTs + durationMin * 60_000) - calendarDayIndex(startTs)) /
+            86_400_000,
+        ),
+      );
+      dayDiff = Math.max(dayDiff, inferredDiff);
+    }
+  }
+
   return dayDiff > 0 ? `+${dayDiff}天` : null;
 }
 
-export function parseDurationMinutes(duration?: string): number {
+/** Legacy-aligned "+N天" tip when arrival is on a later calendar day. */
+export function getTrainArrivalDayTip(train: TrainItem): string | null {
+  return getTrainArrivalDayTipFromTimes(train.StartTime, train.ArrivalTime, {
+    arriveDays: train.ArriveDays,
+    runTime: train.TravelTime,
+  });
+}
+
+/** Compact date label for train trip timelines, e.g. `6月27日`. */
+export function formatTrainTripDateLabel(value?: string): string | null {
+  const datePart = value?.slice(0, 10);
+  if (!datePart || !/^\d{4}-\d{2}-\d{2}$/.test(datePart)) return null;
+  const month = Number(datePart.slice(5, 7));
+  const day = datePart.slice(8, 10);
+  return `${month}月${day}日`;
+}
+
+export function getTrainTripArrivalDayTip(trip: {
+  StartTime?: string;
+  ArrivalTime?: string;
+  RunTime?: string;
+}): string | null {
+  return getTrainArrivalDayTipFromTimes(trip.StartTime, trip.ArrivalTime, {
+    runTime: trip.RunTime,
+  });
+}
+
+export function resolveTrainTripArrivalDateLabel(trip: {
+  StartTime?: string;
+  ArrivalTime?: string;
+  RunTime?: string;
+}): string | null {
+  if (!getTrainTripArrivalDayTip(trip)) return null;
+
+  const depDate = trip.StartTime?.slice(0, 10);
+  const arrDate = trip.ArrivalTime?.slice(0, 10);
+  if (arrDate && depDate && arrDate !== depDate) {
+    return formatTrainTripDateLabel(trip.ArrivalTime);
+  }
+
+  const startTs = parseTrainTimestamp(trip.StartTime ?? "");
+  const durationMin = trip.RunTime ? parseDurationMinutes(trip.RunTime) : 0;
+  if (startTs && durationMin > 0) {
+    const arrivalTs = startTs + durationMin * 60_000;
+    const d = new Date(arrivalTs);
+    return `${d.getMonth() + 1}月${String(d.getDate()).padStart(2, "0")}日`;
+  }
+
+  return formatTrainTripDateLabel(trip.ArrivalTime);
+}
+
+export function parseDurationMinutes(duration?: unknown): number {
   return parseTrainDurationMinutes(duration);
 }
 

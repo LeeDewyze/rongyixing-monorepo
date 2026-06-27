@@ -8,6 +8,7 @@ import {
   normalizeTrainSearchResponse,
   normalizeTrainExchangeInfo,
   normalizeTrainPassengerInfo,
+  normalizeTrainBookResponse,
   normalizeTrainScheduleResponse,
 } from "./train.js";
 
@@ -237,6 +238,37 @@ describe("normalizeTrainExchangeInfo", () => {
       TicketId: "207600000001",
       FromStationName: "北京南",
       ToStationName: "上海虹桥",
+    });
+  });
+});
+
+describe("normalizeTrainBookResponse", () => {
+  it("maps numeric TradeNo to OrderId when OrderId is absent", () => {
+    expect(
+      normalizeTrainBookResponse({
+        TradeNo: 20760000000204,
+        Tickets: [{ TicketId: "20760000000258", Status: 1, Price: 164.5 }],
+        TotalAmount: 164.5,
+        HasTasks: false,
+      }),
+    ).toEqual({
+      OrderId: "20760000000204",
+      TradeNo: "20760000000204",
+      HasTasks: false,
+      IsCheckPay: undefined,
+      OrderNumber: undefined,
+    });
+  });
+
+  it("prefers explicit OrderId over TradeNo", () => {
+    expect(
+      normalizeTrainBookResponse({
+        OrderId: "ORD-1",
+        TradeNo: 99,
+      }),
+    ).toMatchObject({
+      OrderId: "ORD-1",
+      TradeNo: "99",
     });
   });
 });

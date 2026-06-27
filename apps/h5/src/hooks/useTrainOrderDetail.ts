@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import type {
   TrainCancelParams,
   TrainIssueParams,
@@ -31,13 +31,17 @@ export function useTrainOrderDetail(orderId: string) {
   });
 }
 
+async function refreshTrainOrderDetailAfterMutation(queryClient: QueryClient, orderId: string) {
+  await queryClient.refetchQueries({ queryKey: ["order", "detail", orderId], type: "active" });
+  void queryClient.invalidateQueries({ queryKey: ["order", "list"] });
+}
+
 export function useCancelTrainOrder() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (params: TrainCancelParams) => getApi().order.cancelTrain(params),
-    onSuccess: (_data, variables) => {
-      void queryClient.invalidateQueries({ queryKey: ["order", "detail", variables.OrderId] });
-      void queryClient.invalidateQueries({ queryKey: ["order", "list"] });
+    onSuccess: async (_data, variables) => {
+      await refreshTrainOrderDetailAfterMutation(queryClient, variables.OrderId);
     },
   });
 }
@@ -46,9 +50,8 @@ export function useIssueTrainOrder() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (params: TrainIssueParams) => getApi().order.issueTrain(params),
-    onSuccess: (_data, variables) => {
-      void queryClient.invalidateQueries({ queryKey: ["order", "detail", variables.OrderId] });
-      void queryClient.invalidateQueries({ queryKey: ["order", "list"] });
+    onSuccess: async (_data, variables) => {
+      await refreshTrainOrderDetailAfterMutation(queryClient, variables.OrderId);
     },
   });
 }
@@ -57,9 +60,8 @@ export function useRefundTrainOrder() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (params: TrainRefundParams) => getApi().order.refundTrain(params),
-    onSuccess: (_data, variables) => {
-      void queryClient.invalidateQueries({ queryKey: ["order", "detail", variables.OrderId] });
-      void queryClient.invalidateQueries({ queryKey: ["order", "list"] });
+    onSuccess: async (_data, variables) => {
+      await refreshTrainOrderDetailAfterMutation(queryClient, variables.OrderId);
     },
   });
 }

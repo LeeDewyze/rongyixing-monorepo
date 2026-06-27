@@ -71,8 +71,11 @@ export interface TrainItem {
  * Supported formats (from legacy TMC API `Duration` / `TravelTimeName`):
  *   "11时20分", "6小时10分", "4小时28分", "4h28m", "04:28", "268", "268分", "45分".
  */
-export function parseTrainDurationMinutes(duration?: string): number {
-  if (!duration?.trim()) return 0;
+export function parseTrainDurationMinutes(duration?: unknown): number {
+  if (typeof duration === "number" && Number.isFinite(duration) && duration > 0) {
+    return Math.round(duration);
+  }
+  if (typeof duration !== "string" || !duration.trim()) return 0;
   const d = duration.trim();
 
   // "04:28" (HH:MM clock format from API)

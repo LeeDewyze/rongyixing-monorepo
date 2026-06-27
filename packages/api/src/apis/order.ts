@@ -127,7 +127,7 @@ export function createOrderApi(proxy: ProxyClient): OrderApi {
     cancelTrain(params) {
       return proxy.send<boolean>({
         method: ORDER_FLOW_METHODS.CANCEL_TRAIN,
-        data: params,
+        data: { Id: params.OrderId },
       });
     },
     issueTrain(params) {

@@ -14,8 +14,11 @@ import {
   formatTrainOrderSeatTypeLabel,
   resolveTrainOrderSeatLetter,
 } from "@/lib/train-order-seat";
-import { formatTrainOrderTripDuration } from "@/lib/train-order-detail";
-import { formatTrainClock } from "@/utils/train-list";
+import {
+  formatTrainOrderTripDuration,
+  resolveTrainTicketDisplayStatus,
+} from "@/lib/train-order-detail";
+import { formatTrainClock, formatTrainTripDateLabel, getTrainTripArrivalDayTip, resolveTrainTripArrivalDateLabel } from "@/utils/train-list";
 
 interface TrainOrderJourneyCardProps {
   ticket: TrainOrderTicket;
@@ -28,7 +31,7 @@ const TRIP_CARD_CLASS =
 
 function formatTripDateLine(trip?: TrainOrderTrip): string {
   if (!trip?.StartTime) return "—";
-  const datePart = trip.StartTime.slice(0, 10);
+  const datePart = formatTrainTripDateLabel(trip.StartTime) ?? trip.StartTime.slice(0, 10);
   const timePart = formatTrainClock(trip.StartTime);
   const trainCode = trip.TrainCode ?? "";
   return [datePart, timePart, trainCode].filter(Boolean).join(" ");
@@ -58,6 +61,10 @@ function RouteTitle({ fromStation, toStation }: { fromStation?: string; toStatio
 function TripTimeline({ trip }: { trip: TrainOrderTrip }) {
   const durationLabel = formatTrainOrderTripDuration(trip);
   const trainCode = trip.TrainCode ?? "";
+  const arrivalDayTip = getTrainTripArrivalDayTip(trip);
+  const isCrossDay = Boolean(arrivalDayTip);
+  const departureDateLabel = isCrossDay ? formatTrainTripDateLabel(trip.StartTime) : null;
+  const arrivalDateLabel = isCrossDay ? resolveTrainTripArrivalDateLabel(trip) : null;
 
   return (
     <div className={TRIP_CARD_CLASS}>
@@ -67,7 +74,14 @@ function TripTimeline({ trip }: { trip: TrainOrderTrip }) {
             <p className="text-[24px] font-semibold leading-none tracking-tight tabular-nums text-[#1a1a1a]">
               {formatTrainClock(trip.StartTime ?? "")}
             </p>
-            <p className="mt-2 text-[13px] leading-snug text-[#666666]">{trip.FromStationName}</p>
+            {departureDateLabel ? (
+              <p className="mt-1 text-[11px] leading-none text-[#999999]">{departureDateLabel}</p>
+            ) : null}
+            <p
+              className={`text-[13px] leading-snug text-[#666666] ${departureDateLabel ? "mt-1.5" : "mt-2"}`}
+            >
+              {trip.FromStationName}
+            </p>
           </div>
 
           <div className="pt-1 text-center">
@@ -92,10 +106,24 @@ function TripTimeline({ trip }: { trip: TrainOrderTrip }) {
           </div>
 
           <div className="min-w-0 text-right">
-            <p className="text-[24px] font-semibold leading-none tracking-tight tabular-nums text-[#1a1a1a]">
-              {formatTrainClock(trip.ArrivalTime ?? "")}
+            <div className="relative inline-block max-w-full">
+              {arrivalDayTip ? (
+                <span className="absolute bottom-full right-0 mb-0.5 whitespace-nowrap text-[10px] font-medium leading-none text-[#FF8D1A]">
+                  {arrivalDayTip}
+                </span>
+              ) : null}
+              <p className="text-[24px] font-semibold leading-none tracking-tight tabular-nums text-[#1a1a1a]">
+                {formatTrainClock(trip.ArrivalTime ?? "")}
+              </p>
+            </div>
+            {arrivalDateLabel ? (
+              <p className="mt-1 text-[11px] leading-none text-[#999999]">{arrivalDateLabel}</p>
+            ) : null}
+            <p
+              className={`text-[13px] leading-snug text-[#666666] ${arrivalDateLabel ? "mt-1.5" : "mt-2"}`}
+            >
+              {trip.ToStationName}
             </p>
-            <p className="mt-2 text-[13px] leading-snug text-[#666666]">{trip.ToStationName}</p>
           </div>
         </div>
       </div>
@@ -103,20 +131,41 @@ function TripTimeline({ trip }: { trip: TrainOrderTrip }) {
   );
 }
 
-function SeatInfoRow({ trip, ticket }: { trip?: TrainOrderTrip; ticket: TrainOrderTicket }) {
+function SeatInfoRow({
+  trip,
+  ticket,
+  seatAssignment,
+}: {
+  trip?: TrainOrderTrip;
+  ticket: TrainOrderTicket;
+  seatAssignment?: string;
+}) {
   const seatSource = { trip, ticket };
   const seatTypeLabel = formatTrainOrderSeatTypeLabel(seatSource);
   const seatLetter = resolveTrainOrderSeatLetter(seatSource);
 
   return (
-    <div className="mt-3 flex items-center justify-between gap-4">
+    <div className="mt-3 flex items-start justify-between gap-4">
       <span className="shrink-0 text-[14px] font-normal leading-none text-[#999999]">座位信息</span>
-      <span className="flex min-w-0 items-center justify-end gap-1.5">
-        {seatLetter ? <TrainSeatChairIcon code={seatLetter} size="sm" variant="issued" /> : null}
-        <span className="text-[14px] font-normal leading-none text-[#010101]">
-          {seatTypeLabel ?? ""}
-        </span>
-      </span>
+      <div className="flex min-w-0 flex-col items-end gap-1.5">
+        {seatAssignment ? (
+          <span className="text-right text-[12px] font-normal leading-snug text-[#666666]">
+            {seatAssignment}
+          </span>
+        ) : null}
+        {seatLetter || seatTypeLabel ? (
+          <span className="flex items-center justify-end gap-1.5">
+            {seatLetter ? (
+              <TrainSeatChairIcon code={seatLetter} size="sm" variant="issued" />
+            ) : null}
+            {seatTypeLabel ? (
+              <span className="text-[14px] font-normal leading-none text-[#010101]">
+                {seatTypeLabel}
+              </span>
+            ) : null}
+          </span>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -129,6 +178,7 @@ export function TrainOrderJourneyCard({
   const trip = ticket.Trips[0];
   const seatSource = { trip, ticket };
   const seatAssignment = formatTrainOrderSeatAssignment(seatSource);
+  const ticketStatusLabel = resolveTrainTicketDisplayStatus(ticket);
 
   return (
     <section
@@ -136,7 +186,7 @@ export function TrainOrderJourneyCard({
     >
       <div className="mb-3 flex items-center justify-between gap-2">
         <RouteTitle fromStation={trip?.FromStationName} toStation={trip?.ToStationName} />
-        {ticket.StatusName ? <OrderStatusBadge label={ticket.StatusName} variant="ticket" /> : null}
+        {ticketStatusLabel ? <OrderStatusBadge label={ticketStatusLabel} variant="ticket" /> : null}
       </div>
 
       <p className="mb-3 text-[14px] font-normal leading-none text-[#010101]">
@@ -145,16 +195,15 @@ export function TrainOrderJourneyCard({
 
       {trip ? <TripTimeline trip={trip} /> : null}
 
-      <SeatInfoRow trip={trip} ticket={ticket} />
-
-      {seatAssignment ? (
-        <p className="mt-1.5 text-right text-[12px] leading-none text-[#999999]">
-          {seatAssignment}
-        </p>
-      ) : null}
+      <SeatInfoRow trip={trip} ticket={ticket} seatAssignment={seatAssignment} />
 
       {ticket.FullTicketNo ? (
-        <p className="mt-2 text-[12px] text-[#999999]">票号 {ticket.FullTicketNo}</p>
+        <div className="mt-3 flex items-center justify-between gap-4">
+          <span className="shrink-0 text-[14px] font-normal leading-none text-[#999999]">票号</span>
+          <span className="min-w-0 text-right text-[12px] font-normal leading-none text-[#999999]">
+            {ticket.FullTicketNo}
+          </span>
+        </div>
       ) : null}
 
       <div className="mt-3 flex items-center justify-end gap-3">

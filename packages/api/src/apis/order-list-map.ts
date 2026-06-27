@@ -228,7 +228,8 @@ function mapLegacyFlightOrder(order: LegacyRecord): OrderListItem | null {
       `${readString(trip.FlightNumber)} ${readString(trip.FromCityName)}—${readString(trip.ToCityName)}`.trim(),
     DepartTime: formatDateTime(trip.TakeoffTime ?? trip.DepartTime),
     PassengerNames: passengerNames,
-    TicketStatusName: readString(ticket?.StatusName ?? ticket?.Status) || undefined,
+    TicketStatusName:
+      readString(ticket?.AppStatusName ?? ticket?.StatusName ?? ticket?.Status) || undefined,
     Actions: buildFlightTrainActions(ticketVariables ?? variables, "flight"),
   };
 }
@@ -265,7 +266,8 @@ function mapLegacyTrainOrder(order: LegacyRecord): OrderListItem | null {
       `${readString(trip.TrainCode)} ${readString(trip.FromStationName)}—${readString(trip.ToStationName)}`.trim(),
     DepartTime: formatDateTime(trip.StartTime ?? trip.DepartureTime ?? trip.GoDate),
     PassengerNames: passengerNames,
-    TicketStatusName: readString(ticket?.StatusName ?? ticket?.Status) || undefined,
+    TicketStatusName:
+      readString(ticket?.AppStatusName ?? ticket?.StatusName ?? ticket?.Status) || undefined,
     TicketId: readString(ticket?.Id) || undefined,
     Actions: buildFlightTrainActions(ticketVariables ?? variables, "train"),
   };

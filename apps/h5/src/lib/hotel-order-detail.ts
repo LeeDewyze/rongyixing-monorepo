@@ -99,24 +99,28 @@ const CREDENTIAL_TYPE_ENUM_LABELS: Record<string, string> = {
   MilitaryCard: "军人证",
 };
 
-export function normalizeTravelerCredentialTypeLabel(type?: string): string | undefined {
-  const trimmed = type?.trim();
+export function normalizeTravelerCredentialTypeLabel(type?: string | number): string | undefined {
+  if (type == null) return undefined;
+  const trimmed = String(type).trim();
   if (!trimmed) return undefined;
   if (trimmed === "身份证") return trimmed;
 
-  const typeCode = Number(trimmed);
-  if (!Number.isNaN(typeCode) && CREDENTIAL_TYPE_LABELS[typeCode]) {
-    return CREDENTIAL_TYPE_LABELS[typeCode];
+  if (/^\d+$/.test(trimmed)) {
+    const typeCode = Number(trimmed);
+    return CREDENTIAL_TYPE_LABELS[typeCode] ?? undefined;
   }
 
   return CREDENTIAL_TYPE_ENUM_LABELS[trimmed] ?? trimmed;
 }
 
-export function shouldShowTravelerCredentialType(type?: string): boolean {
+export function shouldShowTravelerCredentialType(type?: string | number): boolean {
   return Boolean(normalizeTravelerCredentialTypeLabel(type));
 }
 
-export function formatTravelerCredentialDisplay(number?: string, typeName?: string): string {
+export function formatTravelerCredentialDisplay(
+  number?: string,
+  typeName?: string | number,
+): string {
   if (!number) return "—";
   const label = normalizeTravelerCredentialTypeLabel(typeName);
   if (shouldShowTravelerCredentialType(typeName) && label) {

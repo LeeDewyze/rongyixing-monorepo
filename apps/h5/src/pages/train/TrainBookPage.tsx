@@ -33,7 +33,12 @@ import { TrainBookSummary } from "@/components/train/TrainBookSummary";
 import { useBookOrgCostVisibility } from "@/hooks/useBookOrgCostVisibility";
 import { usePassengerSelection } from "@/hooks/usePassenger";
 import { useTrainBookPassengerForms } from "@/hooks/useTrainBookPassengerForms";
-import { useTrainBookSelection, useTrainInitBook, useTrainSubmitBook, useTrainSubmitExchangeBook } from "@/hooks/useTrainBook";
+import {
+  useTrainBookSelection,
+  useTrainInitBook,
+  useTrainSubmitBook,
+  useTrainSubmitExchangeBook,
+} from "@/hooks/useTrainBook";
 import {
   accountIdFromNotifyTarget,
   authorizedContactNotifyTarget,
@@ -68,10 +73,7 @@ import {
 } from "@/lib/train-book-pay";
 import { pollTrainCheckPay, shouldNavigateToPay } from "@/lib/train-book-check-pay";
 import { clearTrainBookSelection } from "@/lib/train-book-session";
-import {
-  clearTrainExchangeSession,
-  loadTrainExchangeSession,
-} from "@/lib/train-exchange-session";
+import { clearTrainExchangeSession, loadTrainExchangeSession } from "@/lib/train-exchange-session";
 
 const FALLBACK_HEADER_HEIGHT = 56;
 
@@ -109,10 +111,13 @@ export function TrainBookPage() {
     field: FlightOutNumberField;
   } | null>(null);
   const [directBookConfirmOpen, setDirectBookConfirmOpen] = useState(false);
+  /** Skip guard redirect when leaving after a successful submit. */
+  const leavingAfterSubmitRef = useRef(false);
 
   usePageHeader({ visible: false });
 
   useEffect(() => {
+    if (leavingAfterSubmitRef.current) return;
     if (!selection && !redirecting) {
       setRedirecting(true);
       navigate("/home?product=train", { replace: true });
@@ -258,17 +263,23 @@ export function TrainBookPage() {
       const orderId = resolveTrainBookOrderId(response);
       const payType = resolvedPayType;
 
-      clearTrainBookSelection();
-      if (isExchange) {
-        clearTrainExchangeSession();
-      }
+      leavingAfterSubmitRef.current = true;
 
       if (response.IsCheckPay && response.TradeNo) {
         const checkPayReady = await pollTrainCheckPay(response.TradeNo);
         if (shouldNavigateToPay({ travelPayType: payType, checkPayReady }) && orderId) {
+          clearTrainBookSelection();
+          if (isExchange) {
+            clearTrainExchangeSession();
+          }
           navigate(`/train/pay/${encodeURIComponent(orderId)}`, { replace: true });
           return;
         }
+      }
+
+      clearTrainBookSelection();
+      if (isExchange) {
+        clearTrainExchangeSession();
       }
 
       if (orderId) {
@@ -461,7 +472,8 @@ export function TrainBookPage() {
         open={directBookConfirmOpen}
         pending={submitBook.isPending || submitExchangeBook.isPending}
         onCancel={() => {
-          if (!submitBook.isPending && !submitExchangeBook.isPending) setDirectBookConfirmOpen(false);
+          if (!submitBook.isPending && !submitExchangeBook.isPending)
+            setDirectBookConfirmOpen(false);
         }}
         onConfirm={() => void executeSubmit(false)}
       />
