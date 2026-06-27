@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import type { CredentialFormMode, CredentialFormValues } from "@ryx/shared-types";
+import { CREDENTIAL_TYPE_LABELS, maskCredentialNumber, parseProductType } from "@ryx/shared-types";
 
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { CredentialFormShell } from "@/components/passenger/CredentialFormShell";
@@ -23,6 +24,10 @@ import {
 import { formatApiError } from "@/lib/formatApiError";
 import { useMemberProfile } from "@/hooks/useMemberProfile";
 import { normalizeCredentialName } from "@/lib/credential-name";
+import {
+  removeCredentialFromPassengerSelections,
+  updatePassengerSelectionCredential,
+} from "@/lib/passenger-selection";
 import type { MemberPassenger, PassengerCredential } from "@ryx/shared-types";
 
 interface CredentialLocationState {
@@ -57,6 +62,25 @@ function hasCredentialFormChanges(
   );
 }
 
+function credentialSelectionPatch(values: CredentialFormValues): Partial<PassengerCredential> {
+  return {
+    Name: normalizeCredentialName(values.Name),
+    Mobile: values.Mobile?.trim() ?? "",
+    Type: values.Type,
+    TypeName: CREDENTIAL_TYPE_LABELS[values.Type],
+    CredentialsType: values.Type,
+    CredentialsTypeName: CREDENTIAL_TYPE_LABELS[values.Type],
+    Number: values.Number.trim(),
+    HideNumber: maskCredentialNumber(values.Number),
+    HideCredentialsNumber: maskCredentialNumber(values.Number),
+    Gender: values.Gender,
+    Birthday: values.Birthday,
+    ExpirationDate: values.ExpirationDate,
+    Surname: values.Surname,
+    Givenname: values.Givenname,
+  };
+}
+
 export function PassengerCredentialPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -68,10 +92,11 @@ export function PassengerCredentialPage() {
   const addNew = searchParams.get("addNew") === "1";
   const isExternalMode = mode === "external";
   const staffId = searchParams.get("staffId") ?? state.staffId;
+  const rawForType = searchParams.get("forType");
   const returnTo =
     searchParams.get("returnTo") ??
-    buildCredentialReturnPath("/hotel", Number(searchParams.get("forType") ?? "2") || undefined);
-  const forType = searchParams.get("forType");
+    buildCredentialReturnPath("/hotel", Number(rawForType ?? "2") || undefined);
+  const forType = rawForType == null ? undefined : parseProductType(rawForType);
 
   const initialValues = useMemo((): CredentialFormValues => {
     if (state.passenger) return credentialFormFromPassenger(state.passenger, staffId);
@@ -120,7 +145,7 @@ export function PassengerCredentialPage() {
         ? "修改信息"
         : "保存"
       : "保存并使用该证件";
-  const backTo = isExternalMode ? "/passenger/select?forType=1" : returnTo;
+  const backTo = returnTo;
 
   useEffect(() => {
     if (mode !== "self" || !fixedName) return;
@@ -147,6 +172,13 @@ export function PassengerCredentialPage() {
         await saveExternal.mutateAsync(submitValues);
       } else {
         await saveStaff.mutateAsync({ ...submitValues, StaffId: staffId ?? submitValues.StaffId });
+      }
+      if (isEdit) {
+        updatePassengerSelectionCredential(
+          forType,
+          submitValues.Id,
+          credentialSelectionPatch(submitValues),
+        );
       }
       navigate(returnTo, { replace: true });
     } catch (err) {
@@ -176,6 +208,14 @@ export function PassengerCredentialPage() {
     if (!window.confirm("确定删除该证件？")) return;
     try {
       await removeStaff.mutateAsync({ ...values, StaffId: staffId ?? values.StaffId });
+      removeCredentialFromPassengerSelections(forType, {
+        Id: values.Id,
+        Name: values.Name,
+        Type: values.Type,
+        CredentialsType: values.Type,
+        Number: values.Number,
+        HideNumber: maskCredentialNumber(values.Number),
+      });
       navigate(returnTo, { replace: true });
     } catch (err) {
       setError(formatApiError(err));
@@ -186,6 +226,14 @@ export function PassengerCredentialPage() {
     if (!values.Id) return;
     try {
       await removeExternal.mutateAsync(values.Id);
+      removeCredentialFromPassengerSelections(forType, {
+        Id: values.Id,
+        Name: values.Name,
+        Type: values.Type,
+        CredentialsType: values.Type,
+        Number: values.Number,
+        HideNumber: maskCredentialNumber(values.Number),
+      });
       setShowExternalDeleteConfirm(false);
       navigate(returnTo, { replace: true });
     } catch (err) {

@@ -33,7 +33,6 @@ import {
   credentialNavigationState,
 } from "@/lib/passenger-credential-nav";
 import { toggleSelection, removeDeletedFromSelection } from "@/lib/passenger-select-logic";
-import { loadPassengerSelection, savePassengerSelection } from "@/lib/passenger-selection";
 
 export function PassengerSelectPage() {
   const navigate = useNavigate();
@@ -42,14 +41,13 @@ export function PassengerSelectPage() {
   const returnTo = searchParams.get("returnTo") ?? "/home";
   const selectReturnTo = buildPassengerSelectReturnPath(forType, returnTo);
 
-  const { setSelected } = usePassengerSelection(forType);
+  const { selected, setSelected } = usePassengerSelection(forType);
   const { data: allowExternal } = useAllowExternalPassengers();
   const removeExternal = useRemoveExternalPassenger();
   const removeStaffCredential = useRemoveStaffCredential();
 
   const [tab, setTab] = useState<PassengerTabKey>("employee");
   const [keyword, setKeyword] = useState("");
-  const [draft, setDraft] = useState<PassengerBookInfo[]>(() => loadPassengerSelection(forType));
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [selectedSheetOpen, setSelectedSheetOpen] = useState(false);
   const [externalDeleteTarget, setExternalDeleteTarget] = useState<MemberPassenger | null>(null);
@@ -65,10 +63,6 @@ export function PassengerSelectPage() {
     return () => window.clearTimeout(timer);
   }, [keyword]);
 
-  useEffect(() => {
-    setDraft(loadPassengerSelection(forType));
-  }, [forType]);
-
   const staffQuery = useStaffList(debouncedKeyword, tab === "employee");
   const externalQuery = useExternalPassengerList(debouncedKeyword, tab === "external");
 
@@ -83,8 +77,8 @@ export function PassengerSelectPage() {
   );
 
   function handleToggle(info: PassengerBookInfo, checked: boolean) {
-    const result = toggleSelection(draft, info, checked, forType);
-    setDraft(result.items);
+    const result = toggleSelection(selected, info, checked, forType);
+    setSelected(result.items);
     if (result.error) {
       setAlertMessage(result.error);
     }
@@ -95,11 +89,10 @@ export function PassengerSelectPage() {
   }
 
   function handleConfirm() {
-    if (draft.length === 0) {
+    if (selected.length === 0) {
       setAlertMessage("请至少选择一位出行人");
       return;
     }
-    setSelected(draft);
     navigate(returnTo, { replace: true });
   }
 
@@ -141,17 +134,14 @@ export function PassengerSelectPage() {
     setExternalDeleteTarget(passenger);
   }
 
-  function pruneDraftAfterDelete(target: {
+  function pruneSelectedAfterDelete(target: {
     passengerId?: string;
     credential?: PassengerCredential;
   }) {
-    setDraft((prev) => {
-      const next = removeDeletedFromSelection(prev, target);
-      if (next.length !== prev.length) {
-        savePassengerSelection(forType, next);
-      }
-      return next;
-    });
+    const next = removeDeletedFromSelection(selected, target);
+    if (next.length !== selected.length) {
+      setSelected(next);
+    }
   }
 
   async function confirmExternalRemove() {
@@ -159,7 +149,7 @@ export function PassengerSelectPage() {
     const target = externalDeleteTarget;
     try {
       await removeExternal.mutateAsync(target.Id);
-      pruneDraftAfterDelete({ passengerId: target.Id });
+      pruneSelectedAfterDelete({ passengerId: target.Id });
       setExternalDeleteTarget(null);
     } catch (err) {
       setAlertMessage(formatApiError(err));
@@ -203,7 +193,7 @@ export function PassengerSelectPage() {
     if (!window.confirm("确定删除该证件？")) return;
     try {
       await removeStaffCredential.mutateAsync(credentialFormFromCredential(credential, staffId));
-      pruneDraftAfterDelete({ credential });
+      pruneSelectedAfterDelete({ credential });
     } catch (err) {
       setAlertMessage(formatApiError(err));
     }
@@ -229,10 +219,10 @@ export function PassengerSelectPage() {
         tabs={allowExternal ? <PassengerSegmentTabs active={tab} onChange={setTab} /> : null}
         footer={
           <PassengerPickerFooter
-            selectedCount={draft.length}
+            selectedCount={selected.length}
             onShowSelected={() => setSelectedSheetOpen(true)}
             onConfirm={handleConfirm}
-            confirmDisabled={draft.length === 0}
+            confirmDisabled={selected.length === 0}
           />
         }
       >
@@ -254,7 +244,7 @@ export function PassengerSelectPage() {
                   key={staff.Id}
                   staff={staff}
                   forType={forType}
-                  selected={draft}
+                  selected={selected}
                   onToggle={handleToggle}
                   onAddCredential={openStaffAdd}
                   onEditCredential={openStaffEdit}
@@ -272,7 +262,7 @@ export function PassengerSelectPage() {
                   key={p.Id}
                   passenger={p}
                   forType={forType}
-                  selected={draft}
+                  selected={selected}
                   onToggle={handleToggle}
                   onEdit={openExternalEdit}
                   onRemove={handleExternalRemove}
@@ -301,7 +291,7 @@ export function PassengerSelectPage() {
 
       <SelectedPassengersSheet
         open={selectedSheetOpen}
-        items={draft}
+        items={selected}
         onClose={() => setSelectedSheetOpen(false)}
         onRemove={handleRemove}
       />

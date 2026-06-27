@@ -74,6 +74,7 @@ import {
 import { pollTrainCheckPay, shouldNavigateToPay } from "@/lib/train-book-check-pay";
 import { clearTrainBookSelection } from "@/lib/train-book-session";
 import { clearTrainExchangeSession, loadTrainExchangeSession } from "@/lib/train-exchange-session";
+import { clearPassengerSelection } from "@/lib/passenger-selection";
 
 const FALLBACK_HEADER_HEIGHT = 56;
 
@@ -269,6 +270,7 @@ export function TrainBookPage() {
         const checkPayReady = await pollTrainCheckPay(response.TradeNo);
         if (shouldNavigateToPay({ travelPayType: payType, checkPayReady }) && orderId) {
           clearTrainBookSelection();
+          clearPassengerSelection(ProductType.Train);
           if (isExchange) {
             clearTrainExchangeSession();
           }
@@ -278,6 +280,7 @@ export function TrainBookPage() {
       }
 
       clearTrainBookSelection();
+      clearPassengerSelection(ProductType.Train);
       if (isExchange) {
         clearTrainExchangeSession();
       }

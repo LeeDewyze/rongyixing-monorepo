@@ -140,11 +140,13 @@ Rules:
 - 2026-06-27 - Form gradient layout principle: documented why form pages must use root-level `--brand-form-header-gradient` plus card overlap instead of a tall `brand-header-start` to `brand-header-end` block.
 - 2026-06-27 - TravelApprovalPage list shell: replaced the flat white tab strip with a page-level form gradient header, segmented approval tabs, lifted task cards, and tokenized task status treatments while preserving remote approval workflows.
 - 2026-06-27 - TravelApprovalPage header simplification: removed duplicate approval summary copy and the standalone pending counter from the gradient header; kept pending count only inside the tab badge.
+- 2026-06-27 - PassengerCredentialForm pickers: aligned gender with the credential-type bottom sheet pattern and replaced native date inputs with a mobile bottom-sheet year/month/day picker for consistent H5 form interaction.
 
 ## Components
 
 - `apps/h5/src/components/H5Shell.tsx` - base H5 shell with page background and scroll container.
 - `apps/h5/src/components/layout/AppHeader.tsx` - shared app header, supports brand and hotel tones.
+- `apps/h5/src/components/passenger/PassengerCredentialForm.tsx` - credential form with unified bottom-sheet pickers for credential type, gender, birthday, and expiration date.
 - `apps/h5/src/pages/credential/CredentialListPage.tsx` - reference implementation for form-page gradient background.
 - `apps/h5/src/pages/travel/TravelApplyPage.tsx` - travel application form page using page-level form gradient.
 - `apps/h5/src/pages/travel/TravelApprovalPage.tsx` - travel approval list shell using page-level gradient header and segmented tabs.
