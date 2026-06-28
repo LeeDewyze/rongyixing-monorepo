@@ -34,7 +34,7 @@ export function getApiMode(): "mock" | "proxy" | "direct" {
   if (override === "mock" || override === "proxy" || override === "direct") {
     return override;
   }
-  return "mock";
+  return "proxy";
 }
 
 export function getMockDelay(): number {

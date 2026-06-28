@@ -25,6 +25,7 @@ export type {
 export { normalizeWorkbenchResponse } from "./workbench.js";
 
 export type { TmcData } from "./tmc-data.js";
+export type { BulletinNotice, NoticeListParams } from "./notice.js";
 
 export type {
   DeviceLoginParams,

@@ -149,6 +149,9 @@ Rules:
 - 2026-06-28 - AccountCard management: migrated legacy bank-card list/add/edit/delete into H5 with form-gradient pages, card-number masking, bottom-sheet bank selection, and shared confirmation dialog.
 - 2026-06-28 - ProfileCenterPage: connected the profile header personal-center entry to a settings-style detail page showing legacy member/staff profile fields and credential management navigation.
 - 2026-06-28 - ProfileAvatarCropSheet: added a standalone crop-before-upload avatar sheet for the profile center, using local file preview, drag/zoom cropping, and legacy-aligned upload payloads.
+- 2026-06-28 - Notice list/detail pages: moved notice screens to the shared form-gradient shell with custom page headers and denser announcement cards for clearer list scanning.
+- 2026-06-28 - Home notice strip: restyled the homepage bulletin entry to an orange pill banner with orange typography and horn icon, matching the provided legacy reference.
+- 2026-06-28 - Home notice strip rotation: made the homepage bulletin entry cycle through multiple notices automatically, removing the timestamp and animating entries vertically from bottom to top.
 
 ## Components
 
@@ -162,6 +165,8 @@ Rules:
 - `apps/h5/src/pages/account-card/AccountCardFormPage.tsx` - bank-card add/edit form with preview card, bottom-sheet bank picker, validation, save, and delete confirmation.
 - `apps/h5/src/pages/profile/ProfileCenterPage.tsx` - personal center detail page for member/staff profile fields and credential management entry.
 - `apps/h5/src/components/profile/ProfileAvatarCropSheet.tsx` - avatar crop sheet with local preview, drag/zoom crop controls, and confirm-before-upload flow.
+- `apps/h5/src/pages/notice/NoticeListPage.tsx` - notice list page with custom header, refresh action, loading/error/empty states, and announcement cards.
+- `apps/h5/src/pages/notice/NoticeDetailPage.tsx` - notice detail page with custom header and legacy-style content surface.
 - `apps/h5/src/pages/travel/TravelApplyPage.tsx` - travel application form page using page-level form gradient.
 - `apps/h5/src/pages/travel/TravelApprovalPage.tsx` - travel approval list shell using page-level gradient header and segmented tabs.
 - `apps/h5/src/components/travel/ApprovalTaskList.tsx` - approval task list cards with status pills, skeleton, error, empty, and load-more states.

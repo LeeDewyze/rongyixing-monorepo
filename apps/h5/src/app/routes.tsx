@@ -45,6 +45,8 @@ import { MessageNotificationPage } from "@/pages/settings/MessageNotificationPag
 import { LoginDevicesPage } from "@/pages/settings/LoginDevicesPage";
 import { SettingsPage } from "@/pages/settings/SettingsPage";
 import { ContactUsPage } from "@/pages/contact/ContactUsPage";
+import { NoticeListPage } from "@/pages/notice/NoticeListPage";
+import { NoticeDetailPage } from "@/pages/notice/NoticeDetailPage";
 
 export const router = createBrowserRouter([
   {
@@ -143,6 +145,14 @@ export const router = createBrowserRouter([
     path: "/contact",
     element: <RootLayout />,
     children: [{ index: true, element: <ContactUsPage /> }],
+  },
+  {
+    path: "/notice",
+    element: <RootLayout />,
+    children: [
+      { index: true, element: <NoticeListPage /> },
+      { path: ":noticeId", element: <NoticeDetailPage /> },
+    ],
   },
   {
     path: "/passenger",

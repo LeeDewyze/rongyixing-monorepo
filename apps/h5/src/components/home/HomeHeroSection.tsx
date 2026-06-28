@@ -6,6 +6,7 @@ export type { HomeProductId, HomeTravelMode };
 interface HomeHeroSectionProps {
   travelMode: HomeTravelMode;
   activeProduct: HomeProductId;
+  notice?: React.ReactNode;
   onTravelModeChange: (mode: HomeTravelMode) => void;
   onProductChange: (product: HomeProductId) => void;
 }
@@ -50,6 +51,7 @@ function ProductIcon({ product, active }: { product: HomeProductId; active: bool
 export function HomeHeroSection({
   travelMode,
   activeProduct,
+  notice,
   onTravelModeChange,
   onProductChange,
 }: HomeHeroSectionProps) {
@@ -63,6 +65,7 @@ export function HomeHeroSection({
 
       <div className="relative -mt-7">
         <div className="overflow-hidden rounded-t-xl bg-white shadow-[0_-2px_12px_rgba(0,0,0,0.06)]">
+          {notice ? <div className="px-3 pt-3">{notice}</div> : null}
           {/* Figma 10:218 — travel-mode tab strip only; product entries sit on page gray below */}
           <div className="relative h-14 w-full overflow-hidden">
             <img

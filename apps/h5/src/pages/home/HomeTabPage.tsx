@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { FlightCityPickerHostFromForm } from "@/components/flight/common";
 import { HomeBusinessPanel } from "@/components/home/HomeBusinessPanel";
 import { HomeFlightSearchPanel } from "@/components/home/HomeFlightSearchPanel";
+import { HomeNoticeStrip } from "@/components/home/HomeNoticeStrip";
 import { HomeProductTabPointer } from "@/components/home/HomeProductTabPointer";
 import {
   HomeHeroSection,
@@ -18,6 +19,9 @@ import { PageToast } from "@/components/layout/PageToast";
 import { useFlightSearchForm } from "@/hooks/useFlightSearchForm";
 import { useHotelSearchForm } from "@/hooks/useHotelSearchForm";
 import { useTrainSearchForm } from "@/hooks/useTrainSearchForm";
+import { useQuery } from "@tanstack/react-query";
+import { getApi } from "@/lib/api";
+import { getApiMode } from "@/lib/env";
 import { formatApiError } from "@/lib/formatApiError";
 import { buildHomeProductSearch, parseHomeProduct } from "@/lib/home-params";
 import { CITY_HISTORY_KEYS, hotelCityPickerAdapter } from "@/lib/hotel-search";
@@ -49,6 +53,14 @@ export function HomeTabPage() {
   const hotelForm = useHotelSearchForm();
   const trainForm = useTrainSearchForm();
   const flightForm = useFlightSearchForm();
+  const apiMode = getApiMode();
+  const { data: notices = [] } = useQuery({
+    queryKey: ["home", "notices"],
+    queryFn: () => getApi().notice.getList({ PageIndex: 0, PageSize: 20 }),
+    enabled: apiMode !== "mock",
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
 
   useEffect(() => {
     setActiveProduct(parseHomeProduct(searchParams));
@@ -138,6 +150,12 @@ export function HomeTabPage() {
       <HomeHeroSection
         travelMode={travelMode}
         activeProduct={activeProduct}
+        notice={
+          <HomeNoticeStrip
+            notices={notices}
+            onClick={() => navigate("/notice?bulletinType=agentNotice")}
+          />
+        }
         onTravelModeChange={(mode) => {
           setTravelMode(mode);
           saveHomeTravelMode(mode);

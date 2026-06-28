@@ -15,6 +15,7 @@ import { createBookApi, type BookApi } from "./apis/book.js";
 import { createFlightApi, type FlightApi } from "./apis/flight.js";
 import { createHotelApi, type HotelApi } from "./apis/hotel.js";
 import { createMemberApi, type MemberApi } from "./apis/member.js";
+import { createNoticeApi, type NoticeApi } from "./apis/notice.js";
 import { createOrderApi, type OrderApi } from "./apis/order.js";
 import { createPassengerApi, type PassengerApi } from "./apis/passenger.js";
 import { createPayApi, type PayApi } from "./apis/pay.js";
@@ -75,6 +76,12 @@ export {
 export { createPayApi, type PayApi } from "./apis/pay.js";
 export { createPassengerApi, type PassengerApi } from "./apis/passenger.js";
 export { createMemberApi, type MemberApi } from "./apis/member.js";
+export {
+  createNoticeApi,
+  type BulletinNotice,
+  type NoticeApi,
+  type NoticeListParams,
+} from "./apis/notice.js";
 export { createTrainApi, type TrainApi, buildTrainPolicyTrainsPayload } from "./apis/train.js";
 export {
   buildOriginalSearchResultSeats,
@@ -135,6 +142,7 @@ export interface Api {
   order: OrderApi;
   pay: PayApi;
   member: MemberApi;
+  notice: NoticeApi;
   accountCard: AccountCardApi;
   account: AccountApi;
   accountSecurity: AccountSecurityApi;
@@ -187,6 +195,7 @@ export function createApi(config: CreateApiConfig): Api {
     order: createOrderApi(proxy),
     pay: createPayApi(proxy),
     member: createMemberApi(proxy),
+    notice: createNoticeApi(proxy),
     accountCard: createAccountCardApi(proxy),
     account: createAccountApi(proxy),
     accountSecurity: createAccountSecurityApi(proxy),
