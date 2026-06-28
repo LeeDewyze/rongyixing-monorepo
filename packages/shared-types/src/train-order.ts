@@ -43,6 +43,7 @@ export interface TrainOrderTicket {
 
 export interface TrainCancelParams {
   OrderId: string;
+  TicketId?: string;
   Channel?: string;
 }
 

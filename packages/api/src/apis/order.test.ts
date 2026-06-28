@@ -24,6 +24,79 @@ describe("buildOrderListRequest", () => {
 });
 
 describe("normalizeOrderListResponse", () => {
+  it("maps legacy flight ticket id and refund action for list handoff", () => {
+    const response = normalizeOrderListResponse(
+      {
+        Orders: [
+          {
+            Id: "FO-1",
+            Status: "Completed",
+            StatusName: "交易完成",
+            TotalAmount: 860,
+            OrderFlightTickets: [
+              {
+                Id: "TICKET-1",
+                AppStatusName: "已出票",
+                Variables: JSON.stringify({ isShowRefundButton: true }),
+                Passenger: { Name: "姜茗豪" },
+                OrderFlightTrips: [
+                  {
+                    FlightNumber: "CA1234",
+                    FromCityName: "北京",
+                    ToCityName: "上海",
+                    TakeoffTime: "2026-06-27T08:00:00",
+                    OrderFlightTicket: {
+                      Passenger: { Name: "姜茗豪" },
+                    },
+                  },
+                ],
+              },
+              {
+                Id: "TICKET-2",
+                AppStatusName: "已出票",
+                Variables: JSON.stringify({ isShowExchangeButton: true }),
+                Passenger: { Name: "申晓杰" },
+                OrderFlightTrips: [
+                  {
+                    FlightNumber: "CA1234",
+                    FromCityName: "北京",
+                    ToCityName: "上海",
+                    TakeoffTime: "2026-06-27T08:00:00",
+                    OrderFlightTicket: {
+                      Passenger: { Name: "申晓杰" },
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      OrderListTabId.Flight,
+    );
+
+    expect(response.Orders[0]).toMatchObject({
+      tabId: OrderListTabId.Flight,
+      OrderId: "FO-1",
+      TicketId: "TICKET-1",
+      TicketStatusName: "已出票",
+      PassengerNames: "姜茗豪",
+      Actions: [],
+      Tickets: [
+        {
+          TicketId: "TICKET-1",
+          PassengerNames: "姜茗豪",
+          Actions: [{ kind: "refund", label: "退票" }],
+        },
+        {
+          TicketId: "TICKET-2",
+          PassengerNames: "申晓杰",
+          Actions: [{ kind: "exchange", label: "改签" }],
+        },
+      ],
+    });
+  });
+
   it("maps legacy hotel order entity to UI item", () => {
     const response = normalizeOrderListResponse(
       {

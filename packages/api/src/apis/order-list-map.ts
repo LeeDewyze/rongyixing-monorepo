@@ -1,11 +1,13 @@
 import {
   OrderListTabId,
   type OrderAction,
+  type OrderFlightListTicket,
   type OrderHotelListItem,
   type OrderListItem,
   type OrderListParams,
   type OrderListResponse,
   type OrderListScope,
+  type OrderTrainListTicket,
 } from "@ryx/shared-types";
 
 export type OrderListType = "Flight" | "Train" | "Hotel" | "Car" | "RentalCar";
@@ -140,12 +142,12 @@ function buildFlightTrainActions(
   variables: LegacyRecord | undefined,
   tag: "flight" | "train",
 ): OrderAction[] {
-  const actions = buildActions(variables);
-  if (actions.length > 0) {
-    return actions;
-  }
+  const actions: OrderAction[] = [];
   if (!variables) {
     return [];
+  }
+  if (variables.isShowCancelButton) {
+    actions.push({ kind: "cancel", label: "取消" });
   }
   if (variables.isShowRefundButton) {
     actions.push({ kind: "refund", label: "退票" });
@@ -153,10 +155,7 @@ function buildFlightTrainActions(
   if (variables.isShowExchangeButton) {
     actions.push({ kind: "exchange", label: "改签" });
   }
-  if (variables.isShowCancelButton) {
-    actions.unshift({ kind: "cancel", label: "取消" });
-  }
-  if (tag === "flight" && variables.isPay) {
+  if ((tag === "flight" || tag === "train") && variables.isPay) {
     actions.push({ kind: "pay", label: "支付" });
   }
   return actions;
@@ -186,6 +185,7 @@ function mapLegacyHotelOrder(order: LegacyRecord): OrderHotelListItem | null {
     Status: readString(order.Status),
     StatusName: readString(order.StatusName ?? order.Status),
     TotalAmount: readNumber(order.TotalAmount),
+    OrderHotelId: readString(hotel.Id) || undefined,
     HotelName: readString(hotel.HotelName ?? hotel.Name),
     CheckInDate: formatDateOnly(hotel.BeginDate ?? hotel.CheckInDate),
     CheckOutDate: formatDateOnly(hotel.EndDate ?? hotel.CheckOutDate),
@@ -193,6 +193,38 @@ function mapLegacyHotelOrder(order: LegacyRecord): OrderHotelListItem | null {
     RoomType: readString(hotel.RoomName ?? hotel.RoomType),
     PassengerNames: passengerNames,
     Actions: buildActions(variables),
+  };
+}
+
+function mapLegacyFlightTicketForList(ticket: LegacyRecord): OrderFlightListTicket | null {
+  const trips = asArray<LegacyRecord>(ticket.OrderFlightTrips);
+  const trip = trips[0];
+  if (!trip) {
+    return null;
+  }
+
+  const ticketVariables = parseVariablesObj(ticket);
+  const passengerNames =
+    joinNames(
+      trips.map((item) => {
+        const ticketRef = asRecord(item.OrderFlightTicket);
+        const passenger = asRecord(ticketRef?.Passenger) ?? asRecord(ticket.Passenger);
+        return readString(passenger?.Name);
+      }),
+    ) || readString(asRecord(ticket.Passenger)?.Name);
+
+  return {
+    TicketId: readString(ticket.Id),
+    RouteTitle:
+      `${readString(trip.FlightNumber)} ${readString(trip.FromCityName)}—${readString(trip.ToCityName)}`.trim(),
+    DepartTime: formatDateTime(trip.TakeoffTime ?? trip.DepartTime),
+    PassengerNames: passengerNames,
+    TicketStatusName:
+      readString(ticket.AppStatusName ?? ticket.StatusName ?? ticket.Status) || undefined,
+    Actions: buildFlightTrainActions(ticketVariables, "flight"),
+    IsCustomApplyRefunding: Boolean(ticketVariables?.isCustomApplyRefunding),
+    IsCustomApplyExchanging: Boolean(ticketVariables?.isCustomApplyExchanging),
+    TicketType: readString(ticket.TicketType) || readNumber(ticket.TicketType),
   };
 }
 
@@ -207,6 +239,9 @@ function mapLegacyFlightOrder(order: LegacyRecord): OrderListItem | null {
 
   const variables = parseVariablesObj(order);
   const ticketVariables = ticket ? parseVariablesObj(ticket) : undefined;
+  const listTickets = tickets
+    .map(mapLegacyFlightTicketForList)
+    .filter((item): item is OrderFlightListTicket => Boolean(item?.TicketId));
   const passengerNames =
     joinNames(
       trips.map((item) => {
@@ -230,7 +265,41 @@ function mapLegacyFlightOrder(order: LegacyRecord): OrderListItem | null {
     PassengerNames: passengerNames,
     TicketStatusName:
       readString(ticket?.AppStatusName ?? ticket?.StatusName ?? ticket?.Status) || undefined,
-    Actions: buildFlightTrainActions(ticketVariables ?? variables, "flight"),
+    TicketId: readString(ticket?.Id) || undefined,
+    Tickets: listTickets,
+    Actions:
+      listTickets.length > 0
+        ? buildActions(variables)
+        : buildFlightTrainActions(ticketVariables ?? variables, "flight"),
+  };
+}
+
+function mapLegacyTrainTicketForList(ticket: LegacyRecord): OrderTrainListTicket | null {
+  const trips = asArray<LegacyRecord>(ticket.OrderTrainTrips);
+  const trip = trips[0];
+  if (!trip) {
+    return null;
+  }
+
+  const ticketVariables = parseVariablesObj(ticket);
+  const passengerNames =
+    joinNames(
+      trips.map((item) => {
+        const ticketRef = asRecord(item.OrderTrainTicket);
+        const passenger = asRecord(ticketRef?.Passenger) ?? asRecord(ticket.Passenger);
+        return readString(passenger?.Name);
+      }),
+    ) || readString(asRecord(ticket.Passenger)?.Name);
+
+  return {
+    TicketId: readString(ticket.Id),
+    RouteTitle:
+      `${readString(trip.TrainCode)} ${readString(trip.FromStationName)}—${readString(trip.ToStationName)}`.trim(),
+    DepartTime: formatDateTime(trip.StartTime ?? trip.DepartureTime ?? trip.GoDate),
+    PassengerNames: passengerNames,
+    TicketStatusName:
+      readString(ticket.AppStatusName ?? ticket.StatusName ?? ticket.Status) || undefined,
+    Actions: buildFlightTrainActions(ticketVariables, "train"),
   };
 }
 
@@ -245,6 +314,9 @@ function mapLegacyTrainOrder(order: LegacyRecord): OrderListItem | null {
 
   const variables = parseVariablesObj(order);
   const ticketVariables = ticket ? parseVariablesObj(ticket) : undefined;
+  const listTickets = tickets
+    .map(mapLegacyTrainTicketForList)
+    .filter((item): item is OrderTrainListTicket => Boolean(item?.TicketId));
   const passengerNames =
     joinNames(
       trips.map((item) => {
@@ -269,7 +341,11 @@ function mapLegacyTrainOrder(order: LegacyRecord): OrderListItem | null {
     TicketStatusName:
       readString(ticket?.AppStatusName ?? ticket?.StatusName ?? ticket?.Status) || undefined,
     TicketId: readString(ticket?.Id) || undefined,
-    Actions: buildFlightTrainActions(ticketVariables ?? variables, "train"),
+    Tickets: listTickets,
+    Actions:
+      listTickets.length > 0
+        ? buildActions(variables)
+        : buildFlightTrainActions(ticketVariables ?? variables, "train"),
   };
 }
 

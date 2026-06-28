@@ -1,10 +1,14 @@
-import { OrderListTabId, type OrderTrainListItem } from "@ryx/shared-types";
+import {
+  OrderListTabId,
+  type OrderFlightListItem,
+  type OrderTrainListItem,
+} from "@ryx/shared-types";
 import { describe, expect, it } from "vitest";
 
 import { getOrderDetailPath, getOrderPayPath, getOrderResultPath } from "./order-routes";
 
 describe("order-routes", () => {
-  const flightItem = {
+  const flightItem: OrderFlightListItem = {
     tabId: OrderListTabId.Flight,
     OrderId: "ORD-FLT-001",
     Status: "WaitPay",

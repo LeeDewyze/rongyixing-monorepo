@@ -386,6 +386,11 @@ export function createMockFlightOrderDetailLegacy(orderId: string) {
       "退票费\n2026年06月19日 16:30前 ￥33/人\n2026年06月23日 16:30前 ￥66/人\n2026年06月26日 12:30前 ￥231/人\n2026年06月26日 12:30后 ￥297/人\n改期费\n2026年06月19日 16:30前 ￥17/人\n2026年06月23日 16:30前 ￥50/人\n2026年06月26日 12:30前 ￥66/人\n2026年06月26日 12:30后 ￥99/人\n托运行李额\n1件,每件23KG,体积不超过40*60*100cm\n手提行李额\n0KG\n附加信息\n经济舱;\n签转条件\n不得签转",
     Passenger: { Id: passengers[index]?.Id, Name: passengers[index]?.Name },
     OrderFlightTrips: buildTrips(index === 0 ? "KN6777" : "KN5955"),
+    Variables: JSON.stringify(
+      isWaitPay
+        ? { isShowCancelButton: true }
+        : { isShowRefundButton: true, isShowExchangeButton: true },
+    ),
   }));
 
   const orderItems = ticketKeys.flatMap((key, index) => [
@@ -505,8 +510,26 @@ export const MOCK_ORDERS: OrderListItem[] = [
     DepartTime: "2023-08-09 20:23:23",
     PassengerNames: "某某某、某某某",
     TicketStatusName: "待出票",
+    TicketId: "20860000001",
+    Tickets: [
+      {
+        TicketId: "20860000001",
+        RouteTitle: "CZ8879 北京—上海",
+        DepartTime: "2023-08-09 20:23:23",
+        PassengerNames: "某某某",
+        TicketStatusName: "预订成功",
+        Actions: [{ kind: "cancel", label: "取消" }],
+      },
+      {
+        TicketId: "20860000002",
+        RouteTitle: "CZ8879 北京—上海",
+        DepartTime: "2023-08-09 20:23:23",
+        PassengerNames: "某某某",
+        TicketStatusName: "预订成功",
+        Actions: [{ kind: "cancel", label: "取消" }],
+      },
+    ],
     Actions: [
-      { kind: "cancel", label: "取消" },
       { kind: "pay", label: "支付" },
     ],
   },
@@ -521,10 +544,32 @@ export const MOCK_ORDERS: OrderListItem[] = [
     DepartTime: "2023-09-15 08:30:00",
     PassengerNames: "张某某",
     TicketStatusName: "已出票",
-    Actions: [
-      { kind: "refund", label: "退票" },
-      { kind: "exchange", label: "改签" },
+    TicketId: "20860000001",
+    Tickets: [
+      {
+        TicketId: "20860000001",
+        RouteTitle: "MU5101 上海—广州",
+        DepartTime: "2023-09-15 08:30:00",
+        PassengerNames: "张某某",
+        TicketStatusName: "已出票",
+        Actions: [
+          { kind: "refund", label: "退票" },
+          { kind: "exchange", label: "改签" },
+        ],
+      },
+      {
+        TicketId: "20860000002",
+        RouteTitle: "MU5101 上海—广州",
+        DepartTime: "2023-09-15 08:30:00",
+        PassengerNames: "申晓杰",
+        TicketStatusName: "已出票",
+        Actions: [
+          { kind: "refund", label: "退票" },
+          { kind: "exchange", label: "改签" },
+        ],
+      },
     ],
+    Actions: [],
   },
   {
     tabId: OrderListTabId.Flight,
@@ -550,10 +595,26 @@ export const MOCK_ORDERS: OrderListItem[] = [
     DepartTime: "2023-08-09 20:23:23",
     PassengerNames: "某某某、某某某",
     TicketStatusName: "待出票",
-    Actions: [
-      { kind: "cancel", label: "取消" },
-      { kind: "pay", label: "支付" },
+    TicketId: "207600000001",
+    Tickets: [
+      {
+        TicketId: "207600000001",
+        RouteTitle: "G8879 北京南—上海站",
+        DepartTime: "2023-08-09 20:23:23",
+        PassengerNames: "某某某",
+        TicketStatusName: "待出票",
+        Actions: [{ kind: "cancel", label: "取消" }],
+      },
+      {
+        TicketId: "207600000002",
+        RouteTitle: "G8879 北京南—上海站",
+        DepartTime: "2023-08-09 20:23:23",
+        PassengerNames: "申晓杰",
+        TicketStatusName: "待出票",
+        Actions: [{ kind: "cancel", label: "取消" }],
+      },
     ],
+    Actions: [{ kind: "pay", label: "支付" }],
   },
   {
     tabId: OrderListTabId.Train,
@@ -566,10 +627,32 @@ export const MOCK_ORDERS: OrderListItem[] = [
     DepartTime: "2023-09-20 09:15:00",
     PassengerNames: "王某某",
     TicketStatusName: "已出票",
-    Actions: [
-      { kind: "refund", label: "退票" },
-      { kind: "exchange", label: "改签" },
+    TicketId: "207600000001",
+    Tickets: [
+      {
+        TicketId: "207600000001",
+        RouteTitle: "D321 上海—杭州东",
+        DepartTime: "2023-09-20 09:15:00",
+        PassengerNames: "王某某",
+        TicketStatusName: "已出票",
+        Actions: [
+          { kind: "refund", label: "退票" },
+          { kind: "exchange", label: "改签" },
+        ],
+      },
+      {
+        TicketId: "207600000002",
+        RouteTitle: "D321 上海—杭州东",
+        DepartTime: "2023-09-20 09:15:00",
+        PassengerNames: "申晓杰",
+        TicketStatusName: "已出票",
+        Actions: [
+          { kind: "refund", label: "退票" },
+          { kind: "exchange", label: "改签" },
+        ],
+      },
     ],
+    Actions: [],
   },
   {
     tabId: OrderListTabId.Train,
@@ -591,6 +674,7 @@ export const MOCK_ORDERS: OrderListItem[] = [
     Status: "WaitPay",
     StatusName: "待付款",
     TotalAmount: 589,
+    OrderHotelId: "20760000000170",
     HotelName: "武汉泽宇国际酒店（北京方庄地铁站店）",
     CheckInDate: "2026-08-09",
     CheckOutDate: "2026-08-10",

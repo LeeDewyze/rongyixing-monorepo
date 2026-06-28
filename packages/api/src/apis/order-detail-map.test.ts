@@ -359,6 +359,32 @@ describe("normalizeFlightOrderDetail", () => {
     expect(detail.Histories).toHaveLength(1);
   });
 
+  it("maps flight ticket-level refund action from Variables", () => {
+    const detail = normalizeFlightOrderDetail({
+      Order: {
+        Id: "ORD-FLT-REFUND",
+        OrderFlightTickets: [
+          {
+            Id: "T-FLT-1",
+            Key: "flight-key-1",
+            StatusName: "已出票",
+            Variables: JSON.stringify({ isShowRefundButton: true }),
+            OrderFlightTrips: [
+              {
+                FlightNumber: "MU5101",
+                FromCityName: "上海",
+                ToCityName: "北京",
+                TakeoffTime: "2026-06-27T10:00:00",
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    expect(detail.Tickets?.[0]?.Actions).toEqual({ showCancel: false, showRefund: true });
+  });
+
   it("maps airline fields on flight trips including ticket fallbacks", () => {
     const detail = normalizeFlightOrderDetail({
       Order: {

@@ -14,12 +14,16 @@ import { FlightOrderDetailFooter } from "@/components/order/flight/FlightOrderDe
 import { FlightOrderExplainSheet } from "@/components/order/flight/FlightOrderExplainSheet";
 import { FlightOrderInfoCard } from "@/components/order/flight/FlightOrderInfoCard";
 import { FlightOrderPassengerTabs } from "@/components/order/flight/FlightOrderPassengerTabs";
+import { FlightOrderRefundDialog } from "@/components/order/flight/FlightOrderRefundDialog";
 import { FlightOrderSegmentCard } from "@/components/order/flight/FlightOrderSegmentCard";
 import { FlightOrderTravelerCard } from "@/components/order/flight/FlightOrderTravelerCard";
 import {
   useCancelFlightOrder,
   useFlightOrderDetail,
   useFlightPayHoldCountdown,
+  useFlightTicketRefundInfo,
+  useNonVoluntaryRefundFlightOrder,
+  useRefundFlightOrder,
 } from "@/hooks/useFlightOrderDetail";
 import { useInspurRepush } from "@/hooks/useHotelOrderDetail";
 import { resolveAppChannel } from "@/lib/app-channel";
@@ -37,8 +41,11 @@ const FOOTER_OFFSET = "calc(4.5rem + env(safe-area-inset-bottom))";
 const ORDERS_FLIGHT_FALLBACK = `/home/orders?tab=${TAB_ID_TO_PARAM.flight}`;
 
 interface OrderDetailLocationState {
-  action?: "cancel";
+  action?: "cancel" | "refund";
+  ticketId?: string;
 }
+
+type FlightRefundKind = "voluntary" | "nonVoluntary";
 
 export function OrderFlightDetailPage() {
   const { orderId = "" } = useParams();
@@ -47,17 +54,34 @@ export function OrderFlightDetailPage() {
   const openCancelOnMountRef = useRef(
     (location.state as OrderDetailLocationState | null)?.action === "cancel",
   );
+  const cancelTicketIdRef = useRef(
+    (location.state as OrderDetailLocationState | null)?.ticketId,
+  );
+  const cancelFromListRef = useRef(
+    (location.state as OrderDetailLocationState | null)?.action === "cancel" &&
+      Boolean((location.state as OrderDetailLocationState | null)?.ticketId),
+  );
+  const openRefundOnMountRef = useRef(
+    (location.state as OrderDetailLocationState | null)?.action === "refund",
+  );
+  const refundTicketIdRef = useRef(
+    (location.state as OrderDetailLocationState | null)?.ticketId,
+  );
   const headerRef = useRef<HTMLDivElement>(null);
   const [headerHeight, setHeaderHeight] = useState(ORDER_DETAIL_HEADER_FALLBACK_HEIGHT);
 
   const { data: detail, isLoading, isError, error, refetch } = useFlightOrderDetail(orderId);
   const cancelMutation = useCancelFlightOrder();
+  const refundMutation = useRefundFlightOrder();
+  const nonVoluntaryRefundMutation = useNonVoluntaryRefundFlightOrder();
   const { data: showInspurRepush } = useInspurRepush(orderId, Boolean(detail));
   const payHoldSecondsRemaining = useFlightPayHoldCountdown(detail?.PayHoldMinutes);
 
   const [selectedTicketIndex, setSelectedTicketIndex] = useState(0);
   const [billOpen, setBillOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [refundOpen, setRefundOpen] = useState(false);
+  const [refundKind, setRefundKind] = useState<FlightRefundKind>("voluntary");
   const [explainOpen, setExplainOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -99,22 +123,101 @@ export function OrderFlightDetailPage() {
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
-    setSelectedTicketIndex(0);
-  }, [orderId]);
+  const showToast = useCallback((message: string) => {
+    setToast(message);
+    window.setTimeout(() => setToast(null), 2500);
+  }, []);
 
   useEffect(() => {
-    if (!openCancelOnMountRef.current || !detail?.Actions?.showCancel) {
+    setSelectedTicketIndex(0);
+    cancelTicketIdRef.current = (location.state as OrderDetailLocationState | null)?.ticketId;
+    cancelFromListRef.current =
+      (location.state as OrderDetailLocationState | null)?.action === "cancel" &&
+      Boolean((location.state as OrderDetailLocationState | null)?.ticketId);
+    refundTicketIdRef.current = (location.state as OrderDetailLocationState | null)?.ticketId;
+  }, [location.state, orderId]);
+
+  useEffect(() => {
+    if (!openCancelOnMountRef.current || !detail) {
       return;
     }
+
+    const targetTicketId = cancelTicketIdRef.current;
+    const targetIndex = targetTicketId
+      ? detail.Tickets.findIndex((ticket) => ticket.Id === targetTicketId)
+      : selectedTicketIndex;
+
+    if (targetTicketId && targetIndex < 0) {
+      openCancelOnMountRef.current = false;
+      cancelTicketIdRef.current = undefined;
+      showToast("未找到可取消的客票");
+      return;
+    }
+
+    if (targetIndex >= 0 && targetIndex !== selectedTicketIndex) {
+      setSelectedTicketIndex(targetIndex);
+      return;
+    }
+
+    const canCancel = targetTicketId
+      ? detail.Tickets[targetIndex]?.Actions?.showCancel
+      : detail.Actions?.showCancel;
+    if (!canCancel) {
+      openCancelOnMountRef.current = false;
+      cancelTicketIdRef.current = undefined;
+      cancelFromListRef.current = false;
+      showToast("该客票暂不可取消");
+      return;
+    }
+
     openCancelOnMountRef.current = false;
+    cancelTicketIdRef.current = undefined;
     setCancelOpen(true);
-  }, [detail?.Actions?.showCancel]);
+  }, [detail, selectedTicketIndex, showToast]);
 
   const selectedTicket = useMemo(
     () => (detail ? getSelectedTicket(detail, selectedTicketIndex) : undefined),
     [detail, selectedTicketIndex],
   );
+
+  const refundInfo = useFlightTicketRefundInfo(
+    refundOpen && selectedTicket ? { orderFlightTicket: selectedTicket.Id } : null,
+  );
+
+  useEffect(() => {
+    if (!openRefundOnMountRef.current || !detail) {
+      return;
+    }
+
+    const targetTicketId = refundTicketIdRef.current;
+    const targetIndex = targetTicketId
+      ? detail.Tickets.findIndex((ticket) => ticket.Id === targetTicketId)
+      : selectedTicketIndex;
+
+    if (targetIndex < 0) {
+      openRefundOnMountRef.current = false;
+      refundTicketIdRef.current = undefined;
+      showToast("未找到可退票的客票");
+      return;
+    }
+
+    const targetTicket = detail.Tickets[targetIndex];
+    if (!targetTicket?.Actions?.showRefund) {
+      openRefundOnMountRef.current = false;
+      refundTicketIdRef.current = undefined;
+      showToast("该客票暂不可退票");
+      return;
+    }
+
+    if (targetIndex !== selectedTicketIndex) {
+      setSelectedTicketIndex(targetIndex);
+      return;
+    }
+
+    openRefundOnMountRef.current = false;
+    refundTicketIdRef.current = undefined;
+    setRefundOpen(true);
+  }, [detail, selectedTicketIndex, showToast]);
 
   const billLines = useMemo(() => {
     if (!detail || !selectedTicket) return [];
@@ -125,18 +228,15 @@ export function OrderFlightDetailPage() {
     );
   }, [detail, selectedTicket]);
 
-  const showToast = useCallback((message: string) => {
-    setToast(message);
-    window.setTimeout(() => setToast(null), 2500);
-  }, []);
-
   const handlePay = useCallback(() => {
     navigate(`/flight/pay/${encodeURIComponent(orderId)}`);
   }, [navigate, orderId]);
 
   const runCancel = useCallback(async () => {
     if (!detail) return;
-    const target = resolveCancelTarget(detail);
+    const target = cancelFromListRef.current && selectedTicket
+      ? { mode: "ticket" as const, ticketId: selectedTicket.Id }
+      : resolveCancelTarget(detail);
     if (!target) {
       showToast("无法取消：缺少客票信息");
       return;
@@ -162,6 +262,7 @@ export function OrderFlightDetailPage() {
         });
       }
       setCancelOpen(false);
+      cancelFromListRef.current = false;
       showToast("订单已取消");
       void refetch();
     } catch (err) {
@@ -169,10 +270,47 @@ export function OrderFlightDetailPage() {
     }
   }, [cancelMutation, detail, refetch, showToast]);
 
+  const runRefund = useCallback(async () => {
+    if (!detail || !selectedTicket) return;
+    try {
+      if (refundKind === "nonVoluntary") {
+        const result = await nonVoluntaryRefundMutation.mutateAsync({
+          OrderFlightTicketId: selectedTicket.Id,
+          OrderId: detail.OrderId,
+          IsVoluntary: false,
+        });
+        setRefundOpen(false);
+        showToast(result?.Message || "退票申请中");
+      } else {
+        await refundMutation.mutateAsync({
+          orderId: detail.OrderId,
+          ticketId: selectedTicket.Id,
+          IsVoluntary: true,
+        });
+        setRefundOpen(false);
+        showToast("退票申请中");
+      }
+      void refetch();
+    } catch (err) {
+      showToast(formatApiError(err));
+    }
+  }, [
+    detail,
+    nonVoluntaryRefundMutation,
+    refundKind,
+    refundMutation,
+    refetch,
+    selectedTicket,
+    showToast,
+  ]);
+
   const showFooter = detail
-    ? shouldShowFlightFooter(detail.Actions, payHoldSecondsRemaining)
+    ? shouldShowFlightFooter(detail.Actions, payHoldSecondsRemaining, selectedTicket)
     : false;
-  const pending = cancelMutation.isPending;
+  const pending =
+    cancelMutation.isPending ||
+    refundMutation.isPending ||
+    nonVoluntaryRefundMutation.isPending;
 
   return (
     <div className="min-h-screen bg-[#F5F6F9]">
@@ -234,10 +372,15 @@ export function OrderFlightDetailPage() {
         <>
           <FlightOrderDetailFooter
             actions={detail.Actions}
+            selectedTicket={selectedTicket}
             payHoldSecondsRemaining={payHoldSecondsRemaining}
             pending={pending}
             onCancel={() => setCancelOpen(true)}
             onPay={handlePay}
+            onRefund={() => {
+              setRefundKind("voluntary");
+              setRefundOpen(true);
+            }}
           />
 
           <FlightOrderBillSheet
@@ -251,7 +394,22 @@ export function OrderFlightDetailPage() {
             open={cancelOpen}
             pending={pending}
             onConfirm={() => void runCancel()}
-            onClose={() => setCancelOpen(false)}
+            onClose={() => {
+              cancelFromListRef.current = false;
+              setCancelOpen(false);
+            }}
+          />
+
+          <FlightOrderRefundDialog
+            open={refundOpen}
+            refundInfo={refundInfo.data}
+            loading={refundInfo.isLoading}
+            error={refundInfo.error}
+            selectedKind={refundKind}
+            pending={pending}
+            onKindChange={setRefundKind}
+            onConfirm={() => void runRefund()}
+            onClose={() => setRefundOpen(false)}
           />
 
           <FlightOrderExplainSheet

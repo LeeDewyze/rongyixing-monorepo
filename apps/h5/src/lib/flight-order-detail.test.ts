@@ -52,6 +52,12 @@ describe("shouldShowFlightFooter", () => {
     expect(shouldShowFlightFooter(actions, 0)).toBe(false);
     expect(shouldShowFlightFooter(actions, null)).toBe(false);
   });
+
+  it("shows footer for refundable ticket without pay hold countdown", () => {
+    const actions = { showPay: false, showCancel: false, smsAction: "none" as const };
+    const ticket = { Id: "T1", Key: "k1", Trips: [], Actions: { showRefund: true } };
+    expect(shouldShowFlightFooter(actions, null, ticket)).toBe(true);
+  });
 });
 
 describe("shouldPollFlightOrderDetail", () => {

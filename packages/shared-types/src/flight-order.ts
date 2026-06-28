@@ -30,12 +30,17 @@ export interface FlightOrderTicket {
   Key: string;
   Status?: string;
   StatusName?: string;
+  AppStatusName?: string;
   FullTicketNo?: string;
   Explain?: string;
   IsOriginal?: boolean;
   Trips: FlightOrderTrip[];
   Traveler?: HotelOrderTraveler;
   PassengerTypeName?: string;
+  Actions?: {
+    showCancel?: boolean;
+    showRefund?: boolean;
+  };
 }
 
 export interface FlightCancelParams {
@@ -49,6 +54,31 @@ export interface FlightAbolishTicketParams {
   OrderId: string;
   TicketId: string;
   Tag: "flight";
+}
+
+export interface FlightTicketRefundInfoParams {
+  orderFlightTicket: string;
+}
+
+export interface FlightTicketRefundInfo {
+  CanAutoRefund?: boolean;
+  IsOffline?: boolean;
+  RefundFee?: string | number;
+  Message?: string;
+}
+
+export interface FlightRefundParams {
+  orderId: string;
+  ticketId: string;
+  IsVoluntary: boolean;
+  FileName?: string;
+  FileValue?: string;
+}
+
+export interface FlightNonVoluntaryRefundParams {
+  OrderFlightTicketId: string;
+  OrderId: string;
+  IsVoluntary: false;
 }
 
 export interface OrderContact {
