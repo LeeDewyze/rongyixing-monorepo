@@ -36,6 +36,8 @@ import { TravelApprovalPage } from "@/pages/travel/TravelApprovalPage";
 import { TravelTaskPage } from "@/pages/travel/TravelTaskPage";
 import { CredentialListPage } from "@/pages/credential/CredentialListPage";
 import { AccountSecurityPage } from "@/pages/settings/AccountSecurityPage";
+import { AccountCardFormPage } from "@/pages/account-card/AccountCardFormPage";
+import { AccountCardListPage } from "@/pages/account-card/AccountCardListPage";
 import { BindMobilePage } from "@/pages/settings/BindMobilePage";
 import { ChangePasswordPage } from "@/pages/settings/ChangePasswordPage";
 import { MessageNotificationPage } from "@/pages/settings/MessageNotificationPage";
@@ -105,6 +107,15 @@ export const router = createBrowserRouter([
     path: "/credentials",
     element: <RootLayout />,
     children: [{ index: true, element: <CredentialListPage /> }],
+  },
+  {
+    path: "/bank-cards",
+    element: <RootLayout />,
+    children: [
+      { index: true, element: <AccountCardListPage /> },
+      { path: "new", element: <AccountCardFormPage /> },
+      { path: ":cardId", element: <AccountCardFormPage /> },
+    ],
   },
   {
     path: "/settings",

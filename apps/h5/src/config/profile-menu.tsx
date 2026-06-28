@@ -16,7 +16,7 @@ export const PROFILE_MENU_ITEMS: ProfileMenuItem[] = [
   {
     id: "bank-card",
     label: "银行卡信息",
-    comingSoon: true,
+    to: "/bank-cards",
     icon: <MenuIcon src={PROFILE_ASSETS.menu.bankCard} />,
   },
   {

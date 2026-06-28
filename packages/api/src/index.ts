@@ -6,6 +6,7 @@ import {
   type AuthProxyApi,
   type IdentityApi,
 } from "./apis/auth-proxy.js";
+import { createAccountCardApi, type AccountCardApi } from "./apis/account-card.js";
 import { createAccountApi, type AccountApi } from "./apis/account.js";
 import { createAccountSecurityApi, type AccountSecurityApi } from "./apis/account-security.js";
 import { createApprovalApi, type ApprovalApi } from "./apis/approval.js";
@@ -31,6 +32,7 @@ import {
 
 export { ApiError } from "./errors.js";
 export { createApiClient, type ApiClient, type ApiClientConfig } from "./client.js";
+export { createAccountCardApi, type AccountCardApi } from "./apis/account-card.js";
 export { createAccountApi, type AccountApi } from "./apis/account.js";
 export { createAccountSecurityApi, type AccountSecurityApi } from "./apis/account-security.js";
 export {
@@ -87,6 +89,7 @@ export {
 export { createTravelApi, type TravelApi } from "./apis/travel.js";
 export { createTmcApi, type TmcApi } from "./apis/tmc.js";
 export * from "./methods/account-flow.js";
+export * from "./methods/account-card-flow.js";
 export * from "./methods/password-flow.js";
 export * from "./methods/approval-flow.js";
 export * from "./methods/auth-flow.js";
@@ -132,6 +135,7 @@ export interface Api {
   order: OrderApi;
   pay: PayApi;
   member: MemberApi;
+  accountCard: AccountCardApi;
   account: AccountApi;
   accountSecurity: AccountSecurityApi;
   passenger: PassengerApi;
@@ -183,6 +187,7 @@ export function createApi(config: CreateApiConfig): Api {
     order: createOrderApi(proxy),
     pay: createPayApi(proxy),
     member: createMemberApi(proxy),
+    accountCard: createAccountCardApi(proxy),
     account: createAccountApi(proxy),
     accountSecurity: createAccountSecurityApi(proxy),
     passenger: createPassengerApi(proxy),
