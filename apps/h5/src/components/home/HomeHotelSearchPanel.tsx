@@ -17,6 +17,8 @@ interface HomeHotelSearchPanelProps {
   onSearch: () => void;
   onCheckInChange: (date: string) => void;
   onCheckOutChange: (date: string) => void;
+  onMyLocationClick: () => void;
+  myLocationLoading?: boolean;
 }
 
 function ChevronDownIcon() {
@@ -49,6 +51,8 @@ export function HomeHotelSearchPanel({
   onSearch,
   onCheckInChange,
   onCheckOutChange,
+  onMyLocationClick,
+  myLocationLoading = false,
 }: HomeHotelSearchPanelProps) {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const nights = nightsBetween(checkIn, checkOut);
@@ -79,12 +83,14 @@ export function HomeHotelSearchPanel({
           />
           <button
             type="button"
-            className="flex shrink-0 flex-col items-center gap-0.5"
+            className="flex shrink-0 flex-col items-center gap-0.5 disabled:opacity-60"
             aria-label="我的位置"
+            onClick={onMyLocationClick}
+            disabled={myLocationLoading}
           >
             <MyLocationIcon />
             <span className="text-right text-[11px] font-normal leading-none tracking-normal text-[#666666] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]">
-              我的位置
+              {myLocationLoading ? "定位中" : "我的位置"}
             </span>
           </button>
         </div>

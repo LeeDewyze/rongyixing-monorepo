@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { FlightCityPickerHostFromForm } from "@/components/flight/common";
@@ -14,12 +14,14 @@ import { HomeHotelSearchPanel } from "@/components/home/HomeHotelSearchPanel";
 import { HomeTrainSearchPanel } from "@/components/home/HomeTrainSearchPanel";
 import { HomeRecentTripPanel } from "@/components/home/HomeRecentTripPanel";
 import { CityPicker } from "@/components/search";
+import { PageToast } from "@/components/layout/PageToast";
 import { useFlightSearchForm } from "@/hooks/useFlightSearchForm";
 import { useHotelSearchForm } from "@/hooks/useHotelSearchForm";
 import { useTrainSearchForm } from "@/hooks/useTrainSearchForm";
 import { formatApiError } from "@/lib/formatApiError";
 import { buildHomeProductSearch, parseHomeProduct } from "@/lib/home-params";
 import { CITY_HISTORY_KEYS, hotelCityPickerAdapter } from "@/lib/hotel-search";
+import { resolveHotelCityByLocation } from "@/lib/geolocation";
 import { loadHomeTravelMode, saveHomeTravelMode } from "@/lib/flight-travel-mode";
 import { trainStationPickerAdapter } from "@/lib/train-search";
 
@@ -39,6 +41,11 @@ export function HomeTabPage() {
     parseHomeProduct(searchParams),
   );
   const [keyword, setKeyword] = useState("");
+  const [hotelLocationLoading, setHotelLocationLoading] = useState(false);
+  const [hotelLocationFeedback, setHotelLocationFeedback] = useState<
+    { tone: "success" | "error"; text: string } | null
+  >(null);
+  const hotelLocationFeedbackTimer = useRef<number | null>(null);
   const hotelForm = useHotelSearchForm();
   const trainForm = useTrainSearchForm();
   const flightForm = useFlightSearchForm();
@@ -46,6 +53,14 @@ export function HomeTabPage() {
   useEffect(() => {
     setActiveProduct(parseHomeProduct(searchParams));
   }, [searchParams]);
+
+  useEffect(() => {
+    return () => {
+      if (hotelLocationFeedbackTimer.current != null) {
+        window.clearTimeout(hotelLocationFeedbackTimer.current);
+      }
+    };
+  }, []);
 
   function handleProductChange(product: HomeProductId) {
     setActiveProduct(product);
@@ -68,6 +83,49 @@ export function HomeTabPage() {
   function handleFlightSearch() {
     if (flightForm.validate()) return;
     navigate(`/flight/list?${flightForm.buildSearchParams().toString()}`);
+  }
+
+  async function handleHotelLocation() {
+    if (hotelLocationLoading) return;
+    if (hotelLocationFeedbackTimer.current != null) {
+      window.clearTimeout(hotelLocationFeedbackTimer.current);
+      hotelLocationFeedbackTimer.current = null;
+    }
+    setHotelLocationFeedback(null);
+    setHotelLocationLoading(true);
+    try {
+      const result = await resolveHotelCityByLocation();
+      const cityName = result.cityName?.trim();
+      const matched =
+        (result.city
+          ? hotelForm.cities.find((city) => city.Code === result.city?.Code) ??
+            hotelForm.cities.find((city) => city.Name === result.city?.Name)
+          : null) ??
+        (cityName
+          ? hotelForm.cities.find(
+              (city) =>
+                city.Name === cityName ||
+                city.Nickname === cityName ||
+                cityName.includes(city.Name) ||
+                city.Name.includes(cityName),
+            )
+          : null) ??
+        result.city;
+      if (matched) {
+        hotelForm.setCity(matched);
+        setHotelLocationFeedback({ tone: "success", text: `已定位到 ${matched.Name}` });
+        hotelLocationFeedbackTimer.current = window.setTimeout(() => {
+          setHotelLocationFeedback(null);
+          hotelLocationFeedbackTimer.current = null;
+        }, 2500);
+        return;
+      }
+      setHotelLocationFeedback({ tone: "error", text: "已获取位置，但未匹配到酒店城市" });
+    } catch {
+      setHotelLocationFeedback({ tone: "error", text: "定位失败，请重试" });
+    } finally {
+      setHotelLocationLoading(false);
+    }
   }
 
   function handleTrainStationSelect(station: (typeof trainForm.stations)[number]) {
@@ -120,6 +178,9 @@ export function HomeTabPage() {
             onCheckInChange={hotelForm.setCheckIn}
             onCheckOutChange={hotelForm.setCheckOut}
             onSearch={handleHotelSearch}
+            onMyLocationClick={() => void handleHotelLocation()}
+            myLocationLoading={hotelLocationLoading}
+            myLocationFeedback={hotelLocationFeedback}
           />
         </div>
       ) : null}
@@ -144,6 +205,11 @@ export function HomeTabPage() {
 
       {travelMode === "business" ? <HomeBusinessPanel /> : null}
       <HomeRecentTripPanel />
+
+      <PageToast
+        message={hotelLocationFeedback?.text ?? null}
+        tone={hotelLocationFeedback?.tone ?? "error"}
+      />
 
       <FlightCityPickerHostFromForm form={flightForm} />
 

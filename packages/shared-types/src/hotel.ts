@@ -32,6 +32,21 @@ export interface HotelListResponse {
   TotalCount?: number;
 }
 
+export interface HotelMapPoint {
+  lat: number;
+  lng: number;
+}
+
+export interface HotelMapCityResponse {
+  Code?: string;
+  Name?: string;
+  Nickname?: string;
+  Pinyin?: string;
+  IsHot?: boolean;
+  Initial?: string;
+  Sequence?: number;
+}
+
 export interface HotelDetailParams {
   HotelId: string;
   CheckInDate?: string;

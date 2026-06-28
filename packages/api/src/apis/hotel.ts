@@ -2,6 +2,8 @@ import type {
   HotelBookParams,
   HotelBookResponse,
   HotelCity,
+  HotelMapCityResponse,
+  HotelMapPoint,
   HotelCityResourceResponse,
   HotelDetailParams,
   HotelDetailResponse,
@@ -15,12 +17,14 @@ import type {
 } from "@ryx/shared-types";
 
 import { normalizeEntityKeys } from "./flight-detail-adapter.js";
+import { HOTEL_METHODS } from "../methods/hotel.js";
 import { HOTEL_FLOW_METHODS } from "../methods/hotel-flow.js";
 import { TMC_METHODS } from "../methods/tmc.js";
 import type { ProxyClient } from "../proxy/proxy-client.js";
 
 export interface HotelApi {
   getCities(): Promise<HotelCity[]>;
+  getCityByMap(point: HotelMapPoint): Promise<HotelCity | null>;
   getList(params: HotelListParams): Promise<HotelListResponse>;
   getDetail(params: HotelDetailParams): Promise<HotelDetailResponse>;
   getPolicy(params: HotelPolicyParams): Promise<HotelPolicyResponse>;
@@ -1038,6 +1042,26 @@ function normalizeHotelCities(
     .filter((city) => Boolean(city.Code && city.Name));
 }
 
+function normalizeHotelCityByMap(
+  res: unknown,
+): HotelCity | null {
+  if (!res || typeof res !== "object") return null;
+  const payload = res as Record<string, unknown>;
+  const data = payload.Data ?? payload.data ?? payload.City ?? payload.city;
+  if (!data || typeof data !== "object") return null;
+  const city = data as HotelMapCityResponse;
+  if (!city.Code && !city.Name && !city.Nickname) return null;
+  return {
+    Code: city.Code ?? "",
+    Name: city.Name ?? city.Nickname ?? "",
+    Nickname: city.Nickname,
+    Pinyin: city.Pinyin,
+    IsHot: city.IsHot,
+    Initial: city.Initial,
+    Sequence: city.Sequence,
+  };
+}
+
 function normalizeHotelInitBookResponse(res: unknown): HotelInitBookResponse {
   if (!res || typeof res !== "object") return {};
   const raw = res as Record<string, unknown>;
@@ -1077,6 +1101,18 @@ export function createHotelApi(proxy: ProxyClient): HotelApi {
         data: {},
       });
       return normalizeHotelCities(res);
+    },
+    async getCityByMap(point) {
+      const res = await proxy.send<unknown>({
+        method: HOTEL_METHODS.CITY_GETCITYBYMAP,
+        data: {
+          position: {
+            lat: point.lat,
+            lng: point.lng,
+          },
+        },
+      });
+      return normalizeHotelCityByMap(res);
     },
     async getList(params) {
       const res = await proxy.send<unknown>({

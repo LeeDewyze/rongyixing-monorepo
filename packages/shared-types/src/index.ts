@@ -82,6 +82,10 @@ export type {
   PayTotalAmountResponse,
 } from "./hotel.js";
 
+export type {
+  HotelMapCityResponse,
+  HotelMapPoint,
+} from "./hotel.js";
 export type { HotelCity, HotelCityResourceResponse } from "./hotel-city.js";
 
 export type {

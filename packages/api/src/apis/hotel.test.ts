@@ -228,6 +228,30 @@ describe("createHotelApi (mock mode)", () => {
     expect(cities[0]?.Name).toBe("北京");
     expect(cities[1]?.Name).toBe("上海");
   });
+
+  it("getCityByMap unwraps legacy city response", async () => {
+    const proxyWithCityByMap = createProxyClient({
+      baseUrl: "https://example.com",
+      mode: "mock",
+      mockHandler: async (method) => {
+        if (method === HOTEL_FLOW_METHODS.CITY_GETCITYBYMAP) {
+          return successResponse({
+            Data: {
+              Code: "010",
+              Name: "北京",
+              Pinyin: "beijing",
+              IsHot: true,
+            },
+          });
+        }
+        return successResponse(null);
+      },
+    });
+    const api = createHotelApi(proxyWithCityByMap);
+    const city = await api.getCityByMap({ lat: 39.9042, lng: 116.4074 });
+    expect(city?.Code).toBe("010");
+    expect(city?.Name).toBe("北京");
+  });
 });
 
 describe("buildHotelDetailRequest", () => {
