@@ -27,11 +27,6 @@ const SERVICES: ProfileService[] = [
     label: "酒店",
     icon: HOME_ASSETS.products.hotel.active,
   },
-  {
-    id: "car",
-    label: "用车",
-    icon: HOME_ASSETS.products.car.active,
-  },
 ];
 
 /** Figma 23:2495 — service panel fade (375×110, radius 20px). */
@@ -55,7 +50,7 @@ export function ProfileServiceGrid() {
         style={{ background: PROFILE_SERVICE_PANEL_BACKGROUND }}
         aria-hidden
       />
-      <div className="relative grid w-full grid-cols-4">
+      <div className="relative grid w-full grid-cols-3">
         {SERVICES.map((service) => (
           <button
             key={service.id}

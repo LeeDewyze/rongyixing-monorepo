@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { FlightAbolishTicketParams, FlightCancelParams } from "@ryx/shared-types";
+import type {
+  FlightAbolishTicketParams,
+  FlightCancelParams,
+  FlightNonVoluntaryRefundParams,
+  FlightRefundParams,
+  FlightTicketRefundInfoParams,
+} from "@ryx/shared-types";
 
 import { getApi } from "@/lib/api";
 import {
@@ -42,6 +48,44 @@ export function useCancelFlightOrder() {
     onSuccess: (_data, variables) => {
       const orderId = variables.params.OrderId;
       void queryClient.invalidateQueries({ queryKey: ["order", "detail", orderId] });
+      void queryClient.invalidateQueries({ queryKey: ["order", "list"] });
+    },
+  });
+}
+
+export function useFlightTicketRefundInfo(params: FlightTicketRefundInfoParams | null) {
+  return useQuery({
+    queryKey: ["order", "flight", "refundInfo", params?.orderFlightTicket],
+    queryFn: () => getApi().order.getFlightTicketRefundInfo(params!),
+    enabled: Boolean(params?.orderFlightTicket),
+    retry: false,
+  });
+}
+
+export function useRefundFlightOrder() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (params: FlightRefundParams) => getApi().order.refundFlight(params),
+    onSuccess: async (_data, variables) => {
+      await queryClient.refetchQueries({
+        queryKey: ["order", "detail", variables.orderId],
+        type: "active",
+      });
+      void queryClient.invalidateQueries({ queryKey: ["order", "list"] });
+    },
+  });
+}
+
+export function useNonVoluntaryRefundFlightOrder() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (params: FlightNonVoluntaryRefundParams) =>
+      getApi().order.nonVoluntaryRefundFlight(params),
+    onSuccess: async (_data, variables) => {
+      await queryClient.refetchQueries({
+        queryKey: ["order", "detail", variables.OrderId],
+        type: "active",
+      });
       void queryClient.invalidateQueries({ queryKey: ["order", "list"] });
     },
   });

@@ -106,11 +106,16 @@ export function shouldPollFlightOrderDetail(detail?: HotelOrderDetail): boolean 
 export function shouldShowFlightFooter(
   actions: HotelOrderActionFlags,
   payHoldSecondsRemaining: number | null,
+  selectedTicket?: FlightOrderTicket,
 ): boolean {
-  if (payHoldSecondsRemaining == null || payHoldSecondsRemaining <= 0) {
-    return false;
+  if (selectedTicket?.Actions?.showRefund) {
+    return true;
   }
-  return actions.showPay || actions.showCancel;
+  return (
+    payHoldSecondsRemaining != null &&
+    payHoldSecondsRemaining > 0 &&
+    (actions.showPay || actions.showCancel)
+  );
 }
 
 export function formatPayHoldCountdownZh(totalSeconds: number): string {

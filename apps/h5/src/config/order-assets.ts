@@ -10,7 +10,6 @@ export const ORDER_CATEGORY_TABS = [
   { id: "flight" as const, tabId: OrderListTabId.Flight, label: "机票" },
   { id: "train" as const, tabId: OrderListTabId.Train, label: "火车票" },
   { id: "hotel" as const, tabId: OrderListTabId.Hotel, label: "酒店" },
-  { id: "car" as const, tabId: OrderListTabId.Car, label: "用车" },
 ] as const;
 
 export type OrderCategoryId = (typeof ORDER_CATEGORY_TABS)[number]["id"];

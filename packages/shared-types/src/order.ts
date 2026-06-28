@@ -17,6 +17,27 @@ export interface OrderAction {
   label: string;
 }
 
+export interface OrderFlightListTicket {
+  TicketId: string;
+  RouteTitle: string;
+  DepartTime: string;
+  PassengerNames: string;
+  TicketStatusName?: string;
+  Actions?: OrderAction[];
+  IsCustomApplyRefunding?: boolean;
+  IsCustomApplyExchanging?: boolean;
+  TicketType?: string | number;
+}
+
+export interface OrderTrainListTicket {
+  TicketId: string;
+  RouteTitle: string;
+  DepartTime: string;
+  PassengerNames: string;
+  TicketStatusName?: string;
+  Actions?: OrderAction[];
+}
+
 export interface OrderListParams {
   TabId?: OrderListTabId;
   /** Legacy Order-List product type (ryx sends Type: "Hotel" etc.). */
@@ -44,6 +65,9 @@ export interface OrderFlightListItem extends OrderListItemBase {
   DepartTime: string;
   PassengerNames: string;
   TicketStatusName?: string;
+  /** First ticket id — used for refund from list/detail handoff. */
+  TicketId?: string;
+  Tickets?: OrderFlightListTicket[];
 }
 
 export interface OrderTrainListItem extends OrderListItemBase {
@@ -54,10 +78,13 @@ export interface OrderTrainListItem extends OrderListItemBase {
   TicketStatusName?: string;
   /** First ticket id — used for refund/exchange from list. */
   TicketId?: string;
+  Tickets?: OrderTrainListTicket[];
 }
 
 export interface OrderHotelListItem extends OrderListItemBase {
   tabId: OrderListTabId.Hotel;
+  /** First room id — used for hotel cancellation from list. */
+  OrderHotelId?: string;
   HotelName: string;
   CheckInDate: string;
   CheckOutDate: string;

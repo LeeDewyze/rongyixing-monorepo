@@ -27,7 +27,7 @@ export function OrderCategoryTabs({ activeId, onChange }: OrderCategoryTabsProps
   return (
     <div className={`order-category-tabs ${ORDER_FONT}`}>
       <div
-        className="order-category-tabs__list grid grid-cols-4"
+        className="order-category-tabs__list grid grid-cols-3"
         role="tablist"
         aria-label="Order category"
       >

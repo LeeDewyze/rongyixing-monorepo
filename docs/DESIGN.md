@@ -141,6 +141,9 @@ Rules:
 - 2026-06-27 - TravelApprovalPage list shell: replaced the flat white tab strip with a page-level form gradient header, segmented approval tabs, lifted task cards, and tokenized task status treatments while preserving remote approval workflows.
 - 2026-06-27 - TravelApprovalPage header simplification: removed duplicate approval summary copy and the standalone pending counter from the gradient header; kept pending count only inside the tab badge.
 - 2026-06-27 - PassengerCredentialForm pickers: aligned gender with the credential-type bottom sheet pattern and replaced native date inputs with a mobile bottom-sheet year/month/day picker for consistent H5 form interaction.
+- 2026-06-28 - OrderList flight tickets: expanded flight order cards to render ticket-level rows and actions, matching legacy multi-ticket order behavior while keeping the existing card shell and order-level footer.
+- 2026-06-28 - OrderList product scope: removed car from H5 order entry tabs and profile order shortcuts; kept backend car mapping defensive while exposing only flight, train, and hotel.
+- 2026-06-28 - OrderList train and hotel actions: expanded train order cards to ticket-level rows/actions and moved train refund/cancel plus hotel cancel into list-level dialogs to match legacy list behavior.
 
 ## Components
 
@@ -151,6 +154,7 @@ Rules:
 - `apps/h5/src/pages/travel/TravelApplyPage.tsx` - travel application form page using page-level form gradient.
 - `apps/h5/src/pages/travel/TravelApprovalPage.tsx` - travel approval list shell using page-level gradient header and segmented tabs.
 - `apps/h5/src/components/travel/ApprovalTaskList.tsx` - approval task list cards with status pills, skeleton, error, empty, and load-more states.
+- `apps/h5/src/components/order/OrderListCard.tsx` - order list card with flight ticket-level rows/actions and shared transport/hotel bodies.
 
 ## Non-Goals
 

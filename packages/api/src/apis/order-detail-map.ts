@@ -827,6 +827,14 @@ function sortFlightTicketsForTabs(tickets: FlightOrderTicket[]): FlightOrderTick
   return [...active.sort(byIdDesc), ...original.sort(byIdDesc)];
 }
 
+function mapFlightTicketActions(ticket: LegacyRecord) {
+  const ticketVariables = parseVariablesObj(ticket);
+  return {
+    showCancel: Boolean(ticketVariables?.isShowCancelButton),
+    showRefund: Boolean(ticketVariables?.isShowRefundButton),
+  };
+}
+
 function mapFlightTicket(
   ticket: LegacyRecord,
   orderPassengers: LegacyRecord[],
@@ -856,6 +864,7 @@ function mapFlightTicket(
     Traveler: traveler,
     PassengerTypeName:
       readString(passengerRecord?.PassengerTypeName ?? passenger?.PassengerTypeName) || undefined,
+    Actions: mapFlightTicketActions(ticket),
   };
 }
 

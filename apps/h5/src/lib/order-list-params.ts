@@ -7,28 +7,24 @@ const TAB_PARAM_TO_ID: Record<string, OrderCategoryId> = {
   flight: "flight",
   train: "train",
   hotel: "hotel",
-  car: "car",
 };
 
 export const TAB_ID_TO_PARAM: Record<OrderCategoryId, string> = {
   flight: "flight",
   train: "train",
   hotel: "hotel",
-  car: "car",
 };
 
 const TAB_ID_TO_CATEGORY: Partial<Record<OrderListTabId, OrderCategoryId>> = {
   [OrderListTabId.Flight]: "flight",
   [OrderListTabId.Train]: "train",
   [OrderListTabId.Hotel]: "hotel",
-  [OrderListTabId.Car]: "car",
 };
 
 export const CATEGORY_TO_TAB_ID: Record<OrderCategoryId, OrderListTabId> = {
   flight: OrderListTabId.Flight,
   train: OrderListTabId.Train,
   hotel: OrderListTabId.Hotel,
-  car: OrderListTabId.Car,
 };
 
 function parseCategoryFromTabParam(value: string | null): OrderCategoryId | undefined {

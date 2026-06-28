@@ -142,6 +142,7 @@ export type {
   OrderActionKind,
   OrderCarListItem,
   OrderFlightListItem,
+  OrderFlightListTicket,
   OrderHotelListItem,
   OrderListItem,
   OrderListItemBase,
@@ -150,6 +151,7 @@ export type {
   OrderListScope,
   OrderListType,
   OrderTrainListItem,
+  OrderTrainListTicket,
   PayProcessParams,
   PayProcessResponse,
 } from "./order.js";
@@ -239,8 +241,12 @@ export type {
 export type {
   FlightAbolishTicketParams,
   FlightCancelParams,
+  FlightNonVoluntaryRefundParams,
   FlightOrderTicket,
   FlightOrderTrip,
+  FlightRefundParams,
+  FlightTicketRefundInfo,
+  FlightTicketRefundInfoParams,
   OrderContact,
   OrderDetailTicket,
 } from "./flight-order.js";

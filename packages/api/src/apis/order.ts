@@ -1,6 +1,10 @@
 import type {
   FlightAbolishTicketParams,
   FlightCancelParams,
+  FlightNonVoluntaryRefundParams,
+  FlightRefundParams,
+  FlightTicketRefundInfo,
+  FlightTicketRefundInfoParams,
   HotelCancelParams,
   HotelOrderSmsConfirmParams,
   HotelOrderSmsParams,
@@ -38,6 +42,11 @@ export interface OrderApi {
   cancelHotel(params: HotelCancelParams): Promise<boolean>;
   cancelFlight(params: FlightCancelParams): Promise<boolean>;
   abolishFlightTicket(params: FlightAbolishTicketParams): Promise<boolean>;
+  getFlightTicketRefundInfo(
+    params: FlightTicketRefundInfoParams,
+  ): Promise<FlightTicketRefundInfo>;
+  refundFlight(params: FlightRefundParams): Promise<boolean>;
+  nonVoluntaryRefundFlight(params: FlightNonVoluntaryRefundParams): Promise<{ Message?: string }>;
   sendHotelOrderSmsCode(params: HotelOrderSmsParams): Promise<boolean>;
   confirmHotelOrderSmsCode(params: HotelOrderSmsConfirmParams): Promise<boolean>;
   checkInspurRepush(params: OrderDetailParams): Promise<boolean>;
@@ -106,6 +115,35 @@ export function createOrderApi(proxy: ProxyClient): OrderApi {
         data: params,
       });
     },
+    getFlightTicketRefundInfo(params) {
+      return proxy.send<FlightTicketRefundInfo>({
+        method: ORDER_FLOW_METHODS.GET_FLIGHT_TICKET_REFUND_INFO,
+        data: params,
+      });
+    },
+    refundFlight(params) {
+      const data: Record<string, unknown> = {
+        OrderFlightTicketId: params.ticketId,
+        OrderId: params.orderId,
+        IsVoluntary: params.IsVoluntary,
+        FileName: params.FileName,
+      };
+      if (params.FileValue) {
+        data.FileValue = params.FileValue.includes(",")
+          ? params.FileValue.split(",")[1]
+          : params.FileValue;
+      }
+      return proxy.send<boolean>({
+        method: ORDER_FLOW_METHODS.REFUND_FLIGHT,
+        data,
+      });
+    },
+    nonVoluntaryRefundFlight(params) {
+      return proxy.send<{ Message?: string }>({
+        method: ORDER_FLOW_METHODS.NON_VOLUNTARY_REFUND_FLIGHT,
+        data: params,
+      });
+    },
     sendHotelOrderSmsCode(params) {
       return proxy.send<boolean>({
         method: ORDER_FLOW_METHODS.SEND_HOTEL_SMS,
@@ -127,7 +165,7 @@ export function createOrderApi(proxy: ProxyClient): OrderApi {
     cancelTrain(params) {
       return proxy.send<boolean>({
         method: ORDER_FLOW_METHODS.CANCEL_TRAIN,
-        data: { Id: params.OrderId },
+        data: { Id: params.OrderId, OrderId: params.OrderId, TicketId: params.TicketId },
       });
     },
     issueTrain(params) {
