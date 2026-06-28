@@ -119,6 +119,33 @@ VITE_API_DOMAIN=rtesp.com
 
 Do **not** set `VITE_API_TOKEN` — Token comes from Setting at startup.
 
+## This MacBook's local startup note
+
+This machine is Apple Silicon (`arm64`), but `/usr/local/bin/node` is an `x86_64` Node binary from an Intel/Homebrew install. If `pnpm dev:h5` or `vite` starts failing with Rollup native package errors such as:
+
+```text
+Cannot find module @rollup/rollup-darwin-x64
+```
+
+start the app with the `arm64` Node from `nvm` instead of the default `/usr/local/bin/node`:
+
+```bash
+PATH=/Users/jiangjiankang/.nvm/versions/node/v24.11.1/bin:$PATH \
+NPM_CONFIG_USERCONFIG=/Users/jiangjiankang/work/self/rongyixing/rongyixing-monorepo/.npmrc \
+pnpm --filter @ryx/h5 exec vite --host 127.0.0.1 --port 5174
+```
+
+If the port is already occupied, stop the old process first, then restart it on `127.0.0.1:5174`.
+
+If you want the whole shell session to use the correct runtime, run:
+
+```bash
+export PATH=/Users/jiangjiankang/.nvm/versions/node/v24.11.1/bin:$PATH
+node -p "process.arch"
+```
+
+Expected result: `arm64`.
+
 ## Known limitations
 
 | Case | Risk | Mitigation |
