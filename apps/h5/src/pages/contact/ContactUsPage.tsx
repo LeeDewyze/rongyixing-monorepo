@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 
 import { LegalDocumentSheet } from "@/components/contact/LegalDocumentSheet";
 import { HOTEL_DETAIL_FONT } from "@/components/hotel/hotel-detail-chrome";
 import { usePageHeader } from "@/components/layout";
 import { SettingsMenuCard, SettingsMenuRow } from "@/components/settings/SettingsMenuCard";
+import { SettingsPageChrome } from "@/components/settings/SettingsPageChrome";
 import { SettingsSectionLabel } from "@/components/settings/SettingsSectionLabel";
 import { PROFILE_ASSETS } from "@/config/profile-assets";
 import { useTmcData } from "@/hooks/useTmcData";
@@ -19,7 +19,6 @@ import {
 type LegalDoc = "agreement" | "privacy" | null;
 
 export function ContactUsPage() {
-  const navigate = useNavigate();
   usePageHeader({ visible: false });
 
   const { data: tmcData } = useTmcData();
@@ -36,39 +35,28 @@ export function ContactUsPage() {
     legalDoc === "agreement" ? agreementUrl : legalDoc === "privacy" ? privacyUrl : "";
 
   return (
-    <div className={`flex min-h-full flex-col bg-[#F5F6F9] ${HOTEL_DETAIL_FONT}`}>
-      <div className="shrink-0 bg-gradient-to-b from-brand-header-start to-brand-header-end pt-[env(safe-area-inset-top)] shadow-[0_2px_12px_rgba(80,153,254,0.2)]">
-        <div className="flex items-center px-1 pb-3 pt-1">
-          <button
-            type="button"
-            className="flex h-11 w-10 shrink-0 items-center justify-center text-[26px] font-light leading-none text-white active:opacity-70"
-            aria-label="返回"
-            onClick={() => navigate("/home/mine")}
-          >
-            ‹
-          </button>
-          <h1 className="min-w-0 flex-1 truncate text-center text-[17px] font-medium text-white">
-            联系我们
-          </h1>
-          <span className="w-10 shrink-0" />
-        </div>
-      </div>
-
-      <div className="flex flex-1 flex-col space-y-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+    <SettingsPageChrome title="联系我们" backTo="/home/mine">
+      <div
+        className={`flex flex-col gap-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-1 ${HOTEL_DETAIL_FONT}`}
+      >
         <div className="px-3">
-          <div className="overflow-hidden rounded-xl bg-white px-4 py-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
+          <div className="overflow-hidden rounded-2xl bg-white px-4 py-4 shadow-[0_4px_20px_rgba(15,23,42,0.06)] ring-1 ring-black/[0.03]">
             <div className="flex items-center gap-3">
-              <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#EEF4FF]">
-                <img
-                  src={PROFILE_ASSETS.menu.contact}
-                  alt=""
-                  className="size-6 object-contain"
-                  aria-hidden
-                />
+              <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-[#EEF5FF]">
+                <span className="flex size-8 items-center justify-center rounded-full bg-white text-brand-primary shadow-[0_2px_8px_rgba(39,104,250,0.12)]">
+                  <img
+                    src={PROFILE_ASSETS.menu.contact}
+                    alt=""
+                    className="size-5 object-contain"
+                    aria-hidden
+                  />
+                </span>
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[16px] font-semibold text-brand-title">融易行客服</p>
-                <p className="mt-1 text-[13px] leading-snug text-[#999999]">
+                <p className="text-[17px] font-semibold leading-tight text-brand-title">
+                  融易行客服
+                </p>
+                <p className="mt-1.5 text-[13px] leading-relaxed text-[#8A94A6]">
                   咨询、投诉与建议，欢迎随时联系我们
                 </p>
               </div>
@@ -103,6 +91,6 @@ export function ContactUsPage() {
         url={legalUrl}
         onClose={() => setLegalDoc(null)}
       />
-    </div>
+    </SettingsPageChrome>
   );
 }

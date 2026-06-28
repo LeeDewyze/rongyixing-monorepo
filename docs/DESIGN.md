@@ -145,6 +145,7 @@ Rules:
 - 2026-06-28 - OrderList product scope: removed car from H5 order entry tabs and profile order shortcuts; kept backend car mapping defensive while exposing only flight, train, and hotel.
 - 2026-06-28 - OrderList train and hotel actions: expanded train order cards to ticket-level rows/actions and moved train refund/cancel plus hotel cancel into list-level dialogs to match legacy list behavior.
 - 2026-06-28 - ConfirmDialog compact header: aligned alert icon and title on one row and changed body copy to left alignment so wrapped destructive prompts keep a stable reading edge.
+- 2026-06-28 - ContactUsPage chrome: moved contact page onto the shared SettingsPageChrome/form-gradient shell and refreshed the customer-service card to match profile/settings surfaces.
 
 ## Components
 
@@ -152,6 +153,7 @@ Rules:
 - `apps/h5/src/components/ConfirmDialog.tsx` - shared confirmation modal with compact icon/title header and left-aligned body copy.
 - `apps/h5/src/components/layout/AppHeader.tsx` - shared app header, supports brand and hotel tones.
 - `apps/h5/src/components/passenger/PassengerCredentialForm.tsx` - credential form with unified bottom-sheet pickers for credential type, gender, birthday, and expiration date.
+- `apps/h5/src/pages/contact/ContactUsPage.tsx` - contact/legal/service page using the shared settings chrome and form-gradient shell.
 - `apps/h5/src/pages/credential/CredentialListPage.tsx` - reference implementation for form-page gradient background.
 - `apps/h5/src/pages/travel/TravelApplyPage.tsx` - travel application form page using page-level form gradient.
 - `apps/h5/src/pages/travel/TravelApprovalPage.tsx` - travel approval list shell using page-level gradient header and segmented tabs.
