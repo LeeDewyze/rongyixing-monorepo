@@ -147,6 +147,9 @@ export function createProxyClient(config: ProxyClientConfig): ProxyClient {
     if (options.requestTimeout != null) {
       req.Timeout = options.requestTimeout;
     }
+    if (options.requestFields) {
+      Object.assign(req, options.requestFields);
+    }
 
     const dataStr = serializeData(req.Data);
     const includeSign = !options.skipSign;

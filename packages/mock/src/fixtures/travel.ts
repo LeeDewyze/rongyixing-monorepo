@@ -50,7 +50,15 @@ export const MOCK_TRAVEL_URL_RESULT = {
 
 export const MOCK_STAFF = {
   Id: "S001",
-  Name: "王五",
-  Mobile: "13800138003",
-  Department: "研发部",
+  AccountId: "10001",
+  Name: "姜建康",
+  Nickname: "姜建康",
+  Mobile: "13800138000",
+  Department: "融易行-技术部",
+  OrganizationCode: "RYX-TECH",
+  OrganizationName: "融易行-技术部",
+  CostCenterCode: "CC-TECH",
+  CostCenterName: "技术研发中心",
+  BookType: 1,
+  BookTypeName: "本人预订",
 };

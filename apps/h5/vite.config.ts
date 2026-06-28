@@ -31,6 +31,7 @@ const DEV_RYX_SERVICE_TARGETS: Record<string, string> = {
   WorkflowApiUrl: "http://api-workflow.rtesp.com",
   ApiMemberUrl: "http://member-api.rtesp.com",
   ApiAccountUrl: "http://account-api.rtesp.com",
+  HrApiUrl: "http://api-hr.rtesp.com",
   ApiPasswordUrl: "http://pass-api.rtesp.com",
   ApiLoginUrl: "http://login-api.rtesp.com",
   ApiHomeUrl: DEV_API_HOME_TARGET,

@@ -22,6 +22,7 @@ export interface RequestEntityFields {
   IsForward?: boolean;
   Timeout?: number;
   IsShowLoading?: boolean;
+  forceRefresh?: boolean | number | string;
   [key: string]: unknown;
 }
 

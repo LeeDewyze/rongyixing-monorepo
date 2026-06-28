@@ -147,6 +147,8 @@ Rules:
 - 2026-06-28 - ConfirmDialog compact header: aligned alert icon and title on one row and changed body copy to left alignment so wrapped destructive prompts keep a stable reading edge.
 - 2026-06-28 - ContactUsPage chrome: moved contact page onto the shared SettingsPageChrome/form-gradient shell and refreshed the customer-service card to match profile/settings surfaces.
 - 2026-06-28 - AccountCard management: migrated legacy bank-card list/add/edit/delete into H5 with form-gradient pages, card-number masking, bottom-sheet bank selection, and shared confirmation dialog.
+- 2026-06-28 - ProfileCenterPage: connected the profile header personal-center entry to a settings-style detail page showing legacy member/staff profile fields and credential management navigation.
+- 2026-06-28 - ProfileAvatarCropSheet: added a standalone crop-before-upload avatar sheet for the profile center, using local file preview, drag/zoom cropping, and legacy-aligned upload payloads.
 
 ## Components
 
@@ -158,6 +160,8 @@ Rules:
 - `apps/h5/src/pages/credential/CredentialListPage.tsx` - reference implementation for form-page gradient background.
 - `apps/h5/src/pages/account-card/AccountCardListPage.tsx` - bank-card management list with loading, empty, error, edit, delete, and add states.
 - `apps/h5/src/pages/account-card/AccountCardFormPage.tsx` - bank-card add/edit form with preview card, bottom-sheet bank picker, validation, save, and delete confirmation.
+- `apps/h5/src/pages/profile/ProfileCenterPage.tsx` - personal center detail page for member/staff profile fields and credential management entry.
+- `apps/h5/src/components/profile/ProfileAvatarCropSheet.tsx` - avatar crop sheet with local preview, drag/zoom crop controls, and confirm-before-upload flow.
 - `apps/h5/src/pages/travel/TravelApplyPage.tsx` - travel application form page using page-level form gradient.
 - `apps/h5/src/pages/travel/TravelApprovalPage.tsx` - travel approval list shell using page-level gradient header and segmented tabs.
 - `apps/h5/src/components/travel/ApprovalTaskList.tsx` - approval task list cards with status pills, skeleton, error, empty, and load-more states.

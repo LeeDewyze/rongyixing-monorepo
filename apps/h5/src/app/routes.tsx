@@ -27,6 +27,7 @@ import { HotelSearchPage } from "@/pages/hotel/HotelSearchPage";
 import { PassengerSelectPage } from "@/pages/passenger/PassengerSelectPage";
 import { PassengerCredentialPage } from "@/pages/passenger/PassengerCredentialPage";
 import { PasswordLoginPage } from "@/pages/PasswordLoginPage";
+import { ProfileCenterPage } from "@/pages/profile/ProfileCenterPage";
 import { SplashPage } from "@/pages/SplashPage";
 import { TrainListPage } from "@/pages/train/TrainListPage";
 import { TrainBookPage } from "@/pages/train/TrainBookPage";
@@ -116,6 +117,11 @@ export const router = createBrowserRouter([
       { path: "new", element: <AccountCardFormPage /> },
       { path: ":cardId", element: <AccountCardFormPage /> },
     ],
+  },
+  {
+    path: "/profile",
+    element: <RootLayout />,
+    children: [{ path: "center", element: <ProfileCenterPage /> }],
   },
   {
     path: "/settings",

@@ -24,11 +24,14 @@ export const MOCK_PASSENGERS: MemberPassenger[] = [
 
 export const MOCK_MEMBER_PROFILE = {
   Id: "10001",
-  Name: "某某某",
+  Name: "jiangjiankang",
+  RealName: "姜建康",
+  HeadUrl: "",
   Mobile: "13800138000",
   Email: "demo@rongtrip.cn",
   OrganizationCode: "12344555",
   BookType: 1,
+  BookTypeName: "本人预订",
 };
 
 export const MOCK_PASSENGER_LIST = {

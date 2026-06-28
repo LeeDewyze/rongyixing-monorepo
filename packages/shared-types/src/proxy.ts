@@ -37,6 +37,8 @@ export interface ProxySendOptions {
   url?: string;
   timeoutMs?: number;
   isForward?: boolean;
+  /** Extra top-level RequestEntity fields such as forceRefresh. */
+  requestFields?: Record<string, string | number | boolean>;
   /** Beeant Identity GetWebSocketUrl: no Sign/Token on form body */
   skipSign?: boolean;
   isShowLoading?: boolean;

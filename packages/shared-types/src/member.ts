@@ -38,10 +38,15 @@ export interface MemberProfile {
   Name: string;
   /** Legacy Member-Get real-name field used by credential management. */
   RealName?: string;
+  HeadUrl?: string;
   Mobile?: string;
   Email?: string;
   /** Legacy Member-Get organization code. */
   OrganizationCode?: string;
+  OrganizationName?: string;
+  CostCenterCode?: string;
+  CostCenterName?: string;
+  BookTypeName?: string;
   /** Legacy `StaffBookType` — 1 = self book. */
   BookType?: number;
 }

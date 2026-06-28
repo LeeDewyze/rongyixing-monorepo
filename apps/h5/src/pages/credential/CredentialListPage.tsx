@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import type { PassengerCredential } from "@ryx/shared-types";
 import {
@@ -64,6 +64,7 @@ function displayCredentialNumber(credential: PassengerCredential): string {
 
 export function CredentialListPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   usePageHeader({ visible: false });
 
   const queryClient = useQueryClient();
@@ -74,6 +75,7 @@ export function CredentialListPage() {
   const [pageError, setPageError] = useState("");
 
   const removeStaff = useRemoveStaffCredential();
+  const returnTo = searchParams.get("returnTo") || "/home/mine";
 
   const credentials = useMemo(
     () =>
@@ -84,15 +86,24 @@ export function CredentialListPage() {
   );
 
   function navigateAdd() {
-    navigate("/passenger/credential?mode=self&addNew=1&returnTo=/credentials");
+    navigate(
+      `/passenger/credential?mode=self&addNew=1&returnTo=${encodeURIComponent(
+        `/credentials?returnTo=${encodeURIComponent(returnTo)}`,
+      )}`,
+    );
   }
 
   function navigateEditCredential(credential: PassengerCredential) {
-    navigate("/passenger/credential?mode=self&returnTo=/credentials", {
+    navigate(
+      `/passenger/credential?mode=self&returnTo=${encodeURIComponent(
+        `/credentials?returnTo=${encodeURIComponent(returnTo)}`,
+      )}`,
+      {
       state: {
         credential,
       },
-    });
+      },
+    );
   }
 
   async function handleStaffRemove() {
@@ -118,7 +129,7 @@ export function CredentialListPage() {
             type="button"
             className="flex size-10 shrink-0 items-center justify-center text-brand-title active:opacity-70"
             aria-label="返回"
-            onClick={() => navigate("/home/mine", { replace: true })}
+            onClick={() => navigate(returnTo, { replace: true })}
           >
             <svg
               viewBox="0 0 20 20"

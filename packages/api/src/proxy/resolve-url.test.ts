@@ -40,6 +40,19 @@ describe("resolveUrl", () => {
     ).toBe("/__ryx/ApiMemberUrl/Passenger/Add");
   });
 
+  it("routes HrApiUrl methods through vite dev proxy", () => {
+    expect(
+      resolveUrl({
+        baseUrl: "",
+        method: "HrApiUrl-Staff-Get",
+        apiConfig: {
+          Token: "t",
+          Urls: { HrApiUrl: "http://api-hr.rtesp.com" },
+        },
+      }),
+    ).toBe("/__ryx/HrApiUrl/Staff/Get");
+  });
+
   it("disambiguates hotel Home/List in vite dev", () => {
     expect(
       resolveUrl({

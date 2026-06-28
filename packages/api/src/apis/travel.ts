@@ -35,7 +35,7 @@ export interface TravelApi {
   getTravelForms(params?: TravelFormListParams): Promise<TravelFormListResponse>;
   /** jyx-only: FeatureRonglvUrl-jyx-GetTravelForms */
   getTravelFormsJyx(params?: TravelFormListParams): Promise<TravelFormListResponse>;
-  getStaff(staffId: string): Promise<StaffDto>;
+  getStaff(staffId?: string): Promise<StaffDto>;
 }
 
 export function createTravelApi(proxy: ProxyClient): TravelApi {
@@ -71,10 +71,11 @@ export function createTravelApi(proxy: ProxyClient): TravelApi {
       });
     },
 
-    getStaff(staffId) {
+    getStaff(staffId?: string) {
       return proxy.send<StaffDto>({
         method: TRAVEL_FLOW_METHODS.STAFF_GET,
-        data: { Id: staffId },
+        data: staffId ? { Id: staffId } : undefined,
+        requestFields: { forceRefresh: true },
       });
     },
   };

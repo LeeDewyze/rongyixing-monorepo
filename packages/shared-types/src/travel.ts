@@ -59,7 +59,15 @@ export interface TravelFormListResponse {
 
 export interface StaffDto {
   Id: string;
+  AccountId?: string;
   Name: string;
+  Nickname?: string;
   Mobile?: string;
   Department?: string;
+  OrganizationName?: string;
+  OrganizationCode?: string;
+  CostCenterCode?: string;
+  CostCenterName?: string;
+  BookType?: number;
+  BookTypeName?: string;
 }
