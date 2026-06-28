@@ -40,10 +40,10 @@ function DialogCloseButton({ onClose }: { onClose: () => void }) {
 
 function DestructiveIcon() {
   return (
-    <div className="mx-auto flex size-9 items-center justify-center rounded-full bg-[#FFF1F0] text-[#FF4D4F]">
+    <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#FFF1F0] text-[#FF4D4F]">
       <svg
         viewBox="0 0 24 24"
-        className="size-5"
+        className="size-[18px]"
         fill="none"
         stroke="currentColor"
         strokeWidth="1.75"
@@ -63,10 +63,10 @@ function DestructiveIcon() {
 
 function DefaultIcon() {
   return (
-    <div className="mx-auto flex size-9 items-center justify-center rounded-full bg-[#EEF5FF] text-brand-primary">
+    <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#EEF5FF] text-brand-primary">
       <svg
         viewBox="0 0 24 24"
-        className="size-5"
+        className="size-[18px]"
         fill="none"
         stroke="currentColor"
         strokeWidth="1.75"
@@ -137,15 +137,16 @@ export function ConfirmDialog({
             </div>
           ) : null}
 
-          {resolvedVariant === "destructive" ? <DestructiveIcon /> : <DefaultIcon />}
-
-          <h2
-            id={titleId}
-            className="mt-3 text-center text-[17px] font-semibold leading-tight text-[#333333]"
-          >
-            {title}
-          </h2>
-          <p id={messageId} className="mt-2 text-center text-[14px] leading-[1.55] text-[#666666]">
+          <div className="flex min-h-8 items-center justify-center gap-2 px-8">
+            {resolvedVariant === "destructive" ? <DestructiveIcon /> : <DefaultIcon />}
+            <h2
+              id={titleId}
+              className="text-[17px] font-semibold leading-tight text-[#333333]"
+            >
+              {title}
+            </h2>
+          </div>
+          <p id={messageId} className="mt-3 text-left text-[14px] leading-[1.55] text-[#666666]">
             {formatMessage(message)}
           </p>
         </div>
