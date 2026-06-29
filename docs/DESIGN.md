@@ -152,6 +152,7 @@ Rules:
 - 2026-06-28 - Notice list/detail pages: moved notice screens to the shared form-gradient shell with custom page headers and denser announcement cards for clearer list scanning.
 - 2026-06-28 - Home notice strip: restyled the homepage bulletin entry to an orange pill banner with orange typography and horn icon, matching the provided legacy reference.
 - 2026-06-28 - Home notice strip rotation: made the homepage bulletin entry cycle through multiple notices automatically, removing the timestamp and animating entries vertically from bottom to top.
+- 2026-06-29 - PassengerSelectPage chrome: added a form-tone variant to the shared picker shell so the passenger selection header aligns with credential list form-gradient pages while preserving the default city picker chrome.
 
 ## Components
 
@@ -171,6 +172,7 @@ Rules:
 - `apps/h5/src/pages/travel/TravelApprovalPage.tsx` - travel approval list shell using page-level gradient header and segmented tabs.
 - `apps/h5/src/components/travel/ApprovalTaskList.tsx` - approval task list cards with status pills, skeleton, error, empty, and load-more states.
 - `apps/h5/src/components/order/OrderListCard.tsx` - order list card with flight ticket-level rows/actions and shared transport/hotel bodies.
+- `apps/h5/src/components/search/PickerShell.tsx` - shared full-screen picker chrome with default and form-gradient tones.
 
 ## Non-Goals
 

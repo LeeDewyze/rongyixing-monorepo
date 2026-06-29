@@ -216,6 +216,7 @@ export function PassengerSelectPage() {
         onBack={handleBack}
         onSearchClick={() => inputRef.current?.focus()}
         inputRef={inputRef}
+        tone="form"
         tabs={allowExternal ? <PassengerSegmentTabs active={tab} onChange={setTab} /> : null}
         footer={
           <PassengerPickerFooter
