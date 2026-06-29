@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import type { PassengerCredential } from "@ryx/shared-types";
@@ -54,6 +54,8 @@ function CredentialCard({
   );
 }
 
+const CREDENTIAL_LIST_HEADER_FALLBACK_HEIGHT = 88;
+
 function displayCredentialNumber(credential: PassengerCredential): string {
   return (
     credential.HideNumber ??
@@ -66,6 +68,25 @@ export function CredentialListPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   usePageHeader({ visible: false });
+
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [headerHeight, setHeaderHeight] = useState(CREDENTIAL_LIST_HEADER_FALLBACK_HEIGHT);
+
+  useLayoutEffect(() => {
+    const header = headerRef.current;
+    if (!header) {
+      return;
+    }
+
+    const updateHeight = () => {
+      setHeaderHeight(header.offsetHeight);
+    };
+
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
 
   const queryClient = useQueryClient();
   const credentialQuery = useCredentialList();
@@ -120,56 +141,63 @@ export function CredentialListPage() {
 
   return (
     <div
-      className="flex min-h-full flex-col"
+      className="relative h-dvh overflow-hidden"
       style={{ background: "var(--brand-form-header-gradient)" }}
     >
-      <div className="shrink-0 pt-[env(safe-area-inset-top)]">
-        <div className="flex items-center px-1 pb-2 pt-1">
-          <button
-            type="button"
-            className="flex size-10 shrink-0 items-center justify-center text-brand-title active:opacity-70"
-            aria-label="返回"
-            onClick={() => navigate(returnTo, { replace: true })}
-          >
-            <svg
-              viewBox="0 0 20 20"
-              className="size-5"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
+      <div
+        ref={headerRef}
+        className="fixed inset-x-0 top-0 z-30 w-full"
+        style={{ background: "var(--brand-form-header-gradient)" }}
+      >
+        <div className="pt-[env(safe-area-inset-top)]">
+          <div className="flex items-center px-1 pb-2 pt-1">
+            <button
+              type="button"
+              className="flex size-10 shrink-0 items-center justify-center text-brand-title active:opacity-70"
+              aria-label="返回"
+              onClick={() => navigate(returnTo, { replace: true })}
             >
-              <path d="M12 5l-5 5 5 5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-          <h1 className="min-w-0 flex-1 text-center text-[17px] font-medium text-brand-title">
-            证件列表
-          </h1>
-          <button
-            type="button"
-            className="flex size-10 shrink-0 items-center justify-center text-brand-title active:opacity-70"
-            aria-label="刷新"
-            onClick={() => {
-              void queryClient.invalidateQueries({ queryKey: ["credential"] });
-            }}
-          >
-            <svg
-              viewBox="0 0 20 20"
-              className="size-5"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
+              <svg
+                viewBox="0 0 20 20"
+                className="size-5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M12 5l-5 5 5 5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            <h1 className="min-w-0 flex-1 text-center text-[17px] font-medium text-brand-title">
+              证件列表
+            </h1>
+            <button
+              type="button"
+              className="flex size-10 shrink-0 items-center justify-center text-brand-title active:opacity-70"
+              aria-label="刷新"
+              onClick={() => {
+                void queryClient.invalidateQueries({ queryKey: ["credential"] });
+              }}
             >
-              <path
-                d="M17 10a7 7 0 01-7 7 7 7 0 01-5.16-2.26M3 10a7 7 0 017-7 7 7 0 015.16 2.26"
-                strokeLinecap="round"
-              />
-              <path d="M16 2v3h-3M4 18v-3h3" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
+              <svg
+                viewBox="0 0 20 20"
+                className="size-5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path
+                  d="M17 10a7 7 0 01-7 7 7 7 0 01-5.16-2.26M3 10a7 7 0 017-7 7 7 0 015.16 2.26"
+                  strokeLinecap="round"
+                />
+                <path d="M16 2v3h-3M4 18v-3h3" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="flex-1 pb-4 pt-3">
+      <div className="flex h-full flex-col" style={{ paddingTop: headerHeight }}>
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain pb-4 pt-3 [-webkit-overflow-scrolling:touch]">
         {credentialQuery.isLoading ? (
           <p className="py-10 text-center text-sm text-[#999999]">加载中…</p>
         ) : null}
@@ -201,10 +229,10 @@ export function CredentialListPage() {
             ) : null}
           </>
         ) : null}
-      </div>
+        </div>
 
-      {/* Add button — pinned at bottom */}
-      <div className="shrink-0 border-t border-[#ECECEC] bg-[#F5F6F9] px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+        {/* Add button — pinned at bottom */}
+        <div className="shrink-0 border-t border-[#ECECEC] bg-[#F5F6F9] px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
         <button
           type="button"
           className="flex h-11 w-full items-center justify-center rounded-lg bg-gradient-to-r from-brand-btn-start to-brand-btn-end text-sm font-medium text-white active:opacity-90 disabled:opacity-50"
@@ -213,6 +241,7 @@ export function CredentialListPage() {
         >
           添加证件
         </button>
+        </div>
       </div>
 
       {/* Staff delete confirm */}

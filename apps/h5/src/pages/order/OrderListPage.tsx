@@ -481,10 +481,7 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
 
   return (
     <div className={rootClassName}>
-      <header
-        ref={headerRef}
-        className="fixed inset-x-0 top-0 z-30 mx-auto w-full max-w-lg bg-[#F5F6F9]"
-      >
+      <header ref={headerRef} className="fixed inset-x-0 top-0 z-30 w-full bg-[#F5F6F9]">
         <div
           style={{
             backgroundColor: "#F5F6F9",

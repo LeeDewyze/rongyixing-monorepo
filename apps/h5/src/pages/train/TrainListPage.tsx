@@ -363,7 +363,7 @@ export function TrainListPage() {
 
   return (
     <div className="relative h-dvh overflow-hidden bg-[#F5F6F9]">
-      <div ref={headerRef} className="fixed inset-x-0 top-0 z-50 mx-auto w-full max-w-lg">
+      <div ref={headerRef} className="fixed inset-x-0 top-0 z-50 w-full">
         <TrainListHeader
           fromName={fromName}
           toName={toName}

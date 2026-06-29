@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { CityPicker, ResourcePicker } from "@/components/search";
@@ -220,7 +220,9 @@ function SegmentRouteCard({
       >
         <div>
           <p className="text-[11px] uppercase tracking-wide text-[#9CA3AF]">出发</p>
-          <p className="mt-0.5 text-[18px] font-semibold text-brand-title">{segment.fromCity.label}</p>
+          <p className="mt-0.5 text-[18px] font-semibold text-brand-title">
+            {segment.fromCity.label}
+          </p>
         </div>
         <ChevronRightIcon />
       </button>
@@ -234,7 +236,9 @@ function SegmentRouteCard({
       >
         <div>
           <p className="text-[11px] uppercase tracking-wide text-[#9CA3AF]">目的</p>
-          <p className="mt-0.5 text-[18px] font-semibold text-brand-title">{segment.toCity.label}</p>
+          <p className="mt-0.5 text-[18px] font-semibold text-brand-title">
+            {segment.toCity.label}
+          </p>
         </div>
         <ChevronRightIcon />
       </button>
@@ -243,11 +247,14 @@ function SegmentRouteCard({
 }
 
 const TRAVEL_MINE_APPROVAL_PATH = "/travel/approval?tab=mine";
+const TRAVEL_APPLY_HEADER_FALLBACK_HEIGHT = 88;
 
 export function TravelApplyPage() {
   const navigate = useNavigate();
   const goHome = useHomeBack();
   usePageHeader({ visible: false });
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [headerHeight, setHeaderHeight] = useState(TRAVEL_APPLY_HEADER_FALLBACK_HEIGHT);
   const [searchParams] = useSearchParams();
   const editId = searchParams.get("editId") || null;
 
@@ -265,12 +272,25 @@ export function TravelApplyPage() {
   const [validationError, setValidationError] = useState<string | null>(null);
   const [loadingEdit, setLoadingEdit] = useState(false);
 
+  useLayoutEffect(() => {
+    const header = headerRef.current;
+    if (!header) {
+      return;
+    }
+
+    const updateHeight = () => {
+      setHeaderHeight(header.offsetHeight);
+    };
+
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
+
   const isEditing = Boolean(editId);
   const meta = metaQuery.data;
-  const staffOptions = useMemo(
-    () => (meta ? staffPickerOptions(meta.staffOptions) : []),
-    [meta],
-  );
+  const staffOptions = useMemo(() => (meta ? staffPickerOptions(meta.staffOptions) : []), [meta]);
   const totalTripDays = segments.reduce(
     (sum, segment) => sum + tripDaysBetween(segment.startDate, segment.endDate),
     0,
@@ -311,7 +331,9 @@ export function TravelApplyPage() {
   // Init for new form
   useEffect(() => {
     if (!meta || editId || travelers.length > 0 || segments.length > 0) return;
-    setTravelTypes((prev) => (prev.length ? prev : meta.travelTypes.slice(0, 1).map((it) => it.value)));
+    setTravelTypes((prev) =>
+      prev.length ? prev : meta.travelTypes.slice(0, 1).map((it) => it.value),
+    );
     setTravelers((prev) =>
       prev.length ? prev : [defaultTravelApplyTraveler(meta.defaultAccount)],
     );
@@ -420,204 +442,219 @@ export function TravelApplyPage() {
   const travelNumber = meta.travelNumber.label || meta.travelNumber.value;
 
   return (
-    <div className="min-h-full" style={{ background: "var(--brand-form-header-gradient)" }}>
-      <div className="relative pb-10 pt-[env(safe-area-inset-top)]">
-        <div className="flex items-center px-1">
-          <button
-            type="button"
-            className="flex h-11 w-10 shrink-0 items-center justify-center text-[26px] font-light leading-none text-brand-title active:opacity-70"
-            aria-label="返回"
-            onClick={goHome}
-          >
-            ‹
-          </button>
-          <h1 className="min-w-0 flex-1 truncate text-center text-[17px] font-medium text-brand-title">
-            {isEditing ? "编辑出差申请" : "出差申请"}
-          </h1>
-          <span className="w-10 shrink-0" />
-        </div>
-
-        <div className="mt-3 px-4">
-          <p className="text-[11px] text-brand-title/60">差旅单号</p>
-          <p className="mt-0.5 truncate text-[20px] font-semibold tracking-wide text-brand-title">
-            {travelNumber || (isEditing ? editId! : "—")}
-          </p>
-          <div className="mt-3 flex gap-2">
-            <MetaChip label="申请人" value={meta.applicant.label} />
-            <MetaChip label="所属部门" value={meta.organization.label} />
-          </div>
-          {meta.position.label ? (
-            <p className="mt-2 text-[11px] text-brand-title/50">{meta.position.label}</p>
-          ) : null}
-        </div>
-
-      </div>
-
-      <div className="-mt-6 space-y-3 px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
-        <SectionCard title="出差信息" subtitle="选择类型并填写事由">
-          <div className="py-3.5">
-            <p className="mb-2.5 text-sm text-[#6B7280]">出差类型</p>
-            <div className="flex flex-wrap gap-2">
-              {meta.travelTypes.map((type) => {
-                const active = travelTypes.includes(type.value);
-                return (
-                  <button
-                    key={type.value}
-                    type="button"
-                    className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm transition-colors ${
-                      active
-                        ? "border-brand-primary bg-[#EEF4FF] font-medium text-brand-primary shadow-[0_2px_8px_rgba(39,104,250,0.12)]"
-                        : "border-[#E8ECF2] bg-[#FAFBFC] text-[#4B5563] hover:bg-[#F3F4F6] hover:border-[#D1D5DB] active:bg-[#E8ECF2]"
-                    }`}
-                    onClick={() => toggleTravelType(type.value)}
-                  >
-                    {active ? <CheckIcon /> : null}
-                    {type.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <label className="block border-t border-[#F3F4F6] py-3.5">
-            <div className="mb-2 flex items-center justify-between">
-              <span className="text-sm text-[#6B7280]">出差事由</span>
-              <span className="text-xs text-[#C4C9D4]">{reason.length}/200</span>
-            </div>
-            <textarea
-              value={reason}
-              rows={3}
-              maxLength={200}
-              placeholder="请简要说明出差目的，如项目支持、客户拜访等"
-              className="w-full resize-none rounded-xl border border-[#E8ECF2] bg-[#FAFBFC] px-3.5 py-3 text-sm leading-relaxed text-brand-title outline-none transition-colors placeholder:text-[#C4C9D4] focus:border-brand-primary focus:bg-white focus:ring-2 focus:ring-brand-primary/10"
-              onChange={(event) => setReason(event.target.value)}
-            />
-          </label>
-        </SectionCard>
-
-        <SectionCard
-          title="出差人"
-          subtitle={`共 ${travelers.length} 人`}
-          action={
+    <div
+      className="relative h-dvh overflow-hidden"
+      style={{ background: "var(--brand-form-header-gradient)" }}
+    >
+      <div
+        ref={headerRef}
+        className="fixed inset-x-0 top-0 z-30 w-full"
+        style={{ background: "var(--brand-form-header-gradient)" }}
+      >
+        <div className="pt-[env(safe-area-inset-top)]">
+          <div className="flex items-center px-1">
             <button
               type="button"
-              className="shrink-0 rounded-full px-3 py-1 text-xs font-medium text-brand-primary active:bg-[#EEF4FF]"
-              onClick={addTraveler}
+              className="flex h-11 w-10 shrink-0 items-center justify-center text-[26px] font-light leading-none text-brand-title active:opacity-70"
+              aria-label="返回"
+              onClick={goHome}
             >
-              添加
+              ‹
             </button>
-          }
-        >
-          <div className="divide-y divide-[#F3F4F6]">
-            {travelers.map((traveler, index) => (
-              <div key={`traveler-${index}`} className="flex items-center gap-2 py-3.5">
-                <button
-                  type="button"
-                  className="flex min-w-0 flex-1 items-center justify-between text-left"
-                  onClick={() => setStaffPickerIndex(index)}
-                >
-                  <div>
-                    <p className="text-xs text-[#9CA3AF]">
-                      {travelers.length > 1 ? `出差人 ${index + 1}` : "出差人"}
-                    </p>
-                    <p className="mt-0.5 truncate text-sm font-medium text-brand-title">
-                      {traveler.account.label || "请选择出差人"}
-                    </p>
-                  </div>
-                  <ChevronRightIcon />
-                </button>
-                {travelers.length > 1 ? (
+            <h1 className="min-w-0 flex-1 truncate text-center text-[17px] font-medium text-brand-title">
+              {isEditing ? "编辑出差申请" : "出差申请"}
+            </h1>
+            <span className="w-10 shrink-0" />
+          </div>
+        </div>
+      </div>
+
+      <div
+        className="h-full overflow-y-auto overscroll-y-contain [-webkit-overflow-scrolling:touch]"
+        style={{ paddingTop: headerHeight }}
+      >
+        <div className="relative -mt-2 pb-10">
+          <div className="px-4">
+            <p className="text-[11px] text-brand-title/60">差旅单号</p>
+            <p className="mt-0.5 truncate text-[20px] font-semibold tracking-wide text-brand-title">
+              {travelNumber || (isEditing ? editId! : "—")}
+            </p>
+            <div className="mt-3 flex gap-2">
+              <MetaChip label="申请人" value={meta.applicant.label} />
+              <MetaChip label="所属部门" value={meta.organization.label} />
+            </div>
+            {meta.position.label ? (
+              <p className="mt-2 text-[11px] text-brand-title/50">{meta.position.label}</p>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="-mt-6 space-y-3 px-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))]">
+          <SectionCard title="出差信息" subtitle="选择类型并填写事由">
+            <div className="py-3.5">
+              <p className="mb-2.5 text-sm text-[#6B7280]">出差类型</p>
+              <div className="flex flex-wrap gap-2">
+                {meta.travelTypes.map((type) => {
+                  const active = travelTypes.includes(type.value);
+                  return (
+                    <button
+                      key={type.value}
+                      type="button"
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm transition-colors ${
+                        active
+                          ? "border-brand-primary bg-[#EEF4FF] font-medium text-brand-primary shadow-[0_2px_8px_rgba(39,104,250,0.12)]"
+                          : "border-[#E8ECF2] bg-[#FAFBFC] text-[#4B5563] hover:bg-[#F3F4F6] hover:border-[#D1D5DB] active:bg-[#E8ECF2]"
+                      }`}
+                      onClick={() => toggleTravelType(type.value)}
+                    >
+                      {active ? <CheckIcon /> : null}
+                      {type.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <label className="block border-t border-[#F3F4F6] py-3.5">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-sm text-[#6B7280]">出差事由</span>
+                <span className="text-xs text-[#C4C9D4]">{reason.length}/200</span>
+              </div>
+              <textarea
+                value={reason}
+                rows={3}
+                maxLength={200}
+                placeholder="请简要说明出差目的，如项目支持、客户拜访等"
+                className="w-full resize-none rounded-xl border border-[#E8ECF2] bg-[#FAFBFC] px-3.5 py-3 text-sm leading-relaxed text-brand-title outline-none transition-colors placeholder:text-[#C4C9D4] focus:border-brand-primary focus:bg-white focus:ring-2 focus:ring-brand-primary/10"
+                onChange={(event) => setReason(event.target.value)}
+              />
+            </label>
+          </SectionCard>
+
+          <SectionCard
+            title="出差人"
+            subtitle={`共 ${travelers.length} 人`}
+            action={
+              <button
+                type="button"
+                className="shrink-0 rounded-full px-3 py-1 text-xs font-medium text-brand-primary active:bg-[#EEF4FF]"
+                onClick={addTraveler}
+              >
+                添加
+              </button>
+            }
+          >
+            <div className="divide-y divide-[#F3F4F6]">
+              {travelers.map((traveler, index) => (
+                <div key={`traveler-${index}`} className="flex items-center gap-2 py-3.5">
                   <button
                     type="button"
-                    className="shrink-0 rounded-lg px-2 py-1 text-xs text-[#EF4444] active:bg-[#FEF2F2]"
-                    onClick={() => removeTraveler(index)}
+                    className="flex min-w-0 flex-1 items-center justify-between text-left"
+                    onClick={() => setStaffPickerIndex(index)}
                   >
-                    删除
+                    <div>
+                      <p className="text-xs text-[#9CA3AF]">
+                        {travelers.length > 1 ? `出差人 ${index + 1}` : "出差人"}
+                      </p>
+                      <p className="mt-0.5 truncate text-sm font-medium text-brand-title">
+                        {traveler.account.label || "请选择出差人"}
+                      </p>
+                    </div>
+                    <ChevronRightIcon />
                   </button>
-                ) : null}
+                  {travelers.length > 1 ? (
+                    <button
+                      type="button"
+                      className="shrink-0 rounded-lg px-2 py-1 text-xs text-[#EF4444] active:bg-[#FEF2F2]"
+                      onClick={() => removeTraveler(index)}
+                    >
+                      删除
+                    </button>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+            <div className="pb-4">
+              <AddRowButton label="添加出差人" onClick={addTraveler} />
+            </div>
+          </SectionCard>
+
+          <SectionCard
+            title="行程信息"
+            subtitle={
+              segments.length > 1
+                ? `共 ${segments.length} 段 · 合计 ${totalTripDays} 天`
+                : `共 ${tripDaysBetween(segments[0]!.startDate, segments[0]!.endDate)} 天`
+            }
+            action={
+              <button
+                type="button"
+                className="shrink-0 rounded-full px-3 py-1 text-xs font-medium text-brand-primary active:bg-[#EEF4FF]"
+                onClick={addSegment}
+              >
+                添加
+              </button>
+            }
+          >
+            {segments.map((segment, index) => (
+              <div
+                key={`segment-${index}`}
+                className={index > 0 ? "border-t border-[#F0F2F5] pt-1" : undefined}
+              >
+                <div className="flex items-center justify-between py-3">
+                  <p className="text-sm font-medium text-brand-title">
+                    {segments.length > 1 ? `行程 ${index + 1}` : "行程"}
+                  </p>
+                  {segments.length > 1 ? (
+                    <button
+                      type="button"
+                      className="rounded-lg px-2 py-1 text-xs text-[#EF4444] active:bg-[#FEF2F2]"
+                      onClick={() => removeSegment(index)}
+                    >
+                      删除
+                    </button>
+                  ) : null}
+                </div>
+
+                <SegmentRouteCard
+                  segment={segment}
+                  onPickFrom={() => setPickerTarget({ segmentIndex: index, field: "from" })}
+                  onPickTo={() => setPickerTarget({ segmentIndex: index, field: "to" })}
+                  onSwap={() => swapSegmentCities(index)}
+                />
+
+                <DateRow
+                  label="开始日期"
+                  value={segment.startDate}
+                  onChange={(startDate) =>
+                    updateSegment(index, {
+                      startDate,
+                      endDate: segment.endDate < startDate ? startDate : segment.endDate,
+                    })
+                  }
+                />
+                <DateRow
+                  label="结束日期"
+                  value={segment.endDate}
+                  minDate={segment.startDate}
+                  onChange={(endDate) => updateSegment(index, { endDate })}
+                />
               </div>
             ))}
-          </div>
-          <div className="pb-4">
-            <AddRowButton label="添加出差人" onClick={addTraveler} />
-          </div>
-        </SectionCard>
-
-        <SectionCard
-          title="行程信息"
-          subtitle={
-            segments.length > 1
-              ? `共 ${segments.length} 段 · 合计 ${totalTripDays} 天`
-              : `共 ${tripDaysBetween(segments[0]!.startDate, segments[0]!.endDate)} 天`
-          }
-          action={
-            <button
-              type="button"
-              className="shrink-0 rounded-full px-3 py-1 text-xs font-medium text-brand-primary active:bg-[#EEF4FF]"
-              onClick={addSegment}
-            >
-              添加
-            </button>
-          }
-        >
-          {segments.map((segment, index) => (
-            <div
-              key={`segment-${index}`}
-              className={index > 0 ? "border-t border-[#F0F2F5] pt-1" : undefined}
-            >
-              <div className="flex items-center justify-between py-3">
-                <p className="text-sm font-medium text-brand-title">
-                  {segments.length > 1 ? `行程 ${index + 1}` : "行程"}
-                </p>
-                {segments.length > 1 ? (
-                  <button
-                    type="button"
-                    className="rounded-lg px-2 py-1 text-xs text-[#EF4444] active:bg-[#FEF2F2]"
-                    onClick={() => removeSegment(index)}
-                  >
-                    删除
-                  </button>
-                ) : null}
-              </div>
-
-              <SegmentRouteCard
-                segment={segment}
-                onPickFrom={() => setPickerTarget({ segmentIndex: index, field: "from" })}
-                onPickTo={() => setPickerTarget({ segmentIndex: index, field: "to" })}
-                onSwap={() => swapSegmentCities(index)}
-              />
-
-              <DateRow
-                label="开始日期"
-                value={segment.startDate}
-                onChange={(startDate) =>
-                  updateSegment(index, {
-                    startDate,
-                    endDate: segment.endDate < startDate ? startDate : segment.endDate,
-                  })
-                }
-              />
-              <DateRow
-                label="结束日期"
-                value={segment.endDate}
-                minDate={segment.startDate}
-                onChange={(endDate) => updateSegment(index, { endDate })}
-              />
+            <div className="pb-4 pt-1">
+              <AddRowButton label="添加行程" onClick={addSegment} />
             </div>
-          ))}
-          <div className="pb-4 pt-1">
-            <AddRowButton label="添加行程" onClick={addSegment} />
-          </div>
-        </SectionCard>
+          </SectionCard>
 
-        {submitError ? (
-          <div className="rounded-2xl border border-[#FECACA] bg-[#FFF1F0] px-4 py-3.5 text-sm text-[#DC2626]">
-            {submitError}
-          </div>
-        ) : null}
+          {submitError ? (
+            <div className="rounded-2xl border border-[#FECACA] bg-[#FFF1F0] px-4 py-3.5 text-sm text-[#DC2626]">
+              {submitError}
+            </div>
+          ) : null}
+        </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 border-t border-border bg-white/95 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-md">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-white/95 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-md">
         <button
           type="button"
           disabled={submitApply.isPending || modifyApply.isPending}
@@ -649,8 +686,7 @@ export function TravelApplyPage() {
         onClose={() => setPickerTarget(null)}
         onSelect={(city: TravelApplyCity) => {
           if (!pickerTarget) return;
-          const patch =
-            pickerTarget.field === "from" ? { fromCity: city } : { toCity: city };
+          const patch = pickerTarget.field === "from" ? { fromCity: city } : { toCity: city };
           updateSegment(pickerTarget.segmentIndex, patch);
         }}
         {...pickerAdapter}
