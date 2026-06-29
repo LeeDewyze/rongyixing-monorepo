@@ -24,6 +24,7 @@ export type {
 } from "./workbench.js";
 export { normalizeWorkbenchResponse } from "./workbench.js";
 
+export type { HomeBanner, HomeBannerLink, LegacyJumpTarget } from "./home-banner.js";
 export type { TmcData } from "./tmc-data.js";
 export type { BulletinNotice, NoticeListParams } from "./notice.js";
 
@@ -83,10 +84,7 @@ export type {
   PayTotalAmountResponse,
 } from "./hotel.js";
 
-export type {
-  HotelMapCityResponse,
-  HotelMapPoint,
-} from "./hotel.js";
+export type { HotelMapCityResponse, HotelMapPoint } from "./hotel.js";
 export type { HotelCity, HotelCityResourceResponse } from "./hotel-city.js";
 
 export type {

@@ -1,11 +1,13 @@
 import type { IResponse } from "@ryx/shared-types";
 import { TMC_METHODS, successResponse } from "@ryx/api";
 
+import { MOCK_HOME_BANNERS } from "../fixtures/home-banners.js";
 import { MOCK_WORKBENCH_LOAD } from "../fixtures/workbench.js";
 
 export function createTmcMockHandlers(): Record<string, (data: unknown) => IResponse<unknown>> {
   return {
     [TMC_METHODS.WORKBENCH_LOAD]: () => successResponse(MOCK_WORKBENCH_LOAD),
+    [TMC_METHODS.BANNER_LIST]: () => successResponse(MOCK_HOME_BANNERS),
     [TMC_METHODS.NOTICE_LIST]: () =>
       successResponse([
         {

@@ -47,6 +47,7 @@ import { SettingsPage } from "@/pages/settings/SettingsPage";
 import { ContactUsPage } from "@/pages/contact/ContactUsPage";
 import { NoticeListPage } from "@/pages/notice/NoticeListPage";
 import { NoticeDetailPage } from "@/pages/notice/NoticeDetailPage";
+import { OpenUrlPage } from "@/pages/open-url/OpenUrlPage";
 
 export const router = createBrowserRouter([
   {
@@ -153,6 +154,11 @@ export const router = createBrowserRouter([
       { index: true, element: <NoticeListPage /> },
       { path: ":noticeId", element: <NoticeDetailPage /> },
     ],
+  },
+  {
+    path: "/open-url",
+    element: <RootLayout />,
+    children: [{ index: true, element: <OpenUrlPage /> }],
   },
   {
     path: "/passenger",

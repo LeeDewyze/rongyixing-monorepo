@@ -47,7 +47,7 @@ export function ContactUsPage() {
                   <img
                     src={PROFILE_ASSETS.menu.contact}
                     alt=""
-                    className="size-5 object-contain"
+                    className="size-6 object-contain"
                     aria-hidden
                   />
                 </span>

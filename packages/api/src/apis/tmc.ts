@@ -1,6 +1,13 @@
-import type { TmcData, TmcInfo, WorkbenchGroup, WorkbenchLoadResponse } from "@ryx/shared-types";
+import type {
+  HomeBanner,
+  TmcData,
+  TmcInfo,
+  WorkbenchGroup,
+  WorkbenchLoadResponse,
+} from "@ryx/shared-types";
 import { normalizeWorkbenchResponse } from "@ryx/shared-types";
 
+import { normalizeBannerList } from "./home-banner-adapter.js";
 import { TMC_METHODS } from "../methods/tmc.js";
 import type { ProxyClient } from "../proxy/proxy-client.js";
 
@@ -8,6 +15,7 @@ export interface TmcApi {
   getTmc(): Promise<TmcInfo>;
   getTmcData(): Promise<TmcData>;
   getWorkbenches(): Promise<WorkbenchGroup[]>;
+  getBanners(): Promise<HomeBanner[]>;
 }
 
 export function createTmcApi(proxy: ProxyClient): TmcApi {
@@ -30,6 +38,13 @@ export function createTmcApi(proxy: ProxyClient): TmcApi {
         data: {},
       });
       return normalizeWorkbenchResponse(raw);
+    },
+    async getBanners() {
+      const raw = await proxy.send<HomeBanner[]>({
+        method: TMC_METHODS.BANNER_LIST,
+        data: {},
+      });
+      return normalizeBannerList(raw);
     },
   };
 }

@@ -1,11 +1,16 @@
 import type { HomeProductId, HomeTravelMode } from "@/config/home-assets";
 import { HOME_ASSETS } from "@/config/home-assets";
+import { HomeBannerCarousel } from "@/components/home/HomeBannerCarousel";
+import type { HomeBannerSlide } from "@/lib/home-banners";
 
 export type { HomeProductId, HomeTravelMode };
 
 interface HomeHeroSectionProps {
   travelMode: HomeTravelMode;
   activeProduct: HomeProductId;
+  bannerSlides?: HomeBannerSlide[];
+  bannerLoading?: boolean;
+  onBannerClick?: (slide: HomeBannerSlide) => void;
   notice?: React.ReactNode;
   onTravelModeChange: (mode: HomeTravelMode) => void;
   onProductChange: (product: HomeProductId) => void;
@@ -51,17 +56,27 @@ function ProductIcon({ product, active }: { product: HomeProductId; active: bool
 export function HomeHeroSection({
   travelMode,
   activeProduct,
+  bannerSlides,
+  bannerLoading = false,
+  onBannerClick,
   notice,
   onTravelModeChange,
   onProductChange,
 }: HomeHeroSectionProps) {
   const isBusiness = travelMode === "business";
+  const slides = bannerSlides && bannerSlides.length > 0 ? bannerSlides : [];
+  const showBannerPlaceholder = bannerLoading || slides.length === 0;
 
   return (
     <div className="relative shrink-0">
-      <div className="relative h-[208px] w-full overflow-hidden">
-        <img src={HOME_ASSETS.heroBanner} alt="" className="size-full object-cover object-center" />
-      </div>
+      {showBannerPlaceholder ? (
+        <div
+          className={`h-[208px] w-full bg-[#E8EAEF] ${bannerLoading ? "animate-pulse" : ""}`}
+          aria-hidden
+        />
+      ) : (
+        <HomeBannerCarousel slides={slides} onBannerClick={onBannerClick} />
+      )}
 
       <div className="relative -mt-7">
         <div className="overflow-hidden rounded-t-xl bg-white shadow-[0_-2px_12px_rgba(0,0,0,0.06)]">

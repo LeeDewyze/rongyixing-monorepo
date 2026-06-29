@@ -13,9 +13,10 @@ import {
 } from "@/components/home/HomeHeroSection";
 import { HomeHotelSearchPanel } from "@/components/home/HomeHotelSearchPanel";
 import { HomeTrainSearchPanel } from "@/components/home/HomeTrainSearchPanel";
-import { HomeRecentTripPanel } from "@/components/home/HomeRecentTripPanel";
 import { CityPicker } from "@/components/search";
 import { PageToast } from "@/components/layout/PageToast";
+import { useHomeBanners } from "@/hooks/useHomeBanners";
+import { onHomeBannerJump } from "@/lib/core-jump";
 import { useFlightSearchForm } from "@/hooks/useFlightSearchForm";
 import { useHotelSearchForm } from "@/hooks/useHotelSearchForm";
 import { useTrainSearchForm } from "@/hooks/useTrainSearchForm";
@@ -46,14 +47,16 @@ export function HomeTabPage() {
   );
   const [keyword, setKeyword] = useState("");
   const [hotelLocationLoading, setHotelLocationLoading] = useState(false);
-  const [hotelLocationFeedback, setHotelLocationFeedback] = useState<
-    { tone: "success" | "error"; text: string } | null
-  >(null);
+  const [hotelLocationFeedback, setHotelLocationFeedback] = useState<{
+    tone: "success" | "error";
+    text: string;
+  } | null>(null);
   const hotelLocationFeedbackTimer = useRef<number | null>(null);
   const hotelForm = useHotelSearchForm();
   const trainForm = useTrainSearchForm();
   const flightForm = useFlightSearchForm();
   const apiMode = getApiMode();
+  const bannerQuery = useHomeBanners();
   const { data: notices = [] } = useQuery({
     queryKey: ["home", "notices"],
     queryFn: () => getApi().notice.getList({ PageIndex: 0, PageSize: 20 }),
@@ -110,8 +113,8 @@ export function HomeTabPage() {
       const cityName = result.cityName?.trim();
       const matched =
         (result.city
-          ? hotelForm.cities.find((city) => city.Code === result.city?.Code) ??
-            hotelForm.cities.find((city) => city.Name === result.city?.Name)
+          ? (hotelForm.cities.find((city) => city.Code === result.city?.Code) ??
+            hotelForm.cities.find((city) => city.Name === result.city?.Name))
           : null) ??
         (cityName
           ? hotelForm.cities.find(
@@ -150,6 +153,16 @@ export function HomeTabPage() {
       <HomeHeroSection
         travelMode={travelMode}
         activeProduct={activeProduct}
+        bannerSlides={bannerQuery.data}
+        bannerLoading={bannerQuery.isLoading}
+        onBannerClick={(slide) => {
+          if (!slide.banner) return;
+          void onHomeBannerJump(navigate, {
+            Url: slide.banner.Url,
+            Name: slide.banner.Name ?? slide.banner.Title,
+            Title: slide.banner.Title,
+          });
+        }}
         notice={
           <HomeNoticeStrip
             notices={notices}
@@ -222,7 +235,6 @@ export function HomeTabPage() {
       ) : null}
 
       {travelMode === "business" ? <HomeBusinessPanel /> : null}
-      <HomeRecentTripPanel />
 
       <PageToast
         message={hotelLocationFeedback?.text ?? null}

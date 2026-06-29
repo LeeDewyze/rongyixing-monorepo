@@ -62,7 +62,7 @@
 | 1    | 手机登录      | `login`                       | `/login`                 | Login, MobileLogin, SendLoginMobileCode                                                     | [~] | [~]  | [~] | PhoneLoginPage                                                                                                                            |
 | 1    | 密码登录      | `login/password`              | `/login/password`        | Login, DeviceLogin, Identity-Get                                                            | [~] | [~]  | [~] | 缺 identity 续票                                                                                                                          |
 | 2    | Tab 壳        | `tabs`                        | `/home`                  | —                                                                                           | —   | —    | [ ] | 无 TabLayout                                                                                                                              |
-| 2    | 首页工作台    | `tab-tmc-home_ryx`            | `/home`                  | Workbench-Load, Banner-List, Notice-List, Travel-List                                       | [ ] | [ ]  | [ ] | **下一批**                                                                                                                                |
+| 2    | 首页工作台    | `tab-tmc-home_ryx`            | `/home`                  | Workbench-Load, Banner-List, Notice-List, Travel-List                                       | [~] | [~]  | [~] | Banner carousel + jump parity                                                                                                             |
 | 2    | 待出行 Tab    | `tab-tmc-trip_ryx`            | `/trips`                 | Travel-List, Task-List                                                                      | [ ] | [ ]  | [ ] |                                                                                                                                           |
 | 2    | 我的 Tab      | `tab-tmc-my_ryx`              | `/me`                    | Member-Get, 跳转订单列表                                                                    | [~] | [~]  | [ ] |                                                                                                                                           |
 | 3    | 酒店搜索      | `tmc-hotel-search_ryx`        | `/hotel`                 | DomesticHotelCity, SearchHotel, Condition-Gets                                              | [~] | [~]  | [~] | 缺城市/日期 UI                                                                                                                            |
@@ -114,9 +114,9 @@
 
 | Method                                      | 用途            | API | Mock | H5  |
 | ------------------------------------------- | --------------- | --- | ---- | --- |
-| `TmcApiHomeUrl-Workbench-Load`              | 工作台入口      | [ ] | [ ]  | [ ] |
-| `TmcApiHomeUrl-Banner-List`                 | 轮播            | [ ] | [ ]  | [ ] |
-| `TmcApiHomeUrl-Notice-List`                 | 公告            | [ ] | [ ]  | [ ] |
+| `TmcApiHomeUrl-Workbench-Load`              | 工作台入口      | [ ] | [x]  | [ ] |
+| `TmcApiHomeUrl-Banner-List`                 | 轮播            | [x] | [x]  | [x] |
+| `TmcApiHomeUrl-Notice-List`                 | 公告            | [~] | [x]  | [~] |
 | `TmcApiOrderUrl-Travel-List`                | 待出行/首页摘要 | [ ] | [ ]  | [ ] |
 | `TmcApiHomeUrl-Home-GetAccountWaitingTasks` | 审批角标        | [ ] | [ ]  | [ ] |
 | `ApiMemberUrl-Member-Get`                   | 我的页用户信息  | [x] | [x]  | [ ] |
