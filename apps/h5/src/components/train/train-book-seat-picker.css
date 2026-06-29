@@ -1,0 +1,103 @@
+.train-seat-picker {
+  container-type: inline-size;
+  overflow-x: clip;
+}
+
+.train-seat-picker__row {
+  padding: 12px 8px;
+  overflow-x: clip;
+}
+
+.train-seat-picker__track {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.train-seat-picker__window {
+  display: flex;
+  height: 30px;
+  width: 18px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  line-height: 1;
+  color: #999999;
+}
+
+.train-seat-picker__aisle {
+  display: flex;
+  height: 30px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 2px;
+  font-size: 13px;
+  line-height: 1;
+  color: #999999;
+  white-space: nowrap;
+}
+
+.train-seat-picker__seat {
+  position: relative;
+  display: flex;
+  height: 30px;
+  width: 35px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+.train-seat-picker__seat-icon {
+  display: inline-flex;
+}
+
+@container (min-width: 24rem) {
+  .train-seat-picker__row {
+    padding: 12px 10px;
+  }
+
+  .train-seat-picker__window {
+    width: 22px;
+    font-size: 14px;
+  }
+
+  .train-seat-picker__aisle {
+    padding-inline: 4px;
+    font-size: 14px;
+  }
+}
+
+@container (max-width: 23.99rem) {
+  .train-seat-picker__row {
+    padding: 12px 6px;
+  }
+
+  .train-seat-picker__seat {
+    width: 32px;
+  }
+
+  .train-seat-picker__seat-icon {
+    transform: scale(0.92);
+    transform-origin: center;
+  }
+}
+
+/* Last resort: shrink the whole row only if content still overflows. */
+@container (max-width: 20rem) {
+  .train-seat-picker__track {
+    transform: scale(min(1, calc((100cqw - 0.75rem) / 17rem)));
+    transform-origin: center center;
+  }
+}
+
+@container (min-width: 20.01rem) {
+  .train-seat-picker__track {
+    transform: none;
+  }
+}

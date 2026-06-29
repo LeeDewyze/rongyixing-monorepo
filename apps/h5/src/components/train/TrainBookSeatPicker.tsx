@@ -3,6 +3,8 @@ import { TrainSeatType } from "@ryx/shared-types";
 import { HOTEL_DETAIL_FONT } from "@/components/hotel/hotel-detail-chrome";
 import { TrainSeatChairIcon } from "@/components/train/TrainSeatChairIcon";
 
+import "./train-book-seat-picker.css";
+
 const SEAT_TITLES: Record<string, string> = {
   A: "靠窗",
   B: "中间",
@@ -63,26 +65,27 @@ function SeatLocationButton({
   onSelect: () => void;
 }) {
   return (
-    <button type="button" title={title} onClick={onSelect} className="relative shrink-0">
-      <TrainSeatChairIcon code={code} selected={selected} />
+    <button
+      type="button"
+      title={title}
+      onClick={onSelect}
+      className="train-seat-picker__seat"
+      aria-label={title}
+      aria-pressed={selected}
+    >
+      <span className="train-seat-picker__seat-icon">
+        <TrainSeatChairIcon code={code} selected={selected} />
+      </span>
     </button>
   );
 }
 
 function WindowLabel() {
-  return (
-    <span className="flex h-[30px] w-[22px] shrink-0 items-center justify-center text-[14px] leading-none text-[#999999]">
-      窗
-    </span>
-  );
+  return <span className="train-seat-picker__window">窗</span>;
 }
 
 function AisleLabel() {
-  return (
-    <span className="flex h-[30px] shrink-0 items-center justify-center px-1 text-[14px] leading-none text-[#999999]">
-      过道
-    </span>
-  );
+  return <span className="train-seat-picker__aisle">过道</span>;
 }
 
 function SeatPickerRow({
@@ -105,16 +108,12 @@ function SeatPickerRow({
   );
 
   return (
-    <div className="flex items-center justify-between px-2 py-3">
-      <div className="flex min-w-0 items-center gap-2">
+    <div className="train-seat-picker__row">
+      <div className="train-seat-picker__track">
         <WindowLabel />
-        <div className="flex items-center gap-4">{layout.left.map(renderSeat)}</div>
-      </div>
-
-      <AisleLabel />
-
-      <div className="flex min-w-0 items-center gap-2">
-        <div className="flex items-center gap-4">{layout.right.map(renderSeat)}</div>
+        {layout.left.map(renderSeat)}
+        <AisleLabel />
+        {layout.right.map(renderSeat)}
         <WindowLabel />
       </div>
     </div>
@@ -139,7 +138,7 @@ function SeatPickerPanel({
   onSelect: (code: string) => void;
 }) {
   return (
-    <div className="rounded-lg border-2 border-[#F8F9FD]">
+    <div className="train-seat-picker rounded-lg border-2 border-[#F8F9FD]">
       <SeatPickerRow layout={layout} selectedCode={selectedCode} onSelect={onSelect} />
     </div>
   );
@@ -198,7 +197,7 @@ export function TrainBookSeatPicker({
 
   return (
     <section
-      className={`mx-3 mb-3 rounded-xl bg-white px-3 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ${HOTEL_DETAIL_FONT}`}
+      className={`train-seat-picker mx-3 mb-3 rounded-xl bg-white px-3 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ${HOTEL_DETAIL_FONT}`}
     >
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-[16px] font-semibold leading-none text-[#222222]">

@@ -1,6 +1,6 @@
 import type { HomeBanner } from "@ryx/shared-types";
 
-import { asArray, asRecord, readString } from "./legacy-parse.js";
+import { asArray, asRecord, readNumber, readString } from "./legacy-parse.js";
 
 function readImageUrl(record: Record<string, unknown>): string | undefined {
   const value =
@@ -9,6 +9,13 @@ function readImageUrl(record: Record<string, unknown>): string | undefined {
     readString(record.ImgUrl) ||
     readString(record.imgUrl);
   return value.trim() || undefined;
+}
+
+function readBannerId(record: Record<string, unknown>): string | number | undefined {
+  const numericId = readNumber(record.Id) ?? readNumber(record.id);
+  if (numericId !== undefined) return numericId;
+  const textId = readString(record.Id) || readString(record.id);
+  return textId || undefined;
 }
 
 function normalizeBannerItem(raw: unknown): HomeBanner | null {
@@ -28,7 +35,7 @@ function normalizeBannerItem(raw: unknown): HomeBanner | null {
   if (!imageUrl) return null;
 
   return {
-    Id: record.Id ?? record.id,
+    Id: readBannerId(record),
     Title: readString(record.Title) || readString(record.title) || undefined,
     Name: readString(record.Name) || readString(record.name) || undefined,
     ImageUrl: imageUrl,

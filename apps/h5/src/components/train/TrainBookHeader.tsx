@@ -36,7 +36,7 @@ export const TrainBookHeader = forwardRef<HTMLDivElement, TrainBookHeaderProps>(
     return (
       <div
         ref={ref}
-        className={`fixed inset-x-0 top-0 z-30 mx-auto w-full max-w-lg shadow-[0_2px_12px_rgba(142,200,255,0.35)] ${HOTEL_DETAIL_FONT}`}
+        className={`fixed inset-x-0 top-0 z-30 w-full shadow-[0_2px_12px_rgba(142,200,255,0.35)] ${HOTEL_DETAIL_FONT}`}
         style={{ background: HOTEL_HEADER_GRADIENT }}
       >
         <div className="pt-[env(safe-area-inset-top)]">

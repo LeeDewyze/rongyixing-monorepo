@@ -60,9 +60,7 @@ export function TrainBookFooter({
         />
       ) : null}
 
-      <div
-        className={`fixed inset-x-0 bottom-0 z-30 mx-auto flex max-w-lg flex-col ${HOTEL_DETAIL_FONT}`}
-      >
+      <div className={`fixed inset-x-0 bottom-0 z-30 flex w-full flex-col ${HOTEL_DETAIL_FONT}`}>
         {billOpen && billBreakdown ? <TrainBookBillSheet breakdown={billBreakdown} /> : null}
 
         <div className="bg-white px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
