@@ -35,6 +35,32 @@ export interface HotelListParams {
   HotelType?: HotelType;
 }
 
+export interface HotelKeywordSearchParams {
+  PageIndex?: number;
+  CityName: string;
+  CityCode: string;
+  Keyword: string;
+}
+
+export interface HotelKeywordSearchItem {
+  Text: string;
+  Value?: string;
+  IsHotel?: boolean;
+  IsAddress?: boolean;
+  Lat?: string;
+  Lng?: string;
+}
+
+export type HotelKeywordSearchResultType = "hotel" | "address";
+
+export interface HotelKeywordSearchResult {
+  text: string;
+  type: HotelKeywordSearchResultType;
+  hotelId?: string;
+  lat?: string;
+  lng?: string;
+}
+
 export interface HotelListItem {
   HotelId: string;
   HotelName: string;

@@ -11,6 +11,9 @@ import type {
   HotelDetailResponse,
   HotelInitBookParams,
   HotelInitBookResponse,
+  HotelKeywordSearchItem,
+  HotelKeywordSearchParams,
+  HotelKeywordSearchResult,
   HotelListItem,
   HotelListParams,
   HotelListResponse,
@@ -28,6 +31,7 @@ export interface HotelApi {
   getCities(): Promise<HotelCity[]>;
   getCityByMap(point: HotelMapPoint): Promise<HotelCity | null>;
   getConditions(params: HotelConditionParams): Promise<HotelConditionResponse>;
+  searchHotel(params: HotelKeywordSearchParams): Promise<HotelKeywordSearchResult[]>;
   getList(params: HotelListParams): Promise<HotelListResponse>;
   getDetail(params: HotelDetailParams): Promise<HotelDetailResponse>;
   getPolicy(params: HotelPolicyParams): Promise<HotelPolicyResponse>;
@@ -176,6 +180,37 @@ function normalizeHotelConditionResponse(res: unknown): HotelConditionResponse {
         ? (payload.Tmc as HotelConditionResponse["Tmc"])
         : undefined,
   };
+}
+
+function normalizeHotelKeywordSearchResponse(res: unknown): HotelKeywordSearchResult[] {
+  const items = Array.isArray(res)
+    ? res
+    : res && typeof res === "object" && Array.isArray((res as { Data?: unknown }).Data)
+      ? ((res as { Data: unknown[] }).Data)
+      : [];
+
+  return (items as HotelKeywordSearchItem[])
+    .map((item): HotelKeywordSearchResult | null => {
+      const text = item.Text?.trim();
+      if (!text) return null;
+      if (item.IsHotel && item.Value) {
+        return {
+          text,
+          type: "hotel",
+          hotelId: String(item.Value),
+        } satisfies HotelKeywordSearchResult;
+      }
+      if (item.IsAddress && item.Lat && item.Lng) {
+        return {
+          text,
+          type: "address",
+          lat: String(item.Lat),
+          lng: String(item.Lng),
+        } satisfies HotelKeywordSearchResult;
+      }
+      return null;
+    })
+    .filter((item): item is HotelKeywordSearchResult => Boolean(item));
 }
 
 type LegacyImageLocation = {
@@ -1038,7 +1073,7 @@ function buildHotelListRequest(params: HotelListParams): Record<string, unknown>
     data.CityName = cityName;
   }
   const keyword = params.Keyword?.trim();
-  if (keyword) {
+  if (keyword && !params.HotelId) {
     data.SearchKey = keyword;
   }
   const optionalFields: Partial<Record<keyof HotelListParams, string>> = {
@@ -1175,6 +1210,20 @@ export function createHotelApi(proxy: ProxyClient): HotelApi {
         },
       });
       return normalizeHotelConditionResponse(res);
+    },
+    async searchHotel(params) {
+      const keyword = params.Keyword.trim();
+      if (!keyword) return [];
+      const res = await proxy.send<unknown>({
+        method: HOTEL_METHODS.HOME_SEARCHHOTEL,
+        data: {
+          PageIndex: params.PageIndex ?? 0,
+          CityName: params.CityName,
+          CityCode: params.CityCode,
+          Keyword: keyword,
+        },
+      });
+      return normalizeHotelKeywordSearchResponse(res);
     },
     async getList(params) {
       const res = await proxy.send<unknown>({

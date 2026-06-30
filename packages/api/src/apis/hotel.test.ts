@@ -87,6 +87,70 @@ describe("createHotelApi (mock mode)", () => {
     });
   });
 
+  it("searchHotel calls legacy keyword search with city and keyword", async () => {
+    let capturedMethod = "";
+    let capturedData: unknown;
+    const proxyWithCapture = createProxyClient({
+      baseUrl: "https://example.com",
+      mode: "mock",
+      mockHandler: async (method, data) => {
+        capturedMethod = method;
+        capturedData = data;
+        return successResponse([
+          { Text: "北京商大春公寓", Value: "7", IsHotel: true },
+          { Text: "王府井商圈", IsAddress: true, Lat: "39.915599", Lng: "116.411056" },
+        ]);
+      },
+    });
+    const api = createHotelApi(proxyWithCapture);
+    const result = await api.searchHotel({
+      PageIndex: 0,
+      CityName: "北京",
+      CityCode: "1101",
+      Keyword: " 北京商大春公寓 ",
+    });
+
+    expect(capturedMethod).toBe(HOTEL_METHODS.HOME_SEARCHHOTEL);
+    expect(capturedData).toEqual({
+      PageIndex: 0,
+      CityName: "北京",
+      CityCode: "1101",
+      Keyword: "北京商大春公寓",
+    });
+    expect(result).toEqual([
+      { text: "北京商大春公寓", type: "hotel", hotelId: "7" },
+      { text: "王府井商圈", type: "address", lat: "39.915599", lng: "116.411056" },
+    ]);
+  });
+
+  it("getList omits SearchKey when concrete hotel id is selected", async () => {
+    let capturedData: unknown;
+    const proxyWithCapture = createProxyClient({
+      baseUrl: "https://example.com",
+      mode: "mock",
+      mockHandler: async (method, data) => {
+        if (method === HOTEL_FLOW_METHODS.LIST) capturedData = data;
+        return successResponse({ Hotels: [], TotalCount: 0 });
+      },
+    });
+    const api = createHotelApi(proxyWithCapture);
+    await api.getList({
+      CityCode: "1101",
+      CityName: "北京",
+      CheckInDate: "2026-07-05",
+      CheckOutDate: "2026-07-09",
+      Keyword: "北京商大春公寓",
+      HotelId: "7",
+    });
+
+    expect(capturedData).toMatchObject({
+      CityCode: "1101",
+      CityName: "北京",
+      HotelId: "7",
+    });
+    expect(capturedData).not.toHaveProperty("SearchKey");
+  });
+
   it("getConditions calls legacy Condition-Gets", async () => {
     let capturedMethod = "";
     let capturedData: unknown;

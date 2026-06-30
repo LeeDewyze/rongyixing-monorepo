@@ -21,6 +21,14 @@ export function HotelSearchPage() {
     navigate(`/hotel/list?${params.toString()}`);
   }
 
+  function handleKeywordSelect() {
+    if (form.validate()) return;
+    const params = form.buildSearchParams();
+    const trimmed = keyword.trim();
+    if (trimmed) params.set("keyword", trimmed);
+    navigate(`/hotel/keyword?${params.toString()}`);
+  }
+
   if (form.isLoading) {
     return <p className="p-4 text-muted-foreground">加载中…</p>;
   }
@@ -43,6 +51,7 @@ export function HotelSearchPage() {
         checkOut={form.checkOut}
         validationError={form.validationError || undefined}
         onCitySelect={() => form.setPicker("city")}
+        onKeywordSelect={handleKeywordSelect}
         onKeywordChange={setKeyword}
         onKeywordClear={() => setKeyword("")}
         onCheckInChange={form.setCheckIn}

@@ -19,6 +19,7 @@ import { OrderListRedirect } from "@/app/routes/OrderListRedirect";
 import { HotelBookPage } from "@/pages/hotel/HotelBookPage";
 import { HotelDetailPage } from "@/pages/hotel/HotelDetailPage";
 import { HotelListPage } from "@/pages/hotel/HotelListPage";
+import { HotelKeywordSearchPage } from "@/pages/hotel/HotelKeywordSearchPage";
 import { HotelPayPage } from "@/pages/hotel/HotelPayPage";
 import { HotelResultPage } from "@/pages/hotel/HotelResultPage";
 import { HotelShowImagesPage } from "@/pages/hotel/HotelShowImagesPage";
@@ -99,6 +100,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <HotelSearchPage /> },
       { path: "list", element: <HotelListPage /> },
+      { path: "keyword", element: <HotelKeywordSearchPage /> },
       { path: ":hotelId/images", element: <HotelShowImagesPage /> },
       { path: ":hotelId", element: <HotelDetailPage /> },
       { path: ":hotelId/room/:roomId", element: <HotelRoomDetailPage /> },

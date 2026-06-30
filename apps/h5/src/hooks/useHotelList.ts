@@ -1,6 +1,11 @@
 import { useCallback, useMemo } from "react";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { HotelDetailParams, HotelListParams, HotelPolicyParams } from "@ryx/shared-types";
+import type {
+  HotelDetailParams,
+  HotelKeywordSearchParams,
+  HotelListParams,
+  HotelPolicyParams,
+} from "@ryx/shared-types";
 
 import { getApi } from "@/lib/api";
 
@@ -90,5 +95,14 @@ export function useHotelConditions(cityCode?: string) {
     queryKey: ["hotel", "conditions", cityCode],
     queryFn: () => getApi().hotel.getConditions({ CityCode: cityCode! }),
     enabled: Boolean(cityCode),
+  });
+}
+
+export function useHotelKeywordSearch(params: HotelKeywordSearchParams | null, enabled = true) {
+  const keyword = params?.Keyword.trim() ?? "";
+  return useQuery({
+    queryKey: ["hotel", "keyword-search", params?.CityCode, params?.CityName, keyword],
+    queryFn: () => getApi().hotel.searchHotel({ ...params!, Keyword: keyword }),
+    enabled: enabled && Boolean(params?.CityCode && params.CityName && keyword),
   });
 }

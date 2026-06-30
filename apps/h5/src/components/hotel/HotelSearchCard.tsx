@@ -21,6 +21,7 @@ interface HotelSearchCardProps {
   checkOut: string;
   validationError?: string;
   onCitySelect: () => void;
+  onKeywordSelect: () => void;
   onKeywordChange: (value: string) => void;
   onKeywordClear: () => void;
   onCheckInChange: (date: string) => void;
@@ -67,6 +68,7 @@ export function HotelSearchCard({
   checkOut,
   validationError,
   onCitySelect,
+  onKeywordSelect,
   onKeywordChange,
   onKeywordClear,
   onCheckInChange,
@@ -131,6 +133,9 @@ export function HotelSearchCard({
               type="search"
               value={keyword}
               placeholder="位置/品牌/酒店"
+              readOnly
+              onFocus={onKeywordSelect}
+              onClick={onKeywordSelect}
               onChange={(e) => onKeywordChange(e.target.value)}
               className="min-w-0 flex-1 border-0 bg-transparent text-base font-semibold text-[#1F2937] outline-none placeholder:font-normal placeholder:text-[#9CA3AF]"
             />

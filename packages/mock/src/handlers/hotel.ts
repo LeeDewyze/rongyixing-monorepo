@@ -36,6 +36,8 @@ function createHotelListResponse(data: unknown) {
     Themes?: Array<string | number>;
     Services?: Array<string | number>;
     Facilities?: Array<string | number>;
+    HotelId?: string;
+    SearchKey?: string;
   };
   const pageIndex = params.PageIndex ?? 0;
   const pageSize = params.PageSize ?? 20;
@@ -48,6 +50,14 @@ function createHotelListResponse(data: unknown) {
   const services = new Set((params.Services ?? []).map(String));
   const facilities = new Set((params.Facilities ?? []).map(String));
   let hotels = [...MOCK_HOTEL_LIST.Hotels];
+
+  if (params.HotelId) {
+    hotels = hotels.filter((hotel) => hotel.HotelId === params.HotelId);
+  }
+  if (params.SearchKey) {
+    const keyword = String(params.SearchKey).trim();
+    hotels = hotels.filter((hotel) => `${hotel.HotelName} ${hotel.Address}`.includes(keyword));
+  }
 
   if (Number.isFinite(beginPrice)) {
     hotels = hotels.filter((hotel) => (hotel.MinPrice ?? 0) >= beginPrice);
@@ -144,6 +154,22 @@ export function createHotelMockHandlers(): Record<string, (data: unknown) => IRe
         { Code: "029", Name: "西安", Pinyin: "xian", IsHot: false },
       ]),
     [HOTEL_METHODS.CONDITION_GETS]: () => successResponse(MOCK_HOTEL_CONDITIONS),
+    [HOTEL_METHODS.HOME_SEARCHHOTEL]: (data) => {
+      const keyword = String((data as { Keyword?: string })?.Keyword ?? "").trim();
+      const hotelItems = MOCK_HOTEL_LIST.Hotels.filter((hotel) =>
+        hotel.HotelName.includes(keyword),
+      ).map((hotel) => ({
+        Text: hotel.HotelName,
+        Value: hotel.HotelId,
+        IsHotel: true,
+      }));
+      const addressItems = [
+        { Text: "北京商大春公寓", IsAddress: true, Lat: "39.983537", Lng: "116.318551" },
+        { Text: "王府井商圈", IsAddress: true, Lat: "39.915599", Lng: "116.411056" },
+        { Text: "望京地铁站", IsAddress: true, Lat: "40.004168", Lng: "116.469409" },
+      ].filter((item) => item.Text.includes(keyword));
+      return successResponse([...hotelItems, ...addressItems]);
+    },
     [HOTEL_FLOW_METHODS.LIST]: (data) => successResponse(createHotelListResponse(data)),
     [HOTEL_FLOW_METHODS.DETAIL]: (data) => {
       const params = data as { HotelId?: string };

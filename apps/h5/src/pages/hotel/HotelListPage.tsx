@@ -7,7 +7,6 @@ import type { HotelCity, HotelType } from "@ryx/shared-types";
 import { HotelListFilterSheet } from "@/components/hotel/HotelListFilterSheet";
 import { HotelListHeader } from "@/components/hotel/HotelListHeader";
 import { HotelListItem } from "@/components/hotel/HotelListItem";
-import { HotelListSearchBar } from "@/components/hotel/HotelListSearchBar";
 import { HotelListToolbar, type HotelListToolbarId } from "@/components/hotel/HotelListToolbar";
 import { HotelStayDatePickerSheet } from "@/components/hotel/HotelStayDatePickerSheet";
 import { CityPicker } from "@/components/search";
@@ -177,6 +176,10 @@ export function HotelListPage() {
   const checkIn = searchParams.get("checkIn") ?? "";
   const checkOut = searchParams.get("checkOut") ?? "";
   const keyword = searchParams.get("keyword") ?? "";
+  const keywordType = searchParams.get("keywordType") ?? "";
+  const hotelId = searchParams.get("hotelId") ?? "";
+  const lat = searchParams.get("lat") ?? "";
+  const lng = searchParams.get("lng") ?? "";
   const hotelType = parseHotelType(searchParams.get("hotelType")) ?? "Normal";
   const travelFormId = searchParams.get("travelFormId") ?? searchParams.get("travelformid") ?? "";
   const { selected: selectedPassengers } = usePassengerSelection(ProductType.Hotel);
@@ -233,7 +236,7 @@ export function HotelListPage() {
 
   useLayoutEffect(() => {
     scrollContainerRef.current?.scrollTo({ top: 0, behavior: "auto" });
-  }, [cityCode, checkIn, checkOut, keyword]);
+  }, [cityCode, checkIn, checkOut, keyword, keywordType, hotelId, lat, lng]);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -256,20 +259,37 @@ export function HotelListPage() {
   const listParams = useMemo(
     () => {
       if (!listReady || !resolvedCity) return {};
-      return applyHotelListFilterParams(
-        {
-          CityCode: resolvedCity.Code,
-          CityName: resolvedCity.Name,
-          CheckInDate: checkIn,
-          CheckOutDate: checkOut,
-          Keyword: keyword || undefined,
-          HotelType: hotelType,
-          TravelFormId: travelFormId || undefined,
-          Passengers: passengerIds || undefined,
-          StaffCityCode: staffCityCode,
-        },
-        filterApplied,
-      );
+      const baseParams = {
+        CityCode: resolvedCity.Code,
+        CityName: resolvedCity.Name,
+        CheckInDate: checkIn,
+        CheckOutDate: checkOut,
+        Keyword: keyword || undefined,
+        HotelType: hotelType,
+        TravelFormId: travelFormId || undefined,
+        Passengers: passengerIds || undefined,
+        StaffCityCode: staffCityCode,
+      };
+      if (keywordType === "hotel" && hotelId) {
+        return applyHotelListFilterParams(
+          {
+            ...baseParams,
+            HotelId: hotelId,
+          },
+          filterApplied,
+        );
+      }
+      if (keywordType === "address" && lat && lng) {
+        return applyHotelListFilterParams(
+          {
+            ...baseParams,
+            Lat: lat,
+            Lng: lng,
+          },
+          filterApplied,
+        );
+      }
+      return applyHotelListFilterParams(baseParams, filterApplied);
     },
     [
       listReady,
@@ -277,6 +297,10 @@ export function HotelListPage() {
       checkIn,
       checkOut,
       keyword,
+      keywordType,
+      hotelId,
+      lat,
+      lng,
       hotelType,
       travelFormId,
       passengerIds,
@@ -352,7 +376,19 @@ export function HotelListPage() {
   if (!hasParams) return null;
 
   function goModifySearch() {
-    navigate("/hotel");
+    const next = new URLSearchParams();
+    next.set("cityCode", resolvedCity?.Code ?? cityCode);
+    next.set("cityName", resolvedCity?.Name ?? cityName);
+    next.set("checkIn", checkIn);
+    next.set("checkOut", checkOut);
+    if (keyword) next.set("keyword", keyword);
+    if (keywordType) next.set("keywordType", keywordType);
+    if (hotelId) next.set("hotelId", hotelId);
+    if (lat) next.set("lat", lat);
+    if (lng) next.set("lng", lng);
+    if (hotelType) next.set("hotelType", hotelType);
+    if (travelFormId) next.set("travelFormId", travelFormId);
+    navigate(`/hotel/keyword?${next.toString()}`);
   }
 
   function handleDateConfirm(nextCheckIn: string, nextCheckOut: string) {
@@ -366,6 +402,11 @@ export function HotelListPage() {
     const next = new URLSearchParams(searchParams);
     next.set("cityCode", city.Code);
     next.set("cityName", city.Name);
+    next.delete("keyword");
+    next.delete("keywordType");
+    next.delete("hotelId");
+    next.delete("lat");
+    next.delete("lng");
     navigate({ pathname: "/hotel/list", search: next.toString() }, { replace: true });
     setCityPickerOpen(false);
   }
@@ -379,26 +420,40 @@ export function HotelListPage() {
       minPrice: String(hotel.MinPrice ?? ""),
     });
     params.set("hotelType", hotelType);
+    if (keyword) params.set("keyword", keyword);
+    if (keywordType) params.set("keywordType", keywordType);
+    if (hotelId) params.set("hotelId", hotelId);
+    if (lat) params.set("lat", lat);
+    if (lng) params.set("lng", lng);
     if (travelFormId) params.set("travelFormId", travelFormId);
     navigate(`/hotel/${hotel.HotelId}?${params.toString()}`);
   }
 
   return (
-    <div className="relative h-dvh overflow-hidden bg-[#F5F6F9]">
-      <div ref={headerRef} className="fixed inset-x-0 top-0 z-50 mx-auto w-full max-w-lg">
+    <div
+      className="relative h-dvh overflow-hidden"
+      style={{ background: "var(--brand-form-header-gradient)" }}
+    >
+      <div
+        ref={headerRef}
+        className="fixed inset-x-0 top-0 z-50 mx-auto w-full max-w-lg"
+        style={{ background: "var(--brand-form-header-gradient)" }}
+      >
         <HotelListHeader
           cityName={cityName}
           checkIn={checkIn}
           checkOut={checkOut}
           keyword={keyword}
           onBack={() => navigateBack(navigate, "/hotel")}
-          onModify={goModifySearch}
+          onCityClick={() => setCityPickerOpen(true)}
+          onDateClick={() => setDatePickerOpen(true)}
+          onKeywordClick={goModifySearch}
         />
       </div>
 
       <div
         ref={handleScrollRoot}
-        className="h-full overflow-y-auto overscroll-y-contain [-webkit-overflow-scrolling:touch] [scrollbar-gutter:stable]"
+        className="h-full overflow-y-auto overscroll-y-contain [-webkit-overflow-scrolling:touch]"
         style={{ paddingTop: headerHeight }}
       >
         <div
@@ -411,21 +466,7 @@ export function HotelListPage() {
           <span className="pb-2">{statusLabel}</span>
         </div>
 
-        <div className="sticky top-0 z-20 bg-gradient-to-b from-[#6aabff] to-[#e4edfd] px-3 pb-3 pt-2">
-          <div className="mx-auto max-w-lg">
-            <HotelListSearchBar
-              cityName={cityName}
-              checkIn={checkIn}
-              checkOut={checkOut}
-              keyword={keyword}
-              onCityClick={() => setCityPickerOpen(true)}
-              onDateClick={() => setDatePickerOpen(true)}
-              onKeywordClick={goModifySearch}
-            />
-          </div>
-        </div>
-
-        <div className="relative z-0 mx-auto max-w-lg space-y-2 px-3 py-3 pb-[calc(4.75rem+0.75rem+env(safe-area-inset-bottom))]">
+        <div className="relative z-0 mx-auto max-w-lg space-y-2 px-3 pb-[calc(4.75rem+0.75rem+env(safe-area-inset-bottom))] pt-1">
           {showFreeStayTip ? <HotelFreeStayTip onOpen={() => setFreeStayDialogOpen(true)} /> : null}
 
           {citiesLoading || isInitialLoading ? <HotelListSkeleton /> : null}

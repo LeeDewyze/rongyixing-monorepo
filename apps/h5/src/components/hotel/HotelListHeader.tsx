@@ -1,4 +1,4 @@
-import { formatHotelStayDate } from "@/lib/date-search";
+import { HotelListSearchBar } from "@/components/hotel/HotelListSearchBar";
 
 interface HotelListHeaderProps {
   cityName: string;
@@ -6,13 +6,22 @@ interface HotelListHeaderProps {
   checkOut: string;
   keyword?: string;
   onBack: () => void;
-  onModify: () => void;
+  onCityClick: () => void;
+  onDateClick: () => void;
+  onKeywordClick: () => void;
 }
 
-function ModifyTitleCaret() {
+function BackIcon() {
   return (
-    <svg viewBox="0 0 12 12" className="size-3 shrink-0 opacity-80" aria-hidden>
-      <path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" strokeWidth="1.2" />
+    <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
+      <path
+        d="M15 5l-7 7 7 7"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -23,35 +32,43 @@ export function HotelListHeader({
   checkOut,
   keyword,
   onBack,
-  onModify,
+  onCityClick,
+  onDateClick,
+  onKeywordClick,
 }: HotelListHeaderProps) {
-  const keywordText = keyword?.trim();
-  const summary = `${cityName || "酒店"} · ${formatHotelStayDate(checkIn)}-${formatHotelStayDate(
-    checkOut,
-  )}${keywordText ? ` · ${keywordText}` : ""}`;
-
   return (
-    <div className="shrink-0 bg-gradient-to-b from-brand-header-start to-brand-header-end pt-[env(safe-area-inset-top)]">
-      <div className="flex items-center px-1 pb-2 pt-1">
+    <div
+      className="shrink-0 pb-2 pt-[env(safe-area-inset-top)]"
+      style={{ background: "var(--brand-form-header-gradient)" }}
+    >
+      <div className="flex h-12 items-center px-2.5">
         <button
           type="button"
-          className="flex h-11 w-10 shrink-0 items-center justify-center text-[26px] font-light leading-none text-white active:opacity-70"
+          className="flex h-10 w-9 shrink-0 items-center justify-center rounded-full text-brand-title active:bg-white/40"
           aria-label="返回"
           onClick={onBack}
         >
-          ‹
+          <BackIcon />
         </button>
 
-        <button
-          type="button"
-          className="flex min-w-0 flex-1 items-center justify-center gap-1 text-[17px] font-medium text-white active:opacity-80"
-          onClick={onModify}
+        <h1
+          className="min-w-0 flex-1 truncate text-center text-[17px] font-medium leading-tight text-brand-title"
         >
-          <span className="truncate">{summary}</span>
-          <ModifyTitleCaret />
-        </button>
+          酒店列表
+        </h1>
 
-        <span className="h-11 w-10 shrink-0" aria-hidden />
+        <span className="h-10 w-9 shrink-0" aria-hidden />
+      </div>
+      <div className="px-3">
+        <HotelListSearchBar
+          cityName={cityName}
+          checkIn={checkIn}
+          checkOut={checkOut}
+          keyword={keyword}
+          onCityClick={onCityClick}
+          onDateClick={onDateClick}
+          onKeywordClick={onKeywordClick}
+        />
       </div>
     </div>
   );
