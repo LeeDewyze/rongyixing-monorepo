@@ -68,6 +68,7 @@ export function HotelSearchPage() {
         hotTitle="热门城市"
         historyTitle="历史记录"
         hotGridColumns={3}
+        tone="form"
         onClose={() => form.setPicker(null)}
         onSelect={form.setCity}
         {...hotelCityPickerAdapter}

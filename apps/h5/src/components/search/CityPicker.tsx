@@ -29,19 +29,26 @@ interface CityPickerProps<T> extends CityPickerAdapter<T> {
   showCodeInBrowse?: boolean;
   hotGridColumns?: 2 | 3 | 4;
   showHistory?: boolean;
+  tone?: "default" | "form";
 }
 
 function CityChip({
   label,
   onClick,
+  tone = "default",
 }: {
   label: string;
   onClick: () => void;
+  tone?: "default" | "form";
 }) {
   return (
     <button
       type="button"
-      className="flex min-h-[36px] items-center justify-center rounded-lg border border-black/[0.04] bg-white px-2 py-2.5 text-sm text-[#333333] shadow-sm active:bg-[#f0f0f0]"
+      className={
+        tone === "form"
+          ? "flex min-h-[36px] items-center justify-center rounded-lg border border-white/70 bg-white/90 px-2 py-2.5 text-sm text-[#333333] shadow-sm active:bg-white"
+          : "flex min-h-[36px] items-center justify-center rounded-lg border border-black/[0.04] bg-white px-2 py-2.5 text-sm text-[#333333] shadow-sm active:bg-[#f0f0f0]"
+      }
       onClick={onClick}
     >
       {label}
@@ -116,6 +123,7 @@ export function CityPicker<T>({
   showCodeInBrowse = false,
   hotGridColumns = 3,
   showHistory = true,
+  tone = "default",
   ...adapter
 }: CityPickerProps<T>) {
   const [keyword, setKeyword] = useState("");
@@ -241,13 +249,14 @@ export function CityPicker<T>({
           </div>
         ) : null
       }
+      tone={tone}
     >
       {isSearching ? (
-        <div className="pb-6">
+        <div className={tone === "form" ? "px-4 pb-6 pt-3" : "pb-6"}>
           {visibleSearchResults.length === 0 ? (
             <p className="py-10 text-center text-sm text-[#999999]">没有符合条件的数据</p>
           ) : (
-            <ul>
+            <ul className={tone === "form" ? "overflow-hidden rounded-xl bg-white shadow-sm" : ""}>
               {visibleSearchResults.map((row) => (
                 <li key={row.id}>
                   <SearchResultRow row={row} showCode={showCodeInSearch} onSelect={handleSelect} />
@@ -262,7 +271,7 @@ export function CityPicker<T>({
       ) : (
         <>
           {showHistory && historyRows.length > 0 ? (
-            <section className="pb-2">
+            <section className={tone === "form" ? "mx-4 mb-3 rounded-xl bg-white/70 pb-3 shadow-sm" : "pb-2"}>
               <div className="flex items-center justify-between px-4 pb-2 pt-1">
                 <h3 className="text-xs font-medium text-[#666666]">{historyTitle}</h3>
                 <button
@@ -275,31 +284,45 @@ export function CityPicker<T>({
               </div>
               <div className={`grid ${hotGridClass} gap-2 px-4`}>
                 {historyRows.map((row) => (
-                  <CityChip key={row.id} label={row.name} onClick={() => handleSelect(row.item)} />
+                  <CityChip
+                    key={row.id}
+                    label={row.name}
+                    tone={tone}
+                    onClick={() => handleSelect(row.item)}
+                  />
                 ))}
               </div>
             </section>
           ) : null}
 
           {hotItems.length > 0 ? (
-            <section className="pb-2">
+            <section className={tone === "form" ? "mx-4 mb-3 rounded-xl bg-white/70 pb-3 shadow-sm" : "pb-2"}>
               <h3 className="px-4 pb-2 pt-2 text-xs font-medium text-[#666666]">{hotTitle}</h3>
               <div className={`grid ${hotGridClass} gap-2 px-4`}>
                 {hotItems.map((row) => (
-                  <CityChip key={row.id} label={row.name} onClick={() => handleSelect(row.item)} />
+                  <CityChip
+                    key={row.id}
+                    label={row.name}
+                    tone={tone}
+                    onClick={() => handleSelect(row.item)}
+                  />
                 ))}
               </div>
             </section>
           ) : null}
 
-          <ul className="pb-16">
+          <ul className={tone === "form" ? "mx-4 overflow-hidden rounded-xl bg-white pb-16 shadow-sm" : "pb-16"}>
             {letters.map((letter) => (
               <li key={letter}>
                 <div
                   ref={(el) => {
                     letterRefs.current[letter] = el;
                   }}
-                  className="bg-[#e8eef8] px-4 py-1.5 text-sm font-semibold text-[#333333]"
+                  className={
+                    tone === "form"
+                      ? "bg-[#F3F6FC] px-4 py-1.5 text-sm font-semibold text-[#333333]"
+                      : "bg-[#e8eef8] px-4 py-1.5 text-sm font-semibold text-[#333333]"
+                  }
                   data-letter={letter}
                 >
                   {letter}
