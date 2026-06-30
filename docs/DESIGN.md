@@ -123,6 +123,87 @@ Rules:
 - Mobile spacing defaults: horizontal page padding 16px, vertical card gap 12px.
 - Header-safe content must include `pt-[env(safe-area-inset-top)]` when rendered outside `AppHeader`.
 
+## H5 Travel List Chrome
+
+Use `FlightListPage` as the reference implementation for dense travel result lists, including the hotel list migration.
+
+Reference files:
+- `apps/h5/src/pages/flight/FlightListPage.tsx`
+- `apps/h5/src/components/flight/FlightListHeader.tsx`
+- `apps/h5/src/components/flight/FlightListDateStrip.tsx`
+- `apps/h5/src/components/flight/FlightListToolbar.tsx`
+- `apps/h5/src/components/flight/FlightSegmentCard.tsx`
+- `apps/h5/src/components/flight/FlightFilterSheet.tsx`
+- `apps/h5/src/components/flight/flight-filter-sheet.css`
+
+### Page Shell
+
+- Use a full viewport root: `relative h-dvh overflow-hidden bg-[#F5F6F9]`.
+- Keep the navigation/search header fixed at the top with `z-50`, `max-w-lg`, and safe-area padding.
+- Scroll only the content container below the measured header height, not the whole body.
+- When a modify/search/filter sheet is open, lock the content scroller with `overflow-hidden`.
+- Use content padding `px-3 py-3` and bottom padding that accounts for fixed bottom actions plus `env(safe-area-inset-bottom)`.
+
+### Header Pattern
+
+- Compact result-list headers use `bg-gradient-to-b from-brand-header-start to-brand-header-end`.
+- Header content should be one line: back action, central query summary, right-side contextual action.
+- Query summaries should be tappable and open a modify-search sheet instead of navigating away when the user is editing the current list.
+- For hotel list, map this to: back action, `城市 · 入住-离店 · 关键词/地标`, and passenger/profile action as product context requires.
+
+### Secondary Strip
+
+- Use a sticky strip immediately under the fixed header for frequently changed list context.
+- Flight uses `FlightListDateStrip`; hotel should use the same density for stay dates or a compact date/city strip rather than a tall card.
+- Active items use the primary button gradient and white text; inactive items stay transparent with dark text.
+- Calendar/date entry remains a fixed-width control on the right with a subtle blue gradient and left shadow.
+
+### Result Cards
+
+- Cards are full-width buttons with `rounded-lg`, white surface, and subtle shadow.
+- Use `active:scale-[0.99]` for tap feedback and `disabled:opacity-60` for loading transitions.
+- Keep information dense and scannable:
+  - Primary facts in the top row.
+  - Price/value anchored to the right.
+  - Secondary metadata in a single truncated row.
+  - Badges sit at the card edge or as compact inline pills, never as large banners.
+- Special-value cards may use a shallow top gradient only across the upper 48px, as in the direct-lowest flight card.
+- For hotel cards, preserve this hierarchy: image/label block, hotel name + score/star row, address/distance metadata, price anchored right.
+
+### Bottom Toolbar
+
+- Use a fixed bottom toolbar for cross-list filtering and sorting when controls affect the whole result set.
+- Toolbar surface: white, top border, subtle upward shadow, safe-area padding.
+- Keep three to four equal-width icon+label actions.
+- Active labels use brand blue; inactive labels use muted text.
+- Toggle sort labels should reflect state, e.g. `从低到高` / `从高到低`, not only “价格”.
+
+### Filter Sheet
+
+- Prefer the flight filter sheet structure for complex list filtering:
+  - Full-screen fixed dialog wrapper.
+  - Blurred dark backdrop.
+  - Bottom sheet panel at `65dvh`.
+  - 16px top corner radius.
+  - Small drag handle.
+  - Gradient header fading into page background.
+  - Optional quick toggles under the title.
+  - White rounded body with left category rail and right content pane.
+  - Fixed footer with outline reset and primary gradient confirm.
+- Category rail active state uses white background, brand text, and a 3px gradient left marker.
+- Dirty categories use a small brand dot.
+- Selected rows use pale blue fill, brand text, and custom radio/checkbox controls.
+- Motion: 320ms sheet translate and backdrop fade; include `prefers-reduced-motion`.
+
+### Hotel List Mapping
+
+- Hotel should reuse the travel list chrome rather than the current partial sticky hotel header when implementing full legacy behavior.
+- Legacy top filter tabs (`推荐 / 星级价格 / 位置区域 / 筛选`) may become:
+  - bottom toolbar actions for `筛选 / 距离区域 / 价格 / 推荐`, or
+  - a sticky strip under the header if product requires parity.
+- If both sticky tabs and bottom toolbar are considered, prefer one primary control surface to avoid duplicate filters.
+- Complex hotel filters should use the filter sheet body/rail pattern; do not create several unrelated popovers.
+
 ## When To Choose Which Gradient
 
 | Scenario | Use |
@@ -153,6 +234,17 @@ Rules:
 - 2026-06-28 - Home notice strip: restyled the homepage bulletin entry to an orange pill banner with orange typography and horn icon, matching the provided legacy reference.
 - 2026-06-28 - Home notice strip rotation: made the homepage bulletin entry cycle through multiple notices automatically, removing the timestamp and animating entries vertically from bottom to top.
 - 2026-06-29 - PassengerSelectPage chrome: added a form-tone variant to the shared picker shell so the passenger selection header aligns with credential list form-gradient pages while preserving the default city picker chrome.
+- 2026-06-29 - Travel list chrome: documented `FlightListPage` as the H5 reference for result-list pages, including fixed gradient headers, compact sticky context strips, dense cards, fixed bottom toolbar, and the 65dvh filter sheet pattern for the hotel list migration.
+- 2026-06-30 - HotelListPage shell: migrated the hotel list to the H5 travel list chrome with a fixed gradient query header, sticky compact search strip, full-viewport internal scroller, and fixed four-action bottom toolbar; complex hotel filters remain scheduled for later steps.
+- 2026-06-30 - HotelListPage pagination: moved the list data flow to an infinite query using `PageIndex/PageSize`, added pull-to-refresh, bottom sentinel loading, no-more state, and query-change scroll reset while keeping filter actions as inactive entry points for later steps.
+- 2026-06-30 - HotelList price/star filters: added a hotel list bottom sheet for recommended sorting, star multi-select, hotel type, preset price ranges, and custom prices; the sheet reuses the flight filter rail/panel chrome and keeps area/brand/facility filters for the next step.
+- 2026-06-30 - HotelList condition filters: connected `Condition-Gets` to the hotel list sheet, adding location, brand, theme, service, and facility categories with dirty markers, loading/error/empty states, and API parameter mapping for `Geos`, `Brands`, `Themes`, `Services`, and `Facilities`.
+- 2026-06-30 - HotelList card context: completed dense hotel cards with GreenCloud-over-Tmc badge priority, score, star, address, distance, right-anchored price, and detail URL context handoff for date, city, price, hotel type, and travel form.
+- 2026-06-30 - HotelList business context: added hotel passenger/staff-city request context and a compact free-stay policy notice with modal explanation, visible only when TMC config allows it and hidden for agent hotel mode.
+- 2026-06-30 - HotelList location filter parity: upgraded location filtering to the legacy three-column structure for type, metro line, and station while keeping `Geos/searchGeoId` API mapping unchanged.
+- 2026-06-30 - HotelList brand filter parity: changed brand filtering from a flat option list to legacy grouped sections for popular, economy, comfort, high-end, and luxury brands; each section supports local clear while the request continues to submit one `Brands` array.
+- 2026-06-30 - HotelList filter entry grouping: scoped the bottom toolbar entries into basic filters (`sort/star/category/price`), location-only filters, and amenity filters (`brand/theme/service/facility`); single-section sheets hide the outer rail so location categories occupy the first visible column.
+- 2026-06-30 - HotelList location dirty marker: location category buttons now show a small brand dot when any child geo under that category is selected, matching the filter rail dirty-state pattern inside the custom location panel.
 
 ## Components
 
@@ -173,6 +265,16 @@ Rules:
 - `apps/h5/src/components/travel/ApprovalTaskList.tsx` - approval task list cards with status pills, skeleton, error, empty, and load-more states.
 - `apps/h5/src/components/order/OrderListCard.tsx` - order list card with flight ticket-level rows/actions and shared transport/hotel bodies.
 - `apps/h5/src/components/search/PickerShell.tsx` - shared full-screen picker chrome with default and form-gradient tones.
+- `apps/h5/src/pages/flight/FlightListPage.tsx` - reference travel result-list chrome for H5 list pages.
+- `apps/h5/src/components/flight/FlightFilterSheet.tsx` - reference complex list filter sheet with category rail, dirty state, reset, and confirm footer.
+- `apps/h5/src/components/flight/FlightSegmentCard.tsx` - reference dense result card with right-anchored price, compact metadata, value badges, and tap feedback.
+- `apps/h5/src/pages/hotel/HotelListPage.tsx` - hotel result list using the travel list shell with fixed header, sticky query strip, internal scrolling, and bottom toolbar.
+- `apps/h5/src/components/hotel/HotelListHeader.tsx` - compact hotel list query header with back, summary, and profile actions.
+- `apps/h5/src/components/hotel/HotelListToolbar.tsx` - fixed hotel list bottom toolbar for recommended, price/star, location, and filter entry points.
+- `apps/h5/src/components/hotel/HotelListFilterSheet.tsx` - hotel sorting and price/star filter sheet built on the travel-list filter chrome.
+- `apps/h5/src/components/hotel/HotelListItem.tsx` - dense hotel result card with thumbnail badge, score/star row, address/distance metadata, price anchor, and tap feedback.
+- `apps/h5/src/lib/hotel-list-filters.ts` - hotel list filter state, option constants, dirty checks, and API parameter mapping.
+- `apps/h5/src/lib/hotel-list-context.ts` - hotel list passenger AccountId, staff city, and free-stay TMC context helpers.
 
 ## Non-Goals
 

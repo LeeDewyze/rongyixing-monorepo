@@ -1,25 +1,30 @@
 import type {
+  HotelConditionResponse,
   HotelDetailResponse,
+  HotelListItem,
   HotelListResponse,
   HotelPolicyPassengerResult,
 } from "@ryx/shared-types";
 
-export const MOCK_HOTEL_LIST: HotelListResponse = {
-  TotalCount: 5,
-  Hotels: [
+const MOCK_HOTELS: HotelListItem[] = [
     {
       HotelId: "H10001",
       HotelName: "武汉泽宇国际酒店(北京方庄地铁站肿瘤医院店)",
       Address: "华岭路光明地产大厦",
       Star: 5,
+      Grade: 4.8,
+      Distance: "1.2公里",
       MinPrice: 563,
       ImageUrl: "https://picsum.photos/seed/hotel-wuhan-1/200/200",
+      Tags: ["GreenCloud"],
     },
     {
       HotelId: "H10002",
       HotelName: "武汉洪山宾馆",
       Address: "武昌区中南路",
       Star: 4,
+      Grade: 4.6,
+      Distance: "850米",
       MinPrice: 428,
       ImageUrl: "https://picsum.photos/seed/hotel-wuhan-2/200/200",
       Tags: ["Tmc"],
@@ -29,6 +34,8 @@ export const MOCK_HOTEL_LIST: HotelListResponse = {
       HotelName: "武汉万达瑞华酒店",
       Address: "东湖风景区沿湖大道",
       Star: 5,
+      Grade: 4.9,
+      Distance: "3.4公里",
       MinPrice: 888,
       ImageUrl: "https://picsum.photos/seed/hotel-wuhan-3/200/200",
     },
@@ -37,18 +44,81 @@ export const MOCK_HOTEL_LIST: HotelListResponse = {
       HotelName: "武汉光谷凯悦酒店",
       Address: "洪山区珞喻路1077号",
       Star: 5,
+      Grade: 4.7,
+      Distance: "2.1公里",
       MinPrice: 698,
       ImageUrl: "https://picsum.photos/seed/hotel-wuhan-4/200/200",
-      Tags: ["Tmc"],
+      Tags: ["GreenCloud", "Tmc"],
     },
     {
       HotelId: "H10005",
       HotelName: "武汉晴川假日酒店",
       Address: "汉阳区洗马湖路88号",
       Star: 4,
+      Grade: 4.3,
       MinPrice: 368,
       ImageUrl: "https://picsum.photos/seed/hotel-wuhan-5/200/200",
     },
+    ...Array.from({ length: 20 }, (_, index) => {
+      const itemNo = index + 6;
+      const stars = itemNo % 3 === 0 ? 5 : 4;
+      return {
+        HotelId: `H100${String(itemNo).padStart(2, "0")}`,
+        HotelName: `武汉光谷精选酒店${itemNo}号店`,
+        Address: `洪山区软件园${itemNo}路${itemNo * 8}号`,
+        Star: stars,
+        Grade: Number((4.1 + (index % 8) * 0.1).toFixed(1)),
+        Distance: `${(0.6 + index * 0.2).toFixed(1)}公里`,
+        MinPrice: 320 + index * 18,
+        ImageUrl: `https://picsum.photos/seed/hotel-wuhan-${itemNo}/200/200`,
+        Tags: itemNo % 4 === 0 ? ["GreenCloud", "Tmc"] : itemNo % 2 === 0 ? ["Tmc"] : undefined,
+      };
+    }),
+];
+
+export const MOCK_HOTEL_LIST: HotelListResponse = {
+  TotalCount: MOCK_HOTELS.length,
+  Hotels: MOCK_HOTELS,
+};
+
+export const MOCK_HOTEL_CONDITIONS: HotelConditionResponse = {
+  Tmc: {
+    Id: "tmc-mock",
+    GroupCompany: { Id: "group-mock" },
+  },
+  Geos: [
+    {
+      Id: "geo-metro-2-jianghan",
+      Name: "江汉路",
+      Tag: "Metro",
+      VariablesObj: { SubName: "2号线" },
+    },
+    {
+      Id: "geo-metro-2-zhongnan",
+      Name: "中南路",
+      Tag: "Metro",
+      VariablesObj: { SubName: "2号线" },
+    },
+    { Id: "geo-district-wuchang", Name: "武昌区", Tag: "District" },
+    { Id: "geo-district-hongshan", Name: "洪山区", Tag: "District" },
+    { Id: "geo-mall-hanjie", Name: "楚河汉街", Tag: "Mall" },
+    { Id: "geo-landmark-eastlake", Name: "东湖风景区", Tag: "Landmark" },
+    { Id: "geo-company-mock", Name: "融易行总部", Tag: "Company", Number: "tmc-mock" },
+  ],
+  Brands: [
+    { Id: "brand-atour", Name: "亚朵", Tag: "Comfort" },
+    { Id: "brand-hampton", Name: "欢朋", Tag: "Comfort" },
+    { Id: "brand-hanting", Name: "汉庭", Tag: "Economy" },
+    { Id: "brand-hyatt", Name: "凯悦", Tag: "High" },
+    { Id: "brand-wanda", Name: "万达瑞华", Tag: "Luxury" },
+  ],
+  Amenities: [
+    { Id: "amenity-theme-business", Name: "商务出行", Tag: "Theme" },
+    { Id: "amenity-theme-parent", Name: "亲子酒店", Tag: "Theme" },
+    { Id: "amenity-service-pickup", Name: "接送服务", Tag: "Service" },
+    { Id: "amenity-service-laundry", Name: "洗衣服务", Tag: "Service" },
+    { Id: "amenity-facility-gym", Name: "健身房", Tag: "Facility" },
+    { Id: "amenity-facility-parking", Name: "停车场", Tag: "Facility" },
   ],
 };
 

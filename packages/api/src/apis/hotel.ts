@@ -2,6 +2,8 @@ import type {
   HotelBookParams,
   HotelBookResponse,
   HotelCity,
+  HotelConditionParams,
+  HotelConditionResponse,
   HotelMapCityResponse,
   HotelMapPoint,
   HotelCityResourceResponse,
@@ -25,6 +27,7 @@ import type { ProxyClient } from "../proxy/proxy-client.js";
 export interface HotelApi {
   getCities(): Promise<HotelCity[]>;
   getCityByMap(point: HotelMapPoint): Promise<HotelCity | null>;
+  getConditions(params: HotelConditionParams): Promise<HotelConditionResponse>;
   getList(params: HotelListParams): Promise<HotelListResponse>;
   getDetail(params: HotelDetailParams): Promise<HotelDetailResponse>;
   getPolicy(params: HotelPolicyParams): Promise<HotelPolicyResponse>;
@@ -41,6 +44,8 @@ type LegacyHotelEntity = {
   Name?: string;
   Address?: string;
   Category?: string | number;
+  Grade?: number | string;
+  Distance?: string;
   AvgPrice?: number | string;
   Variables?: unknown;
   VariablesObj?: Record<string, unknown>;
@@ -121,6 +126,8 @@ function mapLegacyHotelDayPrice(item: LegacyHotelDayPrice): HotelListItem | null
     HotelName: hotel.Name ?? "",
     Address: hotel.Address,
     Star: parseHotelStar(hotel.Category),
+    Grade: toPrice(hotel.Grade),
+    Distance: hotel.Distance,
     MinPrice: parseHotelListPrice(item),
     ImageUrl: hotel.FullFileName ?? hotel.FileName,
     Tags: tags,
@@ -149,6 +156,26 @@ function normalizeHotelListResponse(res: unknown): HotelListResponse {
     return { Hotels: hotels, TotalCount: total };
   }
   return { Hotels: [] };
+}
+
+function normalizeHotelConditionResponse(res: unknown): HotelConditionResponse {
+  if (!res || typeof res !== "object") {
+    return { Geos: [], Brands: [], Amenities: [] };
+  }
+  const payload = res as Record<string, unknown>;
+  return {
+    Geos: Array.isArray(payload.Geos) ? (payload.Geos as HotelConditionResponse["Geos"]) : [],
+    Brands: Array.isArray(payload.Brands)
+      ? (payload.Brands as HotelConditionResponse["Brands"])
+      : [],
+    Amenities: Array.isArray(payload.Amenities)
+      ? (payload.Amenities as HotelConditionResponse["Amenities"])
+      : [],
+    Tmc:
+      payload.Tmc && typeof payload.Tmc === "object"
+        ? (payload.Tmc as HotelConditionResponse["Tmc"])
+        : undefined,
+  };
 }
 
 type LegacyImageLocation = {
@@ -1000,11 +1027,11 @@ function buildHotelListRequest(params: HotelListParams): Record<string, unknown>
     BeginDate: params.CheckInDate,
     EndDate: params.CheckOutDate,
     PageIndex: params.PageIndex ?? 0,
-    PageSize: params.PageSize ?? 10,
+    PageSize: params.PageSize ?? 20,
     IsLoadDetail: true,
     hotelType: params.HotelType ?? "Normal",
     Stars: null,
-    Passengers: "",
+    Passengers: params.Passengers ?? "",
   };
   const cityName = params.CityName?.trim();
   if (cityName) {
@@ -1013,6 +1040,32 @@ function buildHotelListRequest(params: HotelListParams): Record<string, unknown>
   const keyword = params.Keyword?.trim();
   if (keyword) {
     data.SearchKey = keyword;
+  }
+  const optionalFields: Partial<Record<keyof HotelListParams, string>> = {
+    HotelId: "HotelId",
+    Orderby: "Orderby",
+    BeginPrice: "BeginPrice",
+    EndPrice: "EndPrice",
+    Categories: "Categories",
+    Geos: "Geos",
+    Brands: "Brands",
+    Themes: "Themes",
+    Services: "Services",
+    Facilities: "Facilities",
+    StaffCityCode: "staffCityCode",
+    Lat: "Lat",
+    Lng: "Lng",
+  };
+  for (const [paramKey, requestKey] of Object.entries(optionalFields) as Array<
+    [keyof HotelListParams, string]
+  >) {
+    const value = params[paramKey];
+    if (value == null || value === "") continue;
+    if (Array.isArray(value) && value.length === 0) continue;
+    data[requestKey] = value;
+  }
+  if (params.TravelFormId != null) {
+    data.travelformid = params.TravelFormId;
   }
   return data;
 }
@@ -1113,6 +1166,15 @@ export function createHotelApi(proxy: ProxyClient): HotelApi {
         },
       });
       return normalizeHotelCityByMap(res);
+    },
+    async getConditions(params) {
+      const res = await proxy.send<unknown>({
+        method: HOTEL_METHODS.CONDITION_GETS,
+        data: {
+          cityCode: params.CityCode,
+        },
+      });
+      return normalizeHotelConditionResponse(res);
     },
     async getList(params) {
       const res = await proxy.send<unknown>({

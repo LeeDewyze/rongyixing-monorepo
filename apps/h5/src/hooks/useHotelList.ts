@@ -1,15 +1,63 @@
-import { useQuery } from "@tanstack/react-query";
+import { useCallback, useMemo } from "react";
+import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { HotelDetailParams, HotelListParams, HotelPolicyParams } from "@ryx/shared-types";
 
 import { getApi } from "@/lib/api";
 
+export const HOTEL_LIST_PAGE_SIZE = 20;
+
+export const hotelListQueryKey = (params: HotelListParams) => ["hotel", "list", params] as const;
+
 export function useHotelList(params: HotelListParams = {}, enabled = true) {
   const hasRequired = Boolean(params.CityCode && params.CheckInDate && params.CheckOutDate);
   return useQuery({
-    queryKey: ["hotel", "list", params],
+    queryKey: hotelListQueryKey(params),
     queryFn: () => getApi().hotel.getList(params),
     enabled: enabled && hasRequired,
   });
+}
+
+function getNextHotelPageIndex(
+  hotels: unknown[] | undefined,
+  totalCount: number | undefined,
+  pageParam: number,
+): number | undefined {
+  const pageHotels = hotels ?? [];
+  if (totalCount != null) {
+    const loaded = (pageParam + 1) * HOTEL_LIST_PAGE_SIZE;
+    return loaded < totalCount ? pageParam + 1 : undefined;
+  }
+  return pageHotels.length >= HOTEL_LIST_PAGE_SIZE ? pageParam + 1 : undefined;
+}
+
+export function useInfiniteHotelList(params: HotelListParams = {}, enabled = true) {
+  const queryClient = useQueryClient();
+  const hasRequired = Boolean(params.CityCode && params.CheckInDate && params.CheckOutDate);
+  const baseParams = useMemo(
+    () => ({ ...params, PageSize: params.PageSize ?? HOTEL_LIST_PAGE_SIZE }),
+    [params],
+  );
+  const queryKey = useMemo(() => hotelListQueryKey(baseParams), [baseParams]);
+
+  const query = useInfiniteQuery({
+    queryKey,
+    queryFn: ({ pageParam = 0 }) =>
+      getApi().hotel.getList({
+        ...baseParams,
+        PageIndex: pageParam,
+        PageSize: HOTEL_LIST_PAGE_SIZE,
+      }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, _pages, pageParam) =>
+      getNextHotelPageIndex(lastPage?.Hotels, lastPage?.TotalCount, pageParam),
+    enabled: enabled && hasRequired,
+  });
+
+  const refresh = useCallback(async () => {
+    await queryClient.resetQueries({ queryKey, exact: true });
+  }, [queryClient, queryKey]);
+
+  return { ...query, refresh };
 }
 
 export function useHotelDetail(params: HotelDetailParams | null) {
@@ -34,5 +82,13 @@ export function useHotelCities() {
   return useQuery({
     queryKey: ["hotel", "cities"],
     queryFn: () => getApi().hotel.getCities(),
+  });
+}
+
+export function useHotelConditions(cityCode?: string) {
+  return useQuery({
+    queryKey: ["hotel", "conditions", cityCode],
+    queryFn: () => getApi().hotel.getConditions({ CityCode: cityCode! }),
+    enabled: Boolean(cityCode),
   });
 }

@@ -12,6 +12,25 @@ export interface HotelListParams {
   PageIndex?: number;
   PageSize?: number;
   Keyword?: string;
+  /** Legacy selected concrete hotel from keyword search. */
+  HotelId?: string;
+  /** Legacy Home-List sort order, e.g. PriceAsc / PriceDesc / CategoryAsc / CategoryDesc. */
+  Orderby?: string;
+  BeginPrice?: number | string;
+  EndPrice?: number | string;
+  /** Legacy category/star filter payload. */
+  Categories?: Array<string | number>;
+  Geos?: Array<string | number>;
+  searchGeoId?: string;
+  Brands?: Array<string | number>;
+  Themes?: Array<string | number>;
+  Services?: Array<string | number>;
+  Facilities?: Array<string | number>;
+  TravelFormId?: string;
+  Passengers?: string;
+  StaffCityCode?: string;
+  Lat?: string | number;
+  Lng?: string | number;
   /** Legacy list filter: non-negotiated / negotiated / agent special. */
   HotelType?: HotelType;
 }
@@ -21,6 +40,8 @@ export interface HotelListItem {
   HotelName: string;
   Address?: string;
   Star?: number;
+  Grade?: number;
+  Distance?: string;
   MinPrice?: number;
   ImageUrl?: string;
   /** e.g. Tmc tag from legacy `Hotel.Tag`. */
@@ -30,6 +51,42 @@ export interface HotelListItem {
 export interface HotelListResponse {
   Hotels: HotelListItem[];
   TotalCount?: number;
+}
+
+export interface HotelConditionParams {
+  CityCode: string;
+}
+
+export interface HotelGeo {
+  Id: string;
+  Name: string;
+  Tag?: string;
+  Number?: string | number;
+  Variables?: unknown;
+  VariablesObj?: Record<string, unknown>;
+}
+
+export interface HotelBrand {
+  Id: string;
+  Name: string;
+  Tag?: string;
+}
+
+export interface HotelAmenity {
+  Id: string;
+  Name: string;
+  Tag?: "Theme" | "Service" | "Facility" | string;
+}
+
+export interface HotelConditionResponse {
+  Geos: HotelGeo[];
+  Brands: HotelBrand[];
+  Amenities: HotelAmenity[];
+  Tmc?: {
+    Id?: string | number;
+    GroupCompany?: { Id?: string | number };
+    [key: string]: unknown;
+  };
 }
 
 export interface HotelMapPoint {

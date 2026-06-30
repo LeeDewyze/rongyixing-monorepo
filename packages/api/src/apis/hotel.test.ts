@@ -9,6 +9,7 @@ import {
 import { createProxyClient } from "../proxy/proxy-client.js";
 import { successResponse } from "../proxy/response-adapter.js";
 import { HOTEL_FLOW_METHODS } from "../methods/hotel-flow.js";
+import { HOTEL_METHODS } from "../methods/hotel.js";
 
 describe("createHotelApi (mock mode)", () => {
   const proxy = createProxyClient({
@@ -48,13 +49,70 @@ describe("createHotelApi (mock mode)", () => {
       CityName: "北京",
       CheckInDate: "2026-06-22",
       CheckOutDate: "2026-06-23",
+      Orderby: "PriceAsc",
+      BeginPrice: 150,
+      EndPrice: 300,
+      Categories: ["4", "5"],
+      Geos: ["geo-1"],
+      Brands: ["brand-1"],
+      Themes: ["theme-1"],
+      Services: ["service-1"],
+      Facilities: ["facility-1"],
+      TravelFormId: "tf-1",
+      Passengers: "staff-1,staff-2",
+      StaffCityCode: "010",
+      Lat: "39.9",
+      Lng: "116.4",
     });
     expect(capturedData).toMatchObject({
       CityCode: "1101",
       CityName: "北京",
       BeginDate: "2026-06-22",
       EndDate: "2026-06-23",
+      PageSize: 20,
+      Orderby: "PriceAsc",
+      BeginPrice: 150,
+      EndPrice: 300,
+      Categories: ["4", "5"],
+      Geos: ["geo-1"],
+      Brands: ["brand-1"],
+      Themes: ["theme-1"],
+      Services: ["service-1"],
+      Facilities: ["facility-1"],
+      travelformid: "tf-1",
+      Passengers: "staff-1,staff-2",
+      staffCityCode: "010",
+      Lat: "39.9",
+      Lng: "116.4",
     });
+  });
+
+  it("getConditions calls legacy Condition-Gets", async () => {
+    let capturedMethod = "";
+    let capturedData: unknown;
+    const proxyWithCapture = createProxyClient({
+      baseUrl: "https://example.com",
+      mode: "mock",
+      mockHandler: async (method, data) => {
+        capturedMethod = method;
+        capturedData = data;
+        return successResponse({
+          Geos: [{ Id: "geo-1", Name: "行政区", Tag: "District" }],
+          Brands: [{ Id: "brand-1", Name: "亚朵", Tag: "Comfort" }],
+          Amenities: [{ Id: "amenity-1", Name: "健身房", Tag: "Facility" }],
+          Tmc: { Id: "tmc-1" },
+        });
+      },
+    });
+    const api = createHotelApi(proxyWithCapture);
+    const result = await api.getConditions({ CityCode: "1101" });
+
+    expect(capturedMethod).toBe(HOTEL_METHODS.CONDITION_GETS);
+    expect(capturedData).toEqual({ cityCode: "1101" });
+    expect(result.Geos[0]?.Id).toBe("geo-1");
+    expect(result.Brands[0]?.Name).toBe("亚朵");
+    expect(result.Amenities[0]?.Tag).toBe("Facility");
+    expect(result.Tmc?.Id).toBe("tmc-1");
   });
 
   it("getList normalizes legacy HotelDayPrices response", async () => {
@@ -73,8 +131,10 @@ describe("createHotelApi (mock mode)", () => {
                   Name: "武汉泽宇国际酒店",
                   Address: "华岭路光明地产大厦",
                   Category: "5",
+                  Grade: "4.8",
+                  Distance: "1.2公里",
                   FullFileName: "https://example.com/hotel.jpg",
-                  Tag: "Tmc",
+                  Tag: "GreenCloud,Tmc",
                   Variables: JSON.stringify({ AvgPrice: 696 }),
                 },
               },
@@ -95,7 +155,10 @@ describe("createHotelApi (mock mode)", () => {
     expect(result.Hotels).toHaveLength(1);
     expect(result.Hotels[0]?.HotelName).toBe("武汉泽宇国际酒店");
     expect(result.Hotels[0]?.Star).toBe(5);
+    expect(result.Hotels[0]?.Grade).toBe(4.8);
+    expect(result.Hotels[0]?.Distance).toBe("1.2公里");
     expect(result.Hotels[0]?.MinPrice).toBe(696);
+    expect(result.Hotels[0]?.Tags).toContain("GreenCloud");
     expect(result.Hotels[0]?.Tags).toContain("Tmc");
   });
 
@@ -234,7 +297,7 @@ describe("createHotelApi (mock mode)", () => {
       baseUrl: "https://example.com",
       mode: "mock",
       mockHandler: async (method) => {
-        if (method === HOTEL_FLOW_METHODS.CITY_GETCITYBYMAP) {
+        if (method === HOTEL_METHODS.CITY_GETCITYBYMAP) {
           return successResponse({
             Data: {
               Code: "010",

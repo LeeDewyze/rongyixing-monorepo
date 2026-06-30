@@ -33,6 +33,12 @@ export interface StaffCredentialsParams {
 
 export interface TmcInfo {
   AllowAddingNonTmcUser?: boolean;
+  /** Legacy TMC hotel setting: allow employees to self-pay hotel policy exceed amount. */
+  AllowHotelOutPolicySelfPay?: boolean;
+  /** Compatibility aliases observed in older hotel list flows. */
+  AllowHotelExceedSelfPay?: boolean;
+  IsHotelOutPolicySelfPay?: boolean;
+  IsOpenHotelFreeStay?: boolean;
   Id?: string;
   Name?: string;
 }

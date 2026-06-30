@@ -1,4 +1,3 @@
-import searchLocationPinIcon from "@/assets/hotel/search-location-pin.png";
 import { formatHotelStayDate } from "@/lib/date-search";
 
 interface HotelListSearchBarProps {
@@ -12,17 +11,6 @@ interface HotelListSearchBarProps {
 }
 
 const SEARCH_BAR_DIVIDER_CLASS = "mx-2 h-8 w-0.5 shrink-0 bg-[#D9D9D9]";
-
-function LocationPinIcon() {
-  return (
-    <img
-      src={searchLocationPinIcon}
-      alt=""
-      className="size-4 shrink-0 object-contain"
-      aria-hidden
-    />
-  );
-}
 
 function SearchIcon() {
   return (
@@ -44,10 +32,9 @@ export function HotelListSearchBar({
 }: HotelListSearchBarProps) {
   return (
     <div className="flex h-12 w-full items-center rounded-[24px] bg-white px-3 shadow-[0_2px_8px_rgba(0,0,0,0.06)]">
-      <LocationPinIcon />
       <button
         type="button"
-        className="ml-1 shrink-0 text-[14px] font-medium leading-none tracking-normal text-brand-title [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]"
+        className="shrink-0 text-[14px] font-medium leading-none tracking-normal text-brand-title [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]"
         onClick={onCityClick}
       >
         {cityName}

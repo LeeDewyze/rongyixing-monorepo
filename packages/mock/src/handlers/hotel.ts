@@ -1,7 +1,12 @@
 import type { IResponse } from "@ryx/shared-types";
-import { HOTEL_FLOW_METHODS, successResponse, TMC_METHODS } from "@ryx/api";
+import { HOTEL_FLOW_METHODS, HOTEL_METHODS, successResponse, TMC_METHODS } from "@ryx/api";
 
-import { MOCK_HOTEL_DETAIL, MOCK_HOTEL_LIST, MOCK_HOTEL_POLICY } from "../fixtures/hotel.js";
+import {
+  MOCK_HOTEL_CONDITIONS,
+  MOCK_HOTEL_DETAIL,
+  MOCK_HOTEL_LIST,
+  MOCK_HOTEL_POLICY,
+} from "../fixtures/hotel.js";
 import {
   createMockOrderDetail,
   MOCK_ORDER_PAYS,
@@ -16,6 +21,111 @@ function getOrCreateOrder(orderId: string) {
     orderStore.set(orderId, createMockOrderDetail(orderId));
   }
   return orderStore.get(orderId)!;
+}
+
+function createHotelListResponse(data: unknown) {
+  const params = data as {
+    PageIndex?: number;
+    PageSize?: number;
+    Orderby?: string;
+    BeginPrice?: number | string;
+    EndPrice?: number | string;
+    Categories?: Array<string | number>;
+    Geos?: Array<string | number>;
+    Brands?: Array<string | number>;
+    Themes?: Array<string | number>;
+    Services?: Array<string | number>;
+    Facilities?: Array<string | number>;
+  };
+  const pageIndex = params.PageIndex ?? 0;
+  const pageSize = params.PageSize ?? 20;
+  const beginPrice = params.BeginPrice == null ? undefined : Number(params.BeginPrice);
+  const endPrice = params.EndPrice == null ? undefined : Number(params.EndPrice);
+  const categories = new Set((params.Categories ?? []).map(String));
+  const geos = new Set((params.Geos ?? []).map(String));
+  const brands = new Set((params.Brands ?? []).map(String));
+  const themes = new Set((params.Themes ?? []).map(String));
+  const services = new Set((params.Services ?? []).map(String));
+  const facilities = new Set((params.Facilities ?? []).map(String));
+  let hotels = [...MOCK_HOTEL_LIST.Hotels];
+
+  if (Number.isFinite(beginPrice)) {
+    hotels = hotels.filter((hotel) => (hotel.MinPrice ?? 0) >= beginPrice);
+  }
+  if (Number.isFinite(endPrice)) {
+    hotels = hotels.filter((hotel) => (hotel.MinPrice ?? 0) <= endPrice);
+  }
+  if (categories.size > 0) {
+    hotels = hotels.filter((hotel) => {
+      const starMatched = hotel.Star != null && categories.has(String(hotel.Star));
+      const tagMatched = hotel.Tags?.some((tag) => categories.has(tag)) ?? false;
+      return starMatched || tagMatched;
+    });
+  }
+  if (geos.size > 0) {
+    hotels = hotels.filter((hotel) => {
+      const text = `${hotel.HotelName} ${hotel.Address}`;
+      return (
+        (geos.has("geo-district-hongshan") && text.includes("洪山")) ||
+        (geos.has("geo-district-wuchang") && text.includes("武昌")) ||
+        (geos.has("geo-landmark-eastlake") && text.includes("东湖")) ||
+        (geos.has("geo-metro-2-zhongnan") && text.includes("中南")) ||
+        (geos.has("geo-metro-2-jianghan") && text.includes("汉阳")) ||
+        geos.has("geo-company-mock")
+      );
+    });
+  }
+  if (brands.size > 0) {
+    hotels = hotels.filter((hotel, index) => {
+      const id = index % 2 === 0 ? "brand-atour" : index % 3 === 0 ? "brand-hyatt" : "brand-hanting";
+      return brands.has(id);
+    });
+  }
+  if (themes.size > 0) {
+    hotels = hotels.filter((hotel) => {
+      const business = hotel.HotelName.includes("光谷") || hotel.HotelName.includes("国际");
+      return (
+        (themes.has("amenity-theme-business") && business) ||
+        (themes.has("amenity-theme-parent") && !business)
+      );
+    });
+  }
+  if (services.size > 0) {
+    hotels = hotels.filter((hotel, index) => {
+      const pickup = index % 2 === 0;
+      return (
+        (services.has("amenity-service-pickup") && pickup) ||
+        (services.has("amenity-service-laundry") && !pickup)
+      );
+    });
+  }
+  if (facilities.size > 0) {
+    hotels = hotels.filter((hotel, index) => {
+      const gym = index % 3 !== 0;
+      return (
+        (facilities.has("amenity-facility-gym") && gym) ||
+        (facilities.has("amenity-facility-parking") && !gym)
+      );
+    });
+  }
+
+  if (params.Orderby === "PriceAsc") {
+    hotels.sort((a, b) => (a.MinPrice ?? 0) - (b.MinPrice ?? 0));
+  } else if (params.Orderby === "PriceDesc") {
+    hotels.sort((a, b) => (b.MinPrice ?? 0) - (a.MinPrice ?? 0));
+  } else if (params.Orderby === "CategoryAsc") {
+    hotels.sort((a, b) => (a.Star ?? 0) - (b.Star ?? 0));
+  } else if (params.Orderby === "CategoryDesc") {
+    hotels.sort((a, b) => (b.Star ?? 0) - (a.Star ?? 0));
+  }
+
+  const start = pageIndex * pageSize;
+  const end = start + pageSize;
+  return {
+    ...MOCK_HOTEL_LIST,
+    Hotels: hotels.slice(start, end),
+    TotalCount: hotels.length,
+  };
 }
 
 export function createHotelMockHandlers(): Record<string, (data: unknown) => IResponse<unknown>> {
@@ -33,7 +143,8 @@ export function createHotelMockHandlers(): Record<string, (data: unknown) => IRe
         { Code: "023", Name: "重庆", Pinyin: "chongqing", IsHot: false },
         { Code: "029", Name: "西安", Pinyin: "xian", IsHot: false },
       ]),
-    [HOTEL_FLOW_METHODS.LIST]: () => successResponse(MOCK_HOTEL_LIST),
+    [HOTEL_METHODS.CONDITION_GETS]: () => successResponse(MOCK_HOTEL_CONDITIONS),
+    [HOTEL_FLOW_METHODS.LIST]: (data) => successResponse(createHotelListResponse(data)),
     [HOTEL_FLOW_METHODS.DETAIL]: (data) => {
       const params = data as { HotelId?: string };
       if (params?.HotelId && params.HotelId !== MOCK_HOTEL_DETAIL.HotelId) {

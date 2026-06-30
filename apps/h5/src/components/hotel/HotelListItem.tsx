@@ -44,8 +44,16 @@ function formatDisplayPrice(price?: number): string {
   return String(Math.round(price));
 }
 
-function isContractHotel(hotel: HotelListItemType): boolean {
-  return hotel.Tags?.some((tag) => tag.toLowerCase() === "tmc") ?? false;
+function getHotelBadge(hotel: HotelListItemType): string | undefined {
+  const tags = hotel.Tags?.map((tag) => tag.toLowerCase()) ?? [];
+  if (tags.includes("greencloud")) return "旅发酒店";
+  if (tags.includes("tmc")) return "协议酒店";
+  return undefined;
+}
+
+function getHotelScore(grade?: number): string | undefined {
+  if (grade == null || Number.isNaN(grade) || grade < 4) return undefined;
+  return `${Number(grade.toFixed(1))}分`;
 }
 
 function HotelPrice({ price }: { price?: number }) {
@@ -62,49 +70,55 @@ function HotelPrice({ price }: { price?: number }) {
 
 export function HotelListItem({ hotel, onClick }: HotelListItemProps) {
   const stars = hotel.Star && hotel.Star > 0 ? Math.min(5, Math.round(hotel.Star)) : 0;
-  const contracted = isContractHotel(hotel);
+  const badge = getHotelBadge(hotel);
+  const score = getHotelScore(hotel.Grade);
 
   return (
     <button
       type="button"
-      className="flex w-full gap-3 p-3 text-left active:opacity-90"
+      className="flex w-full gap-3 p-3 text-left active:scale-[0.99] active:opacity-90"
       onClick={onClick}
     >
       <div className="relative size-24 shrink-0 overflow-hidden rounded-lg bg-[#E5E7EB]">
         {hotel.ImageUrl ? (
           <img src={hotel.ImageUrl} alt="" className="size-full object-cover" loading="lazy" />
         ) : null}
-        {contracted ? (
+        {badge ? (
           <span
-            className="absolute left-0 top-0 flex h-5 w-[62px] items-center justify-center rounded-tl-lg rounded-tr-lg rounded-br-lg rounded-bl-none text-[10px] leading-none text-white"
+            className="absolute left-0 top-0 flex h-5 w-[66px] items-center justify-center rounded-tl-lg rounded-tr-lg rounded-br-lg rounded-bl-none text-[10px] leading-none text-white"
             style={{ background: CONTRACT_HOTEL_BADGE_GRADIENT }}
           >
-            协议酒店
+            {badge}
           </span>
         ) : null}
       </div>
 
       <div className="flex min-h-24 min-w-0 flex-1 flex-col">
-        <div className="h-12 shrink-0">
+        <div className="min-h-12 shrink-0">
           <h3 className="line-clamp-2 text-base font-medium leading-6 tracking-[0.35px] text-[#333333] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]">
             {hotel.HotelName}
           </h3>
         </div>
 
-        {stars > 0 ? (
-          <div className="mt-1 shrink-0">
-            <StarRating count={stars} />
+        {stars > 0 || score ? (
+          <div className="mt-1 flex h-[18px] shrink-0 items-center gap-2 overflow-hidden">
+            {score ? (
+              <span className="shrink-0 text-[12px] font-medium leading-none text-[#E72932]">
+                {score}
+              </span>
+            ) : null}
+            {stars > 0 ? <StarRating count={stars} /> : null}
           </div>
         ) : null}
 
         <div className="min-h-0 flex-1" aria-hidden />
 
         <div className="flex shrink-0 items-end justify-between gap-2">
-          {hotel.Address ? (
+          {hotel.Address || hotel.Distance ? (
             <div className="flex min-w-0 flex-1 items-center gap-1 overflow-hidden pr-1">
               <LocationIcon />
               <span className="truncate text-[12px] leading-none text-[#999999]">
-                {hotel.Address}
+                {[hotel.Address, hotel.Distance].filter(Boolean).join(" · ")}
               </span>
             </div>
           ) : (

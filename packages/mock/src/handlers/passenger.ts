@@ -7,6 +7,7 @@ import { mockPassengers } from "../fixtures/passenger-store.js";
 
 const MOCK_TMC = {
   AllowAddingNonTmcUser: true,
+  AllowHotelOutPolicySelfPay: true,
   Id: "TMC001",
   Name: "测试企业",
 };

@@ -1,45 +1,76 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import type { HotelCity } from "@ryx/shared-types";
+import { ProductType } from "@ryx/shared-types";
+import type { HotelCity, HotelType } from "@ryx/shared-types";
 
-import { HotelListFilterBar, type HotelListFilterId } from "@/components/hotel/HotelListFilterBar";
+import { HotelListFilterSheet } from "@/components/hotel/HotelListFilterSheet";
+import { HotelListHeader } from "@/components/hotel/HotelListHeader";
 import { HotelListItem } from "@/components/hotel/HotelListItem";
 import { HotelListSearchBar } from "@/components/hotel/HotelListSearchBar";
+import { HotelListToolbar, type HotelListToolbarId } from "@/components/hotel/HotelListToolbar";
 import { HotelStayDatePickerSheet } from "@/components/hotel/HotelStayDatePickerSheet";
 import { CityPicker } from "@/components/search";
 import { usePageHeader } from "@/components/layout";
-import headerProfileIcon from "@/assets/hotel/header-profile.png";
-import { useHotelCities, useHotelList } from "@/hooks/useHotelList";
+import { useHotelConditions, useInfiniteHotelList, useHotelCities } from "@/hooks/useHotelList";
+import { usePassengerSelection } from "@/hooks/usePassenger";
+import { usePullToRefresh } from "@/hooks/usePullToRefresh";
+import { getApi } from "@/lib/api";
 import { formatApiError } from "@/lib/formatApiError";
+import {
+  readStaffCityCode,
+  resolveHotelListPassengerIds,
+  shouldShowHotelFreeStayTip,
+} from "@/lib/hotel-list-context";
+import {
+  applyHotelListFilterParams,
+  createInitialHotelListFilter,
+  isHotelListFilterActive,
+  type HotelListFilterSection,
+  type HotelListFilterState,
+} from "@/lib/hotel-list-filters";
 import { navigateBack } from "@/lib/navigation";
 import { CITY_HISTORY_KEYS, hotelCityFromQuery, hotelCityPickerAdapter } from "@/lib/hotel-search";
 
-/** Figma hotel list — sky-blue header fading into filter panel (#EEF4FC). */
-const HOTEL_LIST_HEADER_GRADIENT =
-  "linear-gradient(180deg, #8EC8FF 0%, #B8DBFF 42%, #DCE9FA 78%, #EEF4FC 100%)";
+const FALLBACK_HEADER_HEIGHT = 56;
+const HOTEL_LIST_FONT =
+  "[font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
+const BASIC_FILTER_SECTIONS: HotelListFilterSection[] = ["sort", "star", "category", "price"];
+const LOCATION_FILTER_SECTIONS: HotelListFilterSection[] = ["location"];
+const AMENITY_FILTER_SECTIONS: HotelListFilterSection[] = ["brand", "theme", "service", "facility"];
 
-/** Soft fade from header tail into list background. */
-const HOTEL_LIST_HEADER_FADE = "linear-gradient(180deg, #EEF4FC 0%, #F5F6F9 100%)";
-
-function BackIcon() {
-  return (
-    <svg viewBox="0 0 10 17" className="h-[17px] w-[10px] shrink-0 text-black" aria-hidden>
-      <path
-        d="M9 1.5 2.5 8.5 9 15.5"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
+function parseHotelType(value: string | null): HotelType | undefined {
+  if (value === "Normal" || value === "Tmc" || value === "Agent") return value;
+  return undefined;
 }
 
-function ProfileHeaderIcon() {
-  return (
-    <img src={headerProfileIcon} alt="" className="size-6 shrink-0 object-contain" aria-hidden />
-  );
+function useInfiniteScrollTrigger(
+  onLoadMore: (() => void) | undefined,
+  enabled: boolean,
+  scrollRoot: HTMLElement | null | undefined,
+) {
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!enabled || !onLoadMore) return;
+
+    const target = sentinelRef.current;
+    if (!target) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          onLoadMore();
+        }
+      },
+      { root: scrollRoot ?? null, rootMargin: "160px 0px" },
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [enabled, onLoadMore, scrollRoot]);
+
+  return sentinelRef;
 }
 
 function HotelListSkeleton() {
@@ -65,18 +96,101 @@ function HotelListSkeleton() {
   );
 }
 
+function HotelFreeStayTip({ onOpen }: { onOpen: () => void }) {
+  return (
+    <button
+      type="button"
+      className={`${HOTEL_LIST_FONT} flex w-full items-center gap-2 rounded-lg border border-[#B8D8FF] bg-[#EEF6FF] px-3 py-2.5 text-left text-[12px] leading-5 text-[#2768FA] shadow-sm active:scale-[0.99]`}
+      onClick={onOpen}
+    >
+      <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-brand-btn-start to-brand-btn-end text-[11px] font-semibold leading-none text-white">
+        i
+      </span>
+      <span className="min-w-0 flex-1">
+        贵公司已开通超标随心住，自行支付超标部分即可享受心仪的房间
+      </span>
+      <span className="shrink-0 text-[11px] font-medium">说明</span>
+    </button>
+  );
+}
+
+function HotelFreeStayDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/45 px-8 backdrop-blur-sm">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="hotel-free-stay-title"
+        className={`${HOTEL_LIST_FONT} w-full max-w-[320px] overflow-hidden rounded-2xl bg-white shadow-2xl`}
+      >
+        <div className="bg-gradient-to-b from-[#F2F7FF] to-white px-5 pb-3 pt-5">
+          <h2
+            id="hotel-free-stay-title"
+            className="text-center text-[17px] font-semibold text-brand-title"
+          >
+            超标随心住
+          </h2>
+        </div>
+        <div className="px-5 pb-5 text-[14px] leading-6 text-[#4B5563]">
+          <p>
+            预订超出差旅标准的房型时，可自行支付超标部分；企业承担标准内费用，超标差额按实际订单规则展示。
+          </p>
+          <button
+            type="button"
+            className="mt-5 h-10 w-full rounded-full bg-gradient-to-r from-brand-btn-start to-brand-btn-end text-[15px] font-medium text-white active:opacity-90"
+            onClick={onClose}
+          >
+            我知道了
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function HotelListPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [activeFilter, setActiveFilter] = useState<HotelListFilterId | null>(null);
+  const [activeFilter, setActiveFilter] = useState<HotelListToolbarId | null>(null);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filterInitialSection, setFilterInitialSection] =
+    useState<HotelListFilterSection>("sort");
+  const [filterVisibleSections, setFilterVisibleSections] =
+    useState<HotelListFilterSection[]>(BASIC_FILTER_SECTIONS);
+  const [filterDraft, setFilterDraft] = useState<HotelListFilterState>(
+    createInitialHotelListFilter,
+  );
+  const [filterApplied, setFilterApplied] = useState<HotelListFilterState>(
+    createInitialHotelListFilter,
+  );
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [cityPickerOpen, setCityPickerOpen] = useState(false);
+  const [freeStayDialogOpen, setFreeStayDialogOpen] = useState(false);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const [scrollRoot, setScrollRoot] = useState<HTMLDivElement | null>(null);
+  const [headerHeight, setHeaderHeight] = useState(FALLBACK_HEADER_HEIGHT);
 
   const cityCode = searchParams.get("cityCode") ?? "";
   const cityName = searchParams.get("cityName") ?? cityCode;
   const checkIn = searchParams.get("checkIn") ?? "";
   const checkOut = searchParams.get("checkOut") ?? "";
   const keyword = searchParams.get("keyword") ?? "";
+  const hotelType = parseHotelType(searchParams.get("hotelType")) ?? "Normal";
+  const travelFormId = searchParams.get("travelFormId") ?? searchParams.get("travelformid") ?? "";
+  const { selected: selectedPassengers } = usePassengerSelection(ProductType.Hotel);
+  const passengerIds = useMemo(
+    () => resolveHotelListPassengerIds(selectedPassengers),
+    [selectedPassengers],
+  );
+  const staffCityCode = useMemo(() => readStaffCityCode(), []);
+  const { data: tmc } = useQuery({
+    queryKey: ["tmc", "getTmc", "hotel-list"],
+    queryFn: () => getApi().tmc.getTmc(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const showFreeStayTip = shouldShowHotelFreeStayTip({ tmc, hotelType });
 
   const hasParams = Boolean(cityCode && checkIn && checkOut);
 
@@ -103,25 +217,139 @@ export function HotelListPage() {
 
   usePageHeader({ visible: false });
 
+  useLayoutEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+
+    const updateHeight = () => {
+      setHeaderHeight(header.offsetHeight);
+    };
+
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
+
+  useLayoutEffect(() => {
+    scrollContainerRef.current?.scrollTo({ top: 0, behavior: "auto" });
+  }, [cityCode, checkIn, checkOut, keyword]);
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const main = document.querySelector("main");
+    const previousMainOverflow = main instanceof HTMLElement ? main.style.overflow : "";
+    if (main instanceof HTMLElement) {
+      main.style.overflow = "hidden";
+    }
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      if (main instanceof HTMLElement) {
+        main.style.overflow = previousMainOverflow;
+      }
+    };
+  }, []);
+
   const listParams = useMemo(
-    () =>
-      listReady && resolvedCity
-        ? {
-            CityCode: resolvedCity.Code,
-            CityName: resolvedCity.Name,
-            CheckInDate: checkIn,
-            CheckOutDate: checkOut,
-            Keyword: keyword || undefined,
-          }
-        : {},
-    [listReady, resolvedCity, checkIn, checkOut, keyword],
+    () => {
+      if (!listReady || !resolvedCity) return {};
+      return applyHotelListFilterParams(
+        {
+          CityCode: resolvedCity.Code,
+          CityName: resolvedCity.Name,
+          CheckInDate: checkIn,
+          CheckOutDate: checkOut,
+          Keyword: keyword || undefined,
+          HotelType: hotelType,
+          TravelFormId: travelFormId || undefined,
+          Passengers: passengerIds || undefined,
+          StaffCityCode: staffCityCode,
+        },
+        filterApplied,
+      );
+    },
+    [
+      listReady,
+      resolvedCity,
+      checkIn,
+      checkOut,
+      keyword,
+      hotelType,
+      travelFormId,
+      passengerIds,
+      staffCityCode,
+      filterApplied,
+    ],
   );
 
-  const { data, isLoading, isFetching, error, refetch } = useHotelList(listParams);
+  const {
+    data,
+    isLoading,
+    isFetching,
+    isError,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    error,
+    refresh,
+  } = useInfiniteHotelList(listParams);
+  const {
+    data: conditions,
+    isLoading: conditionsLoading,
+    isError: conditionsError,
+  } = useHotelConditions(resolvedCity?.Code);
+
+  const hotels = data?.pages.flatMap((page) => page.Hotels) ?? [];
+  const isInitialLoading = isLoading && hotels.length === 0;
+  const hasLoadedHotels = hotels.length > 0;
+
+  const handleLoadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      void fetchNextPage();
+    }
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
+  const sentinelRef = useInfiniteScrollTrigger(handleLoadMore, Boolean(hasNextPage), scrollRoot);
+
+  const { pullDistance, statusLabel, isActive } = usePullToRefresh({
+    scrollRef: scrollContainerRef,
+    scrollElement: scrollRoot,
+    onRefresh: refresh,
+    disabled: isInitialLoading,
+  });
+
+  const handleScrollRoot = useCallback((node: HTMLDivElement | null) => {
+    scrollContainerRef.current = node;
+    setScrollRoot(node);
+  }, []);
+
+  const filterActive = isHotelListFilterActive(filterApplied);
+
+  function openFilterSheet(id: HotelListToolbarId) {
+    setActiveFilter(id);
+    setFilterInitialSection(
+      id === "location" ? "location" : id === "priceStar" ? "price" : id === "filter" ? "brand" : "sort",
+    );
+    setFilterVisibleSections(
+      id === "location"
+        ? LOCATION_FILTER_SECTIONS
+        : id === "filter"
+          ? AMENITY_FILTER_SECTIONS
+          : BASIC_FILTER_SECTIONS,
+    );
+    setFilterDraft(filterApplied);
+    setFilterOpen(true);
+  }
+
+  function handleFilterConfirm() {
+    setFilterApplied(filterDraft);
+    setFilterOpen(false);
+  }
 
   if (!hasParams) return null;
-
-  const hotels = data?.Hotels ?? [];
 
   function goModifySearch() {
     navigate("/hotel");
@@ -150,39 +378,41 @@ export function HotelListPage() {
       cityName: resolvedCity?.Name ?? cityName,
       minPrice: String(hotel.MinPrice ?? ""),
     });
+    params.set("hotelType", hotelType);
+    if (travelFormId) params.set("travelFormId", travelFormId);
     navigate(`/hotel/${hotel.HotelId}?${params.toString()}`);
   }
 
   return (
-    <div className="flex min-h-full flex-col bg-[#F5F6F9]">
-      <div className="sticky top-0 z-20 shrink-0">
-        <div
-          className="pt-[env(safe-area-inset-top)]"
-          style={{ background: HOTEL_LIST_HEADER_GRADIENT }}
-        >
-          <div className="relative flex h-11 items-center px-3">
-            <button
-              type="button"
-              className="flex h-11 w-10 shrink-0 items-center justify-center active:opacity-70"
-              aria-label="返回"
-              onClick={() => navigateBack(navigate, "/hotel")}
-            >
-              <BackIcon />
-            </button>
-            <h1 className="pointer-events-none absolute inset-x-0 text-center text-[17px] font-semibold text-brand-title [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]">
-              酒店查询
-            </h1>
-            <button
-              type="button"
-              className="ml-auto flex h-11 w-10 shrink-0 items-center justify-center active:opacity-70"
-              aria-label="个人中心"
-              onClick={() => navigate("/home/mine")}
-            >
-              <ProfileHeaderIcon />
-            </button>
-          </div>
+    <div className="relative h-dvh overflow-hidden bg-[#F5F6F9]">
+      <div ref={headerRef} className="fixed inset-x-0 top-0 z-50 mx-auto w-full max-w-lg">
+        <HotelListHeader
+          cityName={cityName}
+          checkIn={checkIn}
+          checkOut={checkOut}
+          keyword={keyword}
+          onBack={() => navigateBack(navigate, "/hotel")}
+          onModify={goModifySearch}
+        />
+      </div>
 
-          <div className="px-3 pt-1.5">
+      <div
+        ref={handleScrollRoot}
+        className="h-full overflow-y-auto overscroll-y-contain [-webkit-overflow-scrolling:touch] [scrollbar-gutter:stable]"
+        style={{ paddingTop: headerHeight }}
+      >
+        <div
+          className={`flex items-end justify-center overflow-hidden text-sm text-[#9CA3AF] transition-[height] duration-200 ease-out ${HOTEL_LIST_FONT} ${
+            isActive ? "opacity-100" : "opacity-0"
+          }`}
+          style={{ height: isActive ? pullDistance : 0 }}
+          aria-live="polite"
+        >
+          <span className="pb-2">{statusLabel}</span>
+        </div>
+
+        <div className="sticky top-0 z-20 bg-gradient-to-b from-[#6aabff] to-[#e4edfd] px-3 pb-3 pt-2">
+          <div className="mx-auto max-w-lg">
             <HotelListSearchBar
               cityName={cityName}
               checkIn={checkIn}
@@ -193,52 +423,83 @@ export function HotelListPage() {
               onKeywordClick={goModifySearch}
             />
           </div>
-
-          <HotelListFilterBar
-            activeId={activeFilter}
-            onSelect={(id) => setActiveFilter((prev) => (prev === id ? null : id))}
-          />
         </div>
 
-        <div className="h-2 shrink-0" style={{ background: HOTEL_LIST_HEADER_FADE }} aria-hidden />
-      </div>
+        <div className="relative z-0 mx-auto max-w-lg space-y-2 px-3 py-3 pb-[calc(4.75rem+0.75rem+env(safe-area-inset-bottom))]">
+          {showFreeStayTip ? <HotelFreeStayTip onOpen={() => setFreeStayDialogOpen(true)} /> : null}
 
-      <div className="flex-1 px-3 pb-2 pt-0">
-        {citiesLoading || isLoading ? <HotelListSkeleton /> : null}
+          {citiesLoading || isInitialLoading ? <HotelListSkeleton /> : null}
 
-        {error ? (
-          <div className="rounded-lg bg-white px-4 py-8 text-center">
-            <p className="text-sm text-destructive">{formatApiError(error, "hotel")}</p>
-            <button
-              type="button"
-              className="mt-3 text-sm font-medium text-brand-primary"
-              onClick={() => refetch()}
+          {isError && !isFetching && !hasLoadedHotels ? (
+            <div className="rounded-lg bg-white px-4 py-8 text-center">
+              <p className="text-sm text-destructive">{formatApiError(error, "hotel")}</p>
+              <button
+                type="button"
+                className="mt-3 text-sm font-medium text-brand-primary"
+                onClick={() => void refresh()}
+              >
+                重试
+              </button>
+            </div>
+          ) : null}
+
+          {!citiesLoading && !isInitialLoading && !isError && hotels.length === 0 ? (
+            <div className="rounded-lg bg-white px-4 py-16 text-center">
+              <p className="text-sm text-[#716161]">暂无数据</p>
+            </div>
+          ) : null}
+
+          {!citiesLoading && !isInitialLoading && hotels.length > 0 ? (
+            <ul className="flex flex-col gap-2">
+              {hotels.map((hotel) => (
+                <li key={hotel.HotelId} className="overflow-hidden rounded-lg bg-white">
+                  <HotelListItem hotel={hotel} onClick={() => openDetail(hotel)} />
+                </li>
+              ))}
+            </ul>
+          ) : null}
+
+          {hasNextPage ? (
+            <div
+              ref={sentinelRef}
+              className={`flex h-10 items-center justify-center text-sm text-[#9CA3AF] ${HOTEL_LIST_FONT}`}
+              aria-hidden={!isFetchingNextPage}
             >
-              重试
-            </button>
-          </div>
-        ) : null}
+              {isFetchingNextPage ? "加载中..." : null}
+            </div>
+          ) : hasLoadedHotels ? (
+            <p className="py-3 text-center text-xs text-[#9CA3AF]">没有更多酒店了</p>
+          ) : null}
 
-        {!citiesLoading && !isLoading && !error && hotels.length === 0 ? (
-          <div className="rounded-lg bg-white px-4 py-16 text-center">
-            <p className="text-sm text-[#716161]">暂无数据</p>
-          </div>
-        ) : null}
-
-        {!citiesLoading && !isLoading && !error && hotels.length > 0 ? (
-          <ul className="flex flex-col gap-2">
-            {hotels.map((hotel) => (
-              <li key={hotel.HotelId} className="overflow-hidden rounded-lg bg-white">
-                <HotelListItem hotel={hotel} onClick={() => openDetail(hotel)} />
-              </li>
-            ))}
-          </ul>
-        ) : null}
-
-        {isFetching && !isLoading ? (
-          <p className="py-3 text-center text-xs text-[#9CA3AF]">更新中…</p>
-        ) : null}
+          {isFetching && !isLoading && !isFetchingNextPage ? (
+            <p className="py-3 text-center text-xs text-[#9CA3AF]">更新中...</p>
+          ) : null}
+        </div>
       </div>
+
+      <HotelListToolbar
+        activeId={filterActive ? activeFilter : activeFilter === "location" ? activeFilter : null}
+        filtered={filterActive}
+        onSelect={openFilterSheet}
+      />
+
+      <HotelListFilterSheet
+        open={filterOpen}
+        filter={filterDraft}
+        initialSection={filterInitialSection}
+        visibleSections={filterVisibleSections}
+        conditions={conditions}
+        conditionsLoading={conditionsLoading}
+        conditionsError={conditionsError}
+        onChange={setFilterDraft}
+        onClose={() => setFilterOpen(false)}
+        onConfirm={handleFilterConfirm}
+      />
+
+      <HotelFreeStayDialog
+        open={freeStayDialogOpen}
+        onClose={() => setFreeStayDialogOpen(false)}
+      />
 
       <HotelStayDatePickerSheet
         open={datePickerOpen}
