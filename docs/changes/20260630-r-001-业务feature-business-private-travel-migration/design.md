@@ -138,8 +138,10 @@ stateDiagram-v2
   3. 填单初始化走 `TmcTouristBookUrl-Flight-Initialize`，下单前校验走 `TmcTouristBookUrl-Flight-Validate`，提交走 `TmcTouristBookUrl-Flight-Book`。
   4. 改签能力若本期覆盖，则使用 `TmcTouristFlightUrl-Home-Exchange`、`TmcTouristFlightUrl-Home-ExchangeDetail`、`TmcTouristBookUrl-Flight-ExchangeInitialize`、`TmcTouristBookUrl-Flight-ExchangeBook`。
   5. public 乘客按常旅客体系处理，证件走 `TmcTouristBookUrl-Home-Credentials`，不走因公员工乘客和出差单锁定。
-  6. 若下单返回 `IsCheckPay=true`，使用 `TmcTouristBookUrl-Flight-CheckPay` 做支付前检查。
-  7. 支付 / 订单详情 / 取消 / 退票进入 `TmcTouristOrderUrl-*`，机票退票使用 `TmcTouristOrderUrl-Order-RefundFlight`。
+  6. 订单联系人保留 public 机票的姓名、手机号、邮箱；不展示因公授权联系人、组织、成本中心、审批、TravelNumber。
+  7. 提交 DTO 进入 personal sanitizer，移除审批、组织、成本中心、超标原因、出差单和因公授权联系人字段。
+  8. 若下单返回 `IsCheckPay=true`，使用 `TmcTouristBookUrl-Flight-CheckPay` 做支付前检查。
+  9. 支付 / 订单详情 / 取消 / 退票进入 `TmcTouristOrderUrl-*`，机票退票使用 `TmcTouristOrderUrl-Order-RefundFlight`。
 
 ### 功能点 5：因私火车 public/tourist 链路
 - 涉及领域模块：火车搜索、火车列表、火车填单、12306、支付 / 订单
@@ -149,9 +151,12 @@ stateDiagram-v2
   1. 搜索走 `TmcTouristTrainUrl-Home-Search`，时刻表走 `TmcTouristTrainUrl-Home-Schedule`。
   2. 填单初始化走 `TmcTouristBookUrl-Train-Initialize`，提交走 `TmcTouristBookUrl-Train-Book`。
   3. 12306 绑定 / 解绑 / 校验 / 联系人使用 `TmcTouristBookUrl-Train-Bind`、`Unbind`、`AccountValidate`、`CodeValidate`、`GetContacts`、`GetBindAccountNumber`。
-  4. 证件走 `TmcTouristBookUrl-Home-Credentials`；若下单返回 `IsCheckPay=true`，使用 `TmcTouristBookUrl-Train-CheckPay`。
-  5. 改签 / 退票能力若本期覆盖，则使用 tourist train 和 tourist book 对应 Method。
-  6. 支付 / 订单详情 / 取消 / 出票进入 `TmcTouristOrderUrl-*`，出票 / 取消出票使用 `TmcTouristOrderUrl-Order-IssueTrain` / `CancelTrain`。
+  4. 因私火车填单页不展示支付方式选择，不复用因公火车支付方式单选 UI；提交时按 legacy public 火车默认个人支付语义处理。
+  5. public frequent passenger 作为旅客来源，证件走 `TmcTouristBookUrl-Home-Credentials`。
+  6. 提交 DTO 进入 personal sanitizer，移除审批、组织、成本中心、超标原因、出差单和因公授权联系人字段。
+  7. 若下单返回 `IsCheckPay=true`，使用 `TmcTouristBookUrl-Train-CheckPay`。
+  8. 改签 / 退票能力若本期覆盖，则使用 tourist train 和 tourist book 对应 Method。
+  9. 支付 / 订单详情 / 取消 / 出票进入 `TmcTouristOrderUrl-*`，出票 / 取消出票使用 `TmcTouristOrderUrl-Order-IssueTrain` / `CancelTrain`。
 
 ### 功能点 6：因私酒店 public/tourist 链路
 - 涉及领域模块：酒店城市、酒店条件、酒店关键字、酒店列表、酒店详情、酒店填单、入住人、支付 / 订单
@@ -161,9 +166,11 @@ stateDiagram-v2
   1. 城市 / 条件走 `TmcTouristHotelUrl-City-Gets`、`TmcTouristHotelUrl-Condition-Gets`、`TmcTouristHotelUrl-City-GetCityByMap`。
   2. 关键字搜索走 `TmcTouristHotelUrl-Home-SearchHotel`，列表走 `TmcTouristHotelUrl-Home-List`，详情走 `TmcTouristHotelUrl-Home-Detail`。
   3. 填单初始化走 `TmcTouristBookUrl-Hotel-Initialize`，提交走 `TmcTouristBookUrl-Hotel-Book`。
-  4. public 入住人使用 public frequent passenger 体系，证件走 `TmcTouristBookUrl-Home-Credentials`，不走因公员工和出差单乘客锁定。
-  5. 若下单返回 `IsCheckPay=true`，使用 `TmcTouristBookUrl-Hotel-CheckPay`。
-  6. 酒店支付优先兼容 legacy `TmcTouristHotelUrl-Pay-Create` / `TmcTouristHotelUrl-Pay-Process` 特例；订单详情 / 短信核验 / 取消进入 `TmcTouristOrderUrl-*`。
+  4. public 酒店入住人以房间为核心建模：房间数、每间 1 个住客姓名、证件类型、证件号、联系人手机号、到店时间、信用卡担保信息；常旅客仅作为快速带入来源。
+  5. public 入住人证件走 `TmcTouristBookUrl-Home-Credentials`，不走因公员工和出差单乘客锁定。
+  6. 提交 DTO 按每间房生成一个 public hotel passenger，并进入 personal sanitizer，移除审批、组织、成本中心、超标原因、TravelNumber、TravelFormId、travelFormId、travelNumber。
+  7. 若下单返回 `IsCheckPay=true`，使用 `TmcTouristBookUrl-Hotel-CheckPay`。
+  8. 酒店支付优先兼容 legacy `TmcTouristHotelUrl-Pay-Create` / `TmcTouristHotelUrl-Pay-Process` 特例；订单详情 / 短信核验 / 取消进入 `TmcTouristOrderUrl-*`。
 
 ### 功能点 6.5：因私公共填单辅助能力
 - 涉及领域模块：public 常旅客、证件、国家 / 国籍、支付检查、资源数据
@@ -175,6 +182,17 @@ stateDiagram-v2
   3. 机票 / 火车 / 酒店下单后如需检查支付状态，分别走 `TmcTouristBookUrl-Flight-CheckPay`、`TmcTouristBookUrl-Train-CheckPay`、`TmcTouristBookUrl-Hotel-CheckPay`。
   4. 国内机场、国际机场等资源在 legacy public 中复用 `TmcApiHomeUrl-Resource-Airport` / `InternationalAirport`，本期仅在机票迁移必要时复用，不视为因公下单域泄漏。
 
+### 功能点 6.6：下单页字段隔离与 DTO sanitizer
+- 涉及领域模块：机票填单、火车填单、酒店填单、订单 DTO、乘客 / 入住人选择
+- 原有接口改造概述：当前 H5 DTO 构造函数已支持因公字段，personal 模式需要在构造前后明确分支，禁止因公字段残留。
+- 新增接口概述：不新增后端接口，新增前端纯函数与测试。
+- 核心实现逻辑&业务流程：
+  1. 新增 `sanitizePersonalOrderDto(product, dto)` 或等价产品内纯函数，对 personal DTO 移除 `ApprovalId`、`CostCenterCode/Name`、`OrganizationCode/Name`、`IllegalPolicy`、`IllegalReason`、`OutNumbers.TravelNumber`、`TravelFormId`、`travelFormId`、`travelNumber`、因公授权联系人。
+  2. business 模式禁止调用 sanitizer，保持现有因公字段和出差单能力。
+  3. personal 机票 / 火车使用 public frequent passenger adapter，把常旅客转换为 H5 可展示的 `PassengerBookInfo`，但保存与证件接口走 tourist。
+  4. personal 酒店使用 `HotelPublicGuestRoomForm` 等价模型：`rooms[]` 包含 `name`、`credentialType`、`credentialNumber`，外层包含 `mobile`、`arrivalTime`、`creditCard`。
+  5. 字段隔离测试必须覆盖“先因公选择 TravelNumber，再切因私提交”的污染场景。
+
 ### 功能点 7：因公专属字段和出差单隔离
 - 涉及领域模块：订单 DTO、审批、组织、成本中心、支付、政策、出差单
 - 原有接口改造概述：因公沿用 TMC DTO；因私 tourist DTO 禁止携带因公字段。
@@ -183,7 +201,7 @@ stateDiagram-v2
   1. 因公选择出差单后，乘客必须保留 `travelFormId`、`travelNumber` 和行程约束。
   2. 出差单带入的乘客与外部编号按 legacy 限制普通新增、删除、重选；具体提示文案沿用现有 H5 文案风格。
   3. 因私模式读取乘客时忽略乘客对象上历史残留的 `travelFormId` / `travelNumber`。
-  4. 因私模式默认不携带审批人、组织、成本中心、差旅政策、违规原因、出差单号；支付类型来自 tourist 初始化 `PayTypes` 或 public 默认规则。
+  4. 因私模式默认不携带审批人、组织、成本中心、差旅政策、违规原因、出差单号；支付类型来自 tourist 初始化 `PayTypes` 或 public 默认规则，其中 public 火车填单页按 legacy 不展示支付方式选择，默认个人支付语义。
   5. 下单成功或切换模式时，不能把因公出差单上下文污染到因私会话。
 
 ### 功能点 8：因私订单与支付域切换
