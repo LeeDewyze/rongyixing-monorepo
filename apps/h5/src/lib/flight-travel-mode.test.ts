@@ -5,6 +5,7 @@ import {
   resolveFlightTravelType,
   resolveOrderTravelType,
   resolveProductChannel,
+  resolveTravelModeFromProductChannel,
   saveHomeTravelMode,
   shouldEnableTravelForm,
 } from "./flight-travel-mode";
@@ -53,6 +54,18 @@ describe("flight-travel-mode", () => {
     expect(staff.BookType).toBe(1);
     expect(resolveProductChannel()).toBe("tourist");
     expect(shouldEnableTravelForm(undefined, true)).toBe(false);
+  });
+
+  it("lets URL product channel override stale session travel mode", () => {
+    saveHomeTravelMode("business");
+
+    expect(resolveTravelModeFromProductChannel("tourist")).toBe("personal");
+    expect(resolveProductChannel(resolveTravelModeFromProductChannel("tourist"))).toBe("tourist");
+
+    saveHomeTravelMode("personal");
+
+    expect(resolveTravelModeFromProductChannel("tmc")).toBe("business");
+    expect(resolveProductChannel(resolveTravelModeFromProductChannel("tmc"))).toBe("tmc");
   });
 
   it("enables TravelNumber forms only for business mode with TMC switch enabled", () => {

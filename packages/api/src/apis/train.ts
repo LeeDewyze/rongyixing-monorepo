@@ -382,6 +382,7 @@ export function normalizeTrainBookResponse(res: unknown): TrainBookResponse {
   const tradeNo = readResponseId(payload.TradeNo);
   const orderId = readResponseId(payload.OrderId) || readResponseId(payload.Id) || tradeNo;
   return {
+    ...(payload as TrainBookResponse),
     OrderId: orderId,
     OrderNumber: typeof payload.OrderNumber === "string" ? payload.OrderNumber : undefined,
     TradeNo: tradeNo || undefined,

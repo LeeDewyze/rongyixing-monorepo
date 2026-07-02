@@ -256,12 +256,12 @@ describe("normalizeTrainBookResponse", () => {
         TotalAmount: 164.5,
         HasTasks: false,
       }),
-    ).toEqual({
+    ).toMatchObject({
       OrderId: "20760000000204",
       TradeNo: "20760000000204",
       HasTasks: false,
-      IsCheckPay: undefined,
-      OrderNumber: undefined,
+      Tickets: [{ TicketId: "20760000000258", Status: 1, Price: 164.5 }],
+      TotalAmount: 164.5,
     });
   });
 

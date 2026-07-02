@@ -4,6 +4,7 @@ import {
   createHotelApi,
   buildHotelDetailRequest,
   normalizeHotelDetailResponse,
+  normalizeHotelBookResponse,
   normalizeHotelInitBookResponse,
   normalizeHotelPolicyResponse,
 } from "./hotel.js";
@@ -476,6 +477,23 @@ describe("normalizeHotelInitBookResponse", () => {
       PayTypes: {
         Alipay: "支付宝",
       },
+    });
+  });
+});
+
+describe("normalizeHotelBookResponse", () => {
+  it("passes through backend fields from book response", () => {
+    expect(
+      normalizeHotelBookResponse({
+        TradeNo: 20760000000204,
+        IsCheckPay: true,
+        PayToken: "pay-token-1",
+      }),
+    ).toMatchObject({
+      OrderId: "20760000000204",
+      TradeNo: "20760000000204",
+      IsCheckPay: true,
+      PayToken: "pay-token-1",
     });
   });
 });

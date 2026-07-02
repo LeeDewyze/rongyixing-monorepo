@@ -1,11 +1,15 @@
 import type { ApiConfigSetting } from "@ryx/shared-types";
 
 import { AUTH_FLOW_METHODS } from "../methods/auth-flow.js";
+import { TMC_METHODS } from "../methods/tmc.js";
 
 const DEFAULT_PROXY_PATH = "/Home/Proxy";
 
 /** Legacy posts unsigned identity websocket to /Home/Proxy (empty Method in getUrl). */
-const PROXY_ONLY_METHODS = new Set<string>([AUTH_FLOW_METHODS.IDENTITY_WEBSOCKET]);
+const PROXY_ONLY_METHODS = new Set<string>([
+  AUTH_FLOW_METHODS.IDENTITY_WEBSOCKET,
+  TMC_METHODS.HOME_TOURIST,
+]);
 
 const LOGIN_URL_METHODS = new Set<string>([
   AUTH_FLOW_METHODS.LOGIN,
@@ -65,6 +69,10 @@ function resolveServiceUrl(
   return toFetchUrl(absolute, baseUrl, urlKey);
 }
 
+function isProxyOnlyMethod(method: string): boolean {
+  return PROXY_ONLY_METHODS.has(method) || method.startsWith("TmcTourist");
+}
+
 /** Resolve POST URL from Method string (beeant getUrl logic). */
 export function resolveUrl(options: ResolveUrlOptions): string {
   const base = normalizeBase(options.baseUrl);
@@ -81,7 +89,7 @@ export function resolveUrl(options: ResolveUrlOptions): string {
     return appendDomainQuery(`${base}${DEFAULT_PROXY_PATH}`, options.domain);
   }
 
-  if (PROXY_ONLY_METHODS.has(options.method)) {
+  if (isProxyOnlyMethod(options.method)) {
     return appendDomainQuery(`${base}${DEFAULT_PROXY_PATH}`, options.domain);
   }
 

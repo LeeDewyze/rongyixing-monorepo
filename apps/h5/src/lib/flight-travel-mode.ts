@@ -50,6 +50,15 @@ export function resolveProductChannel(mode: HomeTravelMode = loadHomeTravelMode(
   return isPersonalTravelMode(mode) ? "tourist" : "tmc";
 }
 
+export function resolveTravelModeFromProductChannel(
+  channel: string | null | undefined,
+  fallback: HomeTravelMode = loadHomeTravelMode(),
+): HomeTravelMode {
+  if (channel === "tourist") return "personal";
+  if (channel === "tmc") return "business";
+  return fallback;
+}
+
 export function shouldEnableTravelForm(
   mode: HomeTravelMode = loadHomeTravelMode(),
   tmcGetTravelUrl = false,

@@ -69,6 +69,68 @@ describe("resolveUrl", () => {
     ).toBe("/__ryx/TmcApiHotelUrl/Home/List");
   });
 
+  it("routes tourist service methods through legacy gateway proxy", () => {
+    const apiConfig = {
+      Token: "t",
+      Urls: {
+        TmcTouristFlightUrl: "http://flight-api-tourist.rtesp.com",
+        TmcTouristTrainUrl: "http://train-api-tourist.rtesp.com",
+        TmcTouristHotelUrl: "http://hotel-api-tourist.rtesp.com",
+        TmcTouristBookUrl: "http://book-api-tourist.rtesp.com",
+        TmcTouristOrderUrl: "http://order-api-tourist.rtesp.com",
+      },
+    };
+
+    expect(
+      resolveUrl({
+        baseUrl: "",
+        method: "TmcTouristFlightUrl-Home-Index",
+        apiConfig,
+      }),
+    ).toBe("/Home/Proxy");
+    expect(
+      resolveUrl({
+        baseUrl: "",
+        method: "TmcTouristTrainUrl-Home-Search",
+        apiConfig,
+      }),
+    ).toBe("/Home/Proxy");
+    expect(
+      resolveUrl({
+        baseUrl: "",
+        method: "TmcTouristHotelUrl-Home-List",
+        apiConfig,
+      }),
+    ).toBe("/Home/Proxy");
+    expect(
+      resolveUrl({
+        baseUrl: "",
+        method: "TmcTouristBookUrl-Flight-Initialize",
+        apiConfig,
+      }),
+    ).toBe("/Home/Proxy");
+    expect(
+      resolveUrl({
+        baseUrl: "",
+        method: "TmcTouristOrderUrl-Order-Detail",
+        apiConfig,
+      }),
+    ).toBe("/Home/Proxy");
+  });
+
+  it("routes Home-Tourist through legacy gateway proxy", () => {
+    expect(
+      resolveUrl({
+        baseUrl: "",
+        method: "TmcApiHomeUrl-Home-Tourist",
+        apiConfig: {
+          Token: "t",
+          Urls: { TmcApiHomeUrl: "http://api-tmc.rtesp.com" },
+        },
+      }),
+    ).toBe("/Home/Proxy");
+  });
+
   it("routes workflow approval lists through vite dev proxy", () => {
     expect(
       resolveUrl({
@@ -94,6 +156,20 @@ describe("resolveUrl", () => {
         },
       }),
     ).toBe("https://hotel-api.example.com/Home/Detail");
+  });
+
+  it("keeps tourist methods on legacy gateway even in direct mode", () => {
+    expect(
+      resolveUrl({
+        baseUrl: "https://app.rongtrip.cn",
+        method: "TmcTouristBookUrl-Hotel-Book",
+        mode: "direct",
+        apiConfig: {
+          Token: "t",
+          Urls: { TmcTouristBookUrl: "https://tourist-book.example.com" },
+        },
+      }),
+    ).toBe("https://app.rongtrip.cn/Home/Proxy");
   });
 
   it("uses LoginUrl from api config for auth login methods", () => {
@@ -153,6 +229,14 @@ describe("parseMethod", () => {
       urlKey: "TmcApiHotelUrl",
       controller: "Home",
       action: "Detail",
+    });
+  });
+
+  it("splits tourist UrlKey-Controller-Action", () => {
+    expect(parseMethod("TmcTouristOrderUrl-Pay-GetTotalPayAmount")).toEqual({
+      urlKey: "TmcTouristOrderUrl",
+      controller: "Pay",
+      action: "GetTotalPayAmount",
     });
   });
 });

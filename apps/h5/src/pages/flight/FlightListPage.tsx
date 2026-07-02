@@ -35,6 +35,11 @@ import { getApiMode } from "@/lib/env";
 import { formatApiError } from "@/lib/formatApiError";
 import { getTicket } from "@/lib/session";
 import {
+  loadHomeTravelMode,
+  resolveProductChannel,
+  resolveTravelModeFromProductChannel,
+} from "@/lib/flight-travel-mode";
+import {
   applyFlightFilters,
   buildFilterOptions,
   createInitialFilter,
@@ -42,6 +47,7 @@ import {
   initLowestPriceSegments,
   isFilterActive,
   normalizeFlightSegments,
+  resolveFlightSegmentId,
   sortByPrice,
   sortByTime,
 } from "@/utils/flight-list";
@@ -66,6 +72,11 @@ export function FlightListPage() {
   const isAgent = hasAgentIdentity(identity);
   const listReturnTo = `/flight/list?${searchParams.toString()}`;
   const isAuthenticated = getApiMode() === "mock" || Boolean(getTicket());
+  const travelMode = useMemo(
+    () => resolveTravelModeFromProductChannel(searchParams.get("channel"), loadHomeTravelMode()),
+    [searchParams],
+  );
+  const productChannel = resolveProductChannel(travelMode);
 
   const listParams: FlightSearchParams = {
     Date: searchParams.get("date") ?? "",
@@ -161,8 +172,9 @@ export function FlightListPage() {
       resolvedListCities.fromCity,
       resolvedListCities.toCity,
       listParams.Date,
+      productChannel,
     );
-  }, [hasListQuery, resolvedListCities, listParams.Date]);
+  }, [hasListQuery, resolvedListCities, listParams.Date, productChannel]);
 
   const { data, isLoading, isFetching, error, refetch, dataUpdatedAt } =
     useFlightList(apiListParams);
@@ -179,6 +191,7 @@ export function FlightListPage() {
       fromCity: resolvedListCities.fromCity,
       toCity: resolvedListCities.toCity,
       date: listParams.Date,
+      channel: productChannel,
     });
     const extras = new URLSearchParams(searchParams);
     for (const key of [
@@ -189,6 +202,7 @@ export function FlightListPage() {
       "date",
       "fromAsAirport",
       "toAsAirport",
+      "channel",
     ]) {
       extras.delete(key);
     }
@@ -199,7 +213,7 @@ export function FlightListPage() {
     if (next.toString() !== searchParams.toString()) {
       navigate(`/flight/list?${next.toString()}`, { replace: true });
     }
-  }, [resolvedListCities, hasListQuery, listParams.Date, navigate, searchParams]);
+  }, [resolvedListCities, hasListQuery, listParams.Date, navigate, productChannel, searchParams]);
 
   const resetListFilters = useCallback(() => {
     setFilterApplied(createInitialFilter());
@@ -395,7 +409,7 @@ export function FlightListPage() {
 
       <div
         ref={scrollContainerRef}
-        className={`h-full overscroll-y-contain [-webkit-overflow-scrolling:touch] [scrollbar-gutter:stable] ${
+        className={`h-full overscroll-y-contain [-webkit-overflow-scrolling:touch] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
           filterOpen || modifyOpen ? "overflow-hidden" : "overflow-y-auto"
         }`}
         style={{ paddingTop: headerHeight }}
@@ -450,11 +464,11 @@ export function FlightListPage() {
           {isAuthenticated &&
             directFlights.map((seg) => (
               <FlightSegmentCard
-                key={seg.Id}
+                key={resolveFlightSegmentId(seg)}
                 segment={seg}
                 variant={resolveFlightCardVariant(seg, "direct")}
                 loading={openingCabinsId === seg.Id}
-                onClick={() => void openCabins(seg.Id)}
+                onClick={() => void openCabins(resolveFlightSegmentId(seg))}
               />
             ))}
 
@@ -467,11 +481,11 @@ export function FlightListPage() {
               </div>
               {transferFlights.map((seg) => (
                 <FlightSegmentCard
-                  key={seg.Id}
+                  key={resolveFlightSegmentId(seg)}
                   segment={seg}
                   variant={resolveFlightCardVariant(seg, "transfer")}
                   loading={openingCabinsId === seg.Id}
-                  onClick={() => void openCabins(seg.Id)}
+                  onClick={() => void openCabins(resolveFlightSegmentId(seg))}
                 />
               ))}
             </>

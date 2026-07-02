@@ -30,6 +30,11 @@ import {
 } from "@/lib/hotel-list-filters";
 import { navigateBack } from "@/lib/navigation";
 import { CITY_HISTORY_KEYS, hotelCityFromQuery, hotelCityPickerAdapter } from "@/lib/hotel-search";
+import {
+  loadHomeTravelMode,
+  resolveProductChannel,
+  resolveTravelModeFromProductChannel,
+} from "@/lib/flight-travel-mode";
 
 const FALLBACK_HEADER_HEIGHT = 56;
 const HOTEL_LIST_FONT =
@@ -188,6 +193,11 @@ export function HotelListPage() {
     [selectedPassengers],
   );
   const staffCityCode = useMemo(() => readStaffCityCode(), []);
+  const travelMode = useMemo(
+    () => resolveTravelModeFromProductChannel(searchParams.get("channel"), loadHomeTravelMode()),
+    [searchParams],
+  );
+  const productChannel = resolveProductChannel(travelMode);
   const { data: tmc } = useQuery({
     queryKey: ["tmc", "getTmc", "hotel-list"],
     queryFn: () => getApi().tmc.getTmc(),
@@ -260,6 +270,7 @@ export function HotelListPage() {
     () => {
       if (!listReady || !resolvedCity) return {};
       const baseParams = {
+        channel: productChannel,
         CityCode: resolvedCity.Code,
         CityName: resolvedCity.Name,
         CheckInDate: checkIn,
@@ -305,6 +316,7 @@ export function HotelListPage() {
       travelFormId,
       passengerIds,
       staffCityCode,
+      productChannel,
       filterApplied,
     ],
   );
@@ -324,7 +336,7 @@ export function HotelListPage() {
     data: conditions,
     isLoading: conditionsLoading,
     isError: conditionsError,
-  } = useHotelConditions(resolvedCity?.Code);
+  } = useHotelConditions(resolvedCity?.Code, productChannel);
 
   const hotels = data?.pages.flatMap((page) => page.Hotels) ?? [];
   const isInitialLoading = isLoading && hotels.length === 0;
@@ -388,6 +400,7 @@ export function HotelListPage() {
     if (lng) next.set("lng", lng);
     if (hotelType) next.set("hotelType", hotelType);
     if (travelFormId) next.set("travelFormId", travelFormId);
+    if (productChannel === "tourist") next.set("channel", productChannel);
     navigate(`/hotel/keyword?${next.toString()}`);
   }
 
@@ -426,6 +439,7 @@ export function HotelListPage() {
     if (lat) params.set("lat", lat);
     if (lng) params.set("lng", lng);
     if (travelFormId) params.set("travelFormId", travelFormId);
+    if (productChannel === "tourist") params.set("channel", productChannel);
     navigate(`/hotel/${hotel.HotelId}?${params.toString()}`);
   }
 

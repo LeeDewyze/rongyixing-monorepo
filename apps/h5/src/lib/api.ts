@@ -1,5 +1,6 @@
 import { createApi } from "@ryx/api";
 import { createDefaultMockHandler } from "@ryx/mock";
+import type { ProxySendOptions } from "@ryx/shared-types";
 
 import { persistDomain } from "@/lib/domain";
 import { getApiBaseUrl, getApiMode, getAppId, getMockDelay } from "@/lib/env";
@@ -10,10 +11,26 @@ import {
   getTicketName,
 } from "@/lib/request-context";
 import { clearSession, getTicket } from "@/lib/session";
+import { isTouristMethod, sendWithTouristContext } from "@/lib/tourist-context";
 
 const API_CONFIG_STORAGE_KEY = "ryx_api_config";
 
 let apiInstance: ReturnType<typeof createApi> | null = null;
+
+function attachTouristContextProxy(api: ReturnType<typeof createApi>): void {
+  const rawSend = api.proxy.send.bind(api.proxy);
+  const sender = { send: rawSend };
+  api.proxy.send = async <TRes = unknown>(options: ProxySendOptions): Promise<TRes> => {
+    if (!isTouristMethod(options.method)) {
+      return rawSend<TRes>(options);
+    }
+    return sendWithTouristContext<TRes>({
+      appId: getAppId(),
+      sender,
+      request: options,
+    });
+  };
+}
 
 /** Route cross-origin login URLs through Vite dev proxy (e.g. /Jyx/LoginByRyx). */
 function rewriteDevProxyUrl(url: string): string {
@@ -65,6 +82,7 @@ export function getApi() {
         }
       },
     });
+    attachTouristContextProxy(apiInstance);
 
     if (mode !== "mock") {
       void apiInstance.proxy.loadApiConfig().then((cfg) => {

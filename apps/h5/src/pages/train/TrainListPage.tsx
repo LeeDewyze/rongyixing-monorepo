@@ -33,6 +33,11 @@ import { formatApiError } from "@/lib/formatApiError";
 import { buildPassengerSelectPath } from "@/lib/passenger-selection";
 import { hasAgentIdentity } from "@/lib/flight-book-save-order";
 import {
+  loadHomeTravelMode,
+  resolveProductChannel,
+  resolveTravelModeFromProductChannel,
+} from "@/lib/flight-travel-mode";
+import {
   applyTrainPolicyColors,
   buildTrainPolicyExceedAlertMessage,
   buildTrainPolicyParams,
@@ -71,6 +76,12 @@ export function TrainListPage() {
   const isAgent = hasAgentIdentity(identity);
   const listReturnTo = `/train/list?${searchParams.toString()}`;
   const isAuthenticated = getApiMode() === "mock" || Boolean(getTicket());
+  const travelMode = useMemo(
+    () => resolveTravelModeFromProductChannel(searchParams.get("channel"), loadHomeTravelMode()),
+    [searchParams],
+  );
+  const productChannel = resolveProductChannel(travelMode);
+  const isBusinessMode = productChannel === "tmc";
 
   const listParams = {
     Date: searchParams.get("date") ?? "",
@@ -119,7 +130,7 @@ export function TrainListPage() {
   const [headerHeight, setHeaderHeight] = useState(FALLBACK_HEADER_HEIGHT);
 
   const { data, isLoading, isFetching, error, refetch } = useTrainList(
-    hasListQuery ? listParams : null,
+    hasListQuery ? { ...listParams, channel: productChannel } : null,
   );
 
   const rawTrains = useMemo(() => normalizeTrains(data?.Trains), [data]);
@@ -128,9 +139,9 @@ export function TrainListPage() {
     () =>
       buildTrainPolicyParams({
         trains: rawTrains,
-        passengers: selectedPassengers,
+        passengers: isBusinessMode ? selectedPassengers : [],
       }),
-    [rawTrains, selectedPassengers],
+    [isBusinessMode, rawTrains, selectedPassengers],
   );
 
   const {
@@ -138,10 +149,11 @@ export function TrainListPage() {
     isLoading: isPolicyLoading,
     isFetching: isPolicyFetching,
     isError: isPolicyError,
-  } = useTrainPolicy(isAuthenticated && rawTrains.length ? policyParams : null);
+  } = useTrainPolicy(isAuthenticated && isBusinessMode && rawTrains.length ? policyParams : null);
 
   const isPolicyChecking =
     isAuthenticated &&
+    isBusinessMode &&
     rawTrains.length > 0 &&
     selectedPassengers.length > 0 &&
     (isPolicyLoading || isPolicyFetching);
@@ -214,9 +226,9 @@ export function TrainListPage() {
   const displayed = useMemo(() => {
     const trains = resolveTrainListOrder(getFilteredTrains(), listOrderState);
     const marked = markLowestPrice(trains);
-    if (!policyResults) return marked;
+    if (!isBusinessMode || !policyResults) return marked;
     return applyTrainPolicyColors(marked, policyResults, selectedPassengers);
-  }, [getFilteredTrains, listOrderState, policyResults, selectedPassengers]);
+  }, [getFilteredTrains, isBusinessMode, listOrderState, policyResults, selectedPassengers]);
 
   const filtered = isTrainFilterActive(filterApplied);
   const showListLoading = isAuthenticated && (isLoading || isFetching) && displayed.length === 0;
@@ -260,37 +272,50 @@ export function TrainListPage() {
 
   const handleBookAttempt = useCallback(
     (train: TrainItem, seat: TrainSeat) => {
-      if (!selectedPassengers.length) {
+      if (isBusinessMode && !selectedPassengers.length) {
         navigate(buildPassengerSelectPath(ProductType.Train, listReturnTo));
         return;
       }
 
-      const bookable = isTrainSeatBookable(seat.policyColor, isAgent, policyChecked);
-      if (!bookable) {
-        setPolicyAlertMessage(
-          buildTrainPolicyExceedAlertMessage(train, seat, selectedPassengers, isAgent),
-        );
-        return;
-      }
+      if (isBusinessMode) {
+        const bookable = isTrainSeatBookable(seat.policyColor, isAgent, policyChecked);
+        if (!bookable) {
+          setPolicyAlertMessage(
+            buildTrainPolicyExceedAlertMessage(train, seat, selectedPassengers, isAgent),
+          );
+          return;
+        }
 
-      if (seat.policyColor === "danger" && isAgent) {
-        setPolicyAlertMessage(
-          buildTrainPolicyExceedAlertMessage(train, seat, selectedPassengers, true),
-        );
+        if (seat.policyColor === "danger" && isAgent) {
+          setPolicyAlertMessage(
+            buildTrainPolicyExceedAlertMessage(train, seat, selectedPassengers, true),
+          );
+        }
       }
 
       saveTrainBookSelection({
-        searchParams: listParams,
+        searchParams: { ...listParams, channel: productChannel },
         train,
         seat,
         trainSnapshot: train.searchSnapshot,
         policy: seat.policy,
         passengers: selectedPassengers,
         selectedAt: Date.now(),
+        travelMode,
       });
       navigate("/train/book");
     },
-    [selectedPassengers, isAgent, policyChecked, navigate, listReturnTo, listParams],
+    [
+      isBusinessMode,
+      selectedPassengers,
+      isAgent,
+      policyChecked,
+      navigate,
+      listReturnTo,
+      listParams,
+      productChannel,
+      travelMode,
+    ],
   );
 
   if (!hasListQuery) return null;
@@ -338,6 +363,7 @@ export function TrainListPage() {
 
   function handleModifySearch(params: URLSearchParams) {
     resetListFilters();
+    if (productChannel) params.set("channel", productChannel);
     navigate(`/train/list?${params.toString()}`, { replace: true });
   }
 
@@ -369,6 +395,7 @@ export function TrainListPage() {
           toName={toName}
           passengerHref={buildPassengerSelectPath(ProductType.Train, listReturnTo)}
           passengerCount={selectedPassengers.length}
+          showPassengerEntry={isBusinessMode}
           modifyOpen={modifyOpen}
           onBack={handleHeaderBack}
           onModifyOpen={handleModifyOpen}
@@ -378,7 +405,7 @@ export function TrainListPage() {
 
       <div
         ref={scrollContainerRef}
-        className={`h-full overscroll-y-contain [-webkit-overflow-scrolling:touch] [scrollbar-gutter:stable] ${
+        className={`h-full overscroll-y-contain [-webkit-overflow-scrolling:touch] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
           filterOpen || modifyOpen ? "overflow-hidden" : "overflow-y-auto"
         }`}
         style={{ paddingTop: headerHeight }}

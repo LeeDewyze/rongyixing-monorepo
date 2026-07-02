@@ -81,15 +81,15 @@ describe("normalizePayCreateResponse", () => {
       normalizePayCreateResponse({
         Number: "PAY-001",
         Url: "https://pay.example.com/h5",
+        ExtraPayload: "keep-me",
       }),
-    ).toEqual({
+    ).toMatchObject({
       PayOrderId: "PAY-001",
       OutTradeNo: "PAY-001",
       Number: "PAY-001",
       PayUrl: "https://pay.example.com/h5",
       Url: "https://pay.example.com/h5",
-      Status: undefined,
-      Message: undefined,
+      ExtraPayload: "keep-me",
     });
   });
 });

@@ -68,6 +68,7 @@ export function normalizePayCreateResponse(raw: unknown): PayCreateResponse {
   const outTradeNo = data.OutTradeNo ?? data.Number ?? data.PayOrderId;
   const payUrl = data.PayUrl ?? data.Url ?? data.Body;
   return {
+    ...(data as PayCreateResponse),
     PayOrderId: outTradeNo ? String(outTradeNo) : undefined,
     OutTradeNo: outTradeNo ? String(outTradeNo) : undefined,
     Number: data.Number ? String(data.Number) : undefined,

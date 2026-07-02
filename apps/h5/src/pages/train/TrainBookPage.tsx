@@ -389,7 +389,10 @@ export function TrainBookPage() {
     return (
       <div className="relative h-dvh overflow-hidden" style={TRAIN_BOOK_PAGE_BACKGROUND}>
         <TrainBookHeader ref={headerRef} />
-        <div className="absolute inset-x-0 bottom-0 overflow-y-auto" style={{ top: headerHeight }}>
+        <div
+          className="absolute inset-x-0 bottom-0 overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          style={{ top: headerHeight }}
+        >
           <p className="p-6 text-center text-sm text-[#999999]">加载预订信息…</p>
         </div>
       </div>
@@ -400,7 +403,10 @@ export function TrainBookPage() {
     return (
       <div className="relative h-dvh overflow-hidden" style={TRAIN_BOOK_PAGE_BACKGROUND}>
         <TrainBookHeader ref={headerRef} />
-        <div className="absolute inset-x-0 bottom-0 overflow-y-auto" style={{ top: headerHeight }}>
+        <div
+          className="absolute inset-x-0 bottom-0 overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          style={{ top: headerHeight }}
+        >
           <p className="p-6 text-center text-sm text-[#ff4d4f]">
             {formatApiError(initBook.error, "train")}
           </p>
@@ -426,7 +432,7 @@ export function TrainBookPage() {
 
       <div
         ref={contentRef}
-        className="absolute inset-x-0 bottom-0 overflow-y-auto overscroll-contain pb-[calc(8.5rem+env(safe-area-inset-bottom))]"
+        className="absolute inset-x-0 bottom-0 overflow-y-auto overscroll-contain pb-[calc(8.5rem+env(safe-area-inset-bottom))] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         style={{ top: headerHeight }}
       >
         <TrainBookSummary selection={selection} />
