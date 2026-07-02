@@ -39,6 +39,7 @@ import { scrollH5MainToTop } from "@/lib/scroll-h5-main";
 
 const FOOTER_OFFSET = "calc(4.5rem + env(safe-area-inset-bottom))";
 const ORDERS_FLIGHT_FALLBACK = `/home/orders?tab=${TAB_ID_TO_PARAM.flight}`;
+const ORDER_FLIGHT_DETAIL_BACKGROUND = { background: "var(--brand-form-header-gradient)" };
 
 interface OrderDetailLocationState {
   action?: "cancel" | "refund";
@@ -56,9 +57,7 @@ export function OrderFlightDetailPage() {
   const openCancelOnMountRef = useRef(
     (location.state as OrderDetailLocationState | null)?.action === "cancel",
   );
-  const cancelTicketIdRef = useRef(
-    (location.state as OrderDetailLocationState | null)?.ticketId,
-  );
+  const cancelTicketIdRef = useRef((location.state as OrderDetailLocationState | null)?.ticketId);
   const cancelFromListRef = useRef(
     (location.state as OrderDetailLocationState | null)?.action === "cancel" &&
       Boolean((location.state as OrderDetailLocationState | null)?.ticketId),
@@ -66,16 +65,18 @@ export function OrderFlightDetailPage() {
   const openRefundOnMountRef = useRef(
     (location.state as OrderDetailLocationState | null)?.action === "refund",
   );
-  const refundTicketIdRef = useRef(
-    (location.state as OrderDetailLocationState | null)?.ticketId,
-  );
+  const refundTicketIdRef = useRef((location.state as OrderDetailLocationState | null)?.ticketId);
   const headerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const [headerHeight, setHeaderHeight] = useState(ORDER_DETAIL_HEADER_FALLBACK_HEIGHT);
 
-  const { data: detail, isLoading, isError, error, refetch } = useFlightOrderDetail(
-    orderId,
-    channel,
-  );
+  const {
+    data: detail,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useFlightOrderDetail(orderId, channel);
   const cancelMutation = useCancelFlightOrder();
   const refundMutation = useRefundFlightOrder();
   const nonVoluntaryRefundMutation = useNonVoluntaryRefundFlightOrder();
@@ -109,6 +110,7 @@ export function OrderFlightDetailPage() {
   usePageHeader({ visible: false });
 
   useLayoutEffect(() => {
+    contentRef.current?.scrollTo({ top: 0 });
     scrollH5MainToTop();
   }, [orderId]);
 
@@ -243,9 +245,10 @@ export function OrderFlightDetailPage() {
 
   const runCancel = useCallback(async () => {
     if (!detail) return;
-    const target = cancelFromListRef.current && selectedTicket
-      ? { mode: "ticket" as const, ticketId: selectedTicket.Id }
-      : resolveCancelTarget(detail);
+    const target =
+      cancelFromListRef.current && selectedTicket
+        ? { mode: "ticket" as const, ticketId: selectedTicket.Id }
+        : resolveCancelTarget(detail);
     if (!target) {
       showToast("无法取消：缺少客票信息");
       return;
@@ -322,15 +325,17 @@ export function OrderFlightDetailPage() {
     ? shouldShowFlightFooter(detail.Actions, payHoldSecondsRemaining, selectedTicket)
     : false;
   const pending =
-    cancelMutation.isPending ||
-    refundMutation.isPending ||
-    nonVoluntaryRefundMutation.isPending;
+    cancelMutation.isPending || refundMutation.isPending || nonVoluntaryRefundMutation.isPending;
 
   return (
-    <div className="min-h-screen bg-[#F5F6F9]">
-      <HotelOrderDetailHeader ref={headerRef} onBack={handleBack} />
+    <div className="relative h-dvh overflow-hidden" style={ORDER_FLIGHT_DETAIL_BACKGROUND}>
+      <HotelOrderDetailHeader ref={headerRef} onBack={handleBack} variant="form" />
 
-      <div style={{ paddingTop: headerHeight }}>
+      <div
+        ref={contentRef}
+        className="absolute inset-x-0 bottom-0 overflow-y-auto overscroll-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        style={{ top: headerHeight }}
+      >
         {isLoading ? (
           <p className="px-4 pt-3 text-center text-sm text-[#999999]">加载中…</p>
         ) : isError || !detail ? (
@@ -338,47 +343,47 @@ export function OrderFlightDetailPage() {
             {formatApiError(error ?? new Error("订单不存在"))}
           </p>
         ) : (
-      <div
-        className="space-y-3 px-4 pb-6 pt-3"
-        style={{ paddingBottom: showFooter ? FOOTER_OFFSET : "1.5rem" }}
-      >
-        <FlightOrderInfoCard
-          detail={detail}
-          transactionId={selectedTicket?.Id}
-          payHoldSecondsRemaining={payHoldSecondsRemaining}
-          onShowBill={() => setBillOpen(true)}
-        />
-
-        <FlightOrderPassengerTabs
-          tickets={detail.Tickets}
-          selectedIndex={selectedTicketIndex}
-          onSelect={setSelectedTicketIndex}
-        />
-
-        {selectedTicket ? (
-          <>
-            <FlightOrderSegmentCard
-              ticket={selectedTicket}
-              onShowExplain={() => setExplainOpen(true)}
-            />
-            <FlightOrderTravelerCard ticket={selectedTicket} />
-          </>
-        ) : null}
-
-        <FlightOrderContactCard contact={detail.Contact} />
-
-        <HotelOrderApprovalSection histories={detail.Histories ?? []} />
-
-        {showInspurRepush ? (
-          <button
-            type="button"
-            className="w-full rounded-xl bg-white py-3 text-[14px] font-medium text-[#2768FA] shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
-            onClick={() => showToast("重推浪潮功能即将上线")}
+          <div
+            className="space-y-3 px-4 pb-6 pt-3"
+            style={{ paddingBottom: showFooter ? FOOTER_OFFSET : "1.5rem" }}
           >
-            重推浪潮
-          </button>
-        ) : null}
-      </div>
+            <FlightOrderInfoCard
+              detail={detail}
+              transactionId={selectedTicket?.Id}
+              payHoldSecondsRemaining={payHoldSecondsRemaining}
+              onShowBill={() => setBillOpen(true)}
+            />
+
+            <FlightOrderPassengerTabs
+              tickets={detail.Tickets}
+              selectedIndex={selectedTicketIndex}
+              onSelect={setSelectedTicketIndex}
+            />
+
+            {selectedTicket ? (
+              <>
+                <FlightOrderSegmentCard
+                  ticket={selectedTicket}
+                  onShowExplain={() => setExplainOpen(true)}
+                />
+                <FlightOrderTravelerCard ticket={selectedTicket} />
+              </>
+            ) : null}
+
+            <FlightOrderContactCard contact={detail.Contact} />
+
+            <HotelOrderApprovalSection histories={detail.Histories ?? []} />
+
+            {showInspurRepush ? (
+              <button
+                type="button"
+                className="w-full rounded-xl bg-white py-3 text-[14px] font-medium text-[#2768FA] shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
+                onClick={() => showToast("重推浪潮功能即将上线")}
+              >
+                重推浪潮
+              </button>
+            ) : null}
+          </div>
         )}
       </div>
 

@@ -11,6 +11,7 @@ export const ORDER_DETAIL_HEADER_FALLBACK_HEIGHT = 48;
 
 interface HotelOrderDetailHeaderProps {
   onBack: () => void;
+  variant?: "legacy" | "form";
 }
 
 function BackIcon() {
@@ -29,30 +30,53 @@ function BackIcon() {
 }
 
 export const HotelOrderDetailHeader = forwardRef<HTMLDivElement, HotelOrderDetailHeaderProps>(
-  function HotelOrderDetailHeader({ onBack }, ref) {
+  function HotelOrderDetailHeader({ onBack, variant = "legacy" }, ref) {
+    const isFormVariant = variant === "form";
+
     return (
       <div
         ref={ref}
-        className={`fixed inset-x-0 top-0 z-30 w-full shadow-[0_2px_12px_rgba(142,200,255,0.35)] ${HOTEL_DETAIL_FONT}`}
-        style={{ background: HOTEL_HEADER_GRADIENT }}
+        className={`fixed inset-x-0 top-0 z-30 mx-auto w-full max-w-lg overflow-hidden ${
+          isFormVariant ? "" : "shadow-[0_2px_12px_rgba(142,200,255,0.35)]"
+        } ${HOTEL_DETAIL_FONT}`}
+        style={{
+          background: isFormVariant ? "var(--brand-form-header-gradient)" : HOTEL_HEADER_GRADIENT,
+        }}
       >
         <div className="pt-[env(safe-area-inset-top)]">
-          <div className="flex h-12 items-center px-2.5">
+          <div
+            className={
+              isFormVariant
+                ? "relative flex h-11 items-center px-1"
+                : "flex h-12 items-center px-2.5"
+            }
+          >
             <button
               type="button"
               onClick={onBack}
-              className="flex h-10 w-9 shrink-0 touch-manipulation items-center justify-center rounded-full active:bg-white/40"
+              className={
+                isFormVariant
+                  ? "flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center text-2xl text-brand-title active:opacity-70"
+                  : "flex h-10 w-9 shrink-0 touch-manipulation items-center justify-center rounded-full active:bg-white/40"
+              }
               aria-label="返回"
             >
-              <BackIcon />
+              {isFormVariant ? "‹" : <BackIcon />}
             </button>
             <h1
-              className="min-w-0 flex-1 text-center text-[16px] font-semibold leading-tight tracking-tight"
-              style={{ color: HOTEL_CHROME.title }}
+              className={
+                isFormVariant
+                  ? "pointer-events-none absolute inset-x-16 truncate text-center text-base font-semibold text-brand-title"
+                  : "min-w-0 flex-1 text-center text-[16px] font-semibold leading-tight tracking-tight"
+              }
+              style={{ color: isFormVariant ? undefined : HOTEL_CHROME.title }}
             >
               订单详情
             </h1>
-            <span className="w-9 shrink-0" aria-hidden />
+            <span
+              className={isFormVariant ? "ml-auto h-11 w-11 shrink-0" : "w-9 shrink-0"}
+              aria-hidden
+            />
           </div>
         </div>
       </div>

@@ -36,6 +36,7 @@ import { scrollH5MainToTop } from "@/lib/scroll-h5-main";
 
 const FOOTER_OFFSET = "calc(4.5rem + env(safe-area-inset-bottom))";
 const ORDERS_HOTEL_FALLBACK = `/home/orders?tab=${TAB_ID_TO_PARAM.hotel}`;
+const ORDER_HOTEL_DETAIL_BACKGROUND = { background: "var(--brand-form-header-gradient)" };
 
 interface OrderDetailLocationState {
   action?: "cancel";
@@ -51,12 +52,16 @@ export function OrderHotelDetailPage() {
     (location.state as OrderDetailLocationState | null)?.action === "cancel",
   );
   const headerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const [headerHeight, setHeaderHeight] = useState(ORDER_DETAIL_HEADER_FALLBACK_HEIGHT);
 
-  const { data: rawDetail, isLoading, isError, error, refetch } = useHotelOrderDetail(
-    orderId,
-    channel,
-  );
+  const {
+    data: rawDetail,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useHotelOrderDetail(orderId, channel);
   const detail = useMemo(
     () => (rawDetail ? coerceHotelOrderDetail(rawDetail) : undefined),
     [rawDetail],
@@ -90,6 +95,7 @@ export function OrderHotelDetailPage() {
   usePageHeader({ visible: false });
 
   useLayoutEffect(() => {
+    contentRef.current?.scrollTo({ top: 0 });
     scrollH5MainToTop();
   }, [orderId]);
 
@@ -220,10 +226,14 @@ export function OrderHotelDetailPage() {
   const pending = cancelMutation.isPending || sms.send.isPending || sms.confirm.isPending;
 
   return (
-    <div className="min-h-screen bg-[#F5F6F9]">
-      <HotelOrderDetailHeader ref={headerRef} onBack={handleBack} />
+    <div className="relative h-dvh overflow-hidden" style={ORDER_HOTEL_DETAIL_BACKGROUND}>
+      <HotelOrderDetailHeader ref={headerRef} onBack={handleBack} variant="form" />
 
-      <div style={{ paddingTop: headerHeight }}>
+      <div
+        ref={contentRef}
+        className="absolute inset-x-0 bottom-0 overflow-y-auto overscroll-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        style={{ top: headerHeight }}
+      >
         {isLoading ? (
           <p className="px-4 pt-3 text-center text-sm text-[#999999]">加载中…</p>
         ) : isError || !detail ? (
@@ -231,50 +241,52 @@ export function OrderHotelDetailPage() {
             {formatApiError(error ?? new Error("订单不存在"))}
           </p>
         ) : (
-      <div
-        className="space-y-3 px-4 pb-6 pt-3"
-        style={{
-          paddingBottom: showFooter ? FOOTER_OFFSET : "1.5rem",
-        }}
-      >
-        <HotelOrderInfoCard
-          detail={detail}
-          transactionId={selectedRoom?.Id}
-          onShowBill={() => setBillOpen(true)}
-        />
-
-        <HotelOrderRoomTabs
-          roomCount={detail.Rooms.length}
-          selectedIndex={selectedRoomIndex}
-          onSelect={setSelectedRoomIndex}
-        />
-
-        {selectedRoom ? (
-          <>
-            <HotelOrderHotelInfoCard room={selectedRoom} />
-            <HotelOrderTravelerCard room={selectedRoom} hideViolation={hideViolation} />
-          </>
-        ) : null}
-
-        <HotelOrderApprovalSection histories={detail.Histories} />
-
-        {detail.Actions.smsAction === "readOnly" && detail.Actions.smsReadOnlyText ? (
-          <p className="text-center text-[13px] text-[#666666]">{detail.Actions.smsReadOnlyText}</p>
-        ) : null}
-        {detail.Actions.smsError ? (
-          <p className="text-center text-[13px] text-[#FF4D4F]">{detail.Actions.smsError}</p>
-        ) : null}
-
-        {showInspurRepush ? (
-          <button
-            type="button"
-            className="w-full rounded-xl bg-white py-3 text-[14px] font-medium text-brand-primary shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
-            onClick={() => showToast("重推浪潮功能即将上线")}
+          <div
+            className="space-y-3 px-4 pb-6 pt-3"
+            style={{
+              paddingBottom: showFooter ? FOOTER_OFFSET : "1.5rem",
+            }}
           >
-            重推浪潮
-          </button>
-        ) : null}
-      </div>
+            <HotelOrderInfoCard
+              detail={detail}
+              transactionId={selectedRoom?.Id}
+              onShowBill={() => setBillOpen(true)}
+            />
+
+            <HotelOrderRoomTabs
+              roomCount={detail.Rooms.length}
+              selectedIndex={selectedRoomIndex}
+              onSelect={setSelectedRoomIndex}
+            />
+
+            {selectedRoom ? (
+              <>
+                <HotelOrderHotelInfoCard room={selectedRoom} />
+                <HotelOrderTravelerCard room={selectedRoom} hideViolation={hideViolation} />
+              </>
+            ) : null}
+
+            <HotelOrderApprovalSection histories={detail.Histories} />
+
+            {detail.Actions.smsAction === "readOnly" && detail.Actions.smsReadOnlyText ? (
+              <p className="text-center text-[13px] text-[#666666]">
+                {detail.Actions.smsReadOnlyText}
+              </p>
+            ) : null}
+            {detail.Actions.smsError ? (
+              <p className="text-center text-[13px] text-[#FF4D4F]">{detail.Actions.smsError}</p>
+            ) : null}
+
+            {showInspurRepush ? (
+              <button
+                type="button"
+                className="w-full rounded-xl bg-white py-3 text-[14px] font-medium text-brand-primary shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
+                onClick={() => showToast("重推浪潮功能即将上线")}
+              >
+                重推浪潮
+              </button>
+            ) : null}
+          </div>
         )}
       </div>
 
@@ -287,7 +299,11 @@ export function OrderHotelDetailPage() {
             onPay={handlePay}
           />
 
-          <HotelOrderBillSheet open={billOpen} lines={billLines} onClose={() => setBillOpen(false)} />
+          <HotelOrderBillSheet
+            open={billOpen}
+            lines={billLines}
+            onClose={() => setBillOpen(false)}
+          />
 
           <HotelOrderCancelDialog
             open={cancelOpen}
@@ -296,7 +312,8 @@ export function OrderHotelDetailPage() {
             onClose={() => setCancelOpen(false)}
           />
 
-          {(detail.Actions.smsAction === "sendCode" || detail.Actions.smsAction === "confirmCode") && (
+          {(detail.Actions.smsAction === "sendCode" ||
+            detail.Actions.smsAction === "confirmCode") && (
             <HotelOrderSmsSheet
               open={smsOpen}
               mode={smsMode}

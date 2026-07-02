@@ -218,6 +218,7 @@ Reference files:
 - 2026-06-27 - init: Vite React Tailwind app detected in `apps/h5`; shared design tokens come from `packages/ui`.
 - 2026-06-27 - TravelApplyPage header: aligned the page-level header background with `--brand-form-header-gradient`, overlapped the first form card into the gradient area, and changed metadata chips to light glass surfaces for contrast.
 - 2026-06-27 - RYX Blue design contract: promoted `docs/融易蓝设计规范.md` into this project-level `DESIGN.md`; CSS token values remain in `packages/ui/src/styles/globals.css`.
+- 2026-07-02 - Travel order detail shell: aligned hotel, flight, and train order details with form-page chrome by using the form gradient root, a transparent fixed header, and an independent hidden-scroll content area.
 - 2026-07-02 - FlightBookPage shell: aligned flight booking with train booking by using the form-page gradient root, fixed transparent header, independent hidden-scroll content, and train-style white section cards.
 - 2026-06-27 - Form gradient layout principle: documented why form pages must use root-level `--brand-form-header-gradient` plus card overlap instead of a tall `brand-header-start` to `brand-header-end` block.
 - 2026-06-27 - TravelApprovalPage list shell: replaced the flat white tab strip with a page-level form gradient header, segmented approval tabs, lifted task cards, and tokenized task status treatments while preserving remote approval workflows.

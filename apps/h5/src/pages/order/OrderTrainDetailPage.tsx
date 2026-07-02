@@ -47,6 +47,7 @@ import { scrollH5MainToTopAfterLayout } from "@/lib/scroll-h5-main";
 const FOOTER_OFFSET = "calc(4.5rem + env(safe-area-inset-bottom))";
 const FOOTER_OFFSET_WITH_SECONDARY = "calc(7rem + env(safe-area-inset-bottom))";
 const ORDERS_TRAIN_FALLBACK = `/home/orders?tab=${TAB_ID_TO_PARAM.train}`;
+const ORDER_TRAIN_DETAIL_BACKGROUND = { background: "var(--brand-form-header-gradient)" };
 
 interface OrderDetailLocationState {
   action?: "cancel" | "refund";
@@ -65,12 +66,16 @@ export function OrderTrainDetailPage() {
     (location.state as OrderDetailLocationState | null)?.action === "refund",
   );
   const headerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const [headerHeight, setHeaderHeight] = useState(ORDER_DETAIL_HEADER_FALLBACK_HEIGHT);
 
-  const { data: detail, isLoading, isError, error, refetch } = useTrainOrderDetail(
-    orderId,
-    channel,
-  );
+  const {
+    data: detail,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useTrainOrderDetail(orderId, channel);
   const cancelMutation = useCancelTrainOrder();
   const issueMutation = useIssueTrainOrder();
   const refundMutation = useRefundTrainOrder();
@@ -111,11 +116,13 @@ export function OrderTrainDetailPage() {
   usePageHeader({ visible: false });
 
   useLayoutEffect(() => {
+    contentRef.current?.scrollTo({ top: 0 });
     scrollH5MainToTopAfterLayout();
   }, [orderId, location.pathname]);
 
   useLayoutEffect(() => {
     if (!detail) return;
+    contentRef.current?.scrollTo({ top: 0 });
     scrollH5MainToTopAfterLayout();
   }, [detail?.OrderId, showHoldBanner]);
 
@@ -268,10 +275,14 @@ export function OrderTrainDetailPage() {
   const pending = cancelMutation.isPending || issueMutation.isPending || refundMutation.isPending;
 
   return (
-    <div className="min-h-screen bg-[#F5F6F9]">
-      <HotelOrderDetailHeader ref={headerRef} onBack={handleBack} />
+    <div className="relative h-dvh overflow-hidden" style={ORDER_TRAIN_DETAIL_BACKGROUND}>
+      <HotelOrderDetailHeader ref={headerRef} onBack={handleBack} variant="form" />
 
-      <div style={{ paddingTop: headerHeight }}>
+      <div
+        ref={contentRef}
+        className="absolute inset-x-0 bottom-0 overflow-y-auto overscroll-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        style={{ top: headerHeight }}
+      >
         {showHoldBanner && payHoldSecondsRemaining != null ? (
           <TrainOrderHoldBanner
             payHoldSecondsRemaining={payHoldSecondsRemaining}
