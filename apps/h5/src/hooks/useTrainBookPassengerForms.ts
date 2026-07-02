@@ -25,7 +25,7 @@ export function useTrainBookPassengerForms(
           const approver = staff.Approvers[0];
           next[passenger.id] = {
             ...next[passenger.id],
-            approvalId: String(approver.AccountId ?? approver.Id ?? ""),
+            approvalId: String(approver.AccountId ?? ""),
             approvalName: approver.Name ?? "",
           };
         }

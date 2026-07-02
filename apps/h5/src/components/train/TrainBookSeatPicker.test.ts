@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { togglePassengerSeatSelection } from "./TrainBookSeatPicker";
+import { togglePassengerSeatSelection, toggleTrainSeatPreference } from "./TrainBookSeatPicker";
 
 describe("togglePassengerSeatSelection", () => {
   it("selects and switches a seat for one passenger", () => {
@@ -14,5 +14,17 @@ describe("togglePassengerSeatSelection", () => {
     expect(togglePassengerSeatSelection(["A", ""], 1, 2, "C")).toEqual(["A", "C"]);
     expect(togglePassengerSeatSelection(["A", "C"], 0, 2, "B")).toEqual(["B", "C"]);
     expect(togglePassengerSeatSelection(["A", "C"], 1, 2, "C")).toEqual(["A", ""]);
+  });
+});
+
+describe("toggleTrainSeatPreference", () => {
+  it("uses a shared legacy preference pool capped by passenger count", () => {
+    expect(toggleTrainSeatPreference([], "1A", 2)).toEqual(["1A"]);
+    expect(toggleTrainSeatPreference(["1A"], "2F", 2)).toEqual(["1A", "2F"]);
+    expect(toggleTrainSeatPreference(["1A", "2F"], "2F", 2)).toEqual(["1A"]);
+  });
+
+  it("replaces the latest selected preference when the pool is full", () => {
+    expect(toggleTrainSeatPreference(["1A", "2F"], "1C", 2)).toEqual(["1A", "1C"]);
   });
 });

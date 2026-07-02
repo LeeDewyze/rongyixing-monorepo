@@ -23,7 +23,7 @@ import type {
 
 import { normalizeEntityKeys } from "./flight-detail-adapter.js";
 import { HOTEL_METHODS } from "../methods/hotel.js";
-import { HOTEL_FLOW_METHODS } from "../methods/hotel-flow.js";
+import { HOTEL_FLOW_METHODS, TOURIST_HOTEL_FLOW_METHODS } from "../methods/hotel-flow.js";
 import { TMC_METHODS } from "../methods/tmc.js";
 import type { ProxyClient } from "../proxy/proxy-client.js";
 
@@ -37,6 +37,15 @@ export interface HotelApi {
   getPolicy(params: HotelPolicyParams): Promise<HotelPolicyResponse>;
   initBook(params: HotelInitBookParams): Promise<HotelInitBookResponse>;
   submitBook(params: HotelBookParams): Promise<HotelBookResponse>;
+}
+
+function isTouristChannel(params?: { channel?: string }): boolean {
+  return params?.channel === "tourist";
+}
+
+function stripChannel<T extends { channel?: string }>(params: T): Omit<T, "channel"> {
+  const { channel: _channel, ...rest } = params;
+  return rest;
 }
 
 type HotelCityLine = HotelCity & {
@@ -1150,10 +1159,11 @@ function normalizeHotelCityByMap(
   };
 }
 
-function normalizeHotelInitBookResponse(res: unknown): HotelInitBookResponse {
+export function normalizeHotelInitBookResponse(res: unknown): HotelInitBookResponse {
   if (!res || typeof res !== "object") return {};
   const raw = res as Record<string, unknown>;
   return {
+    ...(raw as HotelInitBookResponse),
     OrderAmount: toPrice(raw.OrderAmount),
     ServiceFees: raw.ServiceFees as HotelInitBookResponse["ServiceFees"],
     PayTypes: raw.PayTypes as Record<string, string> | undefined,
@@ -1162,7 +1172,10 @@ function normalizeHotelInitBookResponse(res: unknown): HotelInitBookResponse {
     Staffs: raw.Staffs as HotelInitBookResponse["Staffs"],
     OutNumbers: raw.OutNumbers as Record<string, string[]> | undefined,
     Tmc: raw.Tmc as Record<string, unknown> | undefined,
-    isSkipApprove: Boolean(raw.isSkipApprove),
+    isSkipApprove:
+      typeof raw.isSkipApprove === "boolean"
+        ? raw.isSkipApprove
+        : (raw as HotelInitBookResponse).isSkipApprove,
   };
 }
 
@@ -1204,7 +1217,9 @@ export function createHotelApi(proxy: ProxyClient): HotelApi {
     },
     async getConditions(params) {
       const res = await proxy.send<unknown>({
-        method: HOTEL_METHODS.CONDITION_GETS,
+        method: isTouristChannel(params)
+          ? TOURIST_HOTEL_FLOW_METHODS.CONDITION_GETS
+          : HOTEL_METHODS.CONDITION_GETS,
         data: {
           cityCode: params.CityCode,
         },
@@ -1215,7 +1230,9 @@ export function createHotelApi(proxy: ProxyClient): HotelApi {
       const keyword = params.Keyword.trim();
       if (!keyword) return [];
       const res = await proxy.send<unknown>({
-        method: HOTEL_METHODS.HOME_SEARCHHOTEL,
+        method: isTouristChannel(params)
+          ? TOURIST_HOTEL_FLOW_METHODS.SEARCH_HOTEL
+          : HOTEL_METHODS.HOME_SEARCHHOTEL,
         data: {
           PageIndex: params.PageIndex ?? 0,
           CityName: params.CityName,
@@ -1227,14 +1244,16 @@ export function createHotelApi(proxy: ProxyClient): HotelApi {
     },
     async getList(params) {
       const res = await proxy.send<unknown>({
-        method: HOTEL_FLOW_METHODS.LIST,
+        method: isTouristChannel(params) ? TOURIST_HOTEL_FLOW_METHODS.LIST : HOTEL_FLOW_METHODS.LIST,
         data: buildHotelListRequest(params),
       });
       return normalizeHotelListResponse(res);
     },
     async getDetail(params) {
       const res = await proxy.send<unknown>({
-        method: HOTEL_FLOW_METHODS.DETAIL,
+        method: isTouristChannel(params)
+          ? TOURIST_HOTEL_FLOW_METHODS.DETAIL
+          : HOTEL_FLOW_METHODS.DETAIL,
         data: buildHotelDetailRequest(params),
       });
       return normalizeHotelDetailResponse(res, params);
@@ -1248,16 +1267,20 @@ export function createHotelApi(proxy: ProxyClient): HotelApi {
     },
     async initBook(params) {
       const res = await proxy.send<unknown>({
-        method: HOTEL_FLOW_METHODS.INIT,
-        data: params,
+        method: isTouristChannel(params)
+          ? TOURIST_HOTEL_FLOW_METHODS.INIT
+          : HOTEL_FLOW_METHODS.INIT,
+        data: stripChannel(params),
         timeoutMs: 60_000,
       });
       return normalizeHotelInitBookResponse(res);
     },
     async submitBook(params) {
       const res = await proxy.send<unknown>({
-        method: HOTEL_FLOW_METHODS.BOOK,
-        data: params,
+        method: isTouristChannel(params)
+          ? TOURIST_HOTEL_FLOW_METHODS.BOOK
+          : HOTEL_FLOW_METHODS.BOOK,
+        data: stripChannel(params),
         timeoutMs: 60_000,
       });
       return normalizeHotelBookResponse(res);

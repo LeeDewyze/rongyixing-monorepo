@@ -4,11 +4,12 @@ import {
   createHotelApi,
   buildHotelDetailRequest,
   normalizeHotelDetailResponse,
+  normalizeHotelInitBookResponse,
   normalizeHotelPolicyResponse,
 } from "./hotel.js";
 import { createProxyClient } from "../proxy/proxy-client.js";
 import { successResponse } from "../proxy/response-adapter.js";
-import { HOTEL_FLOW_METHODS } from "../methods/hotel-flow.js";
+import { HOTEL_FLOW_METHODS, TOURIST_HOTEL_FLOW_METHODS } from "../methods/hotel-flow.js";
 import { HOTEL_METHODS } from "../methods/hotel.js";
 
 describe("createHotelApi (mock mode)", () => {
@@ -177,6 +178,74 @@ describe("createHotelApi (mock mode)", () => {
     expect(result.Brands[0]?.Name).toBe("亚朵");
     expect(result.Amenities[0]?.Tag).toBe("Facility");
     expect(result.Tmc?.Id).toBe("tmc-1");
+  });
+
+  it("uses tourist hotel methods when channel is tourist", async () => {
+    const captured: Array<{ method: string; data: unknown }> = [];
+    const proxyWithCapture = createProxyClient({
+      baseUrl: "https://example.com",
+      mode: "mock",
+      mockHandler: async (method, data) => {
+        captured.push({ method, data });
+        if (method === TOURIST_HOTEL_FLOW_METHODS.SEARCH_HOTEL) {
+          return successResponse([{ Text: "北京商大春公寓", Value: "7", IsHotel: true }]);
+        }
+        if (method === TOURIST_HOTEL_FLOW_METHODS.LIST) {
+          return successResponse({ HotelDayPrices: [], DataCount: 0 });
+        }
+        if (method === TOURIST_HOTEL_FLOW_METHODS.DETAIL) {
+          return successResponse({ Hotel: { Id: "7", Name: "北京商大春公寓" } });
+        }
+        if (method === TOURIST_HOTEL_FLOW_METHODS.INIT) {
+          return successResponse({ OrderAmount: 100 });
+        }
+        if (method === TOURIST_HOTEL_FLOW_METHODS.BOOK) {
+          return successResponse({ OrderId: "order-1" });
+        }
+        return successResponse({ Geos: [], Brands: [], Amenities: [] });
+      },
+    });
+    const api = createHotelApi(proxyWithCapture);
+
+    await api.getConditions({ channel: "tourist", CityCode: "1101" });
+    await api.searchHotel({
+      channel: "tourist",
+      CityCode: "1101",
+      CityName: "北京",
+      Keyword: "北京商大春公寓",
+    });
+    await api.getList({
+      channel: "tourist",
+      CityCode: "1101",
+      CheckInDate: "2026-07-05",
+      CheckOutDate: "2026-07-09",
+    });
+    await api.getDetail({
+      channel: "tourist",
+      HotelId: "7",
+      CityCode: "1101",
+      CheckInDate: "2026-07-05",
+      CheckOutDate: "2026-07-09",
+    });
+    await api.initBook({
+      channel: "tourist",
+      Passengers: [],
+    });
+    await api.submitBook({
+      channel: "tourist",
+      Passengers: [],
+    });
+
+    expect(captured.map((item) => item.method)).toEqual([
+      TOURIST_HOTEL_FLOW_METHODS.CONDITION_GETS,
+      TOURIST_HOTEL_FLOW_METHODS.SEARCH_HOTEL,
+      TOURIST_HOTEL_FLOW_METHODS.LIST,
+      TOURIST_HOTEL_FLOW_METHODS.DETAIL,
+      TOURIST_HOTEL_FLOW_METHODS.INIT,
+      TOURIST_HOTEL_FLOW_METHODS.BOOK,
+    ]);
+    expect(captured.at(-2)?.data).not.toHaveProperty("channel");
+    expect(captured.at(-1)?.data).not.toHaveProperty("channel");
   });
 
   it("getList normalizes legacy HotelDayPrices response", async () => {
@@ -378,6 +447,36 @@ describe("createHotelApi (mock mode)", () => {
     const city = await api.getCityByMap({ lat: 39.9042, lng: 116.4074 });
     expect(city?.Code).toBe("010");
     expect(city?.Name).toBe("北京");
+  });
+});
+
+describe("normalizeHotelInitBookResponse", () => {
+  it("passes through backend fields from initialize response", () => {
+    expect(
+      normalizeHotelInitBookResponse({
+        OrderAmount: "100.5",
+        ServiceFee: 0,
+        Linkman: {
+          Name: "姜茗豪",
+          Email: "",
+          Mobile: "18610773065",
+        },
+        PayTypes: {
+          Alipay: "支付宝",
+        },
+      }),
+    ).toMatchObject({
+      OrderAmount: 100.5,
+      ServiceFee: 0,
+      Linkman: {
+        Name: "姜茗豪",
+        Email: "",
+        Mobile: "18610773065",
+      },
+      PayTypes: {
+        Alipay: "支付宝",
+      },
+    });
   });
 });
 

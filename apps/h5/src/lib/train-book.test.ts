@@ -57,10 +57,37 @@ describe("buildTrainInitBookDto", () => {
     const dto = buildTrainInitBookDto({ selection, passengers: passengers as never });
     const train = dto.Passengers[0]?.Train;
     expect(dto.Passengers[0]?.ClientId).toBe("p1");
+    expect(dto).not.toHaveProperty("Channel");
     expect(train?.BookSeatType).toBe(TrainSeatType.SecondClassSeat);
     expect(train?.BookSeatLocation).toBe("");
     expect(train?.Seats?.[0]?.SeatTypeName).toBe("二等座");
     expect(train?.OriginalSearchResultSeats?.[0]?.SeatTypeName).toBe("二等座");
+  });
+
+  it("omits travel form fields in personal mode", () => {
+    const dto = buildTrainInitBookDto({
+      selection,
+      passengers: passengers as never,
+      travelFormId: "tf-001",
+      travelMode: "personal",
+    });
+    expect(dto.TravelFormId).toBeUndefined();
+    expect(dto.Passengers[0]?.travelFormId).toBeUndefined();
+  });
+
+  it("can initialize personal train booking with train-only passenger before traveler selection", () => {
+    const dto = buildTrainInitBookDto({
+      selection,
+      passengers: [],
+      travelMode: "personal",
+      includeTrainOnlyPassenger: true,
+    });
+
+    expect(dto.Passengers).toHaveLength(1);
+    expect(dto.Passengers[0]?.ClientId).toBe("g1");
+    expect(dto.Passengers[0]?.Train?.BookSeatType).toBe(TrainSeatType.SecondClassSeat);
+    expect(dto.Passengers[0]?.Credentials).toBeUndefined();
+    expect(dto.Passengers[0]?.travelFormId).toBeUndefined();
   });
 });
 
@@ -103,11 +130,11 @@ describe("buildTrainOrderBookDto seat preferences", () => {
     const dto = buildTrainOrderBookDto({
       selection,
       passengers: passengers as never,
-      bookSeatLocations: ["A", "C"],
+      bookSeatLocations: ["1A", "2C"],
     });
 
     expect(dto.Passengers[0]?.Train?.BookSeatLocation).toBe("1A");
-    expect(dto.Passengers[1]?.Train?.BookSeatLocation).toBe("1C");
+    expect(dto.Passengers[1]?.Train?.BookSeatLocation).toBe("2C");
   });
 
   it("applies order-level notify language to every passenger", () => {
@@ -119,6 +146,40 @@ describe("buildTrainOrderBookDto seat preferences", () => {
 
     expect(dto.Passengers[0]?.MessageLang).toBe("en");
     expect(dto.Passengers[1]?.MessageLang).toBe("en");
+  });
+
+  it("omits travel form fields in personal mode", () => {
+    const dto = buildTrainOrderBookDto({
+      selection,
+      passengers: passengers as never,
+      travelFormId: "tf-001",
+      travelMode: "personal",
+    });
+
+    expect(dto.TravelFormId).toBeUndefined();
+    expect(dto.Passengers[0]?.travelFormId).toBeUndefined();
+    expect(dto.Passengers[0]?.TravelType).toBe(2);
+  });
+
+  it("adds manual order linkman for personal train booking", () => {
+    const dto = buildTrainOrderBookDto({
+      selection,
+      passengers: passengers as never,
+      travelMode: "personal",
+      orderLinkman: {
+        Name: " 张三 ",
+        Mobile: " 13800000000 ",
+        Email: " zhangsan@example.com ",
+      },
+    });
+
+    expect(dto.Linkmans).toEqual([
+      {
+        Name: "张三",
+        Mobile: "13800000000",
+        Email: "zhangsan@example.com",
+      },
+    ]);
   });
 });
 
@@ -206,7 +267,46 @@ describe("validateTrainBookForms", () => {
         forms,
         outNumberFieldsByPassenger: { p1: [] },
         authorizedContacts: [],
-        staffs: [{ Id: "acc-1", Name: "Passenger One", isAllowSelectApprove: false }],
+        staffs: [{ Id: "acc-1", Name: "Passenger One", Approvers: [] }],
+        requireIllegalReason: false,
+      }),
+    ).toBeNull();
+  });
+
+  it("requires manual order linkman when personal train booking submits", () => {
+    const forms = {
+      p1: createTrainPassengerBookForm(passengers[0] as never),
+    };
+    expect(
+      validateTrainBookForms({
+        passengers: passengers as never,
+        forms,
+        outNumberFieldsByPassenger: { p1: [] },
+        authorizedContacts: [],
+        orderLinkman: { Name: "", Mobile: "", Email: "" },
+        requireOrderLinkman: true,
+        requireIllegalReason: false,
+      }),
+    ).toBe("请填写联系人姓名");
+    expect(
+      validateTrainBookForms({
+        passengers: passengers as never,
+        forms,
+        outNumberFieldsByPassenger: { p1: [] },
+        authorizedContacts: [],
+        orderLinkman: { Name: "张三", Mobile: "12345", Email: "" },
+        requireOrderLinkman: true,
+        requireIllegalReason: false,
+      }),
+    ).toBe("请输入正确的联系人手机号");
+    expect(
+      validateTrainBookForms({
+        passengers: passengers as never,
+        forms,
+        outNumberFieldsByPassenger: { p1: [] },
+        authorizedContacts: [],
+        orderLinkman: { Name: "张三", Mobile: "13800000000", Email: "" },
+        requireOrderLinkman: true,
         requireIllegalReason: false,
       }),
     ).toBeNull();

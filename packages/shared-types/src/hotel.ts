@@ -2,9 +2,11 @@ import type { FlightOrderDetailFields } from "./flight-order.js";
 
 /** Legacy TMC hotel type filter (list page segment). */
 export type HotelType = "Normal" | "Tmc" | "Agent";
+export type ProductChannel = "tmc" | "tourist";
 
 /** Hotel list query params. */
 export interface HotelListParams {
+  channel?: ProductChannel;
   CityCode?: string;
   CityName?: string;
   CheckInDate?: string;
@@ -36,6 +38,7 @@ export interface HotelListParams {
 }
 
 export interface HotelKeywordSearchParams {
+  channel?: ProductChannel;
   PageIndex?: number;
   CityName: string;
   CityCode: string;
@@ -80,6 +83,7 @@ export interface HotelListResponse {
 }
 
 export interface HotelConditionParams {
+  channel?: ProductChannel;
   CityCode: string;
 }
 
@@ -131,6 +135,7 @@ export interface HotelMapCityResponse {
 }
 
 export interface HotelDetailParams {
+  channel?: ProductChannel;
   HotelId: string;
   CheckInDate?: string;
   CheckOutDate?: string;
@@ -354,6 +359,7 @@ export interface HotelBookLinkmanDto {
 
 /** Legacy OrderBookDto for hotel. */
 export interface HotelOrderBookDto {
+  channel?: ProductChannel;
   TravelFormId?: string;
   Passengers: HotelBookPassengerDto[];
   Linkmans?: HotelBookLinkmanDto[];
@@ -383,6 +389,7 @@ export interface HotelInitBookResponse {
   Tmc?: Record<string, unknown>;
   TmcServices?: { Id?: string | number; Name?: string; LogoFullFileName?: string }[];
   isSkipApprove?: boolean;
+  Linkman?: HotelBookLinkmanDto;
 }
 
 export type HotelBookParams = HotelOrderBookDto;
@@ -396,23 +403,27 @@ export interface HotelBookResponse {
 }
 
 export interface OrderDetailParams {
+  channel?: ProductChannel;
   OrderId: string;
 }
 
 export type OrderDetailProductType = "Flight" | "Hotel" | "Train" | "Car";
 
 export interface HotelCancelParams {
+  channel?: ProductChannel;
   OrderId: string;
   OrderHotelId: string;
   Channel?: string;
 }
 
 export interface HotelOrderSmsParams {
+  channel?: ProductChannel;
   Mobile: string;
   OrderHotelId: string;
 }
 
 export interface HotelOrderSmsConfirmParams {
+  channel?: ProductChannel;
   SmsCode: string;
   OrderHotelId: string;
 }
@@ -533,6 +544,8 @@ export interface OrderPayChannel {
 }
 
 export interface PayTotalAmountParams {
+  channel?: ProductChannel;
+  ProductType?: OrderDetailProductType;
   OrderId: string;
   Key?: string;
 }
@@ -543,6 +556,8 @@ export interface PayTotalAmountResponse {
 }
 
 export interface PayCreateParams {
+  channel?: ProductChannel;
+  ProductType?: OrderDetailProductType;
   OrderId: string;
   PayType: string;
   Amount?: number;

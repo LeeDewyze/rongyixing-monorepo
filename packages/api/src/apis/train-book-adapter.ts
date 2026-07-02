@@ -159,7 +159,16 @@ function stripCredentialsForWire(
   return next as TrainOrderBookDto["Passengers"][number]["Credentials"];
 }
 
-function stripPassengerForInit(
+function stripPassengerForPersonalInit(
+  passenger: TrainOrderBookDto["Passengers"][number],
+): TrainOrderBookDto["Passengers"][number] {
+  return {
+    ClientId: passenger.ClientId,
+    Train: stripTrainEntityForInit(passenger.Train),
+  };
+}
+
+function stripPassengerForBusinessInit(
   passenger: TrainOrderBookDto["Passengers"][number],
 ): TrainOrderBookDto["Passengers"][number] {
   const next = { ...passenger, TravelPayType: 0 };
@@ -193,14 +202,20 @@ function stripPassengerForBook(
 
 /** Strip heavy fields before Train-Initialize — aligned with legacy api.md. */
 export function stripTrainInitBookDto(dto: TrainOrderBookDto): TrainOrderBookDto {
-  const passengers = dto.Passengers.map(stripPassengerForInit);
-  const travelFormId = dto.TravelFormId ?? passengers.find((p) => p.travelFormId)?.travelFormId;
+  const isPersonalInit = dto.channel === "tourist";
+  const passengers = dto.Passengers.map(
+    isPersonalInit ? stripPassengerForPersonalInit : stripPassengerForBusinessInit,
+  );
+  const travelFormId = dto.TravelFormId;
 
-  return {
-    ...dto,
+  const result: TrainOrderBookDto = {
     TravelFormId: travelFormId ?? "",
     Passengers: passengers,
   };
+  if (dto.channel) {
+    result.channel = dto.channel;
+  }
+  return result;
 }
 
 /** Strip heavy fields before Train-Book seat swap. */
@@ -269,7 +284,7 @@ export function prepareTrainBookSubmitDto(dto: TrainOrderBookDto): TrainOrderBoo
 export function formatBookSeatLocation(location: string | undefined): string | undefined {
   if (!location?.trim()) return undefined;
   const trimmed = location.trim();
-  if (trimmed.startsWith("1")) return trimmed;
+  if (/^[12][A-Z]$/i.test(trimmed)) return trimmed.toUpperCase();
   return `1${trimmed}`;
 }
 

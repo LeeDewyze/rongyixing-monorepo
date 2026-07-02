@@ -48,10 +48,12 @@ export function TrainBookFooter({
   onDirectBook,
 }: TrainBookFooterProps) {
   const submitDisabled = disabled || pending;
+  const hasBill = Boolean(billBreakdown?.passengers.length && amount > 0);
+  const amountText = Number.isFinite(amount) && amount > 0 ? String(amount) : "--";
 
   return (
     <>
-      {billOpen ? (
+      {billOpen && hasBill ? (
         <button
           type="button"
           className="fixed inset-0 z-20 bg-black/25"
@@ -61,24 +63,28 @@ export function TrainBookFooter({
       ) : null}
 
       <div className={`fixed inset-x-0 bottom-0 z-30 flex w-full flex-col ${HOTEL_DETAIL_FONT}`}>
-        {billOpen && billBreakdown ? <TrainBookBillSheet breakdown={billBreakdown} /> : null}
+        {billOpen && hasBill && billBreakdown ? (
+          <TrainBookBillSheet breakdown={billBreakdown} />
+        ) : null}
 
         <div className="bg-white px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
           <div className="flex items-center gap-3">
             <div className="flex h-9 min-w-0 flex-1 items-center gap-2">
               <p className="m-0 shrink-0 text-[13px] leading-none text-[#666666]">总计</p>
               <p className="m-0 text-[25px] font-semibold leading-none text-[#FF4D4F]">
-                ¥{Number.isFinite(amount) ? amount : "—"}
+                ¥{amountText}
               </p>
-              <button
-                type="button"
-                className="inline-flex items-center gap-1 text-[13px] leading-none text-[#2768FA]"
-                aria-expanded={billOpen}
-                onClick={onBillToggle}
-              >
-                明细
-                <BillChevron open={billOpen} />
-              </button>
+              {hasBill ? (
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1 text-[13px] leading-none text-[#2768FA]"
+                  aria-expanded={billOpen}
+                  onClick={onBillToggle}
+                >
+                  明细
+                  <BillChevron open={billOpen} />
+                </button>
+              ) : null}
             </div>
 
             {showOfficialBook ? (
@@ -86,7 +92,7 @@ export function TrainBookFooter({
                 type="button"
                 disabled={submitDisabled}
                 onClick={onOfficialBook}
-                className="h-10 min-w-[96px] shrink-0 rounded-full bg-[#5099fe] px-4 text-[14px] font-medium text-white disabled:opacity-50"
+                className="h-10 min-w-[96px] shrink-0 rounded-full bg-gradient-to-r from-brand-btn-start to-brand-btn-end px-4 text-[14px] font-medium text-white disabled:opacity-50"
               >
                 {pending ? "提交中…" : "12306预定"}
               </button>
@@ -97,7 +103,7 @@ export function TrainBookFooter({
                 type="button"
                 disabled={submitDisabled}
                 onClick={onDirectBook}
-                className="h-10 min-w-[96px] shrink-0 rounded-full bg-[#2768FA] px-4 text-[14px] font-medium text-white disabled:opacity-50"
+                className="h-10 min-w-[96px] shrink-0 rounded-full bg-gradient-to-r from-brand-btn-start to-brand-btn-end px-4 text-[14px] font-medium text-white disabled:opacity-50"
               >
                 {pending ? "提交中…" : "生成订单"}
               </button>

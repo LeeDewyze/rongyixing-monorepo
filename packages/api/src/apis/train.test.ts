@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { TRAIN_FLOW_METHODS } from "../methods/train-flow.js";
+import {
+  TRAIN_FLOW_METHODS,
+  TOURIST_TRAIN_BOOK_METHODS,
+  TOURIST_TRAIN_FLOW_METHODS,
+} from "../methods/train-flow.js";
 import { createProxyClient } from "../proxy/proxy-client.js";
 import { successResponse } from "../proxy/response-adapter.js";
 import {
@@ -9,6 +13,7 @@ import {
   normalizeTrainExchangeInfo,
   normalizeTrainPassengerInfo,
   normalizeTrainBookResponse,
+  normalizeTrainInitBookResponse,
   normalizeTrainScheduleResponse,
 } from "./train.js";
 
@@ -273,6 +278,34 @@ describe("normalizeTrainBookResponse", () => {
   });
 });
 
+describe("normalizeTrainInitBookResponse", () => {
+  it("keeps Linkman from tourist train initialize response", () => {
+    expect(
+      normalizeTrainInitBookResponse({
+        ServiceFee: 0,
+        Linkman: {
+          Name: "姜茗豪",
+          Email: "",
+          Mobile: "18610773065",
+        },
+        PayTypes: {
+          Alipay: "支付宝",
+        },
+      }),
+    ).toMatchObject({
+      ServiceFee: 0,
+      Linkman: {
+        Name: "姜茗豪",
+        Email: "",
+        Mobile: "18610773065",
+      },
+      PayTypes: {
+        Alipay: "支付宝",
+      },
+    });
+  });
+});
+
 describe("normalizeTrainPassengerInfo", () => {
   it("maps refund passenger snapshot", () => {
     expect(
@@ -399,5 +432,48 @@ describe("createTrainApi (mock mode)", () => {
 
     expect(result.Trains).toHaveLength(1);
     expect(result.Trains[0]?.LowestPrice).toBe(553);
+  });
+
+  it("uses tourist methods when channel is tourist", async () => {
+    const captured: Array<{ method: string; data: unknown }> = [];
+    const proxy = createProxyClient({
+      baseUrl: "https://example.com",
+      mode: "mock",
+      mockHandler: async (method, data) => {
+        captured.push({ method, data });
+        return successResponse({ Trains: [], Stops: [], OrderId: "1" });
+      },
+    });
+    const train = createTrainApi(proxy);
+
+    await train.searchTrains({
+      channel: "tourist",
+      Date: "2026-06-22",
+      FromStation: "BJP",
+      ToStation: "SHH",
+    });
+    await train.getSchedule({
+      channel: "tourist",
+      Date: "2026-06-22",
+      TrainCode: "G1",
+    });
+    await train.initializeBook({
+      channel: "tourist",
+      Passengers: [],
+    });
+    await train.submitBook({
+      channel: "tourist",
+      Passengers: [],
+    });
+
+    expect(captured.map((item) => item.method)).toEqual([
+      TOURIST_TRAIN_FLOW_METHODS.HOME_SEARCH,
+      TOURIST_TRAIN_FLOW_METHODS.SCHEDULE,
+      TOURIST_TRAIN_BOOK_METHODS.INIT,
+      TOURIST_TRAIN_BOOK_METHODS.BOOK,
+    ]);
+    expect(captured[0]?.data).not.toHaveProperty("channel");
+    expect(captured[2]?.data).not.toHaveProperty("channel");
+    expect(captured[3]?.data).not.toHaveProperty("channel");
   });
 });

@@ -7,15 +7,21 @@ interface TrainBookBillSheetProps {
 }
 
 function formatBillAmount(value: number): string {
-  return Number.isFinite(value) ? String(value) : "—";
+  return Number.isFinite(value) ? String(value) : "--";
 }
 
-function BillLineRow({ label, amount }: { label: string; amount: number }) {
+function BillLineRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
   return (
-    <div className="flex items-center justify-between gap-3 py-1.5">
+    <div className="flex items-center justify-between gap-3 py-2">
       <span className="min-w-0 flex-1 text-[14px] text-[#666666]">{label}</span>
       <span className="shrink-0 text-[14px] font-medium tabular-nums text-[#333333]">
-        ¥{formatBillAmount(amount)}
+        {value}
       </span>
     </div>
   );
@@ -43,70 +49,43 @@ function RouteRow({ fromStation, toStation }: { fromStation: string; toStation: 
 /** Inline bill panel — expands above the train book footer. */
 export function TrainBookBillSheet({ breakdown }: TrainBookBillSheetProps) {
   const passengerCount = breakdown.passengers.length;
-  const hasMultiplePassengers = passengerCount > 1;
+  const firstBill = breakdown.passengers[0];
+  const serviceFeeTotal = breakdown.passengers.reduce((sum, bill) => sum + bill.serviceFee, 0);
+  const hasSameServiceFee = breakdown.passengers.every(
+    (bill) => bill.serviceFee === firstBill?.serviceFee,
+  );
 
   return (
     <div
-      className={`flex max-h-[min(58vh,26rem)] flex-col overflow-hidden rounded-t-2xl border border-b-0 border-[#EEF1F6] bg-white shadow-[0_-8px_24px_rgba(15,23,42,0.12)] ${HOTEL_DETAIL_FONT}`}
+      className={`overflow-hidden rounded-t-xl border border-b-0 border-[#EEF1F6] bg-white shadow-[0_-6px_18px_rgba(15,23,42,0.10)] ${HOTEL_DETAIL_FONT}`}
       role="dialog"
       aria-label="费用明细"
     >
-      <div className="flex shrink-0 items-center justify-between border-b border-[#EEF1F6] px-4 py-3">
-        <p className="text-[15px] font-medium text-[#010101]">费用明细</p>
-        {hasMultiplePassengers ? (
-          <p className="text-[12px] text-[#999999]">共 {passengerCount} 位乘车人</p>
+      <div className="space-y-2 px-4 py-3">
+        {firstBill?.fromStation || firstBill?.toStation ? (
+          <RouteRow fromStation={firstBill.fromStation} toStation={firstBill.toStation} />
         ) : null}
-      </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
-        <div className="space-y-3">
-          {breakdown.passengers.map((bill, index) => (
-            <section
-              key={`${bill.passengerName}-${bill.credentialNumber}-${index}`}
-              className="overflow-hidden rounded-xl bg-[#F8F9FC] ring-1 ring-[#EEF1F6]"
-            >
-              <div className="border-b border-[#EEF1F6] bg-white/70 px-3.5 py-2.5">
-                <p className="text-[15px] font-semibold text-[#333333]">{bill.passengerName}</p>
-                {bill.credentialNumber ? (
-                  <p className="mt-1 text-[12px] tabular-nums text-[#999999]">
-                    {bill.credentialNumber}
-                  </p>
-                ) : null}
-              </div>
-
-              <div className="space-y-3 px-3.5 py-3">
-                {bill.fromStation || bill.toStation ? (
-                  <RouteRow fromStation={bill.fromStation} toStation={bill.toStation} />
-                ) : null}
-
-                <div className="rounded-lg bg-white px-3 py-1 ring-1 ring-[#EEF1F6]">
-                  <BillLineRow label="火车票票价" amount={bill.ticketPrice} />
-                  {bill.trainRouteLabel ? (
-                    <p className="pb-1.5 text-[12px] leading-snug text-[#999999]">
-                      {bill.trainRouteLabel}
-                    </p>
-                  ) : null}
-                  {bill.seatTypeName ? (
-                    <p className="pb-1.5 text-[12px] leading-snug text-[#999999]">
-                      {bill.seatTypeName}
-                    </p>
-                  ) : null}
-                  {bill.serviceFee > 0 ? (
-                    <BillLineRow label="服务费" amount={bill.serviceFee} />
-                  ) : null}
-                </div>
-
-                {hasMultiplePassengers ? (
-                  <div className="flex items-center justify-between border-t border-dashed border-[#E5E8EF] pt-2.5">
-                    <span className="text-[13px] text-[#666666]">小计</span>
-                    <span className="text-[15px] font-semibold tabular-nums text-[#FF4D4F]">
-                      ¥{formatBillAmount(bill.subtotal)}
-                    </span>
-                  </div>
-                ) : null}
-              </div>
-            </section>
-          ))}
+        <div className="rounded-lg bg-[#F8F9FC] px-3 py-1 ring-1 ring-[#EEF1F6]">
+          <BillLineRow
+            label="火车票"
+            value={`¥${formatBillAmount(firstBill?.ticketPrice ?? 0)} × ${passengerCount}人`}
+          />
+          {firstBill?.seatTypeName ? (
+            <p className="pb-2 text-[12px] leading-snug text-[#999999]">
+              {firstBill.seatTypeName}
+            </p>
+          ) : null}
+          {serviceFeeTotal > 0 ? (
+            <BillLineRow
+              label="服务费"
+              value={
+                hasSameServiceFee
+                  ? `¥${formatBillAmount(firstBill?.serviceFee ?? 0)} × ${passengerCount}人`
+                  : `¥${formatBillAmount(serviceFeeTotal)}`
+              }
+            />
+          ) : null}
         </div>
       </div>
     </div>

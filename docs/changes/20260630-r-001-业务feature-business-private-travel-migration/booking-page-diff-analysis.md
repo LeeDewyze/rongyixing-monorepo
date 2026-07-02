@@ -74,6 +74,7 @@
 - `beeantmobile-main/projects/ryx/src/app/public/public-train/public-train-book_ryx/public-train-book_ryx.base.page.ts`
 - `beeantmobile-main/projects/ryx/src/app/public/public-train/public-train-book_ryx/public-train-book_ryx.page.html`
 - `beeantmobile-main/projects/ryx/src/app/public/public-train/public-train-bookinfos/public-train-bookinfos.page.ts`
+- `beeantmobile-main/projects/ryx/src/app/public/public-train/public-train-freq-passenger-list/public-train-freq-passenger-list.page.ts`
 
 关键行为：
 1. 旅客来源是 public frequent passenger，选择页为 `public-train-freq-passenger-list`，可新增 / 编辑常旅客。
@@ -82,6 +83,11 @@
 4. 普通下单页显示旅客信息、保险、12306 账号、服务费、联系人信息、供应商等；无因公审批、组织、成本中心、TravelNumber。
 5. `fillBookPassengers()` 使用常旅客证件构造 `PassengerDto`，写入 `Train`、保险、选座偏好；未见 `TravelType=2` 显式赋值。
 6. 12306 绑定 / 校验使用 tourist book train 接口，包括 `GetBindAccountNumber`、`Bind`、`AccountValidate`、`CodeValidate` 等。
+7. 旅客人数上限按实际入口 `public-train-freq-passenger-list` 对齐为 5 人；超过 5 人提示“人数不能超过5人”，H5 选择页与填单页均需防御历史缓存超限。
+8. 选座不是按每位旅客各自渲染一套选择器，而是填单页共享的整体座位偏好池：页面渲染第 1 排座位；当旅客数大于 1 时渲染第 2 排座位，生成 `1A/1C/2A/2C` 等编码，提交时再按旅客顺序写入各乘客 `Train.BookSeatLocation`。
+9. 选座仅在高铁 / 动车可选座席展示：legacy 明确覆盖 `二等座`、`一等座`、`商务座`；H5 同时兼容 `特等座` 并沿用商务座布局。硬座、硬卧、软卧等普通席别不展示选座服务。
+10. 联系人默认值只来自 Initialize 返回的 `Linkman`，回填到订单联系人姓名、手机号、邮箱；如果返回为空，说明初始化响应未提供联系人，H5 不再前端兜底。personal 火车提交时写入 `Linkmans`，不复用因公授权联系人语义。
+11. 展开的旅客信息中，「联系方式」与「补充信息」在 H5 合并为连续字段区，不再保留两个分组标题；可录入的文本字段需要提供一键清空能力。
 
 ### 4.3 因私酒店
 代码位置：
@@ -111,7 +117,9 @@
 3. 因私不展示 / 不提交 `TravelNumber`、`TravelFormId`、`travelFormId`、`travelNumber`。
 4. 因私不展示 / 不提交因公审批、组织、成本中心、超标原因、授权账号查看订单。
 5. 因私火车普通下单页不需要用户选择支付方式；默认个人支付语义，金额确认页再取初始化 `PayTypes[0]`。
-6. 因私酒店入住信息要支持按房间填写：住客姓名、证件类型、证件号、手机号、到店时间、担保信用卡。
+6. 因私火车旅客上限为 5 人；选座为整体两排偏好池，按旅客顺序分配到 `Train.BookSeatLocation`，并仅对二等 / 一等 / 商务 / 特等座等可选座席展示。
+7. 因私火车订单联系人从 Initialize `Linkman` 默认回填；用户可手动编辑，录入后提供清空按钮。
+8. 因私酒店入住信息要支持按房间填写：住客姓名、证件类型、证件号、手机号、到店时间、担保信用卡。
 
 ### 6.2 仍需实现时联调确认
 1. public 国内机票 / 火车提交 DTO 未显式写 `TravelType=2`，后端是否完全依赖 tourist 域判断因私；H5 可保留 `TravelType=2` 作为兼容字段，但验收不能只看它。
@@ -134,7 +142,15 @@
 | TC-BK-02 | 因私机票填单 | 旅客来自 public 常旅客；提交走 tourist；payload 不含审批、组织、成本中心、TravelNumber |
 | TC-BK-03 | 因公火车填单 | 支付方式单选可见；12306 能力走因公接口；TravelNumber 仅因公可选 |
 | TC-BK-04 | 因私火车填单 | 不展示支付方式单选；12306 能力走 tourist；payload 不含因公字段 |
+| TC-BK-04A | 因私火车选座 | 二等 / 一等 / 商务 / 特等座展示页面级整体选座；硬座 / 卧铺不展示；选择 `2C` 时提交保持 `2C`，不得转成 `12C` |
+| TC-BK-04B | 因私火车旅客与联系人 | 最多选择 5 位旅客；联系人从 `Initialize.Linkman` 回填；姓名、电话、邮箱输入后可一键清空 |
 | TC-BK-05 | 因公酒店填单 | 入住人为员工 passenger，支持差标、审批、成本中心、信用卡担保 |
 | TC-BK-06 | 因私酒店填单 | 每房填写住客姓名 / 证件 / 手机 / 到店时间；不展示员工组织成本中心与 TravelNumber |
 | TC-BK-07 | 模式切换污染 | 先因公选 TravelNumber，再切因私下单；personal payload 不含任何出差单字段 |
 | TC-BK-08 | public 常旅客证件 | 因私选择 / 编辑常旅客后证件走 `TmcTouristBookUrl-Home-Credentials` |
+
+## 九、接口适配教训
+1. 初始化类 response 不能只按前端当前使用字段做白名单返回。后端初始化结果往往同时承载展示、默认值、开关与后续提交上下文，字段会随产品、因公 / 因私、TMC 配置变化。
+2. 更稳的适配方式是先 `...raw` 透传后端返回，再覆盖需要规范化的字段，例如金额数值化、数组过滤、字段结构兼容。这样新增或暂未使用的后端字段不会无声消失。
+3. 本次因私火车 `TmcTouristBookUrl-Train-Initialize` 已返回 `Linkman`，但 API 层初始化响应 normalizer 白名单未包含该字段，导致页面拿不到联系人默认值。问题不在初始化接口缺字段，而在前端 API 适配吞字段。
+4. 同类风险已同步检查初始化接口：火车、酒店初始化 normalizer 均应使用 raw 透传模式；机票初始化当前直接返回后端 typed response，不存在同类白名单丢字段路径。

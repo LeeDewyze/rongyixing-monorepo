@@ -1,12 +1,21 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  formatBookSeatLocation,
   prepareTrainBookSubmitDto,
   sanitizeTrainPolicyForWire,
   stripStaffTravelPolicyForWire,
   stripTrainBookOrderDto,
   stripTrainInitBookDto,
 } from "./train-book-adapter.js";
+
+describe("formatBookSeatLocation", () => {
+  it("keeps legacy row-prefixed seat locations and prefixes bare seat letters", () => {
+    expect(formatBookSeatLocation("1A")).toBe("1A");
+    expect(formatBookSeatLocation("2f")).toBe("2F");
+    expect(formatBookSeatLocation("C")).toBe("1C");
+  });
+});
 
 describe("sanitizeTrainPolicyForWire", () => {
   it("keeps server policy fields and drops client-only color", () => {
@@ -63,6 +72,7 @@ describe("stripTrainInitBookDto", () => {
     ];
 
     const result = stripTrainInitBookDto({
+      channel: "tourist",
       Passengers: [
         {
           ClientId: "passenger-1",
@@ -78,7 +88,7 @@ describe("stripTrainInitBookDto", () => {
     });
 
     expect(result.TravelFormId).toBe("");
-    expect(result.Passengers[0]?.TravelPayType).toBe(0);
+    expect(result.Passengers[0]?.TravelPayType).toBeUndefined();
     expect(result.Passengers[0]?.Train?.Seats).toEqual([
       {
         SeatType: 1,
@@ -102,10 +112,74 @@ describe("stripTrainInitBookDto", () => {
       },
     ]);
     expect(result.Passengers[0]?.Train?.OriginalSearchResultSeats).toEqual(originalSeats);
+    expect(result.Passengers[0]?.Policy).toBeUndefined();
+  });
+
+  it("strips init passenger fields down to ClientId and Train", () => {
+    const result = stripTrainInitBookDto({
+      channel: "tourist",
+      Channel: "客户H5",
+      Passengers: [
+        {
+          ClientId: "passenger-1",
+          TravelPayType: 2,
+          Mobile: "13800000000",
+          Credentials: { Id: "c1", Name: "张三" },
+          Policy: { Name: "主要负责人" },
+          Train: { TrainNo: "G1", BookSeatType: 10, BookSeatLocation: "" },
+        },
+      ],
+    });
+
+    expect(result).not.toHaveProperty("Channel");
+    expect(result.Passengers[0]).toEqual({
+      ClientId: "passenger-1",
+      Train: { TrainNo: "G1", BookSeatType: 10, BookSeatLocation: "" },
+    });
+  });
+
+  it("keeps business init passenger metadata when TravelFormId is present", () => {
+    const result = stripTrainInitBookDto({
+      channel: "tmc",
+      TravelFormId: "tf-001",
+      Passengers: [
+        {
+          ClientId: "passenger-1",
+          TravelPayType: 2,
+          Mobile: "13800000000",
+          Credentials: { Id: "c1", Name: "张三" },
+          Policy: { Name: "主要负责人" },
+          Train: { TrainNo: "G1", BookSeatType: 10, BookSeatLocation: "" },
+        },
+      ],
+    });
+
+    expect(result.TravelFormId).toBe("tf-001");
+    expect(result.Passengers[0]?.TravelPayType).toBe(0);
+    expect(result.Passengers[0]?.Mobile).toBe("13800000000");
+    expect(result.Passengers[0]?.Credentials).toEqual({ Id: "c1", Name: "张三" });
     expect(result.Passengers[0]?.Policy).toMatchObject({
       Name: "主要负责人",
       TrainDescription: null,
     });
+  });
+
+  it("keeps business init passenger metadata even without TravelFormId", () => {
+    const result = stripTrainInitBookDto({
+      channel: "tmc",
+      Passengers: [
+        {
+          ClientId: "passenger-1",
+          Mobile: "13800000000",
+          Credentials: { Id: "c1", Name: "张三" },
+          Train: { TrainNo: "G1", BookSeatType: 10, BookSeatLocation: "" },
+        },
+      ],
+    });
+
+    expect(result.TravelFormId).toBe("");
+    expect(result.Passengers[0]?.Mobile).toBe("13800000000");
+    expect(result.Passengers[0]?.Credentials).toEqual({ Id: "c1", Name: "张三" });
   });
 });
 

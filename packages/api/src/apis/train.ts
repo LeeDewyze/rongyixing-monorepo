@@ -29,6 +29,7 @@ import {
 import { TRAIN_FLOW_METHODS } from "../methods/train-flow.js";
 import type { ProxyClient } from "../proxy/proxy-client.js";
 import { prepareTrainBookSubmitDto, stripTrainInitBookDto } from "./train-book-adapter.js";
+import { TOURIST_TRAIN_BOOK_METHODS, TOURIST_TRAIN_FLOW_METHODS } from "../methods/train-flow.js";
 
 export interface TrainApi {
   getStations(): Promise<TrainStation[]>;
@@ -45,6 +46,15 @@ export interface TrainApi {
 export { buildTrainPolicyTrainsPayload } from "./train-book-adapter.js";
 
 type LegacyRecord = Record<string, unknown>;
+
+function isTouristChannel(params?: { channel?: string }): boolean {
+  return params?.channel === "tourist";
+}
+
+function stripChannel<T extends { channel?: string }>(params: T): Omit<T, "channel"> {
+  const { channel: _channel, ...rest } = params;
+  return rest;
+}
 
 const SEAT_TYPE_NAME_MAP: Record<string, TrainSeatType> = {
   无座: TrainSeatType.NoSeat,
@@ -274,10 +284,15 @@ export function normalizeTrainPolicyResponse(res: unknown): TrainPolicyResponse 
   });
 }
 
-function normalizeTrainInitBookResponse(res: unknown): TrainInitBookResponse {
+export function normalizeTrainInitBookResponse(res: unknown): TrainInitBookResponse {
   if (!res || typeof res !== "object") return {};
   const payload = res as LegacyRecord;
+  const linkman =
+    payload.Linkman && typeof payload.Linkman === "object"
+      ? (payload.Linkman as LegacyRecord)
+      : undefined;
   return {
+    ...(payload as TrainInitBookResponse),
     OrderAmount: typeof payload.OrderAmount === "number" ? payload.OrderAmount : undefined,
     ServiceFees:
       payload.ServiceFees && typeof payload.ServiceFees === "object"
@@ -324,6 +339,14 @@ function normalizeTrainInitBookResponse(res: unknown): TrainInitBookResponse {
       typeof payload.IsShowOfficalBooked === "boolean" ? payload.IsShowOfficalBooked : undefined,
     IsShowDirectBooked:
       typeof payload.IsShowDirectBooked === "boolean" ? payload.IsShowDirectBooked : undefined,
+    Linkman: linkman
+      ? {
+          Id: linkman.Id == null ? undefined : String(linkman.Id),
+          Name: typeof linkman.Name === "string" ? linkman.Name : undefined,
+          Mobile: typeof linkman.Mobile === "string" ? linkman.Mobile : undefined,
+          Email: typeof linkman.Email === "string" ? linkman.Email : undefined,
+        }
+      : undefined,
     AccountNumber12306:
       payload.AccountNumber12306 && typeof payload.AccountNumber12306 === "object"
         ? {
@@ -509,13 +532,16 @@ export function createTrainApi(proxy: ProxyClient): TrainApi {
     },
     async searchTrains(params) {
       const res = await proxy.send<unknown>({
-        method: TRAIN_FLOW_METHODS.HOME_SEARCH,
-        data: {
+        method: isTouristChannel(params)
+          ? TOURIST_TRAIN_FLOW_METHODS.HOME_SEARCH
+          : TRAIN_FLOW_METHODS.HOME_SEARCH,
+        data: stripChannel({
           Date: params.Date,
           FromStation: params.FromStation,
           ToStation: params.ToStation,
           TrainCode: "",
-        },
+          channel: params.channel,
+        }),
         version: "1.0",
         requestTimeout: 60,
         timeoutMs: 60_000,
@@ -548,31 +574,39 @@ export function createTrainApi(proxy: ProxyClient): TrainApi {
     },
     async getSchedule(params) {
       const res = await proxy.send<unknown>({
-        method: TRAIN_FLOW_METHODS.SCHEDULE,
-        data: params,
+        method: isTouristChannel(params)
+          ? TOURIST_TRAIN_FLOW_METHODS.SCHEDULE
+          : TRAIN_FLOW_METHODS.SCHEDULE,
+        data: stripChannel(params),
         version: "1.0",
       });
       return normalizeTrainScheduleResponse(res);
     },
     async initializeBook(params) {
       const res = await proxy.send<unknown>({
-        method: TRAIN_FLOW_METHODS.INIT,
-        data: stripTrainInitBookDto(params),
+        method: isTouristChannel(params)
+          ? TOURIST_TRAIN_BOOK_METHODS.INIT
+          : TRAIN_FLOW_METHODS.INIT,
+        data: stripChannel(stripTrainInitBookDto(params)),
         timeoutMs: 60_000,
       });
       return normalizeTrainInitBookResponse(res);
     },
     async submitBook(params) {
       const res = await proxy.send<unknown>({
-        method: TRAIN_FLOW_METHODS.BOOK,
-        data: prepareTrainBookSubmitDto(params),
+        method: isTouristChannel(params)
+          ? TOURIST_TRAIN_BOOK_METHODS.BOOK
+          : TRAIN_FLOW_METHODS.BOOK,
+        data: stripChannel(prepareTrainBookSubmitDto(params)),
         timeoutMs: 60_000,
       });
       return normalizeTrainBookResponse(res);
     },
     async submitExchangeBook(params) {
       const res = await proxy.send<unknown>({
-        method: TRAIN_FLOW_METHODS.EXCHANGE_BOOK,
+        method: isTouristChannel(params)
+          ? TOURIST_TRAIN_BOOK_METHODS.EXCHANGE_BOOK
+          : TRAIN_FLOW_METHODS.EXCHANGE_BOOK,
         data: prepareTrainBookSubmitDto({
           ...params,
           IsExchange: true,

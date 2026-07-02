@@ -5,6 +5,7 @@ import type {
   TrainSeat,
 } from "@ryx/shared-types";
 import type { PassengerBookInfo } from "@ryx/shared-types";
+import type { HomeTravelMode } from "@/config/home-assets";
 
 const STORAGE_KEY = "ryx_train_book_selection";
 export const TRAIN_BOOK_SELECTION_EVENT = "ryx-train-book-selection-change";
@@ -18,6 +19,7 @@ export interface TrainBookSelection {
   policy?: TrainBookPolicy;
   passengers: PassengerBookInfo[];
   selectedAt: number;
+  travelMode?: HomeTravelMode;
 }
 
 function notifyChange(): void {

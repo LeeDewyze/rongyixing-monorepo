@@ -12,6 +12,7 @@ export interface TrainStation {
 }
 
 export interface TrainSearchParams {
+  channel?: "tmc" | "tourist";
   Date: string;
   FromStation: string;
   ToStation: string;
@@ -113,6 +114,7 @@ export interface TrainSearchResponse {
 }
 
 export interface TrainScheduleParams {
+  channel?: "tmc" | "tourist";
   Date: string;
   TrainCode: string;
   TrainNo?: string;

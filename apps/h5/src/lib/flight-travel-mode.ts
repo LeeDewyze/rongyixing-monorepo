@@ -2,6 +2,9 @@ import type { HomeTravelMode } from "@/config/home-assets";
 
 const STORAGE_KEY = "ryx_home_travel_mode";
 
+export type ProductChannel = "tmc" | "tourist";
+export type OrderTravelType = 1 | 2;
+
 function readSessionItem(key: string): string | null {
   if (typeof sessionStorage === "undefined") return null;
   try {
@@ -30,7 +33,31 @@ export function loadHomeTravelMode(): HomeTravelMode {
   return raw === "personal" ? "personal" : "business";
 }
 
+export function isBusinessTravelMode(mode: HomeTravelMode = loadHomeTravelMode()): boolean {
+  return mode === "business";
+}
+
+export function isPersonalTravelMode(mode: HomeTravelMode = loadHomeTravelMode()): boolean {
+  return mode === "personal";
+}
+
 /** Legacy `OrderTravelType`: Business=1, Person=2. */
-export function resolveFlightTravelType(mode: HomeTravelMode = loadHomeTravelMode()): number {
-  return mode === "personal" ? 2 : 1;
+export function resolveOrderTravelType(mode: HomeTravelMode = loadHomeTravelMode()): OrderTravelType {
+  return isPersonalTravelMode(mode) ? 2 : 1;
+}
+
+export function resolveProductChannel(mode: HomeTravelMode = loadHomeTravelMode()): ProductChannel {
+  return isPersonalTravelMode(mode) ? "tourist" : "tmc";
+}
+
+export function shouldEnableTravelForm(
+  mode: HomeTravelMode = loadHomeTravelMode(),
+  tmcGetTravelUrl = false,
+): boolean {
+  return isBusinessTravelMode(mode) && tmcGetTravelUrl;
+}
+
+/** @deprecated Use `resolveOrderTravelType` for product-agnostic order builders. */
+export function resolveFlightTravelType(mode: HomeTravelMode = loadHomeTravelMode()): OrderTravelType {
+  return resolveOrderTravelType(mode);
 }

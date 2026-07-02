@@ -77,6 +77,7 @@ export interface TrainBookLinkmanDto {
 }
 
 export interface TrainOrderBookDto {
+  channel?: "tmc" | "tourist";
   TravelFormId?: string;
   Passengers: TrainBookPassengerDto[];
   Linkmans?: TrainBookLinkmanDto[];
@@ -112,6 +113,7 @@ export interface TrainInitBookResponse {
   IsShowOfficalBooked?: boolean;
   IsShowDirectBooked?: boolean;
   AccountNumber12306?: TrainAccountNumber12306;
+  Linkman?: TrainBookLinkmanDto;
 }
 
 export type TrainBookParams = TrainOrderBookDto;

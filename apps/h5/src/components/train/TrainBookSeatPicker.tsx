@@ -53,6 +53,28 @@ export function togglePassengerSeatSelection(
   return next;
 }
 
+/** Legacy train book selection: a shared two-row preference pool, capped by passenger count. */
+export function toggleTrainSeatPreference(
+  current: string[],
+  code: string,
+  passengerCount: number,
+): string[] {
+  const maxSelections = Math.max(passengerCount, 1);
+  const next = current.filter((item) => item.trim());
+  const existingIndex = next.indexOf(code);
+
+  if (existingIndex >= 0) {
+    next.splice(existingIndex, 1);
+    return next;
+  }
+
+  if (next.length < maxSelections) {
+    return [...next, code];
+  }
+
+  return [...next.slice(0, Math.max(maxSelections - 1, 0)), code];
+}
+
 function SeatLocationButton({
   code,
   title,
@@ -89,12 +111,14 @@ function AisleLabel() {
 }
 
 function SeatPickerRow({
+  row,
   layout,
-  selectedCode,
+  selectedCodes,
   onSelect,
 }: {
+  row?: string;
   layout: SeatSideLayout;
-  selectedCode: string;
+  selectedCodes: string[];
   onSelect: (code: string) => void;
 }) {
   const renderSeat = (code: string) => (
@@ -102,8 +126,8 @@ function SeatPickerRow({
       key={code}
       code={code}
       title={SEAT_TITLES[code] ?? code}
-      selected={selectedCode === code}
-      onSelect={() => onSelect(code)}
+      selected={selectedCodes.includes(row ? `${row}${code}` : code)}
+      onSelect={() => onSelect(row ? `${row}${code}` : code)}
     />
   );
 
@@ -139,7 +163,7 @@ function SeatPickerPanel({
 }) {
   return (
     <div className="train-seat-picker rounded-lg border-2 border-[#F8F9FD]">
-      <SeatPickerRow layout={layout} selectedCode={selectedCode} onSelect={onSelect} />
+      <SeatPickerRow layout={layout} selectedCodes={[selectedCode]} onSelect={onSelect} />
     </div>
   );
 }
@@ -185,47 +209,40 @@ export function TrainBookSeatPicker({
 }: TrainBookSeatPickerProps) {
   const layout = seatType != null ? LAYOUTS[seatType] : undefined;
   const maxSelections = Math.max(passengerCount, 1);
-  const selections = Array.from({ length: maxSelections }, (_, index) => value[index] ?? "");
-  const selectedCount = selections.filter(Boolean).length;
-  const isMultiPassenger = maxSelections > 1;
+  const selections = value.filter(Boolean).slice(0, maxSelections);
+  const selectedCount = selections.length;
+  const rows = maxSelections > 1 ? ["1", "2"] : ["1"];
 
   if (!layout) return null;
 
-  const handleSelect = (passengerIndex: number, code: string) => {
-    onChange(togglePassengerSeatSelection(value, passengerIndex, maxSelections, code));
+  const handleSelect = (code: string) => {
+    onChange(toggleTrainSeatPreference(value, code, maxSelections));
   };
 
   return (
-    <section
-      className={`train-seat-picker mx-3 mb-3 rounded-xl bg-white px-3 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)] ${HOTEL_DETAIL_FONT}`}
-    >
+    <section className={`train-seat-picker rounded-xl bg-white px-3 py-3 shadow-sm ${HOTEL_DETAIL_FONT}`}>
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-[16px] font-semibold leading-none text-[#222222]">
-          {isMultiPassenger ? "在线选座" : "选择坐席"}
-        </h2>
+        <h2 className="text-[16px] font-semibold leading-none text-[#222222]">选座服务</h2>
         <span className="text-[13px] leading-none text-[#666666]">
-          {isMultiPassenger ? (
-            <>
-              <span className="text-[#2768FA]">{selectedCount}</span>/{maxSelections}
-            </>
-          ) : (
-            <>
-              已选 <span className="text-[#2768FA]">{selectedCount}</span>/{maxSelections}
-            </>
-          )}
+          可选择 <span className="text-[#2768FA]">{maxSelections}</span> 个座位
         </span>
       </div>
 
       <div className="divide-y divide-[#F0F2F6] rounded-lg border-2 border-[#F8F9FD]">
-        {selections.map((selectedCode, passengerIndex) => (
+        {rows.map((row) => (
           <SeatPickerRow
-            key={passengerIndex}
+            key={row}
+            row={row}
             layout={layout}
-            selectedCode={selectedCode}
-            onSelect={(code) => handleSelect(passengerIndex, code)}
+            selectedCodes={selections}
+            onSelect={handleSelect}
           />
         ))}
       </div>
+
+      <p className="mt-2 text-right text-[12px] text-[#999999]">
+        已选 <span className="text-[#2768FA]">{selectedCount}</span>/{maxSelections}
+      </p>
 
       <SeatPickerDisclaimer />
     </section>

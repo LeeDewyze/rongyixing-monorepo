@@ -1,12 +1,16 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
+  credentialKey,
+  maxPassengersForProduct,
   ProductType,
   type FlightAuthorizedContact,
   type FlightOutNumberField,
   type PassengerBookInfo,
+  type TrainBookLinkmanDto,
 } from "@ryx/shared-types";
 
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { FlightBookAddContactSheet } from "@/components/flight/FlightBookAddContactSheet";
 import { FlightBookApproverSheet } from "@/components/flight/FlightBookApproverSheet";
 import { FlightBookAuthorizedContacts } from "@/components/flight/FlightBookAuthorizedContacts";
@@ -15,7 +19,6 @@ import { FlightBookCredentialSheet } from "@/components/flight/FlightBookCredent
 import { FlightBookServiceFeeRows } from "@/components/flight/FlightBookExtras";
 import { FlightBookNotifyLanguageSheet } from "@/components/flight/FlightBookNotifyLanguageSheet";
 import { FlightBookOrganizationSheet } from "@/components/flight/FlightBookOrganizationSheet";
-import { FlightBookPassengerSection } from "@/components/flight/FlightBookPassengerSection";
 import { FlightBookPayTypes } from "@/components/flight/FlightBookPayTypes";
 import { FlightOutNumberPickerSheet } from "@/components/flight/FlightOutNumberPickerSheet";
 import { HotelBookOptionRow } from "@/components/hotel/HotelBookOptionRow";
@@ -23,12 +26,10 @@ import { usePageHeader } from "@/components/layout";
 import { PassengerSelectAlertDialog } from "@/components/passenger";
 import { TrainBookFooter } from "@/components/train/TrainBookFooter";
 import { TrainBookHeader } from "@/components/train/TrainBookHeader";
+import { TrainBookLinkmanCard } from "@/components/train/TrainBookLinkmanCard";
 import { TrainBookSubmitConfirmDialog } from "@/components/train/TrainBookSubmitConfirmDialog";
 import { TrainBookPassengerCard } from "@/components/train/TrainBookPassengerCard";
-import {
-  TrainBookPassengerSeatPicker,
-  togglePassengerSeatSelection,
-} from "@/components/train/TrainBookSeatPicker";
+import { TrainBookSeatPicker } from "@/components/train/TrainBookSeatPicker";
 import { TrainBookSummary } from "@/components/train/TrainBookSummary";
 import { useBookOrgCostVisibility } from "@/hooks/useBookOrgCostVisibility";
 import { usePassengerSelection } from "@/hooks/usePassenger";
@@ -74,13 +75,21 @@ import {
 import { pollTrainCheckPay, shouldNavigateToPay } from "@/lib/train-book-check-pay";
 import { clearTrainBookSelection } from "@/lib/train-book-session";
 import { clearTrainExchangeSession, loadTrainExchangeSession } from "@/lib/train-exchange-session";
-import { clearPassengerSelection } from "@/lib/passenger-selection";
+import { buildPassengerSelectPath, clearPassengerSelection } from "@/lib/passenger-selection";
+import {
+  isBusinessTravelMode,
+  loadHomeTravelMode,
+  resolveProductChannel,
+} from "@/lib/flight-travel-mode";
 
 const FALLBACK_HEADER_HEIGHT = 56;
+const TRAIN_PASSENGER_LIMIT = maxPassengersForProduct(ProductType.Train);
+const TRAIN_BOOK_PAGE_BACKGROUND = { background: "var(--brand-form-header-gradient)" };
 
 export function TrainBookPage() {
   const navigate = useNavigate();
   const headerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const [headerHeight, setHeaderHeight] = useState(FALLBACK_HEADER_HEIGHT);
   const { selection } = useTrainBookSelection();
   const { selected, setSelected } = usePassengerSelection(ProductType.Train);
@@ -88,6 +97,11 @@ export function TrainBookPage() {
   const submitBook = useTrainSubmitBook();
   const submitExchangeBook = useTrainSubmitExchangeBook();
   const exchangeSession = loadTrainExchangeSession();
+  const isExchangeBook = Boolean(exchangeSession?.ticketId);
+  const travelMode = selection?.travelMode ?? loadHomeTravelMode();
+  const isBusinessMode = isBusinessTravelMode(travelMode);
+  const productChannel = resolveProductChannel(travelMode);
+  const bookReturnTo = "/train/book";
 
   const [redirecting, setRedirecting] = useState(false);
   const [travelPayType, setTravelPayType] = useState<number | null>(null);
@@ -101,6 +115,7 @@ export function TrainBookPage() {
     FLIGHT_NOTIFY_LANGUAGE_DEFAULT,
   );
   const [addContactOpen, setAddContactOpen] = useState(false);
+  const [orderLinkman, setOrderLinkman] = useState<TrainBookLinkmanDto>({});
   const [approverSheetOpen, setApproverSheetOpen] = useState(false);
   const [approverPassengerId, setApproverPassengerId] = useState<string | null>(null);
   const [orgSheetPassengerId, setOrgSheetPassengerId] = useState<string | null>(null);
@@ -112,6 +127,9 @@ export function TrainBookPage() {
     field: FlightOutNumberField;
   } | null>(null);
   const [directBookConfirmOpen, setDirectBookConfirmOpen] = useState(false);
+  const [removePassengerTarget, setRemovePassengerTarget] = useState<PassengerBookInfo | null>(
+    null,
+  );
   /** Skip guard redirect when leaving after a successful submit. */
   const leavingAfterSubmitRef = useRef(false);
 
@@ -136,10 +154,23 @@ export function TrainBookPage() {
     return selection?.passengers ?? [];
   }, [selected, selection?.passengers]);
 
+  useEffect(() => {
+    if (bookPassengers.length > TRAIN_PASSENGER_LIMIT) {
+      setSelected(bookPassengers.slice(0, TRAIN_PASSENGER_LIMIT));
+    }
+  }, [bookPassengers, setSelected]);
+
   const initParams = useMemo(() => {
-    if (!selection || bookPassengers.length === 0) return null;
-    return buildTrainInitBookDto({ selection, passengers: bookPassengers });
-  }, [selection, bookPassengers]);
+    if (!selection) return null;
+    if (isBusinessMode && bookPassengers.length === 0) return null;
+    return buildTrainInitBookDto({
+      selection,
+      passengers: bookPassengers,
+      travelMode,
+      channel: productChannel,
+      includeTrainOnlyPassenger: !isBusinessMode && bookPassengers.length === 0,
+    });
+  }, [selection, bookPassengers, isBusinessMode, travelMode, productChannel]);
 
   const initBook = useTrainInitBook(initParams);
   const { forms, updateForm, toggleExpanded } = useTrainBookPassengerForms(
@@ -152,6 +183,18 @@ export function TrainBookPage() {
       Array.from({ length: bookPassengers.length }, (_, index) => current[index] ?? ""),
     );
   }, [bookPassengers.length]);
+
+  useEffect(() => {
+    if (isBusinessMode) return;
+    if (orderLinkman.Name || orderLinkman.Mobile || orderLinkman.Email) return;
+    const initialLinkman = initBook.data?.Linkman;
+    if (!initialLinkman) return;
+    setOrderLinkman({
+      Name: initialLinkman.Name ?? "",
+      Mobile: initialLinkman.Mobile ?? "",
+      Email: initialLinkman.Email ?? "",
+    });
+  }, [initBook.data?.Linkman, isBusinessMode, orderLinkman.Email, orderLinkman.Mobile, orderLinkman.Name]);
 
   const payOptions = useMemo(
     () => parseTrainPayTypeOptions(initBook.data?.PayTypes),
@@ -190,6 +233,7 @@ export function TrainBookPage() {
   );
 
   const requiresIllegalReason = Boolean(selection?.policy?.Rules?.length);
+  const showPayTypes = isBusinessMode;
   const isInitBlocking = initBook.isFetching && !initBook.data;
   const isSubmitDisabled =
     bookPassengers.length === 0 ||
@@ -209,6 +253,7 @@ export function TrainBookPage() {
   }, []);
 
   useEffect(() => {
+    contentRef.current?.scrollTo({ top: 0 });
     scrollH5MainToTop();
   }, []);
 
@@ -218,6 +263,8 @@ export function TrainBookPage() {
       forms,
       outNumberFieldsByPassenger,
       authorizedContacts,
+      orderLinkman,
+      requireOrderLinkman: !isBusinessMode,
       staffs: initBook.data?.Staffs,
       requireIllegalReason: requiresIllegalReason,
     });
@@ -240,6 +287,27 @@ export function TrainBookPage() {
     setDirectBookConfirmOpen(true);
   }
 
+  function removePassengerFromBook(target: PassengerBookInfo) {
+    const targetKey = credentialKey(target.credential);
+    const targetAccountId =
+      ("AccountId" in target.passenger ? target.passenger.AccountId : undefined) ??
+      target.credential.AccountId;
+    const nextPassengers = bookPassengers.filter((item) => {
+      const sameCredential = credentialKey(item.credential) === targetKey;
+      const itemAccountId =
+        ("AccountId" in item.passenger ? item.passenger.AccountId : undefined) ??
+        item.credential.AccountId;
+      const sameAccount =
+        targetAccountId != null &&
+        itemAccountId != null &&
+        String(itemAccountId) === String(targetAccountId);
+      return !sameCredential && !sameAccount;
+    });
+    setSelected(nextPassengers);
+    setBookSeatLocations((current) => current.slice(0, nextPassengers.length));
+    setRemovePassengerTarget(null);
+  }
+
   async function executeSubmit(isOfficialBooked: boolean) {
     if (!selection) return;
 
@@ -248,12 +316,15 @@ export function TrainBookPage() {
       passengers: bookPassengers,
       passengerForms: forms,
       travelPayType: resolvedPayType,
-      authorizedContacts,
+      authorizedContacts: isBusinessMode ? authorizedContacts : [],
+      orderLinkman: isBusinessMode ? undefined : orderLinkman,
       bookSeatLocations: bookSeatLocations.some(Boolean) ? bookSeatLocations : undefined,
       isOfficialBooked,
       accountNumber12306: initBook.data?.AccountNumber12306?.Name,
       globalNotifyLanguage: notifyLanguage,
       exchangeTicketId: exchangeSession?.ticketId,
+      travelMode,
+      channel: productChannel,
     });
 
     const isExchange = Boolean(exchangeSession?.ticketId);
@@ -267,14 +338,21 @@ export function TrainBookPage() {
       leavingAfterSubmitRef.current = true;
 
       if (response.IsCheckPay && response.TradeNo) {
-        const checkPayReady = await pollTrainCheckPay(response.TradeNo);
+        const checkPayReady = await pollTrainCheckPay(response.TradeNo, {
+          channel: productChannel,
+          productType: "Train",
+        });
         if (shouldNavigateToPay({ travelPayType: payType, checkPayReady }) && orderId) {
           clearTrainBookSelection();
           clearPassengerSelection(ProductType.Train);
           if (isExchange) {
             clearTrainExchangeSession();
           }
-          navigate(`/train/pay/${encodeURIComponent(orderId)}`, { replace: true });
+          const payPath =
+            productChannel === "tourist"
+              ? `/train/pay/${encodeURIComponent(orderId)}?channel=tourist`
+              : `/train/pay/${encodeURIComponent(orderId)}`;
+          navigate(payPath, { replace: true });
           return;
         }
       }
@@ -286,7 +364,11 @@ export function TrainBookPage() {
       }
 
       if (orderId) {
-        navigate(`/orders/train/${encodeURIComponent(orderId)}`, {
+        const detailPath =
+          productChannel === "tourist"
+            ? `/orders/train/${encodeURIComponent(orderId)}?channel=tourist`
+            : `/orders/train/${encodeURIComponent(orderId)}`;
+        navigate(detailPath, {
           replace: true,
           state: { bookedOrderId: orderId, product: "train" },
         });
@@ -305,20 +387,24 @@ export function TrainBookPage() {
 
   if (initBook.isLoading) {
     return (
-      <div className="relative min-h-dvh bg-[#F5F6F9]">
+      <div className="relative h-dvh overflow-hidden" style={TRAIN_BOOK_PAGE_BACKGROUND}>
         <TrainBookHeader ref={headerRef} />
-        <p className="p-6 text-center text-sm text-[#999999]">加载预订信息…</p>
+        <div className="absolute inset-x-0 bottom-0 overflow-y-auto" style={{ top: headerHeight }}>
+          <p className="p-6 text-center text-sm text-[#999999]">加载预订信息…</p>
+        </div>
       </div>
     );
   }
 
-  if (initBook.error) {
+  if (initBook.error && bookPassengers.length > 0) {
     return (
-      <div className="relative min-h-dvh bg-[#F5F6F9]">
+      <div className="relative h-dvh overflow-hidden" style={TRAIN_BOOK_PAGE_BACKGROUND}>
         <TrainBookHeader ref={headerRef} />
-        <p className="p-6 text-center text-sm text-[#ff4d4f]">
-          {formatApiError(initBook.error, "train")}
-        </p>
+        <div className="absolute inset-x-0 bottom-0 overflow-y-auto" style={{ top: headerHeight }}>
+          <p className="p-6 text-center text-sm text-[#ff4d4f]">
+            {formatApiError(initBook.error, "train")}
+          </p>
+        </div>
       </div>
     );
   }
@@ -335,42 +421,66 @@ export function TrainBookPage() {
         )?.notifyLanguage ?? FLIGHT_NOTIFY_LANGUAGE_DEFAULT) as FlightNotifyLanguage);
 
   return (
-    <div className="relative min-h-dvh bg-[#F5F6F9]">
+    <div className="relative h-dvh overflow-hidden" style={TRAIN_BOOK_PAGE_BACKGROUND}>
       <TrainBookHeader ref={headerRef} />
 
       <div
-        className="pb-[calc(8.5rem+env(safe-area-inset-bottom))]"
-        style={{ paddingTop: headerHeight }}
+        ref={contentRef}
+        className="absolute inset-x-0 bottom-0 overflow-y-auto overscroll-contain pb-[calc(8.5rem+env(safe-area-inset-bottom))]"
+        style={{ top: headerHeight }}
       >
         <TrainBookSummary selection={selection} />
 
         <div className="space-y-3 px-3">
-          {bookPassengers.map((passenger, index) => {
-            const form = forms[passenger.id];
-            if (!form) return null;
-            const serviceFee = resolvePassengerServiceFee(passenger, initBook.data?.ServiceFees);
-            const outNumberFields = outNumberFieldsByPassenger[passenger.id] ?? [];
-            const requiresApprover = passengerRequiresTrainApprover(
-              passenger,
-              initBook.data?.Staffs,
-            );
+          <section className="overflow-hidden rounded-xl bg-white px-3.5 shadow-sm ring-1 ring-[#EEF1F6]">
+            <h2 className="border-b border-[#F0F2F5] py-3 text-[15px] font-semibold text-[#111111]">
+              旅客信息
+            </h2>
 
-            return (
-              <FlightBookPassengerSection
-                key={passenger.id}
-                passengerIndex={bookPassengers.length > 1 ? index + 1 : undefined}
-                passengers={
+            {bookPassengers.length === 0 ? (
+              <div className="flex items-center justify-between py-3">
+                <p className="text-[13px] text-[#999999]">请选择乘车人</p>
+                <Link
+                  to={buildPassengerSelectPath(ProductType.Train, bookReturnTo)}
+                  className="rounded-full bg-brand-primary px-3 py-1.5 text-[13px] font-medium text-white active:opacity-80"
+                >
+                  添加旅客
+                </Link>
+              </div>
+            ) : (
+              <>
+                {bookPassengers.map((passenger) => {
+                  const form = forms[passenger.id];
+                  if (!form) return null;
+                  const serviceFee = resolvePassengerServiceFee(
+                    passenger,
+                    initBook.data?.ServiceFees,
+                  );
+                  const outNumberFields = outNumberFieldsByPassenger[passenger.id] ?? [];
+                  const requiresApprover = passengerRequiresTrainApprover(
+                    passenger,
+                    initBook.data?.Staffs,
+                  );
+
+                  return (
                   <TrainBookPassengerCard
+                    key={passenger.id}
+                    grouped
                     passenger={passenger}
                     form={form}
-                    showOrganizations={showOrganizations}
-                    showCostCenter={showCostCenter}
+                    showOrganizations={isBusinessMode && showOrganizations}
+                    showCostCenter={isBusinessMode && showCostCenter}
                     requiresApprover={requiresApprover}
                     isSkipApproveEnabled={Boolean(initBook.data?.isSkipApprove)}
                     outNumberFields={outNumberFields}
                     illegalReasons={initBook.data?.IllegalReasons ?? []}
                     expenseTypes={expenseTypeOptions}
                     requiresIllegalReason={requiresIllegalReason}
+                    onRemove={
+                      !isBusinessMode && !isExchangeBook
+                        ? () => setRemovePassengerTarget(passenger)
+                        : undefined
+                    }
                     onUpdateForm={updateForm}
                     onToggleExpanded={() => toggleExpanded(passenger.id)}
                     onOpenOrganization={() => setOrgSheetPassengerId(passenger.id)}
@@ -383,41 +493,61 @@ export function TrainBookPage() {
                       setOutNumberPicker({ passengerId: passenger.id, field })
                     }
                     onChangeCredential={setCredentialSheetPassenger}
+                    serviceFee={
+                      isShowServiceFee && serviceFee > 0 ? (
+                        <FlightBookServiceFeeRows
+                          sectioned
+                          serviceFees={[
+                            {
+                              passengerId: passenger.id,
+                              passengerName: passenger.credential.Name ?? "",
+                              fee: serviceFee,
+                            },
+                          ]}
+                        />
+                      ) : null
+                    }
                   />
-                }
-                seatPicker={
-                  showSeatPicker ? (
-                    <TrainBookPassengerSeatPicker
-                      seatType={selection.seat.SeatType}
-                      value={bookSeatLocations[index] ?? ""}
-                      showDisclaimer={index === bookPassengers.length - 1}
-                      onChange={(code) =>
-                        setBookSeatLocations((current) =>
-                          togglePassengerSeatSelection(current, index, bookPassengers.length, code),
-                        )
-                      }
-                    />
-                  ) : null
-                }
-                serviceFee={
-                  isShowServiceFee && serviceFee > 0 ? (
-                    <FlightBookServiceFeeRows
-                      sectioned
-                      serviceFees={[
-                        {
-                          passengerId: passenger.id,
-                          passengerName: passenger.credential.Name ?? "",
-                          fee: serviceFee,
-                        },
-                      ]}
-                    />
-                  ) : null
-                }
-              />
-            );
-          })}
+                  );
+                })}
 
-          {isDisplayNotifyLanguage ? (
+                {!isBusinessMode && !isExchangeBook ? (
+                  <Link
+                    to={buildPassengerSelectPath(ProductType.Train, bookReturnTo)}
+                    className="flex h-11 items-center justify-center gap-1.5 text-[14px] font-medium text-brand-primary active:opacity-80"
+                  >
+                    <span className="text-[18px] leading-none" aria-hidden>
+                      +
+                    </span>
+                    添加旅客
+                  </Link>
+                ) : null}
+              </>
+            )}
+          </section>
+
+          {!isBusinessMode ? (
+            <TrainBookLinkmanCard
+              linkman={orderLinkman}
+              onChange={(patch) =>
+                setOrderLinkman((current) => ({
+                  ...current,
+                  ...patch,
+                }))
+              }
+            />
+          ) : null}
+
+          {showSeatPicker && bookPassengers.length > 0 && !isExchangeBook ? (
+            <TrainBookSeatPicker
+              seatType={selection.seat.SeatType}
+              passengerCount={Math.min(bookPassengers.length, TRAIN_PASSENGER_LIMIT)}
+              value={bookSeatLocations}
+              onChange={setBookSeatLocations}
+            />
+          ) : null}
+
+          {isBusinessMode && isDisplayNotifyLanguage ? (
             <HotelBookOptionRow
               label="通知语言"
               value={formatFlightNotifyLanguage(notifyLanguage)}
@@ -428,33 +558,37 @@ export function TrainBookPage() {
             />
           ) : null}
 
-          <FlightBookAuthorizedContacts
-            contacts={authorizedContacts}
-            onAdd={() => setAddContactOpen(true)}
-            onRemove={(accountId) =>
-              setAuthorizedContacts((current) =>
-                current.filter((item) => item.accountId !== accountId),
-              )
-            }
-            onUpdate={(accountId, patch) =>
-              setAuthorizedContacts((current) =>
-                current.map((item) =>
-                  item.accountId === accountId ? { ...item, ...patch } : item,
-                ),
-              )
-            }
-            onOpenNotifyLanguage={(accountId) => {
-              setNotifyLanguageTarget(authorizedContactNotifyTarget(accountId));
-              setNotifyLanguageOpen(true);
-            }}
-          />
+          {isBusinessMode ? (
+            <FlightBookAuthorizedContacts
+              contacts={authorizedContacts}
+              onAdd={() => setAddContactOpen(true)}
+              onRemove={(accountId) =>
+                setAuthorizedContacts((current) =>
+                  current.filter((item) => item.accountId !== accountId),
+                )
+              }
+              onUpdate={(accountId, patch) =>
+                setAuthorizedContacts((current) =>
+                  current.map((item) =>
+                    item.accountId === accountId ? { ...item, ...patch } : item,
+                  ),
+                )
+              }
+              onOpenNotifyLanguage={(accountId) => {
+                setNotifyLanguageTarget(authorizedContactNotifyTarget(accountId));
+                setNotifyLanguageOpen(true);
+              }}
+            />
+          ) : null}
 
-          <FlightBookPayTypes
-            options={payOptions}
-            value={resolvedPayType}
-            personHoldMinutes={personHoldMinutes}
-            onChange={setTravelPayType}
-          />
+          {showPayTypes ? (
+            <FlightBookPayTypes
+              options={payOptions}
+              value={resolvedPayType}
+              personHoldMinutes={personHoldMinutes}
+              onChange={setTravelPayType}
+            />
+          ) : null}
         </div>
       </div>
 
@@ -479,6 +613,24 @@ export function TrainBookPage() {
             setDirectBookConfirmOpen(false);
         }}
         onConfirm={() => void executeSubmit(false)}
+      />
+
+      <ConfirmDialog
+        open={removePassengerTarget != null}
+        title="移除旅客"
+        message={
+          removePassengerTarget
+            ? `确定从当前订单移除「${removePassengerTarget.credential.Name ?? "该旅客"}」？`
+            : ""
+        }
+        confirmLabel="移除"
+        variant="destructive"
+        onConfirm={() => {
+          if (removePassengerTarget) {
+            removePassengerFromBook(removePassengerTarget);
+          }
+        }}
+        onCancel={() => setRemovePassengerTarget(null)}
       />
 
       <FlightBookNotifyLanguageSheet
@@ -515,6 +667,7 @@ export function TrainBookPage() {
       <FlightBookCredentialSheet
         open={Boolean(credentialSheetPassenger)}
         passenger={credentialSheetPassenger}
+        channel={productChannel}
         onClose={() => setCredentialSheetPassenger(null)}
         onSelect={(credential) => {
           if (!credentialSheetPassenger) return;

@@ -4,9 +4,9 @@ import type {
   FlightOutNumberField,
   FlightInitBookResponse,
   FlightPassengerContactOption,
-  FlightPassengerBookForm,
   PassengerBookInfo,
   TrainBookEntityDto,
+  TrainBookLinkmanDto,
   TrainBookPassengerDto,
   TrainInitBookResponse,
   TrainOrderBookDto,
@@ -23,15 +23,11 @@ import {
   buildPassengerOutNumberFields,
   validatePassengerOutNumbers,
 } from "@/lib/flight-book-outnumber";
-import {
-  resolvePassengerFormEmail,
-  resolvePassengerFormMobile,
-  splitContactOptions,
-  findInitStaffForPassenger,
-} from "@/lib/flight-book-passenger-form";
+import { splitContactOptions, findInitStaffForPassenger } from "@/lib/flight-book-passenger-form";
 import { buildAuthorizedLinkmans, validateAuthorizedContacts } from "@/lib/flight-book-contacts";
-import { resolveFlightTravelType } from "@/lib/flight-travel-mode";
+import { isBusinessTravelMode, resolveFlightTravelType } from "@/lib/flight-travel-mode";
 import type { TrainBookSelection } from "@/lib/train-book-session";
+import type { HomeTravelMode } from "@/config/home-assets";
 
 export const TRAIN_BOOK_CHANNEL = "客户H5";
 
@@ -93,7 +89,7 @@ export function passengerRequiresTrainApprover(
   staffs: FlightInitStaff[] | undefined,
 ): boolean {
   const staff = findInitStaffForPassenger(passenger, staffs);
-  return Boolean(staff?.isAllowSelectApprove);
+  return Boolean(staff?.Approvers?.length);
 }
 
 function mergeSeatPoliciesOntoSnapshot(
@@ -185,38 +181,104 @@ function buildTrainPassengerCredentials(
   return credentials;
 }
 
+function resolveTrainPassengerFormMobile(
+  form?: TrainPassengerBookForm,
+  fallback?: string,
+): string {
+  const checked = form?.mobileOptions.filter((item) => item.checked).map((item) => item.value) ?? [];
+  let mobile = checked.join(",");
+  if (form?.otherMobile.trim()) {
+    mobile = mobile ? `${mobile},${form.otherMobile.trim()}` : form.otherMobile.trim();
+  }
+  return mobile || fallback || "";
+}
+
+function resolveTrainPassengerFormEmail(form?: TrainPassengerBookForm): string {
+  const checked = form?.emailOptions.filter((item) => item.checked).map((item) => item.value) ?? [];
+  let email = checked.join(",");
+  if (form?.otherEmail.trim()) {
+    email = email ? `${email},${form.otherEmail.trim()}` : form.otherEmail.trim();
+  }
+  return email;
+}
+
+function normalizeOrderLinkman(linkman?: TrainBookLinkmanDto): TrainBookLinkmanDto | null {
+  const Name = linkman?.Name?.trim() ?? "";
+  const Mobile = linkman?.Mobile?.trim() ?? "";
+  const Email = linkman?.Email?.trim() ?? "";
+  if (!Name && !Mobile && !Email) return null;
+  return {
+    Name,
+    Mobile,
+    Email: Email || undefined,
+  };
+}
+
+function validateOrderLinkman(linkman?: TrainBookLinkmanDto): string | null {
+  const normalized = normalizeOrderLinkman(linkman);
+  if (!normalized?.Name) return "请填写联系人姓名";
+  if (!normalized.Mobile) return "请填写联系人手机号";
+  if (!/^1\d{10}$/.test(normalized.Mobile)) return "请输入正确的联系人手机号";
+  return null;
+}
+
 export function buildTrainInitBookDto(input: {
   selection: TrainBookSelection;
   passengers: PassengerBookInfo[];
   travelFormId?: string;
   agentId?: string;
+  travelMode?: HomeTravelMode;
+  channel?: "tmc" | "tourist";
+  includeTrainOnlyPassenger?: boolean;
 }): TrainOrderBookDto {
-  const { selection, passengers, travelFormId, agentId } = input;
+  const {
+    selection,
+    passengers,
+    travelFormId,
+    agentId,
+    travelMode,
+    channel,
+    includeTrainOnlyPassenger,
+  } = input;
+  const includeTravelForm = isBusinessTravelMode(travelMode);
   const trainEntity = buildTrainBookEntity(selection);
 
   const passengerDtos: TrainBookPassengerDto[] = passengers.map((info) => {
     const cred = info.credential;
     const clientId = resolveTrainInitClientId(info);
-    const passengerTravelFormId =
-      travelFormId ?? ("travelFormId" in info.passenger ? info.passenger.travelFormId : undefined);
+    const passengerTravelFormId = includeTravelForm
+      ? travelFormId ?? ("travelFormId" in info.passenger ? info.passenger.travelFormId : undefined)
+      : undefined;
     const passengerPolicy = buildTrainPassengerPolicy(info);
 
-    return {
+    const passengerDto: TrainBookPassengerDto = {
       ClientId: clientId,
       Train: { ...trainEntity },
       Credentials: buildTrainPassengerCredentials(info),
       Mobile: cred.Mobile,
       Policy: passengerPolicy,
-      travelFormId: passengerTravelFormId,
     };
+    if (includeTravelForm && passengerTravelFormId) passengerDto.travelFormId = passengerTravelFormId;
+    return passengerDto;
   });
+  if (passengerDtos.length === 0 && includeTrainOnlyPassenger) {
+    passengerDtos.push({
+      ClientId: String(selection.train.Id ?? selection.train.TrainNo ?? selection.train.TrainCode ?? "train"),
+      Train: { ...trainEntity },
+      Policy: selection.policy as Record<string, unknown> | undefined,
+    });
+  }
 
   const dto: TrainOrderBookDto = {
-    TravelFormId:
-      travelFormId ?? passengerDtos.find((passenger) => passenger.travelFormId)?.travelFormId ?? "",
     Passengers: passengerDtos,
-    Channel: TRAIN_BOOK_CHANNEL,
   };
+  if (channel) {
+    dto.channel = channel;
+  }
+  if (includeTravelForm) {
+    dto.TravelFormId =
+      travelFormId ?? passengerDtos.find((passenger) => passenger.travelFormId)?.travelFormId ?? "";
+  }
 
   if (agentId) dto.AgentId = agentId;
   return dto;
@@ -235,6 +297,9 @@ export function buildTrainOrderBookDto(input: {
   accountNumber12306?: string;
   globalNotifyLanguage?: TrainPassengerBookForm["notifyLanguage"];
   exchangeTicketId?: string;
+  travelMode?: HomeTravelMode;
+  channel?: "tmc" | "tourist";
+  orderLinkman?: TrainBookLinkmanDto;
 }): TrainOrderBookDto {
   const {
     selection,
@@ -249,7 +314,12 @@ export function buildTrainOrderBookDto(input: {
     accountNumber12306,
     globalNotifyLanguage,
     exchangeTicketId,
+    travelMode,
+    channel,
+    orderLinkman,
   } = input;
+  const includeTravelForm = isBusinessTravelMode(travelMode);
+  const normalizedOrderLinkman = normalizeOrderLinkman(orderLinkman);
 
   const trainEntityBase = buildTrainBookEntity(selection);
   const rules = selection.policy?.Rules?.filter(Boolean) ?? [];
@@ -259,15 +329,12 @@ export function buildTrainOrderBookDto(input: {
     const cred = info.credential;
     const clientId = resolveTrainInitClientId(info);
     const form = passengerForms?.[info.id];
-    const contactForm = form as FlightPassengerBookForm | undefined;
-    const mobile = contactForm
-      ? resolvePassengerFormMobile(contactForm) || cred.Mobile
-      : cred.Mobile;
-    const email = contactForm ? resolvePassengerFormEmail(contactForm) : undefined;
+    const mobile = resolveTrainPassengerFormMobile(form, cred.Mobile);
+    const email = resolveTrainPassengerFormEmail(form);
     const seatPreference = bookSeatLocations?.[index]?.trim();
     const passengerPolicy = buildTrainPassengerPolicy(info);
 
-    return {
+    const passengerDto: TrainBookPassengerDto = {
       ClientId: clientId,
       Train: {
         ...trainEntityBase,
@@ -283,29 +350,43 @@ export function buildTrainOrderBookDto(input: {
       ExpenseType: form?.expenseTypeId || undefined,
       ApprovalId: form?.approvalId || undefined,
       IsSkipApprove: form?.isSkipApprove,
-      TravelType: resolveFlightTravelType(),
-      travelFormId:
-        travelFormId ??
-        ("travelFormId" in info.passenger ? info.passenger.travelFormId : undefined),
+      TravelType: resolveFlightTravelType(travelMode),
       CostCenterCode: form?.costCenter.code || form?.otherCostCenterCode || undefined,
       CostCenterName: form?.costCenter.name || form?.otherCostCenterName || undefined,
-      OrganizationName: form?.organization.name || form?.otherOrganizationName || undefined,
+      OrganizationName:
+        form?.organization.name ||
+        form?.otherOrganizationName ||
+        (typeof (info.passenger as { OrgName?: string }).OrgName === "string"
+          ? (info.passenger as { OrgName?: string }).OrgName
+          : undefined),
       OrganizationCode: form?.organization.code || undefined,
       OutNumbers:
         form?.outNumbers && Object.keys(form.outNumbers).length > 0 ? form.outNumbers : null,
     };
+    if (includeTravelForm) {
+      const passengerTravelFormId =
+        travelFormId ??
+        ("travelFormId" in info.passenger ? info.passenger.travelFormId : undefined);
+      if (passengerTravelFormId) passengerDto.travelFormId = passengerTravelFormId;
+    }
+    return passengerDto;
   });
 
   const dto: TrainOrderBookDto = {
-    TravelFormId:
-      travelFormId ?? passengerDtos.find((passenger) => passenger.travelFormId)?.travelFormId,
     Passengers: passengerDtos,
-    Linkmans: buildAuthorizedLinkmans(authorizedContacts ?? []),
+    Linkmans: normalizedOrderLinkman
+      ? [normalizedOrderLinkman]
+      : buildAuthorizedLinkmans(authorizedContacts ?? []),
     Channel: TRAIN_BOOK_CHANNEL,
+    ...(channel ? { channel } : {}),
     TravelPayType: travelPayType,
     IsOfficialBooked: isOfficialBooked,
     AccountNumber: isOfficialBooked ? accountNumber12306 : undefined,
   };
+  if (includeTravelForm) {
+    dto.TravelFormId =
+      travelFormId ?? passengerDtos.find((passenger) => passenger.travelFormId)?.travelFormId;
+  }
 
   if (agentId) dto.AgentId = agentId;
   if (exchangeTicketId) {
@@ -328,6 +409,7 @@ export function buildTrainPassengerOutNumberFieldsMap(
       passenger,
       staff,
       init: init as FlightInitBookResponse | undefined,
+      travelType: "Train",
     });
   }
   return map;
@@ -338,6 +420,8 @@ export function validateTrainBookForms(input: {
   forms: Record<string, TrainPassengerBookForm>;
   outNumberFieldsByPassenger: Record<string, FlightOutNumberField[]>;
   authorizedContacts: FlightAuthorizedContact[];
+  orderLinkman?: TrainBookLinkmanDto;
+  requireOrderLinkman?: boolean;
   staffs?: FlightInitStaff[];
   requireIllegalReason: boolean;
 }): string | null {
@@ -346,6 +430,8 @@ export function validateTrainBookForms(input: {
     forms,
     outNumberFieldsByPassenger,
     authorizedContacts,
+    orderLinkman,
+    requireOrderLinkman,
     staffs,
     requireIllegalReason,
   } = input;
@@ -354,7 +440,7 @@ export function validateTrainBookForms(input: {
     const form = forms[passenger.id];
     if (!form) return "请完善旅客信息";
 
-    const mobile = resolvePassengerFormMobile(form as FlightPassengerBookForm);
+    const mobile = resolveTrainPassengerFormMobile(form);
     if (!mobile) return `请填写${passenger.credential.Name ?? "旅客"}联系电话`;
 
     if (passengerRequiresTrainApprover(passenger, staffs) && !form.isSkipApprove && !form.approvalId) {
@@ -371,8 +457,13 @@ export function validateTrainBookForms(input: {
     if (outError) return outError;
   }
 
-  const contactError = validateAuthorizedContacts(authorizedContacts);
-  if (contactError) return contactError;
+  if (requireOrderLinkman) {
+    const linkmanError = validateOrderLinkman(orderLinkman);
+    if (linkmanError) return linkmanError;
+  } else {
+    const contactError = validateAuthorizedContacts(authorizedContacts);
+    if (contactError) return contactError;
+  }
 
   return null;
 }
@@ -470,7 +561,14 @@ export function createTrainPassengerBookForm(passenger: PassengerBookInfo): Trai
     otherEmail: "",
     organization: {
       code: "",
-      name: passenger.credential.OrgName ?? passenger.passenger.OrgName ?? "",
+      name:
+        (typeof (passenger.credential as { OrgName?: string }).OrgName === "string"
+          ? (passenger.credential as { OrgName?: string }).OrgName
+          : undefined) ??
+        (typeof (passenger.passenger as { OrgName?: string }).OrgName === "string"
+          ? (passenger.passenger as { OrgName?: string }).OrgName
+          : "") ??
+        "",
     },
     otherOrganizationName: "",
     costCenter: { code: "", name: "" },
