@@ -1,4 +1,4 @@
-import type { HotelOrderActionFlags, TrainExchangeInfo, TrainOrderTicket } from "@ryx/shared-types";
+import type { HotelOrderActionFlags, TrainOrderTicket } from "@ryx/shared-types";
 
 import { getApi } from "@/lib/api";
 import {

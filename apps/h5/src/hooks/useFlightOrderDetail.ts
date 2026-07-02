@@ -6,6 +6,7 @@ import type {
   FlightNonVoluntaryRefundParams,
   FlightRefundParams,
   FlightTicketRefundInfoParams,
+  ProductChannel,
 } from "@ryx/shared-types";
 
 import { getApi } from "@/lib/api";
@@ -15,11 +16,11 @@ import {
   shouldPollFlightOrderDetail,
 } from "@/lib/flight-order-detail";
 
-export function useFlightOrderDetail(orderId: string) {
+export function useFlightOrderDetail(orderId: string, channel?: ProductChannel) {
   return useQuery({
-    queryKey: ["order", "detail", orderId],
+    queryKey: ["order", "detail", orderId, channel],
     queryFn: async () => {
-      const data = await getApi().order.getDetail({ OrderId: orderId });
+      const data = await getApi().order.getDetail({ OrderId: orderId, channel });
       return coerceFlightOrderDetail(data);
     },
     enabled: Boolean(orderId),
@@ -55,7 +56,7 @@ export function useCancelFlightOrder() {
 
 export function useFlightTicketRefundInfo(params: FlightTicketRefundInfoParams | null) {
   return useQuery({
-    queryKey: ["order", "flight", "refundInfo", params?.orderFlightTicket],
+    queryKey: ["order", "flight", "refundInfo", params?.orderFlightTicket, params?.channel],
     queryFn: () => getApi().order.getFlightTicketRefundInfo(params!),
     enabled: Boolean(params?.orderFlightTicket),
     retry: false,

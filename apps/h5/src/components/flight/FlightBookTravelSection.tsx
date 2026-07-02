@@ -17,6 +17,7 @@ import {
 import { buildPassengerOutNumberFields } from "@/lib/flight-book-outnumber";
 import { policyHasViolation } from "@/lib/flight-book-policy";
 import { filterFlightExpenseTypes, shouldRequireIllegalReason } from "@/lib/flight-book-travel";
+import type { HomeTravelMode } from "@/config/home-assets";
 
 interface FlightBookTravelSectionProps {
   passenger: PassengerBookInfo;
@@ -30,6 +31,7 @@ interface FlightBookTravelSectionProps {
   onOpenIllegalReason: () => void;
   onOpenExpenseType: () => void;
   onOpenOutNumber: (field: FlightOutNumberField) => void;
+  travelMode?: HomeTravelMode;
 }
 
 export function FlightBookTravelSection({
@@ -44,12 +46,14 @@ export function FlightBookTravelSection({
   onOpenIllegalReason,
   onOpenExpenseType,
   onOpenOutNumber,
+  travelMode,
 }: FlightBookTravelSectionProps) {
   const outNumberFields = buildPassengerOutNumberFields({
     passenger,
     staff,
     init,
     travelNumber: init?.TravelFrom?.TravelNumber,
+    travelMode,
   });
   const expenseTypes = filterFlightExpenseTypes(init?.ExpenseTypes);
   const showSection = shouldShowTravelSection({
@@ -228,19 +232,24 @@ export function buildPassengerOutNumberFieldsMap(input: {
   passengers: PassengerBookInfo[];
   staffs?: FlightInitStaff[];
   init?: FlightInitBookResponse;
+  travelMode?: HomeTravelMode;
 }): Record<string, FlightOutNumberField[]> {
-  const { passengers, staffs, init } = input;
+  const { passengers, staffs, init, travelMode } = input;
   const map: Record<string, FlightOutNumberField[]> = {};
   for (const passenger of passengers) {
+    const passengerAccountId =
+      "AccountId" in passenger.passenger ? passenger.passenger.AccountId : undefined;
     const staff = staffs?.find(
       (item) =>
-        String(item.Account?.Id ?? "") === String(passenger.passenger.AccountId ?? passenger.id),
+        String(item.Account?.Id ?? "") ===
+        String(passengerAccountId ?? passenger.credential.AccountId ?? passenger.id),
     );
     map[passenger.id] = buildPassengerOutNumberFields({
       passenger,
       staff,
       init,
       travelNumber: init?.TravelFrom?.TravelNumber,
+      travelMode,
     });
   }
   return map;

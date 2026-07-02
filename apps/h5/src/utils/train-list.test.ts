@@ -31,7 +31,6 @@ import {
   isTrainSeatAvailable,
   markLowestPrice,
   parseDurationMinutes,
-  reorderTrainsByIds,
   resolveTrainListOrder,
   sortTrains,
   toggleTrainTimeSpan,
@@ -240,7 +239,7 @@ describe("train-list utils", () => {
     const baseState = {
       activeTab: "duration" as const,
       timeEarlyToLate: true,
-      priceSortMode: "off",
+      priceSortMode: "off" as const,
     };
 
     const shortest = resolveTrainListOrder(trains, {

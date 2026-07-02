@@ -6,7 +6,8 @@ import type {
   FlightSegment,
 } from "@ryx/shared-types";
 
-export function parseFlightTimestamp(value: string): number {
+export function parseFlightTimestamp(value: string | undefined): number {
+  if (!value) return 0;
   const normalized = value.includes("T")
     ? value
     : value.replace(" ", "T");
@@ -19,14 +20,17 @@ export function enrichSegment(seg: FlightSegment): FlightSegment {
     ...seg,
     Number: seg.Number || seg.FlightNumber || "",
     FlightNumber: seg.FlightNumber || seg.Number,
-    TakeoffTimeStamp: seg.TakeoffTimeStamp ?? parseFlightTimestamp(seg.TakeoffTime),
-    ArrivalTimeStamp: seg.ArrivalTimeStamp ?? parseFlightTimestamp(seg.ArrivalTime),
+    TakeoffTimeStamp: seg.TakeoffTimeStamp ?? parseFlightTimestamp(seg.TakeoffTime ?? ""),
+    ArrivalTimeStamp: seg.ArrivalTimeStamp ?? parseFlightTimestamp(seg.ArrivalTime ?? ""),
   };
 }
 
 /** Stable route id when Home-Index `FlightViews[].Segment` has no `Id`. */
 export function resolveFlightSegmentId(
-  seg: Pick<FlightSegment, "Id" | "Number" | "FlightNumber" | "TakeoffTime" | "DetailKey" | "Data">,
+  seg: Pick<
+    FlightSegment,
+    "Id" | "Number" | "FlightNumber" | "TakeoffTime" | "ArrivalTime" | "DetailKey" | "Data"
+  >,
   view?: Pick<FlightListView, "FlightNos" | "Data">,
 ): string {
   if (seg.Id) return seg.Id;

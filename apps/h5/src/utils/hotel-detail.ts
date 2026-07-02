@@ -10,6 +10,7 @@ export interface HotelDetailQuery {
   minPrice?: number;
   hotelType?: HotelDetailParams["HotelType"];
   travelFormId?: string;
+  channel?: HotelDetailParams["channel"];
 }
 
 export function parseHotelDetailQuery(searchParams: URLSearchParams): HotelDetailQuery {
@@ -25,6 +26,7 @@ export function parseHotelDetailQuery(searchParams: URLSearchParams): HotelDetai
     minPrice: Number.isFinite(minPrice) ? minPrice : undefined,
     hotelType: (searchParams.get("hotelType") as HotelDetailParams["HotelType"]) ?? undefined,
     travelFormId: searchParams.get("travelFormId") ?? searchParams.get("travelformid") ?? undefined,
+    channel: (searchParams.get("channel") as HotelDetailParams["channel"]) ?? undefined,
   };
 }
 
@@ -40,6 +42,7 @@ export function buildHotelDetailUrl(hotelId: string, query: HotelDetailQuery): s
   }
   if (query.hotelType) params.set("hotelType", query.hotelType);
   if (query.travelFormId) params.set("travelFormId", query.travelFormId);
+  if (query.channel) params.set("channel", query.channel);
   return `/hotel/${encodeURIComponent(hotelId)}?${params.toString()}`;
 }
 
@@ -59,6 +62,7 @@ export function buildHotelRoomDetailUrl(
   }
   if (query.hotelType) params.set("hotelType", query.hotelType);
   if (query.travelFormId) params.set("travelFormId", query.travelFormId);
+  if (query.channel) params.set("channel", query.channel);
   return `/hotel/${encodeURIComponent(hotelId)}/room/${encodeURIComponent(roomId)}?${params.toString()}`;
 }
 
@@ -76,6 +80,7 @@ export function buildHotelDetailParams(
     MinPrice: query.minPrice,
     HotelType: query.hotelType,
     TravelFormId: query.travelFormId,
+    channel: query.channel,
   };
 }
 

@@ -7,10 +7,17 @@ import {
 const POLL_INTERVAL_MS = 3000;
 const MAX_ATTEMPTS = 5;
 
-export async function pollFlightCheckPay(tradeNo: string): Promise<boolean> {
+export async function pollFlightCheckPay(
+  tradeNo: string,
+  options: { channel?: "tmc" | "tourist"; productType?: "Flight" | "Train" | "Hotel" } = {},
+): Promise<boolean> {
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt += 1) {
     try {
-      const ready = await getApi().book.checkPay(tradeNo);
+      const ready = await getApi().book.checkPay({
+        orderId: tradeNo,
+        channel: options.channel,
+        productType: options.productType,
+      });
       if (ready) return true;
     } catch {
       // Legacy keeps polling; fall through to next attempt.

@@ -12,10 +12,10 @@ function readImageUrl(record: Record<string, unknown>): string | undefined {
 }
 
 function readBannerId(record: Record<string, unknown>): string | number | undefined {
-  const numericId = readNumber(record.Id) ?? readNumber(record.id);
-  if (numericId !== undefined) return numericId;
   const textId = readString(record.Id) || readString(record.id);
-  return textId || undefined;
+  if (textId) return textId;
+  const numericId = readNumber(record.Id) ?? readNumber(record.id);
+  return numericId !== undefined ? String(numericId) : undefined;
 }
 
 function normalizeBannerItem(raw: unknown): HomeBanner | null {
@@ -37,10 +37,14 @@ function normalizeBannerItem(raw: unknown): HomeBanner | null {
   return {
     Id: readBannerId(record),
     Title: readString(record.Title) || readString(record.title) || undefined,
-    Name: readString(record.Name) || readString(record.name) || undefined,
     ImageUrl: imageUrl,
     Url: (record.Url ?? record.url) as HomeBanner["Url"],
-    Tag: readString(record.Tag) || readString(record.tag) || undefined,
+    ...(readString(record.Name) || readString(record.name)
+      ? { Name: readString(record.Name) || readString(record.name) }
+      : {}),
+    ...(readString(record.Tag) || readString(record.tag)
+      ? { Tag: readString(record.Tag) || readString(record.tag) }
+      : {}),
   };
 }
 

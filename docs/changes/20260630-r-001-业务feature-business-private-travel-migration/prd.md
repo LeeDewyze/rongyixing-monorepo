@@ -198,7 +198,7 @@
    - 需要纠正：legacy public 火车不是列表页先选真实旅客再查票；列表页主要选择车次、席别、席位偏好，并保存 public train selection。
    - 因私火车进入 `public-train-book` 后才展示「旅客信息」和「添加旅客」，点击后进入 `public-train-freq-passenger-list`，从 public 常旅客中选择真实乘车人。
    - 填单页通过 `selectedFrequents` 保存已选常旅客；提交时 `fillBookPassengers()` 遍历 `selectedFrequents` 和已选车次 / 席别，生成 `PassengerDto`，写入旅客证件、手机号、车次、席别、保险和席位偏好。
-   - 因私火车联系人由初始化接口返回的 `initialBookDto.Linkman` 填充到 `orderLinkmanDto`，页面展示联系人姓名 / 手机号 / 邮箱。真实环境中该默认值通常是登录人或接口默认联系人，但 H5 不应前端硬编码为登录人，应以 tourist 初始化接口返回为准，允许用户编辑。
+   - 因私火车联系人由初始化接口返回的 `initialBookDto.Linkman` 填充到 `orderLinkmanDto`，页面展示联系人姓名 / 手机号 / 邮箱。H5 不再前端兜底联系人，如果接口返回为空，就说明初始化响应未提供联系人，页面仅允许用户手动填写。
    - 因私火车 12306 账号是购票账号 / 校验上下文，不等同于 H5 旅客主体；常旅客仍由 public frequent passenger 选择决定。
 
 5. 因私酒店：

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import type { OrderDetailProductType, ProductChannel } from "@ryx/shared-types";
 import { Button } from "@ryx/ui/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@ryx/ui/components/ui/card";
 
@@ -21,6 +22,7 @@ export interface OrderPayPageProps {
   title: string;
   orderId: string;
   successPath: string;
+  productType: OrderDetailProductType;
   subtitle?: string;
   /** If set, overrides the API-derived amount — for testing. */
   amountOverride?: number;
@@ -30,13 +32,23 @@ export function OrderPayPage({
   title,
   orderId,
   successPath,
+  productType,
   subtitle,
   amountOverride,
 }: OrderPayPageProps) {
   const navigate = useNavigate();
-  const { data: order } = useOrderDetail(orderId, 0);
-  const { data: payTotal, isLoading: totalLoading } = usePayTotalAmount(orderId);
-  const { data: pays, isLoading: paysLoading } = useOrderPays(orderId);
+  const [searchParams] = useSearchParams();
+  const channel: ProductChannel | undefined =
+    searchParams.get("channel") === "tourist" ? "tourist" : undefined;
+  const { data: order } = useOrderDetail(orderId, 0, channel);
+  const { data: payTotal, isLoading: totalLoading } = usePayTotalAmount(orderId, {
+    channel,
+    productType,
+  });
+  const { data: pays, isLoading: paysLoading } = useOrderPays(orderId, {
+    channel,
+    productType,
+  });
   const payCreate = usePayCreate();
   const payProcess = usePayProcess();
   const [selected, setSelected] = useState("");
@@ -66,8 +78,10 @@ export function OrderPayPage({
     const result = await executeOrderPayFlow({
       orderId,
       payType: selected,
-      createPay: (params) => payCreate.mutateAsync(params),
-      processPay: (params) => payProcess.mutateAsync(params),
+      createPay: (params) =>
+        payCreate.mutateAsync({ ...params, channel, ProductType: productType }),
+      processPay: (params) =>
+        payProcess.mutateAsync({ ...params, channel, ProductType: productType }),
     });
     if (result.redirected) return;
     navigate(successPath, {

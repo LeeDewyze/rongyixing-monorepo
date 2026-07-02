@@ -45,6 +45,18 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function getMethodUrlKey(method: string): string {
+  return method.split("-")[0] ?? "";
+}
+
+function hasServiceUrl(apiConfig: ApiConfigSetting | null, method: string): boolean {
+  const urlKey = getMethodUrlKey(method);
+  if (!urlKey) {
+    return true;
+  }
+  return Boolean(apiConfig?.Urls?.[urlKey]);
+}
+
 export function createProxyClient(config: ProxyClientConfig): ProxyClient {
   const fetchImpl = config.fetchImpl ?? globalThis.fetch.bind(globalThis);
   const mode = config.mode ?? "proxy";
@@ -54,8 +66,13 @@ export function createProxyClient(config: ProxyClientConfig): ProxyClient {
     return apiConfig?.Token ?? "";
   }
 
-  async function ensureApiConfig(): Promise<ApiConfigSetting | null> {
-    if (apiConfig?.Token && apiConfig?.Urls && Object.keys(apiConfig.Urls).length > 0) {
+  async function ensureApiConfig(method: string): Promise<ApiConfigSetting | null> {
+    if (
+      apiConfig?.Token &&
+      apiConfig?.Urls &&
+      Object.keys(apiConfig.Urls).length > 0 &&
+      hasServiceUrl(apiConfig, method)
+    ) {
       return apiConfig;
     }
     if (mode === "mock") {
@@ -111,7 +128,7 @@ export function createProxyClient(config: ProxyClientConfig): ProxyClient {
   }
 
   async function sendReal<TRes>(options: ProxySendOptions): Promise<IResponse<TRes>> {
-    const cfg = await ensureApiConfig();
+    const cfg = await ensureApiConfig(options.method);
     const token = getToken();
     const resolvedUrl = resolveUrl({
       baseUrl: config.baseUrl,

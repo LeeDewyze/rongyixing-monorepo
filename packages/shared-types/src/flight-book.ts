@@ -1,4 +1,5 @@
 import type { FlightFare, FlightSegment } from "./flight.js";
+import type { TravelUrlTravelType } from "./travel.js";
 
 export interface FlightInsuranceProduct {
   Id?: string | number;
@@ -32,6 +33,7 @@ export interface FlightOutNumberField {
   labelDataList?: string[];
   staffNumber?: string;
   staffOutNumber?: string;
+  travelType?: TravelUrlTravelType;
 }
 
 export interface FlightBookCredential {
@@ -171,6 +173,7 @@ export interface SearchLinkmanOption {
 
 /** Legacy `OrderBookDto` — PascalCase matches backend. */
 export interface FlightOrderBookDto {
+  channel?: "tmc" | "tourist";
   TravelFormId?: string;
   Passengers: FlightBookPassengerDto[];
   Linkmans?: FlightBookLinkmanDto[];

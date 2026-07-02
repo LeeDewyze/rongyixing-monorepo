@@ -175,7 +175,6 @@ export function ProfileCenterPage() {
 
   const profileQuery = useProfileCenter();
   const profile = profileQuery.data;
-  const avatar = withAvatarCacheBuster(profile?.HeadUrl || PROFILE_ASSETS.defaultAvatar);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [avatarSheetOpen, setAvatarSheetOpen] = useState(false);
   const [avatarCropOpen, setAvatarCropOpen] = useState(false);

@@ -66,7 +66,8 @@ export function buildCabinsPath(segment: FlightSegment, searchParams: URLSearchP
   if (segment.BookType != null && segment.BookType !== "") {
     params.set("bookType", String(segment.BookType));
   }
-  return `/flight/${encodeURIComponent(segment.Id)}/cabins?${params.toString()}`;
+  const routeId = segment.Id || flightNumber || detailKey || "unknown";
+  return `/flight/${encodeURIComponent(routeId)}/cabins?${params.toString()}`;
 }
 
 /** List route with `doRefresh=true` — Legacy timeout dialog confirm action. */

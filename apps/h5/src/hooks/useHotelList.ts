@@ -90,10 +90,10 @@ export function useHotelCities() {
   });
 }
 
-export function useHotelConditions(cityCode?: string) {
+export function useHotelConditions(cityCode?: string, channel?: "tmc" | "tourist") {
   return useQuery({
-    queryKey: ["hotel", "conditions", cityCode],
-    queryFn: () => getApi().hotel.getConditions({ CityCode: cityCode! }),
+    queryKey: ["hotel", "conditions", cityCode, channel],
+    queryFn: () => getApi().hotel.getConditions({ CityCode: cityCode!, channel }),
     enabled: Boolean(cityCode),
   });
 }
@@ -101,7 +101,14 @@ export function useHotelConditions(cityCode?: string) {
 export function useHotelKeywordSearch(params: HotelKeywordSearchParams | null, enabled = true) {
   const keyword = params?.Keyword.trim() ?? "";
   return useQuery({
-    queryKey: ["hotel", "keyword-search", params?.CityCode, params?.CityName, keyword],
+    queryKey: [
+      "hotel",
+      "keyword-search",
+      params?.CityCode,
+      params?.CityName,
+      keyword,
+      params?.channel,
+    ],
     queryFn: () => getApi().hotel.searchHotel({ ...params!, Keyword: keyword }),
     enabled: enabled && Boolean(params?.CityCode && params.CityName && keyword),
   });

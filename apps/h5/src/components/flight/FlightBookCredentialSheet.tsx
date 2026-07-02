@@ -6,6 +6,7 @@ import {
   credentialKey,
   type PassengerBookInfo,
   type PassengerCredential,
+  type ProductChannel,
 } from "@ryx/shared-types";
 
 import { getApi } from "@/lib/api";
@@ -16,13 +17,17 @@ interface FlightBookCredentialSheetProps {
   open: boolean;
   passenger: PassengerBookInfo | null;
   productType?: ProductType;
+  channel?: ProductChannel;
   onClose: () => void;
   onSelect: (credential: PassengerCredential) => void;
 }
 
 function resolveStaffAccountId(passenger: PassengerBookInfo): string | undefined {
-  const fromPassenger = passenger.passenger.AccountId;
+  const fromPassenger =
+    "AccountId" in passenger.passenger ? passenger.passenger.AccountId : undefined;
   if (fromPassenger) return String(fromPassenger);
+  const passengerId = "Id" in passenger.passenger ? passenger.passenger.Id : undefined;
+  if (passengerId) return String(passengerId);
   return passenger.credential.AccountId ? String(passenger.credential.AccountId) : undefined;
 }
 
@@ -30,14 +35,19 @@ export function FlightBookCredentialSheet({
   open,
   passenger,
   productType = ProductType.Flight,
+  channel,
   onClose,
   onSelect,
 }: FlightBookCredentialSheetProps) {
   const accountId = passenger ? resolveStaffAccountId(passenger) : undefined;
+  const isTourist = channel === "tourist";
 
   const credentials = useQuery({
-    queryKey: ["passenger", "staffCredentials", accountId],
-    queryFn: () => getApi().passenger.getStaffCredentials({ AccountId: accountId! }),
+    queryKey: ["passenger", isTourist ? "touristCredentials" : "staffCredentials", accountId],
+    queryFn: () =>
+      isTourist
+        ? getApi().passenger.getCredentials({ accountId: accountId!, channel })
+        : getApi().passenger.getStaffCredentials({ AccountId: accountId! }),
     enabled: open && Boolean(accountId),
     staleTime: 60_000,
   });

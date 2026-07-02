@@ -39,8 +39,8 @@ export function FlightBookSummary({ selection, onShowRules }: FlightBookSummaryP
   const airlineMetaLabel = [airlineFlightLabel, planeLabel].filter(Boolean).join(" ");
 
   return (
-    <div className="px-3 pb-3">
-      <div className="rounded-xl bg-[linear-gradient(135deg,#24a8ff_0%,#2468f7_100%)] px-3.5 pb-3 pt-3 shadow-[0_8px_18px_rgba(36,104,247,0.22)]">
+    <div className="px-3 pb-3 pt-2">
+      <div className="rounded-lg bg-[linear-gradient(270deg,#2768FA_0%,#33A1F9_100%)] px-3.5 pb-3 pt-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div

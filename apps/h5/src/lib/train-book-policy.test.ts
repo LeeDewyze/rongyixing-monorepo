@@ -38,6 +38,7 @@ describe("resolvePolicySeatType", () => {
 
 describe("matchesTrainPolicySeat", () => {
   const train: TrainItem = {
+    Id: "d321",
     TrainNo: "2400000D0008",
     TrainCode: "D321",
     StartTime: "2025-06-26 08:00",
@@ -187,6 +188,7 @@ describe("applyTrainPolicyColors", () => {
 
   it("matches policy by full TrainNo when policy echoes internal id", () => {
     const train: TrainItem = {
+      Id: "g1",
       TrainNo: "2400000G1008",
       TrainCode: "G1",
       StartTime: "2025-06-26 09:00",
@@ -263,6 +265,7 @@ describe("buildTrainPolicyParams", () => {
     const params = buildTrainPolicyParams({
       trains: [
         {
+          Id: "g1",
           TrainNo: "G1",
           TrainCode: "G1",
           StartTime: "2026-06-22 09:00",
@@ -291,6 +294,6 @@ describe("trainPolicyButtonClassName", () => {
     expect(trainPolicyButtonClassName("success")).toContain("34C759");
     expect(trainPolicyButtonClassName("warning")).toContain("FF8C00");
     expect(trainPolicyButtonClassName("danger")).toContain("EF4444");
-    expect(trainPolicyButtonClassName("secondary")).toContain("5099fe");
+    expect(trainPolicyButtonClassName("secondary")).toContain("brand-header-start");
   });
 });

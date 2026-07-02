@@ -1,6 +1,7 @@
 import type { HotelRoom, HotelRoomPlan } from "@ryx/shared-types";
 
 import { buildHotelDetailUrl } from "@/utils/hotel-detail";
+import type { HomeTravelMode } from "@/config/home-assets";
 
 const STORAGE_KEY = "ryx_hotel_book_selection";
 export const HOTEL_BOOK_SELECTION_EVENT = "ryx-hotel-book-selection-change";
@@ -19,6 +20,7 @@ export interface HotelBookSelection {
   bookingNotice?: string;
   hotelAddress?: string;
   hotelPhone?: string;
+  travelMode?: HomeTravelMode;
   selectedAt: number;
 }
 

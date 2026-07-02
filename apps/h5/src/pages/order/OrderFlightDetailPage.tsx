@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { usePageHeader } from "@/components/layout";
 import { HotelOrderApprovalSection } from "@/components/order/hotel/HotelOrderApprovalSection";
@@ -50,6 +50,8 @@ type FlightRefundKind = "voluntary" | "nonVoluntary";
 export function OrderFlightDetailPage() {
   const { orderId = "" } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const channel = searchParams.get("channel") === "tourist" ? "tourist" : undefined;
   const location = useLocation();
   const openCancelOnMountRef = useRef(
     (location.state as OrderDetailLocationState | null)?.action === "cancel",
@@ -70,7 +72,10 @@ export function OrderFlightDetailPage() {
   const headerRef = useRef<HTMLDivElement>(null);
   const [headerHeight, setHeaderHeight] = useState(ORDER_DETAIL_HEADER_FALLBACK_HEIGHT);
 
-  const { data: detail, isLoading, isError, error, refetch } = useFlightOrderDetail(orderId);
+  const { data: detail, isLoading, isError, error, refetch } = useFlightOrderDetail(
+    orderId,
+    channel,
+  );
   const cancelMutation = useCancelFlightOrder();
   const refundMutation = useRefundFlightOrder();
   const nonVoluntaryRefundMutation = useNonVoluntaryRefundFlightOrder();
@@ -181,7 +186,7 @@ export function OrderFlightDetailPage() {
   );
 
   const refundInfo = useFlightTicketRefundInfo(
-    refundOpen && selectedTicket ? { orderFlightTicket: selectedTicket.Id } : null,
+    refundOpen && selectedTicket ? { orderFlightTicket: selectedTicket.Id, channel } : null,
   );
 
   useEffect(() => {
@@ -229,8 +234,12 @@ export function OrderFlightDetailPage() {
   }, [detail, selectedTicket]);
 
   const handlePay = useCallback(() => {
-    navigate(`/flight/pay/${encodeURIComponent(orderId)}`);
-  }, [navigate, orderId]);
+    const payPath =
+      channel === "tourist"
+        ? `/flight/pay/${encodeURIComponent(orderId)}?channel=tourist`
+        : `/flight/pay/${encodeURIComponent(orderId)}`;
+    navigate(payPath);
+  }, [channel, navigate, orderId]);
 
   const runCancel = useCallback(async () => {
     if (!detail) return;
@@ -246,6 +255,7 @@ export function OrderFlightDetailPage() {
         await cancelMutation.mutateAsync({
           mode: "ticket",
           params: {
+            channel,
             OrderId: detail.OrderId,
             TicketId: target.ticketId,
             Tag: "flight",
@@ -255,6 +265,7 @@ export function OrderFlightDetailPage() {
         await cancelMutation.mutateAsync({
           mode: "order",
           params: {
+            channel,
             OrderId: detail.OrderId,
             TicketId: target.ticketId,
             Channel: resolveAppChannel(),
@@ -268,13 +279,14 @@ export function OrderFlightDetailPage() {
     } catch (err) {
       showToast(formatApiError(err));
     }
-  }, [cancelMutation, detail, refetch, showToast]);
+  }, [cancelMutation, channel, detail, refetch, selectedTicket, showToast]);
 
   const runRefund = useCallback(async () => {
     if (!detail || !selectedTicket) return;
     try {
       if (refundKind === "nonVoluntary") {
         const result = await nonVoluntaryRefundMutation.mutateAsync({
+          channel,
           OrderFlightTicketId: selectedTicket.Id,
           OrderId: detail.OrderId,
           IsVoluntary: false,
@@ -283,6 +295,7 @@ export function OrderFlightDetailPage() {
         showToast(result?.Message || "退票申请中");
       } else {
         await refundMutation.mutateAsync({
+          channel,
           orderId: detail.OrderId,
           ticketId: selectedTicket.Id,
           IsVoluntary: true,
@@ -297,6 +310,7 @@ export function OrderFlightDetailPage() {
   }, [
     detail,
     nonVoluntaryRefundMutation,
+    channel,
     refundKind,
     refundMutation,
     refetch,

@@ -70,10 +70,11 @@ describe("buildFlightDetailParams", () => {
   it("uses airport codes and passenger count for Home-Detail", () => {
     expect(
       buildFlightDetailParams(
-        {
-          date: "2026-06-22",
-          fromCode: "BJS",
-          toCode: "SHA",
+      {
+        date: "2026-06-22",
+        channel: "tourist",
+        fromCode: "BJS",
+        toCode: "SHA",
           fromName: "北京",
           toName: "上海",
           fromAsAirport: false,
@@ -107,15 +108,17 @@ describe("buildFlightDetailParams", () => {
       ADTPtcs: 2,
       DetailKey: "abc",
       Lang: "cn",
+      channel: "tourist",
     });
   });
 
   it("includes BookType when provided from list FlightViews", () => {
     const params = buildFlightDetailParams(
-      {
-        date: "2026-06-23",
-        fromCode: "BJS",
-        toCode: "SHA",
+        {
+          date: "2026-06-23",
+          channel: "tourist",
+          fromCode: "BJS",
+          toCode: "SHA",
         fromName: "北京",
         toName: "上海",
         fromAsAirport: false,
@@ -141,6 +144,7 @@ describe("buildFlightDetailParams", () => {
     );
     expect(params?.BookType).toBe("2");
     expect(params?.Lang).toBe("cn");
+    expect(params?.channel).toBe("tourist");
   });
 });
 

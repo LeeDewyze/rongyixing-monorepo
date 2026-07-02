@@ -44,6 +44,7 @@ export interface FlightOrderTicket {
 }
 
 export interface FlightCancelParams {
+  channel?: "tmc" | "tourist";
   OrderId: string;
   TicketId: string;
   Channel: string;
@@ -51,12 +52,14 @@ export interface FlightCancelParams {
 }
 
 export interface FlightAbolishTicketParams {
+  channel?: "tmc" | "tourist";
   OrderId: string;
   TicketId: string;
   Tag: "flight";
 }
 
 export interface FlightTicketRefundInfoParams {
+  channel?: "tmc" | "tourist";
   orderFlightTicket: string;
 }
 
@@ -68,6 +71,7 @@ export interface FlightTicketRefundInfo {
 }
 
 export interface FlightRefundParams {
+  channel?: "tmc" | "tourist";
   orderId: string;
   ticketId: string;
   IsVoluntary: boolean;
@@ -76,6 +80,7 @@ export interface FlightRefundParams {
 }
 
 export interface FlightNonVoluntaryRefundParams {
+  channel?: "tmc" | "tourist";
   OrderFlightTicketId: string;
   OrderId: string;
   IsVoluntary: false;

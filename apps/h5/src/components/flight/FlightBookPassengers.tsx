@@ -95,7 +95,8 @@ function hasOtherOrganizationInput(form: FlightPassengerBookForm): boolean {
 }
 
 function resolveStaffAccountId(passenger: PassengerBookInfo): string | undefined {
-  const fromPassenger = passenger.passenger.AccountId;
+  const fromPassenger =
+    "AccountId" in passenger.passenger ? passenger.passenger.AccountId : undefined;
   if (fromPassenger) return String(fromPassenger);
   return passenger.credential.AccountId ? String(passenger.credential.AccountId) : undefined;
 }

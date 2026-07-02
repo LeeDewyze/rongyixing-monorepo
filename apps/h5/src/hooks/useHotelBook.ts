@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { HotelBookParams, HotelOrderBookDto } from "@ryx/shared-types";
+import type { HotelBookParams, HotelOrderBookDto, ProductChannel } from "@ryx/shared-types";
 
 import {
   HOTEL_BOOK_SELECTION_EVENT,
@@ -51,10 +51,10 @@ export function useHotelSubmitBook() {
   });
 }
 
-export function useOrderDetail(orderId: string, pollMs = 3000) {
+export function useOrderDetail(orderId: string, pollMs = 3000, channel?: ProductChannel) {
   return useQuery({
-    queryKey: ["order", "detail", orderId],
-    queryFn: () => getApi().order.getDetail({ OrderId: orderId }),
+    queryKey: ["order", "detail", orderId, channel],
+    queryFn: () => getApi().order.getDetail({ OrderId: orderId, channel }),
     enabled: Boolean(orderId),
     refetchInterval: (query) => {
       const data = query.state.data;

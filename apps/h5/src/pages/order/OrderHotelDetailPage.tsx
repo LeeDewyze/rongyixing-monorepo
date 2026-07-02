@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { HotelOrderApprovalSection } from "@/components/order/hotel/HotelOrderApprovalSection";
 import {
@@ -44,6 +44,8 @@ interface OrderDetailLocationState {
 export function OrderHotelDetailPage() {
   const { orderId = "" } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const channel = searchParams.get("channel") === "tourist" ? "tourist" : undefined;
   const location = useLocation();
   const openCancelOnMountRef = useRef(
     (location.state as OrderDetailLocationState | null)?.action === "cancel",
@@ -51,13 +53,16 @@ export function OrderHotelDetailPage() {
   const headerRef = useRef<HTMLDivElement>(null);
   const [headerHeight, setHeaderHeight] = useState(ORDER_DETAIL_HEADER_FALLBACK_HEIGHT);
 
-  const { data: rawDetail, isLoading, isError, error, refetch } = useHotelOrderDetail(orderId);
+  const { data: rawDetail, isLoading, isError, error, refetch } = useHotelOrderDetail(
+    orderId,
+    channel,
+  );
   const detail = useMemo(
     () => (rawDetail ? coerceHotelOrderDetail(rawDetail) : undefined),
     [rawDetail],
   );
   const cancelMutation = useCancelHotelOrder();
-  const sms = useHotelOrderSms();
+  const sms = useHotelOrderSms(channel);
   const { data: showInspurRepush } = useInspurRepush(orderId, Boolean(detail));
 
   const [selectedRoomIndex, setSelectedRoomIndex] = useState(0);
@@ -130,8 +135,12 @@ export function OrderHotelDetailPage() {
   }, []);
 
   const handlePay = useCallback(() => {
-    navigate(`/hotel/pay/${encodeURIComponent(orderId)}`);
-  }, [navigate, orderId]);
+    const payPath =
+      channel === "tourist"
+        ? `/hotel/pay/${encodeURIComponent(orderId)}?channel=tourist`
+        : `/hotel/pay/${encodeURIComponent(orderId)}`;
+    navigate(payPath);
+  }, [channel, navigate, orderId]);
 
   const runCancel = useCallback(async () => {
     if (!detail) return;
@@ -142,6 +151,7 @@ export function OrderHotelDetailPage() {
     }
     try {
       await cancelMutation.mutateAsync({
+        channel,
         OrderId: detail.OrderId,
         OrderHotelId: orderHotelId,
         Channel: resolveAppChannel(),
@@ -152,7 +162,7 @@ export function OrderHotelDetailPage() {
     } catch (err) {
       showToast(formatApiError(err));
     }
-  }, [cancelMutation, detail, refetch, showToast]);
+  }, [cancelMutation, channel, detail, refetch, showToast]);
 
   const handleCancelClick = useCallback(() => {
     if (!detail) return;

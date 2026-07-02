@@ -157,6 +157,12 @@ stateDiagram-v2
   7. 若下单返回 `IsCheckPay=true`，使用 `TmcTouristBookUrl-Train-CheckPay`。
   8. 改签 / 退票能力若本期覆盖，则使用 tourist train 和 tourist book 对应 Method。
   9. 支付 / 订单详情 / 取消 / 出票进入 `TmcTouristOrderUrl-*`，出票 / 取消出票使用 `TmcTouristOrderUrl-Order-IssueTrain` / `CancelTrain`。
+  10. 旅客人数上限对齐 legacy public 火车为 5 人；H5 选择页按 `maxPassengersForProduct(ProductType.Train)` 拦截，填单页再裁剪历史缓存超限数据。
+  11. 选座服务按 legacy 共享偏好池实现，不在每位旅客卡片内单独选座；最多按旅客数选择，提交时按旅客顺序写入 `Passenger.Train.BookSeatLocation`。
+  12. 选座编码支持 `1A/1B/1C/1D/1F` 与 `2A/2B/2C/2D/2F`，`formatBookSeatLocation` 不得把第二排编码转成 `12A/12C`。
+  13. 选座仅在二等座、一等座、商务座、特等座等支持选座席别展示；硬座、硬卧、软卧等普通席别不展示选座服务。
+  14. personal 火车联系人使用 Initialize 返回的 `Linkman` 回填姓名、手机号、邮箱；用户编辑后作为订单级 `Linkmans` 提交。
+  15. H5 旅客区域按一个「旅客信息」卡片承载全部旅客与添加入口；展开后联系方式与补充信息合并为连续字段区，可录入文本字段统一提供一键清空。
 
 ### 功能点 6：因私酒店 public/tourist 链路
 - 涉及领域模块：酒店城市、酒店条件、酒店关键字、酒店列表、酒店详情、酒店填单、入住人、支付 / 订单
@@ -290,7 +296,7 @@ stateDiagram-v2
 任务清单文档：[task-list.md](task-list.md)
 
 ## 10. 设计确认状态
-【未锁定】
+【已锁定】
 
 ## 11. 变更记录
 | 版本 | 变更日期 | 修改人 | 变更内容 |
@@ -300,3 +306,4 @@ stateDiagram-v2
 | V1.2 | 2026-06-30 | Codex | 补充 legacy public 公共填单、证件、CheckPay、待出行、订单支付售后具体 Method 与任务范围 |
 | V1.3 | 2026-06-30 | Codex | 按需求移除对外消息、ETCD、数据监控、灰度方案等非必要模板章节 |
 | V1.4 | 2026-06-30 | Codex | 重新校准为基于现有 H5 页面迁移 legacy 接口与业务差异，不强制复刻 legacy 路由、视觉和未覆盖的订单售后页面 |
+| V1.0-Locked | 2026-07-01 | Codex | 设计文档已锁定，禁止修改 |

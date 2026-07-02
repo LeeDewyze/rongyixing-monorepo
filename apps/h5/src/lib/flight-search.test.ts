@@ -82,6 +82,7 @@ describe("buildHomeIndexParams", () => {
         { Id: "9278", Tag: "AirportCity", Code: "BJS", AirportCityCode: "BJS", Name: "北京" },
         airports[0]!,
         "2026-06-21",
+        "tourist",
       ),
     ).toEqual({
       Date: "2026-06-21",
@@ -89,6 +90,7 @@ describe("buildHomeIndexParams", () => {
       ToCode: "SHA",
       FromAsAirport: false,
       ToAsAirport: false,
+      channel: "tourist",
     });
   });
 });
@@ -99,8 +101,10 @@ describe("buildFlightListSearchParams", () => {
       fromCity: { Id: "9278", Tag: "AirportCity", Code: "BJS", Name: "北京" },
       toCity: airports[0]!,
       date: "2026-06-21",
+      channel: "tourist",
     });
     expect(params.get("toAsAirport")).toBe("false");
     expect(params.get("fromAsAirport")).toBe("false");
+    expect(params.get("channel")).toBe("tourist");
   });
 });

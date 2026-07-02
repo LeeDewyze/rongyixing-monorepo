@@ -12,13 +12,16 @@ import type {
 } from "@ryx/shared-types";
 
 import { PASSENGER_FLOW_METHODS } from "../methods/passenger-flow.js";
+import { BOOK_METHODS } from "../methods/book.js";
 import { TMC_METHODS } from "../methods/tmc.js";
 import type { ProxyClient } from "../proxy/proxy-client.js";
 
 export interface PassengerApi {
   getStaffList(params?: StaffListParams): Promise<StaffListResponse>;
   getPassengerList(params?: PassengerListParams): Promise<PassengerListResponse>;
-  getCredentials(accountId: string): Promise<PassengerCredential[]>;
+  getCredentials(
+    input: string | { accountId: string; channel?: "tmc" | "tourist" },
+  ): Promise<PassengerCredential[]>;
   getStaffCredentials(params: StaffCredentialsParams): Promise<PassengerCredential[]>;
   addPassenger(payload: ExternalPassengerApiPayload): Promise<MemberPassenger | string>;
   modifyPassenger(payload: ExternalPassengerApiPayload): Promise<MemberPassenger>;
@@ -98,9 +101,14 @@ export function createPassengerApi(proxy: ProxyClient): PassengerApi {
       });
       return normalizePassengerListResponse(res);
     },
-    async getCredentials(accountId) {
+    async getCredentials(input) {
+      const accountId = typeof input === "string" ? input : input.accountId;
+      const method =
+        typeof input !== "string" && input.channel === "tourist"
+          ? BOOK_METHODS.HOME_CREDENTIALS_36
+          : TMC_METHODS.CREDENTIALS_LIST;
       const res = await proxy.send<PassengerCredential[] | { Credentials?: PassengerCredential[] }>({
-        method: TMC_METHODS.CREDENTIALS_LIST,
+        method,
         data: { accountId },
       });
       return normalizeCredentialsList(res);

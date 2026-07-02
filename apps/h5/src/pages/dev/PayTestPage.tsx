@@ -59,6 +59,7 @@ export function PayTestPage() {
           <OrderPayPage
             title="支付测试"
             orderId={trimmed}
+            productType="Hotel"
             successPath="/dev/pay"
             subtitle="测试金额 ¥0.01"
             amountOverride={0.01}

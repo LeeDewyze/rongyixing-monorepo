@@ -3,17 +3,20 @@ import type { FlightOutNumberField } from "@ryx/shared-types";
 
 import { HotelBookTravelFields } from "@/components/hotel/HotelBookTravelFields";
 import { BookContactCheckboxMark } from "@/components/book/BookContactCheckbox";
+import { ClearableFieldInput } from "@/components/form";
 import type { HotelPassengerBookForm } from "@/lib/hotel-book";
 
 export type BookPassengerDetailsForm = Omit<HotelPassengerBookForm, "arrivalTime">;
 
-function DetailSection({ title, children }: { title: string; children: ReactNode }) {
+function DetailSection({ title, children }: { title?: string; children: ReactNode }) {
   return (
     <section className="overflow-hidden rounded-lg bg-white ring-1 ring-[#EEF1F6]">
-      <div className="flex items-center gap-2 border-b border-[#F0F2F5] bg-[#FAFBFC] px-3 py-2">
-        <span className="h-3 w-[3px] shrink-0 rounded-full bg-brand-primary" aria-hidden />
-        <h4 className="text-[13px] font-medium leading-none text-[#333333]">{title}</h4>
-      </div>
+      {title ? (
+        <div className="flex items-center gap-2 border-b border-[#F0F2F5] bg-[#FAFBFC] px-3 py-2">
+          <span className="h-3 w-[3px] shrink-0 rounded-full bg-brand-primary" aria-hidden />
+          <h4 className="text-[13px] font-medium leading-none text-[#333333]">{title}</h4>
+        </div>
+      ) : null}
       <div className="px-3">{children}</div>
     </section>
   );
@@ -33,7 +36,7 @@ function DetailRow({
       <span className="w-[5.75rem] shrink-0 whitespace-nowrap text-[14px] leading-none text-[#666666]">
         {label}
       </span>
-      <div className="min-w-0 flex-1">{children}</div>
+      <div className="flex min-w-0 flex-1 items-center justify-end gap-2">{children}</div>
       {action ? <div className="shrink-0">{action}</div> : null}
     </div>
   );
@@ -108,6 +111,7 @@ interface HotelBookPassengerDetailsProps {
   illegalReasons: string[];
   expenseTypes: { id: string; name: string }[];
   requiresIllegalReason: boolean;
+  mergeContactAndSupplement?: boolean;
   onUpdateForm: (patch: Partial<BookPassengerDetailsForm>) => void;
   onOpenOrganization: () => void;
   onOpenCostCenter: () => void;
@@ -125,6 +129,7 @@ export function HotelBookPassengerDetails({
   illegalReasons,
   expenseTypes,
   requiresIllegalReason,
+  mergeContactAndSupplement = false,
   onUpdateForm,
   onOpenOrganization,
   onOpenCostCenter,
@@ -135,23 +140,171 @@ export function HotelBookPassengerDetails({
   const showTravelFields =
     illegalReasons.length > 0 || requiresIllegalReason || expenseTypes.length > 0;
 
+  const contactRows = (
+    <>
+      <DetailRow label="联系电话">
+        <ContactCheckboxList
+          options={form.mobileOptions}
+          onChange={(mobileOptions) => onUpdateForm({ mobileOptions })}
+        />
+      </DetailRow>
+
+      <DetailRow label="联系邮箱">
+        <ContactCheckboxList
+          options={form.emailOptions}
+          onChange={(emailOptions) => onUpdateForm({ emailOptions })}
+        />
+      </DetailRow>
+    </>
+  );
+
+  const supplementRows = (
+    <>
+      <DetailRow label="其他电话">
+        <ClearableFieldInput
+          type="tel"
+          value={form.otherMobile}
+          placeholder="请输入"
+          onChange={(event) => onUpdateForm({ otherMobile: event.target.value })}
+          onClear={() => onUpdateForm({ otherMobile: "" })}
+          inputClassName={detailValueClass}
+        />
+      </DetailRow>
+
+      <DetailRow label="其他邮箱">
+        <ClearableFieldInput
+          type="email"
+          value={form.otherEmail}
+          placeholder="请输入"
+          onChange={(event) => onUpdateForm({ otherEmail: event.target.value })}
+          onClear={() => onUpdateForm({ otherEmail: "" })}
+          inputClassName={detailValueClass}
+        />
+      </DetailRow>
+
+      {showOrganizations ? (
+        <DetailRow label="其他部门">
+          <ClearableFieldInput
+            type="text"
+            value={form.otherOrganizationName}
+            placeholder="请输入名称"
+            onChange={(event) => {
+              const value = event.target.value;
+              onUpdateForm({
+                otherOrganizationName: value,
+                ...(value.trim() ? { organization: emptyOrgCost } : {}),
+              });
+            }}
+            onClear={() => onUpdateForm({ otherOrganizationName: "" })}
+            inputClassName={detailValueClass}
+          />
+        </DetailRow>
+      ) : null}
+
+      {showCostCenter ? (
+        <>
+          <DetailRow label="其他成本中心名称">
+            <ClearableFieldInput
+              type="text"
+              value={form.otherCostCenterName}
+              placeholder="请输入名称"
+              onChange={(event) => {
+                const value = event.target.value;
+                onUpdateForm({
+                  otherCostCenterName: value,
+                  ...(value.trim() ? { costCenter: emptyOrgCost } : {}),
+                });
+              }}
+              onClear={() => onUpdateForm({ otherCostCenterName: "" })}
+              inputClassName={detailValueClass}
+            />
+          </DetailRow>
+          <DetailRow label="其他成本中心代码">
+            <ClearableFieldInput
+              type="text"
+              value={form.otherCostCenterCode}
+              placeholder="请输入代码"
+              onChange={(event) => {
+                const value = event.target.value;
+                onUpdateForm({
+                  otherCostCenterCode: value,
+                  ...(value.trim() ? { costCenter: emptyOrgCost } : {}),
+                });
+              }}
+              onClear={() => onUpdateForm({ otherCostCenterCode: "" })}
+              inputClassName={detailValueClass}
+            />
+          </DetailRow>
+        </>
+      ) : null}
+
+      {outNumberFields.map((field) =>
+        field.canSelect ? (
+          <DetailRow key={field.key} label={field.label}>
+            <button
+              type="button"
+              className={detailActionClass}
+              onClick={() => onOpenOutNumberPicker(field)}
+            >
+              <span className="truncate">
+                {form.outNumbers[field.key] ?? field.value ?? "请选择"}
+              </span>
+              <span className="shrink-0 text-[16px] text-[#bbbbbb]" aria-hidden>
+                ›
+              </span>
+            </button>
+          </DetailRow>
+        ) : (
+          <DetailRow key={field.key} label={field.label}>
+            <ClearableFieldInput
+              type="text"
+              value={form.outNumbers[field.key] ?? field.value ?? ""}
+              placeholder="请输入"
+              onChange={(event) =>
+                onUpdateForm({
+                  outNumbers: {
+                    ...form.outNumbers,
+                    [field.key]: event.target.value,
+                  },
+                })
+              }
+              onClear={() =>
+                onUpdateForm({
+                  outNumbers: {
+                    ...form.outNumbers,
+                    [field.key]: "",
+                  },
+                })
+              }
+              inputClassName={detailValueClass}
+            />
+          </DetailRow>
+        ),
+      )}
+
+      <DetailRow label="同住人">
+        <ClearableFieldInput
+          type="text"
+          value={form.roommate}
+          placeholder="请输入"
+          onChange={(event) => onUpdateForm({ roommate: event.target.value })}
+          onClear={() => onUpdateForm({ roommate: "" })}
+          inputClassName={detailValueClass}
+        />
+      </DetailRow>
+    </>
+  );
+
   return (
     <>
-      <DetailSection title="联系方式">
-        <DetailRow label="联系电话">
-          <ContactCheckboxList
-            options={form.mobileOptions}
-            onChange={(mobileOptions) => onUpdateForm({ mobileOptions })}
-          />
-        </DetailRow>
-
-        <DetailRow label="联系邮箱">
-          <ContactCheckboxList
-            options={form.emailOptions}
-            onChange={(emailOptions) => onUpdateForm({ emailOptions })}
-          />
-        </DetailRow>
-      </DetailSection>
+      {mergeContactAndSupplement ? (
+        <DetailSection>
+          {contactRows}
+          {supplementRows}
+        </DetailSection>
+      ) : (
+        <DetailSection title="联系方式">{contactRows}</DetailSection>
+      )}
 
       {hasOrgSection ? (
         <DetailSection title="组织信息">
@@ -197,126 +350,9 @@ export function HotelBookPassengerDetails({
         </DetailSection>
       ) : null}
 
-      <DetailSection title="补充信息">
-        <DetailRow label="其他电话">
-          <input
-            type="tel"
-            value={form.otherMobile}
-            placeholder="请输入"
-            onChange={(event) => onUpdateForm({ otherMobile: event.target.value })}
-            className={detailValueClass}
-          />
-        </DetailRow>
-
-        <DetailRow label="其他邮箱">
-          <input
-            type="email"
-            value={form.otherEmail}
-            placeholder="请输入"
-            onChange={(event) => onUpdateForm({ otherEmail: event.target.value })}
-            className={detailValueClass}
-          />
-        </DetailRow>
-
-        {showOrganizations ? (
-          <DetailRow label="其他部门">
-            <input
-              type="text"
-              value={form.otherOrganizationName}
-              placeholder="请输入名称"
-              onChange={(event) => {
-                const value = event.target.value;
-                onUpdateForm({
-                  otherOrganizationName: value,
-                  ...(value.trim() ? { organization: emptyOrgCost } : {}),
-                });
-              }}
-              className={detailValueClass}
-            />
-          </DetailRow>
-        ) : null}
-
-        {showCostCenter ? (
-          <>
-            <DetailRow label="其他成本中心名称">
-              <input
-                type="text"
-                value={form.otherCostCenterName}
-                placeholder="请输入名称"
-                onChange={(event) => {
-                  const value = event.target.value;
-                  onUpdateForm({
-                    otherCostCenterName: value,
-                    ...(value.trim() ? { costCenter: emptyOrgCost } : {}),
-                  });
-                }}
-                className={detailValueClass}
-              />
-            </DetailRow>
-            <DetailRow label="其他成本中心代码">
-              <input
-                type="text"
-                value={form.otherCostCenterCode}
-                placeholder="请输入代码"
-                onChange={(event) => {
-                  const value = event.target.value;
-                  onUpdateForm({
-                    otherCostCenterCode: value,
-                    ...(value.trim() ? { costCenter: emptyOrgCost } : {}),
-                  });
-                }}
-                className={detailValueClass}
-              />
-            </DetailRow>
-          </>
-        ) : null}
-
-        {outNumberFields.map((field) =>
-          field.canSelect ? (
-            <DetailRow key={field.key} label={field.label}>
-              <button
-                type="button"
-                className={detailActionClass}
-                onClick={() => onOpenOutNumberPicker(field)}
-              >
-                <span className="truncate">
-                  {form.outNumbers[field.key] ?? field.value ?? "请选择"}
-                </span>
-                <span className="shrink-0 text-[16px] text-[#bbbbbb]" aria-hidden>
-                  ›
-                </span>
-              </button>
-            </DetailRow>
-          ) : (
-            <DetailRow key={field.key} label={field.label}>
-              <input
-                type="text"
-                value={form.outNumbers[field.key] ?? field.value ?? ""}
-                placeholder="请输入"
-                onChange={(event) =>
-                  onUpdateForm({
-                    outNumbers: {
-                      ...form.outNumbers,
-                      [field.key]: event.target.value,
-                    },
-                  })
-                }
-                className={detailValueClass}
-              />
-            </DetailRow>
-          ),
-        )}
-
-        <DetailRow label="同住人">
-          <input
-            type="text"
-            value={form.roommate}
-            placeholder="请输入"
-            onChange={(event) => onUpdateForm({ roommate: event.target.value })}
-            className={detailValueClass}
-          />
-        </DetailRow>
-      </DetailSection>
+      {mergeContactAndSupplement ? null : (
+        <DetailSection title="补充信息">{supplementRows}</DetailSection>
+      )}
 
       {requiresApprover ? (
         <DetailSection title="审批信息">

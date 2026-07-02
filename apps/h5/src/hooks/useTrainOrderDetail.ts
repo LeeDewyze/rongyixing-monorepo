@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import type {
+  ProductChannel,
   TrainCancelParams,
   TrainIssueParams,
   TrainRefundParams,
@@ -13,11 +14,11 @@ import {
 } from "@/lib/train-order-detail";
 import { useFlightPayHoldCountdown } from "@/hooks/useFlightOrderDetail";
 
-export function useTrainOrderDetail(orderId: string) {
+export function useTrainOrderDetail(orderId: string, channel?: ProductChannel) {
   return useQuery({
-    queryKey: ["order", "detail", orderId],
+    queryKey: ["order", "detail", orderId, channel],
     queryFn: async () => {
-      const data = await getApi().order.getDetail({ OrderId: orderId });
+      const data = await getApi().order.getDetail({ OrderId: orderId, channel });
       return coerceTrainOrderDetail(data);
     },
     enabled: Boolean(orderId),

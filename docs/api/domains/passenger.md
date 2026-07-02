@@ -57,7 +57,7 @@ Legacy 通过各产品线 Service（`TmcFlightService`、`TmcTrainService`、`Tm
 |----|------|------|----------|--------------|
 | 1 | `Flight` | 机票 | 9 | 港澳通行证、台湾通行证、台胞证、居住证 |
 | 2 | `Hotel` | 酒店 | 3 | 无 |
-| 3 | `Train` | 火车 | Legacy **5** / H5 当前 **9** ⚠️ | 港澳通行证、台湾通行证、台胞证 |
+| 3 | `Train` | 火车 | 5（Legacy / H5 已对齐） | 港澳通行证、台湾通行证、台胞证 |
 | 4 | `HotelInternational` | 国际酒店 | 3（Legacy 填单逻辑有 1 人限制分支） | 身份证 |
 | 5 | `InternationalFlight` | 国际机票 | 9 | 身份证（另有国籍、Policy 等 Legacy 逻辑） |
 | 6 | `RentalCar` | 租车 | 9（默认） | 无 |

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { TrainPassengerInfo, TrainScheduleParams } from "@ryx/shared-types";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { usePageHeader } from "@/components/layout";
 import { HotelOrderApprovalSection } from "@/components/order/hotel/HotelOrderApprovalSection";
@@ -55,6 +55,8 @@ interface OrderDetailLocationState {
 export function OrderTrainDetailPage() {
   const { orderId = "" } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const channel = searchParams.get("channel") === "tourist" ? "tourist" : undefined;
   const location = useLocation();
   const openCancelOnMountRef = useRef(
     (location.state as OrderDetailLocationState | null)?.action === "cancel",
@@ -65,7 +67,10 @@ export function OrderTrainDetailPage() {
   const headerRef = useRef<HTMLDivElement>(null);
   const [headerHeight, setHeaderHeight] = useState(ORDER_DETAIL_HEADER_FALLBACK_HEIGHT);
 
-  const { data: detail, isLoading, isError, error, refetch } = useTrainOrderDetail(orderId);
+  const { data: detail, isLoading, isError, error, refetch } = useTrainOrderDetail(
+    orderId,
+    channel,
+  );
   const cancelMutation = useCancelTrainOrder();
   const issueMutation = useIssueTrainOrder();
   const refundMutation = useRefundTrainOrder();
@@ -167,13 +172,18 @@ export function OrderTrainDetailPage() {
   }, []);
 
   const handlePay = useCallback(() => {
-    navigate(`/train/pay/${encodeURIComponent(orderId)}`);
-  }, [navigate, orderId]);
+    const payPath =
+      channel === "tourist"
+        ? `/train/pay/${encodeURIComponent(orderId)}?channel=tourist`
+        : `/train/pay/${encodeURIComponent(orderId)}`;
+    navigate(payPath);
+  }, [channel, navigate, orderId]);
 
   const runCancel = useCallback(async () => {
     if (!detail) return;
     try {
       await cancelMutation.mutateAsync({
+        channel,
         OrderId: detail.OrderId,
         Channel: resolveAppChannel(),
       });
@@ -183,19 +193,19 @@ export function OrderTrainDetailPage() {
     } catch (err) {
       showToast(formatApiError(err));
     }
-  }, [cancelMutation, detail, refetch, showToast]);
+  }, [cancelMutation, channel, detail, refetch, showToast]);
 
   const runIssue = useCallback(async () => {
     if (!detail) return;
     try {
-      await issueMutation.mutateAsync({ OrderId: detail.OrderId });
+      await issueMutation.mutateAsync({ OrderId: detail.OrderId, channel });
       setIssueOpen(false);
       showToast("出票请求已提交");
       await refetch();
     } catch (err) {
       showToast(formatApiError(err));
     }
-  }, [detail, issueMutation, refetch, showToast]);
+  }, [channel, detail, issueMutation, refetch, showToast]);
 
   const openRefundDialog = useCallback(async () => {
     if (!selectedTicket) return;
@@ -222,6 +232,7 @@ export function OrderTrainDetailPage() {
     if (!detail || !selectedTicket) return;
     try {
       await refundMutation.mutateAsync({
+        channel,
         OrderId: detail.OrderId,
         TicketId: selectedTicket.Id,
         Channel: resolveAppChannel(),
@@ -232,7 +243,7 @@ export function OrderTrainDetailPage() {
     } catch (err) {
       showToast(formatApiError(err));
     }
-  }, [detail, refundMutation, refetch, selectedTicket, showToast]);
+  }, [channel, detail, refundMutation, refetch, selectedTicket, showToast]);
 
   const runExchange = useCallback(async () => {
     if (!selectedTicket) return;

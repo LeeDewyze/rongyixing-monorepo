@@ -93,7 +93,7 @@ export async function prefetchFlightCabinsPolicy(input: {
   const flightNumber = segment.Number || segment.FlightNumber || "";
   saveFlightPolicySession(
     buildFlightPolicySessionKey({
-      segmentId: segment.Id,
+      segmentId: segment.Id ?? flightNumber,
       flightNumber,
       listParams,
       passengers,

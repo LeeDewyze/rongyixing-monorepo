@@ -29,6 +29,7 @@ export interface AirportResourceResponse {
 
 /** Domestic flight list query (TmcApiFlightUrl-Home-Index). */
 export interface FlightSearchParams {
+  channel?: "tmc" | "tourist";
   Date: string;
   FromCode: string;
   ToCode: string;
@@ -37,8 +38,8 @@ export interface FlightSearchParams {
 }
 
 export interface FlightSegment {
-  Id: string;
-  Number: string;
+  Id?: string;
+  Number?: string;
   CabinCode?: string;
   FlightNumber?: string;
   Airline?: string;
@@ -52,13 +53,13 @@ export interface FlightSegment {
   ToAirportName?: string;
   ToCityName?: string;
   ToTerminal?: string;
-  TakeoffTime: string;
-  ArrivalTime: string;
+  TakeoffTime?: string;
+  ArrivalTime?: string;
   TakeoffTimeStamp?: number;
   ArrivalTimeStamp?: number;
   FlyTime?: string;
   FlyTimeName?: string;
-  LowestFare?: string;
+  LowestFare?: string | number;
   Tax?: string;
   IsStop?: boolean;
   IsTransfer?: boolean;
@@ -78,6 +79,8 @@ export interface FlightSegment {
   RemainSeats?: number;
   /** Cabin rows attached on list segments for Home-Policy. */
   Cabins?: FlightFare[];
+  /** Legacy detail payload cached on some test/list fixtures. */
+  detailResult?: unknown;
 }
 
 export interface FlightListView {
@@ -121,6 +124,7 @@ export type FlightSortTab = "none" | "filter" | "time" | "price";
 
 /** Home-Detail query (TmcApiFlightUrl-Home-Detail v2.0). */
 export interface FlightDetailParams {
+  channel?: "tmc" | "tourist";
   Date: string;
   FromCode: string;
   ToCode: string;
@@ -151,6 +155,7 @@ export interface FlightFareBasic {
   Count?: string | number;
   FlightSegmentIds?: string[];
   FlightTaxs?: FlightTax[];
+  flightAndTaxFeesInfos?: unknown[] | null;
 }
 
 export interface FlightFareRule {
@@ -178,8 +183,8 @@ export interface FlightFare {
   TypeName?: string;
   Name?: string;
   Explain?: string;
-  SalesPrice?: string;
-  TicketPrice?: string;
+  SalesPrice?: string | number;
+  TicketPrice?: string | number;
   Tax?: string;
   Discount?: string | number;
   Count?: string | number;

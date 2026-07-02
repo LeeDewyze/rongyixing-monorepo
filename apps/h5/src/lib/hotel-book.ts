@@ -3,9 +3,7 @@ import type {
   FlightInitBookResponse,
   FlightInitStaff,
   FlightOutNumberField,
-  FlightPassengerBookForm,
   FlightPassengerContactOption,
-  HotelBookLinkmanDto,
   HotelBookPassengerDto,
   HotelBookResponse,
   HotelBookRoomPlanDto,
@@ -21,18 +19,14 @@ import { credentialDisplayNumber, credentialTypeValue } from "@ryx/shared-types"
 import { addDays } from "@/lib/date-search";
 import { buildAuthorizedLinkmans, validateAuthorizedContacts } from "@/lib/flight-book-contacts";
 import { resolvePassengerTravelPolicy } from "@/lib/flight-book-cabin";
-import {
-  resolvePassengerFormEmail,
-  resolvePassengerFormMobile,
-  splitContactOptions,
-} from "@/lib/flight-book-passenger-form";
+import { splitContactOptions } from "@/lib/flight-book-passenger-form";
 import {
   buildPassengerOutNumberFields,
-  mergeOutNumberValues,
   validatePassengerOutNumbers,
 } from "@/lib/flight-book-outnumber";
-import { resolveFlightTravelType } from "@/lib/flight-travel-mode";
+import { isBusinessTravelMode, resolveFlightTravelType } from "@/lib/flight-travel-mode";
 import type { HotelBookSelection } from "@/lib/hotel-book-session";
+import type { HomeTravelMode } from "@/config/home-assets";
 
 /** Legacy `getChannel()` for H5 book submit. */
 export const HOTEL_BOOK_CHANNEL = "客户H5";
@@ -83,6 +77,24 @@ export function resolveHotelInitClientId(info: PassengerBookInfo): string {
     ("AccountId" in info.passenger ? info.passenger.AccountId : undefined) ??
     info.credential.AccountId;
   return String(accountId ?? info.credential.Id ?? info.id);
+}
+
+function resolveHotelPassengerFormMobile(form?: HotelPassengerBookForm): string {
+  const checked = form?.mobileOptions.filter((item) => item.checked).map((item) => item.value) ?? [];
+  let mobile = checked.join(",");
+  if (form?.otherMobile.trim()) {
+    mobile = mobile ? `${mobile},${form.otherMobile.trim()}` : form.otherMobile.trim();
+  }
+  return mobile;
+}
+
+function resolveHotelPassengerFormEmail(form?: HotelPassengerBookForm): string {
+  const checked = form?.emailOptions.filter((item) => item.checked).map((item) => item.value) ?? [];
+  let email = checked.join(",");
+  if (form?.otherEmail.trim()) {
+    email = email ? `${email},${form.otherEmail.trim()}` : form.otherEmail.trim();
+  }
+  return email;
 }
 
 function toLegacyPolicyDate(value?: string): string | undefined {
@@ -246,11 +258,9 @@ function buildSubmitCredentials(
     Type: credType,
     CredentialsType: credType,
     AccountId: accountId,
-    Account: accountId ? { Id: accountId } : cred.Account,
+    Account: accountId ? { Id: accountId } : undefined,
     ...(passengerPolicy ? { Policy: passengerPolicy } : {}),
-    ...(cred.Name && hideNumber ? { CredentialsInfo: `${cred.Name}|${hideNumber}` } : {}),
     HideNumber: hideNumber,
-    checked: true,
   };
 }
 
@@ -259,31 +269,43 @@ export function buildHotelInitBookDto(input: {
   passengers: PassengerBookInfo[];
   travelFormId?: string;
   agentId?: string;
+  travelMode?: HomeTravelMode;
+  channel?: "tmc" | "tourist";
 }): HotelOrderBookDto {
-  const { selection, passengers, travelFormId, agentId } = input;
+  const { selection, passengers, travelFormId, agentId, travelMode } = input;
+  const includeTravelForm = isBusinessTravelMode(travelMode);
   const roomPlan = buildHotelInitRoomPlan(selection.plan, selection.room, selection);
 
   const passengerDtos: HotelBookPassengerDto[] = passengers.map((info) => {
     const clientId = resolveHotelInitClientId(info);
     const accountId = clientId;
-    const passengerTravelFormId =
-      travelFormId ?? ("travelFormId" in info.passenger ? info.passenger.travelFormId : undefined);
+    const passengerTravelFormId = includeTravelForm
+      ? travelFormId ?? ("travelFormId" in info.passenger ? info.passenger.travelFormId : undefined)
+      : undefined;
 
-    return {
+    const passengerDto: HotelBookPassengerDto = {
       ClientId: clientId,
       RoomPlan: roomPlan,
       Credentials: buildSubmitCredentials(info, accountId),
       Mobile: info.credential.Mobile,
-      travelFormId: passengerTravelFormId,
-      travelNumber: "travelNumber" in info.passenger ? info.passenger.travelNumber : undefined,
       OrderHotelType: HOTEL_ORDER_HOTEL_TYPE_DOMESTIC,
     };
+    if (includeTravelForm) {
+      if (passengerTravelFormId) passengerDto.travelFormId = passengerTravelFormId;
+      const passengerTravelNumber =
+        "travelNumber" in info.passenger ? info.passenger.travelNumber : undefined;
+      if (passengerTravelNumber) passengerDto.travelNumber = passengerTravelNumber;
+    }
+    return passengerDto;
   });
 
   const dto: HotelOrderBookDto = {
-    TravelFormId: travelFormId ?? "",
+    channel: input.channel,
     Passengers: passengerDtos,
   };
+  if (includeTravelForm) {
+    dto.TravelFormId = travelFormId ?? "";
+  }
 
   if (agentId) {
     dto.AgentId = agentId;
@@ -306,9 +328,12 @@ export function buildHotelOrderBookDto(input: {
   creditCard?: HotelCreditCardForm;
   outNumberFieldsByPassenger?: Record<string, FlightOutNumberField[]>;
   isFromOffline?: boolean;
+  travelMode?: HomeTravelMode;
+  channel?: "tmc" | "tourist";
   /** Last Initialize payload — Book must reuse the same RoomPlan wire shape. */
   initDto?: HotelOrderBookDto;
 }): HotelOrderBookDto {
+  const includeTravelForm = isBusinessTravelMode(input.travelMode);
   const base: HotelOrderBookDto = input.initDto
     ? (JSON.parse(JSON.stringify(input.initDto)) as HotelOrderBookDto)
     : buildHotelInitBookDto({
@@ -316,6 +341,8 @@ export function buildHotelOrderBookDto(input: {
         passengers: input.passengers,
         travelFormId: input.travelFormId,
         agentId: input.agentId,
+        travelMode: input.travelMode,
+        channel: input.channel,
       });
 
   if (input.agentId) {
@@ -323,7 +350,7 @@ export function buildHotelOrderBookDto(input: {
   }
 
   const travelPayType = input.travelPayType;
-  const travelType = input.travelType ?? resolveFlightTravelType();
+  const travelType = input.travelType ?? resolveFlightTravelType(input.travelMode);
 
   base.Passengers = base.Passengers.map((dto, index) => {
     const passenger = input.passengers[index];
@@ -335,15 +362,14 @@ export function buildHotelOrderBookDto(input: {
       ? `${passenger.credential.Name}|${form.roommate.trim()}`
       : (passenger.credential.Name ?? "");
 
-    const outNumberFields = input.outNumberFieldsByPassenger?.[passenger.id] ?? [];
-    const outNumbers = mergeOutNumberValues(
-      { outNumbers: form.outNumbers } as FlightPassengerBookForm,
-      outNumberFields,
-    );
+    const outNumbers = includeTravelForm
+      ? Object.fromEntries(
+          Object.entries(form.outNumbers).filter(([, value]) => Boolean(value?.trim())),
+        )
+      : {};
 
-    const contactForm = form as FlightPassengerBookForm;
-    const mobile = resolvePassengerFormMobile(contactForm);
-    const email = resolvePassengerFormEmail(contactForm);
+    const mobile = resolveHotelPassengerFormMobile(form);
+    const email = resolveHotelPassengerFormEmail(form);
 
     const initPassenger = input.initDto?.Passengers[index];
     const roomPlan = initPassenger?.RoomPlan ?? dto.RoomPlan;
@@ -380,6 +406,11 @@ export function buildHotelOrderBookDto(input: {
       OutNumbers: Object.keys(outNumbers).length ? outNumbers : null,
     };
 
+    if (!includeTravelForm) {
+      delete passengerDto.travelFormId;
+      delete passengerDto.travelNumber;
+    }
+
     if (index === 0 && input.creditCard) {
       const card = input.creditCard;
       if (card.cardNumber.trim() || card.holderName.trim()) {
@@ -403,8 +434,18 @@ export function buildHotelOrderBookDto(input: {
   if (travelPayType != null) {
     base.TravelPayType = travelPayType;
   }
+  base.channel = input.channel ?? base.channel;
   base.Channel = HOTEL_BOOK_CHANNEL;
   base.IsFromOffline = input.isFromOffline ?? false;
+  if (!includeTravelForm) {
+    delete base.TravelFormId;
+    base.Passengers = base.Passengers.map((passenger) => {
+      const next = { ...passenger };
+      delete next.travelFormId;
+      delete next.travelNumber;
+      return next;
+    });
+  }
   if (input.authorizedContacts?.length) {
     base.Linkmans = buildAuthorizedLinkmans(input.authorizedContacts);
   }
@@ -558,6 +599,7 @@ export function buildHotelPassengerOutNumberFieldsMap(input: {
   passengers: PassengerBookInfo[];
   staffs?: HotelInitStaff[];
   init?: HotelInitBookResponse;
+  travelMode?: HomeTravelMode;
 }): Record<string, FlightOutNumberField[]> {
   const map: Record<string, FlightOutNumberField[]> = {};
   for (const passenger of input.passengers) {
@@ -576,6 +618,8 @@ export function buildHotelPassengerOutNumberFieldsMap(input: {
       passenger,
       staff,
       init: input.init as FlightInitBookResponse | undefined,
+      travelMode: input.travelMode,
+      travelType: "Hotel",
     });
   }
   return map;
@@ -631,7 +675,14 @@ export function createHotelPassengerBookForm(
     otherEmail: "",
     organization: {
       code: "",
-      name: passenger.credential.OrgName ?? passenger.passenger.OrgName ?? "",
+    name:
+      (typeof (passenger.credential as { OrgName?: string }).OrgName === "string"
+        ? (passenger.credential as { OrgName?: string }).OrgName
+        : undefined) ??
+      (typeof (passenger.passenger as { OrgName?: string }).OrgName === "string"
+        ? (passenger.passenger as { OrgName?: string }).OrgName
+        : "") ??
+      "",
     },
     otherOrganizationName: "",
     costCenter: { code: "", name: "" },
@@ -669,7 +720,7 @@ export function validateHotelBookForms(input: {
     const form = input.forms[passenger.id];
     if (!form) continue;
 
-    const mobile = resolvePassengerFormMobile(form as FlightPassengerBookForm);
+    const mobile = resolveHotelPassengerFormMobile(form);
     if (!mobile) {
       const roomIndex = input.passengers.indexOf(passenger) + 1;
       return `房间${roomIndex}联系电话不能为空`;
@@ -683,8 +734,10 @@ export function validateHotelBookForms(input: {
       return "请填写超标原因";
     }
 
-    const outNumberFields = input.outNumberFieldsByPassenger?.[passenger.id] ?? [];
-    const outNumberError = validatePassengerOutNumbers(outNumberFields, form.outNumbers);
+    const outNumberError = validatePassengerOutNumbers(
+      input.outNumberFieldsByPassenger?.[passenger.id] ?? [],
+      form.outNumbers,
+    );
     if (outNumberError) return outNumberError;
   }
 

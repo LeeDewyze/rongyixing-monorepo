@@ -17,7 +17,6 @@ import { FlightPolicyFilterSheet } from "@/components/flight/FlightPolicyFilterS
 import { FlightCabinsSkeleton } from "@/components/flight/FlightCabinsSkeleton";
 import {
   FLIGHT_CABINS_CHROME,
-  FLIGHT_CABINS_HEADER_GRADIENT,
 } from "@/components/flight/flight-cabins-chrome";
 import { formatCabinsDepartTitle } from "@/utils/flight-list-display";
 import { usePageHeader } from "@/components/layout";
@@ -63,6 +62,10 @@ import {
 import { buildFlightPolicySessionKey, loadFlightPolicySession } from "@/lib/flight-policy-session";
 import { isSelfBookType, resolveDefaultPolicyFilterPassengerId } from "@/lib/flight-self-book";
 import { hasAgentIdentity } from "@/lib/flight-book-save-order";
+import {
+  isBusinessTravelMode,
+  loadHomeTravelMode,
+} from "@/lib/flight-travel-mode";
 import { navigateBack } from "@/lib/navigation";
 import { useIdentity } from "@/hooks/useIdentity";
 
@@ -73,6 +76,11 @@ export function FlightCabinsPage() {
   const { flightId = "" } = useParams();
   const [searchParams] = useSearchParams();
   const query = useMemo(() => parseFlightCabinsQuery(searchParams), [searchParams]);
+  const travelMode = useMemo(
+    () => (query.channel === "tourist" ? "personal" : loadHomeTravelMode()),
+    [query.channel],
+  );
+  const isBusinessMode = isBusinessTravelMode(travelMode);
   const { selected: selectedPassengers } = usePassengerSelection(ProductType.Flight);
   const { data: identity } = useIdentity();
   const { data: memberProfile } = useMemberProfile();
@@ -132,6 +140,7 @@ export function FlightCabinsPage() {
   );
 
   const policyParams = useMemo(() => {
+    if (!isBusinessMode) return null;
     if (!detailReady || selectedPassengers.length === 0) return null;
     const listSnapshot = loadFlightListSnapshot(listParams);
     return buildFlightPolicyParams({
@@ -139,7 +148,7 @@ export function FlightCabinsPage() {
       detailSnapshot: detail ?? undefined,
       passengers: selectedPassengers,
     });
-  }, [detail, detailReady, listParams, selectedPassengers]);
+  }, [detail, detailReady, isBusinessMode, listParams, selectedPassengers]);
 
   const hasCachedPolicy = Boolean(cachedPolicySession?.policyResults?.length);
   const {
@@ -148,14 +157,17 @@ export function FlightCabinsPage() {
     isFetching: isPolicyFetching,
     isError: isPolicyError,
   } = useFlightPolicy(policyParams, {
-    enabled: detailReady && selectedPassengers.length > 0 && !hasCachedPolicy,
+    enabled: isBusinessMode && detailReady && selectedPassengers.length > 0 && !hasCachedPolicy,
     initialData: cachedPolicySession?.policyResults,
   });
 
-  const policyResults = policyQueryData ?? cachedPolicySession?.policyResults;
+  const policyResults = isBusinessMode
+    ? policyQueryData ?? cachedPolicySession?.policyResults
+    : undefined;
   const isPolicyChecking =
     selectedPassengers.length > 0 &&
     detailReady &&
+    isBusinessMode &&
     (isPolicyLoading || isPolicyFetching) &&
     !policyResults?.length;
 
@@ -317,6 +329,7 @@ export function FlightCabinsPage() {
   }
 
   async function resolvePolicyResultsForBook() {
+    if (!isBusinessMode) return undefined;
     const timedOut = Boolean(priceSnapshotAt && isFlightListTimedOut(priceSnapshotAt));
     if (policyResults?.length && !isPolicyError && !timedOut) {
       return policyResults;
@@ -336,12 +349,12 @@ export function FlightCabinsPage() {
     const listSnapshot = loadFlightListSnapshot(listParams);
 
     const policyResultsForBook = await resolvePolicyResultsForBook();
-    if (!policyResultsForBook?.length) {
+    if (isBusinessMode && !policyResultsForBook?.length) {
       if (shouldBlockBookingOnPolicyFetchFailure(isAgent)) {
         window.alert(FLIGHT_POLICY_FETCH_FAILED_MESSAGE);
         return;
       }
-    } else if (policyParams && selectedPassengers.length > 0) {
+    } else if (isBusinessMode && policyParams && selectedPassengers.length > 0) {
       flightPoliciesByPassengerId = buildPassengerFlightPoliciesMap({
         results: policyResultsForBook,
         passengers: selectedPassengers,
@@ -355,7 +368,7 @@ export function FlightCabinsPage() {
 
     for (const passenger of selectedPassengers) {
       const passengerPolicy = flightPoliciesByPassengerId[passenger.id];
-      if (passengerPolicy && !isFlightPolicyBookAllowed(passengerPolicy, isAgent)) {
+      if (isBusinessMode && passengerPolicy && !isFlightPolicyBookAllowed(passengerPolicy, isAgent)) {
         window.alert(formatFlightPolicyBookBlockMessage(passengerPolicy, passenger));
         return;
       }
@@ -372,6 +385,7 @@ export function FlightCabinsPage() {
       flightPoliciesByPassengerId,
       priceSnapshotAt: priceSnapshotAt || Date.now(),
       selectedAt: Date.now(),
+      travelMode,
     });
     navigate("/flight/book");
   }
@@ -441,40 +455,36 @@ export function FlightCabinsPage() {
 
   return (
     <div
-      className="relative min-h-full pb-[max(1rem,env(safe-area-inset-bottom))]"
-      style={{ backgroundColor: FLIGHT_CABINS_CHROME.pageBg }}
+      className="relative h-dvh overflow-hidden"
+      style={{ background: "var(--brand-form-header-gradient)" }}
     >
       <div
         ref={headerRef}
-        className="fixed inset-x-0 top-0 z-30 mx-auto w-full max-w-lg overflow-hidden pt-[env(safe-area-inset-top)] shadow-[0_2px_12px_rgba(142,200,255,0.35)]"
-        style={{ background: FLIGHT_CABINS_HEADER_GRADIENT }}
+        className="fixed inset-x-0 top-0 z-30 mx-auto w-full max-w-lg overflow-hidden"
+        style={{ background: "var(--brand-form-header-gradient)" }}
       >
         <FlightCabinsHeader
           title={departTitle}
           onBack={handleBack}
-          showPolicyFilter={!isSelf && selectedPassengers.length > 0}
+          showPolicyFilter={isBusinessMode && !isSelf && selectedPassengers.length > 0}
           onOpenPolicyFilter={() => setPolicyFilterOpen(true)}
         />
       </div>
 
-      <div style={{ paddingTop: headerHeight }}>
-        <div
-          className="px-3 pb-3 pt-3"
-          style={{
-            background: `linear-gradient(180deg, #DCE9FA 0%, ${FLIGHT_CABINS_CHROME.pageBg} 100%)`,
-          }}
-        >
-          <FlightCabinsSummary segment={segment} />
-        </div>
+      <div
+        className="absolute inset-x-0 bottom-0 overflow-y-auto overscroll-y-contain pb-[max(1rem,env(safe-area-inset-bottom))] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        style={{ top: headerHeight }}
+      >
+        <FlightCabinsSummary segment={segment} />
 
-        {policyFilterEnabled && filterPassengerName ? (
+        {isBusinessMode && policyFilterEnabled && filterPassengerName ? (
           <FlightCabinsPolicyBanner
             passengerName={filterPassengerName}
             onClick={() => setPolicyFilterOpen(true)}
           />
         ) : null}
 
-        {isPolicyError && !isAgent && selectedPassengers.length > 0 ? (
+        {isBusinessMode && isPolicyError && !isAgent && selectedPassengers.length > 0 ? (
           <div className="mx-3 mt-2 rounded-xl border border-[#FECACA] bg-[#FEF2F2] px-3 py-2.5 text-[12px] leading-snug text-[#DC2626]">
             差标获取失败，请返回列表重试
           </div>
@@ -520,7 +530,9 @@ export function FlightCabinsPage() {
               <p className="pb-1 text-right text-[12px] text-[#999999]">更新中…</p>
             ) : null}
 
-            <FlightCabinsTabs activeTab={activeTab} onChange={setActiveTab} />
+            <div className="rounded-xl bg-white p-2 shadow-sm ring-1 ring-[#EEF1F6]">
+              <FlightCabinsTabs activeTab={activeTab} onChange={setActiveTab} />
+            </div>
 
             <div className="mt-2 space-y-2">
               {displayRows.length === 0 ? (
@@ -556,7 +568,7 @@ export function FlightCabinsPage() {
         />
 
         <FlightPolicyFilterSheet
-          open={policyFilterOpen}
+          open={isBusinessMode && policyFilterOpen}
           passengers={selectedPassengers}
           showAllSelected={!policyFilterEnabled}
           selectedPassengerId={filterPassengerId}

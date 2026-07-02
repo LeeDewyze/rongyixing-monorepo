@@ -1,22 +1,37 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import type { PayCreateParams } from "@ryx/shared-types";
+import type { OrderDetailProductType, PayCreateParams, ProductChannel } from "@ryx/shared-types";
 
 import { getApi } from "@/lib/api";
 import { resolvePayHoldSeconds } from "@/lib/order-pay";
 
-export function usePayTotalAmount(orderId: string) {
+export function usePayTotalAmount(
+  orderId: string,
+  options: { channel?: ProductChannel; productType?: OrderDetailProductType } = {},
+) {
   return useQuery({
-    queryKey: ["pay", "total", orderId],
-    queryFn: () => getApi().pay.getTotalPayAmount({ OrderId: orderId }),
+    queryKey: ["pay", "total", orderId, options.channel, options.productType],
+    queryFn: () =>
+      getApi().pay.getTotalPayAmount({
+        OrderId: orderId,
+        channel: options.channel,
+        ProductType: options.productType,
+      }),
     enabled: Boolean(orderId),
   });
 }
 
-export function useOrderPays(orderId: string) {
+export function useOrderPays(
+  orderId: string,
+  options: { channel?: ProductChannel; productType?: OrderDetailProductType } = {},
+) {
   return useQuery({
-    queryKey: ["pay", "channels", orderId],
-    queryFn: () => getApi().pay.getOrderPays({ OrderId: orderId }),
+    queryKey: ["pay", "channels", orderId, options.channel, options.productType],
+    queryFn: () =>
+      getApi().pay.getOrderPays({
+        OrderId: orderId,
+        channel: options.channel,
+      }),
     enabled: Boolean(orderId),
   });
 }
@@ -29,7 +44,12 @@ export function usePayCreate() {
 
 export function usePayProcess() {
   return useMutation({
-    mutationFn: (params: { OutTradeNo: string; Type: string }) => getApi().pay.process(params),
+    mutationFn: (params: {
+      OutTradeNo: string;
+      Type: string;
+      channel?: ProductChannel;
+      ProductType?: OrderDetailProductType;
+    }) => getApi().pay.process(params),
   });
 }
 

@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   ProductType,
   credentialDisplayNumber,
@@ -73,13 +73,19 @@ import { FLIGHT_NOTIFY_LANGUAGE_OPTIONS } from "@/lib/flight-book-notify";
 import { replacePassengerCredential } from "@/lib/passenger-select-logic";
 import { clearPassengerSelection } from "@/lib/passenger-selection";
 import { scrollH5MainToTop } from "@/lib/scroll-h5-main";
+import {
+  isBusinessTravelMode,
+  loadHomeTravelMode,
+  resolveProductChannel,
+} from "@/lib/flight-travel-mode";
 
 function resolveNotifyLanguageLabel(value: HotelNotifyLanguage): string {
   return FLIGHT_NOTIFY_LANGUAGE_OPTIONS.find((item) => item.value === value)?.label ?? "中文";
 }
 
 function resolveStaffAccountId(passenger: PassengerBookInfo): string | undefined {
-  const fromPassenger = passenger.passenger.AccountId;
+  const fromPassenger =
+    "AccountId" in passenger.passenger ? passenger.passenger.AccountId : undefined;
   if (fromPassenger) return String(fromPassenger);
   return passenger.credential.AccountId ? String(passenger.credential.AccountId) : undefined;
 }
@@ -87,6 +93,7 @@ function resolveStaffAccountId(passenger: PassengerBookInfo): string | undefined
 export function HotelBookPage() {
   const navigate = useNavigate();
   const { hotelId = "" } = useParams();
+  const [searchParams] = useSearchParams();
   const { selection } = useHotelBookSelection();
   const { selected: passengers, setSelected } = usePassengerSelection(ProductType.Hotel);
   const submitBook = useHotelSubmitBook();
@@ -123,6 +130,15 @@ export function HotelBookPage() {
     useState<PassengerBookInfo | null>(null);
   /** Skip guard redirect when leaving after a successful submit. */
   const leavingAfterSubmitRef = useRef(false);
+  const travelMode = useMemo(
+    () =>
+      searchParams.get("channel") === "tourist"
+        ? "personal"
+        : (selection?.travelMode ?? loadHomeTravelMode()),
+    [searchParams, selection?.travelMode],
+  );
+  const isBusinessMode = isBusinessTravelMode(travelMode);
+  const productChannel = resolveProductChannel(travelMode);
 
   useLayoutEffect(() => {
     scrollH5MainToTop();
@@ -155,8 +171,10 @@ export function HotelBookPage() {
       selection,
       passengers,
       agentId: agentId ?? undefined,
+      travelMode,
+      channel: productChannel,
     });
-  }, [agentId, passengers, selection]);
+  }, [agentId, passengers, productChannel, selection, travelMode]);
 
   const initBook = useHotelInitBook(initParams);
 
@@ -175,8 +193,9 @@ export function HotelBookPage() {
         passengers,
         staffs: initBook.data?.Staffs,
         init: initBook.data,
+        travelMode,
       }),
-    [initBook.data, passengers],
+    [initBook.data, passengers, travelMode],
   );
 
   const expenseTypeOptions = useMemo(
@@ -220,11 +239,11 @@ export function HotelBookPage() {
 
   const warmReminderParagraphs = useMemo(() => buildHotelWarmReminderParagraphs(), []);
 
-  const requiresIllegalReason = Boolean(
+  const requiresIllegalReason = isBusinessMode && Boolean(
     selection?.policyRules?.length || initBook.data?.IllegalReasons?.length,
   );
 
-  const requiresApprover = Boolean(
+  const requiresApprover = isBusinessMode && Boolean(
     initBook.data?.Staffs?.some((staff) => staff.isAllowSelectApprove),
   );
 
@@ -258,7 +277,7 @@ export function HotelBookPage() {
       outNumberFieldsByPassenger,
       showCreditCard,
       creditCard,
-      authorizedContacts,
+      authorizedContacts: isBusinessMode ? authorizedContacts : [],
     });
     if (validationError) {
       setAlertMessage(validationError);
@@ -275,7 +294,11 @@ export function HotelBookPage() {
     clearHotelBookSelection();
 
     if (orderId) {
-      navigate(`/orders/hotel/${encodeURIComponent(orderId)}`, {
+      const detailPath =
+        productChannel === "tourist"
+          ? `/orders/hotel/${encodeURIComponent(orderId)}?channel=tourist`
+          : `/orders/hotel/${encodeURIComponent(orderId)}`;
+      navigate(detailPath, {
         replace: true,
         state: { bookedOrderId: orderId, product: "hotel" },
       });
@@ -296,13 +319,15 @@ export function HotelBookPage() {
           passengers,
           forms,
           travelPayType: payType,
-          authorizedContacts,
           globalArrivalTime: arrivalTime,
           globalNotifyLanguage: notifyLanguage,
           agentId: resolvedAgentId,
           creditCard: showCreditCard ? creditCard : undefined,
           outNumberFieldsByPassenger,
           initDto: initParams ?? undefined,
+          travelMode,
+          channel: productChannel,
+          authorizedContacts: isBusinessMode ? authorizedContacts : [],
         }),
       );
 
@@ -310,12 +335,19 @@ export function HotelBookPage() {
       const orderId = resolveHotelBookOrderId(result);
 
       if (result.IsCheckPay && result.TradeNo) {
-        const checkPayReady = await pollHotelCheckPay(result.TradeNo);
+        const checkPayReady = await pollHotelCheckPay(result.TradeNo, {
+          channel: productChannel,
+          productType: "Hotel",
+        });
         if (shouldNavigateToPay({ travelPayType: payType, checkPayReady })) {
           leavingAfterSubmitRef.current = true;
           clearPassengerSelection(ProductType.Hotel);
           clearHotelBookSelection();
-          navigate(`/hotel/pay/${encodeURIComponent(orderId)}`, { replace: true });
+          const payPath =
+            productChannel === "tourist"
+              ? `/hotel/pay/${encodeURIComponent(orderId)}?channel=tourist`
+              : `/hotel/pay/${encodeURIComponent(orderId)}`;
+          navigate(payPath, { replace: true });
           return;
         }
       }
@@ -367,7 +399,7 @@ export function HotelBookPage() {
           onOpenNotice={() => setNoticeOpen(true)}
         />
 
-        {tmcAgents.length > 1 ? (
+        {isBusinessMode && tmcAgents.length > 1 ? (
           <FlightBookAgentPicker
             agents={tmcAgents}
             value={agentId ?? String(tmcAgents[0]?.Id ?? "")}
@@ -426,13 +458,13 @@ export function HotelBookPage() {
                   {form ? (
                     <HotelBookPassengerDetails
                       form={form}
-                      showOrganizations={showOrganizations}
-                      showCostCenter={showCostCenter}
+                      showOrganizations={isBusinessMode && showOrganizations}
+                      showCostCenter={isBusinessMode && showCostCenter}
                       requiresApprover={requiresApprover}
-                      isSkipApproveEnabled={Boolean(initBook.data?.isSkipApprove)}
-                      outNumberFields={outNumberFields}
-                      illegalReasons={initBook.data?.IllegalReasons ?? []}
-                      expenseTypes={expenseTypeOptions}
+                      isSkipApproveEnabled={isBusinessMode && Boolean(initBook.data?.isSkipApprove)}
+                      outNumberFields={isBusinessMode ? outNumberFields : []}
+                      illegalReasons={isBusinessMode ? (initBook.data?.IllegalReasons ?? []) : []}
+                      expenseTypes={isBusinessMode ? expenseTypeOptions : []}
                       requiresIllegalReason={requiresIllegalReason}
                       onUpdateForm={(patch) => updateForm(passenger.id, patch)}
                       onOpenOrganization={() => setOrgSheetPassengerId(passenger.id)}
@@ -452,24 +484,26 @@ export function HotelBookPage() {
           );
         })}
 
-        <FlightBookAuthorizedContacts
-          contacts={authorizedContacts}
-          onAdd={() => setAddContactOpen(true)}
-          onRemove={(accountId) =>
-            setAuthorizedContacts((current) =>
-              current.filter((item) => item.accountId !== accountId),
-            )
-          }
-          onUpdate={(accountId, patch) =>
-            setAuthorizedContacts((current) =>
-              current.map((item) => (item.accountId === accountId ? { ...item, ...patch } : item)),
-            )
-          }
-          onOpenNotifyLanguage={(accountId) => {
-            setNotifyContactId(accountId);
-            setNotifySheetOpen(true);
-          }}
-        />
+        {isBusinessMode ? (
+          <FlightBookAuthorizedContacts
+            contacts={authorizedContacts}
+            onAdd={() => setAddContactOpen(true)}
+            onRemove={(accountId) =>
+              setAuthorizedContacts((current) =>
+                current.filter((item) => item.accountId !== accountId),
+              )
+            }
+            onUpdate={(accountId, patch) =>
+              setAuthorizedContacts((current) =>
+                current.map((item) => (item.accountId === accountId ? { ...item, ...patch } : item)),
+              )
+            }
+            onOpenNotifyLanguage={(accountId) => {
+              setNotifyContactId(accountId);
+              setNotifySheetOpen(true);
+            }}
+          />
+        ) : null}
 
         {showCreditCard ? (
           <HotelBookCreditCardSection
@@ -559,7 +593,7 @@ export function HotelBookPage() {
       />
 
       <FlightBookAddContactSheet
-        open={addContactOpen}
+        open={isBusinessMode && addContactOpen}
         existingAccountIds={authorizedContacts.map((item) => item.accountId)}
         onClose={() => setAddContactOpen(false)}
         onSelect={(contact) => {
@@ -569,7 +603,7 @@ export function HotelBookPage() {
       />
 
       <FlightBookApproverSheet
-        open={approverSheetOpen}
+        open={isBusinessMode && approverSheetOpen}
         onClose={() => setApproverSheetOpen(false)}
         onSelect={(approver) => {
           if (approverPassengerId) {
@@ -583,7 +617,7 @@ export function HotelBookPage() {
       />
 
       <FlightOutNumberPickerSheet
-        open={outNumberPicker != null}
+        open={isBusinessMode && outNumberPicker != null}
         field={outNumberPicker?.field ?? null}
         selected={
           outNumberPicker
@@ -609,6 +643,7 @@ export function HotelBookPage() {
         open={credentialSheetPassenger != null}
         passenger={credentialSheetPassenger}
         productType={ProductType.Hotel}
+        channel={productChannel}
         onClose={() => setCredentialSheetPassenger(null)}
         onSelect={(credential) => {
           if (!credentialSheetPassenger) return;
@@ -617,7 +652,7 @@ export function HotelBookPage() {
       />
 
       <FlightBookOrganizationSheet
-        open={orgSheetPassengerId != null}
+        open={isBusinessMode && orgSheetPassengerId != null}
         organizations={organizations}
         selectedCode={
           orgSheetPassengerId ? forms[orgSheetPassengerId]?.organization.code : undefined
@@ -633,7 +668,7 @@ export function HotelBookPage() {
       />
 
       <FlightBookCostCenterSheet
-        open={costSheetPassengerId != null}
+        open={isBusinessMode && costSheetPassengerId != null}
         selectedCode={
           costSheetPassengerId ? forms[costSheetPassengerId]?.costCenter.code : undefined
         }

@@ -1,7 +1,6 @@
 import type { FlightCabinTab } from "@ryx/shared-types";
 
-import "@/components/order/order-category-tabs.css";
-import { ORDER_FONT, ORDER_SCOPE_TABS_TRACK } from "@/config/order-assets";
+import { FLIGHT_CABINS_FONT } from "@/components/flight/flight-cabins-chrome";
 
 interface FlightCabinsTabsProps {
   activeTab: FlightCabinTab;
@@ -13,14 +12,12 @@ const TABS: { id: FlightCabinTab; label: string }[] = [
   { id: "business", label: "商务/头等" },
 ];
 
-/** Cabin class tabs — same segmented control as order list scope tabs (全部 / 待出行). */
 export function FlightCabinsTabs({ activeTab, onChange }: FlightCabinsTabsProps) {
   return (
     <div
-      className={`order-scope-tabs flex h-10 p-1 ${ORDER_FONT}`}
-      style={{ background: ORDER_SCOPE_TABS_TRACK }}
+      className={`flex h-10 rounded-lg bg-[#EEF4FC] p-1 ${FLIGHT_CABINS_FONT}`}
       role="tablist"
-      aria-label="Cabin class"
+      aria-label="舱位类型"
     >
       {TABS.map((tab) => {
         const active = tab.id === activeTab;
@@ -30,7 +27,11 @@ export function FlightCabinsTabs({ activeTab, onChange }: FlightCabinsTabsProps)
             type="button"
             role="tab"
             aria-selected={active}
-            className={`order-scope-tab${active ? " order-scope-tab--active" : ""}`}
+            className={`flex flex-1 items-center justify-center rounded-md text-[14px] leading-none transition ${
+              active
+                ? "bg-white font-medium text-brand-title shadow-[0_1px_4px_rgba(39,104,250,0.12)]"
+                : "font-normal text-[#666666] active:bg-white/50"
+            }`}
             onClick={() => onChange(tab.id)}
           >
             {tab.label}

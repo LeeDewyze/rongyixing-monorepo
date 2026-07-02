@@ -19,6 +19,7 @@ const ECONOMY_CABIN_TYPES = new Set([1, 8]);
 
 export interface FlightCabinsQuery {
   date: string;
+  channel?: "tmc" | "tourist";
   fromCode: string;
   toCode: string;
   fromName: string;
@@ -48,6 +49,7 @@ export function parseFlightCabinsQuery(
 ): FlightCabinsQuery {
   return {
     date: searchParams.get("date") ?? "",
+    channel: (searchParams.get("channel") as FlightCabinsQuery["channel"]) ?? undefined,
     fromCode: searchParams.get("fromCode") ?? "",
     toCode: searchParams.get("toCode") ?? "",
     fromName: searchParams.get("fromName") ?? "",
@@ -94,6 +96,7 @@ export function buildFlightDetailParams(
     ADTPtcs: adtPtcs,
     DetailKey: query.detailKey,
     Lang: "cn",
+    channel: query.channel,
   };
   if (query.bookType) {
     params.BookType = query.bookType;

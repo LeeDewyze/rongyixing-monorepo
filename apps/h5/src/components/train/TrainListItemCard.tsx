@@ -69,7 +69,7 @@ function TrainRouteMiddle({
   onToggleSchedule,
 }: {
   trainCode: string;
-  durationLabel?: string;
+  durationLabel?: string | null;
   scheduleOpen: boolean;
   onToggleSchedule: () => void;
 }) {

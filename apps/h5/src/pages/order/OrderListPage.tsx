@@ -42,6 +42,7 @@ import { useCancelTrainOrder, useRefundTrainOrder } from "@/hooks/useTrainOrderD
 import { resolveAppChannel } from "@/lib/app-channel";
 import { getApi } from "@/lib/api";
 import { formatApiError } from "@/lib/formatApiError";
+import { loadHomeTravelMode, resolveProductChannel } from "@/lib/flight-travel-mode";
 import { startTrainExchangeFlow } from "@/lib/train-order-actions";
 import {
   CATEGORY_TO_TAB_ID,
@@ -53,6 +54,14 @@ import {
 import { getOrderDetailPath, getOrderPayPath } from "@/lib/order-routes";
 
 const FALLBACK_HEADER_HEIGHT = 84;
+
+function withOrderChannel(path: string, channel: "tmc" | "tourist"): string {
+  if (channel !== "tourist") return path;
+  const [base = path, search = ""] = path.split("?");
+  const params = new URLSearchParams(search);
+  params.set("channel", "tourist");
+  return `${base}?${params.toString()}`;
+}
 
 function BackIcon() {
   return (
@@ -141,6 +150,7 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
   const categoryId = parseOrderListCategoryId(searchParams);
   const scope = parseOrderListScope(searchParams.get("scope"));
   const tabId = CATEGORY_TO_TAB_ID[categoryId];
+  const productChannel = resolveProductChannel(loadHomeTravelMode());
 
   const {
     data,
@@ -151,10 +161,10 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
     hasNextPage,
     isFetchingNextPage,
     refresh,
-  } = useOrderList({ tabId, scope });
+  } = useOrderList({ tabId, scope, channel: productChannel });
   const flightCancelMutation = useCancelFlightOrder();
   const flightRefundInfo = useFlightTicketRefundInfo(
-    refundTicket ? { orderFlightTicket: refundTicket.ticket.TicketId } : null,
+    refundTicket ? { orderFlightTicket: refundTicket.ticket.TicketId, channel: productChannel } : null,
   );
   const flightRefundMutation = useRefundFlightOrder();
   const flightNonVoluntaryRefundMutation = useNonVoluntaryRefundFlightOrder();
@@ -229,13 +239,13 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
     (action: OrderAction, item: OrderListItem) => {
       switch (action.kind) {
         case "pay":
-          navigate(getOrderPayPath(item));
+          navigate(withOrderChannel(getOrderPayPath(item), productChannel));
           return;
         case "cancel":
           if (item.tabId === OrderListTabId.Hotel) {
             const hotelItem = item as OrderHotelListItem;
             if (!hotelItem.OrderHotelId) {
-              navigate(`/orders/hotel/${encodeURIComponent(item.OrderId)}`, {
+              navigate(withOrderChannel(`/orders/hotel/${encodeURIComponent(item.OrderId)}`, productChannel), {
                 state: { action: "cancel" },
               });
               return;
@@ -312,14 +322,14 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
           setToastMessage("功能即将上线");
       }
     },
-    [navigate, openTrainRefundDialog],
+    [navigate, openTrainRefundDialog, productChannel],
   );
 
   const handleCardClick = useCallback(
     (item: OrderListItem) => {
-      navigate(getOrderDetailPath(item));
+      navigate(withOrderChannel(getOrderDetailPath(item), productChannel));
     },
-    [navigate],
+    [navigate, productChannel],
   );
 
   const showToast = useCallback((message: string) => {
@@ -332,6 +342,7 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
       await flightCancelMutation.mutateAsync({
         mode: "ticket",
         params: {
+          channel: productChannel,
           OrderId: cancelTicket.orderId,
           TicketId: cancelTicket.ticket.TicketId,
           Tag: "flight",
@@ -343,13 +354,14 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
     } catch (error) {
       showToast(formatApiError(error));
     }
-  }, [cancelTicket, flightCancelMutation, refresh, showToast]);
+  }, [cancelTicket, flightCancelMutation, productChannel, refresh, showToast]);
 
   const confirmFlightRefund = useCallback(async () => {
     if (!refundTicket) return;
     try {
       if (refundKind === "nonVoluntary") {
         const result = await flightNonVoluntaryRefundMutation.mutateAsync({
+          channel: productChannel,
           OrderFlightTicketId: refundTicket.ticket.TicketId,
           OrderId: refundTicket.orderId,
           IsVoluntary: false,
@@ -357,6 +369,7 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
         showToast(result?.Message || "退票申请中");
       } else {
         await flightRefundMutation.mutateAsync({
+          channel: productChannel,
           orderId: refundTicket.orderId,
           ticketId: refundTicket.ticket.TicketId,
           IsVoluntary: true,
@@ -371,6 +384,7 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
   }, [
     flightNonVoluntaryRefundMutation,
     flightRefundMutation,
+    productChannel,
     refresh,
     refundKind,
     refundTicket,
@@ -381,6 +395,7 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
     if (!trainCancelTicket) return;
     try {
       await trainCancelMutation.mutateAsync({
+        channel: productChannel,
         OrderId: trainCancelTicket.orderId,
         TicketId: trainCancelTicket.ticket?.TicketId,
         Channel: resolveAppChannel(),
@@ -391,12 +406,13 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
     } catch (error) {
       showToast(formatApiError(error));
     }
-  }, [refresh, showToast, trainCancelMutation, trainCancelTicket]);
+  }, [productChannel, refresh, showToast, trainCancelMutation, trainCancelTicket]);
 
   const confirmTrainRefund = useCallback(async () => {
     if (!trainRefundTicket?.ticket) return;
     try {
       await trainRefundMutation.mutateAsync({
+        channel: productChannel,
         OrderId: trainRefundTicket.orderId,
         TicketId: trainRefundTicket.ticket.TicketId,
         Channel: resolveAppChannel(),
@@ -408,12 +424,13 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
     } catch (error) {
       showToast(formatApiError(error));
     }
-  }, [refresh, showToast, trainRefundMutation, trainRefundTicket]);
+  }, [productChannel, refresh, showToast, trainRefundMutation, trainRefundTicket]);
 
   const confirmHotelCancel = useCallback(async () => {
     if (!hotelCancelItem?.OrderHotelId) return;
     try {
       await hotelCancelMutation.mutateAsync({
+        channel: productChannel,
         OrderId: hotelCancelItem.OrderId,
         OrderHotelId: hotelCancelItem.OrderHotelId,
         Channel: resolveAppChannel(),
@@ -424,7 +441,7 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
     } catch (error) {
       showToast(formatApiError(error));
     }
-  }, [hotelCancelItem, hotelCancelMutation, refresh, showToast]);
+  }, [hotelCancelItem, hotelCancelMutation, productChannel, refresh, showToast]);
 
   useEffect(() => {
     const state = location.state as OrdersLocationState | null;

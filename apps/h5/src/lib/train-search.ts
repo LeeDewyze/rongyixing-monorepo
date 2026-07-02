@@ -56,18 +56,22 @@ export function buildTrainListSearchParams({
   fromStation,
   toStation,
   date,
+  channel,
 }: {
   fromStation: TrainStation;
   toStation: TrainStation;
   date: string;
+  channel?: "tmc" | "tourist";
 }): URLSearchParams {
-  return new URLSearchParams({
+  const params = new URLSearchParams({
     fromCode: fromStation.Code,
     toCode: toStation.Code,
     fromName: displayStationName(fromStation),
     toName: displayStationName(toStation),
     date,
   });
+  if (channel) params.set("channel", channel);
+  return params;
 }
 
 export function validateTrainSearch(

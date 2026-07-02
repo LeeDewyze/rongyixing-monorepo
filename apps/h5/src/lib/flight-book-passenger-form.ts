@@ -19,14 +19,23 @@ export function splitContactOptions(
   return parts.map((value, index) => ({ value, checked: index === 0 }));
 }
 
+function resolvePassengerAccountId(passenger: PassengerBookInfo): string {
+  const passengerAccountId =
+    "AccountId" in passenger.passenger ? passenger.passenger.AccountId : undefined;
+  return String(passengerAccountId ?? passenger.credential.AccountId ?? passenger.id);
+}
+
+function resolvePassengerOrgName(passenger: PassengerBookInfo): string {
+  const passengerOrgName = "OrgName" in passenger.passenger ? passenger.passenger.OrgName : undefined;
+  return passenger.credential.OrgName ?? passengerOrgName ?? "";
+}
+
 export function findInitStaffForPassenger(
   passenger: PassengerBookInfo,
   staffs: FlightInitStaff[] | undefined,
 ): FlightInitStaff | undefined {
   if (!staffs?.length) return undefined;
-  const accountId = String(
-    passenger.passenger.AccountId ?? passenger.credential.AccountId ?? passenger.id,
-  );
+  const accountId = resolvePassengerAccountId(passenger);
   return staffs.find((staff) => {
     const staffAccountId = String(staff.Account?.Id ?? staff.Id ?? "");
     return staffAccountId === accountId;
@@ -55,9 +64,7 @@ export function createPassengerBookForm(
       code: staff?.Organization?.Code ?? "",
       name:
         staff?.Organization?.Name ??
-        passenger.credential.OrgName ??
-        passenger.passenger.OrgName ??
-        "",
+        resolvePassengerOrgName(passenger),
     },
     otherOrganizationName: "",
     costCenter: {

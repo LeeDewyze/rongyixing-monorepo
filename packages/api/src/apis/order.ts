@@ -17,7 +17,7 @@ import type {
   TrainRefundParams,
 } from "@ryx/shared-types";
 
-import { ORDER_FLOW_METHODS } from "../methods/order-flow.js";
+import { ORDER_FLOW_METHODS, TOURIST_ORDER_FLOW_METHODS } from "../methods/order-flow.js";
 import type { ProxyClient } from "../proxy/proxy-client.js";
 import {
   normalizeFlightOrderDetail,
@@ -55,6 +55,19 @@ export interface OrderApi {
   refundTrain(params: TrainRefundParams): Promise<boolean>;
 }
 
+function isTouristChannel(params?: { channel?: string }): boolean {
+  return params?.channel === "tourist";
+}
+
+function stripChannel<T extends { channel?: string }>(params: T): Omit<T, "channel"> {
+  const { channel: _channel, ...rest } = params;
+  return rest;
+}
+
+function orderMethods(params?: { channel?: string }) {
+  return isTouristChannel(params) ? TOURIST_ORDER_FLOW_METHODS : ORDER_FLOW_METHODS;
+}
+
 export function createOrderApi(proxy: ProxyClient): OrderApi {
   return {
     async getList(params) {
@@ -63,17 +76,17 @@ export function createOrderApi(proxy: ProxyClient): OrderApi {
         return { Orders: [], TotalCount: 0 };
       }
 
-      const request = buildOrderListRequest(params);
+      const request = buildOrderListRequest(stripChannel(params));
       if (isPendingTravelScope(params.Scope)) {
         const data = await proxy.send<unknown>({
-          method: ORDER_FLOW_METHODS.TRAVEL_LIST,
+          method: orderMethods(params).TRAVEL_LIST,
           data: request,
         });
         return normalizeTravelListResponse(data, tabId);
       }
 
       const data = await proxy.send<unknown>({
-        method: ORDER_FLOW_METHODS.LIST,
+        method: orderMethods(params).LIST,
         data: request,
       });
       return normalizeOrderListResponse(data, tabId);
@@ -81,7 +94,7 @@ export function createOrderApi(proxy: ProxyClient): OrderApi {
     async getDetail(params) {
       const orderId = params.OrderId;
       const raw = await proxy.send<unknown>({
-        method: ORDER_FLOW_METHODS.DETAIL,
+        method: orderMethods(params).DETAIL,
         // Legacy ryx TmcOrderService.getOrderDetailAsync sends { Id }, not OrderId.
         data: { Id: orderId, OrderId: orderId },
       });
@@ -99,26 +112,28 @@ export function createOrderApi(proxy: ProxyClient): OrderApi {
     },
     cancelHotel(params) {
       return proxy.send<boolean>({
-        method: ORDER_FLOW_METHODS.CANCEL_HOTEL,
-        data: params,
+        method: orderMethods(params).CANCEL_HOTEL,
+        data: stripChannel(params),
       });
     },
     cancelFlight(params) {
       return proxy.send<boolean>({
-        method: ORDER_FLOW_METHODS.ABOLISH_ORDER,
-        data: { ...params, Tag: params.Tag ?? "flight" },
+        method: orderMethods(params).ABOLISH_ORDER,
+        data: { ...stripChannel(params), Tag: params.Tag ?? "flight" },
       });
     },
     abolishFlightTicket(params) {
       return proxy.send<boolean>({
-        method: ORDER_FLOW_METHODS.ABOLISH_TICKET,
-        data: params,
+        method: orderMethods(params).ABOLISH_TICKET,
+        data: stripChannel(params),
       });
     },
     getFlightTicketRefundInfo(params) {
       return proxy.send<FlightTicketRefundInfo>({
-        method: ORDER_FLOW_METHODS.GET_FLIGHT_TICKET_REFUND_INFO,
-        data: params,
+        method: isTouristChannel(params)
+          ? TOURIST_ORDER_FLOW_METHODS.REFUND_FLIGHT
+          : ORDER_FLOW_METHODS.GET_FLIGHT_TICKET_REFUND_INFO,
+        data: stripChannel(params),
       });
     },
     refundFlight(params) {
@@ -134,26 +149,28 @@ export function createOrderApi(proxy: ProxyClient): OrderApi {
           : params.FileValue;
       }
       return proxy.send<boolean>({
-        method: ORDER_FLOW_METHODS.REFUND_FLIGHT,
+        method: orderMethods(params).REFUND_FLIGHT,
         data,
       });
     },
     nonVoluntaryRefundFlight(params) {
       return proxy.send<{ Message?: string }>({
-        method: ORDER_FLOW_METHODS.NON_VOLUNTARY_REFUND_FLIGHT,
-        data: params,
+        method: isTouristChannel(params)
+          ? TOURIST_ORDER_FLOW_METHODS.REFUND_FLIGHT
+          : ORDER_FLOW_METHODS.NON_VOLUNTARY_REFUND_FLIGHT,
+        data: stripChannel(params),
       });
     },
     sendHotelOrderSmsCode(params) {
       return proxy.send<boolean>({
-        method: ORDER_FLOW_METHODS.SEND_HOTEL_SMS,
-        data: params,
+        method: orderMethods(params).SEND_HOTEL_SMS,
+        data: stripChannel(params),
       });
     },
     confirmHotelOrderSmsCode(params) {
       return proxy.send<boolean>({
-        method: ORDER_FLOW_METHODS.CONFIRM_HOTEL_SMS,
-        data: { ...params, ProductId: params.OrderHotelId },
+        method: orderMethods(params).CONFIRM_HOTEL_SMS,
+        data: { ...stripChannel(params), ProductId: params.OrderHotelId },
       });
     },
     checkInspurRepush(params) {
@@ -164,20 +181,22 @@ export function createOrderApi(proxy: ProxyClient): OrderApi {
     },
     cancelTrain(params) {
       return proxy.send<boolean>({
-        method: ORDER_FLOW_METHODS.CANCEL_TRAIN,
-        data: { Id: params.OrderId, OrderId: params.OrderId, TicketId: params.TicketId },
+        method: orderMethods(params).CANCEL_TRAIN,
+        data: { Id: params.OrderId },
       });
     },
     issueTrain(params) {
       return proxy.send<boolean>({
-        method: ORDER_FLOW_METHODS.ISSUE_TRAIN,
+        method: orderMethods(params).ISSUE_TRAIN,
         data: { Id: params.OrderId, OrderId: params.OrderId },
       });
     },
     refundTrain(params) {
       return proxy.send<boolean>({
-        method: ORDER_FLOW_METHODS.TRAIN_REFUND,
-        data: params,
+        method: isTouristChannel(params)
+          ? TOURIST_ORDER_FLOW_METHODS.CANCEL_TRAIN
+          : ORDER_FLOW_METHODS.TRAIN_REFUND,
+        data: stripChannel(params),
       });
     },
   };

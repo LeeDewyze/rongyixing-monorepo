@@ -146,6 +146,18 @@ describe("buildHotelInitBookDto", () => {
     const dto = buildHotelInitBookDto({ selection, passengers, agentId: "agent1" });
     expect(dto.AgentId).toBe("agent1");
   });
+
+  it("omits travel form fields in personal mode", () => {
+    const dto = buildHotelInitBookDto({
+      selection,
+      passengers,
+      travelFormId: "tf-001",
+      travelMode: "personal",
+    });
+    expect(dto.TravelFormId).toBeUndefined();
+    expect(dto.Passengers[0]?.travelFormId).toBeUndefined();
+    expect(dto.Passengers[0]?.travelNumber).toBeUndefined();
+  });
 });
 
 describe("buildHotelOrderBookDto", () => {
@@ -191,7 +203,6 @@ describe("buildHotelOrderBookDto", () => {
     expect(passenger?.ExpenseType).toBe("1");
     expect(passenger?.ApprovalId).toBe("ap1");
     expect(passenger?.OrderCard?.CardNumber).toBe("4111111111111111");
-    expect(passenger?.Linkmans).toBeUndefined();
     expect(dto.Linkmans).toHaveLength(1);
     expect(dto.Channel).toBe("客户H5");
     expect(dto.TravelPayType).toBe(1);
@@ -258,6 +269,29 @@ describe("buildHotelOrderBookDto", () => {
     });
 
     expect(bookDto.Passengers[0]?.RoomPlan).toEqual(initRoomPlan);
+  });
+
+  it("omits travel form fields in personal mode", () => {
+    const forms = {
+      p1: {
+        ...createHotelPassengerBookForm(passengers[0]!, "2026-06-20 14:00"),
+        outNumbers: { TravelNumber: "TR-001" },
+      },
+    };
+
+    const dto = buildHotelOrderBookDto({
+      selection,
+      passengers,
+      forms,
+      travelFormId: "tf-001",
+      travelMode: "personal",
+    });
+
+    expect(dto.TravelFormId).toBeUndefined();
+    expect(dto.Passengers[0]?.travelFormId).toBeUndefined();
+    expect(dto.Passengers[0]?.travelNumber).toBeUndefined();
+    expect(dto.Passengers[0]?.OutNumbers).toBeNull();
+    expect(dto.Passengers[0]?.TravelType).toBe(2);
   });
 });
 

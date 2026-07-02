@@ -565,19 +565,19 @@ function readControlDefault(control: TravelApplyRawControl): string {
 
 /** 从 Form/Get 响应中提取前端可用的表单字段。 */
 export function parseFormDataToValues(
-  meta: TravelApplyMeta,
+  _meta: TravelApplyMeta,
   controls: FormGetResponse,
-  cities: TravelApplyCity[],
-  staffOptions: TravelApplyOption[],
+  _cities: TravelApplyCity[],
+  _staffOptions: TravelApplyOption[],
 ): { travelTypes: string[]; reason: string } | null {
   if (!Array.isArray(controls) || controls.length === 0) return null;
 
-  const travelTypeCtrl = controls.find((c) => c.tag === "TravelType" && !c.slave);
+  const travelTypeCtrl = controls.find((c) => c.tag === "TravelType" && !c.slaves);
   const travelTypes = travelTypeCtrl
     ? readControlDefault(travelTypeCtrl).split(",").map((s) => s.trim()).filter(Boolean)
     : [];
 
-  const reasonCtrl = controls.find((c) => c.label === "出差事由" && !c.slave);
+  const reasonCtrl = controls.find((c) => c.label === "出差事由" && !c.slaves);
   const reason = reasonCtrl ? readControlDefault(reasonCtrl) : "";
 
   return { travelTypes, reason };

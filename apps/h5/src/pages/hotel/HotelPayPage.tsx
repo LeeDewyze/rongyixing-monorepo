@@ -6,6 +6,11 @@ export function HotelPayPage() {
   const { orderId = "" } = useParams();
 
   return (
-    <OrderPayPage title="订单支付" orderId={orderId} successPath={`/hotel/result/${orderId}`} />
+    <OrderPayPage
+      title="订单支付"
+      orderId={orderId}
+      productType="Hotel"
+      successPath={`/hotel/result/${orderId}`}
+    />
   );
 }

@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
-import { OrderListTabId, type OrderListScope } from "@ryx/shared-types";
+import { OrderListTabId, type OrderListScope, type ProductChannel } from "@ryx/shared-types";
 
 import { getApi } from "@/lib/api";
 
@@ -12,6 +12,7 @@ export const orderListQueryKey = (tabId: OrderListTabId | null, scope: OrderList
 export interface UseOrderListParams {
   tabId: OrderListTabId | null;
   scope: OrderListScope;
+  channel?: ProductChannel;
 }
 
 function getNextPageIndex(
@@ -27,15 +28,16 @@ function getNextPageIndex(
   return pageOrders.length >= ORDER_LIST_PAGE_SIZE ? pageParam + 1 : undefined;
 }
 
-export function useOrderList({ tabId, scope }: UseOrderListParams, enabled = true) {
+export function useOrderList({ tabId, scope, channel }: UseOrderListParams, enabled = true) {
   const queryClient = useQueryClient();
 
   const query = useInfiniteQuery({
-    queryKey: orderListQueryKey(tabId, scope),
+    queryKey: [...orderListQueryKey(tabId, scope), channel],
     queryFn: ({ pageParam = 0 }) =>
       getApi().order.getList({
         TabId: tabId!,
         Scope: scope,
+        channel,
         PageIndex: pageParam,
         PageSize: ORDER_LIST_PAGE_SIZE,
       }),
@@ -48,7 +50,7 @@ export function useOrderList({ tabId, scope }: UseOrderListParams, enabled = tru
   const refresh = useCallback(async () => {
     await queryClient.resetQueries({
       queryKey: orderListQueryKey(tabId, scope),
-      exact: true,
+      exact: false,
     });
   }, [queryClient, scope, tabId]);
 

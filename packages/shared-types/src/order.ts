@@ -39,6 +39,7 @@ export interface OrderTrainListTicket {
 }
 
 export interface OrderListParams {
+  channel?: "tmc" | "tourist";
   TabId?: OrderListTabId;
   /** Legacy Order-List product type (ryx sends Type: "Hotel" etc.). */
   Type?: OrderListType;
@@ -111,6 +112,8 @@ export interface OrderListResponse {
 }
 
 export interface PayProcessParams {
+  channel?: "tmc" | "tourist";
+  ProductType?: OrderListType;
   OrderId?: string;
   PayOrderId?: string;
   PayType?: string;

@@ -128,6 +128,7 @@ export function buildHomeIndexParams(
   fromCity: Trafficline,
   toCity: Trafficline,
   date: string,
+  channel?: FlightSearchParams["channel"],
 ): FlightSearchParams {
   const fromAsAirport = isFlightAirportQuery(fromCity);
   const toAsAirport = isFlightAirportQuery(toCity);
@@ -137,6 +138,7 @@ export function buildHomeIndexParams(
     ToCode: resolveFlightLocationCode(toCity),
     FromAsAirport: fromAsAirport,
     ToAsAirport: toAsAirport,
+    channel,
   };
 }
 
@@ -144,16 +146,18 @@ export interface FlightListQueryInput {
   fromCity: Trafficline;
   toCity: Trafficline;
   date: string;
+  channel?: FlightSearchParams["channel"];
 }
 
 export function buildFlightListSearchParams({
   fromCity,
   toCity,
   date,
+  channel,
 }: FlightListQueryInput): URLSearchParams {
   const fromAsAirport = isFlightAirportQuery(fromCity);
   const toAsAirport = isFlightAirportQuery(toCity);
-  return new URLSearchParams({
+  const params = new URLSearchParams({
     fromCode: resolveFlightLocationCode(fromCity),
     toCode: resolveFlightLocationCode(toCity),
     fromName: displayCityName(fromCity),
@@ -162,6 +166,8 @@ export function buildFlightListSearchParams({
     fromAsAirport: String(fromAsAirport),
     toAsAirport: String(toAsAirport),
   });
+  if (channel) params.set("channel", channel);
+  return params;
 }
 
 export function formatFlightDateLabel(dateStr: string) {

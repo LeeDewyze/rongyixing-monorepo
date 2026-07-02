@@ -2,6 +2,7 @@ import type { FlightDetailResult, FlightFare, FlightListResult, FlightSegment } 
 import type { FlightBookPolicy } from "@ryx/shared-types";
 
 import type { FlightCabinsQuery } from "@/lib/flight-detail";
+import type { HomeTravelMode } from "@/config/home-assets";
 
 const STORAGE_KEY = "ryx_flight_book_selection";
 export const FLIGHT_BOOK_SELECTION_EVENT = "ryx-flight-book-selection-change";
@@ -20,6 +21,7 @@ export interface FlightBookSelection {
   /** When cabin prices were last fetched — used for 10-minute timeout. */
   priceSnapshotAt: number;
   selectedAt: number;
+  travelMode?: HomeTravelMode;
 }
 
 function notifyChange(): void {

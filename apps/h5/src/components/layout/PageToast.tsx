@@ -1,4 +1,4 @@
-interface PageToastProps {
+export interface PageToastProps {
   message: string | null;
   tone?: "success" | "error";
   className?: string;

@@ -19,6 +19,7 @@ interface HomeHotelSearchPanelProps {
   onCheckOutChange: (date: string) => void;
   onMyLocationClick: () => void;
   myLocationLoading?: boolean;
+  myLocationFeedback?: { tone: "success" | "error"; text: string } | null;
 }
 
 function ChevronDownIcon() {
@@ -53,6 +54,7 @@ export function HomeHotelSearchPanel({
   onCheckOutChange,
   onMyLocationClick,
   myLocationLoading = false,
+  myLocationFeedback,
 }: HomeHotelSearchPanelProps) {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const nights = nightsBetween(checkIn, checkOut);
@@ -118,6 +120,14 @@ export function HomeHotelSearchPanel({
 
         {validationError ? (
           <p className="pt-2 text-center text-sm text-destructive">{validationError}</p>
+        ) : myLocationFeedback ? (
+          <p
+            className={`pt-2 text-center text-sm ${
+              myLocationFeedback.tone === "success" ? "text-[#00a870]" : "text-destructive"
+            }`}
+          >
+            {myLocationFeedback.text}
+          </p>
         ) : null}
 
         <button

@@ -43,6 +43,53 @@ describe("createProxyClient proxy mode", () => {
     expect(capturedBody).toContain("Version=2.0");
     expect(capturedBody).not.toContain("root=");
   });
+
+  it("refreshes stale ApiConfig when current method url key is missing", async () => {
+    const capturedUrls: string[] = [];
+    const client = createProxyClient({
+      baseUrl: "",
+      mode: "proxy",
+      apiConfig: {
+        Token: "old-token",
+        Urls: { TmcApiTrainUrl: "http://train-api-tmc.rtesp.com" },
+      },
+      getTicket: () => "ticket",
+      fetchImpl: async (url) => {
+        capturedUrls.push(String(url));
+        if (String(url).startsWith("/Home/Setting")) {
+          return new Response(
+            JSON.stringify(
+              successResponse({
+                Token: "new-token",
+                Urls: {
+                  TmcTouristTrainUrl: "http://train-api-tourist.rtesp.com",
+                },
+              }),
+            ),
+            { status: 200, headers: { "Content-Type": "application/json" } },
+          );
+        }
+        return new Response(
+          JSON.stringify(successResponse({ TrainInfos: [] })),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        );
+      },
+    });
+
+    await client.send({
+      method: "TmcTouristTrainUrl-Home-Search",
+      data: {
+        From: "BJP",
+        To: "SHH",
+        Date: "2026-07-02",
+      },
+    });
+
+    expect(capturedUrls).toEqual([
+      "/Home/Setting",
+      "/Home/Proxy",
+    ]);
+  });
 });
 
 describe("createProxyClient mock mode", () => {

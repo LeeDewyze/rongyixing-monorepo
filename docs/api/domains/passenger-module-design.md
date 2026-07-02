@@ -220,7 +220,7 @@ usePassengerCredentialForm(mode, ids): { save, remove, ... }
 沿用 `packages/shared-types/src/passenger.ts` + `passenger-select-logic.ts`：
 
 - `blockedCredentialTypes(forType)`
-- `maxPassengersForProduct(forType)` — **火车需改为 5**（Legacy 对齐）
+- `maxPassengersForProduct(forType)` — 火车为 5（Legacy / H5 已对齐）
 - 同 `AccountId` 单证件、credentialKey 去重
 - 非员工 `isNotWhitelist: true`
 
@@ -281,7 +281,7 @@ usePassengerCredentialForm(mode, ids): { save, remove, ... }
 - [ ] 员工/非员工 Tab 改为胶囊 Segment（设计稿）
 - [ ] `EmployeePassengerCard` / `ExternalPassengerCard` 视觉对齐 Token
 - [ ] 圆形多选控件；底栏主按钮 `#5099fe`
-- [ ] 火车 `maxPassengers` 改为 5
+- [x] 火车 `maxPassengers` 改为 5
 - [ ] 酒店下单成功 `clearPassengerSelection(Hotel)`
 
 **交付标准**：与设计稿 / CityPicker 并排对比视觉一致；酒店链端到端不变。

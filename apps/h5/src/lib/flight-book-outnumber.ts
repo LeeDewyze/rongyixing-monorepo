@@ -5,10 +5,13 @@ import type {
   FlightPassengerBookForm,
   GetTravelUrlParams,
   PassengerBookInfo,
+  TravelUrlTravelType,
   TravelUrlRow,
 } from "@ryx/shared-types";
 
 import { getApi } from "@/lib/api";
+import { isBusinessTravelMode, shouldEnableTravelForm } from "@/lib/flight-travel-mode";
+import type { HomeTravelMode } from "@/config/home-assets";
 
 function parseTmcStringArray(raw: unknown): string[] {
   if (Array.isArray(raw)) return raw.map(String);
@@ -23,8 +26,10 @@ export function buildPassengerOutNumberFields(input: {
   staff?: FlightInitStaff;
   init?: FlightInitBookResponse;
   travelNumber?: string;
+  travelMode?: HomeTravelMode;
+  travelType?: TravelUrlTravelType;
 }): FlightOutNumberField[] {
-  const { passenger, staff, init, travelNumber } = input;
+  const { staff, init, travelNumber, travelMode, travelType = "Flight" } = input;
   const tmc = init?.Tmc as Record<string, unknown> | undefined;
   const labels =
     parseTmcStringArray(tmc?.OutNumberNameArray) ||
@@ -35,8 +40,34 @@ export function buildPassengerOutNumberFields(input: {
   const hintMap = init?.OutNumbers ?? {};
 
   const prefilledTravelNumber = travelNumber?.trim() ?? "";
-  const canSelectFromTravelUrl =
-    Boolean(tmc?.GetTravelUrl) && !prefilledTravelNumber;
+  const businessMode = isBusinessTravelMode(travelMode);
+  const travelFormEnabled = shouldEnableTravelForm(travelMode, Boolean(tmc?.GetTravelUrl));
+  const canSelectFromTravelUrl = travelFormEnabled && !prefilledTravelNumber;
+
+  if (!businessMode) {
+    const visibleLabels = labels.filter((label) => !/travel|出差/i.test(label));
+    if (!visibleLabels.length) return [];
+    return visibleLabels.map((label) => {
+      const key = label.replace(/\s+/g, "");
+      const prefilled =
+        (key === "StaffNumber" ? staff?.Number : undefined) ||
+        (key === "StaffOutNumber" ? staff?.OutNumber : undefined) ||
+        "";
+
+      return {
+        key,
+        label,
+        value: String(prefilled ?? ""),
+        required: requiredLabels.includes(label),
+        isTravelNumber: false,
+        canSelect: false,
+        labelDataList: hintMap[key] ?? hintMap[label] ?? [],
+        staffNumber: staff?.Number ?? "",
+        staffOutNumber: staff?.OutNumber ?? "",
+        travelType,
+      };
+    });
+  }
 
   if (!labels.length) {
     if (travelNumber) {
@@ -51,6 +82,7 @@ export function buildPassengerOutNumberFields(input: {
           labelDataList: hintMap.TravelNumber ?? [],
           staffNumber: staff?.Number ?? "",
           staffOutNumber: staff?.OutNumber ?? "",
+          travelType,
         },
       ];
     }
@@ -76,6 +108,7 @@ export function buildPassengerOutNumberFields(input: {
       labelDataList: hintMap[key] ?? hintMap[label] ?? [],
       staffNumber: staff?.Number ?? "",
       staffOutNumber: staff?.OutNumber ?? "",
+      travelType,
     };
   });
 }
@@ -83,11 +116,12 @@ export function buildPassengerOutNumberFields(input: {
 export async function fetchTravelUrlOptions(
   field: FlightOutNumberField,
 ): Promise<TravelUrlRow[]> {
+  if (!field.canSelect) return [];
   const params: GetTravelUrlParams = {
     staffNumber: field.staffNumber ?? null,
     staffOutNumber: field.staffOutNumber ?? null,
     name: field.label,
-    travelType: "Flight",
+    travelType: field.travelType ?? "Flight",
     outNumberName: field.key,
   };
   const result = await getApi().travel.getTravelUrl(params);

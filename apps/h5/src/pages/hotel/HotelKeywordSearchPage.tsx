@@ -5,6 +5,7 @@ import type { HotelKeywordSearchResult } from "@ryx/shared-types";
 import { usePageHeader } from "@/components/layout";
 import { useHotelKeywordSearch } from "@/hooks/useHotelList";
 import { formatApiError } from "@/lib/formatApiError";
+import { loadHomeTravelMode, resolveProductChannel } from "@/lib/flight-travel-mode";
 import { navigateBack } from "@/lib/navigation";
 
 const HOTEL_KEYWORD_FONT =
@@ -84,6 +85,7 @@ function keywordReturnPath(params: URLSearchParams, selected?: HotelKeywordSearc
   const checkOut = params.get("checkOut") ?? "";
   const hotelType = params.get("hotelType") ?? "";
   const travelFormId = params.get("travelFormId") ?? params.get("travelformid") ?? "";
+  const channel = params.get("channel") ?? "";
 
   next.set("cityCode", cityCode);
   next.set("cityName", cityName);
@@ -91,6 +93,7 @@ function keywordReturnPath(params: URLSearchParams, selected?: HotelKeywordSearc
   next.set("checkOut", checkOut);
   if (hotelType) next.set("hotelType", hotelType);
   if (travelFormId) next.set("travelFormId", travelFormId);
+  if (channel) next.set("channel", channel);
 
   if (selected?.type === "hotel" && selected.hotelId) {
     next.set("keyword", selected.text);
@@ -118,6 +121,10 @@ export function HotelKeywordSearchPage() {
   const cityCode = searchParams.get("cityCode") ?? "";
   const cityName = searchParams.get("cityName") ?? cityCode;
   const initialKeyword = searchParams.get("keyword") ?? "";
+  const travelMode = useMemo(() => loadHomeTravelMode(), []);
+  const productChannel = searchParams.get("channel") === "tourist"
+    ? "tourist"
+    : resolveProductChannel(travelMode);
   const [keyword, setKeyword] = useState(initialKeyword);
   const [debouncedKeyword, setDebouncedKeyword] = useState(initialKeyword.trim());
 
@@ -135,12 +142,13 @@ export function HotelKeywordSearchPage() {
       debouncedKeyword
         ? {
             PageIndex: 0,
+            channel: productChannel,
             CityName: cityName,
             CityCode: cityCode,
             Keyword: debouncedKeyword,
           }
         : null,
-    [cityCode, cityName, debouncedKeyword],
+    [cityCode, cityName, debouncedKeyword, productChannel],
   );
 
   const { data: results = [], isFetching, isError, error } = useHotelKeywordSearch(queryParams);

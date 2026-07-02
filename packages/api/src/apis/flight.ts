@@ -18,7 +18,11 @@ import type {
 import { stripFlightOrderBookDto } from "./flight-book-adapter.js";
 import { normalizeFlightDetailResponse } from "./flight-detail-adapter.js";
 import { BOOK_METHODS } from "../methods/book.js";
-import { FLIGHT_FLOW_METHODS } from "../methods/flight-flow.js";
+import {
+  FLIGHT_FLOW_METHODS,
+  TOURIST_FLIGHT_BOOK_METHODS,
+  TOURIST_FLIGHT_FLOW_METHODS,
+} from "../methods/flight-flow.js";
 import type { ProxyClient } from "../proxy/proxy-client.js";
 
 export interface FlightApi {
@@ -29,6 +33,15 @@ export interface FlightApi {
   getFlightPolicy(params: FlightPolicyParams): Promise<FlightPolicyPassengerResult[]>;
   initializeBook(params: FlightInitBookParams): Promise<FlightInitBookResponse>;
   submitBook(params: FlightBookParams): Promise<FlightBookResponse>;
+}
+
+function isTouristChannel(params?: { channel?: string }): boolean {
+  return params?.channel === "tourist";
+}
+
+function stripChannel<T extends { channel?: string }>(params: T): Omit<T, "channel"> {
+  const { channel: _channel, ...rest } = params;
+  return rest;
 }
 
 export function createFlightApi(proxy: ProxyClient): FlightApi {
@@ -49,8 +62,10 @@ export function createFlightApi(proxy: ProxyClient): FlightApi {
     },
     searchFlights(params) {
       return proxy.send<FlightListResult>({
-        method: FLIGHT_FLOW_METHODS.HOME_INDEX,
-        data: params,
+        method: isTouristChannel(params)
+          ? TOURIST_FLIGHT_FLOW_METHODS.HOME_INDEX
+          : FLIGHT_FLOW_METHODS.HOME_INDEX,
+        data: stripChannel(params),
         version: "2.0",
         requestTimeout: 60,
         timeoutMs: 60_000,
@@ -58,8 +73,10 @@ export function createFlightApi(proxy: ProxyClient): FlightApi {
     },
     async getFlightDetail(params) {
       const raw = await proxy.send<unknown>({
-        method: FLIGHT_FLOW_METHODS.HOME_DETAIL,
-        data: params,
+        method: isTouristChannel(params)
+          ? TOURIST_FLIGHT_FLOW_METHODS.HOME_DETAIL
+          : FLIGHT_FLOW_METHODS.HOME_DETAIL,
+        data: stripChannel(params),
         version: "2.0",
         requestTimeout: 60,
         timeoutMs: 60_000,
@@ -76,15 +93,19 @@ export function createFlightApi(proxy: ProxyClient): FlightApi {
     },
     initializeBook(params) {
       return proxy.send<FlightInitBookResponse>({
-        method: BOOK_METHODS.FLIGHT_INITIALIZE,
-        data: stripFlightOrderBookDto(params),
+        method: isTouristChannel(params)
+          ? TOURIST_FLIGHT_BOOK_METHODS.INIT
+          : BOOK_METHODS.FLIGHT_INITIALIZE,
+        data: stripChannel(stripFlightOrderBookDto(params)),
         timeoutMs: 60_000,
       });
     },
     submitBook(params) {
       return proxy.send<FlightBookResponse>({
-        method: BOOK_METHODS.FLIGHT_BOOK,
-        data: stripFlightOrderBookDto(params),
+        method: isTouristChannel(params)
+          ? TOURIST_FLIGHT_BOOK_METHODS.BOOK
+          : BOOK_METHODS.FLIGHT_BOOK,
+        data: stripChannel(stripFlightOrderBookDto(params)),
         timeoutMs: 60_000,
       });
     },

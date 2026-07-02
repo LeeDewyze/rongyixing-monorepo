@@ -61,7 +61,7 @@ function resolveTrainCalendarDayDiff(
 export function getTrainArrivalDayTipFromTimes(
   startTime?: string,
   arrivalTime?: string,
-  options?: { arriveDays?: number; runTime?: string },
+  options?: { arriveDays?: number; runTime?: string | number },
 ): string | null {
   let dayDiff = resolveTrainCalendarDayDiff(startTime, arrivalTime, options?.arriveDays);
 
@@ -103,7 +103,7 @@ export function formatTrainTripDateLabel(value?: string): string | null {
 export function getTrainTripArrivalDayTip(trip: {
   StartTime?: string;
   ArrivalTime?: string;
-  RunTime?: string;
+  RunTime?: string | number;
 }): string | null {
   return getTrainArrivalDayTipFromTimes(trip.StartTime, trip.ArrivalTime, {
     runTime: trip.RunTime,
@@ -113,7 +113,7 @@ export function getTrainTripArrivalDayTip(trip: {
 export function resolveTrainTripArrivalDateLabel(trip: {
   StartTime?: string;
   ArrivalTime?: string;
-  RunTime?: string;
+  RunTime?: string | number;
 }): string | null {
   if (!getTrainTripArrivalDayTip(trip)) return null;
 

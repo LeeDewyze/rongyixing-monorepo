@@ -166,6 +166,20 @@ describe("buildFlightInitBookDto", () => {
     expect(dto.TravelPayType).toBeUndefined();
   });
 
+  it("uses tourist channel and omits travel form fields in personal mode", () => {
+    const dto = buildFlightInitBookDto({
+      selection,
+      passengers,
+      travelMode: "personal",
+      channel: "tourist",
+      travelFormId: "tf-001",
+    });
+    expect(dto.channel).toBe("tourist");
+    expect(dto.TravelFormId).toBeUndefined();
+    expect(dto.Passengers[0]?.travelFormId).toBeUndefined();
+    expect(dto.Passengers[0]?.travelNumber).toBeUndefined();
+  });
+
   it("uses flightPolicy cabin and uuid rules on initialize", () => {
     vi.stubGlobal("crypto", { randomUUID: () => "uuid-policy" });
     const dto = buildFlightInitBookDto({
@@ -402,9 +416,25 @@ describe("buildFlightOrderBookDto", () => {
     const dto = buildFlightOrderBookDto({
       selection,
       passengers,
-      channel: "客户H5",
     });
     expect(dto.Channel).toBe("客户H5");
+  });
+
+  it("uses tourist route channel and strips travel form fields in personal mode", () => {
+    const dto = buildFlightOrderBookDto({
+      selection,
+      passengers,
+      travelMode: "personal",
+      channel: "tourist",
+      travelFormId: "tf-001",
+      travelNumber: "TF-001",
+    });
+    expect(dto.channel).toBe("tourist");
+    expect(dto.Channel).toBe("客户H5");
+    expect(dto.TravelFormId).toBeUndefined();
+    expect(dto.Passengers[0]?.travelFormId).toBeUndefined();
+    expect(dto.Passengers[0]?.travelNumber).toBeUndefined();
+    expect(dto.Passengers[0]?.OutNumbers).toBeNull();
   });
 
   it("sets offline flags from isSave like Legacy bookFlight(isSave)", () => {
@@ -448,6 +478,33 @@ describe("buildFlightOrderBookDto", () => {
       travelNumber: "TF-001",
     });
     expect(dto.Passengers[0]?.OutNumbers).toEqual({ TravelNumber: "TF-001" });
+  });
+
+  it("omits travel form fields in personal mode", () => {
+    const dto = buildFlightOrderBookDto({
+      selection,
+      passengers,
+      travelFormId: "tf-001",
+      travelNumber: "TF-001",
+      travelMode: "personal",
+    });
+    expect(dto.TravelFormId).toBeUndefined();
+    expect(dto.Passengers[0]?.travelFormId).toBeUndefined();
+    expect(dto.Passengers[0]?.travelNumber).toBeUndefined();
+    expect(dto.Passengers[0]?.OutNumbers).toBeNull();
+    expect(dto.Passengers[0]?.TravelType).toBe(2);
+  });
+
+  it("omits initialize travel form fields in personal mode", () => {
+    const dto = buildFlightInitBookDto({
+      selection,
+      passengers,
+      travelFormId: "tf-001",
+      travelMode: "personal",
+    });
+    expect(dto.TravelFormId).toBeUndefined();
+    expect(dto.Passengers[0]?.travelFormId).toBeUndefined();
+    expect(dto.Passengers[0]?.travelNumber).toBeUndefined();
   });
 
   it("aligns legacy empty card/ticket fields and explicit illegal strings", () => {

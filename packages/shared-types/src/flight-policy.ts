@@ -5,7 +5,7 @@ export interface FlightBookPolicy {
   Rules?: string[];
   Descriptions?: string[];
   color?: string;
-  IsAllowBook?: boolean;
+  IsAllowBook?: boolean | number | string;
   Cabin?: FlightFare;
   OrderTravelPays?: string;
   Id?: string;

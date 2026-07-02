@@ -257,11 +257,22 @@ export function buildHotelPolicyParams(input: {
  */
 function isAllowedByPolicy(policy: HotelPolicyItem): boolean {
   const raw = policy.IsAllowBook;
-  if (raw === false || raw === 0 || raw === "0" || raw === "false" || raw === "False") {
-    return false;
+  if (typeof raw === "boolean") {
+    return raw;
   }
-  if (raw === true || raw === 1 || raw === "1" || raw === "true" || raw === "True") {
-    return true;
+  if (typeof raw === "number") {
+    return raw !== 0;
+  }
+  if (typeof raw === "string") {
+    if (raw === "0" || raw === "false" || raw === "False") {
+      return false;
+    }
+    if (raw === "1" || raw === "true" || raw === "True") {
+      return true;
+    }
+  }
+  if (raw === false || raw === 0) {
+    return false;
   }
   // absent / null / other → treat as allowed (legacy default)
   return true;

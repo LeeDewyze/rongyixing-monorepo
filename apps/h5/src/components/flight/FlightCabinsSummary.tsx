@@ -1,7 +1,7 @@
 import type { FlightSegment } from "@ryx/shared-types";
 
-import { FlightRoutePlaneIcon } from "@/components/flight/FlightRoutePlaneIcon";
 import { FLIGHT_CABINS_FONT } from "@/components/flight/flight-cabins-chrome";
+import summaryRouteArrow from "@/assets/flight/summary-route-arrow.png";
 import { formatFlightTime } from "@/utils/flight-list";
 import {
   formatArrivalDateBadge,
@@ -71,58 +71,81 @@ export function FlightCabinsSummary({ segment }: FlightCabinsSummaryProps) {
   );
 
   return (
-    <div
-      className={`overflow-hidden rounded-xl bg-white/95 px-4 py-4 shadow-[0_2px_12px_rgba(39,104,250,0.08)] ring-1 ring-white/80 backdrop-blur-[2px] ${FLIGHT_CABINS_FONT}`}
-    >
-      <div className="grid grid-cols-[minmax(0,1fr)_5.5rem_minmax(0,1fr)] items-center gap-x-3">
-        <p className="text-[28px] font-semibold leading-none tracking-tight tabular-nums text-[#1a1a1a]">
-          {formatFlightTime(segment.TakeoffTime)}
-        </p>
-
-        <div className="flex items-center">
-          <div className="h-px flex-1 bg-brand-header-start/30" />
-          <FlightRoutePlaneIcon className="mx-1 h-4 w-5 shrink-0" />
-          <div className="h-px flex-1 bg-brand-header-start/30" />
-        </div>
-
-        <div className="relative min-w-0 text-right">
-          {arrivalDateBadge ? (
-            <p className="absolute -top-4 right-0 whitespace-nowrap text-[11px] font-medium leading-none text-[#ff8d1a]">
-              {arrivalDateBadge}
-            </p>
-          ) : null}
-          <p className="text-[28px] font-semibold leading-none tracking-tight tabular-nums text-[#1a1a1a]">
-            {formatFlightTime(segment.ArrivalTime)}
-          </p>
-        </div>
-
-        <p className="mt-2 text-[13px] leading-snug text-[#666666]">{fromLabel}</p>
-        <div aria-hidden />
-        <p className="mt-2 text-right text-[13px] leading-snug text-[#666666]">{toLabel}</p>
-      </div>
-
-      {flightTitle || metaChips.length > 0 ? (
-        <div className="mt-4 border-t border-[#EEF1F6] pt-3">
-          {flightTitle ? (
+    <div className={`px-3 pb-3 pt-2 ${FLIGHT_CABINS_FONT}`}>
+      <div
+        className="rounded-lg px-3.5 pb-3 pt-3"
+        style={{ background: "linear-gradient(270deg, #2768FA 0%, #33A1F9 100%)" }}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1 text-white">
             <div className="flex min-w-0 items-center gap-2">
               <AirlineLogo segment={segment} />
-              <p className="min-w-0 flex-1 truncate text-[13px] font-medium leading-snug text-[#333333]">
-                {flightTitle}
+              <p className="min-w-0 flex-1 truncate text-[17px] font-medium leading-none">
+                {flightTitle || "航班详情"}
               </p>
             </div>
-          ) : null}
-
-          {metaChips.length > 0 ? (
-            <div
-              className={`flex flex-wrap items-center gap-1.5 ${flightTitle ? "mt-2 pl-[26px]" : ""}`}
-            >
-              {planeLabel ? <MetaChip>{planeLabel}</MetaChip> : null}
-              {durationLabel ? <MetaChip>{durationLabel}</MetaChip> : null}
-              {mealLabel ? <MetaChip variant="accent">{mealLabel}</MetaChip> : null}
-            </div>
-          ) : null}
+            <p className="mt-3 truncate text-[14px] font-normal leading-none text-white">
+              {[planeLabel, mealLabel].filter(Boolean).join(" · ")}
+            </p>
+          </div>
         </div>
-      ) : null}
+
+        <div className="mt-3 h-16 rounded-[8px] bg-white px-3">
+          <div className="grid h-full grid-cols-[minmax(0,1fr)_7.5rem_minmax(0,1fr)] items-center gap-x-2">
+            <div className="min-w-0">
+              <p className="text-[16px] font-medium leading-none tabular-nums text-[#010101]">
+                {formatFlightTime(segment.TakeoffTime)}
+              </p>
+              <p className="mt-1 truncate text-[14px] font-normal leading-none text-[#666666]">
+                {fromLabel}
+              </p>
+            </div>
+
+            <div className="text-center">
+              {durationLabel ? (
+                <p className="text-[12px] leading-none text-[#999999]">{durationLabel}</p>
+              ) : null}
+              <div className="mt-1 flex items-center justify-center">
+                <img
+                  src={summaryRouteArrow}
+                  alt=""
+                  width={56}
+                  height={12}
+                  className="h-3 w-14 shrink-0 object-contain"
+                  aria-hidden
+                />
+              </div>
+              {flightNo ? (
+                <p className="mt-1 truncate text-[11px] font-normal leading-none text-[#666666]">
+                  {flightNo}
+                </p>
+              ) : null}
+            </div>
+
+            <div className="relative min-w-0 text-right">
+              {arrivalDateBadge ? (
+                <p className="absolute -top-4 right-0 whitespace-nowrap text-[11px] font-medium leading-none text-[#ff8d1a]">
+                  {arrivalDateBadge}
+                </p>
+              ) : null}
+              <p className="text-[16px] font-medium leading-none tabular-nums text-[#010101]">
+                {formatFlightTime(segment.ArrivalTime)}
+              </p>
+              <p className="mt-1 truncate text-[14px] font-normal leading-none text-[#666666]">
+                {toLabel}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {metaChips.length > 0 ? (
+          <div className="mt-2 flex flex-wrap items-center gap-1.5">
+            {durationLabel ? <MetaChip>{durationLabel}</MetaChip> : null}
+            {planeLabel ? <MetaChip>{planeLabel}</MetaChip> : null}
+            {mealLabel ? <MetaChip variant="accent">{mealLabel}</MetaChip> : null}
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

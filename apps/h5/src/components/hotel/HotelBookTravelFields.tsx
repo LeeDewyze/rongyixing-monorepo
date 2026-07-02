@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { ClearableFieldInput } from "@/components/form";
 import { HOTEL_DETAIL_FONT } from "@/components/hotel/hotel-detail-chrome";
 
 interface ExpenseTypeOption {
@@ -76,12 +77,13 @@ export function HotelBookTravelFields({
                 ))}
               </select>
             ) : (
-              <input
+              <ClearableFieldInput
                 type="text"
                 value={otherIllegalReason}
                 placeholder="请输入超标原因"
-                className="min-w-0 flex-1 bg-transparent text-[14px] text-[#333333] outline-none placeholder:text-[#CCCCCC]"
+                inputClassName="min-w-0 flex-1 bg-transparent text-[14px] text-[#333333] outline-none placeholder:text-[#CCCCCC]"
                 onChange={(event) => onOtherIllegalReasonChange(event.target.value)}
+                onClear={() => onOtherIllegalReasonChange("")}
               />
             )}
           </div>
@@ -90,12 +92,13 @@ export function HotelBookTravelFields({
             <div
               className={`mt-2 flex items-center gap-2 ${embedded ? "pl-[5.75rem]" : "pl-[5.5rem] gap-3"}`}
             >
-              <input
+              <ClearableFieldInput
                 type="text"
                 value={otherIllegalReason}
                 placeholder="请输入其他原因"
-                className="min-w-0 flex-1 rounded-md bg-[#F5F6F9] px-3 py-2 text-[14px] text-[#333333] outline-none placeholder:text-[#CCCCCC]"
+                inputClassName="min-w-0 flex-1 rounded-md bg-[#F5F6F9] px-3 py-2 text-[14px] text-[#333333] outline-none placeholder:text-[#CCCCCC]"
                 onChange={(event) => onOtherIllegalReasonChange(event.target.value)}
+                onClear={() => onOtherIllegalReasonChange("")}
               />
             </div>
           ) : null}

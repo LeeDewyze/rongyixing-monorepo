@@ -2,7 +2,6 @@ import type {
   FlightAuthorizedContact,
   FlightBookPassengerDto,
   FlightBookPolicy,
-  FlightDetailResult,
   FlightInsuranceProduct,
   FlightOrderBookDto,
   FlightOutNumberField,
@@ -31,8 +30,12 @@ import {
   resolvePassengerFormMobile,
 } from "@/lib/flight-book-passenger-form";
 import type { FlightBookSelection } from "@/lib/flight-book-session";
-import { resolveFlightTravelType } from "@/lib/flight-travel-mode";
+import {
+  isBusinessTravelMode,
+  resolveFlightTravelType,
+} from "@/lib/flight-travel-mode";
 import { resolveTravelFormPassengerId } from "@/lib/flight-book-travel";
+import type { HomeTravelMode } from "@/config/home-assets";
 
 function normalizeFlightSegment(segment: FlightSegment): FlightSegment {
   const next = { ...segment };
@@ -71,11 +74,19 @@ function mergeTravelNumberOutNumbers(
   return { ...outNumbers, TravelNumber: travelNumber };
 }
 
+function resolvePassengerAccountId(info: PassengerBookInfo): string | undefined {
+  return "AccountId" in info.passenger
+    ? String(info.passenger.AccountId ?? "")
+    : info.credential.AccountId;
+}
+
+function resolveCredentialAccount(info: PassengerBookInfo): { Id?: string } | undefined {
+  return (info.credential as { Account?: { Id?: string } }).Account;
+}
+
 /** Initialize ClientId — aligned with proxy verify script (AccountId, not credential Id). */
 export function resolveFlightInitClientId(info: PassengerBookInfo): string {
-  const accountId =
-    ("AccountId" in info.passenger ? info.passenger.AccountId : undefined) ??
-    info.credential.AccountId;
+  const accountId = resolvePassengerAccountId(info);
   return String(accountId ?? info.credential.Id ?? info.id);
 }
 
@@ -115,7 +126,7 @@ export function buildSubmitCredentials(
     Type: credType,
     CredentialsType: credType,
     AccountId: accountId,
-    Account: accountId ? { Id: accountId } : cred.Account,
+    Account: accountId ? { Id: accountId } : resolveCredentialAccount(info),
     ...(passengerPolicy ? { Policy: passengerPolicy } : {}),
     ...(cred.Name && hideNumber ? { CredentialsInfo: `${cred.Name}|${hideNumber}` } : {}),
     checked: true,
@@ -124,7 +135,7 @@ export function buildSubmitCredentials(
 
 /** Legacy submit uses passenger AccountId. */
 export function resolveFlightSubmitClientId(info: PassengerBookInfo): string {
-  return String(info.passenger.AccountId ?? info.id);
+  return String(resolvePassengerAccountId(info) ?? info.id);
 }
 
 export interface FlightTicketNoticeRule {
@@ -150,8 +161,11 @@ export function buildFlightInitBookDto(input: {
   passengers: PassengerBookInfo[];
   travelFormId?: string;
   agentId?: string;
+  travelMode?: HomeTravelMode;
+  channel?: "tmc" | "tourist";
 }): FlightOrderBookDto {
-  const { selection, passengers, travelFormId, agentId } = input;
+  const { selection, passengers, travelFormId, agentId, travelMode, channel } = input;
+  const includeTravelForm = isBusinessTravelMode(travelMode);
   const policy = selection.flightPolicy;
   const flightCabin = prepareInitFlightCabinDto({
     flightPolicy: policy,
@@ -164,15 +178,17 @@ export function buildFlightInitBookDto(input: {
   const passengerDtos: FlightBookPassengerDto[] = passengers.map((info) => {
     const cred = info.credential;
     const clientId = resolveFlightInitClientId(info);
-    const accountId = info.passenger.AccountId ?? info.id;
+    const accountId = resolvePassengerAccountId(info) ?? info.id;
     const passengerPolicy = resolvePassengerTravelPolicy(info);
 
-    const passengerTravelFormId = resolveInitTravelFormId(
-      travelFormId ??
-        ("travelFormId" in info.passenger ? info.passenger.travelFormId : undefined),
-    );
+    const passengerTravelFormId = includeTravelForm
+      ? resolveInitTravelFormId(
+          travelFormId ??
+            ("travelFormId" in info.passenger ? info.passenger.travelFormId : undefined),
+        )
+      : undefined;
 
-    return {
+    const passengerDto: FlightBookPassengerDto = {
       ClientId: clientId,
       FlightSegments: initSegments,
       FlightCabin: resolvedCabin,
@@ -183,23 +199,36 @@ export function buildFlightInitBookDto(input: {
         Number: cred.Number,
         Type: cred.CredentialsType ?? cred.Type,
         CredentialsType: cred.CredentialsType ?? cred.Type,
-        Account: accountId ? { Id: accountId } : cred.Account,
+        Account: accountId ? { Id: accountId } : resolveCredentialAccount(info),
       },
       Mobile: cred.Mobile,
       Policy: passengerPolicy,
-      travelFormId: passengerTravelFormId,
-      travelNumber: resolvePassengerTravelNumber(info),
     };
+
+    if (includeTravelForm) {
+      if (passengerTravelFormId) passengerDto.travelFormId = passengerTravelFormId;
+      const passengerTravelNumber = resolvePassengerTravelNumber(info);
+      if (passengerTravelNumber) passengerDto.travelNumber = passengerTravelNumber;
+    }
+
+    return passengerDto;
   });
 
-  const resolvedTravelFormId = resolveInitTravelFormId(
-    travelFormId ?? passengerDtos.find((passenger) => passenger.travelFormId)?.travelFormId,
-  );
+  const resolvedTravelFormId = includeTravelForm
+    ? resolveInitTravelFormId(
+        travelFormId ?? passengerDtos.find((passenger) => passenger.travelFormId)?.travelFormId,
+      )
+    : undefined;
 
   const dto: FlightOrderBookDto = {
-    TravelFormId: resolvedTravelFormId,
     Passengers: passengerDtos,
   };
+  if (channel) {
+    dto.channel = channel;
+  }
+  if (includeTravelForm && resolvedTravelFormId) {
+    dto.TravelFormId = resolvedTravelFormId;
+  }
 
   if (agentId) {
     dto.AgentId = agentId;
@@ -217,7 +246,7 @@ export function buildFlightOrderBookDto(input: {
   messageLang?: string;
   authorizedContacts?: FlightAuthorizedContact[];
   agentId?: string;
-  channel?: string;
+  channel?: "tmc" | "tourist";
   isSave?: boolean;
   insurancesByPassenger?: Record<string, FlightInsuranceProduct[]>;
   outNumberFieldsByPassenger?: Record<string, FlightOutNumberField[]>;
@@ -225,6 +254,7 @@ export function buildFlightOrderBookDto(input: {
   flightPoliciesByPassenger?: Record<string, FlightBookPolicy>;
   travelNumber?: string;
   travelType?: number;
+  travelMode?: HomeTravelMode;
 }): FlightOrderBookDto {
   const {
     selection,
@@ -243,15 +273,17 @@ export function buildFlightOrderBookDto(input: {
     flightPoliciesByPassenger,
     travelNumber,
     travelType,
+    travelMode,
   } = input;
   const defaultPolicy = flightPolicy ?? selection.flightPolicy;
   const policiesByPassenger =
     flightPoliciesByPassenger ?? selection.flightPoliciesByPassengerId;
   const detailSnapshot = selection.detailSnapshot;
-  const resolvedTravelType = travelType ?? resolveFlightTravelType();
-  const sharedTravelNumber =
-    travelNumber ??
-    passengers.map(resolvePassengerTravelNumber).find(Boolean);
+  const resolvedTravelType = travelType ?? resolveFlightTravelType(travelMode);
+  const includeTravelForm = isBusinessTravelMode(travelMode);
+  const sharedTravelNumber = includeTravelForm
+    ? travelNumber ?? passengers.map(resolvePassengerTravelNumber).find(Boolean)
+    : undefined;
 
   const passengerDtos: FlightBookPassengerDto[] = passengers.map((info) => {
     const cred = info.credential;
@@ -268,10 +300,17 @@ export function buildFlightOrderBookDto(input: {
     const costCenterName = form?.otherCostCenterName || form?.costCenter.name || "";
     const organizationName = form?.otherOrganizationName || form?.organization.name || "";
     const organizationCode = form?.otherOrganizationName ? "" : form?.organization.code || "";
-    const outNumbers = mergeTravelNumberOutNumbers(
-      travelForm ? mergeOutNumberValues(travelForm, outNumberFieldsByPassenger?.[travelFormPassengerId] ?? []) : null,
-      sharedTravelNumber,
-    );
+    const outNumbers = includeTravelForm
+      ? mergeTravelNumberOutNumbers(
+          travelForm
+            ? mergeOutNumberValues(
+                travelForm,
+                outNumberFieldsByPassenger?.[travelFormPassengerId] ?? [],
+              )
+            : null,
+          sharedTravelNumber,
+        )
+      : null;
 
     const passengerPolicy =
       policiesByPassenger?.[info.id] ??
@@ -304,10 +343,6 @@ export function buildFlightOrderBookDto(input: {
       Credentials: buildSubmitCredentials(info, accountId),
       Mobile: mobile,
       Email: email,
-      travelFormId:
-        travelFormId ??
-        ("travelFormId" in info.passenger ? info.passenger.travelFormId : undefined),
-      travelNumber: resolvePassengerTravelNumber(info),
       IllegalPolicy: formatPolicyRules(passengerPolicy) || "",
       IllegalReason: (travelForm?.otherIllegalReason || travelForm?.illegalReason || "").trim(),
       IsSkipApprove: travelForm?.isSkipApprove ?? false,
@@ -317,6 +352,15 @@ export function buildFlightOrderBookDto(input: {
       TravelPayType: 0,
       Policy: resolvePassengerTravelPolicy(info),
     };
+
+    if (includeTravelForm) {
+      const passengerTravelFormId =
+        travelFormId ??
+        ("travelFormId" in info.passenger ? info.passenger.travelFormId : undefined);
+      if (passengerTravelFormId) passenger.travelFormId = passengerTravelFormId;
+      const passengerTravelNumber = resolvePassengerTravelNumber(info);
+      if (passengerTravelNumber) passenger.travelNumber = passengerTravelNumber;
+    }
 
     if (costCenterCode) passenger.CostCenterCode = costCenterCode;
     if (costCenterName) passenger.CostCenterName = costCenterName;
@@ -332,10 +376,18 @@ export function buildFlightOrderBookDto(input: {
   });
 
   const dto: FlightOrderBookDto = {
-    TravelFormId: travelFormId ?? passengerDtos.find((passenger) => passenger.travelFormId)?.travelFormId,
     Passengers: passengerDtos,
-    Channel: channel ?? resolveAppChannel(),
   };
+  if (channel) {
+    dto.channel = channel;
+  }
+  dto.Channel = resolveAppChannel();
+
+  const resolvedTravelFormId =
+    travelFormId ?? passengerDtos.find((passenger) => passenger.travelFormId)?.travelFormId;
+  if (includeTravelForm && resolvedTravelFormId) {
+    dto.TravelFormId = resolvedTravelFormId;
+  }
 
   if (agentId) {
     dto.AgentId = agentId;
@@ -415,7 +467,7 @@ export function resolvePassengerServiceFee(
   if (!serviceFees) return 0;
   const keys = [
     passenger.id,
-    passenger.passenger.AccountId,
+    resolvePassengerAccountId(passenger),
     passenger.passenger.Id,
     passenger.credential.Id,
     passenger.credential.AccountId,

@@ -149,7 +149,7 @@ describe("policyItemMatchesPlanUniqueId", () => {
   it("ignores SupplierNumber — does not concatenate", () => {
     expect(
       policyItemMatchesPlanUniqueId(
-        { UniqueIdId: "rate-abc", SupplierNumber: 12, IsAllowBook: false },
+        { UniqueIdId: "rate-abc", IsAllowBook: false },
         "rate-abc12",
       ),
     ).toBe(false);
@@ -233,7 +233,7 @@ describe("buildPolicyColorMap", () => {
         {
           PassengerKey: "acc-1",
           HotelPolicies: [
-            { UniqueIdId: "rate-x", SupplierNumber: 7, IsAllowBook: false, Rules: ["超出差标"] },
+            { UniqueIdId: "rate-x", IsAllowBook: false, Rules: ["超出差标"] },
           ],
         },
       ],
@@ -577,7 +577,7 @@ describe("getHotelPlanBookButtonPresentation", () => {
     expect(button.topLabel).toBe("预订");
     expect(button.bottomLabel).toBe("预付");
     expect(button.disabled).toBe(false);
-    expect(button.priceClass).toContain("2768FA");
+    expect(button.priceClass).toContain("text-brand-primary");
   });
 
   it("shows legacy warning labels when rules exist but booking is allowed", () => {

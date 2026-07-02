@@ -32,6 +32,7 @@ import {
 } from "@/lib/hotel-book-policy";
 import { saveHotelGalleryImages } from "@/lib/hotel-gallery-session";
 import { saveHotelBookSelection } from "@/lib/hotel-book-session";
+import { loadHomeTravelMode } from "@/lib/flight-travel-mode";
 import { formatApiError } from "@/lib/formatApiError";
 import { navigateBack } from "@/lib/navigation";
 import { hasAgentIdentity } from "@/lib/flight-book-save-order";
@@ -65,6 +66,10 @@ export function HotelDetailPage() {
   const [searchParams] = useSearchParams();
   const query = useMemo(() => parseHotelDetailQuery(searchParams), [searchParams]);
   const detailParams = useMemo(() => buildHotelDetailParams(hotelId, query), [hotelId, query]);
+  const travelMode = useMemo(
+    () => (query.channel === "tourist" ? "personal" : loadHomeTravelMode()),
+    [query.channel],
+  );
 
   const { selected: selectedPassengers } = usePassengerSelection(ProductType.Hotel);
   const { data: identity } = useIdentity();
@@ -124,8 +129,6 @@ export function HotelDetailPage() {
       selectedPassengers,
     ],
   );
-  const policyChecked = detailReady && selectedPassengers.length > 0 && !isPolicyChecking;
-
   const {
     stickyRef,
     stickySentinelRef,
@@ -265,6 +268,7 @@ export function HotelDetailPage() {
       policyRules: resolvePlanPolicyRules(plan, policyResults, selectedPassengers),
       checkInOutTime: data.CheckInOutTime,
       bookingNotice: data.BookingNotice,
+      travelMode,
       selectedAt: Date.now(),
     });
 
@@ -274,6 +278,7 @@ export function HotelDetailPage() {
       checkIn: query.checkIn,
       checkOut: query.checkOut,
     });
+    if (query.channel) bookParams.set("channel", query.channel);
     navigate(`/hotel/${hotelId}/book?${bookParams.toString()}`);
   }
 
@@ -388,7 +393,7 @@ export function HotelDetailPage() {
         )}
       </section>
 
-      <div ref={hotelRef} data-section-id="hotel" style={sectionScrollStyle}>
+      <section ref={hotelRef} data-section-id="hotel" style={sectionScrollStyle}>
         <HotelDetailHotelInfoSection
           checkInOutTime={data.CheckInOutTime}
           bookingNotice={data.BookingNotice}
@@ -396,11 +401,11 @@ export function HotelDetailPage() {
           renovationDate={data.RenovationDate}
           introduction={data.Introduction}
         />
-      </div>
+      </section>
 
-      <div ref={trafficRef} data-section-id="traffic" style={sectionScrollStyle} className="pb-4">
+      <section ref={trafficRef} data-section-id="traffic" style={sectionScrollStyle} className="pb-4">
         <HotelDetailTrafficSection address={data.Address} mapUrl={mapUrl} />
-      </div>
+      </section>
 
       <HotelStayDatePickerSheet
         open={datePickerOpen}

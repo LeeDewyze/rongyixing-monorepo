@@ -97,6 +97,7 @@ export type TrainSearchForm = ReturnType<typeof useTrainSearchForm>;
 
 export function useTrainList(
   params: {
+    channel?: "tmc" | "tourist";
     Date: string;
     FromStation: string;
     ToStation: string;

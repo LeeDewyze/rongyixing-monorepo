@@ -42,16 +42,19 @@ export interface TrainOrderTicket {
 }
 
 export interface TrainCancelParams {
+  channel?: "tmc" | "tourist";
   OrderId: string;
   TicketId?: string;
   Channel?: string;
 }
 
 export interface TrainIssueParams {
+  channel?: "tmc" | "tourist";
   OrderId: string;
 }
 
 export interface TrainRefundParams {
+  channel?: "tmc" | "tourist";
   OrderId: string;
   TicketId: string;
   Channel: string;

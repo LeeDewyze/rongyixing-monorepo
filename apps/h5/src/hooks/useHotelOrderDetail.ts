@@ -1,14 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { HotelCancelParams } from "@ryx/shared-types";
+import type { HotelCancelParams, ProductChannel } from "@ryx/shared-types";
 
 import { getApi } from "@/lib/api";
 
 const TRANSITIONAL_STATUSES = new Set(["Booking", "WaitHandle", "WaitPay"]);
 
-export function useHotelOrderDetail(orderId: string) {
+export function useHotelOrderDetail(orderId: string, channel?: ProductChannel) {
   return useQuery({
-    queryKey: ["order", "detail", orderId],
-    queryFn: () => getApi().order.getDetail({ OrderId: orderId }),
+    queryKey: ["order", "detail", orderId, channel],
+    queryFn: () => getApi().order.getDetail({ OrderId: orderId, channel }),
     enabled: Boolean(orderId),
     refetchInterval: (query) => {
       const status = query.state.data?.Status;
@@ -31,11 +31,12 @@ export function useCancelHotelOrder() {
   });
 }
 
-export function useHotelOrderSms() {
+export function useHotelOrderSms(channel?: ProductChannel) {
   const queryClient = useQueryClient();
   const send = useMutation({
     mutationFn: (params: { Mobile: string; OrderHotelId: string; orderId: string }) =>
       getApi().order.sendHotelOrderSmsCode({
+        channel,
         Mobile: params.Mobile,
         OrderHotelId: params.OrderHotelId,
       }),
@@ -46,6 +47,7 @@ export function useHotelOrderSms() {
   const confirm = useMutation({
     mutationFn: (params: { SmsCode: string; OrderHotelId: string; orderId: string }) =>
       getApi().order.confirmHotelOrderSmsCode({
+        channel,
         SmsCode: params.SmsCode,
         OrderHotelId: params.OrderHotelId,
       }),
