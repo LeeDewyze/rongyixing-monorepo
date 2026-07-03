@@ -1,6 +1,8 @@
 import { OrderListTabId } from "@ryx/shared-types";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
+import { ORDER_FLOW_METHODS, TOURIST_ORDER_FLOW_METHODS } from "../methods/order-flow.js";
+import { createOrderApi } from "./order.js";
 import {
   buildOrderListRequest,
   normalizeOrderListResponse,
@@ -20,6 +22,80 @@ describe("buildOrderListRequest", () => {
   it("maps flight tab to Flight type", () => {
     expect(orderListTabIdToType(OrderListTabId.Flight)).toBe("Flight");
     expect(buildOrderListRequest({ TabId: OrderListTabId.Flight }).Type).toBe("Flight");
+  });
+});
+
+describe("createOrderApi list and detail channel routing", () => {
+  it("uses TMC order list method by default", async () => {
+    const send = vi.fn().mockResolvedValue({ Orders: [], DataCount: 0 });
+    const api = createOrderApi({ send } as never);
+
+    await api.getList({ TabId: OrderListTabId.Flight, Scope: "all", PageIndex: 0 });
+
+    expect(send).toHaveBeenCalledWith({
+      method: ORDER_FLOW_METHODS.LIST,
+      data: {
+        pageIndex: 0,
+        PageIndex: 0,
+        PageSize: 20,
+        Type: "Flight",
+      },
+    });
+  });
+
+  it("uses tourist order list method when channel is tourist", async () => {
+    const send = vi.fn().mockResolvedValue({ Orders: [], DataCount: 0 });
+    const api = createOrderApi({ send } as never);
+
+    await api.getList({
+      channel: "tourist",
+      TabId: OrderListTabId.Hotel,
+      Scope: "all",
+      PageIndex: 1,
+    });
+
+    expect(send).toHaveBeenCalledWith({
+      method: TOURIST_ORDER_FLOW_METHODS.LIST,
+      data: {
+        pageIndex: 1,
+        PageIndex: 1,
+        PageSize: 20,
+        Type: "Hotel",
+      },
+    });
+  });
+
+  it("uses tourist travel list method for pending tourist orders", async () => {
+    const send = vi.fn().mockResolvedValue({ Trips: [], DataCount: 0 });
+    const api = createOrderApi({ send } as never);
+
+    await api.getList({
+      channel: "tourist",
+      TabId: OrderListTabId.Train,
+      Scope: "pendingTravel",
+    });
+
+    expect(send).toHaveBeenCalledWith({
+      method: TOURIST_ORDER_FLOW_METHODS.TRAVEL_LIST,
+      data: {
+        pageIndex: 0,
+        PageIndex: 0,
+        PageSize: 20,
+        Type: "Train",
+      },
+    });
+  });
+
+  it("uses tourist order detail method when channel is tourist", async () => {
+    const send = vi.fn().mockResolvedValue({ Data: { Id: "ORD-1" } });
+    const api = createOrderApi({ send } as never);
+
+    await api.getDetail({ channel: "tourist", OrderId: "ORD-1" });
+
+    expect(send).toHaveBeenCalledWith({
+      method: TOURIST_ORDER_FLOW_METHODS.DETAIL,
+      data: { Id: "ORD-1", OrderId: "ORD-1" },
+    });
   });
 });
 

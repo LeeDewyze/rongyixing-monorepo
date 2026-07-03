@@ -6,8 +6,11 @@ import { getApi } from "@/lib/api";
 
 export const ORDER_LIST_PAGE_SIZE = 20;
 
-export const orderListQueryKey = (tabId: OrderListTabId | null, scope: OrderListScope) =>
-  ["order", "list", tabId, scope] as const;
+export const orderListQueryKey = (
+  tabId: OrderListTabId | null,
+  scope: OrderListScope,
+  channel?: ProductChannel,
+) => ["order", "list", tabId, scope, channel] as const;
 
 export interface UseOrderListParams {
   tabId: OrderListTabId | null;
@@ -32,7 +35,7 @@ export function useOrderList({ tabId, scope, channel }: UseOrderListParams, enab
   const queryClient = useQueryClient();
 
   const query = useInfiniteQuery({
-    queryKey: [...orderListQueryKey(tabId, scope), channel],
+    queryKey: orderListQueryKey(tabId, scope, channel),
     queryFn: ({ pageParam = 0 }) =>
       getApi().order.getList({
         TabId: tabId!,
@@ -49,10 +52,9 @@ export function useOrderList({ tabId, scope, channel }: UseOrderListParams, enab
 
   const refresh = useCallback(async () => {
     await queryClient.resetQueries({
-      queryKey: orderListQueryKey(tabId, scope),
-      exact: false,
+      queryKey: orderListQueryKey(tabId, scope, channel),
     });
-  }, [queryClient, scope, tabId]);
+  }, [channel, queryClient, scope, tabId]);
 
   return { ...query, refresh };
 }
