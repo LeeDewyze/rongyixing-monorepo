@@ -123,6 +123,36 @@ Rules:
 - Mobile spacing defaults: horizontal page padding 16px, vertical card gap 12px.
 - Header-safe content must include `pt-[env(safe-area-inset-top)]` when rendered outside `AppHeader`.
 
+## H5 Order List Tabs
+
+### v1 Recorded
+
+- Layout: one row with six tabs, ordered as `因公机票 / 因公火车 / 因公酒店 / 因私机票 / 因私火车 / 因私酒店`.
+- Group signal: center divider between public and private groups.
+- Selection: neutral active text plus underline; personal group underline may use green.
+- Tradeoff: direct but text-heavy; six labels are crowded on mobile and repeat “因公/因私”.
+
+### v2 Trial
+
+- Layout: two-level selector.
+- Level 1 ownership: `企业 / 个人`.
+- Level 2 product: `机票 / 火车 / 酒店`.
+- Scope remains below as `全部 / 待出行`.
+- Goal: remove repeated “因公/因私” wording while preserving public/private distinction through hierarchy and selected state.
+
+### v3 Hierarchy Refinement
+
+- Ownership is a compact centered segmented control, visually lighter than product tabs.
+- Product tabs are the primary navigation and carry the active underline.
+- Active underline follows channel tone: enterprise uses RYX blue, personal uses green.
+- Scope is a small content-level filter aligned near the list instead of a full-width third navigation row.
+
+### v4 Compact Filter Row
+
+- Product tabs remain the first row and continue to own the page-level category navigation.
+- Ownership and scope filters share one row below the product tabs: ownership on the left, scope on the right.
+- Both lower-row controls use equal compact segmented widths to read as auxiliary filters, reducing the previous three-row stack.
+
 ## H5 Travel List Chrome
 
 Use `FlightListPage` as the reference implementation for dense travel result lists, including the hotel list migration.

@@ -15,9 +15,9 @@ import type {
 import { OrderListTabId } from "@ryx/shared-types";
 
 import {
+  OrderChannelTabs,
   OrderCategoryTabs,
   OrderScopeTabs,
-  orderCategoryPointerLeft,
 } from "@/components/order/OrderCategoryTabs";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { FlightOrderRefundDialog } from "@/components/order/flight/FlightOrderRefundDialog";
@@ -588,16 +588,14 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
           <OrderCategoryTabs activeId={activeOrderTypeTab.id} onChange={handleOrderTypeChange} />
         </div>
         <div
-          className="order-scope-shell relative z-0 flex h-[72px] items-center px-3"
+          className="order-scope-shell relative z-0 flex h-14 items-center justify-between gap-3 px-4"
           style={{
             background: ORDER_SCOPE_TABS_SHELL_GRADIENT,
             borderTopLeftRadius: 16,
             borderTopRightRadius: 16,
-            ["--order-category-pointer-left" as string]: orderCategoryPointerLeft(
-              activeOrderTypeTab.id,
-            ),
           }}
         >
+          <OrderChannelTabs activeId={activeOrderTypeTab.id} onChange={handleOrderTypeChange} />
           <OrderScopeTabs scope={scope} onChange={(next) => updateParams({ scope: next })} />
         </div>
       </header>

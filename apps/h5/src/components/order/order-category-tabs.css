@@ -1,134 +1,141 @@
-/**
- * Order type tab bar (因公/因私 + 机票/火车/酒店).
- * v1 palette: business #2768fa, personal #0f9f6e, active underline currentColor.
- * v2 palette: muted #666666, active text #010101, active underline #2768fa.
- * v3: v2 palette with stable font weight; selection is mainly the underline.
- * v4 current: neutral text, center divider for public/private groups, group-color underline.
- */
 .order-category-tabs {
   position: relative;
   z-index: 1;
-  height: 2.75rem;
+  height: 4.25rem;
   overflow: hidden;
+  padding: 0.875rem 1rem 0.25rem;
+  --order-active-color: #2768fa;
 }
 
-.order-category-tabs__list {
+.order-category-tabs--tourist {
+  --order-active-color: #0f8f69;
+}
+
+.order-channel-tabs {
+  width: 9.75rem;
+  --order-active-color: #2768fa;
+}
+
+.order-channel-tabs--tourist {
+  --order-active-color: #0f8f69;
+}
+
+.order-channel-tabs__inner {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: center;
-  gap: 0.125rem;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent calc(50% - 0.5px),
-    rgba(1, 1, 1, 0.1) calc(50% - 0.5px),
-    rgba(1, 1, 1, 0.1) calc(50% + 0.5px),
-    transparent calc(50% + 0.5px)
-  );
-  overflow-x: hidden;
-  overflow-y: visible;
-  padding: 0 0.5rem 0.375rem;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  gap: 0.25rem;
+  width: 100%;
+  height: 2rem;
+  border-radius: 999px;
+  background: rgba(39, 104, 250, 0.12);
+  padding: 0.125rem;
+  box-shadow: inset 0 0 0 1px rgba(39, 104, 250, 0.08);
 }
 
-.order-category-tabs__list::-webkit-scrollbar {
-  display: none;
-}
-
-.order-category-tab {
+.order-channel-tab {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   min-width: 0;
-  height: 1.75rem;
-  padding: 0 0.125rem;
+  height: 100%;
+  padding: 0 0.5rem;
   border: none;
-  border-radius: 0;
+  border-radius: 999px;
   background: transparent;
   font-family: "HarmonyOS Sans SC", "HarmonyOS Sans", "PingFang SC", sans-serif;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
-  font-style: normal;
   line-height: 1;
   letter-spacing: 0;
   text-align: center;
-  color: #666666;
+  color: rgba(1, 1, 1, 0.52);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition:
-    color 0.15s ease;
+    color 0.15s ease,
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
-.order-category-tab::after {
+.order-channel-tab--active {
+  background: #ffffff;
+  color: var(--order-active-color);
+  box-shadow:
+    0 1px 3px rgba(39, 104, 250, 0.1),
+    0 4px 10px rgba(39, 104, 250, 0.06);
+}
+
+.order-product-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  height: 3rem;
+  overflow: visible;
+}
+
+.order-product-tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  height: 2.875rem;
+  border: none;
+  background: transparent;
+  font-family: "HarmonyOS Sans SC", "HarmonyOS Sans", "PingFang SC", sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0;
+  color: rgba(1, 1, 1, 0.52);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s ease;
+}
+
+.order-product-tab::after {
   content: "";
   position: absolute;
   left: 50%;
   bottom: 0;
-  width: 18px;
+  width: 22px;
   height: 3px;
   border-radius: 999px;
   transform: translateX(-50%) scaleX(0);
   transform-origin: center;
-  background: #2768fa;
+  background: var(--order-active-color);
   opacity: 0;
   transition:
     opacity 0.15s ease,
     transform 0.15s ease;
 }
 
-.order-category-tab--business {
-  color: #666666;
-}
-
-.order-category-tab--personal {
-  color: #666666;
-}
-
-.order-category-tab--active {
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.order-category-tab--business.order-category-tab--active {
+.order-product-tab--active {
+  font-weight: 600;
   color: #010101;
 }
 
-.order-category-tab--personal.order-category-tab--active {
+.order-category-tabs--tourist .order-product-tab--active {
   color: #010101;
 }
 
-.order-category-tab--active::after {
+.order-product-tab--active::after {
   opacity: 1;
   transform: translateX(-50%) scaleX(1);
 }
 
-.order-category-tab--personal.order-category-tab--active::after {
-  background: #12a678;
-}
-
-/* Scope shell: white upward notch (::before) merges 1px into the top edge. */
+/* Scope shell: content-level filter below the primary product tabs. */
 .order-scope-shell {
   overflow: visible;
 }
 
-.order-scope-shell::before {
-  content: "";
-  position: absolute;
-  left: var(--order-category-pointer-left, 12.5%);
-  top: -9px;
-  z-index: 1;
-  transform: translateX(-50%);
-  border-left: 11px solid transparent;
-  border-right: 11px solid transparent;
-  border-bottom: 10px solid #ffffff;
-  pointer-events: none;
-}
-
-/* Scope filter: 全部 / 待出行 — Figma 351×40 inside 375×72 shell, 8px radius */
+/* Scope filter: 全部 / 待出行 — lightweight content filter below product tabs. */
 .order-scope-tabs {
-  border-radius: 8px;
+  width: 9.75rem;
+  height: 2rem;
+  border-radius: 999px;
 }
 
 .order-scope-tab {
@@ -138,12 +145,12 @@
   justify-content: center;
   height: 100%;
   border: none;
-  border-radius: 6px;
+  border-radius: 999px;
   background: transparent;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1;
   font-weight: 400;
-  color: #666666;
+  color: rgba(1, 1, 1, 0.55);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition:
@@ -154,9 +161,11 @@
 
 .order-scope-tab--active {
   background: #ffffff;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 500;
   line-height: 1;
   color: #010101;
-  box-shadow: 0 1px 4px rgba(39, 104, 250, 0.12);
+  box-shadow:
+    0 1px 3px rgba(39, 104, 250, 0.1),
+    0 4px 10px rgba(39, 104, 250, 0.06);
 }
