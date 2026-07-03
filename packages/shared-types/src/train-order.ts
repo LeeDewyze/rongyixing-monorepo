@@ -16,6 +16,7 @@ export interface TrainOrderTrip {
 }
 
 export interface TrainTicketActionFlags {
+  showCancel?: boolean;
   showRefund?: boolean;
   showExchange?: boolean;
 }
@@ -48,6 +49,14 @@ export interface TrainCancelParams {
   Channel?: string;
 }
 
+export interface TrainAbolishTicketParams {
+  channel?: "tmc" | "tourist";
+  OrderId: string;
+  TicketId: string;
+  Tag: "train";
+  Channel?: string;
+}
+
 export interface TrainIssueParams {
   channel?: "tmc" | "tourist";
   OrderId: string;
@@ -61,6 +70,7 @@ export interface TrainRefundParams {
 }
 
 export interface TrainExchangeInfoParams {
+  channel?: "tmc" | "tourist";
   TicketId: string;
 }
 
@@ -76,6 +86,7 @@ export interface TrainExchangeInfo {
 }
 
 export interface TrainPassengerInfoParams {
+  channel?: "tmc" | "tourist";
   TicketId: string;
 }
 

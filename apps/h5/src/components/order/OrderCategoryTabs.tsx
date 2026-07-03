@@ -2,9 +2,11 @@ import type { OrderListScope } from "@ryx/shared-types";
 
 import {
   ORDER_CATEGORY_TABS,
+  ORDER_TYPE_TABS,
   ORDER_FONT,
   ORDER_SCOPE_TABS_TRACK,
   type OrderCategoryId,
+  type OrderTypeTab,
 } from "@/config/order-assets";
 
 import "./order-category-tabs.css";
@@ -12,26 +14,26 @@ import "./order-category-tabs.css";
 export type { OrderCategoryId };
 export { ORDER_CATEGORY_TABS };
 
-export function orderCategoryPointerLeft(activeId: OrderCategoryId): string {
-  const index = ORDER_CATEGORY_TABS.findIndex((tab) => tab.id === activeId);
+export function orderCategoryPointerLeft(activeId: string): string {
+  const index = ORDER_TYPE_TABS.findIndex((tab) => tab.id === activeId);
   const safeIndex = index >= 0 ? index : 0;
-  return `${((safeIndex + 0.5) / ORDER_CATEGORY_TABS.length) * 100}%`;
+  return `${((safeIndex + 0.5) / ORDER_TYPE_TABS.length) * 100}%`;
 }
 
 interface OrderCategoryTabsProps {
-  activeId: OrderCategoryId;
-  onChange: (id: OrderCategoryId) => void;
+  activeId: string;
+  onChange: (tab: OrderTypeTab) => void;
 }
 
 export function OrderCategoryTabs({ activeId, onChange }: OrderCategoryTabsProps) {
   return (
     <div className={`order-category-tabs ${ORDER_FONT}`}>
       <div
-        className="order-category-tabs__list grid grid-cols-3"
+        className="order-category-tabs__list"
         role="tablist"
         aria-label="Order category"
       >
-        {ORDER_CATEGORY_TABS.map((tab) => {
+        {ORDER_TYPE_TABS.map((tab) => {
           const active = tab.id === activeId;
           return (
             <button
@@ -39,8 +41,10 @@ export function OrderCategoryTabs({ activeId, onChange }: OrderCategoryTabsProps
               type="button"
               role="tab"
               aria-selected={active}
-              className={`order-category-tab${active ? " order-category-tab--active" : ""}`}
-              onClick={() => onChange(tab.id)}
+              className={`order-category-tab order-category-tab--${tab.tone}${
+                active ? " order-category-tab--active" : ""
+              }`}
+              onClick={() => onChange(tab)}
             >
               {tab.label}
             </button>

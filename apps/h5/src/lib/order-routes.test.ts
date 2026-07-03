@@ -5,7 +5,12 @@ import {
 } from "@ryx/shared-types";
 import { describe, expect, it } from "vitest";
 
-import { getOrderDetailPath, getOrderPayPath, getOrderResultPath } from "./order-routes";
+import {
+  getOrderDetailPath,
+  getOrderListPath,
+  getOrderPayPath,
+  getOrderResultPath,
+} from "./order-routes";
 
 describe("order-routes", () => {
   const flightItem: OrderFlightListItem = {
@@ -37,5 +42,11 @@ describe("order-routes", () => {
   it("routes train detail and pay paths", () => {
     expect(getOrderDetailPath(trainItem)).toBe("/orders/train/ORD-TRN-001");
     expect(getOrderPayPath(trainItem)).toBe("/train/pay/ORD-TRN-001");
+  });
+
+  it("builds order list path with channel and scope", () => {
+    expect(getOrderListPath("train", { channel: "tourist", scope: "pendingTravel" })).toBe(
+      "/home/orders?channel=tourist&tab=train&scope=pendingTravel",
+    );
   });
 });

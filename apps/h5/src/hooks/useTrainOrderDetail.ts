@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import type {
   ProductChannel,
+  TrainAbolishTicketParams,
   TrainCancelParams,
   TrainIssueParams,
   TrainRefundParams,
@@ -41,6 +42,16 @@ export function useCancelTrainOrder() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (params: TrainCancelParams) => getApi().order.cancelTrain(params),
+    onSuccess: async (_data, variables) => {
+      await refreshTrainOrderDetailAfterMutation(queryClient, variables.OrderId);
+    },
+  });
+}
+
+export function useAbolishTrainTicket() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (params: TrainAbolishTicketParams) => getApi().order.abolishTrainTicket(params),
     onSuccess: async (_data, variables) => {
       await refreshTrainOrderDetailAfterMutation(queryClient, variables.OrderId);
     },

@@ -23,6 +23,7 @@ import { TrainOrderTravelerCard } from "@/components/order/train/TrainOrderTrave
 import { TrainScheduleSheet } from "@/components/train/TrainScheduleSheet";
 import {
   useCancelTrainOrder,
+  useAbolishTrainTicket,
   useIssueTrainOrder,
   useRefundTrainOrder,
   useTrainOrderDetail,
@@ -41,12 +42,12 @@ import {
   shouldShowTrainOrderHoldBanner,
 } from "@/lib/train-order-detail";
 import { buildTrainScheduleParamsFromTrip } from "@/lib/train-schedule";
-import { TAB_ID_TO_PARAM } from "@/lib/order-list-params";
+import { parseOrderListScope } from "@/lib/order-list-params";
+import { getOrderListPath } from "@/lib/order-routes";
 import { scrollH5MainToTopAfterLayout } from "@/lib/scroll-h5-main";
 
 const FOOTER_OFFSET = "calc(4.5rem + env(safe-area-inset-bottom))";
 const FOOTER_OFFSET_WITH_SECONDARY = "calc(7rem + env(safe-area-inset-bottom))";
-const ORDERS_TRAIN_FALLBACK = `/home/orders?tab=${TAB_ID_TO_PARAM.train}`;
 const ORDER_TRAIN_DETAIL_BACKGROUND = { background: "var(--brand-form-header-gradient)" };
 
 interface OrderDetailLocationState {
@@ -57,7 +58,13 @@ export function OrderTrainDetailPage() {
   const { orderId = "" } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const channel = searchParams.get("channel") === "tourist" ? "tourist" : undefined;
+  const channel =
+    searchParams.get("channel") === "tourist"
+      ? "tourist"
+      : searchParams.get("channel") === "tmc"
+        ? "tmc"
+        : undefined;
+  const listScope = parseOrderListScope(searchParams.get("scope"));
   const location = useLocation();
   const openCancelOnMountRef = useRef(
     (location.state as OrderDetailLocationState | null)?.action === "cancel",
@@ -77,6 +84,7 @@ export function OrderTrainDetailPage() {
     refetch,
   } = useTrainOrderDetail(orderId, channel);
   const cancelMutation = useCancelTrainOrder();
+  const abolishMutation = useAbolishTrainTicket();
   const issueMutation = useIssueTrainOrder();
   const refundMutation = useRefundTrainOrder();
   const payHoldSecondsRemaining = useTrainPayHoldCountdown(detail?.PayHoldMinutes);
@@ -98,8 +106,8 @@ export function OrderTrainDetailPage() {
   const scheduleQuery = useTrainSchedule(scheduleParams);
 
   const leaveDetail = useCallback(() => {
-    navigate(ORDERS_TRAIN_FALLBACK, { replace: true });
-  }, [navigate]);
+    navigate(getOrderListPath("train", { channel, scope: listScope }), { replace: true });
+  }, [channel, listScope, navigate]);
 
   const handleBack = useCallback(() => {
     if (billOpen) {
@@ -179,28 +187,37 @@ export function OrderTrainDetailPage() {
   }, []);
 
   const handlePay = useCallback(() => {
-    const payPath =
-      channel === "tourist"
-        ? `/train/pay/${encodeURIComponent(orderId)}?channel=tourist`
-        : `/train/pay/${encodeURIComponent(orderId)}`;
+    const payPath = `/train/pay/${encodeURIComponent(orderId)}${
+      channel ? `?channel=${channel}` : ""
+    }`;
     navigate(payPath);
   }, [channel, navigate, orderId]);
 
   const runCancel = useCallback(async () => {
     if (!detail) return;
     try {
-      await cancelMutation.mutateAsync({
-        channel,
-        OrderId: detail.OrderId,
-        Channel: resolveAppChannel(),
-      });
+      if (selectedTicket?.Actions?.showCancel && !detail.Actions?.showCancel) {
+        await abolishMutation.mutateAsync({
+          channel,
+          OrderId: detail.OrderId,
+          TicketId: selectedTicket.Id,
+          Tag: "train",
+          Channel: resolveAppChannel(),
+        });
+      } else {
+        await cancelMutation.mutateAsync({
+          channel,
+          OrderId: detail.OrderId,
+          Channel: resolveAppChannel(),
+        });
+      }
       setCancelOpen(false);
       showToast("订单已取消");
       await refetch();
     } catch (err) {
       showToast(formatApiError(err));
     }
-  }, [cancelMutation, channel, detail, refetch, showToast]);
+  }, [abolishMutation, cancelMutation, channel, detail, refetch, selectedTicket, showToast]);
 
   const runIssue = useCallback(async () => {
     if (!detail) return;
@@ -218,6 +235,7 @@ export function OrderTrainDetailPage() {
     if (!selectedTicket) return;
     try {
       const passenger = await getApi().train.getTrainPassenger({
+        channel,
         TicketId: selectedTicket.Id,
       });
       setRefundPassenger(passenger);
@@ -225,7 +243,7 @@ export function OrderTrainDetailPage() {
     } catch (err) {
       showToast(formatApiError(err));
     }
-  }, [selectedTicket, showToast]);
+  }, [channel, selectedTicket, showToast]);
 
   useEffect(() => {
     if (!openRefundOnMountRef.current || !selectedTicket?.Actions?.showRefund) {
@@ -256,6 +274,7 @@ export function OrderTrainDetailPage() {
     if (!selectedTicket) return;
     try {
       await startTrainExchangeFlow({
+        channel,
         ticketId: selectedTicket.Id,
         orderId: detail?.OrderId,
         navigate,
@@ -263,7 +282,7 @@ export function OrderTrainDetailPage() {
     } catch (err) {
       showToast(formatApiError(err));
     }
-  }, [detail?.OrderId, navigate, selectedTicket, showToast]);
+  }, [channel, detail?.OrderId, navigate, selectedTicket, showToast]);
 
   const showFooter = detail ? shouldShowTrainFooter(footerActions, payHoldSecondsRemaining) : false;
   const contentBottomPadding =
@@ -272,7 +291,11 @@ export function OrderTrainDetailPage() {
       : showFooter
         ? FOOTER_OFFSET
         : "1.5rem";
-  const pending = cancelMutation.isPending || issueMutation.isPending || refundMutation.isPending;
+  const pending =
+    cancelMutation.isPending ||
+    abolishMutation.isPending ||
+    issueMutation.isPending ||
+    refundMutation.isPending;
 
   return (
     <div className="relative h-dvh overflow-hidden" style={ORDER_TRAIN_DETAIL_BACKGROUND}>

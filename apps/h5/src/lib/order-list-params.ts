@@ -1,7 +1,13 @@
-import { OrderListTabId, type OrderListScope } from "@ryx/shared-types";
+import { OrderListTabId, type OrderListScope, type ProductChannel } from "@ryx/shared-types";
 
-import type { OrderCategoryId } from "@/components/order/OrderCategoryTabs";
-import { ORDER_CATEGORY_TABS } from "@/config/order-assets";
+import type { HomeTravelMode } from "@/config/home-assets";
+import { resolveProductChannel } from "@/lib/flight-travel-mode";
+import {
+  ORDER_CATEGORY_TABS,
+  ORDER_TYPE_TABS,
+  type OrderCategoryId,
+  type OrderTypeTab,
+} from "@/config/order-assets";
 
 const TAB_PARAM_TO_ID: Record<string, OrderCategoryId> = {
   flight: "flight",
@@ -46,6 +52,7 @@ function parseCategoryFromTabIdParam(value: string | null): OrderCategoryId | un
 }
 
 export const DEFAULT_ORDER_CATEGORY: OrderCategoryId = "flight";
+export const DEFAULT_ORDER_CHANNEL: ProductChannel = "tmc";
 
 export function parseOrderListCategoryId(searchParams: URLSearchParams): OrderCategoryId {
   return (
@@ -55,8 +62,62 @@ export function parseOrderListCategoryId(searchParams: URLSearchParams): OrderCa
   );
 }
 
+export function parseOrderListChannel(
+  searchParams: URLSearchParams,
+  fallbackMode?: HomeTravelMode,
+): ProductChannel {
+  const raw = searchParams.get("channel");
+  if (raw === "tourist" || raw === "tmc") {
+    return raw;
+  }
+  return fallbackMode ? resolveProductChannel(fallbackMode) : DEFAULT_ORDER_CHANNEL;
+}
+
 export function parseOrderListScope(value: string | null): OrderListScope {
   return value === "pendingTravel" ? "pendingTravel" : "all";
+}
+
+export interface OrderListRouteState {
+  channel: ProductChannel;
+  categoryId: OrderCategoryId;
+  scope: OrderListScope;
+}
+
+export function parseOrderListRouteState(
+  searchParams: URLSearchParams,
+  fallbackMode?: HomeTravelMode,
+): OrderListRouteState {
+  return {
+    channel: parseOrderListChannel(searchParams, fallbackMode),
+    categoryId: parseOrderListCategoryId(searchParams),
+    scope: parseOrderListScope(searchParams.get("scope")),
+  };
+}
+
+export function buildOrderListSearchParams(
+  current: URLSearchParams,
+  next: Partial<OrderListRouteState>,
+): URLSearchParams {
+  const params = new URLSearchParams(current);
+  const categoryId = next.categoryId ?? parseOrderListCategoryId(params);
+  const channel = next.channel ?? parseOrderListChannel(params);
+  const scope = next.scope ?? parseOrderListScope(params.get("scope"));
+
+  params.delete("tabId");
+  params.set("channel", channel);
+  params.set("tab", TAB_ID_TO_PARAM[categoryId]);
+  params.set("scope", scope);
+  return params;
+}
+
+export function resolveOrderTypeTab(
+  channel: ProductChannel,
+  categoryId: OrderCategoryId,
+): OrderTypeTab {
+  return (
+    ORDER_TYPE_TABS.find((tab) => tab.channel === channel && tab.categoryId === categoryId) ??
+    ORDER_TYPE_TABS[0]
+  );
 }
 
 /** Maps category id to label for tests or deep links. */

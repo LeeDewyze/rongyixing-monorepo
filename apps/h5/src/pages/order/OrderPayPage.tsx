@@ -39,7 +39,11 @@ export function OrderPayPage({
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const channel: ProductChannel | undefined =
-    searchParams.get("channel") === "tourist" ? "tourist" : undefined;
+    searchParams.get("channel") === "tourist"
+      ? "tourist"
+      : searchParams.get("channel") === "tmc"
+        ? "tmc"
+        : undefined;
   const { data: order } = useOrderDetail(orderId, 0, channel);
   const { data: payTotal, isLoading: totalLoading } = usePayTotalAmount(orderId, {
     channel,
@@ -84,7 +88,17 @@ export function OrderPayPage({
         payProcess.mutateAsync({ ...params, channel, ProductType: productType }),
     });
     if (result.redirected) return;
-    navigate(successPath, {
+    const [base = successPath, search = ""] = successPath.split("?");
+    const params = new URLSearchParams(search);
+    if (channel) {
+      params.set("channel", channel);
+    }
+    const scope = searchParams.get("scope");
+    if (scope) {
+      params.set("scope", scope);
+    }
+    const nextSuccessPath = params.size > 0 ? `${base}?${params.toString()}` : base;
+    navigate(nextSuccessPath, {
       replace: true,
       state: { paySucceeded: result.processed, message: result.message },
     });

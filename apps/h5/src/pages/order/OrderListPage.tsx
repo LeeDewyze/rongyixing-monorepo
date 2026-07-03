@@ -7,6 +7,7 @@ import type {
   OrderHotelListItem,
   OrderListItem,
   OrderListScope,
+  ProductChannel,
   OrderTrainListItem,
   OrderTrainListTicket,
   TrainPassengerInfo,
@@ -17,7 +18,6 @@ import {
   OrderCategoryTabs,
   OrderScopeTabs,
   orderCategoryPointerLeft,
-  type OrderCategoryId,
 } from "@/components/order/OrderCategoryTabs";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { FlightOrderRefundDialog } from "@/components/order/flight/FlightOrderRefundDialog";
@@ -38,28 +38,41 @@ import {
 import { useCancelHotelOrder } from "@/hooks/useHotelOrderDetail";
 import { useOrderList } from "@/hooks/useOrderList";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
-import { useCancelTrainOrder, useRefundTrainOrder } from "@/hooks/useTrainOrderDetail";
+import {
+  useAbolishTrainTicket,
+  useCancelTrainOrder,
+  useRefundTrainOrder,
+} from "@/hooks/useTrainOrderDetail";
 import { resolveAppChannel } from "@/lib/app-channel";
 import { getApi } from "@/lib/api";
 import { formatApiError } from "@/lib/formatApiError";
-import { loadHomeTravelMode, resolveProductChannel } from "@/lib/flight-travel-mode";
+import { loadHomeTravelMode } from "@/lib/flight-travel-mode";
 import { startTrainExchangeFlow } from "@/lib/train-order-actions";
 import {
+  buildOrderListSearchParams,
   CATEGORY_TO_TAB_ID,
-  DEFAULT_ORDER_CATEGORY,
   parseOrderListCategoryId,
+  parseOrderListChannel,
   parseOrderListScope,
+  resolveOrderTypeTab,
   TAB_ID_TO_PARAM,
 } from "@/lib/order-list-params";
 import { getOrderDetailPath, getOrderPayPath } from "@/lib/order-routes";
+import type { OrderCategoryId, OrderTypeTab } from "@/config/order-assets";
 
 const FALLBACK_HEADER_HEIGHT = 84;
 
-function withOrderChannel(path: string, channel: "tmc" | "tourist"): string {
-  if (channel !== "tourist") return path;
+function withOrderChannel(
+  path: string,
+  channel: ProductChannel,
+  extra?: { scope?: OrderListScope },
+): string {
   const [base = path, search = ""] = path.split("?");
   const params = new URLSearchParams(search);
-  params.set("channel", "tourist");
+  params.set("channel", channel);
+  if (extra?.scope) {
+    params.set("scope", extra.scope);
+  }
   return `${base}?${params.toString()}`;
 }
 
@@ -149,8 +162,10 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
 
   const categoryId = parseOrderListCategoryId(searchParams);
   const scope = parseOrderListScope(searchParams.get("scope"));
+  const fallbackTravelMode = loadHomeTravelMode();
+  const productChannel = parseOrderListChannel(searchParams, fallbackTravelMode);
+  const activeOrderTypeTab = resolveOrderTypeTab(productChannel, categoryId);
   const tabId = CATEGORY_TO_TAB_ID[categoryId];
-  const productChannel = resolveProductChannel(loadHomeTravelMode());
 
   const {
     data,
@@ -169,6 +184,7 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
   const flightRefundMutation = useRefundFlightOrder();
   const flightNonVoluntaryRefundMutation = useNonVoluntaryRefundFlightOrder();
   const trainCancelMutation = useCancelTrainOrder();
+  const trainAbolishMutation = useAbolishTrainTicket();
   const trainRefundMutation = useRefundTrainOrder();
   const hotelCancelMutation = useCancelHotelOrder();
 
@@ -178,14 +194,20 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
   usePageHeader({ visible: false });
 
   useEffect(() => {
-    const hasCategory = searchParams.has("tab") || searchParams.has("tabId");
-    if (hasCategory) {
+    const hasExplicitChannel = searchParams.get("channel") === productChannel;
+    const hasCategory = searchParams.has("tab");
+    const hasScope = searchParams.has("scope");
+    const hasLegacyTabId = searchParams.has("tabId");
+    if (hasExplicitChannel && hasCategory && hasScope && !hasLegacyTabId) {
       return;
     }
-    const params = new URLSearchParams(searchParams);
-    params.set("tab", TAB_ID_TO_PARAM[DEFAULT_ORDER_CATEGORY]);
+    const params = buildOrderListSearchParams(searchParams, {
+      channel: productChannel,
+      categoryId,
+      scope,
+    });
     setSearchParams(params, { replace: true });
-  }, [searchParams, setSearchParams]);
+  }, [categoryId, productChannel, scope, searchParams, setSearchParams]);
 
   const handleLoadMore = useCallback(() => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -206,24 +228,29 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
   });
 
   const updateParams = useCallback(
-    (next: { tab?: OrderCategoryId; scope?: OrderListScope }) => {
-      const params = new URLSearchParams(searchParams);
-      params.delete("tabId");
-      if (next.tab) {
-        params.set("tab", TAB_ID_TO_PARAM[next.tab]);
-      }
-      if (next.scope) {
-        params.set("scope", next.scope);
-      }
+    (next: { channel?: ProductChannel; tab?: OrderCategoryId; scope?: OrderListScope }) => {
+      const params = buildOrderListSearchParams(searchParams, {
+        channel: next.channel,
+        categoryId: next.tab,
+        scope: next.scope,
+      });
       setSearchParams(params, { replace: true });
     },
     [searchParams, setSearchParams],
+  );
+
+  const handleOrderTypeChange = useCallback(
+    (tab: OrderTypeTab) => {
+      updateParams({ channel: tab.channel, tab: tab.categoryId });
+    },
+    [updateParams],
   );
 
   const openTrainRefundDialog = useCallback(
     async (orderId: string, ticket: OrderTrainListTicket) => {
       try {
         const passenger = await getApi().train.getTrainPassenger({
+          channel: productChannel,
           TicketId: ticket.TicketId,
         });
         setTrainRefundPassenger(passenger);
@@ -232,22 +259,25 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
         setToastMessage(formatApiError(error));
       }
     },
-    [],
+    [productChannel],
   );
 
   const handleAction = useCallback(
     (action: OrderAction, item: OrderListItem) => {
       switch (action.kind) {
         case "pay":
-          navigate(withOrderChannel(getOrderPayPath(item), productChannel));
+          navigate(withOrderChannel(getOrderPayPath(item), productChannel, { scope }));
           return;
         case "cancel":
           if (item.tabId === OrderListTabId.Hotel) {
             const hotelItem = item as OrderHotelListItem;
             if (!hotelItem.OrderHotelId) {
-              navigate(withOrderChannel(`/orders/hotel/${encodeURIComponent(item.OrderId)}`, productChannel), {
-                state: { action: "cancel" },
-              });
+              navigate(
+                withOrderChannel(`/orders/hotel/${encodeURIComponent(item.OrderId)}`, productChannel, {
+                  scope,
+                }),
+                { state: { action: "cancel" } },
+              );
               return;
             }
             setHotelCancelItem(hotelItem);
@@ -310,6 +340,7 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
               return;
             }
             void startTrainExchangeFlow({
+              channel: productChannel,
               ticketId: ticket.TicketId,
               orderId: trainItem.OrderId,
               navigate,
@@ -322,14 +353,14 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
           setToastMessage("功能即将上线");
       }
     },
-    [navigate, openTrainRefundDialog, productChannel],
+    [navigate, openTrainRefundDialog, productChannel, scope],
   );
 
   const handleCardClick = useCallback(
     (item: OrderListItem) => {
-      navigate(withOrderChannel(getOrderDetailPath(item), productChannel));
+      navigate(withOrderChannel(getOrderDetailPath(item), productChannel, { scope }));
     },
-    [navigate, productChannel],
+    [navigate, productChannel, scope],
   );
 
   const showToast = useCallback((message: string) => {
@@ -394,19 +425,35 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
   const confirmTrainCancel = useCallback(async () => {
     if (!trainCancelTicket) return;
     try {
-      await trainCancelMutation.mutateAsync({
-        channel: productChannel,
-        OrderId: trainCancelTicket.orderId,
-        TicketId: trainCancelTicket.ticket?.TicketId,
-        Channel: resolveAppChannel(),
-      });
+      if (trainCancelTicket.ticket?.TicketId) {
+        await trainAbolishMutation.mutateAsync({
+          channel: productChannel,
+          OrderId: trainCancelTicket.orderId,
+          TicketId: trainCancelTicket.ticket.TicketId,
+          Tag: "train",
+          Channel: resolveAppChannel(),
+        });
+      } else {
+        await trainCancelMutation.mutateAsync({
+          channel: productChannel,
+          OrderId: trainCancelTicket.orderId,
+          Channel: resolveAppChannel(),
+        });
+      }
       setTrainCancelTicket(null);
       showToast("订单已取消");
       void refresh();
     } catch (error) {
       showToast(formatApiError(error));
     }
-  }, [productChannel, refresh, showToast, trainCancelMutation, trainCancelTicket]);
+  }, [
+    productChannel,
+    refresh,
+    showToast,
+    trainAbolishMutation,
+    trainCancelMutation,
+    trainCancelTicket,
+  ]);
 
   const confirmTrainRefund = useCallback(async () => {
     if (!trainRefundTicket?.ticket) return;
@@ -452,13 +499,24 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
     if (state.product === "flight") {
       const params = new URLSearchParams(searchParams);
       params.delete("tabId");
+      params.set("channel", productChannel);
       params.set("tab", TAB_ID_TO_PARAM.flight);
+      params.set("scope", scope);
       setSearchParams(params, { replace: true });
     }
 
     setToastMessage(`下单成功，订单号 ${state.bookedOrderId}`);
     navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
-  }, [location.pathname, location.search, location.state, navigate, searchParams, setSearchParams]);
+  }, [
+    location.pathname,
+    location.search,
+    location.state,
+    navigate,
+    productChannel,
+    scope,
+    searchParams,
+    setSearchParams,
+  ]);
 
   useLayoutEffect(() => {
     const header = headerRef.current;
@@ -527,7 +585,7 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
               </h1>
             </div>
           ) : null}
-          <OrderCategoryTabs activeId={categoryId} onChange={(id) => updateParams({ tab: id })} />
+          <OrderCategoryTabs activeId={activeOrderTypeTab.id} onChange={handleOrderTypeChange} />
         </div>
         <div
           className="order-scope-shell relative z-0 flex h-[72px] items-center px-3"
@@ -535,7 +593,9 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
             background: ORDER_SCOPE_TABS_SHELL_GRADIENT,
             borderTopLeftRadius: 16,
             borderTopRightRadius: 16,
-            ["--order-category-pointer-left" as string]: orderCategoryPointerLeft(categoryId),
+            ["--order-category-pointer-left" as string]: orderCategoryPointerLeft(
+              activeOrderTypeTab.id,
+            ),
           }}
         >
           <OrderScopeTabs scope={scope} onChange={(next) => updateParams({ scope: next })} />
@@ -632,7 +692,7 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
           }
           confirmLabel="是"
           cancelLabel="否"
-          loading={trainCancelMutation.isPending}
+          loading={trainCancelMutation.isPending || trainAbolishMutation.isPending}
           onConfirm={() => void confirmTrainCancel()}
           onCancel={() => setTrainCancelTicket(null)}
         />

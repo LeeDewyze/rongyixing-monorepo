@@ -561,15 +561,19 @@ export function createTrainApi(proxy: ProxyClient): TrainApi {
     },
     async getExchangeInfo(params) {
       const res = await proxy.send<unknown>({
-        method: TRAIN_FLOW_METHODS.GET_EXCHANGE_INFO,
-        data: params,
+        method: isTouristChannel(params)
+          ? TOURIST_TRAIN_FLOW_METHODS.GET_EXCHANGE_INFO
+          : TRAIN_FLOW_METHODS.GET_EXCHANGE_INFO,
+        data: stripChannel(params),
       });
       return normalizeTrainExchangeInfo(res);
     },
     async getTrainPassenger(params) {
       const res = await proxy.send<unknown>({
-        method: TRAIN_FLOW_METHODS.GET_TRAIN_PASSENGER,
-        data: params,
+        method: isTouristChannel(params)
+          ? TOURIST_TRAIN_FLOW_METHODS.GET_TRAIN_PASSENGER
+          : TRAIN_FLOW_METHODS.GET_TRAIN_PASSENGER,
+        data: stripChannel(params),
       });
       return normalizeTrainPassengerInfo(res);
     },

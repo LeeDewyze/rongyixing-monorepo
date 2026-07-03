@@ -1,4 +1,12 @@
-import { OrderListTabId, type OrderListItem } from "@ryx/shared-types";
+import {
+  OrderListTabId,
+  type OrderListItem,
+  type OrderListScope,
+  type ProductChannel,
+} from "@ryx/shared-types";
+
+import type { OrderCategoryId } from "@/config/order-assets";
+import { TAB_ID_TO_PARAM } from "@/lib/order-list-params";
 
 export function getOrderDetailPath(item: OrderListItem): string {
   switch (item.tabId) {
@@ -28,6 +36,21 @@ export function getOrderPayPath(item: OrderListItem): string {
     default:
       return `/hotel/pay/${item.OrderId}`;
   }
+}
+
+export function getOrderListPath(
+  categoryId: OrderCategoryId,
+  options: { channel?: ProductChannel; scope?: OrderListScope } = {},
+): string {
+  const params = new URLSearchParams();
+  if (options.channel) {
+    params.set("channel", options.channel);
+  }
+  params.set("tab", TAB_ID_TO_PARAM[categoryId]);
+  if (options.scope) {
+    params.set("scope", options.scope);
+  }
+  return `/home/orders?${params.toString()}`;
 }
 
 export function getOrderResultPath(productType: "Flight" | "Hotel", orderId: string): string {

@@ -458,6 +458,14 @@ describe("createTrainApi (mock mode)", () => {
       Date: "2026-06-22",
       TrainCode: "G1",
     });
+    await train.getExchangeInfo({
+      channel: "tourist",
+      TicketId: "ticket-1",
+    });
+    await train.getTrainPassenger({
+      channel: "tourist",
+      TicketId: "ticket-1",
+    });
     await train.initializeBook({
       channel: "tourist",
       Passengers: [],
@@ -479,15 +487,18 @@ describe("createTrainApi (mock mode)", () => {
     expect(captured.map((item) => item.method)).toEqual([
       TOURIST_TRAIN_FLOW_METHODS.HOME_SEARCH,
       TOURIST_TRAIN_FLOW_METHODS.SCHEDULE,
+      TOURIST_TRAIN_FLOW_METHODS.GET_EXCHANGE_INFO,
+      TOURIST_TRAIN_FLOW_METHODS.GET_TRAIN_PASSENGER,
       TOURIST_TRAIN_BOOK_METHODS.INIT,
       TOURIST_TRAIN_BOOK_METHODS.EXCHANGE_INIT,
       TOURIST_TRAIN_BOOK_METHODS.BOOK,
       TOURIST_TRAIN_BOOK_METHODS.EXCHANGE_BOOK,
     ]);
     expect(captured[0]?.data).not.toHaveProperty("channel");
-    expect(captured[2]?.data).not.toHaveProperty("channel");
     expect(captured[3]?.data).not.toHaveProperty("channel");
     expect(captured[4]?.data).not.toHaveProperty("channel");
+    expect(captured[5]?.data).not.toHaveProperty("channel");
+    expect(captured[6]?.data).not.toHaveProperty("channel");
     expect(captured[5]?.data).not.toHaveProperty("channel");
   });
 

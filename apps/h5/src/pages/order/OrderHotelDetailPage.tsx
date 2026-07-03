@@ -31,11 +31,11 @@ import {
   getCancelOrderHotelId,
   getSelectedRoom,
 } from "@/lib/hotel-order-detail";
-import { TAB_ID_TO_PARAM } from "@/lib/order-list-params";
+import { parseOrderListScope } from "@/lib/order-list-params";
+import { getOrderListPath } from "@/lib/order-routes";
 import { scrollH5MainToTop } from "@/lib/scroll-h5-main";
 
 const FOOTER_OFFSET = "calc(4.5rem + env(safe-area-inset-bottom))";
-const ORDERS_HOTEL_FALLBACK = `/home/orders?tab=${TAB_ID_TO_PARAM.hotel}`;
 const ORDER_HOTEL_DETAIL_BACKGROUND = { background: "var(--brand-form-header-gradient)" };
 
 interface OrderDetailLocationState {
@@ -46,7 +46,13 @@ export function OrderHotelDetailPage() {
   const { orderId = "" } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const channel = searchParams.get("channel") === "tourist" ? "tourist" : undefined;
+  const channel =
+    searchParams.get("channel") === "tourist"
+      ? "tourist"
+      : searchParams.get("channel") === "tmc"
+        ? "tmc"
+        : undefined;
+  const listScope = parseOrderListScope(searchParams.get("scope"));
   const location = useLocation();
   const openCancelOnMountRef = useRef(
     (location.state as OrderDetailLocationState | null)?.action === "cancel",
@@ -77,8 +83,8 @@ export function OrderHotelDetailPage() {
   const [toast, setToast] = useState<string | null>(null);
 
   const leaveDetail = useCallback(() => {
-    navigate(ORDERS_HOTEL_FALLBACK, { replace: true });
-  }, [navigate]);
+    navigate(getOrderListPath("hotel", { channel, scope: listScope }), { replace: true });
+  }, [channel, listScope, navigate]);
 
   const handleBack = useCallback(() => {
     if (billOpen) {
@@ -141,10 +147,9 @@ export function OrderHotelDetailPage() {
   }, []);
 
   const handlePay = useCallback(() => {
-    const payPath =
-      channel === "tourist"
-        ? `/hotel/pay/${encodeURIComponent(orderId)}?channel=tourist`
-        : `/hotel/pay/${encodeURIComponent(orderId)}`;
+    const payPath = `/hotel/pay/${encodeURIComponent(orderId)}${
+      channel ? `?channel=${channel}` : ""
+    }`;
     navigate(payPath);
   }, [channel, navigate, orderId]);
 

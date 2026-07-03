@@ -17,6 +17,7 @@ export function mergeTrainFooterActions(
   };
   return {
     ...base,
+    showCancel: base.showCancel || Boolean(ticket?.Actions?.showCancel),
     showRefund: ticket?.Actions?.showRefund,
     showExchange: ticket?.Actions?.showExchange,
   };
@@ -33,11 +34,15 @@ export function resolveTrainCountdownLabel(actions: HotelOrderActionFlags | unde
 }
 
 export async function startTrainExchangeFlow(input: {
+  channel?: "tmc" | "tourist";
   ticketId: string;
   orderId?: string;
   navigate: (path: string) => void;
 }): Promise<void> {
-  const exchangeInfo = await getApi().train.getExchangeInfo({ TicketId: input.ticketId });
+  const exchangeInfo = await getApi().train.getExchangeInfo({
+    channel: input.channel,
+    TicketId: input.ticketId,
+  });
   saveTrainExchangeSession({
     ticketId: input.ticketId,
     orderId: input.orderId ?? exchangeInfo.OrderId,

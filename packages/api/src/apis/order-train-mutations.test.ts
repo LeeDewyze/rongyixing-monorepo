@@ -21,6 +21,19 @@ describe("train order mutations", () => {
 
     await api.cancelTrain({ channel: "tourist", OrderId: "20760000000204", Channel: "客户H5" });
     await api.issueTrain({ channel: "tourist", OrderId: "20760000000204" });
+    await api.abolishTrainTicket({
+      channel: "tourist",
+      OrderId: "20760000000204",
+      TicketId: "20760000000258",
+      Tag: "train",
+      Channel: "客户H5",
+    });
+    await api.refundTrain({
+      channel: "tourist",
+      OrderId: "20760000000204",
+      TicketId: "20760000000258",
+      Channel: "客户H5",
+    });
     await api.cancelHotel({
       channel: "tourist",
       OrderId: "20760000000205",
@@ -36,6 +49,19 @@ describe("train order mutations", () => {
       data: { Id: "20760000000204", OrderId: "20760000000204" },
     });
     expect(send).toHaveBeenNthCalledWith(3, {
+      method: "TmcTouristOrderUrl-Order-AbolishTicket",
+      data: {
+        OrderId: "20760000000204",
+        TicketId: "20760000000258",
+        Tag: "train",
+        Channel: "客户H5",
+      },
+    });
+    expect(send).toHaveBeenNthCalledWith(4, {
+      method: "TmcTouristTrainUrl-Home-Refund",
+      data: { TicketId: "20760000000258" },
+    });
+    expect(send).toHaveBeenNthCalledWith(5, {
       method: "TmcTouristOrderUrl-Order-CancelOrderHotel",
       data: { OrderId: "20760000000205", OrderHotelId: "hotel-1" },
     });

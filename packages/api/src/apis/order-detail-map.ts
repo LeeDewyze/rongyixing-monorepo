@@ -998,6 +998,7 @@ function mapTrainTrip(trip: LegacyRecord, ticket?: LegacyRecord): TrainOrderTrip
 function mapTrainTicketActions(ticket: LegacyRecord) {
   const ticketVariables = parseVariablesObj(ticket);
   return {
+    ...(ticketVariables?.isShowCancelButton ? { showCancel: true } : {}),
     showRefund: Boolean(ticketVariables?.isShowRefundButton),
     showExchange: Boolean(ticketVariables?.isShowExchangeButton),
   };

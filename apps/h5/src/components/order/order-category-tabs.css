@@ -1,16 +1,39 @@
 /**
- * Order category tab bar (机票 / 火车票 / 酒店).
- * Active tab shows a white upward triangle connecting to the scope shell below.
+ * Order type tab bar (因公/因私 + 机票/火车/酒店).
+ * v1 palette: business #2768fa, personal #0f9f6e, active underline currentColor.
+ * v2 palette: muted #666666, active text #010101, active underline #2768fa.
+ * v3: v2 palette with stable font weight; selection is mainly the underline.
+ * v4 current: neutral text, center divider for public/private groups, group-color underline.
  */
 .order-category-tabs {
   position: relative;
   z-index: 1;
   height: 2.75rem;
+  overflow: hidden;
 }
 
 .order-category-tabs__list {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  align-items: center;
+  gap: 0.125rem;
   height: 100%;
-  overflow: visible;
+  background: linear-gradient(
+    90deg,
+    transparent calc(50% - 0.5px),
+    rgba(1, 1, 1, 0.1) calc(50% - 0.5px),
+    rgba(1, 1, 1, 0.1) calc(50% + 0.5px),
+    transparent calc(50% + 0.5px)
+  );
+  overflow-x: hidden;
+  overflow-y: visible;
+  padding: 0 0.5rem 0.375rem;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.order-category-tabs__list::-webkit-scrollbar {
+  display: none;
 }
 
 .order-category-tab {
@@ -18,27 +41,71 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100%;
+  min-width: 0;
+  height: 1.75rem;
+  padding: 0 0.125rem;
   border: none;
+  border-radius: 0;
   background: transparent;
   font-family: "HarmonyOS Sans SC", "HarmonyOS Sans", "PingFang SC", sans-serif;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
   font-style: normal;
-  line-height: 100%;
+  line-height: 1;
   letter-spacing: 0;
   text-align: center;
   color: #666666;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  transition:
+    color 0.15s ease;
+}
+
+.order-category-tab::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 18px;
+  height: 3px;
+  border-radius: 999px;
+  transform: translateX(-50%) scaleX(0);
+  transform-origin: center;
+  background: #2768fa;
+  opacity: 0;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+.order-category-tab--business {
+  color: #666666;
+}
+
+.order-category-tab--personal {
+  color: #666666;
 }
 
 .order-category-tab--active {
-  font-size: 17px;
-  font-weight: 700;
-  line-height: 100%;
-  letter-spacing: 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.order-category-tab--business.order-category-tab--active {
   color: #010101;
+}
+
+.order-category-tab--personal.order-category-tab--active {
+  color: #010101;
+}
+
+.order-category-tab--active::after {
+  opacity: 1;
+  transform: translateX(-50%) scaleX(1);
+}
+
+.order-category-tab--personal.order-category-tab--active::after {
+  background: #12a678;
 }
 
 /* Scope shell: white upward notch (::before) merges 1px into the top edge. */

@@ -12,12 +12,14 @@ import type {
   OrderDetailResponse,
   OrderListParams,
   OrderListResponse,
+  TrainAbolishTicketParams,
   TrainCancelParams,
   TrainIssueParams,
   TrainRefundParams,
 } from "@ryx/shared-types";
 
 import { ORDER_FLOW_METHODS, TOURIST_ORDER_FLOW_METHODS } from "../methods/order-flow.js";
+import { TOURIST_TRAIN_FLOW_METHODS } from "../methods/train-flow.js";
 import type { ProxyClient } from "../proxy/proxy-client.js";
 import {
   normalizeFlightOrderDetail,
@@ -51,6 +53,7 @@ export interface OrderApi {
   confirmHotelOrderSmsCode(params: HotelOrderSmsConfirmParams): Promise<boolean>;
   checkInspurRepush(params: OrderDetailParams): Promise<boolean>;
   cancelTrain(params: TrainCancelParams): Promise<boolean>;
+  abolishTrainTicket(params: TrainAbolishTicketParams): Promise<boolean>;
   issueTrain(params: TrainIssueParams): Promise<boolean>;
   refundTrain(params: TrainRefundParams): Promise<boolean>;
 }
@@ -185,6 +188,12 @@ export function createOrderApi(proxy: ProxyClient): OrderApi {
         data: { Id: params.OrderId },
       });
     },
+    abolishTrainTicket(params) {
+      return proxy.send<boolean>({
+        method: orderMethods(params).ABOLISH_TICKET,
+        data: stripChannel(params),
+      });
+    },
     issueTrain(params) {
       return proxy.send<boolean>({
         method: orderMethods(params).ISSUE_TRAIN,
@@ -194,9 +203,9 @@ export function createOrderApi(proxy: ProxyClient): OrderApi {
     refundTrain(params) {
       return proxy.send<boolean>({
         method: isTouristChannel(params)
-          ? TOURIST_ORDER_FLOW_METHODS.CANCEL_TRAIN
+          ? TOURIST_TRAIN_FLOW_METHODS.REFUND
           : ORDER_FLOW_METHODS.TRAIN_REFUND,
-        data: stripChannel(params),
+        data: isTouristChannel(params) ? { TicketId: params.TicketId } : stripChannel(params),
       });
     },
   };

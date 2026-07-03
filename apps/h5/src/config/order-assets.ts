@@ -1,4 +1,4 @@
-import { OrderListTabId } from "@ryx/shared-types";
+import { OrderListTabId, type ProductChannel } from "@ryx/shared-types";
 
 import orderEmptyIllustration from "@/assets/order/empty.png";
 
@@ -13,6 +13,67 @@ export const ORDER_CATEGORY_TABS = [
 ] as const;
 
 export type OrderCategoryId = (typeof ORDER_CATEGORY_TABS)[number]["id"];
+
+export const ORDER_TYPE_TABS = [
+  {
+    id: "tmc-flight",
+    channel: "tmc",
+    categoryId: "flight",
+    tabId: OrderListTabId.Flight,
+    label: "因公机票",
+    tone: "business",
+  },
+  {
+    id: "tmc-train",
+    channel: "tmc",
+    categoryId: "train",
+    tabId: OrderListTabId.Train,
+    label: "因公火车",
+    tone: "business",
+  },
+  {
+    id: "tmc-hotel",
+    channel: "tmc",
+    categoryId: "hotel",
+    tabId: OrderListTabId.Hotel,
+    label: "因公酒店",
+    tone: "business",
+  },
+  {
+    id: "tourist-flight",
+    channel: "tourist",
+    categoryId: "flight",
+    tabId: OrderListTabId.Flight,
+    label: "因私机票",
+    tone: "personal",
+  },
+  {
+    id: "tourist-train",
+    channel: "tourist",
+    categoryId: "train",
+    tabId: OrderListTabId.Train,
+    label: "因私火车",
+    tone: "personal",
+  },
+  {
+    id: "tourist-hotel",
+    channel: "tourist",
+    categoryId: "hotel",
+    tabId: OrderListTabId.Hotel,
+    label: "因私酒店",
+    tone: "personal",
+  },
+] as const satisfies ReadonlyArray<{
+  id: string;
+  channel: ProductChannel;
+  categoryId: OrderCategoryId;
+  tabId: OrderListTabId;
+  label: string;
+  tone: "business" | "personal";
+}>;
+
+export type OrderTypeTab = (typeof ORDER_TYPE_TABS)[number];
+export type OrderTypeTabId = OrderTypeTab["id"];
 
 export const ORDER_FONT =
   "[font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";

@@ -300,6 +300,7 @@ export type {
 
 export type {
   TrainCancelParams,
+  TrainAbolishTicketParams,
   TrainExchangeInfo,
   TrainExchangeInfoParams,
   TrainIssueParams,
