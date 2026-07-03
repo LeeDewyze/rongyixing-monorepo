@@ -1,8 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import type { OrderDetailProductType, ProductChannel } from "@ryx/shared-types";
-import { Button } from "@ryx/ui/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@ryx/ui/components/ui/card";
 
 import { usePageHeader } from "@/components/layout";
 import {
@@ -14,9 +12,20 @@ import {
 } from "@/hooks/useOrderPay";
 import { useOrderDetail } from "@/hooks/useHotelBook";
 import {
+  buildLegacyH5PayUrl,
   executeOrderPayFlow,
   formatPayHoldCountdown,
+  shouldUseLegacyH5PayRedirect,
 } from "@/lib/order-pay";
+import { getApi } from "@/lib/api";
+import { getAppId, getLegacyAppBaseUrl } from "@/lib/env";
+import {
+  getRequestDomain,
+  getRequestLanguage,
+  getTicketName,
+} from "@/lib/request-context";
+import { getTicket } from "@/lib/session";
+import { resolveTouristContext } from "@/lib/tourist-context";
 
 export interface OrderPayPageProps {
   title: string;
@@ -26,6 +35,23 @@ export interface OrderPayPageProps {
   subtitle?: string;
   /** If set, overrides the API-derived amount — for testing. */
   amountOverride?: number;
+}
+
+const ORDER_PAY_HEADER_FALLBACK_HEIGHT = 88;
+
+function formatPayAmount(amount: number | undefined): string {
+  if (amount == null || !Number.isFinite(amount)) return "-";
+  return amount.toLocaleString("zh-CN", {
+    minimumFractionDigits: Number.isInteger(amount) ? 0 : 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function payChannelIcon(label: string): string {
+  if (label.includes("微信")) return "微";
+  if (label.includes("工行") || label.includes("工商")) return "工";
+  if (label.includes("支付宝")) return "支";
+  return label.slice(0, 1) || "付";
 }
 
 export function OrderPayPage({
@@ -38,6 +64,8 @@ export function OrderPayPage({
 }: OrderPayPageProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [headerHeight, setHeaderHeight] = useState(ORDER_PAY_HEADER_FALLBACK_HEIGHT);
   const channel: ProductChannel | undefined =
     searchParams.get("channel") === "tourist"
       ? "tourist"
@@ -58,7 +86,18 @@ export function OrderPayPage({
   const [selected, setSelected] = useState("");
   const remainingSeconds = usePayHoldCountdown(payTotal?.PayHoldTime);
 
-  usePageHeader({ title, showBack: true });
+  usePageHeader({ visible: false });
+
+  useLayoutEffect(() => {
+    const header = headerRef.current;
+    if (!header) return undefined;
+
+    const updateHeight = () => setHeaderHeight(header.offsetHeight);
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!selected && pays?.[0]?.PayType) {
@@ -70,6 +109,7 @@ export function OrderPayPage({
   const isLoading = totalLoading || paysLoading;
   const isPending = payCreate.isPending || payProcess.isPending;
   const channels = pays ?? [];
+  const selectedChannel = channels.find((item) => item.PayType === selected);
   const payError =
     payCreate.error instanceof Error
       ? payCreate.error.message
@@ -79,6 +119,29 @@ export function OrderPayPage({
 
   async function handlePay() {
     if (!selected) return;
+    if (shouldUseLegacyH5PayRedirect({ channel, productType, payType: selected })) {
+      const api = getApi();
+      const apiConfig = api.proxy.getApiConfig() ?? (await api.proxy.loadApiConfig());
+      const context = await resolveTouristContext({
+        appId: getAppId(),
+        sender: api.proxy,
+      });
+      window.location.assign(
+        buildLegacyH5PayUrl({
+          appBaseUrl: getLegacyAppBaseUrl(),
+          orderId,
+          payType: selected,
+          ticket: getTicket() ?? "",
+          ticketName: getTicketName(),
+          domain: getRequestDomain(),
+          language: getRequestLanguage(),
+          token: apiConfig.Token ?? "",
+          tmcId: context.TouristTmcId,
+          mmsId: context.TouristMmsId,
+        }),
+      );
+      return;
+    }
     const result = await executeOrderPayFlow({
       orderId,
       payType: selected,
@@ -104,59 +167,159 @@ export function OrderPayPage({
     });
   }
 
-  if (isLoading) {
-    return <p className="p-4 text-muted-foreground">加载支付信息…</p>;
-  }
-
   return (
-    <div className="space-y-4 p-4 pb-24">
-      <h1 className="text-xl font-bold">选择支付方式</h1>
-      {subtitle ? <p className="text-sm text-muted-foreground">{subtitle}</p> : null}
-      <div className="space-y-1">
-        <p className="text-lg font-semibold">应付 ¥{amount ?? "-"}</p>
-        {remainingSeconds != null ? (
-          <p className="text-sm text-muted-foreground">
-            请在 {formatPayHoldCountdown(remainingSeconds)} 内完成支付
-          </p>
-        ) : null}
+    <div
+      className="relative h-dvh overflow-hidden"
+      style={{ background: "var(--brand-form-header-gradient)" }}
+    >
+      <div
+        ref={headerRef}
+        className="fixed inset-x-0 top-0 z-30 w-full"
+        style={{ background: "var(--brand-form-header-gradient)" }}
+      >
+        <div className="pt-[env(safe-area-inset-top)]">
+          <div className="flex items-center px-1 pb-2 pt-1">
+            <button
+              type="button"
+              className="flex size-10 shrink-0 items-center justify-center text-brand-title active:opacity-70"
+              aria-label="返回"
+              onClick={() => navigate(-1)}
+            >
+              <svg
+                viewBox="0 0 20 20"
+                className="size-5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M12 5l-5 5 5 5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            <h1 className="min-w-0 flex-1 text-center text-[17px] font-medium text-brand-title">
+              {title}
+            </h1>
+            <span className="size-10 shrink-0" aria-hidden />
+          </div>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">支付渠道</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          {channels.length === 0 ? (
-            <p className="text-sm text-muted-foreground">暂无可用支付方式</p>
-          ) : (
-            channels.map((channel) => (
-              <label
-                key={channel.PayType}
-                className="flex cursor-pointer items-center gap-3 rounded-md border p-3"
-              >
-                <input
-                  type="radio"
-                  name="payType"
-                  value={channel.PayType}
-                  checked={selected === channel.PayType}
-                  onChange={() => setSelected(channel.PayType)}
-                />
-                <span>{channel.PayTypeName}</span>
-              </label>
-            ))
-          )}
-        </CardContent>
-      </Card>
+      <div className="flex h-full flex-col" style={{ paddingTop: headerHeight }}>
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 pb-4 pt-3 [-webkit-overflow-scrolling:touch]">
+          <section className="mb-4 rounded-2xl bg-white/78 px-4 py-4 shadow-sm backdrop-blur">
+            {subtitle ? (
+              <p className="truncate text-[15px] leading-5 text-brand-title/65">{subtitle}</p>
+            ) : null}
+            <div className="mt-4 flex items-end justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[13px] text-brand-title/55">应付金额</p>
+                <p className="mt-1 text-[30px] font-semibold leading-none tracking-tight text-brand-title">
+                  <span className="text-[20px]">¥</span>
+                  {formatPayAmount(amount)}
+                </p>
+              </div>
+              {remainingSeconds != null ? (
+                <div className="shrink-0 rounded-full bg-[#EEF5FF] px-3 py-1.5 text-[12px] font-medium text-brand-primary">
+                  请在 {formatPayHoldCountdown(remainingSeconds)} 内完成支付
+                </div>
+              ) : null}
+            </div>
+          </section>
 
-      {payError ? <p className="text-sm text-destructive">{payError}</p> : null}
+          <section className="rounded-2xl bg-white p-4 shadow-sm">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-[16px] font-semibold text-brand-title">支付渠道</h2>
+              {selectedChannel ? (
+                <span className="rounded-full bg-[#EEF5FF] px-2.5 py-1 text-[12px] font-medium text-brand-primary">
+                  {selectedChannel.PayTypeName}
+                </span>
+              ) : null}
+            </div>
 
-      <Button
-        className="fixed bottom-4 left-4 right-4"
-        disabled={!selected || isPending || channels.length === 0}
-        onClick={() => void handlePay()}
-      >
-        {isPending ? "处理中…" : "确认支付"}
-      </Button>
+            {isLoading ? (
+              <div className="space-y-3">
+                {[0, 1, 2].map((item) => (
+                  <div
+                    key={item}
+                    className="h-[58px] animate-pulse rounded-xl bg-[#F5F6F9]"
+                    aria-hidden
+                  />
+                ))}
+              </div>
+            ) : channels.length === 0 ? (
+              <div className="py-8 text-center">
+                <div className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-[#EEF5FF] text-brand-primary">
+                  <span className="text-[18px] font-semibold">付</span>
+                </div>
+                <p className="mt-3 text-[15px] font-medium text-brand-title">暂无可用支付方式</p>
+                <p className="mt-1 text-[13px] text-brand-title/45">请稍后重试或返回订单详情</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {channels.map((channel) => {
+                  const checked = selected === channel.PayType;
+                  return (
+                    <label
+                      key={channel.PayType}
+                      className={`flex min-h-[58px] cursor-pointer items-center gap-3 rounded-xl border px-3.5 transition-colors active:scale-[0.99] ${
+                        checked
+                          ? "border-brand-primary bg-[#EEF5FF]"
+                          : "border-[#EEF0F4] bg-white active:bg-[#FAFBFC]"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="payType"
+                        value={channel.PayType}
+                        className="sr-only"
+                        checked={checked}
+                        onChange={() => setSelected(channel.PayType)}
+                      />
+                      <span
+                        className={`flex size-9 shrink-0 items-center justify-center rounded-full text-[14px] font-semibold ${
+                          checked
+                            ? "bg-brand-primary text-white"
+                            : "bg-[#F5F8FF] text-brand-primary"
+                        }`}
+                        aria-hidden
+                      >
+                        {payChannelIcon(channel.PayTypeName)}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-[15px] font-medium text-brand-title">
+                        {channel.PayTypeName}
+                      </span>
+                      <span
+                        className={`flex size-5 shrink-0 items-center justify-center rounded-full border ${
+                          checked ? "border-brand-primary bg-brand-primary" : "border-[#D0D5DD]"
+                        }`}
+                        aria-hidden
+                      >
+                        {checked ? <span className="size-2 rounded-full bg-white" /> : null}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+
+          {payError ? (
+            <p className="mt-3 rounded-xl bg-[#FFF1F0] px-3 py-2 text-[13px] leading-5 text-[#FF4D4F]">
+              {payError}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="shrink-0 border-t border-[#ECECEC] bg-white px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+          <button
+            type="button"
+            className="flex h-11 w-full items-center justify-center rounded-lg bg-gradient-to-r from-brand-btn-start to-brand-btn-end text-sm font-medium text-white shadow-[0_8px_20px_rgba(39,104,250,0.24)] transition-opacity active:opacity-90 disabled:opacity-50"
+            disabled={!selected || isPending || channels.length === 0 || isLoading}
+            onClick={() => void handlePay()}
+          >
+            {isPending ? "处理中…" : "确认支付"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,13 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  buildLegacyH5PayUrl,
   executeOrderPayFlow,
   formatPayHoldCountdown,
   requiresPersonalPayment,
   resolveCheckoutSuccessMessage,
+  resolveLegacyH5PayType,
   resolvePayCreateOutTradeNo,
   resolvePayFailureMessage,
   resolvePayHoldSeconds,
+  shouldUseLegacyH5PayRedirect,
 } from "./order-pay";
 import { shouldNavigateToPay } from "./flight-book-check-pay";
 
@@ -69,6 +72,58 @@ describe("resolvePayFailureMessage", () => {
   it("returns message when create status is false", () => {
     expect(resolvePayFailureMessage({ Status: false, Message: "余额不足" })).toBe("余额不足");
     expect(resolvePayFailureMessage({ Status: true })).toBeUndefined();
+  });
+});
+
+describe("legacy H5 train pay", () => {
+  it("only redirects Alipay and WeChat for tourist train H5 pay", () => {
+    expect(resolveLegacyH5PayType("Alipay")).toBe("2");
+    expect(resolveLegacyH5PayType("Wechatpay")).toBe("3");
+    expect(resolveLegacyH5PayType("Icbcpay")).toBeUndefined();
+    expect(
+      shouldUseLegacyH5PayRedirect({
+        channel: "tourist",
+        productType: "Train",
+        payType: "Alipay",
+      }),
+    ).toBe(true);
+    expect(
+      shouldUseLegacyH5PayRedirect({
+        channel: "tourist",
+        productType: "Train",
+        payType: "Icbcpay",
+      }),
+    ).toBe(false);
+  });
+
+  it("builds legacy /home/Pay url for tourist train H5 pay", () => {
+    const url = new URL(
+      buildLegacyH5PayUrl({
+        appBaseUrl: "http://app.rtesp.com/",
+        orderId: "44880000000033",
+        payType: "Alipay",
+        ticket: "ticket-1",
+        ticketName: "ticket",
+        domain: "rtesp.com",
+        language: "cn",
+        token: "token-1",
+        tmcId: "10001",
+        mmsId: "1",
+      }),
+    );
+    expect(`${url.origin}${url.pathname}`).toBe("http://app.rtesp.com/home/Pay");
+    expect(url.searchParams.get("ticket")).toBe("ticket-1");
+    expect(url.searchParams.get("Method")).toBe("TmcTouristOrderUrl-Pay-Create");
+    expect(url.searchParams.get("Version")).toBe("2.0");
+    expect(url.searchParams.get("TmcId")).toBe("10001");
+    expect(url.searchParams.get("MmsId")).toBe("1");
+    expect(JSON.parse(url.searchParams.get("Data") ?? "{}")).toMatchObject({
+      Channel: "App",
+      Type: "2",
+      OrderId: "44880000000033",
+      IsApp: false,
+      CreateType: "Mobile",
+    });
   });
 });
 

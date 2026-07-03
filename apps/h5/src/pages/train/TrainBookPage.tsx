@@ -27,7 +27,6 @@ import { PassengerSelectAlertDialog } from "@/components/passenger";
 import { TrainBookFooter } from "@/components/train/TrainBookFooter";
 import { TrainBookHeader } from "@/components/train/TrainBookHeader";
 import { TrainBookLinkmanCard } from "@/components/train/TrainBookLinkmanCard";
-import { TrainBookSubmitConfirmDialog } from "@/components/train/TrainBookSubmitConfirmDialog";
 import { TrainBookPassengerCard } from "@/components/train/TrainBookPassengerCard";
 import { TrainBookSeatPicker } from "@/components/train/TrainBookSeatPicker";
 import { TrainBookSummary } from "@/components/train/TrainBookSummary";
@@ -129,7 +128,7 @@ export function TrainBookPage() {
     passengerId: string;
     field: FlightOutNumberField;
   } | null>(null);
-  const [directBookConfirmOpen, setDirectBookConfirmOpen] = useState(false);
+  const [checkingPay, setCheckingPay] = useState(false);
   const [removePassengerTarget, setRemovePassengerTarget] = useState<PassengerBookInfo | null>(
     null,
   );
@@ -303,7 +302,7 @@ export function TrainBookPage() {
       return;
     }
 
-    setDirectBookConfirmOpen(true);
+    void executeSubmit(false);
   }
 
   function removePassengerFromBook(target: PassengerBookInfo) {
@@ -355,25 +354,25 @@ export function TrainBookPage() {
     try {
       const response = await submitMutation.mutateAsync(bookDto);
       const orderId = resolveTrainBookOrderId(response);
-      const payType = resolvedPayType;
-
       leavingAfterSubmitRef.current = true;
 
       if (response.IsCheckPay && response.TradeNo) {
+        setCheckingPay(true);
         const checkPayReady = await pollTrainCheckPay(response.TradeNo, {
           channel: productChannel,
           productType: "Train",
         });
-        if (shouldNavigateToPay({ travelPayType: payType, checkPayReady }) && orderId) {
+        if (
+          productChannel !== "tourist" &&
+          shouldNavigateToPay({ travelPayType: resolvedPayType, checkPayReady }) &&
+          orderId
+        ) {
           clearTrainBookSelection();
           clearPassengerSelection(ProductType.Train);
           if (isExchange) {
             clearTrainExchangeSession();
           }
-          const payPath =
-            productChannel === "tourist"
-              ? `/train/pay/${encodeURIComponent(orderId)}?channel=tourist`
-              : `/train/pay/${encodeURIComponent(orderId)}`;
+          const payPath = `/train/pay/${encodeURIComponent(orderId)}`;
           navigate(payPath, { replace: true });
           return;
         }
@@ -401,7 +400,7 @@ export function TrainBookPage() {
     } catch (error) {
       setAlertMessage(formatApiError(error, "train"));
     } finally {
-      setDirectBookConfirmOpen(false);
+      setCheckingPay(false);
     }
   }
 
@@ -622,8 +621,8 @@ export function TrainBookPage() {
 
       <TrainBookFooter
         amount={displayAmount}
-        disabled={isSubmitDisabled}
-        pending={submitBook.isPending || submitExchangeBook.isPending}
+        disabled={isSubmitDisabled || checkingPay}
+        pending={submitBook.isPending || submitExchangeBook.isPending || checkingPay}
         billOpen={billOpen}
         billBreakdown={billBreakdown}
         showOfficialBook={false}
@@ -633,15 +632,21 @@ export function TrainBookPage() {
         onDirectBook={() => handleSubmitClick(false)}
       />
 
-      <TrainBookSubmitConfirmDialog
-        open={directBookConfirmOpen}
-        pending={submitBook.isPending || submitExchangeBook.isPending}
-        onCancel={() => {
-          if (!submitBook.isPending && !submitExchangeBook.isPending)
-            setDirectBookConfirmOpen(false);
-        }}
-        onConfirm={() => void executeSubmit(false)}
-      />
+      {checkingPay ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-8">
+          <div className="w-full max-w-[18rem] rounded-2xl bg-white px-5 py-6 text-center shadow-lg">
+            <div className="mx-auto size-8 animate-spin rounded-full border-2 border-[#DCE8FF] border-t-[#2768FA]" />
+            <p className="mt-4 text-[16px] font-semibold text-[#222222]">
+              {productChannel === "tourist" ? "正在确认预订状态" : "正在确认支付状态"}
+            </p>
+            <p className="mt-2 text-[13px] leading-relaxed text-[#666666]">
+              {productChannel === "tourist"
+                ? "订单已提交，请稍候，确认后将进入订单详情"
+                : "订单已提交，请稍候，确认后将进入支付页面"}
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       <ConfirmDialog
         open={removePassengerTarget != null}

@@ -169,19 +169,28 @@ export function formatTrainOrderHoldBannerMessage(
 ): string {
   const time = formatPayHoldCountdownZh(payHoldSecondsRemaining);
   if (actions?.showIssue && !actions.showPay) {
-    return `订单将在${time}后关闭`;
+    return `订单将在${time}后关闭，请尽快确认出票`;
   }
-  return `订单将在${time}后关闭，如需出行，请尽快提交`;
+  if (actions?.showPay) {
+    return `支付剩余${time}，请尽快完成支付`;
+  }
+  return `订单将在${time}后关闭，请尽快处理`;
 }
 
-const PENDING_ISSUE_TICKET_STATUSES = new Set(["2", "8", "Booked", "BookExchanged"]);
+const TRAIN_TICKET_BOOKED_STATUS_LABELS = new Map([
+  ["2", "预订成功"],
+  ["Booked", "预订成功"],
+  ["8", "预订修改成功"],
+  ["BookExchanged", "预订修改成功"],
+]);
 
 export function resolveTrainTicketDisplayStatus(
   ticket: Pick<TrainOrderTicket, "AppStatusName" | "StatusName" | "Status">,
 ): string | undefined {
   const status = ticket.Status?.trim();
-  if (status && PENDING_ISSUE_TICKET_STATUSES.has(status)) {
-    return "待出票";
+  const bookedStatusName = status ? TRAIN_TICKET_BOOKED_STATUS_LABELS.get(status) : undefined;
+  if (bookedStatusName) {
+    return bookedStatusName;
   }
 
   const statusName = ticket.StatusName?.trim();

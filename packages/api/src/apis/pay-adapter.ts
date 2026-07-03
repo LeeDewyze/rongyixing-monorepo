@@ -1,13 +1,17 @@
 import type { OrderPayChannel, PayCreateResponse } from "@ryx/shared-types";
 
-/** Legacy Pay-Create Type: 2=支付宝, 3=微信, 6=快捷支付等。 */
+/** Legacy PaylineType used by H5 personal pay: 2=支付宝, 3=微信, 7=工行。 */
 export function resolveLegacyPayType(payType: string): string {
-  const value = payType.toLowerCase();
-  if (value.includes("wechat") || value.includes("weixin") || value === "3") return "3";
-  if (value.includes("ali") || value === "2") return "2";
-  if (value.includes("quickexpress") || value === "6") return "6";
-  if (/^\d+$/.test(payType)) return payType;
+  const value = payType.trim().toLowerCase();
+  if (/^\d+$/.test(value)) return value;
+  if (value.includes("wechat") || value.includes("weixin")) return "3";
+  if (value.includes("ali")) return "2";
+  if (value.includes("icbc")) return "7";
   return payType;
+}
+
+export function isLegacyIcbcPayType(payType: string): boolean {
+  return resolveLegacyPayType(payType) === "7";
 }
 
 export function normalizeOrderPayChannels(raw: unknown): OrderPayChannel[] {
@@ -46,6 +50,15 @@ export function buildLegacyPayCreatePayload(input: {
   payType: string;
   key?: string;
 }): Record<string, unknown> {
+  if (isLegacyIcbcPayType(input.payType)) {
+    return {
+      Channel: "App",
+      Type: 7,
+      OrderId: input.orderId,
+      IsApp: false,
+    };
+  }
+
   return {
     Channel: "App",
     Type: resolveLegacyPayType(input.payType),

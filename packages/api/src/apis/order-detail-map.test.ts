@@ -594,7 +594,42 @@ describe("normalizeTrainOrderDetail", () => {
     expect(detail.PassengerNames).toBe("申晓杰、郭某某");
     expect(detail.Actions?.showPay).toBe(true);
     expect(detail.Actions?.showCancel).toBe(true);
+    expect(detail.Actions?.showIssue).toBe(false);
     expect(detail.Tickets?.[0]?.Trips[0]?.TrainCode).toBe("D7889");
+  });
+
+  it("keeps waiting-pay train orders in pay flow even when tickets are pending issue", () => {
+    const detail = normalizeTrainOrderDetail({
+      Order: {
+        Id: "ORD-TRN-waiting-pay-without-is-pay",
+        Status: "WaitPay",
+        StatusName: "等待支付",
+        Variables: JSON.stringify({
+          OrderPayHoldTime: 13,
+          TravelPayType: 2,
+        }),
+        OrderTrainTickets: [
+          {
+            Id: "448800000000010",
+            Key: "train-key-1",
+            StatusName: "待出票",
+            Passenger: { Name: "申晓杰" },
+            OrderTrainTrips: [
+              {
+                TrainCode: "D79",
+                FromStationName: "北京南",
+                ToStationName: "上海虹桥",
+              },
+            ],
+          },
+        ],
+      },
+      TravelPayType: "个付",
+    });
+
+    expect(detail.Actions?.showPay).toBe(true);
+    expect(detail.Actions?.showCancel).toBe(true);
+    expect(detail.Actions?.showIssue).toBe(false);
   });
 
   it("prefers AppStatusName for ticket display status", () => {

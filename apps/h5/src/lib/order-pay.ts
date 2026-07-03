@@ -1,4 +1,5 @@
 import type { PayCreateResponse } from "@ryx/shared-types";
+import { createRequestEntity } from "@ryx/api";
 
 import { FLIGHT_PAY_TYPE_CREDIT, FLIGHT_PAY_TYPE_PERSON } from "@/lib/flight-book-pay";
 
@@ -48,6 +49,84 @@ export function resolvePayFailureMessage(response: PayCreateResponse): string | 
     return response.Message ?? "支付发起失败";
   }
   return undefined;
+}
+
+export function resolveLegacyH5PayType(payType: string): "2" | "3" | undefined {
+  const value = payType.trim().toLowerCase();
+  if (value === "2" || value.includes("ali")) return "2";
+  if (value === "3" || value.includes("wechat") || value.includes("weixin")) return "3";
+  return undefined;
+}
+
+export function shouldUseLegacyH5PayRedirect(input: {
+  channel?: string;
+  productType?: string;
+  payType: string;
+}): boolean {
+  return (
+    input.channel === "tourist" &&
+    input.productType === "Train" &&
+    resolveLegacyH5PayType(input.payType) != null
+  );
+}
+
+export function buildLegacyH5PayUrl(input: {
+  appBaseUrl: string;
+  orderId: string;
+  payType: string;
+  ticket: string;
+  ticketName: string;
+  domain: string;
+  language: string;
+  token: string;
+  tmcId: string;
+  mmsId: string;
+  path?: string;
+  openid?: string;
+}): string {
+  const type = resolveLegacyH5PayType(input.payType);
+  if (!type) {
+    throw new Error("错误的支付方式");
+  }
+  const ticketName = input.ticketName || "ticket";
+  const req = createRequestEntity(
+    "TmcTouristOrderUrl-Pay-Create",
+    {
+      Channel: "App",
+      Type: type,
+      OrderId: input.orderId,
+      IsApp: false,
+      CreateType: "Mobile",
+    },
+    {
+      getTicket: () => input.ticket,
+      getTicketName: () => ticketName,
+      getDomain: () => input.domain,
+      getLanguage: () => input.language,
+      token: input.token,
+    },
+  );
+  req.Version = "2.0";
+  req.TmcId = input.tmcId;
+  req.MmsId = input.mmsId;
+
+  const params = new URLSearchParams();
+  params.set(ticketName, input.ticket);
+  params.set("path", input.path ?? "");
+  params.set("openid", input.openid ?? "");
+
+  for (const [key, value] of Object.entries(req)) {
+    const lower = key.toLowerCase();
+    if (lower === ticketName.toLowerCase() || lower === "path" || lower === "openid") {
+      continue;
+    }
+    if (value === undefined || value === null) {
+      continue;
+    }
+    params.set(key, typeof value === "string" ? value : JSON.stringify(value));
+  }
+
+  return `${input.appBaseUrl.replace(/\/$/, "")}/home/Pay?${params.toString()}`;
 }
 
 export async function executeOrderPayFlow(input: {

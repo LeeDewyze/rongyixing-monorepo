@@ -1047,7 +1047,21 @@ function sortTrainTicketsForTabs(tickets: TrainOrderTicket[]): TrainOrderTicket[
   return [...tickets].sort(byIdDesc);
 }
 
+const TRAIN_TICKET_BOOKED_STATUSES = new Set(["2", "8", "Booked", "BookExchanged"]);
+
+function isTrainTicketBookedSuccess(ticket: TrainOrderTicket): boolean {
+  const status = ticket.Status?.trim();
+  if (status && TRAIN_TICKET_BOOKED_STATUSES.has(status)) {
+    return true;
+  }
+  const label = (ticket.StatusName ?? "").trim();
+  return label.includes("预订成功") || label.includes("预订修改成功");
+}
+
 function isTrainTicketPendingIssue(ticket: TrainOrderTicket): boolean {
+  if (isTrainTicketBookedSuccess(ticket)) {
+    return false;
+  }
   const label = (ticket.AppStatusName ?? ticket.StatusName ?? "").trim();
   return label.includes("待出票");
 }
@@ -1056,6 +1070,12 @@ function isTrainOrderPendingIssue(order: LegacyRecord): boolean {
   const status = readString(order.Status);
   const statusName = readString(order.StatusName ?? order.Status);
   return status === "WaitIssue" || statusName.includes("待出票");
+}
+
+function isTrainOrderWaitingPay(order: LegacyRecord): boolean {
+  const status = readString(order.Status);
+  const statusName = readString(order.StatusName ?? order.Status);
+  return status === "WaitPay" || /待付款|等待支付|待支付/.test(statusName);
 }
 
 function resolveTrainIssueFlag(
@@ -1092,11 +1112,16 @@ function buildTrainActionFlags(
 ): HotelOrderActionFlags {
   const status = readString(order.Status);
   const hasHoldWindow = payHoldMinutes > 0;
+  const waitingPay = isTrainOrderWaitingPay(order);
+  const hasBookedSuccess = tickets.some(isTrainTicketBookedSuccess);
   const isPersonalPay =
     travelPayTypeCode === FLIGHT_PAY_TYPE_PERSON || travelPayTypeCode === FLIGHT_PAY_TYPE_CREDIT;
   const showPay =
-    Boolean(orderVariables?.isPay) && status !== "WaitHandle" && isPersonalPay && hasHoldWindow;
-  const showIssue = resolveTrainIssueFlag(orderVariables, tickets, order);
+    (Boolean(orderVariables?.isPay) || hasBookedSuccess || waitingPay) &&
+    status !== "WaitHandle" &&
+    isPersonalPay &&
+    hasHoldWindow;
+  const showIssue = showPay ? false : resolveTrainIssueFlag(orderVariables, tickets, order);
   const showCancel =
     Boolean(orderVariables?.isShowCancelButton) || showPay || showIssue || hasHoldWindow;
 

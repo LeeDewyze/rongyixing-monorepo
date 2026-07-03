@@ -26,7 +26,8 @@ describe("train-order-detail", () => {
         StatusName: "预订成功",
         Status: "2",
       }),
-    ).toBe("待出票");
+    ).toBe("预订成功");
+    expect(resolveTrainTicketDisplayStatus({ Status: "8" })).toBe("预订修改成功");
     expect(resolveTrainTicketDisplayStatus({ StatusName: "预订成功" })).toBe("预订成功");
     expect(resolveTrainTicketDisplayStatus({ AppStatusName: "待出票" })).toBe("待出票");
   });
@@ -38,7 +39,15 @@ describe("train-order-detail", () => {
         showCancel: true,
         smsAction: "none",
       }),
-    ).toBe("订单将在05分30秒后关闭，如需出行，请尽快提交");
+    ).toBe("支付剩余05分30秒，请尽快完成支付");
+    expect(
+      formatTrainOrderHoldBannerMessage(330, {
+        showPay: false,
+        showCancel: true,
+        showIssue: true,
+        smsAction: "none",
+      }),
+    ).toBe("订单将在05分30秒后关闭，请尽快确认出票");
   });
 
   it("shows hold banner while pay or issue hold is active", () => {

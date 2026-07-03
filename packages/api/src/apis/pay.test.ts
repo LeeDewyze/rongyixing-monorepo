@@ -53,4 +53,27 @@ describe("createPayApi", () => {
       data: { OutTradeNo: "pay-1", Type: "3" },
     });
   });
+
+  it("uses legacy ICBC train pay create version and numeric type", async () => {
+    const send = vi.fn().mockResolvedValue({ Url: "https://icbc.example/pay" });
+    const api = createPayApi({ send } as never);
+
+    await api.create({
+      channel: "tourist",
+      ProductType: "Train",
+      OrderId: "ord-icbc",
+      PayType: "Icbcpay",
+    });
+
+    expect(send).toHaveBeenCalledWith({
+      method: "TmcTouristOrderUrl-Pay-Create",
+      version: "2.0",
+      data: {
+        Channel: "App",
+        Type: 7,
+        OrderId: "ord-icbc",
+        IsApp: false,
+      },
+    });
+  });
 });

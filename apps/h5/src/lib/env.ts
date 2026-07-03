@@ -17,6 +17,10 @@ export function getApiBaseUrl(): string {
   return configured;
 }
 
+export function getLegacyAppBaseUrl(): string {
+  return (import.meta.env.VITE_API_BASE_URL?.trim() || "https://app.rongtrip.cn").replace(/\/$/, "");
+}
+
 const API_MODE_KEY = "ryx_api_mode";
 
 export function getApiMode(): "mock" | "proxy" | "direct" {
