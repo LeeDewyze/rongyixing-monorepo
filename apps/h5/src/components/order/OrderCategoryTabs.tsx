@@ -80,8 +80,8 @@ export function OrderChannelTabs({ activeId, onChange }: OrderCategoryTabsProps)
         aria-label="Order ownership"
       >
         {[
-          { channel: "tmc" as const, label: "企业" },
-          { channel: "tourist" as const, label: "个人" },
+          { channel: "tmc" as const, label: "因公" },
+          { channel: "tourist" as const, label: "因私" },
         ].map((option) => {
           const active = activeChannel === option.channel;
           return (
