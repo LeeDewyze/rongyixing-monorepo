@@ -184,7 +184,7 @@ describe("stripTrainInitBookDto", () => {
 });
 
 describe("stripTrainBookOrderDto", () => {
-  it("zeros passenger TravelPayType and swaps Seats with OriginalSearchResultSeats", () => {
+  it("zeros passenger TravelPayType and sends original search seats as Book Seats", () => {
     const originalSeats = [{ SeatType: 1, SeatTypeName: "硬座", Price: 189 }];
     const displaySeats = [{ SeatType: 1, SeatTypeName: "硬座上", Price: 189 }];
 
@@ -206,7 +206,7 @@ describe("stripTrainBookOrderDto", () => {
     expect(result.TravelPayType).toBe(2);
     expect(result.Passengers[0]?.TravelPayType).toBe(0);
     expect(result.Passengers[0]?.Train?.Seats).toEqual(originalSeats);
-    expect(result.Passengers[0]?.Train).not.toHaveProperty("OriginalSearchResultSeats");
+    expect(result.Passengers[0]?.Train?.OriginalSearchResultSeats).toEqual(originalSeats);
   });
 });
 
@@ -241,5 +241,160 @@ describe("prepareTrainBookSubmitDto", () => {
     });
 
     expect(result.AccountNumber).toBe("user@12306");
+  });
+
+  it("strips business-only fields from tourist train book payload", () => {
+    const originalSeats = [{ SeatType: 10, SeatTypeName: "二等座", Price: 553 }];
+    const displaySeats = [{ SeatType: 10, SeatTypeName: "二等座", Price: 553 }];
+
+    const result = prepareTrainBookSubmitDto({
+      channel: "tourist",
+      TravelFormId: "tf-001",
+      AgentId: "agent-1",
+      Channel: "客户H5",
+      TravelPayType: 2,
+      IsOfficialBooked: false,
+      AccountNumber: "should-remove",
+      Linkmans: [
+        {
+          Id: "authorized-account",
+          Name: "订单联系人",
+          Mobile: "13800000000",
+          Email: "contact@example.com",
+        },
+      ],
+      Passengers: [
+        {
+          ClientId: "passenger-1",
+          Mobile: "13800000001",
+          Email: "p1@example.com",
+          MessageLang: "cn",
+          Credentials: {
+            Id: "c1",
+            Name: "张三",
+            Type: 1,
+            CredentialsType: 1,
+            Gender: "M",
+            Number: "110101199001010000",
+            Surname: "张",
+            Givenname: "三",
+            Mobile: "13800000001",
+            Policy: { Name: "主要负责人" },
+          } as never,
+          Train: {
+            TrainNo: "G1",
+            BookSeatType: 10,
+            BookSeatLocation: "",
+            Seats: displaySeats,
+            OriginalSearchResultSeats: originalSeats,
+            InsuranceProducts: [],
+          },
+          Policy: { Name: "主要负责人" },
+          IllegalPolicy: "违反座位类型",
+          IllegalReason: "reason",
+          ExpenseType: "expense",
+          ApprovalId: "approval-1",
+          IsSkipApprove: true,
+          TravelPayType: 0,
+          TravelType: 2,
+          travelFormId: "tf-001",
+          travelNumber: "TN-001",
+          CostCenterCode: "CC",
+          CostCenterName: "成本中心",
+          OrganizationCode: "ORG",
+          OrganizationName: "组织",
+          OutNumbers: { TravelNumber: "TN-001" },
+        },
+      ],
+    });
+
+    const passenger = result.Passengers[0] as Record<string, unknown>;
+    const credentials = passenger.Credentials as Record<string, unknown>;
+
+    expect(result.TravelFormId).toBeUndefined();
+    expect(result.AgentId).toBe("agent-1");
+    expect(result.AccountNumber).toBeUndefined();
+    expect(result.TravelPayType).toBeUndefined();
+    expect(result.IsFromOffline).toBe(false);
+    expect(result.Linkmans).toEqual([
+      {
+        Name: "订单联系人",
+        Mobile: "13800000000",
+        Email: "contact@example.com",
+      },
+    ]);
+    expect(passenger.ClientId).toBeUndefined();
+    expect(passenger.MessageLang).toBe("cn");
+    expect(passenger.CardName).toBe("");
+    expect(passenger.CardNumber).toBe("");
+    expect(passenger.TicketNum).toBe("");
+    expect(passenger.Policy).toBeUndefined();
+    expect(passenger.IllegalPolicy).toBe("违反座位类型");
+    expect(passenger.IllegalReason).toBeUndefined();
+    expect(passenger.ExpenseType).toBeUndefined();
+    expect(passenger.ApprovalId).toBeUndefined();
+    expect(passenger.IsSkipApprove).toBeUndefined();
+    expect(passenger.TravelPayType).toBeUndefined();
+    expect(passenger.TravelType).toBeUndefined();
+    expect(passenger.travelFormId).toBeUndefined();
+    expect(passenger.travelNumber).toBeUndefined();
+    expect(passenger.CostCenterCode).toBeUndefined();
+    expect(passenger.CostCenterName).toBeUndefined();
+    expect(passenger.OrganizationCode).toBeUndefined();
+    expect(passenger.OrganizationName).toBeUndefined();
+    expect(passenger.OutNumbers).toBeUndefined();
+    expect(credentials).toEqual({
+      Type: 1,
+      Gender: "M",
+      Number: "110101199001010000",
+      Surname: "张",
+      Givenname: "三",
+    });
+    expect(result.Passengers[0]?.Train?.Seats).toEqual(originalSeats);
+    expect(result.Passengers[0]?.Train?.OriginalSearchResultSeats).toEqual(originalSeats);
+    expect(result.Passengers[0]?.Train?.InsuranceProducts).toEqual([]);
+  });
+
+  it("derives tourist credential surname and givenname from Name when missing", () => {
+    const result = prepareTrainBookSubmitDto({
+      channel: "tourist",
+      Passengers: [
+        {
+          ClientId: "passenger-1",
+          Mobile: "13800000001",
+          Credentials: {
+            Type: 1,
+            Name: "申晓杰",
+            Number: "410928199608225121",
+          },
+        },
+      ],
+    });
+
+    expect(result.Passengers[0]?.Credentials).toEqual({
+      Type: 1,
+      Number: "410928199608225121",
+      Surname: "申",
+      Givenname: "晓杰",
+    });
+  });
+
+  it("keeps TicketId on tourist train exchange initialize payload", () => {
+    const result = stripTrainInitBookDto({
+      channel: "tourist",
+      TicketId: "ticket-1",
+      Passengers: [
+        {
+          ClientId: "train-only",
+          Train: { TrainNo: "G1" },
+        },
+      ],
+    });
+
+    expect(result.TicketId).toBe("ticket-1");
+    expect(result.Passengers[0]).toEqual({
+      ClientId: "train-only",
+      Train: { TrainNo: "G1" },
+    });
   });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createAuthProxyApi } from "./auth-proxy.js";
+import { createAuthProxyApi, createIdentityApi } from "./auth-proxy.js";
 import { AUTH_FLOW_METHODS } from "../methods/auth-flow.js";
 import { createProxyClient } from "../proxy/proxy-client.js";
 import { successResponse } from "../proxy/response-adapter.js";
@@ -21,5 +21,26 @@ describe("createAuthProxyApi (mock mode)", () => {
   it("login returns ticket", async () => {
     const result = await auth.login({ Name: "demo", Password: "123" });
     expect(result.Ticket).toBe("t1");
+  });
+});
+
+describe("createIdentityApi (mock mode)", () => {
+  it("checks identity with legacy H5 login type", async () => {
+    let capturedData: unknown;
+    const proxy = createProxyClient({
+      baseUrl: "https://example.com",
+      mode: "mock",
+      mockHandler: async (method, data) => {
+        if (method === AUTH_FLOW_METHODS.IDENTITY_CHECK) {
+          capturedData = data;
+          return successResponse(true);
+        }
+        return successResponse(null);
+      },
+    });
+    const identity = createIdentityApi(proxy);
+
+    await expect(identity.check()).resolves.toBe(true);
+    expect(capturedData).toEqual({ LoginType: "H5" });
   });
 });

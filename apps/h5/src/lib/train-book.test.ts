@@ -4,6 +4,7 @@ import { TrainSeatType } from "@ryx/shared-types";
 import {
   canSelectTrainSeat,
   buildTrainInitBookDto,
+  buildTrainBookEntity,
   buildTrainOrderBookDto,
   createTrainPassengerBookForm,
   resolveTrainBookBillBreakdown,
@@ -91,6 +92,82 @@ describe("buildTrainInitBookDto", () => {
   });
 });
 
+describe("buildTrainBookEntity", () => {
+  it("keeps raw snapshot seat fields in OriginalSearchResultSeats", () => {
+    const selection = {
+      searchParams: {
+        Date: "2025-06-26",
+        FromStation: "BJP",
+        ToStation: "SHH",
+      },
+      train: {
+        Id: "g1",
+        TrainNo: "G1",
+        TrainCode: "G1",
+        StartTime: "2025-06-26 09:00",
+        ArrivalTime: "2025-06-26 13:28",
+        FromStation: "北京",
+        ToStation: "上海",
+        Seats: [
+          {
+            SeatType: TrainSeatType.HardBerthUp,
+            SeatTypeName: "硬卧上",
+            Price: 300,
+            Count: 10,
+          },
+        ],
+        searchSnapshot: {
+          TrainNo: "G1",
+          Seats: [
+            {
+              SeatType: TrainSeatType.HardBerthUp,
+              SeatTypeName: "硬卧上",
+              Price: 300,
+              SalesPrice: 300,
+              SettlePrice: 300,
+              TicketPrice: 300,
+              IsSupportChooseSeats: true,
+              isCanHB: "0",
+              BedInfos: [
+                {
+                  BedType: "1",
+                  BedTicketPrice: 244.5,
+                  BedTypeName: "下铺",
+                },
+              ],
+            },
+          ],
+        },
+      },
+      seat: {
+        SeatType: TrainSeatType.HardBerthUp,
+        SeatTypeName: "硬卧上",
+        Price: 300,
+        Count: 10,
+      },
+      selectedAt: Date.now(),
+      passengers: [],
+    } as TrainBookSelection;
+
+    const entity = buildTrainBookEntity(selection);
+
+    expect(entity.OriginalSearchResultSeats?.[0]).toMatchObject({
+      SeatType: TrainSeatType.HardBerthUp,
+      SeatTypeName: "硬卧",
+      SettlePrice: 300,
+      IsSupportChooseSeats: true,
+      isCanHB: "0",
+      BedInfos: [
+        {
+          BedType: "1",
+          BedTicketPrice: 244.5,
+          BedTypeName: "下铺",
+        },
+      ],
+    });
+  });
+});
+
 describe("buildTrainOrderBookDto seat preferences", () => {
   const selection: TrainBookSelection = {
     searchParams: {
@@ -137,6 +214,18 @@ describe("buildTrainOrderBookDto seat preferences", () => {
     expect(dto.Passengers[1]?.Train?.BookSeatLocation).toBe("2C");
   });
 
+  it("uses legacy default seat preference fallback for personal train book", () => {
+    const dto = buildTrainOrderBookDto({
+      selection,
+      passengers: passengers as never,
+      channel: "tourist",
+      travelMode: "personal",
+    });
+
+    expect(dto.Passengers[0]?.Train?.BookSeatLocation).toBe("2F");
+    expect(dto.Passengers[1]?.Train?.BookSeatLocation).toBe("2D");
+  });
+
   it("applies order-level notify language to every passenger", () => {
     const dto = buildTrainOrderBookDto({
       selection,
@@ -173,6 +262,8 @@ describe("buildTrainOrderBookDto seat preferences", () => {
       },
     });
 
+    expect(dto.Passengers[0]?.Mobile).toBe("13800000001");
+    expect(dto.Passengers[0]?.Credentials).not.toHaveProperty("Mobile");
     expect(dto.Linkmans).toEqual([
       {
         Name: "张三",
@@ -310,6 +401,49 @@ describe("validateTrainBookForms", () => {
         requireIllegalReason: false,
       }),
     ).toBeNull();
+  });
+
+  it("rejects duplicate passenger contact mobiles", () => {
+    const passengerTwo = {
+      id: "p2",
+      passenger: { Id: "p2", AccountId: "acc-2", Name: "Passenger Two", Mobile: "13800000002" },
+      credential: { Id: "c2", Name: "Passenger Two", AccountId: "acc-2", Mobile: "13800000002" },
+    };
+    const forms = {
+      p1: createTrainPassengerBookForm(passengers[0] as never),
+      p2: {
+        ...createTrainPassengerBookForm(passengerTwo as never),
+        mobileOptions: [{ value: "13800000001", checked: true }],
+      },
+    };
+
+    expect(
+      validateTrainBookForms({
+        passengers: [passengers[0], passengerTwo] as never,
+        forms,
+        outNumberFieldsByPassenger: { p1: [], p2: [] },
+        authorizedContacts: [],
+        requireIllegalReason: false,
+      }),
+    ).toBe("Passenger One与Passenger Two联系电话不能重复");
+  });
+
+  it("rejects order linkman mobile duplicated with passenger contact", () => {
+    const forms = {
+      p1: createTrainPassengerBookForm(passengers[0] as never),
+    };
+
+    expect(
+      validateTrainBookForms({
+        passengers: [passengers[0]] as never,
+        forms,
+        outNumberFieldsByPassenger: { p1: [] },
+        authorizedContacts: [],
+        orderLinkman: { Name: "张三", Mobile: "13800000001", Email: "" },
+        requireOrderLinkman: true,
+        requireIllegalReason: false,
+      }),
+    ).toBe("联系人手机号不能与乘车人联系电话重复");
   });
 });
 

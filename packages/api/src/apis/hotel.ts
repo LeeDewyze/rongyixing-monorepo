@@ -1186,7 +1186,7 @@ export function normalizeHotelBookResponse(res: unknown): HotelBookResponse {
   const raw = res as Record<string, unknown>;
   const orderId = String(raw.OrderId ?? raw.TradeNo ?? "");
   return {
-    ...(raw as HotelBookResponse),
+    ...(raw as unknown as HotelBookResponse),
     OrderId: orderId,
     OrderNumber: raw.OrderNumber != null ? String(raw.OrderNumber) : undefined,
     TradeNo: raw.TradeNo != null ? String(raw.TradeNo) : undefined,

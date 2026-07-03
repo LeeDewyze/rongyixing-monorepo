@@ -69,7 +69,7 @@ describe("resolveUrl", () => {
     ).toBe("/__ryx/TmcApiHotelUrl/Home/List");
   });
 
-  it("routes tourist service methods through legacy gateway proxy", () => {
+  it("routes tourist service methods to their direct service URLs", () => {
     const apiConfig = {
       Token: "t",
       Urls: {
@@ -87,35 +87,35 @@ describe("resolveUrl", () => {
         method: "TmcTouristFlightUrl-Home-Index",
         apiConfig,
       }),
-    ).toBe("/Home/Proxy");
+    ).toBe("/__ryx/TmcTouristFlightUrl/Home/Index");
     expect(
       resolveUrl({
         baseUrl: "",
         method: "TmcTouristTrainUrl-Home-Search",
         apiConfig,
       }),
-    ).toBe("/Home/Proxy");
+    ).toBe("/__ryx/TmcTouristTrainUrl/Home/Search");
     expect(
       resolveUrl({
         baseUrl: "",
         method: "TmcTouristHotelUrl-Home-List",
         apiConfig,
       }),
-    ).toBe("/Home/Proxy");
+    ).toBe("/__ryx/TmcTouristHotelUrl/Home/List");
     expect(
       resolveUrl({
         baseUrl: "",
         method: "TmcTouristBookUrl-Flight-Initialize",
         apiConfig,
       }),
-    ).toBe("/Home/Proxy");
+    ).toBe("/__ryx/TmcTouristBookUrl/Flight/Initialize");
     expect(
       resolveUrl({
         baseUrl: "",
         method: "TmcTouristOrderUrl-Order-Detail",
         apiConfig,
       }),
-    ).toBe("/Home/Proxy");
+    ).toBe("/__ryx/TmcTouristOrderUrl/Order/Detail");
   });
 
   it("routes Home-Tourist through legacy gateway proxy", () => {
@@ -158,7 +158,7 @@ describe("resolveUrl", () => {
     ).toBe("https://hotel-api.example.com/Home/Detail");
   });
 
-  it("keeps tourist methods on legacy gateway even in direct mode", () => {
+  it("keeps tourist methods on direct service URLs in direct mode", () => {
     expect(
       resolveUrl({
         baseUrl: "https://app.rongtrip.cn",
@@ -169,7 +169,7 @@ describe("resolveUrl", () => {
           Urls: { TmcTouristBookUrl: "https://tourist-book.example.com" },
         },
       }),
-    ).toBe("https://app.rongtrip.cn/Home/Proxy");
+    ).toBe("https://tourist-book.example.com/Hotel/Book");
   });
 
   it("uses LoginUrl from api config for auth login methods", () => {

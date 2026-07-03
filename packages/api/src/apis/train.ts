@@ -382,7 +382,7 @@ export function normalizeTrainBookResponse(res: unknown): TrainBookResponse {
   const tradeNo = readResponseId(payload.TradeNo);
   const orderId = readResponseId(payload.OrderId) || readResponseId(payload.Id) || tradeNo;
   return {
-    ...(payload as TrainBookResponse),
+    ...(payload as unknown as TrainBookResponse),
     OrderId: orderId,
     OrderNumber: typeof payload.OrderNumber === "string" ? payload.OrderNumber : undefined,
     TradeNo: tradeNo || undefined,
@@ -585,10 +585,14 @@ export function createTrainApi(proxy: ProxyClient): TrainApi {
     },
     async initializeBook(params) {
       const res = await proxy.send<unknown>({
-        method: isTouristChannel(params)
-          ? TOURIST_TRAIN_BOOK_METHODS.INIT
-          : TRAIN_FLOW_METHODS.INIT,
+        method:
+          isTouristChannel(params) && params.TicketId
+            ? TOURIST_TRAIN_BOOK_METHODS.EXCHANGE_INIT
+            : isTouristChannel(params)
+              ? TOURIST_TRAIN_BOOK_METHODS.INIT
+              : TRAIN_FLOW_METHODS.INIT,
         data: stripChannel(stripTrainInitBookDto(params)),
+        requestTimeout: 60,
         timeoutMs: 60_000,
       });
       return normalizeTrainInitBookResponse(res);
@@ -599,6 +603,7 @@ export function createTrainApi(proxy: ProxyClient): TrainApi {
           ? TOURIST_TRAIN_BOOK_METHODS.BOOK
           : TRAIN_FLOW_METHODS.BOOK,
         data: stripChannel(prepareTrainBookSubmitDto(params)),
+        requestTimeout: 60,
         timeoutMs: 60_000,
       });
       return normalizeTrainBookResponse(res);
@@ -608,10 +613,13 @@ export function createTrainApi(proxy: ProxyClient): TrainApi {
         method: isTouristChannel(params)
           ? TOURIST_TRAIN_BOOK_METHODS.EXCHANGE_BOOK
           : TRAIN_FLOW_METHODS.EXCHANGE_BOOK,
-        data: prepareTrainBookSubmitDto({
-          ...params,
-          IsExchange: true,
-        }),
+        data: stripChannel(
+          prepareTrainBookSubmitDto({
+            ...params,
+            IsExchange: true,
+          }),
+        ),
+        requestTimeout: 60,
         timeoutMs: 60_000,
       });
       return normalizeTrainBookResponse(res);

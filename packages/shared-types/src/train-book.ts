@@ -8,6 +8,9 @@ export interface TrainBookCredential {
   Number?: string;
   Type?: number | string;
   CredentialsType?: number | string;
+  Gender?: string;
+  Surname?: string;
+  Givenname?: string;
   AccountId?: string;
   Account?: { Id?: string };
 }
@@ -49,6 +52,9 @@ export interface TrainBookPassengerDto {
   Mobile?: string;
   Email?: string;
   MessageLang?: string;
+  CardName?: string;
+  CardNumber?: string;
+  TicketNum?: string;
   Credentials?: TrainBookCredential;
   Train?: TrainBookEntityDto;
   Policy?: Record<string, unknown>;
@@ -81,7 +87,7 @@ export interface TrainOrderBookDto {
   TravelFormId?: string;
   Passengers: TrainBookPassengerDto[];
   Linkmans?: TrainBookLinkmanDto[];
-  AgentId?: string;
+  AgentId?: string | number;
   Channel?: string;
   TravelPayType?: number;
   IsOfficialBooked?: boolean;
@@ -90,6 +96,8 @@ export interface TrainOrderBookDto {
   /** Train exchange book — legacy ExchangeBook payload. */
   IsExchange?: boolean;
   ExchangeTicketId?: string;
+  /** Train exchange initialize — legacy uses TicketId on init payload. */
+  TicketId?: string;
 }
 
 export type TrainInitBookParams = TrainOrderBookDto;

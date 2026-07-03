@@ -87,7 +87,7 @@ describe("createProxyClient proxy mode", () => {
 
     expect(capturedUrls).toEqual([
       "/Home/Setting",
-      "/Home/Proxy",
+      "/__ryx/TmcTouristTrainUrl/Home/Search",
     ]);
   });
 });

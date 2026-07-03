@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { ProxySendOptions } from "@ryx/shared-types";
 
 import {
   TRAIN_FLOW_METHODS,
@@ -461,7 +462,16 @@ describe("createTrainApi (mock mode)", () => {
       channel: "tourist",
       Passengers: [],
     });
+    await train.initializeBook({
+      channel: "tourist",
+      TicketId: "ticket-1",
+      Passengers: [],
+    });
     await train.submitBook({
+      channel: "tourist",
+      Passengers: [],
+    });
+    await train.submitExchangeBook({
       channel: "tourist",
       Passengers: [],
     });
@@ -470,10 +480,36 @@ describe("createTrainApi (mock mode)", () => {
       TOURIST_TRAIN_FLOW_METHODS.HOME_SEARCH,
       TOURIST_TRAIN_FLOW_METHODS.SCHEDULE,
       TOURIST_TRAIN_BOOK_METHODS.INIT,
+      TOURIST_TRAIN_BOOK_METHODS.EXCHANGE_INIT,
       TOURIST_TRAIN_BOOK_METHODS.BOOK,
+      TOURIST_TRAIN_BOOK_METHODS.EXCHANGE_BOOK,
     ]);
     expect(captured[0]?.data).not.toHaveProperty("channel");
     expect(captured[2]?.data).not.toHaveProperty("channel");
     expect(captured[3]?.data).not.toHaveProperty("channel");
+    expect(captured[4]?.data).not.toHaveProperty("channel");
+    expect(captured[5]?.data).not.toHaveProperty("channel");
+  });
+
+  it("sends legacy Timeout=60 on train initialize and book requests", async () => {
+    const sent: ProxySendOptions[] = [];
+    const train = createTrainApi({
+      async send(options) {
+        sent.push(options);
+        return { OrderId: "1", Passengers: [] };
+      },
+      async loadApiConfig() {
+        return null;
+      },
+      getApiConfig() {
+        return null;
+      },
+    });
+
+    await train.initializeBook({ channel: "tourist", Passengers: [] });
+    await train.submitBook({ channel: "tourist", Passengers: [] });
+    await train.submitExchangeBook({ channel: "tourist", Passengers: [] });
+
+    expect(sent.map((item) => item.requestTimeout)).toEqual([60, 60, 60]);
   });
 });

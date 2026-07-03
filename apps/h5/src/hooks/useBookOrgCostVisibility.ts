@@ -2,15 +2,18 @@ import { useQuery } from "@tanstack/react-query";
 
 import { getApi } from "@/lib/api";
 
-export function useBookOrgCostVisibility() {
+export function useBookOrgCostVisibility(options?: { enabled?: boolean }) {
+  const enabled = options?.enabled ?? true;
   const organizations = useQuery({
     queryKey: ["book", "organizations"],
     queryFn: () => getApi().book.getOrganizations(),
+    enabled,
     staleTime: 5 * 60_000,
   });
   const costCenters = useQuery({
     queryKey: ["book", "costCenters", ""],
     queryFn: () => getApi().book.getCostCenter(""),
+    enabled,
     staleTime: 5 * 60_000,
   });
 

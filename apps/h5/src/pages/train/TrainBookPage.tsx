@@ -71,6 +71,7 @@ import {
   resolveDefaultTrainPayType,
   resolveTrainBookTmcFlags,
   resolveTrainHoldMinutes,
+  TRAIN_PAY_TYPE_PERSON,
 } from "@/lib/train-book-pay";
 import { pollTrainCheckPay, shouldNavigateToPay } from "@/lib/train-book-check-pay";
 import { clearTrainBookSelection } from "@/lib/train-book-session";
@@ -93,14 +94,16 @@ export function TrainBookPage() {
   const [headerHeight, setHeaderHeight] = useState(FALLBACK_HEADER_HEIGHT);
   const { selection } = useTrainBookSelection();
   const { selected, setSelected } = usePassengerSelection(ProductType.Train);
-  const { showOrganizations, showCostCenter, organizations } = useBookOrgCostVisibility();
+  const travelMode = selection?.travelMode ?? loadHomeTravelMode();
+  const isBusinessMode = isBusinessTravelMode(travelMode);
+  const productChannel = resolveProductChannel(travelMode);
+  const { showOrganizations, showCostCenter, organizations } = useBookOrgCostVisibility({
+    enabled: isBusinessMode,
+  });
   const submitBook = useTrainSubmitBook();
   const submitExchangeBook = useTrainSubmitExchangeBook();
   const exchangeSession = loadTrainExchangeSession();
   const isExchangeBook = Boolean(exchangeSession?.ticketId);
-  const travelMode = selection?.travelMode ?? loadHomeTravelMode();
-  const isBusinessMode = isBusinessTravelMode(travelMode);
-  const productChannel = resolveProductChannel(travelMode);
   const bookReturnTo = "/train/book";
 
   const [redirecting, setRedirecting] = useState(false);
@@ -169,8 +172,16 @@ export function TrainBookPage() {
       travelMode,
       channel: productChannel,
       includeTrainOnlyPassenger: !isBusinessMode && bookPassengers.length === 0,
+      ticketId: exchangeSession?.ticketId,
     });
-  }, [selection, bookPassengers, isBusinessMode, travelMode, productChannel]);
+  }, [
+    selection,
+    bookPassengers,
+    isBusinessMode,
+    travelMode,
+    productChannel,
+    exchangeSession?.ticketId,
+  ]);
 
   const initBook = useTrainInitBook(initParams);
   const { forms, updateForm, toggleExpanded } = useTrainBookPassengerForms(
@@ -194,14 +205,22 @@ export function TrainBookPage() {
       Mobile: initialLinkman.Mobile ?? "",
       Email: initialLinkman.Email ?? "",
     });
-  }, [initBook.data?.Linkman, isBusinessMode, orderLinkman.Email, orderLinkman.Mobile, orderLinkman.Name]);
+  }, [
+    initBook.data?.Linkman,
+    isBusinessMode,
+    orderLinkman.Email,
+    orderLinkman.Mobile,
+    orderLinkman.Name,
+  ]);
 
   const payOptions = useMemo(
     () => parseTrainPayTypeOptions(initBook.data?.PayTypes),
     [initBook.data?.PayTypes],
   );
 
-  const resolvedPayType = travelPayType ?? resolveDefaultTrainPayType(payOptions);
+  const resolvedPayType = isBusinessMode
+    ? (travelPayType ?? resolveDefaultTrainPayType(payOptions))
+    : TRAIN_PAY_TYPE_PERSON;
   const { isShowServiceFee, isDisplayNotifyLanguage } = resolveTrainBookTmcFlags(initBook.data);
   const personHoldMinutes = resolveTrainHoldMinutes(initBook.data);
   const outNumberFieldsByPassenger = useMemo(
@@ -310,6 +329,8 @@ export function TrainBookPage() {
 
   async function executeSubmit(isOfficialBooked: boolean) {
     if (!selection) return;
+    const touristAgentId =
+      productChannel === "tourist" ? initBook.data?.TmcServices?.[0]?.Id : undefined;
 
     const bookDto = buildTrainOrderBookDto({
       selection,
@@ -325,6 +346,7 @@ export function TrainBookPage() {
       exchangeTicketId: exchangeSession?.ticketId,
       travelMode,
       channel: productChannel,
+      agentId: touristAgentId,
     });
 
     const isExchange = Boolean(exchangeSession?.ticketId);
@@ -469,51 +491,51 @@ export function TrainBookPage() {
                   );
 
                   return (
-                  <TrainBookPassengerCard
-                    key={passenger.id}
-                    grouped
-                    passenger={passenger}
-                    form={form}
-                    showOrganizations={isBusinessMode && showOrganizations}
-                    showCostCenter={isBusinessMode && showCostCenter}
-                    requiresApprover={requiresApprover}
-                    isSkipApproveEnabled={Boolean(initBook.data?.isSkipApprove)}
-                    outNumberFields={outNumberFields}
-                    illegalReasons={initBook.data?.IllegalReasons ?? []}
-                    expenseTypes={expenseTypeOptions}
-                    requiresIllegalReason={requiresIllegalReason}
-                    onRemove={
-                      !isBusinessMode && !isExchangeBook
-                        ? () => setRemovePassengerTarget(passenger)
-                        : undefined
-                    }
-                    onUpdateForm={updateForm}
-                    onToggleExpanded={() => toggleExpanded(passenger.id)}
-                    onOpenOrganization={() => setOrgSheetPassengerId(passenger.id)}
-                    onOpenCostCenter={() => setCostSheetPassengerId(passenger.id)}
-                    onOpenApprover={() => {
-                      setApproverPassengerId(passenger.id);
-                      setApproverSheetOpen(true);
-                    }}
-                    onOpenOutNumberPicker={(field) =>
-                      setOutNumberPicker({ passengerId: passenger.id, field })
-                    }
-                    onChangeCredential={setCredentialSheetPassenger}
-                    serviceFee={
-                      isShowServiceFee && serviceFee > 0 ? (
-                        <FlightBookServiceFeeRows
-                          sectioned
-                          serviceFees={[
-                            {
-                              passengerId: passenger.id,
-                              passengerName: passenger.credential.Name ?? "",
-                              fee: serviceFee,
-                            },
-                          ]}
-                        />
-                      ) : null
-                    }
-                  />
+                    <TrainBookPassengerCard
+                      key={passenger.id}
+                      grouped
+                      passenger={passenger}
+                      form={form}
+                      showOrganizations={isBusinessMode && showOrganizations}
+                      showCostCenter={isBusinessMode && showCostCenter}
+                      requiresApprover={requiresApprover}
+                      isSkipApproveEnabled={Boolean(initBook.data?.isSkipApprove)}
+                      outNumberFields={outNumberFields}
+                      illegalReasons={initBook.data?.IllegalReasons ?? []}
+                      expenseTypes={expenseTypeOptions}
+                      requiresIllegalReason={requiresIllegalReason}
+                      onRemove={
+                        !isBusinessMode && !isExchangeBook
+                          ? () => setRemovePassengerTarget(passenger)
+                          : undefined
+                      }
+                      onUpdateForm={updateForm}
+                      onToggleExpanded={() => toggleExpanded(passenger.id)}
+                      onOpenOrganization={() => setOrgSheetPassengerId(passenger.id)}
+                      onOpenCostCenter={() => setCostSheetPassengerId(passenger.id)}
+                      onOpenApprover={() => {
+                        setApproverPassengerId(passenger.id);
+                        setApproverSheetOpen(true);
+                      }}
+                      onOpenOutNumberPicker={(field) =>
+                        setOutNumberPicker({ passengerId: passenger.id, field })
+                      }
+                      onChangeCredential={setCredentialSheetPassenger}
+                      serviceFee={
+                        isShowServiceFee && serviceFee > 0 ? (
+                          <FlightBookServiceFeeRows
+                            sectioned
+                            serviceFees={[
+                              {
+                                passengerId: passenger.id,
+                                passengerName: passenger.credential.Name ?? "",
+                                fee: serviceFee,
+                              },
+                            ]}
+                          />
+                        ) : null
+                      }
+                    />
                   );
                 })}
 

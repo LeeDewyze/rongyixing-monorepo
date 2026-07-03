@@ -70,7 +70,7 @@ function resolveServiceUrl(
 }
 
 function isProxyOnlyMethod(method: string): boolean {
-  return PROXY_ONLY_METHODS.has(method) || method.startsWith("TmcTourist");
+  return PROXY_ONLY_METHODS.has(method);
 }
 
 /** Resolve POST URL from Method string (beeant getUrl logic). */

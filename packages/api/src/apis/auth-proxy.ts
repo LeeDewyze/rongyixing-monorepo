@@ -75,10 +75,10 @@ export function createIdentityApi(proxy: ProxyClient): IdentityApi {
         data: ticket ? { Ticket: ticket } : {},
       });
     },
-    check(ticket) {
+    check() {
       return proxy.send<boolean>({
         method: AUTH_FLOW_METHODS.IDENTITY_CHECK,
-        data: ticket ? { Ticket: ticket } : {},
+        data: { LoginType: H5_LOGIN_TYPE },
       });
     },
     getWebSocketUrl() {

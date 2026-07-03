@@ -133,19 +133,19 @@ function stripTrainEntityForInit(
   return next;
 }
 
-/** Book — swap Seats with OriginalSearchResultSeats and drop the snapshot field. */
+/** Book — legacy sends original search seats as Seats for backend anti-tamper checks. */
 function stripTrainEntityForBook(
   train: TrainBookEntityDto | undefined,
 ): TrainBookEntityDto | undefined {
   if (!train) return train;
 
-  const wireTrain = train as TrainBookEntityDto & {
-    OriginalSearchResultSeats?: TrainBookSeatDto[];
-  };
-  const { InsuranceProducts: _insurance, OriginalSearchResultSeats, Seats, ...rest } = wireTrain;
+  const { OriginalSearchResultSeats, Seats, ...rest } = train;
   const wireSeats = OriginalSearchResultSeats?.length ? OriginalSearchResultSeats : Seats;
-  if (!wireSeats?.length) return rest;
-  return { ...rest, Seats: wireSeats };
+  return {
+    ...rest,
+    ...(wireSeats?.length ? { Seats: wireSeats } : {}),
+    ...(OriginalSearchResultSeats?.length ? { OriginalSearchResultSeats } : {}),
+  };
 }
 
 function stripCredentialsForWire(
@@ -157,6 +157,67 @@ function stripCredentialsForWire(
     next.Policy = stripStaffTravelPolicyForWire(next.Policy as Record<string, unknown>);
   }
   return next as TrainOrderBookDto["Passengers"][number]["Credentials"];
+}
+
+function stripPersonalCredentialsForBook(
+  credentials: TrainOrderBookDto["Passengers"][number]["Credentials"],
+): TrainOrderBookDto["Passengers"][number]["Credentials"] {
+  if (!credentials) return credentials;
+  const raw = credentials as Record<string, unknown>;
+  const type = raw.Type ?? raw.CredentialsType;
+  const nameParts = resolveCredentialNameParts(raw);
+  return {
+    ...(type != null ? { Type: type as number | string } : {}),
+    ...(raw.Gender != null ? { Gender: raw.Gender as string } : {}),
+    ...(raw.Number != null ? { Number: raw.Number as string } : {}),
+    ...(nameParts.Surname ? { Surname: nameParts.Surname } : {}),
+    ...(nameParts.Givenname ? { Givenname: nameParts.Givenname } : {}),
+  };
+}
+
+function resolveCredentialNameParts(raw: Record<string, unknown>): {
+  Surname: string;
+  Givenname: string;
+} {
+  const surname = typeof raw.Surname === "string" ? raw.Surname.trim() : "";
+  const givenname = typeof raw.Givenname === "string" ? raw.Givenname.trim() : "";
+  if (surname && givenname) {
+    return { Surname: surname, Givenname: givenname };
+  }
+
+  const name = typeof raw.Name === "string" ? raw.Name.trim() : "";
+  if (!name) {
+    return { Surname: surname, Givenname: givenname };
+  }
+
+  if (name.includes("/")) {
+    const [left = "", ...right] = name.split("/");
+    return {
+      Surname: surname || left.trim(),
+      Givenname: givenname || right.join("/").trim() || left.trim(),
+    };
+  }
+
+  const parts = name.split(/\s+/).filter(Boolean);
+  if (parts.length > 1) {
+    return {
+      Surname: surname || parts[0] || "",
+      Givenname: givenname || parts.slice(1).join(" "),
+    };
+  }
+
+  const chars = [...name];
+  if (chars.length > 1) {
+    return {
+      Surname: surname || chars[0] || "",
+      Givenname: givenname || chars.slice(1).join(""),
+    };
+  }
+
+  return {
+    Surname: surname || name,
+    Givenname: givenname || name,
+  };
 }
 
 function stripPassengerForPersonalInit(
@@ -200,6 +261,46 @@ function stripPassengerForBook(
   return next;
 }
 
+function stripPassengerForPersonalBook(
+  passenger: TrainOrderBookDto["Passengers"][number],
+): TrainOrderBookDto["Passengers"][number] {
+  const {
+    ClientId: _clientId,
+    Policy: _policy,
+    IllegalReason: _illegalReason,
+    ExpenseType: _expenseType,
+    ApprovalId: _approvalId,
+    IsSkipApprove: _isSkipApprove,
+    TravelPayType: _travelPayType,
+    TravelType: _travelType,
+    travelFormId: _travelFormId,
+    travelNumber: _travelNumber,
+    CostCenterCode: _costCenterCode,
+    CostCenterName: _costCenterName,
+    OrganizationCode: _organizationCode,
+    OrganizationName: _organizationName,
+    OutNumbers: _outNumbers,
+    ...rest
+  } = passenger;
+
+  const next = {
+    ...rest,
+    MessageLang: passenger.MessageLang || "cn",
+    CardName: passenger.CardName ?? "",
+    CardNumber: passenger.CardNumber ?? "",
+    TicketNum: passenger.TicketNum ?? "",
+    IllegalPolicy: passenger.IllegalPolicy ?? "",
+    Email: passenger.Email ?? "",
+  } as TrainOrderBookDto["Passengers"][number];
+  if (next.Credentials) {
+    next.Credentials = stripPersonalCredentialsForBook(next.Credentials);
+  }
+  if (next.Train) {
+    next.Train = stripTrainEntityForBook(next.Train);
+  }
+  return next;
+}
+
 /** Strip heavy fields before Train-Initialize — aligned with legacy api.md. */
 export function stripTrainInitBookDto(dto: TrainOrderBookDto): TrainOrderBookDto {
   const isPersonalInit = dto.channel === "tourist";
@@ -212,6 +313,9 @@ export function stripTrainInitBookDto(dto: TrainOrderBookDto): TrainOrderBookDto
     TravelFormId: travelFormId ?? "",
     Passengers: passengers,
   };
+  if (dto.TicketId) {
+    result.TicketId = dto.TicketId;
+  }
   if (dto.channel) {
     result.channel = dto.channel;
   }
@@ -237,6 +341,32 @@ export function stripTrainOrderBookDto(dto: TrainOrderBookDto): TrainOrderBookDt
 
 /** Legacy `onBook` final transforms before Train-Book proxy send. */
 export function prepareTrainBookSubmitDto(dto: TrainOrderBookDto): TrainOrderBookDto {
+  if (dto.channel === "tourist") {
+    const passengers = dto.Passengers.map(stripPassengerForPersonalBook);
+    const result: TrainOrderBookDto = {
+      ...dto,
+      IsFromOffline: dto.IsFromOffline ?? false,
+      Passengers: passengers,
+    };
+
+    delete result.TravelFormId;
+    delete result.AccountNumber;
+    delete result.TravelPayType;
+    result.Linkmans = result.Linkmans?.map(({ Id: _id, ...linkman }) => ({
+      ...linkman,
+      Email: linkman.Email ?? "",
+    })).filter((linkman) => linkman.Name || linkman.Mobile || linkman.Email);
+    if (!result.Linkmans?.length) {
+      delete result.Linkmans;
+    }
+
+    if (result.IsExchange && result.ExchangeTicketId) {
+      result.ExchangeTicketId = String(result.ExchangeTicketId);
+    }
+
+    return result;
+  }
+
   const base = stripTrainBookOrderDto(dto);
 
   const passengers = base.Passengers.map((passenger) => {

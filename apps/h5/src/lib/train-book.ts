@@ -11,10 +11,7 @@ import type {
   TrainInitBookResponse,
   TrainOrderBookDto,
 } from "@ryx/shared-types";
-import {
-  canSelectTrainSeatType,
-  credentialDisplayNumber,
-} from "@ryx/shared-types";
+import { canSelectTrainSeatType, credentialDisplayNumber } from "@ryx/shared-types";
 import { buildOriginalSearchResultSeats, formatBookSeatLocation } from "@ryx/api";
 
 import { buildSubmitCredentials } from "@/lib/flight-book";
@@ -30,6 +27,7 @@ import type { TrainBookSelection } from "@/lib/train-book-session";
 import type { HomeTravelMode } from "@/config/home-assets";
 
 export const TRAIN_BOOK_CHANNEL = "客户H5";
+const BERTH_SUFFIX_PATTERN = /[上中下]$/;
 
 export { canSelectTrainSeatType as canSelectTrainSeat };
 
@@ -113,6 +111,21 @@ function mergeSeatPoliciesOntoSnapshot(
   });
 }
 
+function buildOriginalSearchResultSeatsFromSnapshot(
+  snapshotSeats: Record<string, unknown>[],
+): TrainBookEntityDto["OriginalSearchResultSeats"] {
+  return snapshotSeats.map((seat) => {
+    const SeatTypeName =
+      typeof seat.SeatTypeName === "string"
+        ? seat.SeatTypeName.replace(BERTH_SUFFIX_PATTERN, "")
+        : seat.SeatTypeName;
+    return {
+      ...seat,
+      ...(SeatTypeName != null ? { SeatTypeName } : {}),
+    };
+  }) as TrainBookEntityDto["OriginalSearchResultSeats"];
+}
+
 /** Build Train entity from Home-Search snapshot — aligned with legacy Initialize api.md. */
 export function buildTrainBookEntity(
   selection: TrainBookSelection,
@@ -128,7 +141,9 @@ export function buildTrainBookEntity(
       ? (entity.Seats as Record<string, unknown>[])
       : [];
     entity.Seats = mergeSeatPoliciesOntoSnapshot(snapshotSeats, displaySeats);
-    entity.OriginalSearchResultSeats = buildOriginalSearchResultSeats(displaySeats);
+    entity.OriginalSearchResultSeats = snapshotSeats.length
+      ? buildOriginalSearchResultSeatsFromSnapshot(snapshotSeats)
+      : buildOriginalSearchResultSeats(displaySeats);
     entity.BookSeatType = seat.SeatType;
     entity.BookSeatLocation = options?.bookSeatLocation ?? "";
     return entity as TrainBookEntityDto;
@@ -170,22 +185,19 @@ function buildTrainPassengerPolicy(info: PassengerBookInfo): Record<string, unkn
 
 function buildTrainPassengerCredentials(
   info: PassengerBookInfo,
-  mobile?: string,
 ): TrainBookPassengerDto["Credentials"] {
   const accountId = resolveTrainAccountId(info);
-  const credentials = buildSubmitCredentials(info, accountId) as TrainBookPassengerDto["Credentials"];
+  const credentials = buildSubmitCredentials(info, accountId) as
+    | (TrainBookPassengerDto["Credentials"] & { Mobile?: unknown })
+    | undefined;
   if (!credentials) return credentials;
-  if (mobile) {
-    return { ...credentials, Mobile: mobile };
-  }
-  return credentials;
+  const { Mobile: _mobile, ...rest } = credentials;
+  return rest as TrainBookPassengerDto["Credentials"];
 }
 
-function resolveTrainPassengerFormMobile(
-  form?: TrainPassengerBookForm,
-  fallback?: string,
-): string {
-  const checked = form?.mobileOptions.filter((item) => item.checked).map((item) => item.value) ?? [];
+function resolveTrainPassengerFormMobile(form?: TrainPassengerBookForm, fallback?: string): string {
+  const checked =
+    form?.mobileOptions.filter((item) => item.checked).map((item) => item.value) ?? [];
   let mobile = checked.join(",");
   if (form?.otherMobile.trim()) {
     mobile = mobile ? `${mobile},${form.otherMobile.trim()}` : form.otherMobile.trim();
@@ -200,6 +212,32 @@ function resolveTrainPassengerFormEmail(form?: TrainPassengerBookForm): string {
     email = email ? `${email},${form.otherEmail.trim()}` : form.otherEmail.trim();
   }
   return email;
+}
+
+function splitTrainContactMobiles(mobile: string): string[] {
+  return mobile
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function buildLegacyDefaultBookSeatLocations(
+  passengerCount: number,
+  selectedLocations?: string[],
+): string[] {
+  const explicit = new Set(
+    (selectedLocations ?? [])
+      .map((item) => formatBookSeatLocation(item))
+      .filter((item): item is string => Boolean(item)),
+  );
+  const fallbackPool = ["1A", "1B", "1C", "1D", "1F", "2A", "2B", "2C", "2D", "2F"].filter(
+    (item) => !explicit.has(item),
+  );
+
+  return Array.from({ length: passengerCount }, (_, index) => {
+    const selected = formatBookSeatLocation(selectedLocations?.[index]);
+    return selected ?? fallbackPool.pop() ?? "";
+  });
 }
 
 function normalizeOrderLinkman(linkman?: TrainBookLinkmanDto): TrainBookLinkmanDto | null {
@@ -226,10 +264,11 @@ export function buildTrainInitBookDto(input: {
   selection: TrainBookSelection;
   passengers: PassengerBookInfo[];
   travelFormId?: string;
-  agentId?: string;
+  agentId?: string | number;
   travelMode?: HomeTravelMode;
   channel?: "tmc" | "tourist";
   includeTrainOnlyPassenger?: boolean;
+  ticketId?: string;
 }): TrainOrderBookDto {
   const {
     selection,
@@ -239,6 +278,7 @@ export function buildTrainInitBookDto(input: {
     travelMode,
     channel,
     includeTrainOnlyPassenger,
+    ticketId,
   } = input;
   const includeTravelForm = isBusinessTravelMode(travelMode);
   const trainEntity = buildTrainBookEntity(selection);
@@ -247,7 +287,8 @@ export function buildTrainInitBookDto(input: {
     const cred = info.credential;
     const clientId = resolveTrainInitClientId(info);
     const passengerTravelFormId = includeTravelForm
-      ? travelFormId ?? ("travelFormId" in info.passenger ? info.passenger.travelFormId : undefined)
+      ? (travelFormId ??
+        ("travelFormId" in info.passenger ? info.passenger.travelFormId : undefined))
       : undefined;
     const passengerPolicy = buildTrainPassengerPolicy(info);
 
@@ -258,12 +299,15 @@ export function buildTrainInitBookDto(input: {
       Mobile: cred.Mobile,
       Policy: passengerPolicy,
     };
-    if (includeTravelForm && passengerTravelFormId) passengerDto.travelFormId = passengerTravelFormId;
+    if (includeTravelForm && passengerTravelFormId)
+      passengerDto.travelFormId = passengerTravelFormId;
     return passengerDto;
   });
   if (passengerDtos.length === 0 && includeTrainOnlyPassenger) {
     passengerDtos.push({
-      ClientId: String(selection.train.Id ?? selection.train.TrainNo ?? selection.train.TrainCode ?? "train"),
+      ClientId: String(
+        selection.train.Id ?? selection.train.TrainNo ?? selection.train.TrainCode ?? "train",
+      ),
       Train: { ...trainEntity },
       Policy: selection.policy as Record<string, unknown> | undefined,
     });
@@ -281,6 +325,7 @@ export function buildTrainInitBookDto(input: {
   }
 
   if (agentId) dto.AgentId = agentId;
+  if (ticketId) dto.TicketId = ticketId;
   return dto;
 }
 
@@ -291,7 +336,7 @@ export function buildTrainOrderBookDto(input: {
   travelFormId?: string;
   travelPayType?: number;
   authorizedContacts?: FlightAuthorizedContact[];
-  agentId?: string;
+  agentId?: string | number;
   bookSeatLocations?: string[];
   isOfficialBooked?: boolean;
   accountNumber12306?: string;
@@ -324,6 +369,10 @@ export function buildTrainOrderBookDto(input: {
   const trainEntityBase = buildTrainBookEntity(selection);
   const rules = selection.policy?.Rules?.filter(Boolean) ?? [];
   const illegalPolicy = rules.length ? rules.join(",") : undefined;
+  const legacyBookSeatLocations =
+    channel === "tourist"
+      ? buildLegacyDefaultBookSeatLocations(passengers.length, bookSeatLocations)
+      : undefined;
 
   const passengerDtos: TrainBookPassengerDto[] = passengers.map((info, index) => {
     const cred = info.credential;
@@ -331,16 +380,16 @@ export function buildTrainOrderBookDto(input: {
     const form = passengerForms?.[info.id];
     const mobile = resolveTrainPassengerFormMobile(form, cred.Mobile);
     const email = resolveTrainPassengerFormEmail(form);
-    const seatPreference = bookSeatLocations?.[index]?.trim();
+    const seatPreference = legacyBookSeatLocations?.[index] ?? bookSeatLocations?.[index]?.trim();
     const passengerPolicy = buildTrainPassengerPolicy(info);
 
     const passengerDto: TrainBookPassengerDto = {
       ClientId: clientId,
       Train: {
         ...trainEntityBase,
-        BookSeatLocation: formatBookSeatLocation(seatPreference) ?? "",
+        BookSeatLocation: seatPreference ? (formatBookSeatLocation(seatPreference) ?? "") : "",
       },
-      Credentials: buildTrainPassengerCredentials(info, mobile),
+      Credentials: buildTrainPassengerCredentials(info),
       Mobile: mobile,
       Email: email || undefined,
       MessageLang: globalNotifyLanguage ?? form?.notifyLanguage ?? "cn",
@@ -436,14 +485,26 @@ export function validateTrainBookForms(input: {
     requireIllegalReason,
   } = input;
 
+  const passengerMobileOwners = new Map<string, string>();
+
   for (const passenger of passengers) {
     const form = forms[passenger.id];
     if (!form) return "请完善旅客信息";
 
     const mobile = resolveTrainPassengerFormMobile(form);
     if (!mobile) return `请填写${passenger.credential.Name ?? "旅客"}联系电话`;
+    const passengerName = passenger.credential.Name ?? "旅客";
+    for (const item of splitTrainContactMobiles(mobile)) {
+      const firstOwner = passengerMobileOwners.get(item);
+      if (firstOwner) return `${firstOwner}与${passengerName}联系电话不能重复`;
+      passengerMobileOwners.set(item, passengerName);
+    }
 
-    if (passengerRequiresTrainApprover(passenger, staffs) && !form.isSkipApprove && !form.approvalId) {
+    if (
+      passengerRequiresTrainApprover(passenger, staffs) &&
+      !form.isSkipApprove &&
+      !form.approvalId
+    ) {
       return `请选择${passenger.credential.Name ?? "旅客"}审批人`;
     }
 
@@ -460,6 +521,10 @@ export function validateTrainBookForms(input: {
   if (requireOrderLinkman) {
     const linkmanError = validateOrderLinkman(orderLinkman);
     if (linkmanError) return linkmanError;
+    const normalizedLinkman = normalizeOrderLinkman(orderLinkman);
+    for (const item of splitTrainContactMobiles(normalizedLinkman?.Mobile ?? "")) {
+      if (passengerMobileOwners.has(item)) return "联系人手机号不能与乘车人联系电话重复";
+    }
   } else {
     const contactError = validateAuthorizedContacts(authorizedContacts);
     if (contactError) return contactError;
