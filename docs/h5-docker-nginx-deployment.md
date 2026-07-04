@@ -5,12 +5,12 @@
 将本地 `localhost:5173` 的 Vite dev proxy 模式迁移到服务器生产部署：
 
 ```text
-浏览器 -> https://rtesp.songguoren.site
+浏览器 -> http://82.156.247.243
 服务器 Nginx -> 127.0.0.1:18080
 Docker 内 Nginx -> H5 静态文件 + rtesp 后端代理
 ```
 
-浏览器只访问 `rtesp.songguoren.site`，接口请求也使用同域路径，例如 `/Home/Setting`、`/Jyx/LoginByRyx`、`/__ryx/TmcTouristTrainUrl/Home/Search`。真实 rtesp 后端由 Docker 内 Nginx 代发，从而避免浏览器跨域和 HTTPS 页面访问 HTTP 后端的 mixed content 问题。
+域名备案完成前，浏览器只访问服务器 IP `82.156.247.243`，接口请求也使用同源路径，例如 `/Home/Setting`、`/Jyx/LoginByRyx`、`/__ryx/TmcTouristTrainUrl/Home/Search`。真实 rtesp 后端由 Docker 内 Nginx 代发，从而避免浏览器跨域问题。
 
 ## 本地与生产的对应关系
 
@@ -24,7 +24,7 @@ Vite proxy -> http://app.rtesp.com/Home/Setting
 生产部署：
 
 ```text
-浏览器 -> https://rtesp.songguoren.site/Home/Setting
+浏览器 -> http://82.156.247.243/Home/Setting
 Nginx proxy -> http://app.rtesp.com/Home/Setting
 ```
 
@@ -40,7 +40,7 @@ Nginx proxy -> http://app.rtesp.com/Home/Setting
 | `deploy/scripts/deploy-h5.sh` | 一键构建并启动 H5 Docker 服务，可选安装服务器 Nginx 入口配置 |
 | `deploy/scripts/stop-h5.sh` | 停止 H5 Docker 服务，可选删除镜像 |
 | `deploy/nginx/h5.conf` | Docker 内 Nginx：托管 SPA，并复刻 Vite dev proxy 的后端转发 |
-| `deploy/nginx/rtesp.songguoren.site.conf` | 服务器公网 Nginx 入口示例：域名转发到本机 Docker 服务 |
+| `deploy/nginx/rtesp.songguoren.site.conf` | 服务器公网 Nginx 入口示例：默认接管 80 端口，支持直接用 IP 访问 |
 
 ## 容器内 DNS
 
@@ -50,7 +50,15 @@ Docker 内 Nginx 使用运行期 DNS 解析：
 resolver 127.0.0.11 223.5.5.5 8.8.8.8 valid=300s ipv6=off;
 ```
 
-后端代理使用变量 `proxy_pass`，避免 Nginx 在容器启动时因为某个 rtesp 域名临时解析失败而直接退出。`/__ryx/{UrlKey}/...` 会先 rewrite 掉 `/__ryx/{UrlKey}` 前缀，再转发到对应后端服务。
+`/__ryx/{UrlKey}/...` 使用 Nginx 原生前缀替换：
+
+```nginx
+location ^~ /__ryx/TmcApiHomeUrl/ {
+  proxy_pass http://api-tmc.rtesp.com/;
+}
+```
+
+`proxy_pass` 末尾的 `/` 会把匹配到的 `/__ryx/TmcApiHomeUrl/` 前缀替换掉，因此浏览器请求 `/__ryx/TmcApiHomeUrl/Resource/DomesticHotelCity` 时，真实后端收到的是 `/Resource/DomesticHotelCity`。
 
 ## 构建顺序
 
@@ -145,8 +153,8 @@ HTTP 版本：
 
 ```nginx
 server {
-  listen 80;
-  server_name rtesp.songguoren.site;
+  listen 80 default_server;
+  server_name _;
 
   location / {
     proxy_http_version 1.1;
@@ -158,6 +166,14 @@ server {
   }
 }
 ```
+
+备案完成前，可以直接访问：
+
+```text
+http://82.156.247.243
+```
+
+备案完成后，再把 `server_name _;` 改成正式域名，并按需启用 HTTPS。
 
 启用后检查并重载：
 
