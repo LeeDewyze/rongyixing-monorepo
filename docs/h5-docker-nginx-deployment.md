@@ -42,6 +42,17 @@ Nginx proxy -> http://app.rtesp.com/Home/Setting
 | `deploy/nginx/h5.conf` | Docker 内 Nginx：托管 SPA，并复刻 Vite dev proxy 的后端转发 |
 | `deploy/nginx/rtesp.songguoren.site.conf` | 服务器公网 Nginx 入口示例：域名转发到本机 Docker 服务 |
 
+## 构建顺序
+
+Docker 镜像内是干净环境，H5 构建前必须先构建 workspace 依赖：
+
+```bash
+pnpm build:workspace
+pnpm --filter @ryx/h5 build
+```
+
+原因是 `@ryx/shared-types`、`@ryx/api`、`@ryx/mock` 的包入口和类型声明都指向各自的 `dist/`。如果跳过 workspace 构建，H5 的 `tsc -b` 会在服务器镜像内报 `Cannot find module '@ryx/shared-types'`、`Cannot find module '@ryx/api'` 等错误。
+
 ## 构建参数
 
 默认构建参数：
