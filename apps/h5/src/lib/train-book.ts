@@ -8,6 +8,7 @@ import type {
   TrainBookEntityDto,
   TrainBookLinkmanDto,
   TrainBookPassengerDto,
+  TrainBookPolicy,
   TrainInitBookResponse,
   TrainOrderBookDto,
 } from "@ryx/shared-types";
@@ -23,6 +24,11 @@ import {
 import { splitContactOptions, findInitStaffForPassenger } from "@/lib/flight-book-passenger-form";
 import { buildAuthorizedLinkmans, validateAuthorizedContacts } from "@/lib/flight-book-contacts";
 import { isBusinessTravelMode, resolveFlightTravelType } from "@/lib/flight-travel-mode";
+import {
+  resolveTrainPassengerApprovalId,
+  shouldAllowSelectTrainApprover,
+  validatePassengerTrainApprover,
+} from "@/lib/train-book-approval";
 import type { TrainBookSelection } from "@/lib/train-book-session";
 import type { HomeTravelMode } from "@/config/home-assets";
 
@@ -80,14 +86,6 @@ export function resolvePassengerServiceFee(
     return Number.isFinite(parsed) ? parsed : 0;
   }
   return 0;
-}
-
-export function passengerRequiresTrainApprover(
-  passenger: PassengerBookInfo,
-  staffs: FlightInitStaff[] | undefined,
-): boolean {
-  const staff = findInitStaffForPassenger(passenger, staffs);
-  return Boolean(staff?.Approvers?.length);
 }
 
 function mergeSeatPoliciesOntoSnapshot(
@@ -345,6 +343,8 @@ export function buildTrainOrderBookDto(input: {
   travelMode?: HomeTravelMode;
   channel?: "tmc" | "tourist";
   orderLinkman?: TrainBookLinkmanDto;
+  init?: TrainInitBookResponse;
+  isExchangeBook?: boolean;
 }): TrainOrderBookDto {
   const {
     selection,
@@ -362,8 +362,11 @@ export function buildTrainOrderBookDto(input: {
     travelMode,
     channel,
     orderLinkman,
+    init,
+    isExchangeBook,
   } = input;
   const includeTravelForm = isBusinessTravelMode(travelMode);
+  const policy = selection.policy;
   const normalizedOrderLinkman = normalizeOrderLinkman(orderLinkman);
 
   const trainEntityBase = buildTrainBookEntity(selection);
@@ -382,6 +385,16 @@ export function buildTrainOrderBookDto(input: {
     const email = resolveTrainPassengerFormEmail(form);
     const seatPreference = legacyBookSeatLocations?.[index] ?? bookSeatLocations?.[index]?.trim();
     const passengerPolicy = buildTrainPassengerPolicy(info);
+    const staff = findInitStaffForPassenger(info, init?.Staffs);
+    const showApproverPicker =
+      includeTravelForm &&
+      shouldAllowSelectTrainApprover({
+        init,
+        policy,
+        staff,
+        passenger: info,
+        isExchangeBook,
+      });
 
     const passengerDto: TrainBookPassengerDto = {
       ClientId: clientId,
@@ -395,22 +408,33 @@ export function buildTrainOrderBookDto(input: {
       MessageLang: globalNotifyLanguage ?? form?.notifyLanguage ?? "cn",
       Policy: passengerPolicy,
       IllegalPolicy: illegalPolicy,
-      IllegalReason: form?.illegalReason || form?.otherIllegalReason || undefined,
-      ExpenseType: form?.expenseTypeId || undefined,
-      ApprovalId: form?.approvalId || undefined,
-      IsSkipApprove: form?.isSkipApprove,
+      IllegalReason: includeTravelForm
+        ? form?.illegalReason || form?.otherIllegalReason || undefined
+        : undefined,
+      ExpenseType: includeTravelForm ? form?.expenseTypeId || undefined : undefined,
+      ApprovalId: includeTravelForm
+        ? resolveTrainPassengerApprovalId({ form, showPicker: showApproverPicker })
+        : undefined,
+      IsSkipApprove: includeTravelForm && showApproverPicker ? form?.isSkipApprove : undefined,
       TravelType: resolveFlightTravelType(travelMode),
-      CostCenterCode: form?.costCenter.code || form?.otherCostCenterCode || undefined,
-      CostCenterName: form?.costCenter.name || form?.otherCostCenterName || undefined,
-      OrganizationName:
-        form?.organization.name ||
-        form?.otherOrganizationName ||
-        (typeof (info.passenger as { OrgName?: string }).OrgName === "string"
-          ? (info.passenger as { OrgName?: string }).OrgName
-          : undefined),
-      OrganizationCode: form?.organization.code || undefined,
+      CostCenterCode: includeTravelForm
+        ? form?.costCenter.code || form?.otherCostCenterCode || undefined
+        : undefined,
+      CostCenterName: includeTravelForm
+        ? form?.costCenter.name || form?.otherCostCenterName || undefined
+        : undefined,
+      OrganizationName: includeTravelForm
+        ? form?.organization.name ||
+          form?.otherOrganizationName ||
+          (typeof (info.passenger as { OrgName?: string }).OrgName === "string"
+            ? (info.passenger as { OrgName?: string }).OrgName
+            : undefined)
+        : undefined,
+      OrganizationCode: includeTravelForm ? form?.organization.code || undefined : undefined,
       OutNumbers:
-        form?.outNumbers && Object.keys(form.outNumbers).length > 0 ? form.outNumbers : null,
+        includeTravelForm && form?.outNumbers && Object.keys(form.outNumbers).length > 0
+          ? form.outNumbers
+          : null,
     };
     if (includeTravelForm) {
       const passengerTravelFormId =
@@ -471,7 +495,10 @@ export function validateTrainBookForms(input: {
   authorizedContacts: FlightAuthorizedContact[];
   orderLinkman?: TrainBookLinkmanDto;
   requireOrderLinkman?: boolean;
-  staffs?: FlightInitStaff[];
+  init?: TrainInitBookResponse;
+  policy?: TrainBookPolicy;
+  isExchangeBook?: boolean;
+  isBusinessMode?: boolean;
   requireIllegalReason: boolean;
 }): string | null {
   const {
@@ -481,7 +508,10 @@ export function validateTrainBookForms(input: {
     authorizedContacts,
     orderLinkman,
     requireOrderLinkman,
-    staffs,
+    init,
+    policy,
+    isExchangeBook,
+    isBusinessMode = true,
     requireIllegalReason,
   } = input;
 
@@ -500,12 +530,22 @@ export function validateTrainBookForms(input: {
       passengerMobileOwners.set(item, passengerName);
     }
 
-    if (
-      passengerRequiresTrainApprover(passenger, staffs) &&
-      !form.isSkipApprove &&
-      !form.approvalId
-    ) {
-      return `请选择${passenger.credential.Name ?? "旅客"}审批人`;
+    if (isBusinessMode) {
+      const staff = findInitStaffForPassenger(passenger, init?.Staffs);
+      const showApproverPicker = shouldAllowSelectTrainApprover({
+        init,
+        policy,
+        staff,
+        passenger,
+        isExchangeBook,
+      });
+      const approverError = validatePassengerTrainApprover({
+        form,
+        showPicker: showApproverPicker,
+      });
+      if (approverError) {
+        return `请选择${passenger.credential.Name ?? "旅客"}审批人`;
+      }
     }
 
     if (requireIllegalReason && !form.illegalReason?.trim() && !form.otherIllegalReason?.trim()) {

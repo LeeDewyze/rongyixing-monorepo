@@ -12,6 +12,7 @@ import {
 } from "@/components/flight/FlightBookExpandableSummaryCard";
 import { HotelBookPassengerDetails } from "@/components/hotel/HotelBookPassengerDetails";
 import { HotelBookRoomCard } from "@/components/hotel/HotelBookRoomCard";
+import type { GroupedApproverLevel } from "@/lib/flight-book-approval";
 import type { TrainPassengerBookForm } from "@/lib/train-book";
 
 function resolveStaffAccountId(passenger: PassengerBookInfo): string | undefined {
@@ -29,6 +30,8 @@ interface TrainBookPassengerCardProps {
   showOrganizations: boolean;
   showCostCenter: boolean;
   requiresApprover: boolean;
+  showApproveNode?: boolean;
+  approverLevels?: GroupedApproverLevel[];
   isSkipApproveEnabled: boolean;
   outNumberFields: FlightOutNumberField[];
   illegalReasons: string[];
@@ -53,6 +56,8 @@ export function TrainBookPassengerCard({
   showOrganizations,
   showCostCenter,
   requiresApprover,
+  showApproveNode = false,
+  approverLevels = [],
   isSkipApproveEnabled,
   outNumberFields,
   illegalReasons,
@@ -96,6 +101,8 @@ export function TrainBookPassengerCard({
         showOrganizations={showOrganizations}
         showCostCenter={showCostCenter}
         requiresApprover={requiresApprover}
+        showApproveNode={showApproveNode}
+        approverLevels={approverLevels}
         isSkipApproveEnabled={isSkipApproveEnabled}
         outNumberFields={outNumberFields}
         illegalReasons={illegalReasons}

@@ -1,38 +1,20 @@
 import { useEffect, useState } from "react";
-import type { FlightInitStaff, PassengerBookInfo } from "@ryx/shared-types";
+import type { PassengerBookInfo } from "@ryx/shared-types";
 
-import {
-  createTrainPassengerBookForm,
-  type TrainPassengerBookForm,
-} from "@/lib/train-book";
-import { findInitStaffForPassenger } from "@/lib/flight-book-passenger-form";
+import { createTrainPassengerBookForm, type TrainPassengerBookForm } from "@/lib/train-book";
 
-export function useTrainBookPassengerForms(
-  passengers: PassengerBookInfo[],
-  staffs: FlightInitStaff[] | undefined,
-) {
+export function useTrainBookPassengerForms(passengers: PassengerBookInfo[]) {
   const [forms, setForms] = useState<Record<string, TrainPassengerBookForm>>({});
 
   useEffect(() => {
     setForms((prev) => {
       const next: Record<string, TrainPassengerBookForm> = {};
       for (const passenger of passengers) {
-        const existing = prev[passenger.id];
-        next[passenger.id] = existing ?? createTrainPassengerBookForm(passenger);
-
-        const staff = findInitStaffForPassenger(passenger, staffs);
-        if (staff?.Approvers?.length && !next[passenger.id].approvalId) {
-          const approver = staff.Approvers[0];
-          next[passenger.id] = {
-            ...next[passenger.id],
-            approvalId: String(approver.AccountId ?? ""),
-            approvalName: approver.Name ?? "",
-          };
-        }
+        next[passenger.id] = prev[passenger.id] ?? createTrainPassengerBookForm(passenger);
       }
       return next;
     });
-  }, [passengers, staffs]);
+  }, [passengers]);
 
   function updateForm(passengerId: string, patch: Partial<TrainPassengerBookForm>) {
     setForms((prev) => {

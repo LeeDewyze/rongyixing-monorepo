@@ -63,8 +63,14 @@ import {
   resolveTrainBookOrderId,
   resolvePassengerServiceFee,
   validateTrainBookForms,
-  passengerRequiresTrainApprover,
 } from "@/lib/train-book";
+import { findInitStaffForPassenger } from "@/lib/flight-book-passenger-form";
+import {
+  groupStaffApprovers,
+  shouldAllowSelectTrainApprover,
+  shouldShowTrainApproveNode,
+  shouldShowTrainSkipApprove,
+} from "@/lib/train-book-approval";
 import {
   parseTrainPayTypeOptions,
   resolveDefaultTrainPayType,
@@ -183,10 +189,7 @@ export function TrainBookPage() {
   ]);
 
   const initBook = useTrainInitBook(initParams);
-  const { forms, updateForm, toggleExpanded } = useTrainBookPassengerForms(
-    bookPassengers,
-    initBook.data?.Staffs,
-  );
+  const { forms, updateForm, toggleExpanded } = useTrainBookPassengerForms(bookPassengers);
 
   useEffect(() => {
     setBookSeatLocations((current) =>
@@ -283,7 +286,10 @@ export function TrainBookPage() {
       authorizedContacts,
       orderLinkman,
       requireOrderLinkman: !isBusinessMode,
-      staffs: initBook.data?.Staffs,
+      init: initBook.data,
+      policy: selection?.policy,
+      isExchangeBook,
+      isBusinessMode,
       requireIllegalReason: requiresIllegalReason,
     });
   }
@@ -346,6 +352,8 @@ export function TrainBookPage() {
       travelMode,
       channel: productChannel,
       agentId: touristAgentId,
+      init: initBook.data,
+      isExchangeBook,
     });
 
     const isExchange = Boolean(exchangeSession?.ticketId);
@@ -484,10 +492,22 @@ export function TrainBookPage() {
                     initBook.data?.ServiceFees,
                   );
                   const outNumberFields = outNumberFieldsByPassenger[passenger.id] ?? [];
-                  const requiresApprover = passengerRequiresTrainApprover(
+                  const staff = findInitStaffForPassenger(passenger, initBook.data?.Staffs);
+                  const trainPolicy = selection?.policy;
+                  const approvalInput = {
+                    init: initBook.data,
+                    policy: trainPolicy,
+                    staff,
                     passenger,
-                    initBook.data?.Staffs,
-                  );
+                    isExchangeBook,
+                  };
+                  const requiresApprover =
+                    isBusinessMode && shouldAllowSelectTrainApprover(approvalInput);
+                  const showApproveNode =
+                    isBusinessMode && shouldShowTrainApproveNode(initBook.data, trainPolicy);
+                  const approverLevels = showApproveNode ? groupStaffApprovers(staff) : [];
+                  const isSkipApproveEnabled =
+                    isBusinessMode && shouldShowTrainSkipApprove(approvalInput);
 
                   return (
                     <TrainBookPassengerCard
@@ -498,7 +518,9 @@ export function TrainBookPage() {
                       showOrganizations={isBusinessMode && showOrganizations}
                       showCostCenter={isBusinessMode && showCostCenter}
                       requiresApprover={requiresApprover}
-                      isSkipApproveEnabled={Boolean(initBook.data?.isSkipApprove)}
+                      showApproveNode={showApproveNode}
+                      approverLevels={approverLevels}
+                      isSkipApproveEnabled={isSkipApproveEnabled}
                       outNumberFields={outNumberFields}
                       illegalReasons={initBook.data?.IllegalReasons ?? []}
                       expenseTypes={expenseTypeOptions}

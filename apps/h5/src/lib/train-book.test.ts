@@ -358,7 +358,87 @@ describe("validateTrainBookForms", () => {
         forms,
         outNumberFieldsByPassenger: { p1: [] },
         authorizedContacts: [],
-        staffs: [{ Id: "acc-1", Name: "Passenger One", Approvers: [] }],
+        init: { Staffs: [{ Id: "acc-1", Name: "Passenger One", Approvers: [] }] },
+        requireIllegalReason: false,
+      }),
+    ).toBeNull();
+  });
+
+  it("does not require approver when staff has fixed approver chain", () => {
+    const forms = {
+      p1: createTrainPassengerBookForm(passengers[0] as never),
+    };
+    expect(
+      validateTrainBookForms({
+        passengers: passengers as never,
+        forms,
+        outNumberFieldsByPassenger: { p1: [] },
+        authorizedContacts: [],
+        init: {
+          Tmc: { TrainApprovalType: 3 },
+          Staffs: [
+            {
+              Id: "acc-1",
+              Name: "Passenger One",
+              Approvers: [{ Name: "审批人A", AccountId: "acc-approver" }],
+            },
+          ],
+        },
+        isBusinessMode: true,
+        requireIllegalReason: false,
+      }),
+    ).toBeNull();
+  });
+
+  it("requires approver for free approval mode in business travel", () => {
+    const forms = {
+      p1: createTrainPassengerBookForm(passengers[0] as never),
+    };
+    expect(
+      validateTrainBookForms({
+        passengers: passengers as never,
+        forms,
+        outNumberFieldsByPassenger: { p1: [] },
+        authorizedContacts: [],
+        init: {
+          Tmc: { TrainApprovalType: 2 },
+          Staffs: [
+            {
+              Id: "acc-1",
+              Name: "Passenger One",
+              Approvers: [{ Name: "审批人A", AccountId: "acc-approver" }],
+            },
+          ],
+        },
+        isBusinessMode: true,
+        requireIllegalReason: false,
+      }),
+    ).toBe("请选择Passenger One审批人");
+  });
+
+  it("skips approver validation in personal travel mode", () => {
+    const forms = {
+      p1: createTrainPassengerBookForm(passengers[0] as never),
+    };
+    expect(
+      validateTrainBookForms({
+        passengers: passengers as never,
+        forms,
+        outNumberFieldsByPassenger: { p1: [] },
+        authorizedContacts: [],
+        init: {
+          Tmc: { TrainApprovalType: 2 },
+          Staffs: [
+            {
+              Id: "acc-1",
+              Name: "Passenger One",
+              Approvers: [{ Name: "审批人A", AccountId: "acc-approver" }],
+            },
+          ],
+        },
+        isBusinessMode: false,
+        requireOrderLinkman: true,
+        orderLinkman: { Name: "张三", Mobile: "13800000000", Email: "" },
         requireIllegalReason: false,
       }),
     ).toBeNull();

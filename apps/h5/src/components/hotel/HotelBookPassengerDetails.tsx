@@ -4,6 +4,7 @@ import type { FlightOutNumberField } from "@ryx/shared-types";
 import { HotelBookTravelFields } from "@/components/hotel/HotelBookTravelFields";
 import { BookContactCheckboxMark } from "@/components/book/BookContactCheckbox";
 import { ClearableFieldInput } from "@/components/form";
+import type { GroupedApproverLevel } from "@/lib/flight-book-approval";
 import type { HotelPassengerBookForm } from "@/lib/hotel-book";
 
 export type BookPassengerDetailsForm = Omit<HotelPassengerBookForm, "arrivalTime">;
@@ -106,6 +107,8 @@ interface HotelBookPassengerDetailsProps {
   showOrganizations: boolean;
   showCostCenter: boolean;
   requiresApprover: boolean;
+  showApproveNode?: boolean;
+  approverLevels?: GroupedApproverLevel[];
   isSkipApproveEnabled: boolean;
   outNumberFields: FlightOutNumberField[];
   illegalReasons: string[];
@@ -124,6 +127,8 @@ export function HotelBookPassengerDetails({
   showOrganizations,
   showCostCenter,
   requiresApprover,
+  showApproveNode = false,
+  approverLevels = [],
   isSkipApproveEnabled,
   outNumberFields,
   illegalReasons,
@@ -353,6 +358,20 @@ export function HotelBookPassengerDetails({
       {mergeContactAndSupplement ? null : (
         <DetailSection title="补充信息">{supplementRows}</DetailSection>
       )}
+
+      {showApproveNode && approverLevels.length ? (
+        <DetailSection title="审批信息">
+          <div className="space-y-2 py-2">
+            {approverLevels.map((level) => (
+              <p key={level.tag} className="text-[13px] leading-relaxed text-[#333333]">
+                第{level.tag}级：
+                {level.approvers.map((item) => item.Name).join("、")}
+                {level.type === 1 ? "（所有通过）" : "（任意通过）"}
+              </p>
+            ))}
+          </div>
+        </DetailSection>
+      ) : null}
 
       {requiresApprover ? (
         <DetailSection title="审批信息">
