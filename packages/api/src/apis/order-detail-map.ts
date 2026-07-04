@@ -1121,7 +1121,11 @@ function buildTrainActionFlags(
     status !== "WaitHandle" &&
     isPersonalPay &&
     hasHoldWindow;
-  const showIssue = showPay ? false : resolveTrainIssueFlag(orderVariables, tickets, order);
+  const resolvedIssueFlag = resolveTrainIssueFlag(orderVariables, tickets, order);
+  // Legacy train detail footer: pay-hold + non-personal pay always offers「确认出票」.
+  const legacyBusinessHoldIssue =
+    !isPersonalPay && hasHoldWindow && orderVariables?.isShowIssueButton !== false;
+  const showIssue = showPay ? false : resolvedIssueFlag || legacyBusinessHoldIssue;
   const showCancel =
     Boolean(orderVariables?.isShowCancelButton) || showPay || showIssue || hasHoldWindow;
 

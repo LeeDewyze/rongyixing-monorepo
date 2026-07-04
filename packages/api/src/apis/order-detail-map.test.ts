@@ -632,6 +632,78 @@ describe("normalizeTrainOrderDetail", () => {
     expect(detail.Actions?.showIssue).toBe(false);
   });
 
+  it("shows confirm issue for business pay during waiting-pay hold window", () => {
+    const detail = normalizeTrainOrderDetail({
+      Order: {
+        Id: "ORD-TRN-waiting-pay-business",
+        Status: "WaitPay",
+        StatusName: "等待支付",
+        Variables: JSON.stringify({
+          OrderPayHoldTime: 6,
+          isShowCancelButton: true,
+          TravelPayType: 1,
+        }),
+        OrderTrainTickets: [
+          {
+            Id: "448800000000010",
+            Key: "train-key-1",
+            StatusName: "预订成功",
+            AppStatusName: "待出票",
+            Passenger: { Name: "申晓杰" },
+            OrderTrainTrips: [
+              {
+                TrainCode: "Z1037",
+                FromStationName: "北京",
+                ToStationName: "上海",
+              },
+            ],
+          },
+        ],
+      },
+      TravelPayType: "公付",
+    });
+
+    expect(detail.Actions?.showPay).toBe(false);
+    expect(detail.Actions?.showCancel).toBe(true);
+    expect(detail.Actions?.showIssue).toBe(true);
+  });
+
+  it("shows confirm issue for business pay during waiting-pay hold window", () => {
+    const detail = normalizeTrainOrderDetail({
+      Order: {
+        Id: "ORD-TRN-waiting-pay-business",
+        Status: "WaitPay",
+        StatusName: "等待支付",
+        Variables: JSON.stringify({
+          OrderPayHoldTime: 6,
+          isShowCancelButton: true,
+          TravelPayType: 1,
+        }),
+        OrderTrainTickets: [
+          {
+            Id: "448800000000010",
+            Key: "train-key-1",
+            StatusName: "预订成功",
+            AppStatusName: "待出票",
+            Passenger: { Name: "申晓杰" },
+            OrderTrainTrips: [
+              {
+                TrainCode: "Z1037",
+                FromStationName: "北京",
+                ToStationName: "上海",
+              },
+            ],
+          },
+        ],
+      },
+      TravelPayType: "公付",
+    });
+
+    expect(detail.Actions?.showPay).toBe(false);
+    expect(detail.Actions?.showCancel).toBe(true);
+    expect(detail.Actions?.showIssue).toBe(true);
+  });
+
   it("prefers AppStatusName for ticket display status", () => {
     const detail = normalizeTrainOrderDetail({
       Order: {
