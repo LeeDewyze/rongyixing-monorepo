@@ -598,6 +598,43 @@ describe("normalizeTrainOrderDetail", () => {
     expect(detail.Tickets?.[0]?.Trips[0]?.TrainCode).toBe("D7889");
   });
 
+  it("marks superseded train tickets as original and sorts them after active tickets", () => {
+    const detail = normalizeTrainOrderDetail({
+      Order: {
+        Id: "ORD-TRN-original",
+        StatusName: "预订成功",
+        OrderTrainTickets: [
+          {
+            Id: "207600000001",
+            Key: "train-key-old",
+            StatusName: "预订修改成功",
+            Passenger: { Id: "p1", Name: "申晓杰" },
+            OrderTrainTrips: [
+              { TrainCode: "D79", FromStationName: "北京南", ToStationName: "上海虹桥" },
+            ],
+          },
+          {
+            Id: "207600000002",
+            Key: "train-key-new",
+            StatusName: "预订成功",
+            Passenger: { Id: "p1", Name: "申晓杰" },
+            Variables: JSON.stringify({ OriginalTicketId: "207600000001" }),
+            OrderTrainTrips: [
+              { TrainCode: "D7889", FromStationName: "北京南", ToStationName: "上海虹桥" },
+            ],
+          },
+        ],
+        OrderPassengers: [{ Id: "p1", Key: "train-key-new", Name: "申晓杰" }],
+      },
+    });
+
+    expect(detail.Tickets).toHaveLength(2);
+    expect(detail.Tickets?.[0]?.Id).toBe("207600000002");
+    expect(detail.Tickets?.[0]?.IsOriginal).toBe(false);
+    expect(detail.Tickets?.[1]?.Id).toBe("207600000001");
+    expect(detail.Tickets?.[1]?.IsOriginal).toBe(true);
+  });
+
   it("keeps waiting-pay train orders in pay flow even when tickets are pending issue", () => {
     const detail = normalizeTrainOrderDetail({
       Order: {

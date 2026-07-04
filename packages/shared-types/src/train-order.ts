@@ -39,6 +39,8 @@ export interface TrainOrderTicket {
   Trips: TrainOrderTrip[];
   Traveler?: HotelOrderTraveler;
   PassengerTypeName?: string;
+  /** True when this ticket was superseded by a change/exchange (legacy original ticket chain). */
+  IsOriginal?: boolean;
   Actions?: TrainTicketActionFlags;
 }
 
@@ -100,4 +102,5 @@ export interface TrainPassengerInfo {
   FromStationName?: string;
   ToStationName?: string;
   StartTime?: string;
+  ArrivalTime?: string;
 }

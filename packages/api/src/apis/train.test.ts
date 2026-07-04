@@ -312,12 +312,19 @@ describe("normalizeTrainPassengerInfo", () => {
     expect(
       normalizeTrainPassengerInfo({
         Passenger: { Name: "郭某某", Mobile: "13800000000" },
-        Trip: { TrainCode: "D79", FromStationName: "北京南", ToStationName: "上海虹桥" },
+        Trip: {
+          TrainCode: "D79",
+          FromStationName: "北京南",
+          ToStationName: "上海虹桥",
+          StartTime: "2026-07-04T22:15:00",
+          ArrivalTime: "2026-07-05T11:39:00",
+        },
       }),
     ).toMatchObject({
       Name: "郭某某",
       TrainCode: "D79",
       FromStationName: "北京南",
+      ArrivalTime: "2026-07-05T11:39:00",
     });
   });
 });

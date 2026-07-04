@@ -1041,10 +1041,30 @@ function mapTrainTicket(
   };
 }
 
+function collectSupersededTrainTicketIds(rawTickets: LegacyRecord[]): Set<string> {
+  const supersededIds = new Set<string>();
+  const byId = new Map(rawTickets.map((ticket) => [readString(ticket.Id), ticket]));
+
+  for (const ticket of rawTickets) {
+    let vars = parseVariablesObj(ticket);
+    let originalId = readString(vars?.OriginalTicketId);
+    while (originalId) {
+      supersededIds.add(originalId);
+      const predecessor = byId.get(originalId);
+      vars = predecessor ? parseVariablesObj(predecessor) : undefined;
+      originalId = readString(vars?.OriginalTicketId);
+    }
+  }
+
+  return supersededIds;
+}
+
 function sortTrainTicketsForTabs(tickets: TrainOrderTicket[]): TrainOrderTicket[] {
+  const active = tickets.filter((ticket) => !ticket.IsOriginal);
+  const original = tickets.filter((ticket) => ticket.IsOriginal);
   const byIdDesc = (a: TrainOrderTicket, b: TrainOrderTicket) =>
     Number(b.Id) - Number(a.Id) || b.Id.localeCompare(a.Id);
-  return [...tickets].sort(byIdDesc);
+  return [...active.sort(byIdDesc), ...original.sort(byIdDesc)];
 }
 
 const TRAIN_TICKET_BOOKED_STATUSES = new Set(["2", "8", "Booked", "BookExchanged"]);
@@ -1161,8 +1181,12 @@ function mapLegacyTrainDetail(payload: LegacyRecord): HotelOrderDetail {
     ...asArray<LegacyRecord>(order.OrderNumbers),
   ];
   const rawBillItems = asArray<LegacyRecord>(order.OrderItems).map(mapBillItem);
+  const supersededTicketIds = collectSupersededTrainTicketIds(rawTickets);
   const tickets = sortTrainTicketsForTabs(
-    rawTickets.map((ticket) => mapTrainTicket(ticket, orderPassengers, orderTravels, orderNumbers)),
+    rawTickets.map((ticket) => ({
+      ...mapTrainTicket(ticket, orderPassengers, orderTravels, orderNumbers),
+      IsOriginal: supersededTicketIds.has(readString(ticket.Id)),
+    })),
   );
   const firstTicket = tickets[0];
   const firstTrip = firstTicket?.Trips[0];

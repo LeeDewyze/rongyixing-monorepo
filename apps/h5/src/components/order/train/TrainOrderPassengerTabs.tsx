@@ -21,7 +21,8 @@ export function TrainOrderPassengerTabs({
     <div className={`flex gap-2 overflow-x-auto px-0 py-1 ${HOTEL_DETAIL_FONT}`}>
       {tickets.map((ticket, index) => {
         const active = index === selectedIndex;
-        const label = ticket.Traveler?.Name ?? `乘车人${index + 1}`;
+        const name = ticket.Traveler?.Name ?? `乘车人${index + 1}`;
+        const label = ticket.IsOriginal ? `${name}·原票` : name;
         return (
           <button
             key={ticket.Id}
@@ -33,7 +34,9 @@ export function TrainOrderPassengerTabs({
                 : "border border-[#2768FA] bg-white text-[#2768FA]"
             }`}
           >
-            <span className="max-w-[6rem] truncate">{label}</span>
+            <span className={`truncate ${ticket.IsOriginal ? "max-w-[7.5rem]" : "max-w-[6rem]"}`}>
+              {label}
+            </span>
           </button>
         );
       })}

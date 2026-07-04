@@ -214,4 +214,56 @@ describe("normalizeOrderListResponse", () => {
       TotalAmount: 633,
     });
   });
+
+  it("dedupes refunded train tickets for the same passenger in list cards", () => {
+    const response = normalizeOrderListResponse(
+      {
+        Orders: [
+          {
+            Id: "TRN-1",
+            StatusName: "交易完成",
+            TotalAmount: 553,
+            OrderTrainTickets: [
+              {
+                Id: "207600000001",
+                AppStatusName: "已退票",
+                Passenger: { Name: "申晓杰" },
+                OrderTrainTrips: [
+                  {
+                    TrainCode: "G1302",
+                    FromStationName: "北京南",
+                    ToStationName: "上海虹桥",
+                    StartTime: "2026-07-05T07:00:00",
+                  },
+                ],
+              },
+              {
+                Id: "207600000002",
+                AppStatusName: "已退票",
+                Passenger: { Name: "申晓杰" },
+                Variables: JSON.stringify({ OriginalTicketId: "207600000001" }),
+                OrderTrainTrips: [
+                  {
+                    TrainCode: "G1302",
+                    FromStationName: "北京南",
+                    ToStationName: "上海虹桥",
+                    StartTime: "2026-07-05T07:00:00",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      OrderListTabId.Train,
+    );
+
+    expect(response.Orders[0]?.Tickets).toHaveLength(1);
+    expect(response.Orders[0]?.Tickets?.[0]).toMatchObject({
+      TicketId: "207600000002",
+      PassengerNames: "申晓杰",
+      TicketStatusName: "已退票",
+      RouteTitle: "G1302 北京南—上海虹桥",
+    });
+  });
 });

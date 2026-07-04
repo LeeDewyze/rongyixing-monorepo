@@ -693,6 +693,7 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
         <TrainOrderRefundDialog
           open
           pending={trainRefundMutation.isPending}
+          orderId={trainRefundTicket.orderId}
           passenger={trainRefundPassenger}
           onConfirm={() => void confirmTrainRefund()}
           onClose={() => {

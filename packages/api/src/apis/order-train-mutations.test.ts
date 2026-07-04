@@ -27,6 +27,25 @@ describe("train order mutations", () => {
     });
   });
 
+  it("refundTrain sends legacy TicketId-only payload", async () => {
+    const send = vi.fn().mockResolvedValue(true);
+    const api = createOrderApi({ send } as never);
+
+    await api.refundTrain({
+      OrderId: "20760000000204",
+      TicketId: "20760000000258",
+      Channel: "客户H5",
+    });
+
+    expect(send).toHaveBeenCalledWith({
+      method: "TmcApiOrderUrl-Train-Refund",
+      data: { TicketId: "20760000000258" },
+      version: "2.0",
+      requestTimeout: 60,
+      timeoutMs: 60_000,
+    });
+  });
+
   it("uses tourist order methods when channel is tourist", async () => {
     const send = vi.fn().mockResolvedValue(true);
     const api = createOrderApi({ send } as never);
@@ -72,6 +91,9 @@ describe("train order mutations", () => {
     expect(send).toHaveBeenNthCalledWith(4, {
       method: "TmcTouristTrainUrl-Home-Refund",
       data: { TicketId: "20760000000258" },
+      version: "2.0",
+      requestTimeout: 60,
+      timeoutMs: 60_000,
     });
     expect(send).toHaveBeenNthCalledWith(5, {
       method: "TmcTouristOrderUrl-Order-CancelOrderHotel",

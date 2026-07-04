@@ -391,7 +391,9 @@ export function OrderTrainDetailPage() {
           <TrainOrderRefundDialog
             open={refundOpen}
             pending={refundMutation.isPending}
+            orderId={detail.OrderId}
             passenger={refundPassenger}
+            arrivalTime={selectedTicket?.Trips[0]?.ArrivalTime}
             onConfirm={() => void runRefund()}
             onClose={() => setRefundOpen(false)}
           />

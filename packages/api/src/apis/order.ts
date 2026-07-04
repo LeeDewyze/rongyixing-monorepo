@@ -203,7 +203,10 @@ export function createOrderApi(proxy: ProxyClient): OrderApi {
         method: isTouristChannel(params)
           ? TOURIST_TRAIN_FLOW_METHODS.REFUND
           : ORDER_FLOW_METHODS.TRAIN_REFUND,
-        data: isTouristChannel(params) ? { TicketId: params.TicketId } : stripChannel(params),
+        data: { TicketId: params.TicketId },
+        version: "2.0",
+        requestTimeout: 60,
+        timeoutMs: 60_000,
       });
     },
   };

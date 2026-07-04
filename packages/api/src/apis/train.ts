@@ -438,6 +438,7 @@ export function normalizeTrainPassengerInfo(res: unknown): TrainPassengerInfo {
     FromStationName: readExchangeString(trip ?? payload, "FromStationName", "FromStation"),
     ToStationName: readExchangeString(trip ?? payload, "ToStationName", "ToStation"),
     StartTime: readExchangeString(trip ?? payload, "StartTime", "DepartureTime", "GoDate"),
+    ArrivalTime: readExchangeString(trip ?? payload, "ArrivalTime", "ArriveTime"),
   };
 }
 

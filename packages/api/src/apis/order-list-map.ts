@@ -274,6 +274,87 @@ function mapLegacyFlightOrder(order: LegacyRecord): OrderListItem | null {
   };
 }
 
+function parseTicketVariablesObj(ticket: LegacyRecord): LegacyRecord | undefined {
+  if (asRecord(ticket.VariablesObj)) {
+    return ticket.VariablesObj as LegacyRecord;
+  }
+  const variables = ticket.Variables;
+  if (typeof variables === "string" && variables.trim()) {
+    try {
+      return JSON.parse(variables) as LegacyRecord;
+    } catch {
+      return undefined;
+    }
+  }
+  return undefined;
+}
+
+const TRAIN_LIST_HIDDEN_STATUSES = new Set(["ChangeTicket"]);
+
+function collectSupersededTrainTicketIds(rawTickets: LegacyRecord[]): Set<string> {
+  const supersededIds = new Set<string>();
+  const byId = new Map(rawTickets.map((ticket) => [readString(ticket.Id), ticket]));
+
+  for (const ticket of rawTickets) {
+    let vars = parseTicketVariablesObj(ticket);
+    let originalId = readString(vars?.OriginalTicketId);
+    while (originalId) {
+      supersededIds.add(originalId);
+      const predecessor = byId.get(originalId);
+      vars = predecessor ? parseTicketVariablesObj(predecessor) : undefined;
+      originalId = readString(vars?.OriginalTicketId);
+    }
+  }
+
+  return supersededIds;
+}
+
+function shouldShowTrainTicketInList(ticket: LegacyRecord, supersededIds: Set<string>): boolean {
+  const ticketId = readString(ticket.Id);
+  if (!ticketId || supersededIds.has(ticketId)) {
+    return false;
+  }
+
+  const ticketVariables = parseTicketVariablesObj(ticket);
+  if (ticketVariables?.IsScrap) {
+    return false;
+  }
+
+  const status = readString(ticket.Status);
+  return !TRAIN_LIST_HIDDEN_STATUSES.has(status);
+}
+
+function filterRawTrainTicketsForList(rawTickets: LegacyRecord[]): LegacyRecord[] {
+  const supersededIds = collectSupersededTrainTicketIds(rawTickets);
+  return rawTickets.filter((ticket) => shouldShowTrainTicketInList(ticket, supersededIds));
+}
+
+function dedupeTrainListTickets(tickets: OrderTrainListTicket[]): OrderTrainListTicket[] {
+  const active: OrderTrainListTicket[] = [];
+  const terminalByKey = new Map<string, OrderTrainListTicket>();
+
+  for (const ticket of tickets) {
+    const status = ticket.TicketStatusName ?? "";
+    const isTerminal =
+      status.includes("退票") || status.includes("已取消") || status.includes("作废");
+    if (!isTerminal) {
+      active.push(ticket);
+      continue;
+    }
+
+    const key = `${ticket.PassengerNames}|${ticket.RouteTitle}|${status}`;
+    const existing = terminalByKey.get(key);
+    if (!existing || Number(ticket.TicketId) > Number(existing.TicketId)) {
+      terminalByKey.set(key, ticket);
+    }
+  }
+
+  const byIdDesc = (a: OrderTrainListTicket, b: OrderTrainListTicket) =>
+    Number(b.TicketId) - Number(a.TicketId) || b.TicketId.localeCompare(a.TicketId);
+
+  return [...active, ...terminalByKey.values()].sort(byIdDesc);
+}
+
 function mapLegacyTrainTicketForList(ticket: LegacyRecord): OrderTrainListTicket | null {
   const trips = asArray<LegacyRecord>(ticket.OrderTrainTrips);
   const trip = trips[0];
@@ -305,7 +386,8 @@ function mapLegacyTrainTicketForList(ticket: LegacyRecord): OrderTrainListTicket
 
 function mapLegacyTrainOrder(order: LegacyRecord): OrderListItem | null {
   const tickets = asArray<LegacyRecord>(order.OrderTrainTickets);
-  const ticket = tickets[0];
+  const visibleTickets = filterRawTrainTicketsForList(tickets);
+  const ticket = visibleTickets[0] ?? tickets[0];
   const trips = ticket ? asArray<LegacyRecord>(ticket.OrderTrainTrips) : [];
   const trip = trips[0];
   if (!trip) {
@@ -313,11 +395,15 @@ function mapLegacyTrainOrder(order: LegacyRecord): OrderListItem | null {
   }
 
   const variables = parseVariablesObj(order);
-  const ticketVariables = ticket ? parseVariablesObj(ticket) : undefined;
-  const listTickets = tickets
-    .map(mapLegacyTrainTicketForList)
-    .filter((item): item is OrderTrainListTicket => Boolean(item?.TicketId));
+  const ticketVariables = ticket ? parseTicketVariablesObj(ticket) : undefined;
+  const listTickets = dedupeTrainListTickets(
+    visibleTickets
+      .map(mapLegacyTrainTicketForList)
+      .filter((item): item is OrderTrainListTicket => Boolean(item?.TicketId)),
+  );
+  const firstListTicket = listTickets[0];
   const passengerNames =
+    joinNames(listTickets.map((item) => item.PassengerNames)) ||
     joinNames(
       trips.map((item) => {
         const ticketRef = asRecord(item.OrderTrainTicket);
@@ -335,12 +421,16 @@ function mapLegacyTrainOrder(order: LegacyRecord): OrderListItem | null {
     StatusName: readString(order.StatusName ?? order.Status),
     TotalAmount: readNumber(order.TotalAmount),
     RouteTitle:
+      firstListTicket?.RouteTitle ??
       `${readString(trip.TrainCode)} ${readString(trip.FromStationName)}—${readString(trip.ToStationName)}`.trim(),
-    DepartTime: formatDateTime(trip.StartTime ?? trip.DepartureTime ?? trip.GoDate),
+    DepartTime:
+      firstListTicket?.DepartTime ??
+      formatDateTime(trip.StartTime ?? trip.DepartureTime ?? trip.GoDate),
     PassengerNames: passengerNames,
     TicketStatusName:
-      readString(ticket?.AppStatusName ?? ticket?.StatusName ?? ticket?.Status) || undefined,
-    TicketId: readString(ticket?.Id) || undefined,
+      firstListTicket?.TicketStatusName ??
+      (readString(ticket?.AppStatusName ?? ticket?.StatusName ?? ticket?.Status) || undefined),
+    TicketId: firstListTicket?.TicketId ?? (readString(ticket?.Id) || undefined),
     Tickets: listTickets,
     Actions:
       listTickets.length > 0
