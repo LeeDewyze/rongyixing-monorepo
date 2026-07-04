@@ -29,6 +29,13 @@ log() {
   printf '[ryx-h5 deploy] %s\n' "$*"
 }
 
+dump_compose_debug() {
+  log "container status"
+  docker compose -f "${COMPOSE_FILE}" ps || true
+  log "container logs"
+  docker compose -f "${COMPOSE_FILE}" logs --tail=160 ryx-h5 || true
+}
+
 run_sudo() {
   if [[ "${EUID}" -eq 0 ]]; then
     "$@"
@@ -62,7 +69,21 @@ RYX_H5_PORT="${RYX_H5_PORT}" docker compose -f "${COMPOSE_FILE}" up -d --build
 
 if command -v curl >/dev/null 2>&1; then
   log "health check http://127.0.0.1:${RYX_H5_PORT}/"
-  curl --fail --silent --show-error --head "http://127.0.0.1:${RYX_H5_PORT}/" >/dev/null
+  health_ok=0
+  for attempt in $(seq 1 20); do
+    if curl --fail --silent --show-error --head "http://127.0.0.1:${RYX_H5_PORT}/" >/dev/null; then
+      health_ok=1
+      break
+    fi
+    log "health check attempt ${attempt}/20 failed; retrying"
+    sleep 1
+  done
+
+  if [[ "${health_ok}" != "1" ]]; then
+    log "health check failed"
+    dump_compose_debug
+    exit 1
+  fi
 else
   log "curl not found; skipped local health check"
 fi
@@ -88,4 +109,3 @@ if [[ "${INSTALL_SERVER_NGINX}" == "1" ]]; then
 fi
 
 log "done"
-

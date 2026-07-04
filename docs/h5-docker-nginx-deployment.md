@@ -42,6 +42,16 @@ Nginx proxy -> http://app.rtesp.com/Home/Setting
 | `deploy/nginx/h5.conf` | Docker 内 Nginx：托管 SPA，并复刻 Vite dev proxy 的后端转发 |
 | `deploy/nginx/rtesp.songguoren.site.conf` | 服务器公网 Nginx 入口示例：域名转发到本机 Docker 服务 |
 
+## 容器内 DNS
+
+Docker 内 Nginx 使用运行期 DNS 解析：
+
+```nginx
+resolver 127.0.0.11 223.5.5.5 8.8.8.8 valid=300s ipv6=off;
+```
+
+后端代理使用变量 `proxy_pass`，避免 Nginx 在容器启动时因为某个 rtesp 域名临时解析失败而直接退出。`/__ryx/{UrlKey}/...` 会先 rewrite 掉 `/__ryx/{UrlKey}` 前缀，再转发到对应后端服务。
+
 ## 构建顺序
 
 Docker 镜像内是干净环境，H5 构建前必须先构建 workspace 依赖：
