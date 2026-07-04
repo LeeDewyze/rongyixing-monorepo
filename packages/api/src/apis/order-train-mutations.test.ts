@@ -15,6 +15,18 @@ describe("train order mutations", () => {
     });
   });
 
+  it("issueTrain sends legacy Id-only payload", async () => {
+    const send = vi.fn().mockResolvedValue(true);
+    const api = createOrderApi({ send } as never);
+
+    await api.issueTrain({ OrderId: "20760000000204", Channel: "客户H5" });
+
+    expect(send).toHaveBeenCalledWith({
+      method: "TmcApiOrderUrl-Order-IssueTrain",
+      data: { Id: "20760000000204" },
+    });
+  });
+
   it("uses tourist order methods when channel is tourist", async () => {
     const send = vi.fn().mockResolvedValue(true);
     const api = createOrderApi({ send } as never);
@@ -46,7 +58,7 @@ describe("train order mutations", () => {
     });
     expect(send).toHaveBeenNthCalledWith(2, {
       method: "TmcTouristOrderUrl-Order-IssueTrain",
-      data: { Id: "20760000000204", OrderId: "20760000000204" },
+      data: { Id: "20760000000204" },
     });
     expect(send).toHaveBeenNthCalledWith(3, {
       method: "TmcTouristOrderUrl-Order-AbolishTicket",

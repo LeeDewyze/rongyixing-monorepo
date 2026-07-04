@@ -44,9 +44,7 @@ export interface OrderApi {
   cancelHotel(params: HotelCancelParams): Promise<boolean>;
   cancelFlight(params: FlightCancelParams): Promise<boolean>;
   abolishFlightTicket(params: FlightAbolishTicketParams): Promise<boolean>;
-  getFlightTicketRefundInfo(
-    params: FlightTicketRefundInfoParams,
-  ): Promise<FlightTicketRefundInfo>;
+  getFlightTicketRefundInfo(params: FlightTicketRefundInfoParams): Promise<FlightTicketRefundInfo>;
   refundFlight(params: FlightRefundParams): Promise<boolean>;
   nonVoluntaryRefundFlight(params: FlightNonVoluntaryRefundParams): Promise<{ Message?: string }>;
   sendHotelOrderSmsCode(params: HotelOrderSmsParams): Promise<boolean>;
@@ -197,7 +195,7 @@ export function createOrderApi(proxy: ProxyClient): OrderApi {
     issueTrain(params) {
       return proxy.send<boolean>({
         method: orderMethods(params).ISSUE_TRAIN,
-        data: { Id: params.OrderId, OrderId: params.OrderId },
+        data: { Id: params.OrderId },
       });
     },
     refundTrain(params) {
