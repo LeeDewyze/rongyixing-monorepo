@@ -216,7 +216,7 @@ export function createMockFlightList(params: {
   return {
     Result: { FlightSegments: segments },
     FlightViews: segments.map((seg) => ({
-      Price: seg.LowestFare,
+      Price: seg.LowestFare != null ? String(seg.LowestFare) : undefined,
       Data: seg.Data ?? `mock-${seg.Id}`,
       BookType: 2,
       Segment: {
@@ -280,7 +280,8 @@ export function createMockFlightDetail(params: {
   });
   const segments = list.Result?.FlightSegments ?? [];
   const flightNumber = (params.FlightNumber ?? "").toUpperCase();
-  const segment = segments.find((s) => s.Number.toUpperCase() === flightNumber) ?? segments[0];
+  const segment =
+    segments.find((s) => (s.Number ?? "").toUpperCase() === flightNumber) ?? segments[0];
   if (!segment) {
     return { FlightSegments: [], FlightFares: [] };
   }

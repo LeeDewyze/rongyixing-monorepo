@@ -15,6 +15,7 @@ import type {
 import { OrderListTabId } from "@ryx/shared-types";
 
 import {
+  OrderChannelDropdown,
   OrderChannelTabs,
   OrderCategoryTabs,
   OrderScopeTabs,
@@ -179,7 +180,9 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
   } = useOrderList({ tabId, scope, channel: productChannel });
   const flightCancelMutation = useCancelFlightOrder();
   const flightRefundInfo = useFlightTicketRefundInfo(
-    refundTicket ? { orderFlightTicket: refundTicket.ticket.TicketId, channel: productChannel } : null,
+    refundTicket
+      ? { orderFlightTicket: refundTicket.ticket.TicketId, channel: productChannel }
+      : null,
   );
   const flightRefundMutation = useRefundFlightOrder();
   const flightNonVoluntaryRefundMutation = useNonVoluntaryRefundFlightOrder();
@@ -273,9 +276,13 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
             const hotelItem = item as OrderHotelListItem;
             if (!hotelItem.OrderHotelId) {
               navigate(
-                withOrderChannel(`/orders/hotel/${encodeURIComponent(item.OrderId)}`, productChannel, {
-                  scope,
-                }),
+                withOrderChannel(
+                  `/orders/hotel/${encodeURIComponent(item.OrderId)}`,
+                  productChannel,
+                  {
+                    scope,
+                  },
+                ),
                 { state: { action: "cancel" } },
               );
               return;
@@ -566,12 +573,12 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
           }}
           className={
             embeddedInTab
-              ? "overflow-visible pt-[calc(env(safe-area-inset-top)+12px)]"
+              ? "order-list-header--embedded relative overflow-visible pt-[calc(env(safe-area-inset-top)+6px)]"
               : "overflow-visible"
           }
         >
           {!embeddedInTab ? (
-            <div className="flex h-11 items-center px-3 pt-[env(safe-area-inset-top)]">
+            <div className="relative flex h-11 items-center justify-between px-3 pt-[env(safe-area-inset-top)]">
               <button
                 type="button"
                 className="flex h-11 w-10 shrink-0 items-center justify-center active:opacity-70"
@@ -583,19 +590,35 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
               <h1 className="pointer-events-none absolute inset-x-0 pt-[env(safe-area-inset-top)] text-center text-[17px] font-semibold leading-[44px] text-brand-title [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]">
                 订单
               </h1>
+              <OrderChannelTabs
+                compact
+                activeId={activeOrderTypeTab.id}
+                onChange={handleOrderTypeChange}
+              />
             </div>
-          ) : null}
+          ) : (
+            <div className="order-list-header-embedded__toolbar grid grid-cols-[1fr_auto_1fr] items-center px-4">
+              <span className="w-9" aria-hidden />
+              <OrderChannelDropdown
+                embedded
+                activeId={activeOrderTypeTab.id}
+                onChange={handleOrderTypeChange}
+              />
+              <span className="w-9" aria-hidden />
+            </div>
+          )}
           <OrderCategoryTabs activeId={activeOrderTypeTab.id} onChange={handleOrderTypeChange} />
         </div>
         <div
-          className="order-scope-shell relative z-0 flex h-14 items-center justify-between gap-3 px-4"
+          className={`order-scope-shell relative z-0 flex items-center px-4 pb-2.5 pt-2${
+            activeOrderTypeTab.channel === "tourist" ? " order-scope-shell--tourist" : ""
+          }`}
           style={{
             background: ORDER_SCOPE_TABS_SHELL_GRADIENT,
             borderTopLeftRadius: 16,
             borderTopRightRadius: 16,
           }}
         >
-          <OrderChannelTabs activeId={activeOrderTypeTab.id} onChange={handleOrderTypeChange} />
           <OrderScopeTabs scope={scope} onChange={(next) => updateParams({ scope: next })} />
         </div>
       </header>

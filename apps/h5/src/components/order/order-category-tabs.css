@@ -11,6 +11,387 @@
   --order-active-color: #0f8f69;
 }
 
+.order-list-header--embedded .order-category-tabs {
+  width: 100%;
+  height: auto;
+  min-height: 3rem;
+  padding: 0.375rem 0 0;
+}
+
+.order-list-header-embedded__toolbar {
+  height: 2rem;
+}
+
+/* Channel dropdown: centered ownership switcher in the title bar. */
+.order-channel-dropdown {
+  position: relative;
+  --order-active-color: #2768fa;
+}
+
+.order-channel-dropdown__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  border: none;
+  background: transparent;
+  cursor: default;
+}
+
+.order-channel-dropdown--tourist {
+  --order-active-color: #0f8f69;
+}
+
+.order-channel-dropdown__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 28px;
+  padding: 0 4px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font-family: "HarmonyOS Sans SC", "HarmonyOS Sans", "PingFang SC", sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--order-active-color);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.order-channel-dropdown__trigger:active {
+  background: rgba(15, 23, 42, 0.04);
+}
+
+.order-channel-dropdown--embedded .order-channel-dropdown__trigger {
+  height: auto;
+  min-width: 0;
+  padding: 2px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(
+    98.64deg,
+    rgba(39, 104, 250, 0.2) 12.63%,
+    rgba(51, 161, 249, 0.2) 82.81%
+  );
+  box-shadow: none;
+  transition: transform 0.15s ease;
+}
+
+.order-channel-dropdown--embedded.order-channel-dropdown--tourist .order-channel-dropdown__trigger {
+  background: linear-gradient(
+    98.64deg,
+    rgba(15, 143, 105, 0.2) 12.63%,
+    rgba(15, 143, 105, 0.12) 82.81%
+  );
+}
+
+.order-channel-dropdown--embedded .order-channel-dropdown__trigger-inner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  color: #2768fa;
+  box-shadow: 0 1px 2px rgba(39, 104, 250, 0.06);
+  transition: box-shadow 0.2s ease;
+}
+
+.order-channel-dropdown--embedded.order-channel-dropdown--tourist
+  .order-channel-dropdown__trigger-inner {
+  color: #0f8f69;
+  box-shadow: 0 1px 2px rgba(15, 143, 105, 0.06);
+}
+
+.order-channel-dropdown--embedded .order-channel-dropdown__label {
+  flex: none;
+  min-width: 0;
+  padding: 0;
+  text-align: center;
+}
+
+.order-channel-dropdown--embedded .order-channel-dropdown__chevron-wrap {
+  width: auto;
+  height: auto;
+  border: none;
+  background: transparent;
+}
+
+.order-channel-dropdown--embedded .order-channel-dropdown__trigger:active {
+  transform: scale(0.98);
+}
+
+.order-channel-dropdown--embedded .order-channel-dropdown__trigger[aria-expanded="true"] {
+  box-shadow: none;
+}
+
+.order-channel-dropdown--embedded
+  .order-channel-dropdown__trigger[aria-expanded="true"]
+  .order-channel-dropdown__trigger-inner {
+  box-shadow: 0 2px 6px rgba(39, 104, 250, 0.12);
+}
+
+.order-channel-dropdown--embedded.order-channel-dropdown--tourist
+  .order-channel-dropdown__trigger[aria-expanded="true"]
+  .order-channel-dropdown__trigger-inner {
+  box-shadow: 0 2px 6px rgba(15, 143, 105, 0.1);
+}
+
+.order-channel-dropdown__chevron {
+  flex-shrink: 0;
+  margin-top: 1px;
+  opacity: 0.72;
+  transition: transform 0.2s ease;
+}
+
+.order-channel-dropdown__chevron-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.order-channel-dropdown__chevron--embedded {
+  display: block;
+  flex-shrink: 0;
+  color: currentColor;
+  opacity: 0.75;
+  transition: transform 0.2s ease;
+}
+
+.order-channel-dropdown__chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.order-channel-dropdown__menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 132px;
+  padding: 8px;
+  border: 1px solid rgba(39, 104, 250, 0.06);
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow:
+    0 4px 8px rgba(15, 23, 42, 0.04),
+    0 12px 28px rgba(15, 23, 42, 0.1),
+    0 24px 48px rgba(39, 104, 250, 0.08);
+  transform: translateX(-50%);
+  transform-origin: top center;
+  animation: order-channel-dropdown-in 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.order-channel-dropdown__menu::before {
+  content: "";
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  border-top: 1px solid rgba(39, 104, 250, 0.06);
+  border-left: 1px solid rgba(39, 104, 250, 0.06);
+  background: #ffffff;
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.order-channel-dropdown--embedded .order-channel-dropdown__menu {
+  min-width: max(100%, 120px);
+  width: max-content;
+  padding: 6px;
+  gap: 4px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow:
+    0 4px 12px rgba(15, 23, 42, 0.08),
+    0 12px 32px rgba(15, 23, 42, 0.12);
+}
+
+.order-channel-dropdown--embedded.order-channel-dropdown--tourist .order-channel-dropdown__menu {
+  background: #ffffff;
+  box-shadow:
+    0 4px 12px rgba(15, 23, 42, 0.08),
+    0 12px 32px rgba(15, 23, 42, 0.12);
+}
+
+.order-channel-dropdown--embedded .order-channel-dropdown__menu::before {
+  display: none;
+}
+
+.order-channel-dropdown--embedded .order-channel-dropdown__option {
+  justify-content: center;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 500;
+  color: rgba(1, 1, 1, 0.65);
+}
+
+.order-channel-dropdown--embedded .order-channel-dropdown__option-label {
+  flex: none;
+  text-align: center;
+}
+
+.order-channel-dropdown--embedded .order-channel-dropdown__option.is-active {
+  background: linear-gradient(
+    98.64deg,
+    rgba(39, 104, 250, 0.12) 12.63%,
+    rgba(51, 161, 249, 0.08) 82.81%
+  );
+  color: #2768fa;
+  font-weight: 600;
+}
+
+.order-channel-dropdown--embedded.order-channel-dropdown--tourist
+  .order-channel-dropdown__option.is-active {
+  background: linear-gradient(
+    98.64deg,
+    rgba(15, 143, 105, 0.12) 12.63%,
+    rgba(15, 143, 105, 0.08) 82.81%
+  );
+  color: #0f8f69;
+}
+
+.order-channel-dropdown--embedded .order-channel-dropdown__check-badge {
+  display: none;
+}
+
+.order-channel-dropdown--embedded .order-channel-dropdown__option-spacer {
+  display: none;
+}
+
+.order-channel-dropdown--tourist .order-channel-dropdown__menu {
+  box-shadow:
+    0 4px 8px rgba(15, 23, 42, 0.04),
+    0 12px 28px rgba(15, 23, 42, 0.1),
+    0 24px 48px rgba(15, 143, 105, 0.08);
+}
+
+@keyframes order-channel-dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-8px) scale(0.94);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+.order-channel-dropdown__option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  font-family: "HarmonyOS Sans SC", "HarmonyOS Sans", "PingFang SC", sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  color: rgba(1, 1, 1, 0.62);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    color 0.18s ease,
+    background 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.order-channel-dropdown__option-label {
+  flex: 1;
+  text-align: left;
+}
+
+.order-channel-dropdown__option-spacer {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+}
+
+.order-channel-dropdown__option:active:not(.is-active) {
+  background: rgba(15, 23, 42, 0.04);
+}
+
+.order-channel-dropdown__option.is-active {
+  background: linear-gradient(
+    98.64deg,
+    rgba(39, 104, 250, 0.14) 12.63%,
+    rgba(51, 161, 249, 0.1) 82.81%
+  );
+  color: #2768fa;
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px rgba(39, 104, 250, 0.08);
+}
+
+.order-channel-dropdown--tourist .order-channel-dropdown__option.is-active {
+  background: linear-gradient(
+    98.64deg,
+    rgba(15, 143, 105, 0.14) 12.63%,
+    rgba(15, 143, 105, 0.08) 82.81%
+  );
+  color: #0f8f69;
+  box-shadow: inset 0 0 0 1px rgba(15, 143, 105, 0.08);
+}
+
+.order-channel-dropdown__check-badge {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: rgba(39, 104, 250, 0.12);
+  color: #2768fa;
+}
+
+.order-channel-dropdown--tourist .order-channel-dropdown__check-badge {
+  background: rgba(15, 143, 105, 0.12);
+  color: #0f8f69;
+}
+
+.order-channel-dropdown__check {
+  flex-shrink: 0;
+  display: block;
+}
+
+.order-list-header--embedded .order-product-tabs {
+  height: 3rem;
+}
+
+.order-list-header--embedded .order-product-tab {
+  height: 3rem;
+}
+
+.order-product-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  width: 100%;
+  height: 3rem;
+  overflow: visible;
+}
+
 .order-channel-tabs {
   width: 9.75rem;
   --order-active-color: #2768fa;
@@ -18,6 +399,27 @@
 
 .order-channel-tabs--tourist {
   --order-active-color: #0f8f69;
+}
+
+.order-channel-tabs--compact {
+  width: 8rem;
+  flex-shrink: 0;
+}
+
+.order-channel-tabs--compact .order-channel-tabs__inner {
+  height: 1.875rem;
+  gap: 0.125rem;
+  padding: 0.1875rem;
+}
+
+.order-channel-tabs--compact .order-channel-tab {
+  font-size: 12px;
+  padding: 0 0.5rem;
+}
+
+.order-channel-tabs--tourist .order-channel-tabs__inner {
+  background: rgba(15, 143, 105, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(15, 143, 105, 0.08);
 }
 
 .order-channel-tabs__inner {
@@ -62,17 +464,10 @@
 .order-channel-tab--active {
   background: #ffffff;
   color: var(--order-active-color);
+  font-weight: 600;
   box-shadow:
-    0 1px 3px rgba(39, 104, 250, 0.1),
-    0 4px 10px rgba(39, 104, 250, 0.06);
-}
-
-.order-product-tabs {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  align-items: end;
-  height: 3rem;
-  overflow: visible;
+    0 1px 2px rgba(15, 23, 42, 0.08),
+    0 2px 6px rgba(15, 23, 42, 0.06);
 }
 
 .order-product-tab {
@@ -85,14 +480,16 @@
   border: none;
   background: transparent;
   font-family: "HarmonyOS Sans SC", "HarmonyOS Sans", "PingFang SC", sans-serif;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 500;
   line-height: 1;
   letter-spacing: 0;
-  color: rgba(1, 1, 1, 0.52);
+  color: rgba(1, 1, 1, 0.45);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: color 0.15s ease;
+  transition:
+    color 0.2s ease,
+    font-size 0.2s ease;
 }
 
 .order-product-tab::after {
@@ -100,7 +497,7 @@
   position: absolute;
   left: 50%;
   bottom: 0;
-  width: 22px;
+  width: 24px;
   height: 3px;
   border-radius: 999px;
   transform: translateX(-50%) scaleX(0);
@@ -108,17 +505,18 @@
   background: var(--order-active-color);
   opacity: 0;
   transition:
-    opacity 0.15s ease,
-    transform 0.15s ease;
+    opacity 0.2s ease,
+    transform 0.2s ease;
 }
 
 .order-product-tab--active {
+  font-size: 17px;
   font-weight: 600;
-  color: #010101;
+  color: #0d1220;
 }
 
 .order-category-tabs--tourist .order-product-tab--active {
-  color: #010101;
+  color: #0d1220;
 }
 
 .order-product-tab--active::after {
@@ -131,11 +529,17 @@
   overflow: visible;
 }
 
-/* Scope filter: 全部 / 待出行 — lightweight content filter below product tabs. */
+/* Scope filter: 全部 / 待出行 — Figma 351×40 track, 172×32 active pill. */
 .order-scope-tabs {
-  width: 9.75rem;
-  height: 2rem;
-  border-radius: 999px;
+  width: 100%;
+  height: 40px;
+  border-radius: 8px;
+  padding: 4px;
+  background: linear-gradient(
+    98.64deg,
+    rgba(39, 104, 250, 0.2) 12.63%,
+    rgba(51, 161, 249, 0.2) 82.81%
+  );
 }
 
 .order-scope-tab {
@@ -143,11 +547,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100%;
+  min-width: 0;
+  height: 32px;
   border: none;
-  border-radius: 999px;
+  border-radius: 8px;
   background: transparent;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1;
   font-weight: 400;
   color: rgba(1, 1, 1, 0.55);
@@ -161,11 +566,9 @@
 
 .order-scope-tab--active {
   background: #ffffff;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 500;
   line-height: 1;
   color: #010101;
-  box-shadow:
-    0 1px 3px rgba(39, 104, 250, 0.1),
-    0 4px 10px rgba(39, 104, 250, 0.06);
+  box-shadow: none;
 }

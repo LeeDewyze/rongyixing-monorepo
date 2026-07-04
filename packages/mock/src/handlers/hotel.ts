@@ -59,10 +59,10 @@ function createHotelListResponse(data: unknown) {
     hotels = hotels.filter((hotel) => `${hotel.HotelName} ${hotel.Address}`.includes(keyword));
   }
 
-  if (Number.isFinite(beginPrice)) {
+  if (typeof beginPrice === "number" && Number.isFinite(beginPrice)) {
     hotels = hotels.filter((hotel) => (hotel.MinPrice ?? 0) >= beginPrice);
   }
-  if (Number.isFinite(endPrice)) {
+  if (typeof endPrice === "number" && Number.isFinite(endPrice)) {
     hotels = hotels.filter((hotel) => (hotel.MinPrice ?? 0) <= endPrice);
   }
   if (categories.size > 0) {
@@ -86,8 +86,9 @@ function createHotelListResponse(data: unknown) {
     });
   }
   if (brands.size > 0) {
-    hotels = hotels.filter((hotel, index) => {
-      const id = index % 2 === 0 ? "brand-atour" : index % 3 === 0 ? "brand-hyatt" : "brand-hanting";
+    hotels = hotels.filter((_hotel, index) => {
+      const id =
+        index % 2 === 0 ? "brand-atour" : index % 3 === 0 ? "brand-hyatt" : "brand-hanting";
       return brands.has(id);
     });
   }
@@ -101,7 +102,7 @@ function createHotelListResponse(data: unknown) {
     });
   }
   if (services.size > 0) {
-    hotels = hotels.filter((hotel, index) => {
+    hotels = hotels.filter((_hotel, index) => {
       const pickup = index % 2 === 0;
       return (
         (services.has("amenity-service-pickup") && pickup) ||
@@ -110,7 +111,7 @@ function createHotelListResponse(data: unknown) {
     });
   }
   if (facilities.size > 0) {
-    hotels = hotels.filter((hotel, index) => {
+    hotels = hotels.filter((_hotel, index) => {
       const gym = index % 3 !== 0;
       return (
         (facilities.has("amenity-facility-gym") && gym) ||
