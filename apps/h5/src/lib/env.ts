@@ -10,8 +10,8 @@ export function getAppId(): string {
 
 export function getApiBaseUrl(): string {
   const configured = import.meta.env.VITE_API_BASE_URL ?? "";
-  // Dev + proxy: use same-origin /Home/* so Vite forwards to VITE_API_BASE_URL (avoids CORS).
-  if (import.meta.env.DEV && getApiMode() === "proxy") {
+  // Proxy mode uses same-origin /Home/*; dev uses Vite proxy, prod uses Nginx proxy.
+  if (getApiMode() === "proxy") {
     return "";
   }
   return configured;

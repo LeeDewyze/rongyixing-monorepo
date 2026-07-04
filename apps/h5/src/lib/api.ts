@@ -32,9 +32,9 @@ function attachTouristContextProxy(api: ReturnType<typeof createApi>): void {
   };
 }
 
-/** Route cross-origin login URLs through Vite dev proxy (e.g. /Jyx/LoginByRyx). */
+/** Route cross-origin login URLs through same-origin proxy (Vite in dev, Nginx in prod). */
 function rewriteDevProxyUrl(url: string): string {
-  if (!import.meta.env.DEV) {
+  if (getApiMode() !== "proxy") {
     return url;
   }
   try {
