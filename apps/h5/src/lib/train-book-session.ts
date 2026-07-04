@@ -1,9 +1,4 @@
-import type {
-  TrainBookPolicy,
-  TrainItem,
-  TrainSearchParams,
-  TrainSeat,
-} from "@ryx/shared-types";
+import type { TrainBookPolicy, TrainItem, TrainSearchParams, TrainSeat } from "@ryx/shared-types";
 import type { PassengerBookInfo } from "@ryx/shared-types";
 import type { HomeTravelMode } from "@/config/home-assets";
 
@@ -20,6 +15,8 @@ export interface TrainBookSelection {
   passengers: PassengerBookInfo[];
   selectedAt: number;
   travelMode?: HomeTravelMode;
+  /** Set when navigating from exchange train list. */
+  isExchange?: boolean;
 }
 
 function notifyChange(): void {

@@ -339,15 +339,27 @@ export function stripTrainOrderBookDto(dto: TrainOrderBookDto): TrainOrderBookDt
   return stripTrainBookOrderDto(dto);
 }
 
+/** Normalize legacy exchange book wire payload — backend expects root TicketId. */
+function normalizeTrainExchangeSubmitDto(dto: TrainOrderBookDto): TrainOrderBookDto {
+  const ticketId = dto.TicketId ?? dto.ExchangeTicketId;
+  const next: TrainOrderBookDto = { ...dto };
+  if (ticketId) {
+    next.TicketId = String(ticketId);
+  }
+  delete next.ExchangeTicketId;
+  delete next.IsExchange;
+  return next;
+}
+
 /** Legacy `onBook` final transforms before Train-Book proxy send. */
 export function prepareTrainBookSubmitDto(dto: TrainOrderBookDto): TrainOrderBookDto {
   if (dto.channel === "tourist") {
     const passengers = dto.Passengers.map(stripPassengerForPersonalBook);
-    const result: TrainOrderBookDto = {
+    const result: TrainOrderBookDto = normalizeTrainExchangeSubmitDto({
       ...dto,
       IsFromOffline: dto.IsFromOffline ?? false,
       Passengers: passengers,
-    };
+    });
 
     delete result.TravelFormId;
     delete result.AccountNumber;
@@ -358,10 +370,6 @@ export function prepareTrainBookSubmitDto(dto: TrainOrderBookDto): TrainOrderBoo
     })).filter((linkman) => linkman.Name || linkman.Mobile || linkman.Email);
     if (!result.Linkmans?.length) {
       delete result.Linkmans;
-    }
-
-    if (result.IsExchange && result.ExchangeTicketId) {
-      result.ExchangeTicketId = String(result.ExchangeTicketId);
     }
 
     return result;
@@ -390,10 +398,10 @@ export function prepareTrainBookSubmitDto(dto: TrainOrderBookDto): TrainOrderBoo
     return next;
   });
 
-  const result: TrainOrderBookDto = {
+  const result: TrainOrderBookDto = normalizeTrainExchangeSubmitDto({
     ...base,
     Passengers: passengers,
-  };
+  });
 
   if (!result.Linkmans?.length) {
     delete result.Linkmans;
@@ -401,10 +409,6 @@ export function prepareTrainBookSubmitDto(dto: TrainOrderBookDto): TrainOrderBoo
 
   if (!result.IsOfficialBooked) {
     delete result.AccountNumber;
-  }
-
-  if (result.IsExchange && result.ExchangeTicketId) {
-    result.ExchangeTicketId = String(result.ExchangeTicketId);
   }
 
   return result;

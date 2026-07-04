@@ -397,4 +397,25 @@ describe("prepareTrainBookSubmitDto", () => {
       Train: { TrainNo: "G1" },
     });
   });
+
+  it("maps exchange book payload to legacy root TicketId", () => {
+    const result = prepareTrainBookSubmitDto({
+      TravelFormId: "tf-1",
+      TravelPayType: 1,
+      ExchangeTicketId: "207600000001",
+      IsExchange: true,
+      Passengers: [
+        {
+          ClientId: "p1",
+          Mobile: "13800000001",
+          Train: { TrainNo: "G1", BookSeatType: 4 },
+          Credentials: { Id: "c1", Type: 1, Number: "410928199608225121" },
+        },
+      ],
+    });
+
+    expect(result.TicketId).toBe("207600000001");
+    expect(result.ExchangeTicketId).toBeUndefined();
+    expect(result.IsExchange).toBeUndefined();
+  });
 });

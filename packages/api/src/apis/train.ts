@@ -7,6 +7,7 @@ import type {
   TrainExchangeInfoParams,
   TrainItem,
   TrainPassengerInfo,
+  TrainPassengerBookSnapshot,
   TrainPassengerInfoParams,
   TrainPolicyParams,
   TrainPolicyPassengerResult,
@@ -37,6 +38,9 @@ export interface TrainApi {
   getPolicy(params: TrainPolicyParams): Promise<TrainPolicyResponse>;
   getExchangeInfo(params: TrainExchangeInfoParams): Promise<TrainExchangeInfo>;
   getTrainPassenger(params: TrainPassengerInfoParams): Promise<TrainPassengerInfo>;
+  getTrainPassengerBookSnapshot(
+    params: TrainPassengerInfoParams,
+  ): Promise<TrainPassengerBookSnapshot | null>;
   getSchedule(params: TrainScheduleParams): Promise<TrainScheduleResponse>;
   initializeBook(params: TrainInitBookParams): Promise<TrainInitBookResponse>;
   submitBook(params: TrainBookParams): Promise<TrainBookResponse>;
@@ -401,19 +405,96 @@ function readExchangeString(payload: LegacyRecord, ...keys: string[]): string | 
   return undefined;
 }
 
+function readExchangeNumber(value: unknown): number | undefined {
+  if (typeof value === "number" && !Number.isNaN(value)) return value;
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? undefined : parsed;
+  }
+  return undefined;
+}
+
+function parseLegacyVariables(record: LegacyRecord | undefined): LegacyRecord | undefined {
+  if (!record) return undefined;
+  if (record.VariablesObj && typeof record.VariablesObj === "object") {
+    return record.VariablesObj as LegacyRecord;
+  }
+  const variables = record.Variables;
+  if (typeof variables === "string" && variables.trim()) {
+    try {
+      return JSON.parse(variables) as LegacyRecord;
+    } catch {
+      return undefined;
+    }
+  }
+  return undefined;
+}
+
+function readOriginalTicketPrice(
+  orderTrainTicket: LegacyRecord | undefined,
+  payload: LegacyRecord,
+): number | undefined {
+  const direct =
+    readExchangeNumber(orderTrainTicket?.TicketPrice) ?? readExchangeNumber(payload.TicketPrice);
+  if (direct !== undefined) return direct;
+
+  const trips = orderTrainTicket?.OrderTrainTrips;
+  if (Array.isArray(trips) && trips.length > 0) {
+    const trip = trips[0] as LegacyRecord;
+    const tripPrice = readExchangeNumber(trip.Price ?? trip.TicketPrice);
+    if (tripPrice !== undefined) return tripPrice;
+  }
+
+  return undefined;
+}
+
+function readRecordString(record: LegacyRecord | undefined, ...keys: string[]): string | undefined {
+  if (!record) return undefined;
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+    if (typeof value === "number" && !Number.isNaN(value)) {
+      return String(value);
+    }
+  }
+  return undefined;
+}
+
 export function normalizeTrainExchangeInfo(res: unknown): TrainExchangeInfo {
   if (!res || typeof res !== "object") {
     return {};
   }
   const payload = res as LegacyRecord;
+  const orderTrainTicket = (payload.OrderTrainTicket as LegacyRecord | undefined) ?? undefined;
+  const order = (orderTrainTicket?.Order as LegacyRecord | undefined) ?? undefined;
+  const orderVariables = parseLegacyVariables(order) ?? parseLegacyVariables(payload);
+  const originalTicketPrice = readOriginalTicketPrice(orderTrainTicket, payload);
+  const travelPayType = readExchangeNumber(orderVariables?.TravelPayType);
+  const insuranceAmount =
+    readExchangeNumber(payload.InsurnanceAmount) ?? readExchangeNumber(payload.InsuranceAmount);
+  const ticketPassenger = (orderTrainTicket?.Passenger as LegacyRecord | undefined) ?? undefined;
+  const passengerMobile = ticketPassenger
+    ? readExchangeString(ticketPassenger, "Mobile")
+    : undefined;
+
   return {
-    TicketId: readExchangeString(payload, "TicketId", "Id"),
-    OrderId: readExchangeString(payload, "OrderId"),
-    Date: readExchangeString(payload, "Date", "GoDate", "DepartDate"),
+    TicketId:
+      readExchangeString(payload, "TicketId") ??
+      readRecordString(orderTrainTicket, "TicketId", "Id"),
+    OrderId: readExchangeString(payload, "OrderId") ?? readRecordString(order, "Id", "OrderId"),
+    Date:
+      readExchangeString(payload, "Date", "GoDate", "DepartDate") ??
+      readRecordString(orderTrainTicket, "GoDate"),
     FromStation: readExchangeString(payload, "FromStation", "FromStationCode"),
     ToStation: readExchangeString(payload, "ToStation", "ToStationCode"),
     FromStationName: readExchangeString(payload, "FromStationName", "FromStation"),
     ToStationName: readExchangeString(payload, "ToStationName", "ToStation"),
+    OriginalTicketPrice: originalTicketPrice,
+    TravelPayType: travelPayType,
+    InsuranceAmount: insuranceAmount,
+    PassengerMobile: passengerMobile,
   };
 }
 
@@ -439,6 +520,78 @@ export function normalizeTrainPassengerInfo(res: unknown): TrainPassengerInfo {
     ToStationName: readExchangeString(trip ?? payload, "ToStationName", "ToStation"),
     StartTime: readExchangeString(trip ?? payload, "StartTime", "DepartureTime", "GoDate"),
     ArrivalTime: readExchangeString(trip ?? payload, "ArrivalTime", "ArriveTime"),
+  };
+}
+
+function readPassengerString(record: LegacyRecord, ...keys: string[]): string | undefined {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+    if (typeof value === "number" && !Number.isNaN(value)) return String(value);
+  }
+  return undefined;
+}
+
+export function normalizeTrainPassengerBookSnapshot(
+  res: unknown,
+): TrainPassengerBookSnapshot | null {
+  if (!res || typeof res !== "object") {
+    return null;
+  }
+  const payload = res as LegacyRecord;
+  const passenger = (payload.Passenger as LegacyRecord | undefined) ?? payload;
+  const name = readPassengerString(passenger, "Name");
+  if (!name) {
+    return null;
+  }
+
+  const passengerId =
+    readPassengerString(passenger, "Id", "PassengerId", "ClientId") ??
+    readPassengerString(payload, "Id");
+  const accountId = readPassengerString(passenger, "AccountId");
+  const credentialId =
+    readPassengerString(passenger, "CredentialsId", "CredentialId") ?? passengerId ?? name;
+  const clientId = credentialId ?? passengerId ?? name;
+  const credentialNumber =
+    readPassengerString(passenger, "CredentialsNumber", "Number") ??
+    readPassengerString(passenger, "HideCredentialsNumber", "HideNumber");
+  const hideNumber =
+    readPassengerString(passenger, "HideCredentialsNumber", "HideNumber") ?? credentialNumber;
+
+  const staffPassenger = {
+    Id: passengerId ?? clientId,
+    AccountId: accountId,
+    Name: name,
+    Mobile: readPassengerString(passenger, "Mobile"),
+    OrgName: readPassengerString(passenger, "OrgName", "OrganizationName"),
+    CredentialsType: passenger.CredentialsType as string | number | undefined,
+    CredentialsTypeName: readPassengerString(
+      passenger,
+      "CredentialsTypeName",
+      "CredentialTypeName",
+    ),
+    Number: credentialNumber,
+    HideNumber: hideNumber,
+  };
+
+  const credential = {
+    Id: clientId,
+    AccountId: accountId,
+    Name: name,
+    Mobile: readPassengerString(passenger, "Mobile"),
+    OrgName: staffPassenger.OrgName,
+    CredentialsType: staffPassenger.CredentialsType,
+    CredentialsTypeName: staffPassenger.CredentialsTypeName,
+    Number: credentialNumber,
+    HideNumber: hideNumber,
+    HideCredentialsNumber: hideNumber,
+  };
+
+  return {
+    clientId,
+    passenger: staffPassenger,
+    credential,
+    isNotWhitelist: passenger.IsNotWhiteList === true || passenger.isNotWhiteList === true,
   };
 }
 
@@ -578,6 +731,15 @@ export function createTrainApi(proxy: ProxyClient): TrainApi {
       });
       return normalizeTrainPassengerInfo(res);
     },
+    async getTrainPassengerBookSnapshot(params) {
+      const res = await proxy.send<unknown>({
+        method: isTouristChannel(params)
+          ? TOURIST_TRAIN_FLOW_METHODS.GET_TRAIN_PASSENGER
+          : TRAIN_FLOW_METHODS.GET_TRAIN_PASSENGER,
+        data: stripChannel(params),
+      });
+      return normalizeTrainPassengerBookSnapshot(res);
+    },
     async getSchedule(params) {
       const res = await proxy.send<unknown>({
         method: isTouristChannel(params)
@@ -618,12 +780,7 @@ export function createTrainApi(proxy: ProxyClient): TrainApi {
         method: isTouristChannel(params)
           ? TOURIST_TRAIN_BOOK_METHODS.EXCHANGE_BOOK
           : TRAIN_FLOW_METHODS.EXCHANGE_BOOK,
-        data: stripChannel(
-          prepareTrainBookSubmitDto({
-            ...params,
-            IsExchange: true,
-          }),
-        ),
+        data: stripChannel(prepareTrainBookSubmitDto(params)),
         requestTimeout: 60,
         timeoutMs: 60_000,
       });

@@ -1,10 +1,13 @@
 import type { HotelOrderActionFlags, TrainOrderTicket } from "@ryx/shared-types";
+import { ProductType } from "@ryx/shared-types";
 
 import { getApi } from "@/lib/api";
+import { savePassengerSelection } from "@/lib/passenger-selection";
 import {
-  buildTrainExchangeListPath,
-  saveTrainExchangeSession,
-} from "@/lib/train-exchange-session";
+  passengerBookInfoFromExchangeSnapshot,
+  enrichExchangePassengerContact,
+} from "@/lib/train-exchange-passenger";
+import { buildTrainExchangeListPath, saveTrainExchangeSession } from "@/lib/train-exchange-session";
 
 export function mergeTrainFooterActions(
   orderActions: HotelOrderActionFlags | undefined,
@@ -39,14 +42,32 @@ export async function startTrainExchangeFlow(input: {
   orderId?: string;
   navigate: (path: string) => void;
 }): Promise<void> {
-  const exchangeInfo = await getApi().train.getExchangeInfo({
-    channel: input.channel,
-    TicketId: input.ticketId,
-  });
+  const [exchangeInfo, passengerSnapshot] = await Promise.all([
+    getApi().train.getExchangeInfo({
+      channel: input.channel,
+      TicketId: input.ticketId,
+    }),
+    getApi().train.getTrainPassengerBookSnapshot({
+      channel: input.channel,
+      TicketId: input.ticketId,
+    }),
+  ]);
+  const passengers = passengerSnapshot
+    ? [
+        enrichExchangePassengerContact(
+          passengerBookInfoFromExchangeSnapshot(passengerSnapshot),
+          exchangeInfo,
+        ),
+      ]
+    : [];
+  if (passengers.length > 0) {
+    savePassengerSelection(ProductType.Train, passengers);
+  }
   saveTrainExchangeSession({
     ticketId: input.ticketId,
     orderId: input.orderId ?? exchangeInfo.OrderId,
     exchangeInfo: { ...exchangeInfo, TicketId: input.ticketId },
+    passengers,
     startedAt: Date.now(),
   });
   input.navigate(buildTrainExchangeListPath(exchangeInfo));

@@ -203,6 +203,50 @@ function resolveTrainPassengerFormMobile(form?: TrainPassengerBookForm, fallback
   return mobile || fallback || "";
 }
 
+/** Legacy exchange contact fallback: init staff mobile → passenger mobile → original ticket mobile. */
+export function resolveTrainPassengerMobileFallback(
+  passenger: PassengerBookInfo,
+  init?: TrainInitBookResponse,
+  exchangePassengerMobile?: string,
+): string {
+  const staff = findInitStaffForPassenger(passenger, init?.Staffs);
+  const staffMobile = staff?.Account?.Mobile?.trim();
+  if (staffMobile) return staffMobile;
+
+  const credentialMobile = passenger.credential.Mobile?.trim();
+  if (credentialMobile) return credentialMobile;
+
+  const passengerMobile =
+    "Mobile" in passenger.passenger && typeof passenger.passenger.Mobile === "string"
+      ? passenger.passenger.Mobile.trim()
+      : "";
+  if (passengerMobile) return passengerMobile;
+
+  return exchangePassengerMobile?.trim() ?? "";
+}
+
+export function mergeTrainPassengerContactIntoForm(
+  form: TrainPassengerBookForm,
+  passenger: PassengerBookInfo,
+  options?: { init?: TrainInitBookResponse; exchangePassengerMobile?: string },
+): TrainPassengerBookForm {
+  if (resolveTrainPassengerFormMobile(form)) return form;
+
+  const fallback = resolveTrainPassengerMobileFallback(
+    passenger,
+    options?.init,
+    options?.exchangePassengerMobile,
+  );
+  if (!fallback) return form;
+
+  const mobileOptions = splitContactOptions(fallback);
+  return {
+    ...form,
+    mobileOptions,
+    otherMobile: mobileOptions.length === 0 ? fallback : form.otherMobile,
+  };
+}
+
 function resolveTrainPassengerFormEmail(form?: TrainPassengerBookForm): string {
   const checked = form?.emailOptions.filter((item) => item.checked).map((item) => item.value) ?? [];
   let email = checked.join(",");
@@ -345,6 +389,7 @@ export function buildTrainOrderBookDto(input: {
   orderLinkman?: TrainBookLinkmanDto;
   init?: TrainInitBookResponse;
   isExchangeBook?: boolean;
+  exchangePassengerMobile?: string;
 }): TrainOrderBookDto {
   const {
     selection,
@@ -364,6 +409,7 @@ export function buildTrainOrderBookDto(input: {
     orderLinkman,
     init,
     isExchangeBook,
+    exchangePassengerMobile,
   } = input;
   const includeTravelForm = isBusinessTravelMode(travelMode);
   const policy = selection.policy;
@@ -381,7 +427,14 @@ export function buildTrainOrderBookDto(input: {
     const cred = info.credential;
     const clientId = resolveTrainInitClientId(info);
     const form = passengerForms?.[info.id];
-    const mobile = resolveTrainPassengerFormMobile(form, cred.Mobile);
+    const mobile = resolveTrainPassengerFormMobile(
+      form,
+      resolveTrainPassengerMobileFallback(
+        info,
+        init,
+        isExchangeBook ? input.exchangePassengerMobile : undefined,
+      ),
+    );
     const email = resolveTrainPassengerFormEmail(form);
     const seatPreference = legacyBookSeatLocations?.[index] ?? bookSeatLocations?.[index]?.trim();
     const passengerPolicy = buildTrainPassengerPolicy(info);
@@ -463,8 +516,7 @@ export function buildTrainOrderBookDto(input: {
 
   if (agentId) dto.AgentId = agentId;
   if (exchangeTicketId) {
-    dto.IsExchange = true;
-    dto.ExchangeTicketId = exchangeTicketId;
+    dto.TicketId = exchangeTicketId;
   }
   return dto;
 }
@@ -500,6 +552,7 @@ export function validateTrainBookForms(input: {
   isExchangeBook?: boolean;
   isBusinessMode?: boolean;
   requireIllegalReason: boolean;
+  exchangePassengerMobile?: string;
 }): string | null {
   const {
     passengers,
@@ -513,6 +566,7 @@ export function validateTrainBookForms(input: {
     isExchangeBook,
     isBusinessMode = true,
     requireIllegalReason,
+    exchangePassengerMobile,
   } = input;
 
   const passengerMobileOwners = new Map<string, string>();
@@ -521,7 +575,14 @@ export function validateTrainBookForms(input: {
     const form = forms[passenger.id];
     if (!form) return "请完善旅客信息";
 
-    const mobile = resolveTrainPassengerFormMobile(form);
+    const mobile = resolveTrainPassengerFormMobile(
+      form,
+      resolveTrainPassengerMobileFallback(
+        passenger,
+        init,
+        isExchangeBook ? exchangePassengerMobile : undefined,
+      ),
+    );
     if (!mobile) return `请填写${passenger.credential.Name ?? "旅客"}联系电话`;
     const passengerName = passenger.credential.Name ?? "旅客";
     for (const item of splitTrainContactMobiles(mobile)) {
@@ -588,6 +649,8 @@ export interface TrainBookPassengerBill {
 export interface TrainBookBillBreakdown {
   passengers: TrainBookPassengerBill[];
   total: number;
+  /** Original ticket amount deducted in exchange flow (legacy TicketPrice). */
+  originalTicketCredit?: number;
 }
 
 function toBillAmount(value: unknown): number {
@@ -630,6 +693,45 @@ export function resolveTrainBookBillBreakdown(input: {
   };
 }
 
+export interface TrainExchangeBookPricingInput {
+  selection: TrainBookSelection;
+  passengers: PassengerBookInfo[];
+  serviceFees?: Record<string, number | string>;
+  originalTicketPrice?: number;
+  exchangeOnlineFee?: number;
+}
+
+/** Legacy calcTotalPrice for exchange: new fare + fees − original TicketPrice. */
+export function resolveTrainExchangeBookBillBreakdown(
+  input: TrainExchangeBookPricingInput,
+): TrainBookBillBreakdown {
+  const base = resolveTrainBookBillBreakdown(input);
+  let total = base.total;
+
+  if (input.exchangeOnlineFee !== undefined) {
+    const regularServiceTotal = base.passengers.reduce((sum, bill) => sum + bill.serviceFee, 0);
+    total = total - regularServiceTotal + toBillAmount(input.exchangeOnlineFee);
+  }
+
+  const originalPrice = toBillAmount(input.originalTicketPrice);
+  if (originalPrice > 0) {
+    total -= originalPrice;
+  }
+
+  return {
+    ...base,
+    total,
+    originalTicketCredit: originalPrice > 0 ? originalPrice : undefined,
+  };
+}
+
+export function resolveTrainExchangeBookDisplayAmount(
+  input: TrainExchangeBookPricingInput,
+): number {
+  if (input.passengers.length === 0) return 0;
+  return resolveTrainExchangeBookBillBreakdown(input).total;
+}
+
 export function resolveTrainBookDisplayAmount(
   selection: TrainBookSelection,
   passengers: PassengerBookInfo[],
@@ -648,8 +750,15 @@ export function resolveTrainBookOrderId(
   return response.OrderId?.trim() ?? "";
 }
 
-export function createTrainPassengerBookForm(passenger: PassengerBookInfo): TrainPassengerBookForm {
-  const accountMobile = passenger.credential.Mobile ?? passenger.passenger.Mobile ?? undefined;
+export function createTrainPassengerBookForm(
+  passenger: PassengerBookInfo,
+  options?: { init?: TrainInitBookResponse; exchangePassengerMobile?: string },
+): TrainPassengerBookForm {
+  const accountMobile = resolveTrainPassengerMobileFallback(
+    passenger,
+    options?.init,
+    options?.exchangePassengerMobile,
+  );
   const mobileOptions = splitContactOptions(accountMobile, passenger.credential.Mobile);
 
   return {

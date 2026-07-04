@@ -10,19 +10,11 @@ function formatBillAmount(value: number): string {
   return Number.isFinite(value) ? String(value) : "--";
 }
 
-function BillLineRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
+function BillLineRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-3 py-2">
       <span className="min-w-0 flex-1 text-[14px] text-[#666666]">{label}</span>
-      <span className="shrink-0 text-[14px] font-medium tabular-nums text-[#333333]">
-        {value}
-      </span>
+      <span className="shrink-0 text-[14px] font-medium tabular-nums text-[#333333]">{value}</span>
     </div>
   );
 }
@@ -72,9 +64,7 @@ export function TrainBookBillSheet({ breakdown }: TrainBookBillSheetProps) {
             value={`¥${formatBillAmount(firstBill?.ticketPrice ?? 0)} × ${passengerCount}人`}
           />
           {firstBill?.seatTypeName ? (
-            <p className="pb-2 text-[12px] leading-snug text-[#999999]">
-              {firstBill.seatTypeName}
-            </p>
+            <p className="pb-2 text-[12px] leading-snug text-[#999999]">{firstBill.seatTypeName}</p>
           ) : null}
           {serviceFeeTotal > 0 ? (
             <BillLineRow
@@ -84,6 +74,12 @@ export function TrainBookBillSheet({ breakdown }: TrainBookBillSheetProps) {
                   ? `¥${formatBillAmount(firstBill?.serviceFee ?? 0)} × ${passengerCount}人`
                   : `¥${formatBillAmount(serviceFeeTotal)}`
               }
+            />
+          ) : null}
+          {breakdown.originalTicketCredit != null && breakdown.originalTicketCredit > 0 ? (
+            <BillLineRow
+              label="原票抵扣"
+              value={`-¥${formatBillAmount(breakdown.originalTicketCredit)}`}
             />
           ) : null}
         </div>

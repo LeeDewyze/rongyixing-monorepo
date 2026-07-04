@@ -307,6 +307,7 @@ export type {
   TrainOrderTicket,
   TrainOrderTrip,
   TrainPassengerInfo,
+  TrainPassengerBookSnapshot,
   TrainPassengerInfoParams,
   TrainRefundParams,
   TrainTicketActionFlags,

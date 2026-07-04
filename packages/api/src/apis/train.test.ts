@@ -13,6 +13,7 @@ import {
   normalizeTrainSearchResponse,
   normalizeTrainExchangeInfo,
   normalizeTrainPassengerInfo,
+  normalizeTrainPassengerBookSnapshot,
   normalizeTrainBookResponse,
   normalizeTrainInitBookResponse,
   normalizeTrainScheduleResponse,
@@ -246,6 +247,40 @@ describe("normalizeTrainExchangeInfo", () => {
       ToStationName: "上海虹桥",
     });
   });
+
+  it("maps original ticket price and travel pay type from OrderTrainTicket", () => {
+    expect(
+      normalizeTrainExchangeInfo({
+        OrderTrainTicket: {
+          TicketPrice: 233,
+          Passenger: { Mobile: "19528280621" },
+          Order: {
+            Id: "ORD-TRN-002",
+            Variables: JSON.stringify({ TravelPayType: 1 }),
+          },
+        },
+        InsurnanceAmount: 10,
+      }),
+    ).toMatchObject({
+      OrderId: "ORD-TRN-002",
+      OriginalTicketPrice: 233,
+      TravelPayType: 1,
+      InsuranceAmount: 10,
+      PassengerMobile: "19528280621",
+    });
+  });
+
+  it("falls back to trip Price when TicketPrice is absent", () => {
+    expect(
+      normalizeTrainExchangeInfo({
+        OrderTrainTicket: {
+          OrderTrainTrips: [{ Price: 415.5 }],
+        },
+      }),
+    ).toMatchObject({
+      OriginalTicketPrice: 415.5,
+    });
+  });
 });
 
 describe("normalizeTrainBookResponse", () => {
@@ -325,6 +360,37 @@ describe("normalizeTrainPassengerInfo", () => {
       TrainCode: "D79",
       FromStationName: "北京南",
       ArrivalTime: "2026-07-05T11:39:00",
+    });
+  });
+});
+
+describe("normalizeTrainPassengerBookSnapshot", () => {
+  it("maps order passenger into exchange book snapshot", () => {
+    expect(
+      normalizeTrainPassengerBookSnapshot({
+        Passenger: {
+          Id: "p1",
+          AccountId: "acc-1",
+          Name: "申晓杰",
+          Mobile: "13800000001",
+          CredentialsId: "cred-1",
+          CredentialsNumber: "110101199001011234",
+          HideCredentialsNumber: "110***********1234",
+          CredentialsTypeName: "身份证",
+        },
+      }),
+    ).toMatchObject({
+      clientId: "cred-1",
+      passenger: {
+        Id: "p1",
+        AccountId: "acc-1",
+        Name: "申晓杰",
+      },
+      credential: {
+        Id: "cred-1",
+        Name: "申晓杰",
+        HideCredentialsNumber: "110***********1234",
+      },
     });
   });
 });

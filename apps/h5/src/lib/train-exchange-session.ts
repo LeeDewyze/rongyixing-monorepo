@@ -1,4 +1,5 @@
 import type { TrainExchangeInfo } from "@ryx/shared-types";
+import type { PassengerBookInfo } from "@ryx/shared-types";
 
 const STORAGE_KEY = "ryx_train_exchange_session";
 export const TRAIN_EXCHANGE_SESSION_EVENT = "ryx-train-exchange-session-change";
@@ -7,6 +8,8 @@ export interface TrainExchangeSession {
   ticketId: string;
   orderId?: string;
   exchangeInfo: TrainExchangeInfo;
+  /** Passenger from the original ticket — no re-selection in exchange list. */
+  passengers?: PassengerBookInfo[];
   startedAt: number;
 }
 

@@ -37,6 +37,7 @@ export function createMockTrainInitBookResponse(): TrainInitBookResponse {
     Tmc: {
       IsShowServiceFee: true,
       TrainApprovalType: 3,
+      TrainExchangeOnlineFee: 5,
     },
   };
 }

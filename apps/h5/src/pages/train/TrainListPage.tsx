@@ -44,7 +44,10 @@ import {
   isTrainSeatBookable,
 } from "@/lib/train-book-policy";
 import { saveTrainBookSelection } from "@/lib/train-book-session";
-import { loadTrainExchangeSession } from "@/lib/train-exchange-session";
+import {
+  loadTrainExchangeSession,
+  TRAIN_EXCHANGE_SESSION_EVENT,
+} from "@/lib/train-exchange-session";
 import { getTicket } from "@/lib/session";
 import {
   applyTrainFilters,
@@ -93,8 +96,21 @@ export function TrainListPage() {
 
   const fromName = listParams.FromName ?? listParams.FromStation;
   const toName = listParams.ToName ?? listParams.ToStation;
-  const isExchangeMode =
-    searchParams.get("exchange") === "1" || Boolean(loadTrainExchangeSession());
+  const [exchangeSession, setExchangeSession] = useState(() => loadTrainExchangeSession());
+  const isExchangeMode = searchParams.get("exchange") === "1" || Boolean(exchangeSession);
+  const bookingPassengers = useMemo(() => {
+    if (isExchangeMode && exchangeSession?.passengers?.length) {
+      return exchangeSession.passengers;
+    }
+    return selectedPassengers;
+  }, [exchangeSession, isExchangeMode, selectedPassengers]);
+
+  useEffect(() => {
+    const syncExchangeSession = () => setExchangeSession(loadTrainExchangeSession());
+    syncExchangeSession();
+    window.addEventListener(TRAIN_EXCHANGE_SESSION_EVENT, syncExchangeSession);
+    return () => window.removeEventListener(TRAIN_EXCHANGE_SESSION_EVENT, syncExchangeSession);
+  }, []);
 
   const hasListQuery = Boolean(
     parseLocalDate(listParams.Date) && listParams.FromStation && listParams.ToStation,
@@ -139,9 +155,9 @@ export function TrainListPage() {
     () =>
       buildTrainPolicyParams({
         trains: rawTrains,
-        passengers: isBusinessMode ? selectedPassengers : [],
+        passengers: isBusinessMode ? bookingPassengers : [],
       }),
-    [isBusinessMode, rawTrains, selectedPassengers],
+    [isBusinessMode, rawTrains, bookingPassengers],
   );
 
   const {
@@ -155,7 +171,7 @@ export function TrainListPage() {
     isAuthenticated &&
     isBusinessMode &&
     rawTrains.length > 0 &&
-    selectedPassengers.length > 0 &&
+    bookingPassengers.length > 0 &&
     (isPolicyLoading || isPolicyFetching);
 
   const policyChecked = !isPolicyFetching && !isPolicyError && Boolean(policyResults);
@@ -227,8 +243,8 @@ export function TrainListPage() {
     const trains = resolveTrainListOrder(getFilteredTrains(), listOrderState);
     const marked = markLowestPrice(trains);
     if (!isBusinessMode || !policyResults) return marked;
-    return applyTrainPolicyColors(marked, policyResults, selectedPassengers);
-  }, [getFilteredTrains, isBusinessMode, listOrderState, policyResults, selectedPassengers]);
+    return applyTrainPolicyColors(marked, policyResults, bookingPassengers);
+  }, [getFilteredTrains, isBusinessMode, listOrderState, policyResults, bookingPassengers]);
 
   const filtered = isTrainFilterActive(filterApplied);
   const showListLoading = isAuthenticated && (isLoading || isFetching) && displayed.length === 0;
@@ -272,23 +288,23 @@ export function TrainListPage() {
 
   const handleBookAttempt = useCallback(
     (train: TrainItem, seat: TrainSeat) => {
-      if (isBusinessMode && !selectedPassengers.length) {
+      if (isBusinessMode && !isExchangeMode && !bookingPassengers.length) {
         navigate(buildPassengerSelectPath(ProductType.Train, listReturnTo));
         return;
       }
 
-      if (isBusinessMode) {
+      if (isBusinessMode && bookingPassengers.length > 0) {
         const bookable = isTrainSeatBookable(seat.policyColor, isAgent, policyChecked);
         if (!bookable) {
           setPolicyAlertMessage(
-            buildTrainPolicyExceedAlertMessage(train, seat, selectedPassengers, isAgent),
+            buildTrainPolicyExceedAlertMessage(train, seat, bookingPassengers, isAgent),
           );
           return;
         }
 
         if (seat.policyColor === "danger" && isAgent) {
           setPolicyAlertMessage(
-            buildTrainPolicyExceedAlertMessage(train, seat, selectedPassengers, true),
+            buildTrainPolicyExceedAlertMessage(train, seat, bookingPassengers, true),
           );
         }
       }
@@ -299,15 +315,17 @@ export function TrainListPage() {
         seat,
         trainSnapshot: train.searchSnapshot,
         policy: seat.policy,
-        passengers: selectedPassengers,
+        passengers: bookingPassengers,
         selectedAt: Date.now(),
         travelMode,
+        isExchange: isExchangeMode,
       });
       navigate("/train/book");
     },
     [
       isBusinessMode,
-      selectedPassengers,
+      isExchangeMode,
+      bookingPassengers,
       isAgent,
       policyChecked,
       navigate,
@@ -394,8 +412,8 @@ export function TrainListPage() {
           fromName={fromName}
           toName={toName}
           passengerHref={buildPassengerSelectPath(ProductType.Train, listReturnTo)}
-          passengerCount={selectedPassengers.length}
-          showPassengerEntry={isBusinessMode}
+          passengerCount={bookingPassengers.length}
+          showPassengerEntry={isBusinessMode && !isExchangeMode}
           modifyOpen={modifyOpen}
           onBack={handleHeaderBack}
           onModifyOpen={handleModifyOpen}

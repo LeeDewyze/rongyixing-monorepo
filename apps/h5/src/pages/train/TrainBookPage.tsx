@@ -8,6 +8,7 @@ import {
   type FlightOutNumberField,
   type PassengerBookInfo,
   type TrainBookLinkmanDto,
+  type TrainExchangeInfo,
 } from "@ryx/shared-types";
 
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -52,14 +53,18 @@ import {
 import { replacePassengerCredential } from "@/lib/passenger-select-logic";
 import { TAB_ID_TO_PARAM } from "@/lib/order-list-params";
 import { formatApiError } from "@/lib/formatApiError";
+import { getApi } from "@/lib/api";
 import { scrollH5MainToTop } from "@/lib/scroll-h5-main";
 import {
   buildTrainInitBookDto,
   buildTrainOrderBookDto,
   buildTrainPassengerOutNumberFieldsMap,
   canSelectTrainSeat,
+  mergeTrainPassengerContactIntoForm,
   resolveTrainBookDisplayAmount,
   resolveTrainBookBillBreakdown,
+  resolveTrainExchangeBookDisplayAmount,
+  resolveTrainExchangeBookBillBreakdown,
   resolveTrainBookOrderId,
   resolvePassengerServiceFee,
   validateTrainBookForms,
@@ -75,12 +80,18 @@ import {
   parseTrainPayTypeOptions,
   resolveDefaultTrainPayType,
   resolveTrainBookTmcFlags,
+  resolveTrainExchangeOnlineFee,
   resolveTrainHoldMinutes,
   TRAIN_PAY_TYPE_PERSON,
 } from "@/lib/train-book-pay";
 import { pollTrainCheckPay, shouldNavigateToPay } from "@/lib/train-book-check-pay";
-import { clearTrainBookSelection } from "@/lib/train-book-session";
-import { clearTrainExchangeSession, loadTrainExchangeSession } from "@/lib/train-exchange-session";
+import { clearTrainBookSelection, saveTrainBookSelection } from "@/lib/train-book-session";
+import {
+  clearTrainExchangeSession,
+  loadTrainExchangeSession,
+  saveTrainExchangeSession,
+  TRAIN_EXCHANGE_SESSION_EVENT,
+} from "@/lib/train-exchange-session";
 import { buildPassengerSelectPath, clearPassengerSelection } from "@/lib/passenger-selection";
 import {
   isBusinessTravelMode,
@@ -107,8 +118,13 @@ export function TrainBookPage() {
   });
   const submitBook = useTrainSubmitBook();
   const submitExchangeBook = useTrainSubmitExchangeBook();
-  const exchangeSession = loadTrainExchangeSession();
-  const isExchangeBook = Boolean(exchangeSession?.ticketId);
+  const [exchangeSession, setExchangeSession] = useState(() => loadTrainExchangeSession());
+  const isExchangeBook = Boolean(exchangeSession?.ticketId || selection?.isExchange);
+  const exchangeTicketId = exchangeSession?.ticketId;
+  const sessionOriginalTicketPrice = exchangeSession?.exchangeInfo?.OriginalTicketPrice;
+  const [exchangeInfoState, setExchangeInfoState] = useState<TrainExchangeInfo | null>(
+    () => exchangeSession?.exchangeInfo ?? null,
+  );
   const bookReturnTo = "/train/book";
 
   const [redirecting, setRedirecting] = useState(false);
@@ -135,6 +151,7 @@ export function TrainBookPage() {
     field: FlightOutNumberField;
   } | null>(null);
   const [checkingPay, setCheckingPay] = useState(false);
+  const [exchangeConfirmOpen, setExchangeConfirmOpen] = useState(false);
   const [removePassengerTarget, setRemovePassengerTarget] = useState<PassengerBookInfo | null>(
     null,
   );
@@ -142,6 +159,19 @@ export function TrainBookPage() {
   const leavingAfterSubmitRef = useRef(false);
 
   usePageHeader({ visible: false });
+
+  useEffect(() => {
+    function syncExchangeSession() {
+      setExchangeSession(loadTrainExchangeSession());
+    }
+    window.addEventListener(TRAIN_EXCHANGE_SESSION_EVENT, syncExchangeSession);
+    return () => window.removeEventListener(TRAIN_EXCHANGE_SESSION_EVENT, syncExchangeSession);
+  }, []);
+
+  useEffect(() => {
+    if (!exchangeTicketId || selection?.isExchange || !selection) return;
+    saveTrainBookSelection({ ...selection, isExchange: true });
+  }, [exchangeTicketId, selection]);
 
   useEffect(() => {
     if (leavingAfterSubmitRef.current) return;
@@ -168,21 +198,64 @@ export function TrainBookPage() {
     }
   }, [bookPassengers, setSelected]);
 
+  useEffect(() => {
+    if (!isExchangeBook || !exchangeTicketId) return;
+
+    const session = loadTrainExchangeSession();
+    const sessionInfo = session?.exchangeInfo;
+    if (sessionOriginalTicketPrice != null && sessionOriginalTicketPrice > 0) {
+      setExchangeInfoState(sessionInfo ?? null);
+      return;
+    }
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const info = await getApi().train.getExchangeInfo({
+          channel: productChannel,
+          TicketId: exchangeTicketId,
+        });
+        if (cancelled || !session) return;
+
+        const merged: TrainExchangeInfo = {
+          ...sessionInfo,
+          ...info,
+          TicketId: exchangeTicketId,
+        };
+        setExchangeInfoState(merged);
+        saveTrainExchangeSession({
+          ...session,
+          exchangeInfo: merged,
+        });
+        if (merged.TravelPayType != null) {
+          setTravelPayType(merged.TravelPayType);
+        }
+      } catch {
+        setExchangeInfoState(sessionInfo ?? null);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isExchangeBook, exchangeTicketId, sessionOriginalTicketPrice, productChannel]);
+
   const initParams = useMemo(() => {
     if (!selection) return null;
-    if (isBusinessMode && bookPassengers.length === 0) return null;
+    if (isBusinessMode && bookPassengers.length === 0 && !isExchangeBook) return null;
     return buildTrainInitBookDto({
       selection,
       passengers: bookPassengers,
       travelMode,
       channel: productChannel,
-      includeTrainOnlyPassenger: !isBusinessMode && bookPassengers.length === 0,
+      includeTrainOnlyPassenger: bookPassengers.length === 0 && (!isBusinessMode || isExchangeBook),
       ticketId: exchangeSession?.ticketId,
     });
   }, [
     selection,
     bookPassengers,
     isBusinessMode,
+    isExchangeBook,
     travelMode,
     productChannel,
     exchangeSession?.ticketId,
@@ -190,6 +263,28 @@ export function TrainBookPage() {
 
   const initBook = useTrainInitBook(initParams);
   const { forms, updateForm, toggleExpanded } = useTrainBookPassengerForms(bookPassengers);
+
+  const exchangeInfo = exchangeInfoState ?? exchangeSession?.exchangeInfo;
+  const exchangeOriginalTicketPrice = exchangeInfo?.OriginalTicketPrice;
+  const exchangeTravelPayType = exchangeInfo?.TravelPayType;
+  const exchangePassengerMobile = exchangeInfo?.PassengerMobile;
+
+  useEffect(() => {
+    if (!isExchangeBook && !initBook.data && !exchangePassengerMobile) return;
+    for (const passenger of bookPassengers) {
+      const form = forms[passenger.id];
+      if (!form) continue;
+      const merged = mergeTrainPassengerContactIntoForm(form, passenger, {
+        init: initBook.data,
+        exchangePassengerMobile,
+      });
+      if (merged === form) continue;
+      updateForm(passenger.id, {
+        mobileOptions: merged.mobileOptions,
+        otherMobile: merged.otherMobile,
+      });
+    }
+  }, [isExchangeBook, initBook.data, exchangePassengerMobile, bookPassengers, forms, updateForm]);
 
   useEffect(() => {
     setBookSeatLocations((current) =>
@@ -220,11 +315,20 @@ export function TrainBookPage() {
     [initBook.data?.PayTypes],
   );
 
-  const resolvedPayType = isBusinessMode
-    ? (travelPayType ?? resolveDefaultTrainPayType(payOptions))
-    : TRAIN_PAY_TYPE_PERSON;
+  useEffect(() => {
+    if (!isExchangeBook || exchangeTravelPayType == null) return;
+    setTravelPayType(exchangeTravelPayType);
+  }, [isExchangeBook, exchangeTravelPayType]);
+
+  const resolvedPayType =
+    isExchangeBook && exchangeTravelPayType != null
+      ? exchangeTravelPayType
+      : isBusinessMode
+        ? (travelPayType ?? resolveDefaultTrainPayType(payOptions))
+        : TRAIN_PAY_TYPE_PERSON;
   const { isShowServiceFee, isDisplayNotifyLanguage } = resolveTrainBookTmcFlags(initBook.data);
   const personHoldMinutes = resolveTrainHoldMinutes(initBook.data);
+  const exchangeOnlineFee = resolveTrainExchangeOnlineFee(initBook.data);
   const outNumberFieldsByPassenger = useMemo(
     () => buildTrainPassengerOutNumberFieldsMap(initBook.data, bookPassengers),
     [initBook.data, bookPassengers],
@@ -232,17 +336,49 @@ export function TrainBookPage() {
 
   const displayAmount = useMemo(() => {
     if (!selection) return 0;
+    if (isExchangeBook) {
+      return resolveTrainExchangeBookDisplayAmount({
+        selection,
+        passengers: bookPassengers,
+        serviceFees: initBook.data?.ServiceFees,
+        originalTicketPrice: exchangeOriginalTicketPrice,
+        exchangeOnlineFee,
+      });
+    }
     return resolveTrainBookDisplayAmount(selection, bookPassengers, initBook.data?.ServiceFees);
-  }, [selection, bookPassengers, initBook.data?.ServiceFees]);
+  }, [
+    selection,
+    bookPassengers,
+    initBook.data?.ServiceFees,
+    isExchangeBook,
+    exchangeOriginalTicketPrice,
+    exchangeOnlineFee,
+  ]);
 
   const billBreakdown = useMemo(() => {
     if (!selection || bookPassengers.length === 0) return null;
+    if (isExchangeBook) {
+      return resolveTrainExchangeBookBillBreakdown({
+        selection,
+        passengers: bookPassengers,
+        serviceFees: initBook.data?.ServiceFees,
+        originalTicketPrice: exchangeOriginalTicketPrice,
+        exchangeOnlineFee,
+      });
+    }
     return resolveTrainBookBillBreakdown({
       selection,
       passengers: bookPassengers,
       serviceFees: initBook.data?.ServiceFees,
     });
-  }, [selection, bookPassengers, initBook.data?.ServiceFees]);
+  }, [
+    selection,
+    bookPassengers,
+    initBook.data?.ServiceFees,
+    isExchangeBook,
+    exchangeOriginalTicketPrice,
+    exchangeOnlineFee,
+  ]);
 
   const expenseTypeOptions = useMemo(
     () =>
@@ -254,10 +390,10 @@ export function TrainBookPage() {
   );
 
   const requiresIllegalReason = Boolean(selection?.policy?.Rules?.length);
-  const showPayTypes = isBusinessMode;
+  const showPayTypes = isBusinessMode && !isExchangeBook;
   const isInitBlocking = initBook.isFetching && !initBook.data;
   const isSubmitDisabled =
-    bookPassengers.length === 0 ||
+    (!isExchangeBook && bookPassengers.length === 0) ||
     isInitBlocking ||
     submitBook.isPending ||
     submitExchangeBook.isPending;
@@ -291,10 +427,11 @@ export function TrainBookPage() {
       isExchangeBook,
       isBusinessMode,
       requireIllegalReason: requiresIllegalReason,
+      exchangePassengerMobile,
     });
   }
 
-  function handleSubmitClick(isOfficialBooked: boolean) {
+  function handleSubmitClick() {
     if (!selection) return;
 
     const validationError = resolveSubmitValidationError();
@@ -303,12 +440,12 @@ export function TrainBookPage() {
       return;
     }
 
-    if (isOfficialBooked) {
-      void executeSubmit(true);
+    if (isExchangeBook) {
+      setExchangeConfirmOpen(true);
       return;
     }
 
-    void executeSubmit(false);
+    void executeSubmit();
   }
 
   function removePassengerFromBook(target: PassengerBookInfo) {
@@ -332,7 +469,7 @@ export function TrainBookPage() {
     setRemovePassengerTarget(null);
   }
 
-  async function executeSubmit(isOfficialBooked: boolean) {
+  async function executeSubmit() {
     if (!selection) return;
     const touristAgentId =
       productChannel === "tourist" ? initBook.data?.TmcServices?.[0]?.Id : undefined;
@@ -345,8 +482,7 @@ export function TrainBookPage() {
       authorizedContacts: isBusinessMode ? authorizedContacts : [],
       orderLinkman: isBusinessMode ? undefined : orderLinkman,
       bookSeatLocations: bookSeatLocations.some(Boolean) ? bookSeatLocations : undefined,
-      isOfficialBooked,
-      accountNumber12306: initBook.data?.AccountNumber12306?.Name,
+      isOfficialBooked: false,
       globalNotifyLanguage: notifyLanguage,
       exchangeTicketId: exchangeSession?.ticketId,
       travelMode,
@@ -354,6 +490,7 @@ export function TrainBookPage() {
       agentId: touristAgentId,
       init: initBook.data,
       isExchangeBook,
+      exchangePassengerMobile,
     });
 
     const isExchange = Boolean(exchangeSession?.ticketId);
@@ -417,7 +554,7 @@ export function TrainBookPage() {
   if (initBook.isLoading) {
     return (
       <div className="relative h-dvh overflow-hidden" style={TRAIN_BOOK_PAGE_BACKGROUND}>
-        <TrainBookHeader ref={headerRef} />
+        <TrainBookHeader ref={headerRef} title={isExchangeBook ? "确认信息" : undefined} />
         <div
           className="absolute inset-x-0 bottom-0 overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           style={{ top: headerHeight }}
@@ -431,7 +568,7 @@ export function TrainBookPage() {
   if (initBook.error && bookPassengers.length > 0) {
     return (
       <div className="relative h-dvh overflow-hidden" style={TRAIN_BOOK_PAGE_BACKGROUND}>
-        <TrainBookHeader ref={headerRef} />
+        <TrainBookHeader ref={headerRef} title={isExchangeBook ? "确认信息" : undefined} />
         <div
           className="absolute inset-x-0 bottom-0 overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           style={{ top: headerHeight }}
@@ -457,7 +594,7 @@ export function TrainBookPage() {
 
   return (
     <div className="relative h-dvh overflow-hidden" style={TRAIN_BOOK_PAGE_BACKGROUND}>
-      <TrainBookHeader ref={headerRef} />
+      <TrainBookHeader ref={headerRef} title={isExchangeBook ? "确认信息" : undefined} />
 
       <div
         ref={contentRef}
@@ -472,7 +609,7 @@ export function TrainBookPage() {
               旅客信息
             </h2>
 
-            {bookPassengers.length === 0 ? (
+            {bookPassengers.length === 0 && !isExchangeBook ? (
               <div className="flex items-center justify-between py-3">
                 <p className="text-[13px] text-[#999999]">请选择乘车人</p>
                 <Link
@@ -587,7 +724,7 @@ export function TrainBookPage() {
             />
           ) : null}
 
-          {showSeatPicker && bookPassengers.length > 0 && !isExchangeBook ? (
+          {showSeatPicker && bookPassengers.length > 0 ? (
             <TrainBookSeatPicker
               seatType={selection.seat.SeatType}
               passengerCount={Math.min(bookPassengers.length, TRAIN_PASSENGER_LIMIT)}
@@ -647,11 +784,9 @@ export function TrainBookPage() {
         pending={submitBook.isPending || submitExchangeBook.isPending || checkingPay}
         billOpen={billOpen}
         billBreakdown={billBreakdown}
-        showOfficialBook={false}
-        showDirectBook={initBook.data?.IsShowDirectBooked !== false}
+        directBookLabel={isExchangeBook ? "改签预订" : "生成订单"}
         onBillToggle={() => setBillOpen((open) => !open)}
-        onOfficialBook={() => handleSubmitClick(true)}
-        onDirectBook={() => handleSubmitClick(false)}
+        onDirectBook={handleSubmitClick}
       />
 
       {checkingPay ? (
@@ -669,6 +804,20 @@ export function TrainBookPage() {
           </div>
         </div>
       ) : null}
+
+      <ConfirmDialog
+        open={exchangeConfirmOpen}
+        title="提示"
+        message="改签提交订单后暂未完成出票，请在订单详情中确认座位信息，确认无误后，点击确认出票，过期不确认出票将自动取消订单"
+        confirmLabel="确定"
+        cancelLabel="取消"
+        showCloseButton={false}
+        onConfirm={() => {
+          setExchangeConfirmOpen(false);
+          void executeSubmit();
+        }}
+        onCancel={() => setExchangeConfirmOpen(false)}
+      />
 
       <ConfirmDialog
         open={removePassengerTarget != null}

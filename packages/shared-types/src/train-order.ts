@@ -85,6 +85,13 @@ export interface TrainExchangeInfo {
   ToStation?: string;
   FromStationName?: string;
   ToStationName?: string;
+  /** Original ticket price deducted from exchange total (legacy OrderTrainTicket.TicketPrice). */
+  OriginalTicketPrice?: number;
+  /** Original order pay type — hidden in exchange UI, sent on submit. */
+  TravelPayType?: number;
+  InsuranceAmount?: number;
+  /** Original ticket passenger mobile for exchange contact fallback. */
+  PassengerMobile?: string;
 }
 
 export interface TrainPassengerInfoParams {
@@ -103,4 +110,12 @@ export interface TrainPassengerInfo {
   ToStationName?: string;
   StartTime?: string;
   ArrivalTime?: string;
+}
+
+/** Minimal book snapshot from Home-GetTrainPassenger for exchange flows. */
+export interface TrainPassengerBookSnapshot {
+  clientId: string;
+  passenger: import("./passenger.js").StaffPassenger;
+  credential: import("./passenger.js").PassengerCredential;
+  isNotWhitelist?: boolean;
 }

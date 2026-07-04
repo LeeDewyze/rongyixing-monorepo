@@ -9,10 +9,9 @@ interface TrainBookFooterProps {
   pending: boolean;
   billOpen: boolean;
   billBreakdown: TrainBookBillBreakdown | null;
-  showOfficialBook?: boolean;
-  showDirectBook?: boolean;
+  /** Override default "生成订单" label (e.g. exchange flow). */
+  directBookLabel?: string;
   onBillToggle: () => void;
-  onOfficialBook?: () => void;
   onDirectBook?: () => void;
 }
 
@@ -41,15 +40,13 @@ export function TrainBookFooter({
   pending,
   billOpen,
   billBreakdown,
-  showOfficialBook = true,
-  showDirectBook = true,
+  directBookLabel = "生成订单",
   onBillToggle,
-  onOfficialBook,
   onDirectBook,
 }: TrainBookFooterProps) {
   const submitDisabled = disabled || pending;
-  const hasBill = Boolean(billBreakdown?.passengers.length && amount > 0);
-  const amountText = Number.isFinite(amount) && amount > 0 ? String(amount) : "--";
+  const hasBill = Boolean(billBreakdown?.passengers.length && Number.isFinite(amount));
+  const amountText = Number.isFinite(amount) ? String(amount) : "--";
 
   return (
     <>
@@ -87,27 +84,14 @@ export function TrainBookFooter({
               ) : null}
             </div>
 
-            {showOfficialBook ? (
-              <button
-                type="button"
-                disabled={submitDisabled}
-                onClick={onOfficialBook}
-                className="h-10 min-w-[96px] shrink-0 rounded-full bg-gradient-to-r from-brand-btn-start to-brand-btn-end px-4 text-[14px] font-medium text-white disabled:opacity-50"
-              >
-                {pending ? "提交中…" : "12306预定"}
-              </button>
-            ) : null}
-
-            {showDirectBook ? (
-              <button
-                type="button"
-                disabled={submitDisabled}
-                onClick={onDirectBook}
-                className="h-10 min-w-[96px] shrink-0 rounded-full bg-gradient-to-r from-brand-btn-start to-brand-btn-end px-4 text-[14px] font-medium text-white disabled:opacity-50"
-              >
-                {pending ? "提交中…" : "生成订单"}
-              </button>
-            ) : null}
+            <button
+              type="button"
+              disabled={submitDisabled}
+              onClick={onDirectBook}
+              className="h-10 min-w-[96px] shrink-0 rounded-full bg-gradient-to-r from-brand-btn-start to-brand-btn-end px-4 text-[14px] font-medium text-white disabled:opacity-50"
+            >
+              {pending ? "提交中…" : directBookLabel}
+            </button>
           </div>
         </div>
       </div>

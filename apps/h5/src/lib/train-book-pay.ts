@@ -50,3 +50,17 @@ export function resolveTrainBookTmcFlags(init: TrainInitBookResponse | undefined
     isDisplayNotifyLanguage: tmc?.IsDisplayNotifyLanguage !== false,
   };
 }
+
+/** Legacy exchange book uses Tmc.TrainExchangeOnlineFee when present. */
+export function resolveTrainExchangeOnlineFee(
+  init: TrainInitBookResponse | undefined,
+): number | undefined {
+  const tmc = init?.Tmc as { TrainExchangeOnlineFee?: number | string } | undefined;
+  const fee = tmc?.TrainExchangeOnlineFee;
+  if (typeof fee === "number" && !Number.isNaN(fee)) return fee;
+  if (typeof fee === "string" && fee.trim()) {
+    const parsed = Number(fee);
+    return Number.isNaN(parsed) ? undefined : parsed;
+  }
+  return undefined;
+}

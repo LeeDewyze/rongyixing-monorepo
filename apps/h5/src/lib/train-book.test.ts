@@ -8,6 +8,10 @@ import {
   buildTrainOrderBookDto,
   createTrainPassengerBookForm,
   resolveTrainBookBillBreakdown,
+  resolveTrainExchangeBookBillBreakdown,
+  resolveTrainExchangeBookDisplayAmount,
+  resolveTrainPassengerMobileFallback,
+  mergeTrainPassengerContactIntoForm,
   resolveTrainBookOrderId,
   validateTrainBookForms,
 } from "./train-book";
@@ -214,6 +218,19 @@ describe("buildTrainOrderBookDto seat preferences", () => {
     expect(dto.Passengers[1]?.Train?.BookSeatLocation).toBe("2C");
   });
 
+  it("sets legacy TicketId for exchange book payload", () => {
+    const dto = buildTrainOrderBookDto({
+      selection,
+      passengers: passengers as never,
+      exchangeTicketId: "207600000001",
+      isExchangeBook: true,
+    });
+
+    expect(dto.TicketId).toBe("207600000001");
+    expect(dto.ExchangeTicketId).toBeUndefined();
+    expect(dto.IsExchange).toBeUndefined();
+  });
+
   it("uses legacy default seat preference fallback for personal train book", () => {
     const dto = buildTrainOrderBookDto({
       selection,
@@ -324,6 +341,91 @@ describe("resolveTrainBookBillBreakdown", () => {
   });
 });
 
+describe("resolveTrainExchangeBookBillBreakdown", () => {
+  const selection: TrainBookSelection = {
+    searchParams: {
+      Date: "2025-06-26",
+      FromStation: "BJP",
+      ToStation: "SHH",
+    },
+    train: {
+      Id: "g1",
+      TrainNo: "G1",
+      TrainCode: "G1",
+      StartTime: "2025-06-26 09:00",
+      ArrivalTime: "2025-06-26 13:28",
+      FromStation: "北京",
+      ToStation: "上海",
+      Seats: [{ SeatType: TrainSeatType.SecondClassSeat, SeatTypeName: "二等座", Price: 415.5 }],
+    },
+    seat: { SeatType: TrainSeatType.SecondClassSeat, SeatTypeName: "二等座", Price: 415.5 },
+    selectedAt: Date.now(),
+    passengers: [],
+  };
+
+  const passengers = [
+    {
+      id: "p1",
+      passenger: { Id: "p1", AccountId: "acc-1", Name: "Passenger One" },
+      credential: { Id: "c1", Name: "Passenger One", AccountId: "acc-1", Mobile: "13800000001" },
+    },
+  ] as const;
+
+  it("subtracts original ticket price from new fare plus fees", () => {
+    const breakdown = resolveTrainExchangeBookBillBreakdown({
+      selection,
+      passengers: passengers as never,
+      serviceFees: { default: 5 },
+      originalTicketPrice: 233,
+    });
+
+    expect(breakdown.total).toBe(187.5);
+    expect(breakdown.originalTicketCredit).toBe(233);
+    expect(
+      resolveTrainExchangeBookDisplayAmount({
+        selection,
+        passengers: passengers as never,
+        serviceFees: { default: 5 },
+        originalTicketPrice: 233,
+      }),
+    ).toBe(187.5);
+  });
+
+  it("uses TrainExchangeOnlineFee instead of per-passenger service fees", () => {
+    const breakdown = resolveTrainExchangeBookBillBreakdown({
+      selection,
+      passengers: passengers as never,
+      serviceFees: { default: 5 },
+      originalTicketPrice: 233,
+      exchangeOnlineFee: 10,
+    });
+
+    expect(breakdown.total).toBe(192.5);
+  });
+});
+
+describe("resolveTrainPassengerMobileFallback", () => {
+  const passenger = {
+    id: "p1",
+    passenger: { Id: "p1", AccountId: "acc-1", Name: "申晓杰" },
+    credential: { Id: "c1", Name: "申晓杰", AccountId: "acc-1" },
+  } as const;
+
+  it("prefers init staff account mobile", () => {
+    expect(
+      resolveTrainPassengerMobileFallback(passenger as never, {
+        Staffs: [{ Id: "acc-1", Name: "申晓杰", Account: { Id: "acc-1", Mobile: "13800000001" } }],
+      }),
+    ).toBe("13800000001");
+  });
+
+  it("falls back to original ticket passenger mobile in exchange", () => {
+    expect(resolveTrainPassengerMobileFallback(passenger as never, undefined, "19528280621")).toBe(
+      "19528280621",
+    );
+  });
+});
+
 describe("validateTrainBookForms", () => {
   const passengers = [
     {
@@ -343,6 +445,32 @@ describe("validateTrainBookForms", () => {
         forms,
         outNumberFieldsByPassenger: { p1: [] },
         authorizedContacts: [],
+        requireIllegalReason: false,
+      }),
+    ).toBeNull();
+  });
+
+  it("uses exchange passenger mobile fallback when form contact is empty", () => {
+    const exchangePassenger = {
+      id: "p1",
+      passenger: { Id: "p1", AccountId: "acc-1", Name: "申晓杰" },
+      credential: { Id: "c1", Name: "申晓杰", AccountId: "acc-1" },
+    } as const;
+    const forms = {
+      p1: {
+        ...createTrainPassengerBookForm(exchangePassenger as never),
+        mobileOptions: [],
+        otherMobile: "",
+      },
+    };
+    expect(
+      validateTrainBookForms({
+        passengers: [exchangePassenger] as never,
+        forms,
+        outNumberFieldsByPassenger: { p1: [] },
+        authorizedContacts: [],
+        isExchangeBook: true,
+        exchangePassengerMobile: "19528280621",
         requireIllegalReason: false,
       }),
     ).toBeNull();

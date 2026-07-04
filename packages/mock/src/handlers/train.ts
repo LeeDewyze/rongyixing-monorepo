@@ -98,10 +98,27 @@ export function createTrainMockHandlers(): Record<string, (data: unknown) => IRe
       const ticketId = params?.TicketId ?? "207600000001";
       const detail = createMockTrainOrderDetailLegacy("ORD-TRN-002");
       const order = (detail as { Order?: Record<string, unknown> }).Order;
-      const tickets = (order?.OrderTrainTickets as Array<Record<string, unknown>> | undefined) ?? [];
-      const ticket =
-        tickets.find((item) => String(item.Id) === ticketId) ?? tickets[0];
-      const trip = ((ticket?.OrderTrainTrips as Array<Record<string, unknown>> | undefined) ?? [])[0];
+      const tickets =
+        (order?.OrderTrainTickets as Array<Record<string, unknown>> | undefined) ?? [];
+      const ticket = tickets.find((item) => String(item.Id) === ticketId) ?? tickets[0];
+      const trip = ((ticket?.OrderTrainTrips as Array<Record<string, unknown>> | undefined) ??
+        [])[0];
+      const orderVariables =
+        typeof order?.Variables === "string"
+          ? (JSON.parse(order.Variables) as Record<string, unknown>)
+          : (order?.Variables as Record<string, unknown> | undefined);
+      const ticketPrice =
+        typeof trip?.Price === "number"
+          ? trip.Price
+          : typeof ticket?.TicketPrice === "number"
+            ? ticket.TicketPrice
+            : 233;
+      const ticketPassenger = (ticket?.Passenger as Record<string, unknown> | undefined) ?? {};
+      const orderPassengers =
+        (order?.OrderPassengers as Array<Record<string, unknown>> | undefined) ?? [];
+      const fullPassenger =
+        orderPassengers.find((item) => String(item.Id) === String(ticketPassenger.Id)) ??
+        ticketPassenger;
       return successResponse({
         TicketId: ticketId,
         OrderId: order?.Id,
@@ -110,6 +127,20 @@ export function createTrainMockHandlers(): Record<string, (data: unknown) => IRe
         ToStation: "AOH",
         FromStationName: trip?.FromStationName ?? "北京南",
         ToStationName: trip?.ToStationName ?? "上海虹桥",
+        OrderTrainTicket: {
+          ...ticket,
+          TicketPrice: ticketPrice,
+          Passenger: {
+            ...ticketPassenger,
+            Mobile: typeof fullPassenger.Mobile === "string" ? fullPassenger.Mobile : undefined,
+          },
+          Order: {
+            Id: order?.Id,
+            Variables: order?.Variables,
+            VariablesObj: orderVariables,
+          },
+        },
+        InsurnanceAmount: 0,
       });
     },
     [TRAIN_FLOW_METHODS.GET_TRAIN_PASSENGER]: (data) => {
@@ -117,10 +148,11 @@ export function createTrainMockHandlers(): Record<string, (data: unknown) => IRe
       const ticketId = params?.TicketId ?? "207600000001";
       const detail = createMockTrainOrderDetailLegacy("ORD-TRN-002");
       const order = (detail as { Order?: Record<string, unknown> }).Order;
-      const tickets = (order?.OrderTrainTickets as Array<Record<string, unknown>> | undefined) ?? [];
-      const ticket =
-        tickets.find((item) => String(item.Id) === ticketId) ?? tickets[0];
-      const trip = ((ticket?.OrderTrainTrips as Array<Record<string, unknown>> | undefined) ?? [])[0];
+      const tickets =
+        (order?.OrderTrainTickets as Array<Record<string, unknown>> | undefined) ?? [];
+      const ticket = tickets.find((item) => String(item.Id) === ticketId) ?? tickets[0];
+      const trip = ((ticket?.OrderTrainTrips as Array<Record<string, unknown>> | undefined) ??
+        [])[0];
       const passenger = (ticket?.Passenger as Record<string, unknown> | undefined) ?? {};
       const passengers =
         (order?.OrderPassengers as Array<Record<string, unknown>> | undefined) ?? [];
