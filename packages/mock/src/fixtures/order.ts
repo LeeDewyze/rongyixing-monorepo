@@ -754,11 +754,12 @@ function parseRouteTitleParts(routeTitle: string): {
 
 function orderListItemToLegacyTrip(item: OrderListItem): Record<string, unknown> {
   const type = TAB_ID_TO_TRAVEL_TYPE[item.tabId] ?? "Flight";
+  const ticketStatusName = "TicketStatusName" in item ? item.TicketStatusName : undefined;
   const trip: Record<string, unknown> = {
     Type: type,
     OrderId: item.OrderId,
     Id: item.OrderId,
-    Status: item.TicketStatusName ?? item.StatusName ?? item.Status,
+    Status: ticketStatusName ?? item.StatusName ?? item.Status,
     StatusName: item.StatusName,
     TotalAmount: item.TotalAmount,
   };

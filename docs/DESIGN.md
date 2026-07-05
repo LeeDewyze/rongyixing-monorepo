@@ -251,6 +251,7 @@ Reference files:
 - 2026-07-02 - Travel order detail shell: aligned hotel, flight, and train order details with form-page chrome by using the form gradient root, a transparent fixed header, and an independent hidden-scroll content area.
 - 2026-07-02 - FlightBookPage shell: aligned flight booking with train booking by using the form-page gradient root, fixed transparent header, independent hidden-scroll content, and train-style white section cards.
 - 2026-07-04 - OrderPayPage shell: aligned the shared payment selection page with credential management chrome using the form gradient root, transparent tokenized header, white payment sections, selected pale-blue channel rows, and a fixed primary gradient CTA.
+- 2026-07-05 - PassengerSelectAlertDialog polish: aligned the blocking one-action prompt with the RYX Blue alert pattern by using a 16px panel radius, blurred backdrop, softer tokenized notice surface, gradient pill CTA, and explicit hover/active/focus-visible states.
 - 2026-06-27 - Form gradient layout principle: documented why form pages must use root-level `--brand-form-header-gradient` plus card overlap instead of a tall `brand-header-start` to `brand-header-end` block.
 - 2026-06-27 - TravelApprovalPage list shell: replaced the flat white tab strip with a page-level form gradient header, segmented approval tabs, lifted task cards, and tokenized task status treatments while preserving remote approval workflows.
 - 2026-06-27 - TravelApprovalPage header simplification: removed duplicate approval summary copy and the standalone pending counter from the gradient header; kept pending count only inside the tab badge.
@@ -279,10 +280,54 @@ Reference files:
 - 2026-06-30 - HotelList filter entry grouping: scoped the bottom toolbar entries into basic filters (`sort/star/category/price`), location-only filters, and amenity filters (`brand/theme/service/facility`); single-section sheets hide the outer rail so location categories occupy the first visible column.
 - 2026-06-30 - HotelList location dirty marker: location category buttons now show a small brand dot when any child geo under that category is selected, matching the filter rail dirty-state pattern inside the custom location panel.
 
+## H5 Dialog And Sheet Inventory
+
+Before creating any new dialog, sheet, toast, or modal-like surface, first check this inventory and reuse or extend an existing component when the interaction intent matches. New one-off dialogs should be the exception: add one only when the existing structure cannot express the content, action model, or visual hierarchy without becoming confusing.
+
+### Reuse Decision Rules
+
+- Use `ConfirmDialog` for destructive or irreversible confirmations with cancel/confirm actions.
+- Use `PassengerSelectAlertDialog` for blocking acknowledgement prompts in passenger, booking, or submit flows where the user only needs to read a message and tap confirm.
+- Use `PageToast` for short, non-blocking success/error feedback that does not require acknowledgement.
+- Use a bottom sheet for selection, filtering, long detail text, bills, or forms that need more than one compact message.
+- Prefer extending an existing product sheet/dialog if the behavior belongs to that product domain; extract a shared primitive only after two or more domains need the same structure.
+- Server-returned business messages should be displayed as returned unless product copy explicitly requires mapping; do not silently rewrite backend `Message` values in a new dialog.
+
+### Existing Reusable Surfaces
+
+| Component | File | Use For | Notes |
+| --- | --- | --- | --- |
+| `ConfirmDialog` | `apps/h5/src/components/ConfirmDialog.tsx` | Delete, cancel, submit confirmation, two-action blocking decisions | Shared alert dialog; compact icon/title header; used by credential, passenger, bank-card, order, and train booking flows. |
+| `PassengerSelectAlertDialog` | `apps/h5/src/components/passenger/PassengerSelectAlertDialog.tsx` | Blocking friendly prompt with one confirm action | Used by passenger selection and booking submit errors; suitable for server business failures such as train duplicate-trip messages. |
+| `PageToast` | `apps/h5/src/components/layout/PageToast.tsx` | Non-blocking page feedback | Prefer for transient list/detail actions where the user can continue without a modal. |
+| `FlightListTimeoutDialog` | `apps/h5/src/components/flight/FlightListTimeoutDialog.tsx` | Flight list timeout acknowledgement | Product-specific timeout surface; reuse only for the same timeout pattern. |
+| `HotelPolicyAlertDialog` | `apps/h5/src/components/hotel/HotelPolicyAlertDialog.tsx` | Hotel/train policy or rule alert text | Use when policy copy needs formatted alert content, not for generic errors. |
+| `HotelBookWarmReminderDialog` | `apps/h5/src/components/hotel/HotelBookWarmReminderDialog.tsx` | Hotel booking warm reminder | Product-specific reminder with richer header/content. |
+| `HotelPassengerRequiredDialog` | `apps/h5/src/components/hotel/HotelPassengerRequiredDialog.tsx` | Hotel guest required prompt | Product-specific missing-passenger acknowledgement. |
+| `HotelOrderCancelDialog` / `HotelOrderSmsSheet` | `apps/h5/src/components/order/hotel/HotelOrderSmsSheet.tsx` | Hotel cancel confirmation and SMS verification | Use for hotel order cancellation, especially SMS-required cancellation. |
+| `FlightOrderCancelDialog` | `apps/h5/src/components/order/flight/FlightOrderCancelDialog.tsx` | Flight order cancel confirmation | Product-specific order action dialog. |
+| `FlightOrderRefundDialog` | `apps/h5/src/components/order/flight/FlightOrderRefundDialog.tsx` | Flight refund reason/form | Product-specific order action form dialog. |
+| `TrainOrderCancelDialog` | `apps/h5/src/components/order/train/TrainOrderCancelDialog.tsx` | Train order/ticket cancel confirmation | Product-specific order action dialog. |
+| `TrainOrderIssueDialog` | `apps/h5/src/components/order/train/TrainOrderIssueDialog.tsx` | Train issue confirmation | Product-specific order action dialog. |
+| `TrainOrderRefundDialog` | `apps/h5/src/components/order/train/TrainOrderRefundDialog.tsx` | Train refund confirmation/form | Product-specific order action dialog. |
+
+### Existing Bottom Sheet Families
+
+| Family | Components | Use For |
+| --- | --- | --- |
+| Travel list filters | `FlightFilterSheet`, `FlightPolicyFilterSheet`, `PolicyFilterSheet`, `TrainFilterSheet`, `HotelListFilterSheet`, `HotelPolicyFilterSheet` | Complex filter, category rail, dirty state, reset and confirm footer. |
+| Search/date modification | `CalendarPickerSheet`, `FlightModifySearchSheet`, `TrainModifySearchSheet`, `HotelStayDatePickerSheet` | Date and route/stay edits within list pages. |
+| Booking selectors | `FlightBookPickerSheet`, `FlightBookApproverSheet`, `FlightBookOrganizationSheet`, `FlightBookCostCenterSheet`, `FlightOutNumberPickerSheet`, `FlightBookNotifyLanguageSheet`, `FlightBookCredentialSheet`, `FlightBookAddContactSheet` | Booking-page pickers and form-bound selection. |
+| Passenger and credential | `CredentialTypeSheet`, `CredentialNameRulesDialog`, `SelectedPassengersSheet`, credential form gender/date sheets | Passenger credential selection, rule explanation, selected passenger preview. |
+| Bills and rules | `FlightBookBillSheet`, `TrainBookBillSheet`, `HotelBookBillSheet`, `FlightFareRulesSheet`, `FareRulesBottomSheet`, `FlightInsuranceDetailSheet`, order bill/explain sheets | Price breakdowns, fare rules, insurance/rule detail content. |
+| Hotel booking | `HotelBookArrivalTimeSheet`, `HotelBookNoticeSheet`, `HotelBookGuaranteeAgreementSheet` | Hotel arrival, notice, guarantee agreement content. |
+| Profile/settings/contact | `ProfileAvatarCropSheet`, `ChangeEmailSheet`, `LegalDocumentSheet` | Account/profile editing and legal document display. |
+
 ## Components
 
 - `apps/h5/src/components/H5Shell.tsx` - base H5 shell with page background and scroll container.
 - `apps/h5/src/components/ConfirmDialog.tsx` - shared confirmation modal with compact icon/title header and left-aligned body copy.
+- `apps/h5/src/components/passenger/PassengerSelectAlertDialog.tsx` - shared one-action blocking prompt for passenger selection, booking validation, and backend business messages.
 - `apps/h5/src/components/layout/AppHeader.tsx` - shared app header, supports brand and hotel tones.
 - `apps/h5/src/components/passenger/PassengerCredentialForm.tsx` - credential form with unified bottom-sheet pickers for credential type, gender, birthday, and expiration date.
 - `apps/h5/src/pages/contact/ContactUsPage.tsx` - contact/legal/service page using the shared settings chrome and form-gradient shell.

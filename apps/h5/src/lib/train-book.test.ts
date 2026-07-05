@@ -11,7 +11,6 @@ import {
   resolveTrainExchangeBookBillBreakdown,
   resolveTrainExchangeBookDisplayAmount,
   resolveTrainPassengerMobileFallback,
-  mergeTrainPassengerContactIntoForm,
   resolveTrainBookOrderId,
   validateTrainBookForms,
 } from "./train-book";

@@ -409,7 +409,6 @@ export function buildTrainOrderBookDto(input: {
     orderLinkman,
     init,
     isExchangeBook,
-    exchangePassengerMobile,
   } = input;
   const includeTravelForm = isBusinessTravelMode(travelMode);
   const policy = selection.policy;
@@ -424,7 +423,6 @@ export function buildTrainOrderBookDto(input: {
       : undefined;
 
   const passengerDtos: TrainBookPassengerDto[] = passengers.map((info, index) => {
-    const cred = info.credential;
     const clientId = resolveTrainInitClientId(info);
     const form = passengerForms?.[info.id];
     const mobile = resolveTrainPassengerFormMobile(

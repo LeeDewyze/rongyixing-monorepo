@@ -138,6 +138,10 @@ stateDiagram-v2
   4. 详情页返回列表时，fallback URL 必须包含原来的 `channel + tab + scope`，不能只回 `/home/orders?tab=train`。
   5. 下单成功返回订单列表时，按下单 channel 写入对应第一层入口。
 
+Legacy 支付链路补充：详见 [Legacy 订单支付流程梳理](../../api/domains/order-payment-legacy-flow.md)。H5 必须按 `channel` 区分 `TmcTouristOrderUrl-*` 与 `TmcApiOrderUrl-*`，并按 `OrderTravelPayType` 判断是否进入个人支付：`Person` / `Credit` 属于个人支付类，`Company` / `Balance` 不进入个人支付页。
+
+下单错误提示补充：列表进入下单、支付、详情的 channel 链路不能吞掉 `Train-Book` 返回的业务错误。`TmcApiBookUrl-Train-Book` / `TmcTouristBookUrl-Train-Book` 返回失败时，H5 应保留后端 `Message` 并使用 `PassengerSelectAlertDialog` 展示；例如 `乘客存在重复行程，请重新预订` 是服务端重复行程校验结果，不应在前端改写、合并或替换成本地校验文案。
+
 ### 功能点 5：因私火车订单详情动作补齐
 - 涉及领域模块：火车订单详情、火车票级动作、tourist train / order API
 - 原有接口改造概述：当前 H5 已有订单级支付、取消、确认出票、退票、改签入口，但 tourist 退票 / 改签辅助接口和票级取消仍需按 legacy public 链路补齐。
