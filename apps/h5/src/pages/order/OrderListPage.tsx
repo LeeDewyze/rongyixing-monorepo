@@ -639,6 +639,7 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
         </div>
         <OrderList
           orders={orders}
+          scope={scope}
           isLoading={isInitialLoading}
           isLoadingMore={isFetchingNextPage}
           errorMessage={isError ? formatApiError(error) : undefined}

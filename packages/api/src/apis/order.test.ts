@@ -5,9 +5,30 @@ import { ORDER_FLOW_METHODS, TOURIST_ORDER_FLOW_METHODS } from "../methods/order
 import { createOrderApi } from "./order.js";
 import {
   buildOrderListRequest,
+  buildTravelListRequest,
   normalizeOrderListResponse,
+  normalizeTravelListResponse,
   orderListTabIdToType,
 } from "./order-list-map.js";
+
+describe("buildTravelListRequest", () => {
+  it("uses legacy 1-based PageIndex and drops lowercase pageIndex", () => {
+    expect(buildTravelListRequest({ TabId: OrderListTabId.Train, PageIndex: 0 })).toEqual({
+      data: {
+        PageIndex: 1,
+        PageSize: 20,
+        Type: "Train",
+      },
+      requestType: "Train",
+    });
+  });
+
+  it("maps second UI page to legacy PageIndex 2", () => {
+    expect(
+      buildTravelListRequest({ TabId: OrderListTabId.Train, PageIndex: 1 }).data.PageIndex,
+    ).toBe(2);
+  });
+});
 
 describe("buildOrderListRequest", () => {
   it("maps tab id to legacy Type and zero-based page index", () => {
@@ -78,11 +99,32 @@ describe("createOrderApi list and detail channel routing", () => {
     expect(send).toHaveBeenCalledWith({
       method: TOURIST_ORDER_FLOW_METHODS.TRAVEL_LIST,
       data: {
-        pageIndex: 0,
-        PageIndex: 0,
+        PageIndex: 1,
         PageSize: 20,
         Type: "Train",
       },
+      requestFields: { Type: "Train" },
+    });
+  });
+
+  it("uses TMC travel list with legacy paging for pending business train orders", async () => {
+    const send = vi.fn().mockResolvedValue({ Trips: [], DataCount: 0 });
+    const api = createOrderApi({ send } as never);
+
+    await api.getList({
+      TabId: OrderListTabId.Train,
+      Scope: "pendingTravel",
+      PageIndex: 0,
+    });
+
+    expect(send).toHaveBeenCalledWith({
+      method: ORDER_FLOW_METHODS.TRAVEL_LIST,
+      data: {
+        PageIndex: 1,
+        PageSize: 20,
+        Type: "Train",
+      },
+      requestFields: { Type: "Train" },
     });
   });
 
@@ -212,6 +254,71 @@ describe("normalizeOrderListResponse", () => {
       Nights: 1,
       PassengerNames: "SUN/XUE",
       TotalAmount: 633,
+    });
+  });
+
+  it("maps legacy train travel trip price from Price field", () => {
+    const response = normalizeTravelListResponse(
+      {
+        Trips: [
+          {
+            Type: "Train",
+            OrderId: "20760000000234",
+            Status: "已出票",
+            Name: "1999",
+            FromName: "北京",
+            ToName: "上海",
+            goDate: "2026-07-05 11:54:00",
+            Price: 144.5,
+            Passenger: { Name: "申晓杰" },
+          },
+        ],
+        DataCount: 1,
+      },
+      OrderListTabId.Train,
+    );
+
+    expect(response.Orders[0]?.TotalAmount).toBe(144.5);
+  });
+
+  it("maps legacy train travel trips for pending scope", () => {
+    const response = normalizeTravelListResponse(
+      {
+        Trips: [
+          {
+            Type: "Train",
+            OrderId: "20760000000234",
+            OrderTicketId: "448800000000234",
+            Status: "已出票",
+            StatusName: "待出行",
+            Name: "1999",
+            Number: "1999",
+            FromName: "北京",
+            ToName: "上海",
+            goDate: "2026-07-05 11:54:00",
+            TotalAmount: 144.5,
+            Passenger: { Name: "申晓杰" },
+          },
+        ],
+        DataCount: 1,
+      },
+      OrderListTabId.Train,
+    );
+
+    expect(response.Orders).toHaveLength(1);
+    expect(response.Orders[0]).toMatchObject({
+      tabId: OrderListTabId.Train,
+      OrderId: "20760000000234",
+      StatusName: "待出行",
+      RouteTitle: "1999 北京—上海",
+      PassengerNames: "申晓杰",
+      TotalAmount: 144.5,
+      TicketStatusName: "已出票",
+      TicketId: "448800000000234",
+    });
+    expect(response.Orders[0].Tickets?.[0]).toMatchObject({
+      RouteTitle: "1999 北京—上海",
+      TicketStatusName: "已出票",
     });
   });
 

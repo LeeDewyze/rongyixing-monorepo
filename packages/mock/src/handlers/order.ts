@@ -3,6 +3,7 @@ import { HOTEL_FLOW_METHODS, ORDER_FLOW_METHODS, successResponse } from "@ryx/ap
 
 import {
   buildOrderListResponse,
+  buildTravelListResponse,
   markMockTrainOrderCancelled,
   markMockTrainOrderIssued,
   markMockTrainTicketRefunded,
@@ -23,6 +24,10 @@ export function createOrderMockHandlers(): Record<string, (data: unknown) => IRe
     [ORDER_FLOW_METHODS.LIST]: (data) => {
       const params = (data ?? {}) as OrderListParams;
       return successResponse(buildOrderListResponse(params));
+    },
+    [ORDER_FLOW_METHODS.TRAVEL_LIST]: (data) => {
+      const params = (data ?? {}) as OrderListParams;
+      return successResponse(buildTravelListResponse(params));
     },
     [ORDER_FLOW_METHODS.DETAIL]: (data) =>
       getHotelHandlers()[HOTEL_FLOW_METHODS.ORDER_DETAIL]!(data),

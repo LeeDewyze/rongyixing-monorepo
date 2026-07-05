@@ -32,6 +32,7 @@ import {
 } from "./order-detail-map.js";
 import {
   buildOrderListRequest,
+  buildTravelListRequest,
   isPendingTravelScope,
   normalizeOrderListResponse,
   normalizeTravelListResponse,
@@ -77,14 +78,17 @@ export function createOrderApi(proxy: ProxyClient): OrderApi {
         return { Orders: [], TotalCount: 0 };
       }
 
-      const request = buildOrderListRequest(stripChannel(params));
       if (isPendingTravelScope(params.Scope)) {
-        const data = await proxy.send<unknown>({
+        const { data, requestType } = buildTravelListRequest(stripChannel(params));
+        const travelData = await proxy.send<unknown>({
           method: orderMethods(params).TRAVEL_LIST,
-          data: request,
+          data,
+          requestFields: requestType ? { Type: requestType } : undefined,
         });
-        return normalizeTravelListResponse(data, tabId);
+        return normalizeTravelListResponse(travelData, tabId);
       }
+
+      const request = buildOrderListRequest(stripChannel(params));
 
       const data = await proxy.send<unknown>({
         method: orderMethods(params).LIST,

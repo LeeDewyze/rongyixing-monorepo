@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import type { OrderAction, OrderListItem } from "@ryx/shared-types";
+import type { OrderAction, OrderListItem, OrderListScope } from "@ryx/shared-types";
 
 import { ORDER_FONT } from "@/config/order-assets";
 
@@ -8,6 +8,7 @@ import { OrderListCard } from "./OrderListCard";
 
 interface OrderListProps {
   orders: OrderListItem[];
+  scope?: OrderListScope;
   isLoading?: boolean;
   isLoadingMore?: boolean;
   errorMessage?: string;
@@ -74,6 +75,7 @@ function OrderListSkeleton() {
 
 export function OrderList({
   orders,
+  scope = "all",
   isLoading,
   isLoadingMore,
   errorMessage,
@@ -84,6 +86,8 @@ export function OrderList({
   scrollRoot,
 }: OrderListProps) {
   const sentinelRef = useInfiniteScrollTrigger(onLoadMore, Boolean(hasMore), scrollRoot);
+
+  const showPrice = scope !== "pendingTravel";
 
   if (isLoading) {
     return <OrderListSkeleton />;
@@ -103,6 +107,7 @@ export function OrderList({
         <OrderListCard
           key={item.OrderId}
           item={item}
+          showPrice={showPrice}
           onAction={onAction}
           onCardClick={onCardClick}
         />

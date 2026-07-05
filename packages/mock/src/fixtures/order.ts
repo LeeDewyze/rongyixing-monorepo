@@ -529,9 +529,7 @@ export const MOCK_ORDERS: OrderListItem[] = [
         Actions: [{ kind: "cancel", label: "取消" }],
       },
     ],
-    Actions: [
-      { kind: "pay", label: "支付" },
-    ],
+    Actions: [{ kind: "pay", label: "支付" }],
   },
   {
     tabId: OrderListTabId.Flight,
@@ -730,5 +728,72 @@ export function buildOrderListResponse(params: OrderListParams = {}) {
   return {
     Orders: filtered,
     TotalCount: filtered.length,
+  };
+}
+
+const TAB_ID_TO_TRAVEL_TYPE: Partial<Record<OrderListTabId, OrderListType>> = {
+  [OrderListTabId.Flight]: "Flight",
+  [OrderListTabId.Train]: "Train",
+  [OrderListTabId.Hotel]: "Hotel",
+};
+
+function parseRouteTitleParts(routeTitle: string): {
+  code: string;
+  fromName?: string;
+  toName?: string;
+} {
+  const match = routeTitle.match(/^(\S+)\s+(.+?)—(.+)$/);
+  if (!match) {
+    return { code: routeTitle };
+  }
+  return { code: match[1], fromName: match[2], toName: match[3] };
+}
+
+function orderListItemToLegacyTrip(item: OrderListItem): Record<string, unknown> {
+  const type = TAB_ID_TO_TRAVEL_TYPE[item.tabId] ?? "Flight";
+  const trip: Record<string, unknown> = {
+    Type: type,
+    OrderId: item.OrderId,
+    Id: item.OrderId,
+    Status: item.TicketStatusName ?? item.StatusName ?? item.Status,
+    StatusName: item.StatusName,
+    TotalAmount: item.TotalAmount,
+  };
+
+  if (item.tabId === OrderListTabId.Hotel) {
+    return {
+      ...trip,
+      Name: item.HotelName,
+      StartTime: item.CheckInDate,
+      EndTime: item.CheckOutDate,
+      countDay: item.Nights,
+      RoomName: item.RoomType,
+      Passenger: { Name: item.PassengerNames },
+    };
+  }
+
+  const routeItem = item as Extract<OrderListItem, { RouteTitle: string }>;
+  const { code, fromName, toName } = parseRouteTitleParts(routeItem.RouteTitle);
+  return {
+    ...trip,
+    Name: code,
+    Number: code,
+    FromName: fromName,
+    ToName: toName,
+    StartTime: routeItem.DepartTime,
+    goDate: routeItem.DepartTime,
+    OrderTicketId: routeItem.TicketId,
+    Price: routeItem.TotalAmount,
+    Passenger: { Name: routeItem.PassengerNames },
+  };
+}
+
+/** Legacy Travel-List payload for mock / tests. */
+export function buildTravelListResponse(params: OrderListParams = {}) {
+  const tabId = resolveTabIdFromParams(params);
+  const filtered = filterOrders(MOCK_ORDERS, tabId, "pendingTravel");
+  return {
+    Trips: filtered.map(orderListItemToLegacyTrip),
+    DataCount: filtered.length,
   };
 }

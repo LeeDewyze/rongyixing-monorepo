@@ -72,6 +72,24 @@ export function buildOrderListRequest(params: OrderListParams): LegacyRecord {
   return data;
 }
 
+/** Legacy Travel-List: 1-based PageIndex, no lowercase pageIndex, Type on RequestEntity root. */
+export function buildTravelListRequest(params: OrderListParams): {
+  data: LegacyRecord;
+  requestType?: OrderListType;
+} {
+  const base = buildOrderListRequest(params);
+  const legacyPageIndex = (params.PageIndex ?? 0) + 1;
+  const data: LegacyRecord = {
+    ...base,
+    PageIndex: legacyPageIndex,
+  };
+  delete data.pageIndex;
+
+  const requestType = typeof data.Type === "string" ? (data.Type as OrderListType) : undefined;
+
+  return { data, requestType };
+}
+
 function asRecord(value: unknown): LegacyRecord | null {
   return value && typeof value === "object" ? (value as LegacyRecord) : null;
 }
@@ -467,6 +485,148 @@ function mapLegacyOrder(order: LegacyRecord, tabId: OrderListTabId): OrderListIt
   }
 }
 
+function resolveTravelTripAmount(trip: LegacyRecord): number | undefined {
+  const variables = parseVariablesObj(trip);
+  const orderTrainTicket = asRecord(trip.OrderTrainTicket);
+  const order = asRecord(trip.Order);
+
+  return (
+    readNumber(trip.TotalAmount) ??
+    readNumber(trip.Price) ??
+    readNumber(trip.TicketPrice) ??
+    readNumber(trip.SalesPrice) ??
+    readNumber(trip.Amount) ??
+    readNumber(trip.PayAmount) ??
+    readNumber(trip.vmTicketAmount) ??
+    readNumber(orderTrainTicket?.TicketPrice) ??
+    readNumber(orderTrainTicket?.Price) ??
+    readNumber(order?.TotalAmount) ??
+    readNumber(order?.PayAmount) ??
+    readNumber(variables?.totalAmount) ??
+    readNumber(variables?.TotalAmount) ??
+    readNumber(variables?.ticketPrice) ??
+    readNumber(variables?.TicketPrice) ??
+    readNumber(variables?.vmTicketAmount)
+  );
+}
+
+function buildTravelTrainRouteTitle(trip: LegacyRecord): string {
+  const trainCode = readString(trip.Number ?? trip.Name ?? trip.TrainCode);
+  const from = readString(trip.FromName ?? trip.FromStationName ?? trip.FromCityName);
+  const to = readString(trip.ToName ?? trip.ToStationName ?? trip.ToCityName);
+  if (from && to) {
+    return `${trainCode} ${from}—${to}`.trim();
+  }
+  return readString(trip.Name) || trainCode;
+}
+
+function buildTravelFlightRouteTitle(trip: LegacyRecord): string {
+  const flightNo = readString(trip.Number ?? trip.Name ?? trip.FlightNumber);
+  const from = readString(trip.FromName ?? trip.FromCityName ?? trip.FromAirportName);
+  const to = readString(trip.ToName ?? trip.ToCityName ?? trip.ToAirportName);
+  if (from && to) {
+    return `${flightNo} ${from}—${to}`.trim();
+  }
+  return readString(trip.Name) || flightNo;
+}
+
+function buildTravelDepartTime(trip: LegacyRecord): string {
+  return formatDateTime(trip["goDate"] ?? trip.StartTime ?? trip.DepartureTime ?? trip.TakeoffTime);
+}
+
+function isLikelyTicketStatus(status: string): boolean {
+  return /已出票|改签|退票|待出票|预订|出票|废除|作废|取消/.test(status);
+}
+
+function resolveTravelOrderStatusName(trip: LegacyRecord): string {
+  const explicit = readString(trip.StatusName ?? trip.OrderStatusName);
+  if (explicit) {
+    return explicit;
+  }
+  const status = readString(trip.Status);
+  if (status && !isLikelyTicketStatus(status)) {
+    return status;
+  }
+  return "待出行";
+}
+
+function resolveTravelTicketStatusName(trip: LegacyRecord): string | undefined {
+  const explicit = readString(trip.AppStatusName ?? trip.TicketStatus);
+  if (explicit) {
+    return explicit;
+  }
+  const status = readString(trip.Status);
+  return status && isLikelyTicketStatus(status) ? status : undefined;
+}
+
+function mapLegacyTrainTrip(trip: LegacyRecord): OrderListItem {
+  const variables = parseVariablesObj(trip);
+  const passengerName = readString(asRecord(trip.Passenger)?.Name);
+  const routeTitle = buildTravelTrainRouteTitle(trip);
+  const departTime = buildTravelDepartTime(trip);
+  const ticketStatusName = resolveTravelTicketStatusName(trip);
+  const ticketId = readString(trip.OrderTicketId ?? trip.TicketId ?? trip.Id);
+  const listTicket: OrderTrainListTicket = {
+    TicketId: ticketId,
+    RouteTitle: routeTitle,
+    DepartTime: departTime,
+    PassengerNames: passengerName,
+    TicketStatusName: ticketStatusName,
+    Actions: buildFlightTrainActions(variables, "train"),
+  };
+
+  return {
+    tabId: OrderListTabId.Train,
+    OrderId: readString(trip.OrderId ?? trip.Id),
+    OrderNumber: readString(trip.OrderId ?? trip.Id),
+    Status: readString(trip.OrderStatus ?? trip.Status),
+    StatusName: resolveTravelOrderStatusName(trip),
+    TotalAmount: resolveTravelTripAmount(trip),
+    RouteTitle: routeTitle,
+    DepartTime: departTime,
+    PassengerNames: passengerName,
+    TicketStatusName: ticketStatusName,
+    TicketId: ticketId || undefined,
+    Tickets: [listTicket],
+    Actions: [],
+  };
+}
+
+function mapLegacyFlightTrip(trip: LegacyRecord): OrderListItem {
+  const variables = parseVariablesObj(trip);
+  const passengerName = readString(asRecord(trip.Passenger)?.Name);
+  const routeTitle = buildTravelFlightRouteTitle(trip);
+  const departTime = buildTravelDepartTime(trip);
+  const ticketStatusName = resolveTravelTicketStatusName(trip);
+  const ticketId = readString(trip.OrderTicketId ?? trip.TicketId ?? trip.Id);
+  const listTicket: OrderFlightListTicket = {
+    TicketId: ticketId,
+    RouteTitle: routeTitle,
+    DepartTime: departTime,
+    PassengerNames: passengerName,
+    TicketStatusName: ticketStatusName,
+    Actions: buildFlightTrainActions(variables, "flight"),
+    IsCustomApplyRefunding: Boolean(variables?.isCustomApplyRefunding),
+    IsCustomApplyExchanging: Boolean(variables?.isCustomApplyExchanging),
+  };
+
+  return {
+    tabId: OrderListTabId.Flight,
+    OrderId: readString(trip.OrderId ?? trip.Id),
+    OrderNumber: readString(trip.OrderId ?? trip.Id),
+    Status: readString(trip.OrderStatus ?? trip.Status),
+    StatusName: resolveTravelOrderStatusName(trip),
+    TotalAmount: resolveTravelTripAmount(trip),
+    RouteTitle: routeTitle,
+    DepartTime: departTime,
+    PassengerNames: passengerName,
+    TicketStatusName: ticketStatusName,
+    TicketId: ticketId || undefined,
+    Tickets: [listTicket],
+    Actions: [],
+  };
+}
+
 function mapLegacyTrip(trip: LegacyRecord, tabId: OrderListTabId): OrderListItem | null {
   const type = readString(trip.Type);
   const resolvedTabId = orderListTypeToTabId(type) ?? tabId;
@@ -492,33 +652,11 @@ function mapLegacyTrip(trip: LegacyRecord, tabId: OrderListTabId): OrderListItem
   }
 
   if (resolvedTabId === OrderListTabId.Flight) {
-    return {
-      tabId: OrderListTabId.Flight,
-      OrderId: readString(trip.OrderId ?? trip.Id),
-      OrderNumber: readString(trip.OrderId ?? trip.Id),
-      Status: readString(trip.Status),
-      StatusName: readString(trip.Status),
-      TotalAmount: readNumber(trip.TotalAmount),
-      RouteTitle: readString(trip.Name),
-      DepartTime: formatDateTime(trip.StartTime ?? trip["goDate"]),
-      PassengerNames: readString(asRecord(trip.Passenger)?.Name),
-      Actions: [],
-    };
+    return mapLegacyFlightTrip(trip);
   }
 
   if (resolvedTabId === OrderListTabId.Train) {
-    return {
-      tabId: OrderListTabId.Train,
-      OrderId: readString(trip.OrderId ?? trip.Id),
-      OrderNumber: readString(trip.OrderId ?? trip.Id),
-      Status: readString(trip.Status),
-      StatusName: readString(trip.Status),
-      TotalAmount: readNumber(trip.TotalAmount),
-      RouteTitle: readString(trip.Name),
-      DepartTime: formatDateTime(trip.StartTime ?? trip["goDate"]),
-      PassengerNames: readString(asRecord(trip.Passenger)?.Name),
-      Actions: [],
-    };
+    return mapLegacyTrainTrip(trip);
   }
 
   return null;

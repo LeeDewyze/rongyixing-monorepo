@@ -19,6 +19,7 @@ import { OrderStatusBadge } from "./OrderStatusBadge";
 
 interface OrderListCardProps {
   item: OrderListItem;
+  showPrice?: boolean;
   onAction?: (action: OrderAction, item: OrderListItem) => void;
   onCardClick?: (item: OrderListItem) => void;
 }
@@ -226,7 +227,12 @@ function renderBody(
   }
 }
 
-export function OrderListCard({ item, onAction, onCardClick }: OrderListCardProps) {
+export function OrderListCard({
+  item,
+  showPrice = true,
+  onAction,
+  onCardClick,
+}: OrderListCardProps) {
   const actions = getOrderActions(item);
   const grayPrice = shouldGrayPrice(item);
   const handleFlightTicketAction = (action: OrderAction, ticket: OrderFlightListTicket) => {
@@ -279,18 +285,24 @@ export function OrderListCard({ item, onAction, onCardClick }: OrderListCardProp
         {renderBody(item, handleFlightTicketAction, handleTrainTicketAction)}
       </div>
 
-      <footer className="mt-3 flex items-center justify-between gap-3">
-        <p
-          className={`leading-none ${ORDER_FONT} ${
-            grayPrice
-              ? "text-[24px] font-medium text-[#8E8E93]"
-              : "text-[24px] font-medium text-[#FF383C]"
-          }`}
+      {showPrice || actions.length > 0 ? (
+        <footer
+          className={`mt-3 flex items-center gap-3 ${showPrice ? "justify-between" : "justify-end"}`}
         >
-          ¥{item.TotalAmount ?? "-"}
-        </p>
-        <OrderActionBar actions={actions} onAction={(action) => onAction?.(action, item)} />
-      </footer>
+          {showPrice ? (
+            <p
+              className={`leading-none ${ORDER_FONT} ${
+                grayPrice
+                  ? "text-[24px] font-medium text-[#8E8E93]"
+                  : "text-[24px] font-medium text-[#FF383C]"
+              }`}
+            >
+              ¥{item.TotalAmount ?? "-"}
+            </p>
+          ) : null}
+          <OrderActionBar actions={actions} onAction={(action) => onAction?.(action, item)} />
+        </footer>
+      ) : null}
     </article>
   );
 }
