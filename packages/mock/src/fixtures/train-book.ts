@@ -38,6 +38,7 @@ export function createMockTrainInitBookResponse(): TrainInitBookResponse {
       IsShowServiceFee: true,
       TrainApprovalType: 3,
       TrainExchangeOnlineFee: 5,
+      TrainIsForbidAutoIssue: true,
     },
   };
 }

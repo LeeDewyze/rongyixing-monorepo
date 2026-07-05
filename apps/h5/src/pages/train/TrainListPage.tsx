@@ -13,6 +13,7 @@ import type {
 import { CalendarPickerSheet } from "@/components/calendar/CalendarPickerSheet";
 import { FlightPolicyLoadingOverlay } from "@/components/flight/FlightPolicyLoadingOverlay";
 import { HotelPolicyAlertDialog } from "@/components/hotel/HotelPolicyAlertDialog";
+import { HotelPassengerRequiredDialog } from "@/components/hotel/HotelPassengerRequiredDialog";
 import { usePageHeader } from "@/components/layout";
 import { TrainFilterSheet } from "@/components/train/TrainFilterSheet";
 import { TrainListEmptyState } from "@/components/train/TrainListEmptyState";
@@ -141,6 +142,7 @@ export function TrainListPage() {
   const [priceSortMode, setPriceSortMode] = useState<TrainPriceSortMode>("off");
   const [expandedTrainId, setExpandedTrainId] = useState<string | null>(null);
   const [policyAlertMessage, setPolicyAlertMessage] = useState<string | null>(null);
+  const [passengerRequiredOpen, setPassengerRequiredOpen] = useState(false);
   const headerRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [headerHeight, setHeaderHeight] = useState(FALLBACK_HEADER_HEIGHT);
@@ -289,7 +291,7 @@ export function TrainListPage() {
   const handleBookAttempt = useCallback(
     (train: TrainItem, seat: TrainSeat) => {
       if (isBusinessMode && !isExchangeMode && !bookingPassengers.length) {
-        navigate(buildPassengerSelectPath(ProductType.Train, listReturnTo));
+        setPassengerRequiredOpen(true);
         return;
       }
 
@@ -335,6 +337,11 @@ export function TrainListPage() {
       travelMode,
     ],
   );
+
+  function handlePassengerRequiredConfirm() {
+    setPassengerRequiredOpen(false);
+    navigate(buildPassengerSelectPath(ProductType.Train, listReturnTo));
+  }
 
   if (!hasListQuery) return null;
 
@@ -550,6 +557,13 @@ export function TrainListPage() {
         }}
         onClose={handleModifyClose}
         onSearch={handleModifySearch}
+      />
+
+      <HotelPassengerRequiredDialog
+        open={passengerRequiredOpen}
+        message="请添加旅客"
+        onClose={() => setPassengerRequiredOpen(false)}
+        onConfirm={handlePassengerRequiredConfirm}
       />
 
       <HotelPolicyAlertDialog

@@ -10,6 +10,11 @@ function formatBillAmount(value: number): string {
   return Number.isFinite(value) ? String(value) : "--";
 }
 
+function parseTrainCode(routeLabel: string): string {
+  const match = routeLabel.match(/^([A-Z0-9]+)/i);
+  return match?.[1] ?? "";
+}
+
 function BillLineRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-3 py-2">
@@ -19,21 +24,44 @@ function BillLineRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function RouteRow({ fromStation, toStation }: { fromStation: string; toStation: string }) {
+function RouteRow({
+  fromStation,
+  toStation,
+  trainRouteLabel,
+}: {
+  fromStation: string;
+  toStation: string;
+  trainRouteLabel?: string;
+}) {
+  const trainCode = trainRouteLabel ? parseTrainCode(trainRouteLabel) : "";
+
   return (
-    <div className="flex items-center gap-2 rounded-lg bg-white px-3 py-2.5 ring-1 ring-[#E8EBF0]">
-      <span className="text-[14px] font-medium text-[#2768FA]">{fromStation}</span>
-      <span className="flex min-w-0 flex-1 items-center px-1">
-        <div className="h-px flex-1 bg-[#d8e7ff]" />
-        <img
-          src={trainRouteArrow}
-          alt=""
-          className="mx-1 h-3 w-8 shrink-0 object-contain"
-          aria-hidden
-        />
-        <div className="h-px flex-1 bg-[#d8e7ff]" />
-      </span>
-      <span className="text-[14px] font-medium text-[#2768FA]">{toStation}</span>
+    <div className="overflow-hidden rounded-xl bg-[linear-gradient(180deg,#EEF4FF_0%,#F8FBFF_100%)] px-3.5 py-3 ring-1 ring-[#D6E4FF]">
+      <div className="grid grid-cols-[minmax(0,1fr)_5.5rem_minmax(0,1fr)] items-center gap-x-2">
+        <p className="truncate text-left text-[15px] font-semibold leading-tight text-[#333333]">
+          {fromStation}
+        </p>
+
+        <div className="flex flex-col items-center justify-center gap-1">
+          {trainCode ? (
+            <span className="text-[11px] font-medium leading-none tracking-wide text-[#2768FA]">
+              {trainCode}
+            </span>
+          ) : null}
+          <img
+            src={trainRouteArrow}
+            alt=""
+            width={56}
+            height={12}
+            className="h-3 w-14 shrink-0 object-contain"
+            aria-hidden
+          />
+        </div>
+
+        <p className="truncate text-right text-[15px] font-semibold leading-tight text-[#333333]">
+          {toStation}
+        </p>
+      </div>
     </div>
   );
 }
@@ -49,16 +77,27 @@ export function TrainBookBillSheet({ breakdown }: TrainBookBillSheetProps) {
 
   return (
     <div
-      className={`overflow-hidden rounded-t-xl border border-b-0 border-[#EEF1F6] bg-white shadow-[0_-6px_18px_rgba(15,23,42,0.10)] ${HOTEL_DETAIL_FONT}`}
+      className={`overflow-hidden rounded-t-2xl border border-b-0 border-[#EEF1F6] bg-white shadow-[0_-8px_24px_rgba(15,23,42,0.12)] ${HOTEL_DETAIL_FONT}`}
       role="dialog"
       aria-label="费用明细"
     >
-      <div className="space-y-2 px-4 py-3">
+      <div className="flex shrink-0 items-center justify-between border-b border-[#EEF1F6] px-4 py-3">
+        <p className="text-[15px] font-medium text-[#010101]">费用明细</p>
+        {passengerCount > 1 ? (
+          <p className="text-[12px] text-[#999999]">共 {passengerCount} 位乘车人</p>
+        ) : null}
+      </div>
+
+      <div className="space-y-3 px-4 py-3">
         {firstBill?.fromStation || firstBill?.toStation ? (
-          <RouteRow fromStation={firstBill.fromStation} toStation={firstBill.toStation} />
+          <RouteRow
+            fromStation={firstBill.fromStation}
+            toStation={firstBill.toStation}
+            trainRouteLabel={firstBill.trainRouteLabel}
+          />
         ) : null}
 
-        <div className="rounded-lg bg-[#F8F9FC] px-3 py-1 ring-1 ring-[#EEF1F6]">
+        <div className="rounded-xl bg-[#F8F9FC] px-3 py-1 ring-1 ring-[#EEF1F6]">
           <BillLineRow
             label="火车票"
             value={`¥${formatBillAmount(firstBill?.ticketPrice ?? 0)} × ${passengerCount}人`}

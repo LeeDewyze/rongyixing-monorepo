@@ -82,6 +82,8 @@ import {
   resolveTrainBookTmcFlags,
   resolveTrainExchangeOnlineFee,
   resolveTrainHoldMinutes,
+  resolveTrainSubmitConfirmMessage,
+  shouldConfirmTrainBookBeforeSubmit,
   TRAIN_PAY_TYPE_PERSON,
 } from "@/lib/train-book-pay";
 import { pollTrainCheckPay, shouldNavigateToPay } from "@/lib/train-book-check-pay";
@@ -151,7 +153,7 @@ export function TrainBookPage() {
     field: FlightOutNumberField;
   } | null>(null);
   const [checkingPay, setCheckingPay] = useState(false);
-  const [exchangeConfirmOpen, setExchangeConfirmOpen] = useState(false);
+  const [submitConfirmOpen, setSubmitConfirmOpen] = useState(false);
   const [removePassengerTarget, setRemovePassengerTarget] = useState<PassengerBookInfo | null>(
     null,
   );
@@ -440,8 +442,14 @@ export function TrainBookPage() {
       return;
     }
 
-    if (isExchangeBook) {
-      setExchangeConfirmOpen(true);
+    if (
+      shouldConfirmTrainBookBeforeSubmit({
+        init: initBook.data,
+        isExchangeBook,
+        travelPayType: resolvedPayType,
+      })
+    ) {
+      setSubmitConfirmOpen(true);
       return;
     }
 
@@ -806,17 +814,17 @@ export function TrainBookPage() {
       ) : null}
 
       <ConfirmDialog
-        open={exchangeConfirmOpen}
+        open={submitConfirmOpen}
         title="提示"
-        message="改签提交订单后暂未完成出票，请在订单详情中确认座位信息，确认无误后，点击确认出票，过期不确认出票将自动取消订单"
+        message={resolveTrainSubmitConfirmMessage(isExchangeBook)}
         confirmLabel="确定"
         cancelLabel="取消"
         showCloseButton={false}
         onConfirm={() => {
-          setExchangeConfirmOpen(false);
+          setSubmitConfirmOpen(false);
           void executeSubmit();
         }}
-        onCancel={() => setExchangeConfirmOpen(false)}
+        onCancel={() => setSubmitConfirmOpen(false)}
       />
 
       <ConfirmDialog

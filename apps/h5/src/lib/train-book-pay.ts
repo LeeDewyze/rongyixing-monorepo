@@ -64,3 +64,28 @@ export function resolveTrainExchangeOnlineFee(
   }
   return undefined;
 }
+
+export const TRAIN_BOOK_SUBMIT_CONFIRM_MESSAGE =
+  "提交订单后暂未完成出票，请在订单详情中确认座位信息，确认无误后，提交完成出票，过期不确认提交将自动取消订单";
+
+export const TRAIN_EXCHANGE_SUBMIT_CONFIRM_MESSAGE =
+  "改签提交订单后暂未完成出票，请在订单详情中确认座位信息，确认无误后，点击确认出票，过期不确认出票将自动取消订单";
+
+/** Legacy tmc-train-book_ryx: confirm before submit when auto-issue is forbidden. */
+export function shouldConfirmTrainBookBeforeSubmit(input: {
+  init: TrainInitBookResponse | undefined;
+  isExchangeBook: boolean;
+  travelPayType: number | null | undefined;
+}): boolean {
+  if (input.isExchangeBook) return true;
+
+  const tmc = input.init?.Tmc as { TrainIsForbidAutoIssue?: boolean } | undefined;
+  if (!tmc?.TrainIsForbidAutoIssue) return false;
+
+  const payType = input.travelPayType;
+  return payType === TRAIN_PAY_TYPE_COMPANY || payType === TRAIN_PAY_TYPE_PERSON;
+}
+
+export function resolveTrainSubmitConfirmMessage(isExchangeBook: boolean): string {
+  return isExchangeBook ? TRAIN_EXCHANGE_SUBMIT_CONFIRM_MESSAGE : TRAIN_BOOK_SUBMIT_CONFIRM_MESSAGE;
+}
