@@ -138,8 +138,8 @@ function policiesForFlight(
   const normalized = flightNumber.trim().toUpperCase();
   if (!normalized) return policies;
   const matched = policies.filter((policy) => {
-    const flightNo = (policy.FlightNo ?? "").toUpperCase();
-    return !flightNo || flightNo === normalized || flightNo.includes(normalized);
+    const flightNo = (policy.FlightNo ?? policy.FlightNumber ?? "").toUpperCase();
+    return !flightNo || flightNo === normalized || flightNo.includes(normalized) || normalized.includes(flightNo);
   });
   return matched.length > 0 ? matched : policies;
 }

@@ -14,6 +14,7 @@ import { FlightCabinsSummary } from "@/components/flight/FlightCabinsSummary";
 import { FlightFareRulesSheet } from "@/components/flight/FlightFareRulesSheet";
 import { FlightCabinsTabs } from "@/components/flight/FlightCabinsTabs";
 import { FlightPolicyFilterSheet } from "@/components/flight/FlightPolicyFilterSheet";
+import { FlightPolicyAlertDialog } from "@/components/flight/FlightPolicyAlertDialog";
 import { FlightCabinsSkeleton } from "@/components/flight/FlightCabinsSkeleton";
 import {
   FLIGHT_CABINS_CHROME,
@@ -180,6 +181,7 @@ export function FlightCabinsPage() {
   const [rulesFare, setRulesFare] = useState<FlightFare | null>(null);
   const [priceSnapshotAt, setPriceSnapshotAt] = useState(0);
   const [policyFilterOpen, setPolicyFilterOpen] = useState(false);
+  const [policyAlertMessage, setPolicyAlertMessage] = useState<string | null>(null);
   const [policyFilterEnabled, setPolicyFilterEnabled] = useState(true);
   const [filterPassengerId, setFilterPassengerId] = useState<string | null>(null);
   const headerRef = useRef<HTMLDivElement>(null);
@@ -342,6 +344,10 @@ export function FlightCabinsPage() {
     }
   }
 
+  function showPolicyAlert(message: string) {
+    setPolicyAlertMessage(message);
+  }
+
   async function proceedToBook(row: FlightCabinPolicyRow) {
     const fare = row.fare;
     let flightPoliciesByPassengerId: Record<string, FlightBookPolicy> = {};
@@ -351,7 +357,7 @@ export function FlightCabinsPage() {
     const policyResultsForBook = await resolvePolicyResultsForBook();
     if (isBusinessMode && !policyResultsForBook?.length) {
       if (shouldBlockBookingOnPolicyFetchFailure(isAgent)) {
-        window.alert(FLIGHT_POLICY_FETCH_FAILED_MESSAGE);
+        showPolicyAlert(FLIGHT_POLICY_FETCH_FAILED_MESSAGE);
         return;
       }
     } else if (isBusinessMode && policyParams && selectedPassengers.length > 0) {
@@ -369,7 +375,7 @@ export function FlightCabinsPage() {
     for (const passenger of selectedPassengers) {
       const passengerPolicy = flightPoliciesByPassengerId[passenger.id];
       if (isBusinessMode && passengerPolicy && !isFlightPolicyBookAllowed(passengerPolicy, isAgent)) {
-        window.alert(formatFlightPolicyBookBlockMessage(passengerPolicy, passenger));
+        showPolicyAlert(formatFlightPolicyBookBlockMessage(passengerPolicy, passenger));
         return;
       }
     }
@@ -402,17 +408,17 @@ export function FlightCabinsPage() {
     const policy = resolvePolicyForRow({ row: resolvedRow, ...policyContext });
 
     if (isFlightCabinSoldOut(resolvedRow)) {
-      window.alert("该舱位已售罄");
+      showPolicyAlert("该舱位已售罄");
       return;
     }
     if (policy && !isFlightPolicyBookAllowed(policy, isAgent)) {
       const filterPassenger =
         selectedPassengers.find((item) => item.id === filterPassengerId) ?? selectedPassengers[0];
-      window.alert(formatFlightPolicyBookBlockMessage(policy, filterPassenger));
+      showPolicyAlert(formatFlightPolicyBookBlockMessage(policy, filterPassenger));
       return;
     }
     if (!isFlightFareBookable(fare)) {
-      window.alert("该舱位已售罄");
+      showPolicyAlert("该舱位已售罄");
       return;
     }
     if (selectedPassengers.length === 0) {
@@ -574,6 +580,12 @@ export function FlightCabinsPage() {
           selectedPassengerId={filterPassengerId}
           onClose={() => setPolicyFilterOpen(false)}
           onConfirm={handlePolicyFilterConfirm}
+        />
+
+        <FlightPolicyAlertDialog
+          open={Boolean(policyAlertMessage)}
+          message={policyAlertMessage ?? ""}
+          onClose={() => setPolicyAlertMessage(null)}
         />
       </div>
     </div>

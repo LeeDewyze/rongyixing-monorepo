@@ -7,9 +7,12 @@ export interface FlightBookPolicy {
   color?: string;
   IsAllowBook?: boolean | number | string;
   Cabin?: FlightFare;
+  CabinCode?: string;
+  BookCode?: string;
   OrderTravelPays?: string;
   Id?: string;
   FlightNo?: string;
+  FlightNumber?: string;
 }
 
 export interface FlightPolicyPassengerResult {

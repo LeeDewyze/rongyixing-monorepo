@@ -301,6 +301,7 @@ Before creating any new dialog, sheet, toast, or modal-like surface, first check
 | `PassengerSelectAlertDialog` | `apps/h5/src/components/passenger/PassengerSelectAlertDialog.tsx` | Blocking friendly prompt with one confirm action | Used by passenger selection and booking submit errors; suitable for server business failures such as train duplicate-trip messages. |
 | `PageToast` | `apps/h5/src/components/layout/PageToast.tsx` | Non-blocking page feedback | Prefer for transient list/detail actions where the user can continue without a modal. |
 | `FlightListTimeoutDialog` | `apps/h5/src/components/flight/FlightListTimeoutDialog.tsx` | Flight list timeout acknowledgement | Product-specific timeout surface; reuse only for the same timeout pattern. |
+| `FlightPolicyAlertDialog` | `apps/h5/src/components/flight/FlightPolicyAlertDialog.tsx` | Flight policy, sold-out, or cabin booking blocking prompt | Thin flight-domain wrapper over the shared policy alert presentation; use instead of browser `alert` in flight cabin policy flows. |
 | `HotelPolicyAlertDialog` | `apps/h5/src/components/hotel/HotelPolicyAlertDialog.tsx` | Hotel/train policy or rule alert text | Use when policy copy needs formatted alert content, not for generic errors. |
 | `HotelBookWarmReminderDialog` | `apps/h5/src/components/hotel/HotelBookWarmReminderDialog.tsx` | Hotel booking warm reminder | Product-specific reminder with richer header/content. |
 | `HotelPassengerRequiredDialog` | `apps/h5/src/components/hotel/HotelPassengerRequiredDialog.tsx` | Hotel guest required prompt | Product-specific missing-passenger acknowledgement. |
@@ -346,6 +347,7 @@ Before creating any new dialog, sheet, toast, or modal-like surface, first check
 - `apps/h5/src/pages/flight/FlightListPage.tsx` - reference travel result-list chrome for H5 list pages.
 - `apps/h5/src/components/flight/FlightFilterSheet.tsx` - reference complex list filter sheet with category rail, dirty state, reset, and confirm footer.
 - `apps/h5/src/components/flight/FlightSegmentCard.tsx` - reference dense result card with right-anchored price, compact metadata, value badges, and tap feedback.
+- `apps/h5/src/components/flight/FlightPolicyAlertDialog.tsx` - flight-domain wrapper for policy blocking prompts, reusing the shared warm-reminder policy dialog presentation.
 - `apps/h5/src/pages/hotel/HotelListPage.tsx` - hotel result list using the travel list shell with fixed header, sticky query strip, internal scrolling, and bottom toolbar.
 - `apps/h5/src/components/hotel/HotelListHeader.tsx` - compact hotel list query header with back, summary, and profile actions.
 - `apps/h5/src/components/hotel/HotelListToolbar.tsx` - fixed hotel list bottom toolbar for recommended, price/star, location, and filter entry points.

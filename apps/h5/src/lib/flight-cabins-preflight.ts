@@ -24,6 +24,7 @@ export function buildCabinsQueryFromSegment(
   const detailKey = segment.DetailKey ?? segment.Data ?? "";
   return {
     date: searchParams.get("date") ?? segment.TakeoffTime?.slice(0, 10) ?? "",
+    channel: (searchParams.get("channel") as FlightCabinsQuery["channel"]) ?? undefined,
     fromCode: searchParams.get("fromCode") ?? "",
     toCode: searchParams.get("toCode") ?? "",
     fromName: searchParams.get("fromName") ?? segment.FromCityName ?? "",
@@ -63,8 +64,9 @@ export async function prefetchFlightCabinsPolicy(input: {
   listParams: FlightSearchParams;
   searchParams: URLSearchParams;
   passengers: PassengerBookInfo[];
+  fetchPolicy?: boolean;
 }): Promise<PrefetchFlightCabinsPolicyResult> {
-  const { segment, listParams, searchParams, passengers } = input;
+  const { segment, listParams, searchParams, passengers, fetchPolicy = true } = input;
   const query = buildCabinsQueryFromSegment(segment, searchParams);
   const detailParams = buildFlightDetailParams(query, passengers.length);
   if (!detailParams) {
@@ -86,7 +88,7 @@ export async function prefetchFlightCabinsPolicy(input: {
   });
 
   let policyResults: FlightPolicyPassengerResult[] = [];
-  if (policyParams) {
+  if (fetchPolicy && policyParams) {
     policyResults = await api.flight.getFlightPolicy(policyParams);
   }
 

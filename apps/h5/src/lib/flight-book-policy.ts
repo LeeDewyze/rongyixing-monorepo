@@ -68,6 +68,25 @@ export function resolvePassengerAccountId(passenger: PassengerBookInfo): string 
   return fromPassenger || fromCredential || String(passenger.id);
 }
 
+function readStringField(source: unknown, names: string[]): string | undefined {
+  if (!source || typeof source !== "object") return undefined;
+  const record = source as Record<string, unknown>;
+  for (const name of names) {
+    const value = record[name];
+    if (value == null || value === "") continue;
+    const text = String(value).trim();
+    if (text) return text;
+  }
+  return undefined;
+}
+
+function resolvePassengerTravelFormId(info: PassengerBookInfo): string | undefined {
+  return (
+    readStringField(info.passenger, ["travelFormId", "TravelFormId", "TravelFromId"]) ??
+    readStringField(info.credential, ["travelFormId", "TravelFormId", "TravelFromId"])
+  );
+}
+
 export function buildFlightPolicyParams(input: {
   listSnapshot?: FlightListResult;
   detailSnapshot?: FlightDetailResult;
@@ -84,9 +103,13 @@ export function buildFlightPolicyParams(input: {
 
   if (!accountIds) return null;
 
-  const travelFormIds = passengers
-    .map((item) => ("travelFormId" in item.passenger ? item.passenger.travelFormId : undefined))
-    .filter((value): value is string => Boolean(value && String(value).trim()));
+  const travelFormIds = Array.from(
+    new Set(
+      passengers
+        .map(resolvePassengerTravelFormId)
+        .filter((value): value is string => Boolean(value)),
+    ),
+  );
 
   const flightNumber =
     detailSnapshot.FlightSegments?.[0]?.Number ??
@@ -135,8 +158,8 @@ function policiesForFlight(
   const normalized = flightNumber.trim().toUpperCase();
   if (!normalized) return policies;
   const matched = policies.filter((policy) => {
-    const flightNo = (policy.FlightNo ?? "").toUpperCase();
-    return !flightNo || flightNo === normalized || flightNo.includes(normalized);
+    const flightNo = (policy.FlightNo ?? policy.FlightNumber ?? "").toUpperCase();
+    return !flightNo || flightNo === normalized || flightNo.includes(normalized) || normalized.includes(flightNo);
   });
   return matched.length > 0 ? matched : policies;
 }
@@ -151,6 +174,7 @@ export function resolveFareCabinCodes(fare: FlightFare): string[] {
 
   add(fare.Code);
   add(fare.BookCode);
+  add(readStringField(fare, ["CabinCode"]));
   for (const basic of fare.FlightFareBasics ?? []) {
     add(basic.CabinCode);
     add(basic.FareBasic);
@@ -211,6 +235,13 @@ function policyMatchesFare(policy: FlightBookPolicy, fare: FlightFare): boolean 
   const normalizedFare = normalizeFareForPolicyMatch(fare);
   const fareIds = new Set(resolveFareMatchIds(normalizedFare));
   const fareCodes = new Set(resolveFareCabinCodes(normalizedFare));
+  const policyCodes = new Set<string>();
+  const addPolicyCode = (value: unknown) => {
+    if (value == null || value === "") return;
+    policyCodes.add(String(value).trim().toUpperCase());
+  };
+  addPolicyCode(policy.CabinCode);
+  addPolicyCode(policy.BookCode);
 
   if (policy.Id != null && policy.Id !== "") {
     const policyId = String(policy.Id);
@@ -219,6 +250,10 @@ function policyMatchesFare(policy: FlightBookPolicy, fare: FlightFare): boolean 
   }
 
   const cabin = policy.Cabin ? normalizeFareForPolicyMatch(policy.Cabin) : undefined;
+  if ([...policyCodes].some((code) => fareCodes.has(code))) {
+    return cabin ? farePricesMatch(cabin, normalizedFare) : true;
+  }
+
   if (!cabin) return false;
 
   const cabinIds = new Set(resolveFareMatchIds(cabin));

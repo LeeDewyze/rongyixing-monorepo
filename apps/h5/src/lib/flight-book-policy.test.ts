@@ -176,4 +176,29 @@ describe("buildFlightPolicyParams", () => {
     expect(seg?.Cabins?.length).toBe(1);
     expect(seg?.Cabins?.[0]?.Id).toBe("biz-c");
   });
+
+  it("collects TravelFromId from uppercase legacy passenger fields", () => {
+    const params = buildFlightPolicyParams({
+      detailSnapshot,
+      passengers: [
+        {
+          id: "p1",
+          passenger: {
+            Id: "p1",
+            Name: "申晓杰",
+            AccountId: "acc-1",
+            TravelFormId: "tf-upper",
+          } as PassengerBookInfo["passenger"],
+          credential: {
+            Id: "c1",
+            Name: "申晓杰",
+            Number: "110101199001011234",
+            CredentialsType: 1,
+          },
+        },
+      ],
+    });
+
+    expect(params?.TravelFromId).toBe("tf-upper");
+  });
 });

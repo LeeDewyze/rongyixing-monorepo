@@ -370,8 +370,9 @@ export function FlightListPage() {
         listParams,
         searchParams,
         passengers: selectedPassengers,
+        fetchPolicy: productChannel === "tmc",
       });
-      if (!policyResults.length && !isAgent) {
+      if (productChannel === "tmc" && !policyResults.length && !isAgent) {
         window.alert(FLIGHT_NO_POLICY_SEATS_MESSAGE);
         return;
       }

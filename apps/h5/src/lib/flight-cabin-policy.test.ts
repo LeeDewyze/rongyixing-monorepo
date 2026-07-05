@@ -252,6 +252,43 @@ describe("filterFlightFaresByPolicy", () => {
     expect(rows[0]?.policy).toBeDefined();
   });
 
+  it("matches policy rows by legacy CabinCode when policy id differs from detail fare id", () => {
+    const businessFare: FlightFare = {
+      Id: "detail-i-1",
+      BookCode: "I",
+      Code: "I",
+      SalesPrice: "1410",
+      FlightNumber: "MU5186",
+      Count: "8",
+      FlightFareBasics: [{ CabinCode: "I", CabinType: 2, FareBasic: "I" }],
+    };
+    const rows = filterFlightFaresByPolicy({
+      fares: [businessFare],
+      policyResults: [
+        {
+          PassengerKey: "acc-1",
+          FlightPolicies: [
+            {
+              Id: "policy-i",
+              FlightNumber: "MU5186",
+              CabinCode: "I",
+              IsAllowBook: true,
+              Rules: ["超出差旅标准"],
+              Descriptions: ["超出差旅标准"],
+            },
+          ],
+        },
+      ],
+      passengers,
+      filterPassengerId: "p1",
+      filterEnabled: true,
+      flightNumber: "MU5186",
+    });
+
+    expect(rows[0]?.color).toBe("warning");
+    expect(rows[0]?.policy?.Rules).toEqual(["超出差旅标准"]);
+  });
+
   it("treats string IsAllowBook false as blocked", () => {
     const rows = filterFlightFaresByPolicy({
       fares,
