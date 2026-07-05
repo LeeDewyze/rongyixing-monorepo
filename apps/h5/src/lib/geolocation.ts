@@ -2,21 +2,30 @@ import type { HotelCity, HotelMapPoint } from "@ryx/shared-types";
 
 import { getApi } from "@/lib/api";
 
+type BMapAddress = {
+  city?: string;
+  province?: string;
+  district?: string;
+  street?: string;
+  street_number?: string;
+};
+
 interface PositionLike {
   lat: number;
   lng: number;
   cityName?: string;
+  address?: BMapAddress;
+}
+
+/** Legacy ryx: `${city}${district}${street}` when user taps 我的位置. */
+export function buildHotelMyPositionText(address?: BMapAddress): string {
+  if (!address) return "";
+  return `${address.city ?? ""}${address.district ?? ""}${address.street ?? ""}`.trim();
 }
 
 type BMapPosition = {
   point?: { lat: number; lng: number };
-  address?: {
-    city?: string;
-    province?: string;
-    district?: string;
-    street?: string;
-    street_number?: string;
-  };
+  address?: BMapAddress;
 };
 
 type BMapRuntime = typeof globalThis & {
@@ -88,45 +97,52 @@ function getBMapPosition(): Promise<PositionLike> {
 
     const geolocation = new BMap.Geolocation();
     let settled = false;
-    const timer = window.setTimeout(() => {
-      if (settled) return;
-      settled = true;
-      reject(new Error("定位超时"));
-    }, 2 * 60 * 1000);
+    const timer = window.setTimeout(
+      () => {
+        if (settled) return;
+        settled = true;
+        reject(new Error("定位超时"));
+      },
+      2 * 60 * 1000,
+    );
 
-    geolocation.getCurrentPosition((result: BMapPosition) => {
-      if (settled) return;
-      settled = true;
-      window.clearTimeout(timer);
-      const status = geolocation.getStatus?.();
-      if (status != null && status !== runtime.BMAP_STATUS_SUCCESS && status !== 0) {
-        const statusText: Record<number, string> = {
-          1: "城市列表",
-          2: "位置结果未知",
-          3: "导航结果未知",
-          4: "非法密钥",
-          5: "非法请求",
-          6: "没有权限",
-          7: "服务不可用",
-          8: "定位超时",
-        };
-        reject(new Error(`百度定位失败：${statusText[status] ?? status}`));
-        return;
-      }
-      const point = result?.point;
-      if (!point) {
-        reject(new Error("百度定位未返回坐标"));
-        return;
-      }
-      resolve({
-        lat: point.lat,
-        lng: point.lng,
-        cityName: result?.address?.city,
-      });
-    }, {
-      enableHighAccuracy: true,
-      SDKLocation: true,
-    });
+    geolocation.getCurrentPosition(
+      (result: BMapPosition) => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timer);
+        const status = geolocation.getStatus?.();
+        if (status != null && status !== runtime.BMAP_STATUS_SUCCESS && status !== 0) {
+          const statusText: Record<number, string> = {
+            1: "城市列表",
+            2: "位置结果未知",
+            3: "导航结果未知",
+            4: "非法密钥",
+            5: "非法请求",
+            6: "没有权限",
+            7: "服务不可用",
+            8: "定位超时",
+          };
+          reject(new Error(`百度定位失败：${statusText[status] ?? status}`));
+          return;
+        }
+        const point = result?.point;
+        if (!point) {
+          reject(new Error("百度定位未返回坐标"));
+          return;
+        }
+        resolve({
+          lat: point.lat,
+          lng: point.lng,
+          cityName: result?.address?.city,
+          address: result?.address,
+        });
+      },
+      {
+        enableHighAccuracy: true,
+        SDKLocation: true,
+      },
+    );
   });
 }
 
@@ -159,6 +175,63 @@ function toPoint(pos: { lat: number; lng: number }): HotelMapPoint {
   return { lat: pos.lat, lng: pos.lng };
 }
 
+/** Legacy ryx map.service: BMap.Geocoder.getLocation after GPS coords. */
+async function reverseGeocodeBMapAddress(lat: number, lng: number): Promise<BMapAddress | null> {
+  const BMap = (globalThis as BMapRuntime).BMap;
+  if (!BMap?.Geocoder) return null;
+
+  const pt = new BMap.Point(lng, lat);
+  return new Promise((resolve) => {
+    let settled = false;
+    const timer = window.setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      resolve(null);
+    }, 25_000);
+
+    const geoc = new BMap.Geocoder({ extensions_town: true });
+    geoc.getLocation(
+      pt,
+      (rs: {
+        addressComponents?: {
+          city?: string;
+          province?: string;
+          district?: string;
+          street?: string;
+          streetNumber?: string;
+        };
+      }) => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timer);
+        const addComp = rs?.addressComponents;
+        if (!addComp) {
+          resolve(null);
+          return;
+        }
+        resolve({
+          city: addComp.city,
+          province: addComp.province,
+          district: addComp.district,
+          street: addComp.street,
+          street_number: addComp.streetNumber,
+        });
+      },
+    );
+  });
+}
+
+async function enrichPositionAddress(position: PositionLike): Promise<PositionLike> {
+  const geocoded = await reverseGeocodeBMapAddress(position.lat, position.lng);
+  if (!geocoded) return position;
+
+  return {
+    ...position,
+    cityName: position.cityName ?? geocoded.city,
+    address: geocoded,
+  };
+}
+
 async function getCurrentPosition(): Promise<PositionLike> {
   try {
     await loadBMapScript();
@@ -170,10 +243,10 @@ async function getCurrentPosition(): Promise<PositionLike> {
     console.error("[hotel-location] bmap position failed", error);
     return null;
   });
-  if (point) return point;
+  if (point) return enrichPositionAddress(point);
 
   const ipFallback = await getIpFallbackPosition();
-  if (ipFallback) return ipFallback;
+  if (ipFallback) return enrichPositionAddress(ipFallback);
 
   throw new Error("定位失败，请检查定位权限或网络后重试");
 }
@@ -182,8 +255,16 @@ export async function resolveHotelCityByLocation(): Promise<{
   city: HotelCity | null;
   cityName: string | null;
   position: { lat: number; lng: number } | null;
+  addressText: string;
 }> {
   const position = await getCurrentPosition();
-  const city = await getApi().hotel.getCityByMap(toPoint(position)).catch(() => null);
-  return { city, cityName: position.cityName ?? city?.Name ?? null, position };
+  const city = await getApi()
+    .hotel.getCityByMap(toPoint(position))
+    .catch(() => null);
+  return {
+    city,
+    cityName: position.cityName ?? city?.Name ?? null,
+    position: { lat: position.lat, lng: position.lng },
+    addressText: buildHotelMyPositionText(position.address),
+  };
 }

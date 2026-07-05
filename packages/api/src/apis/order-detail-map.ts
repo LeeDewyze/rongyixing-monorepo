@@ -216,6 +216,15 @@ function mapPaymentType(value: unknown): string | number | undefined {
   return typeof value === "number" ? value : readString(value);
 }
 
+/** Legacy ryx hotel detail reads `orderHotel.VariablesObj.ExceptionMessage` only (not parsed Variables). */
+function readRoomExceptionMessage(record: LegacyRecord): string | undefined {
+  const varsObj = asRecord(record.VariablesObj);
+  if (!varsObj) {
+    return undefined;
+  }
+  return readString(varsObj.ExceptionMessage) || undefined;
+}
+
 function mapRoomVariables(record: LegacyRecord): HotelOrderRoomVariables | undefined {
   const vars = parseVariablesObj(record);
   if (!vars) {
@@ -227,7 +236,6 @@ function mapRoomVariables(record: LegacyRecord): HotelOrderRoomVariables | undef
     SMSCodeVerifyResultDesc: readString(vars.SMSCodeVerifyResultDesc) || undefined,
     VerifySmsCodeMobile: readString(vars.VerifySmsCodeMobile) || undefined,
     SupplierName: readString(vars.SupplierName) || undefined,
-    ExceptionMessage: readString(vars.ExceptionMessage) || undefined,
   };
 }
 
@@ -555,7 +563,7 @@ function mapRoom(
     SupplierName:
       vars?.SupplierName ?? (readString(hotel.SupplierName ?? hotel.Supplier) || undefined),
     RuleDescription: readString(hotel.RuleDescription) || undefined,
-    ExceptionMessage: vars?.ExceptionMessage,
+    ExceptionMessage: readRoomExceptionMessage(hotel),
     CustomerName: customerName || undefined,
     Variables: vars,
     Traveler: traveler,

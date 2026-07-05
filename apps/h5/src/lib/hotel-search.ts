@@ -56,21 +56,47 @@ export function loadDefaultHotelSearchForm() {
   };
 }
 
+export type HotelMyPosition = {
+  lat: number;
+  lng: number;
+  text: string;
+};
+
 export function buildHotelListSearchParams({
   city,
   checkIn,
   checkOut,
+  myPosition,
+  keyword,
 }: {
   city: HotelCity;
   checkIn: string;
   checkOut: string;
+  myPosition?: HotelMyPosition | null;
+  keyword?: string;
 }): URLSearchParams {
-  return new URLSearchParams({
+  const params = new URLSearchParams({
     cityCode: city.Code,
     cityName: city.Name,
     checkIn,
     checkOut,
   });
+
+  const trimmedKeyword = keyword?.trim();
+  if (trimmedKeyword) {
+    params.set("keyword", trimmedKeyword);
+  }
+
+  if (myPosition?.lat && myPosition.lng && myPosition.text) {
+    params.set("lat", String(myPosition.lat));
+    params.set("lng", String(myPosition.lng));
+    params.set("keywordType", "address");
+    if (!trimmedKeyword) {
+      params.set("keyword", myPosition.text);
+    }
+  }
+
+  return params;
 }
 
 export function validateHotelSearch(

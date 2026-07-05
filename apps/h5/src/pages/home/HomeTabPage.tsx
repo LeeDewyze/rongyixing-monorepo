@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { FlightCityPickerHostFromForm } from "@/components/flight/common";
@@ -25,7 +25,7 @@ import { getApi } from "@/lib/api";
 import { getApiMode } from "@/lib/env";
 import { formatApiError } from "@/lib/formatApiError";
 import { buildHomeProductSearch, parseHomeProduct } from "@/lib/home-params";
-import { CITY_HISTORY_KEYS, hotelCityPickerAdapter } from "@/lib/hotel-search";
+import { CITY_HISTORY_KEYS, displayHotelCity, hotelCityPickerAdapter } from "@/lib/hotel-search";
 import { resolveHotelCityByLocation } from "@/lib/geolocation";
 import { loadHomeTravelMode, saveHomeTravelMode } from "@/lib/flight-travel-mode";
 import { trainStationPickerAdapter } from "@/lib/train-search";
@@ -47,11 +47,7 @@ export function HomeTabPage() {
   );
   const [keyword, setKeyword] = useState("");
   const [hotelLocationLoading, setHotelLocationLoading] = useState(false);
-  const [hotelLocationFeedback, setHotelLocationFeedback] = useState<{
-    tone: "success" | "error";
-    text: string;
-  } | null>(null);
-  const hotelLocationFeedbackTimer = useRef<number | null>(null);
+  const [hotelLocationError, setHotelLocationError] = useState<string | null>(null);
   const hotelForm = useHotelSearchForm();
   const trainForm = useTrainSearchForm();
   const flightForm = useFlightSearchForm();
@@ -69,14 +65,6 @@ export function HomeTabPage() {
     setActiveProduct(parseHomeProduct(searchParams));
   }, [searchParams]);
 
-  useEffect(() => {
-    return () => {
-      if (hotelLocationFeedbackTimer.current != null) {
-        window.clearTimeout(hotelLocationFeedbackTimer.current);
-      }
-    };
-  }, []);
-
   function handleProductChange(product: HomeProductId) {
     setActiveProduct(product);
     setSearchParams(buildHomeProductSearch(product), { replace: true });
@@ -84,10 +72,7 @@ export function HomeTabPage() {
 
   function handleHotelSearch() {
     if (hotelForm.validate()) return;
-    const params = hotelForm.buildSearchParams();
-    const trimmed = keyword.trim();
-    if (trimmed) params.set("keyword", trimmed);
-    navigate(`/hotel/list?${params.toString()}`);
+    navigate(`/hotel/list?${hotelForm.buildSearchParams(keyword).toString()}`);
   }
 
   function handleTrainSearch() {
@@ -102,11 +87,7 @@ export function HomeTabPage() {
 
   async function handleHotelLocation() {
     if (hotelLocationLoading) return;
-    if (hotelLocationFeedbackTimer.current != null) {
-      window.clearTimeout(hotelLocationFeedbackTimer.current);
-      hotelLocationFeedbackTimer.current = null;
-    }
-    setHotelLocationFeedback(null);
+    setHotelLocationError(null);
     setHotelLocationLoading(true);
     try {
       const result = await resolveHotelCityByLocation();
@@ -127,20 +108,37 @@ export function HomeTabPage() {
           : null) ??
         result.city;
       if (matched) {
-        hotelForm.setCity(matched);
-        setHotelLocationFeedback({ tone: "success", text: `已定位到 ${matched.Name}` });
-        hotelLocationFeedbackTimer.current = window.setTimeout(() => {
-          setHotelLocationFeedback(null);
-          hotelLocationFeedbackTimer.current = null;
-        }, 2500);
+        hotelForm.selectCity(matched);
+        if (result.position && result.addressText) {
+          hotelForm.setMyPosition({
+            lat: result.position.lat,
+            lng: result.position.lng,
+            text: result.addressText,
+          });
+          setKeyword("");
+        } else {
+          hotelForm.clearMyPosition();
+        }
         return;
       }
-      setHotelLocationFeedback({ tone: "error", text: "已获取位置，但未匹配到酒店城市" });
+      setHotelLocationError("已获取位置，但未匹配到酒店城市");
     } catch {
-      setHotelLocationFeedback({ tone: "error", text: "定位失败，请重试" });
+      setHotelLocationError("定位失败，请重试");
     } finally {
       setHotelLocationLoading(false);
     }
+  }
+
+  function handleHotelKeywordChange(value: string) {
+    setKeyword(value);
+    if (hotelForm.myPosition && value.trim() !== hotelForm.myPosition.text) {
+      hotelForm.clearMyPosition();
+    }
+  }
+
+  function handleHotelCitySelect(city: (typeof hotelForm.cities)[number]) {
+    hotelForm.selectCity(city);
+    setKeyword("");
   }
 
   function handleTrainStationSelect(station: (typeof trainForm.stations)[number]) {
@@ -200,18 +198,18 @@ export function HomeTabPage() {
           {hotelForm.error ? <HomeSearchPanelError error={hotelForm.error} /> : null}
           <HomeHotelSearchPanel
             city={hotelForm.city}
+            cityLabel={hotelForm.myPosition?.text ?? displayHotelCity(hotelForm.city)}
             keyword={keyword}
             checkIn={hotelForm.checkIn}
             checkOut={hotelForm.checkOut}
             validationError={hotelForm.validationError || undefined}
             onCitySelect={() => hotelForm.setPicker("city")}
-            onKeywordChange={setKeyword}
+            onKeywordChange={handleHotelKeywordChange}
             onCheckInChange={hotelForm.setCheckIn}
             onCheckOutChange={hotelForm.setCheckOut}
             onSearch={handleHotelSearch}
             onMyLocationClick={() => void handleHotelLocation()}
             myLocationLoading={hotelLocationLoading}
-            myLocationFeedback={hotelLocationFeedback}
           />
         </div>
       ) : null}
@@ -236,10 +234,7 @@ export function HomeTabPage() {
 
       {travelMode === "business" ? <HomeBusinessPanel /> : null}
 
-      <PageToast
-        message={hotelLocationFeedback?.text ?? null}
-        tone={hotelLocationFeedback?.tone ?? "error"}
-      />
+      <PageToast message={hotelLocationError} tone="error" />
 
       <FlightCityPickerHostFromForm form={flightForm} />
 
@@ -253,7 +248,7 @@ export function HomeTabPage() {
         historyTitle="历史记录"
         hotGridColumns={3}
         onClose={() => hotelForm.setPicker(null)}
-        onSelect={hotelForm.setCity}
+        onSelect={handleHotelCitySelect}
         {...hotelCityPickerAdapter}
       />
 

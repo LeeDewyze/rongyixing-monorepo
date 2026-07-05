@@ -8,6 +8,7 @@ import { HOME_ASSETS } from "@/config/home-assets";
 
 interface HomeHotelSearchPanelProps {
   city: HotelCity;
+  cityLabel?: string;
   keyword: string;
   checkIn: string;
   checkOut: string;
@@ -19,7 +20,6 @@ interface HomeHotelSearchPanelProps {
   onCheckOutChange: (date: string) => void;
   onMyLocationClick: () => void;
   myLocationLoading?: boolean;
-  myLocationFeedback?: { tone: "success" | "error"; text: string } | null;
 }
 
 function ChevronDownIcon() {
@@ -43,6 +43,7 @@ function MyLocationIcon() {
 
 export function HomeHotelSearchPanel({
   city,
+  cityLabel,
   keyword,
   checkIn,
   checkOut,
@@ -54,10 +55,10 @@ export function HomeHotelSearchPanel({
   onCheckOutChange,
   onMyLocationClick,
   myLocationLoading = false,
-  myLocationFeedback,
 }: HomeHotelSearchPanelProps) {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const nights = nightsBetween(checkIn, checkOut);
+  const destinationLabel = cityLabel ?? displayHotelCity(city);
 
   function handleDateConfirm(nextCheckIn: string, nextCheckOut: string) {
     onCheckInChange(nextCheckIn);
@@ -70,10 +71,11 @@ export function HomeHotelSearchPanel({
         <div className="flex h-12 items-center gap-2 rounded-lg bg-[#F5F6F9] px-3">
           <button
             type="button"
-            className="flex shrink-0 items-center gap-0.5 text-[17px] font-medium text-brand-title"
+            className="flex min-w-0 max-w-[42%] items-center gap-0.5 text-[17px] font-medium text-brand-title"
+            title={destinationLabel}
             onClick={onCitySelect}
           >
-            {displayHotelCity(city)}
+            <span className="truncate">{destinationLabel}</span>
             <ChevronDownIcon />
           </button>
           <input
@@ -120,21 +122,14 @@ export function HomeHotelSearchPanel({
 
         {validationError ? (
           <p className="pt-2 text-center text-sm text-destructive">{validationError}</p>
-        ) : myLocationFeedback ? (
-          <p
-            className={`pt-2 text-center text-sm ${
-              myLocationFeedback.tone === "success" ? "text-[#00a870]" : "text-destructive"
-            }`}
-          >
-            {myLocationFeedback.text}
-          </p>
         ) : null}
 
         <button
           type="button"
           className="mt-4 flex h-10 w-full items-center justify-center rounded-[24px] text-[17px] font-medium text-white active:opacity-90"
           style={{
-            background: "linear-gradient(270deg, var(--brand-btn-end) 0%, var(--brand-btn-start) 100%)",
+            background:
+              "linear-gradient(270deg, var(--brand-btn-end) 0%, var(--brand-btn-start) 100%)",
             boxShadow: "0px 2px 16px 0px rgba(175, 175, 175, 0.2)",
           }}
           onClick={onSearch}

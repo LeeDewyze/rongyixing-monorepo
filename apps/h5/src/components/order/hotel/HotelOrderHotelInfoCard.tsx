@@ -36,16 +36,25 @@ export function HotelOrderHotelInfoCard({ room }: HotelOrderHotelInfoCardProps) 
         label="房型名称"
         value={
           roomNameWithBreakfast ? (
-            <span className="line-clamp-1 w-full break-all text-right">{roomNameWithBreakfast}</span>
+            <span className="line-clamp-1 w-full break-all text-right">
+              {roomNameWithBreakfast}
+            </span>
           ) : (
             "—"
           )
         }
       />
-      <HotelOrderDetailRow label="酒店状态" value={room.StatusName ?? "—"} />
-      {room.ExceptionMessage ? (
-        <p className="py-1 text-right text-[13px] text-[#FF9500]">{room.ExceptionMessage}</p>
-      ) : null}
+      <HotelOrderDetailRow
+        label="酒店状态"
+        value={
+          <>
+            {room.StatusName ?? "—"}
+            {room.ExceptionMessage ? (
+              <span className="text-[#FF4D4F]"> ({room.ExceptionMessage})</span>
+            ) : null}
+          </>
+        }
+      />
       <HotelOrderDetailRow
         label="入离日期"
         value={formatStayRange(room.BeginDate, room.EndDate, nights)}

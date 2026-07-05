@@ -15,18 +15,12 @@ export function HotelSearchPage() {
 
   function handleSearch() {
     if (form.validate()) return;
-    const params = form.buildSearchParams();
-    const trimmed = keyword.trim();
-    if (trimmed) params.set("keyword", trimmed);
-    navigate(`/hotel/list?${params.toString()}`);
+    navigate(`/hotel/list?${form.buildSearchParams(keyword).toString()}`);
   }
 
   function handleKeywordSelect() {
     if (form.validate()) return;
-    const params = form.buildSearchParams();
-    const trimmed = keyword.trim();
-    if (trimmed) params.set("keyword", trimmed);
-    navigate(`/hotel/keyword?${params.toString()}`);
+    navigate(`/hotel/keyword?${form.buildSearchParams(keyword).toString()}`);
   }
 
   if (form.isLoading) {
@@ -70,7 +64,7 @@ export function HotelSearchPage() {
         hotGridColumns={3}
         tone="form"
         onClose={() => form.setPicker(null)}
-        onSelect={form.setCity}
+        onSelect={form.selectCity}
         {...hotelCityPickerAdapter}
       />
     </SearchPageLayout>

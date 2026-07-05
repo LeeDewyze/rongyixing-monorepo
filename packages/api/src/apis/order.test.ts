@@ -155,7 +155,7 @@ describe("normalizeOrderListResponse", () => {
               {
                 Id: "TICKET-1",
                 AppStatusName: "已出票",
-                Variables: JSON.stringify({ isShowRefundButton: true }),
+                Variables: JSON.stringify({ isShow: true, isShowRefundButton: true }),
                 Passenger: { Name: "姜茗豪" },
                 OrderFlightTrips: [
                   {
@@ -172,7 +172,7 @@ describe("normalizeOrderListResponse", () => {
               {
                 Id: "TICKET-2",
                 AppStatusName: "已出票",
-                Variables: JSON.stringify({ isShowExchangeButton: true }),
+                Variables: JSON.stringify({ isShow: true, isShowExchangeButton: true }),
                 Passenger: { Name: "申晓杰" },
                 OrderFlightTrips: [
                   {
@@ -198,7 +198,7 @@ describe("normalizeOrderListResponse", () => {
       OrderId: "FO-1",
       TicketId: "TICKET-1",
       TicketStatusName: "已出票",
-      PassengerNames: "姜茗豪",
+      PassengerNames: "姜茗豪、申晓杰",
       Actions: [],
       Tickets: [
         {
@@ -213,6 +213,66 @@ describe("normalizeOrderListResponse", () => {
         },
       ],
     });
+  });
+
+  it("hides flight tickets when VariablesObj.isShow is absent or false", () => {
+    const response = normalizeOrderListResponse(
+      {
+        Orders: [
+          {
+            Id: "FO-2",
+            StatusName: "交易完成",
+            TotalAmount: 860,
+            OrderFlightTickets: [
+              {
+                Id: "TICKET-VISIBLE",
+                Variables: JSON.stringify({ isShow: true, isShowRefundButton: true }),
+                Passenger: { Name: "张三" },
+                OrderFlightTrips: [
+                  {
+                    FlightNumber: "CA1234",
+                    FromCityName: "北京",
+                    ToCityName: "上海",
+                    TakeoffTime: "2026-06-27T08:00:00",
+                  },
+                ],
+              },
+              {
+                Id: "TICKET-HIDDEN",
+                Variables: JSON.stringify({ isShow: false, isShowRefundButton: true }),
+                Passenger: { Name: "李四" },
+                OrderFlightTrips: [
+                  {
+                    FlightNumber: "CA5678",
+                    FromCityName: "北京",
+                    ToCityName: "广州",
+                    TakeoffTime: "2026-06-27T10:00:00",
+                  },
+                ],
+              },
+              {
+                Id: "TICKET-NO-FLAG",
+                Variables: JSON.stringify({ isShowRefundButton: true }),
+                Passenger: { Name: "王五" },
+                OrderFlightTrips: [
+                  {
+                    FlightNumber: "CA9999",
+                    FromCityName: "北京",
+                    ToCityName: "成都",
+                    TakeoffTime: "2026-06-27T12:00:00",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      OrderListTabId.Flight,
+    );
+
+    expect(response.Orders).toHaveLength(1);
+    expect(response.Orders[0]?.Tickets).toHaveLength(1);
+    expect(response.Orders[0]?.Tickets?.[0]?.TicketId).toBe("TICKET-VISIBLE");
   });
 
   it("maps legacy hotel order entity to UI item", () => {
@@ -322,6 +382,127 @@ describe("normalizeOrderListResponse", () => {
     });
   });
 
+  it("hides scrapped failed exchange and keeps issued train ticket in list", () => {
+    const response = normalizeOrderListResponse(
+      {
+        Orders: [
+          {
+            Id: "20760000000235",
+            StatusName: "交易完成",
+            TotalAmount: 124.5,
+            OrderTrainTickets: [
+              {
+                Id: "20760000000100",
+                AppStatusName: "已出票",
+                Status: "4",
+                Passenger: { Name: "申晓杰" },
+                Variables: JSON.stringify({
+                  isShow: true,
+                  isShowExchangeButton: true,
+                  isShowRefundButton: true,
+                }),
+                OrderTrainTrips: [
+                  {
+                    TrainCode: "1999",
+                    FromStationName: "北京",
+                    ToStationName: "上海",
+                    StartTime: "2026-07-05T11:54:00",
+                  },
+                ],
+              },
+              {
+                Id: "20760000000101",
+                AppStatusName: "出票失败",
+                StatusName: "废除",
+                Status: "15",
+                Passenger: { Name: "申晓杰" },
+                Variables: JSON.stringify({
+                  OriginalTicketId: "20760000000100",
+                  IsScrap: true,
+                  isShow: false,
+                }),
+                OrderTrainTrips: [
+                  {
+                    TrainCode: "Z1031",
+                    FromStationName: "北京",
+                    ToStationName: "上海",
+                    StartTime: "2026-07-05T14:09:00",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      OrderListTabId.Train,
+    );
+
+    expect(response.Orders).toHaveLength(1);
+    expect(response.Orders[0]?.Tickets).toHaveLength(1);
+    expect(response.Orders[0]?.Tickets?.[0]).toMatchObject({
+      RouteTitle: "1999 北京—上海",
+      TicketStatusName: "已出票",
+      TicketId: "20760000000100",
+    });
+    expect(response.Orders[0]?.Tickets?.[0]?.Actions).toEqual(
+      expect.arrayContaining([
+        { kind: "refund", label: "退票" },
+        { kind: "exchange", label: "改签" },
+      ]),
+    );
+  });
+
+  it("does not hide original ticket when a failed exchange references OriginalTicketId", () => {
+    const response = normalizeOrderListResponse(
+      {
+        Orders: [
+          {
+            Id: "20760000000235",
+            StatusName: "交易完成",
+            TotalAmount: 124.5,
+            OrderTrainTickets: [
+              {
+                Id: "20760000000100",
+                AppStatusName: "已出票",
+                Status: "4",
+                Passenger: { Name: "申晓杰" },
+                Variables: JSON.stringify({ isShow: true }),
+                OrderTrainTrips: [
+                  {
+                    TrainCode: "1999",
+                    FromStationName: "北京",
+                    ToStationName: "上海",
+                    StartTime: "2026-07-05T11:54:00",
+                  },
+                ],
+              },
+              {
+                Id: "20760000000101",
+                AppStatusName: "出票失败",
+                StatusName: "废除",
+                Status: "15",
+                Passenger: { Name: "申晓杰" },
+                Variables: JSON.stringify({ OriginalTicketId: "20760000000100", isShow: false }),
+                OrderTrainTrips: [
+                  {
+                    TrainCode: "Z1031",
+                    FromStationName: "北京",
+                    ToStationName: "上海",
+                    StartTime: "2026-07-05T14:09:00",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      OrderListTabId.Train,
+    );
+
+    expect(response.Orders[0]?.Tickets).toHaveLength(1);
+    expect(response.Orders[0]?.Tickets?.[0]?.RouteTitle).toBe("1999 北京—上海");
+  });
+
   it("dedupes refunded train tickets for the same passenger in list cards", () => {
     const response = normalizeOrderListResponse(
       {
@@ -335,6 +516,7 @@ describe("normalizeOrderListResponse", () => {
                 Id: "207600000001",
                 AppStatusName: "已退票",
                 Passenger: { Name: "申晓杰" },
+                Variables: JSON.stringify({ isShow: true }),
                 OrderTrainTrips: [
                   {
                     TrainCode: "G1302",
@@ -348,7 +530,7 @@ describe("normalizeOrderListResponse", () => {
                 Id: "207600000002",
                 AppStatusName: "已退票",
                 Passenger: { Name: "申晓杰" },
-                Variables: JSON.stringify({ OriginalTicketId: "207600000001" }),
+                Variables: JSON.stringify({ OriginalTicketId: "207600000001", isShow: true }),
                 OrderTrainTrips: [
                   {
                     TrainCode: "G1302",

@@ -236,10 +236,13 @@ export function createMockTrainOrderDetailLegacy(orderId: string) {
     const ticketVariables =
       isIssued && !isCancelled && !isRefunded
         ? {
+            isShow: true,
             isShowRefundButton: true,
             isShowExchangeButton: true,
           }
-        : undefined;
+        : isRefunded
+          ? { isShow: true }
+          : { isShow: true };
 
     return {
       Id: ticketId,
@@ -388,8 +391,8 @@ export function createMockFlightOrderDetailLegacy(orderId: string) {
     OrderFlightTrips: buildTrips(index === 0 ? "KN6777" : "KN5955"),
     Variables: JSON.stringify(
       isWaitPay
-        ? { isShowCancelButton: true }
-        : { isShowRefundButton: true, isShowExchangeButton: true },
+        ? { isShow: true, isShowCancelButton: true }
+        : { isShow: true, isShowRefundButton: true, isShowExchangeButton: true },
     ),
   }));
 

@@ -9,6 +9,7 @@ import {
   persistHotelSearch,
   resolveHotelCityInCatalog,
   validateHotelSearch,
+  type HotelMyPosition,
 } from "@/lib/hotel-search";
 import { addDays } from "@/lib/date-search";
 
@@ -30,6 +31,7 @@ export function useHotelSearchForm() {
   const [checkOut, setCheckOut] = useState(defaults.checkOut);
   const [picker, setPicker] = useState<HotelCityPickerTarget>(null);
   const [validationError, setValidationError] = useState("");
+  const [myPosition, setMyPositionState] = useState<HotelMyPosition | null>(null);
 
   useEffect(() => {
     if (!cities.length) return;
@@ -57,9 +59,23 @@ export function useHotelSearchForm() {
       setCheckOut(initial.checkOut);
       setValidationError("");
       setPicker(null);
+      setMyPositionState(null);
     },
     [cities],
   );
+
+  const selectCity = useCallback((next: HotelCity) => {
+    setCity(next);
+    setMyPositionState(null);
+  }, []);
+
+  const setMyPosition = useCallback((position: HotelMyPosition) => {
+    setMyPositionState(position);
+  }, []);
+
+  const clearMyPosition = useCallback(() => {
+    setMyPositionState(null);
+  }, []);
 
   const validate = useCallback((): string | null => {
     const message = validateHotelSearch(city, checkIn, checkOut);
@@ -67,9 +83,12 @@ export function useHotelSearchForm() {
     return message;
   }, [city, checkIn, checkOut]);
 
-  const buildSearchParams = useCallback(() => {
-    return buildHotelListSearchParams({ city, checkIn, checkOut });
-  }, [city, checkIn, checkOut]);
+  const buildSearchParams = useCallback(
+    (keyword?: string) => {
+      return buildHotelListSearchParams({ city, checkIn, checkOut, myPosition, keyword });
+    },
+    [city, checkIn, checkOut, myPosition],
+  );
 
   return {
     cities,
@@ -80,7 +99,11 @@ export function useHotelSearchForm() {
     checkOut,
     picker,
     validationError,
+    myPosition,
     setCity,
+    selectCity,
+    setMyPosition,
+    clearMyPosition,
     setCheckIn,
     setCheckOut,
     setPicker,

@@ -243,6 +243,42 @@ describe("normalizeHotelOrderDetail", () => {
     expect(traveler?.OutNumbers).toBe("外部:TR2026001");
   });
 
+  it("ignores ExceptionMessage from OrderHotel Variables string like legacy ryx", () => {
+    const detail = normalizeHotelOrderDetail({
+      Order: {
+        Id: "ORD-EX-1",
+        OrderHotels: [
+          {
+            Key: "k1",
+            HotelName: "测试酒店",
+            StatusName: "已确认",
+            Variables: JSON.stringify({ ExceptionMessage: "获取订单失败" }),
+          },
+        ],
+      },
+    });
+
+    expect(detail.Rooms[0]?.ExceptionMessage).toBeUndefined();
+  });
+
+  it("maps ExceptionMessage from OrderHotel VariablesObj", () => {
+    const detail = normalizeHotelOrderDetail({
+      Order: {
+        Id: "ORD-EX-2",
+        OrderHotels: [
+          {
+            Key: "k1",
+            HotelName: "测试酒店",
+            StatusName: "待确认",
+            VariablesObj: { ExceptionMessage: "供应商异常" },
+          },
+        ],
+      },
+    });
+
+    expect(detail.Rooms[0]?.ExceptionMessage).toBe("供应商异常");
+  });
+
   it("enriches minimal normalized detail with a synthetic room", () => {
     const detail = normalizeHotelOrderDetail({
       OrderId: "ORD-MIN",

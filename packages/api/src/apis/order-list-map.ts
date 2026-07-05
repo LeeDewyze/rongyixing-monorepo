@@ -248,19 +248,26 @@ function mapLegacyFlightTicketForList(ticket: LegacyRecord): OrderFlightListTick
 
 function mapLegacyFlightOrder(order: LegacyRecord): OrderListItem | null {
   const tickets = asArray<LegacyRecord>(order.OrderFlightTickets);
-  const ticket = tickets[0];
-  const trips = ticket ? asArray<LegacyRecord>(ticket.OrderFlightTrips) : [];
+  const visibleTickets = filterRawFlightTicketsForList(tickets);
+  if (visibleTickets.length === 0) {
+    return null;
+  }
+
+  const ticket = visibleTickets[0];
+  const trips = asArray<LegacyRecord>(ticket.OrderFlightTrips);
   const trip = trips[0];
   if (!trip) {
     return null;
   }
 
   const variables = parseVariablesObj(order);
-  const ticketVariables = ticket ? parseVariablesObj(ticket) : undefined;
-  const listTickets = tickets
+  const ticketVariables = parseTicketVariablesObj(ticket);
+  const listTickets = visibleTickets
     .map(mapLegacyFlightTicketForList)
     .filter((item): item is OrderFlightListTicket => Boolean(item?.TicketId));
+  const firstListTicket = listTickets[0];
   const passengerNames =
+    joinNames(listTickets.map((item) => item.PassengerNames)) ||
     joinNames(
       trips.map((item) => {
         const ticketRef = asRecord(item.OrderFlightTicket);
@@ -278,12 +285,14 @@ function mapLegacyFlightOrder(order: LegacyRecord): OrderListItem | null {
     StatusName: readString(order.StatusName ?? order.Status),
     TotalAmount: readNumber(order.TotalAmount),
     RouteTitle:
+      firstListTicket?.RouteTitle ??
       `${readString(trip.FlightNumber)} ${readString(trip.FromCityName)}—${readString(trip.ToCityName)}`.trim(),
-    DepartTime: formatDateTime(trip.TakeoffTime ?? trip.DepartTime),
+    DepartTime: firstListTicket?.DepartTime ?? formatDateTime(trip.TakeoffTime ?? trip.DepartTime),
     PassengerNames: passengerNames,
     TicketStatusName:
-      readString(ticket?.AppStatusName ?? ticket?.StatusName ?? ticket?.Status) || undefined,
-    TicketId: readString(ticket?.Id) || undefined,
+      firstListTicket?.TicketStatusName ??
+      (readString(ticket.AppStatusName ?? ticket.StatusName ?? ticket.Status) || undefined),
+    TicketId: firstListTicket?.TicketId ?? (readString(ticket.Id) || undefined),
     Tickets: listTickets,
     Actions:
       listTickets.length > 0
@@ -307,44 +316,72 @@ function parseTicketVariablesObj(ticket: LegacyRecord): LegacyRecord | undefined
   return undefined;
 }
 
-const TRAIN_LIST_HIDDEN_STATUSES = new Set(["ChangeTicket"]);
-
-function collectSupersededTrainTicketIds(rawTickets: LegacyRecord[]): Set<string> {
-  const supersededIds = new Set<string>();
-  const byId = new Map(rawTickets.map((ticket) => [readString(ticket.Id), ticket]));
-
-  for (const ticket of rawTickets) {
-    let vars = parseTicketVariablesObj(ticket);
-    let originalId = readString(vars?.OriginalTicketId);
-    while (originalId) {
-      supersededIds.add(originalId);
-      const predecessor = byId.get(originalId);
-      vars = predecessor ? parseTicketVariablesObj(predecessor) : undefined;
-      originalId = readString(vars?.OriginalTicketId);
-    }
-  }
-
-  return supersededIds;
+function isLegacyTruthy(value: unknown): boolean {
+  return value === true || value === "true" || value === 1 || value === "1";
 }
 
-function shouldShowTrainTicketInList(ticket: LegacyRecord, supersededIds: Set<string>): boolean {
-  const ticketId = readString(ticket.Id);
-  if (!ticketId || supersededIds.has(ticketId)) {
+/** Legacy order-item_ryx: `.filter((it) => it.VariablesObj.isShow)` — absent isShow is hidden. */
+function resolveLegacyListTicketVisible(ticket: LegacyRecord): boolean {
+  const ticketVariables = parseTicketVariablesObj(ticket);
+  if (!ticketVariables || !("isShow" in ticketVariables)) {
     return false;
   }
+  return isLegacyTruthy(ticketVariables.isShow);
+}
 
-  const ticketVariables = parseTicketVariablesObj(ticket);
-  if (ticketVariables?.IsScrap) {
+/** Failed exchange / scrapped replacement tickets (H5 safety when API isShow is stale). */
+function isFailedExchangeTrainTicket(
+  ticket: LegacyRecord,
+  ticketVariables?: LegacyRecord,
+): boolean {
+  const vars = ticketVariables ?? parseTicketVariablesObj(ticket);
+  const originalTicketId = readString(vars?.OriginalTicketId);
+  if (!originalTicketId) {
     return false;
   }
 
   const status = readString(ticket.Status);
-  return !TRAIN_LIST_HIDDEN_STATUSES.has(status);
+  if (
+    status === "15" ||
+    status === "Abolish" ||
+    status === "16" ||
+    status === "Exception" ||
+    status === "17" ||
+    status === "ExchangeAbolishing"
+  ) {
+    return true;
+  }
+
+  const label = readString(ticket.AppStatusName ?? ticket.StatusName);
+  return /出票失败|废除|作废|失败/.test(label);
+}
+
+function shouldShowTrainTicketInList(ticket: LegacyRecord): boolean {
+  if (!resolveLegacyListTicketVisible(ticket)) {
+    return false;
+  }
+
+  if (isFailedExchangeTrainTicket(ticket)) {
+    return false;
+  }
+
+  return true;
+}
+
+function shouldShowFlightTicketInList(ticket: LegacyRecord): boolean {
+  return resolveLegacyListTicketVisible(ticket);
 }
 
 function filterRawTrainTicketsForList(rawTickets: LegacyRecord[]): LegacyRecord[] {
-  const supersededIds = collectSupersededTrainTicketIds(rawTickets);
-  return rawTickets.filter((ticket) => shouldShowTrainTicketInList(ticket, supersededIds));
+  return rawTickets.filter(shouldShowTrainTicketInList);
+}
+
+function filterRawFlightTicketsForList(rawTickets: LegacyRecord[]): LegacyRecord[] {
+  return rawTickets.filter(shouldShowFlightTicketInList);
+}
+
+function isTerminalTrainListTicketStatus(status: string): boolean {
+  return /退票|已取消|作废|废除|出票失败|失败/.test(status);
 }
 
 function dedupeTrainListTickets(tickets: OrderTrainListTicket[]): OrderTrainListTicket[] {
@@ -353,8 +390,7 @@ function dedupeTrainListTickets(tickets: OrderTrainListTicket[]): OrderTrainList
 
   for (const ticket of tickets) {
     const status = ticket.TicketStatusName ?? "";
-    const isTerminal =
-      status.includes("退票") || status.includes("已取消") || status.includes("作废");
+    const isTerminal = isTerminalTrainListTicketStatus(status);
     if (!isTerminal) {
       active.push(ticket);
       continue;
@@ -405,15 +441,19 @@ function mapLegacyTrainTicketForList(ticket: LegacyRecord): OrderTrainListTicket
 function mapLegacyTrainOrder(order: LegacyRecord): OrderListItem | null {
   const tickets = asArray<LegacyRecord>(order.OrderTrainTickets);
   const visibleTickets = filterRawTrainTicketsForList(tickets);
-  const ticket = visibleTickets[0] ?? tickets[0];
-  const trips = ticket ? asArray<LegacyRecord>(ticket.OrderTrainTrips) : [];
+  if (visibleTickets.length === 0) {
+    return null;
+  }
+
+  const ticket = visibleTickets[0];
+  const trips = asArray<LegacyRecord>(ticket.OrderTrainTrips);
   const trip = trips[0];
   if (!trip) {
     return null;
   }
 
   const variables = parseVariablesObj(order);
-  const ticketVariables = ticket ? parseTicketVariablesObj(ticket) : undefined;
+  const ticketVariables = parseTicketVariablesObj(ticket);
   const listTickets = dedupeTrainListTickets(
     visibleTickets
       .map(mapLegacyTrainTicketForList)
@@ -447,8 +487,8 @@ function mapLegacyTrainOrder(order: LegacyRecord): OrderListItem | null {
     PassengerNames: passengerNames,
     TicketStatusName:
       firstListTicket?.TicketStatusName ??
-      (readString(ticket?.AppStatusName ?? ticket?.StatusName ?? ticket?.Status) || undefined),
-    TicketId: firstListTicket?.TicketId ?? (readString(ticket?.Id) || undefined),
+      (readString(ticket.AppStatusName ?? ticket.StatusName ?? ticket.Status) || undefined),
+    TicketId: firstListTicket?.TicketId ?? (readString(ticket.Id) || undefined),
     Tickets: listTickets,
     Actions:
       listTickets.length > 0
