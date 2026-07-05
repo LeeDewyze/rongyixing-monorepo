@@ -1,12 +1,15 @@
 import type { ReactNode } from "react";
 
+import { DangerWarningIcon } from "@/components/icons/DangerWarningIcon";
+
 type SettingsMenuIconVariant =
   | "security"
   | "notification"
   | "device"
   | "password"
   | "phone"
-  | "history";
+  | "history"
+  | "accountDelete";
 
 const ICON_CLASS = "size-[18px]";
 
@@ -105,6 +108,10 @@ function HistoryIcon() {
   );
 }
 
+function AccountDeleteIcon() {
+  return <DangerWarningIcon className={ICON_CLASS} />;
+}
+
 const VARIANT_STYLES: Record<SettingsMenuIconVariant, { shell: string; icon: ReactNode }> = {
   security: {
     shell: "bg-[#EEF4FF] text-brand-primary",
@@ -129,6 +136,10 @@ const VARIANT_STYLES: Record<SettingsMenuIconVariant, { shell: string; icon: Rea
   history: {
     shell: "bg-[#F5F3FF] text-[#7C3AED]",
     icon: <HistoryIcon />,
+  },
+  accountDelete: {
+    shell: "bg-[#FFF1F0] text-[#FF4D4F]",
+    icon: <AccountDeleteIcon />,
   },
 };
 

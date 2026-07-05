@@ -39,4 +39,9 @@ describe("resolveLegacyRoute", () => {
     expect(getNormalizedLegacyPath("/tmc-order-list_ryx")).toBe("tmc-order-list_ryx");
     expect(resolveLegacyRoute("tmc-order-list_ryx")?.pathname).toBe("/orders");
   });
+
+  it("maps account logout aliases to account deletion page", () => {
+    expect(resolveLegacyRoute("account-logout")?.pathname).toBe("/settings/account-deletion");
+    expect(resolveLegacyRoute("account-logout_ryx")?.pathname).toBe("/settings/account-deletion");
+  });
 });

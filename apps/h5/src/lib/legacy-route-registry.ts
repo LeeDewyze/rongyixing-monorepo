@@ -51,6 +51,9 @@ registerAliases(["tmc-select-passenger", "tmc-select-passenger_ryx"], {
 
 registerAliases(["account-setting", "account-setting_ryx"], { pathname: "/settings" });
 registerAliases(["account-security", "account-security_ryx"], { pathname: "/settings/security" });
+registerAliases(["account-logout", "account-logout_ryx"], {
+  pathname: "/settings/account-deletion",
+});
 registerAliases(["member-credential-list"], { pathname: "/credentials" });
 registerAliases(["open-url"], { pathname: "/open-url" });
 

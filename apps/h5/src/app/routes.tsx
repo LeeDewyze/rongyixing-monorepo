@@ -37,6 +37,7 @@ import { TravelApplyPage } from "@/pages/travel/TravelApplyPage";
 import { TravelApprovalPage } from "@/pages/travel/TravelApprovalPage";
 import { TravelTaskPage } from "@/pages/travel/TravelTaskPage";
 import { CredentialListPage } from "@/pages/credential/CredentialListPage";
+import { AccountDeletionPage } from "@/pages/settings/AccountDeletionPage";
 import { AccountSecurityPage } from "@/pages/settings/AccountSecurityPage";
 import { AccountCardFormPage } from "@/pages/account-card/AccountCardFormPage";
 import { AccountCardListPage } from "@/pages/account-card/AccountCardListPage";
@@ -134,6 +135,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <SettingsPage /> },
       { path: "security", element: <AccountSecurityPage /> },
+      { path: "account-deletion", element: <AccountDeletionPage /> },
       { path: "mobile", element: <BindMobilePage /> },
       { path: "password", element: <ChangePasswordPage /> },
       { path: "devices", element: <LoginDevicesPage /> },

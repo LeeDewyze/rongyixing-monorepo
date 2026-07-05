@@ -5,6 +5,10 @@ import { ProductType } from "@ryx/shared-types";
 import type { HotelCity, HotelType } from "@ryx/shared-types";
 
 import { HotelListFilterSheet } from "@/components/hotel/HotelListFilterSheet";
+import {
+  HotelListEmptyState,
+  resolveHotelListEmptyVariant,
+} from "@/components/hotel/HotelListEmptyState";
 import { HotelListHeader } from "@/components/hotel/HotelListHeader";
 import { HotelListItem } from "@/components/hotel/HotelListItem";
 import { HotelListToolbar, type HotelListToolbarId } from "@/components/hotel/HotelListToolbar";
@@ -158,8 +162,7 @@ export function HotelListPage() {
   const [searchParams] = useSearchParams();
   const [activeFilter, setActiveFilter] = useState<HotelListToolbarId | null>(null);
   const [filterOpen, setFilterOpen] = useState(false);
-  const [filterInitialSection, setFilterInitialSection] =
-    useState<HotelListFilterSection>("sort");
+  const [filterInitialSection, setFilterInitialSection] = useState<HotelListFilterSection>("sort");
   const [filterVisibleSections, setFilterVisibleSections] =
     useState<HotelListFilterSection[]>(BASIC_FILTER_SECTIONS);
   const [filterDraft, setFilterDraft] = useState<HotelListFilterState>(
@@ -266,60 +269,57 @@ export function HotelListPage() {
     };
   }, []);
 
-  const listParams = useMemo(
-    () => {
-      if (!listReady || !resolvedCity) return {};
-      const baseParams = {
-        channel: productChannel,
-        CityCode: resolvedCity.Code,
-        CityName: resolvedCity.Name,
-        CheckInDate: checkIn,
-        CheckOutDate: checkOut,
-        Keyword: keyword || undefined,
-        HotelType: hotelType,
-        TravelFormId: travelFormId || undefined,
-        Passengers: passengerIds || undefined,
-        StaffCityCode: staffCityCode,
-      };
-      if (keywordType === "hotel" && hotelId) {
-        return applyHotelListFilterParams(
-          {
-            ...baseParams,
-            HotelId: hotelId,
-          },
-          filterApplied,
-        );
-      }
-      if (keywordType === "address" && lat && lng) {
-        return applyHotelListFilterParams(
-          {
-            ...baseParams,
-            Lat: lat,
-            Lng: lng,
-          },
-          filterApplied,
-        );
-      }
-      return applyHotelListFilterParams(baseParams, filterApplied);
-    },
-    [
-      listReady,
-      resolvedCity,
-      checkIn,
-      checkOut,
-      keyword,
-      keywordType,
-      hotelId,
-      lat,
-      lng,
-      hotelType,
-      travelFormId,
-      passengerIds,
-      staffCityCode,
-      productChannel,
-      filterApplied,
-    ],
-  );
+  const listParams = useMemo(() => {
+    if (!listReady || !resolvedCity) return {};
+    const baseParams = {
+      channel: productChannel,
+      CityCode: resolvedCity.Code,
+      CityName: resolvedCity.Name,
+      CheckInDate: checkIn,
+      CheckOutDate: checkOut,
+      Keyword: keyword || undefined,
+      HotelType: hotelType,
+      TravelFormId: travelFormId || undefined,
+      Passengers: passengerIds || undefined,
+      StaffCityCode: staffCityCode,
+    };
+    if (keywordType === "hotel" && hotelId) {
+      return applyHotelListFilterParams(
+        {
+          ...baseParams,
+          HotelId: hotelId,
+        },
+        filterApplied,
+      );
+    }
+    if (keywordType === "address" && lat && lng) {
+      return applyHotelListFilterParams(
+        {
+          ...baseParams,
+          Lat: lat,
+          Lng: lng,
+        },
+        filterApplied,
+      );
+    }
+    return applyHotelListFilterParams(baseParams, filterApplied);
+  }, [
+    listReady,
+    resolvedCity,
+    checkIn,
+    checkOut,
+    keyword,
+    keywordType,
+    hotelId,
+    lat,
+    lng,
+    hotelType,
+    travelFormId,
+    passengerIds,
+    staffCityCode,
+    productChannel,
+    filterApplied,
+  ]);
 
   const {
     data,
@@ -367,7 +367,13 @@ export function HotelListPage() {
   function openFilterSheet(id: HotelListToolbarId) {
     setActiveFilter(id);
     setFilterInitialSection(
-      id === "location" ? "location" : id === "priceStar" ? "price" : id === "filter" ? "brand" : "sort",
+      id === "location"
+        ? "location"
+        : id === "priceStar"
+          ? "price"
+          : id === "filter"
+            ? "brand"
+            : "sort",
     );
     setFilterVisibleSections(
       id === "location"
@@ -486,22 +492,21 @@ export function HotelListPage() {
           {citiesLoading || isInitialLoading ? <HotelListSkeleton /> : null}
 
           {isError && !isFetching && !hasLoadedHotels ? (
-            <div className="rounded-lg bg-white px-4 py-8 text-center">
-              <p className="text-sm text-destructive">{formatApiError(error, "hotel")}</p>
-              <button
-                type="button"
-                className="mt-3 text-sm font-medium text-brand-primary"
-                onClick={() => void refresh()}
-              >
-                重试
-              </button>
-            </div>
+            <HotelListEmptyState
+              variant="error"
+              message={formatApiError(error, "hotel")}
+              onRetry={() => void refresh()}
+            />
           ) : null}
 
           {!citiesLoading && !isInitialLoading && !isError && hotels.length === 0 ? (
-            <div className="rounded-lg bg-white px-4 py-16 text-center">
-              <p className="text-sm text-[#716161]">暂无数据</p>
-            </div>
+            <HotelListEmptyState
+              variant={resolveHotelListEmptyVariant(
+                filterActive,
+                keyword,
+                keywordType === "address" && Boolean(lat && lng),
+              )}
+            />
           ) : null}
 
           {!citiesLoading && !isInitialLoading && hotels.length > 0 ? (
@@ -551,10 +556,7 @@ export function HotelListPage() {
         onConfirm={handleFilterConfirm}
       />
 
-      <HotelFreeStayDialog
-        open={freeStayDialogOpen}
-        onClose={() => setFreeStayDialogOpen(false)}
-      />
+      <HotelFreeStayDialog open={freeStayDialogOpen} onClose={() => setFreeStayDialogOpen(false)} />
 
       <HotelStayDatePickerSheet
         open={datePickerOpen}
