@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { WebSidebarNav } from "@/app/layouts/WebSidebarNav";
 import { getAppName } from "@/lib/env";
 
 interface WebShellProps {
@@ -8,19 +9,22 @@ interface WebShellProps {
 
 export function WebShell({ children }: WebShellProps) {
   return (
-    <div className="min-h-dvh bg-background text-foreground">
-      <div className="hidden border-b bg-muted/40 px-4 py-2 text-center text-sm text-muted-foreground max-[767px]:block">
+    <div className="flex h-dvh flex-col overflow-hidden bg-[#F5F6F9] text-foreground">
+      <div className="hidden shrink-0 border-b bg-muted/40 px-4 py-2 text-center text-sm text-muted-foreground max-[767px]:block">
         For the full mobile experience, visit the H5 app.
       </div>
-      <div className="mx-auto flex min-h-dvh max-w-[1600px]">
-        <aside className="hidden w-64 shrink-0 border-r bg-card p-4 pc:block">
-          <p className="text-lg font-semibold">{getAppName()}</p>
-          <p className="mt-2 text-sm text-muted-foreground">PC layout</p>
+      <div className="mx-auto flex min-h-0 w-full max-w-[1600px] flex-1 overflow-hidden">
+        <aside className="hidden h-full w-[88px] shrink-0 border-r bg-white px-2 pad:flex pad:flex-col pc:w-56 pc:px-4 pc:py-4">
+          <p className="mb-4 hidden text-lg font-semibold text-brand-title pc:block">
+            {getAppName()}
+          </p>
+          <div className="flex flex-1 flex-col justify-center pc:flex-none pc:justify-start">
+            <WebSidebarNav />
+          </div>
         </aside>
-        <aside className="hidden w-20 shrink-0 border-r bg-card p-2 pad:block pc:hidden">
-          <div className="mx-auto size-10 rounded-md bg-primary/10" />
-        </aside>
-        <main className="flex-1 p-4 pad:p-6 pc:p-8 pointer-coarse:p-5">{children}</main>
+        <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain p-4 pad:p-6 pc:p-8 pointer-coarse:p-5">
+          {children}
+        </main>
       </div>
     </div>
   );
