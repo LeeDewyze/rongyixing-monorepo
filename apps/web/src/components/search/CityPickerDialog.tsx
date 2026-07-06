@@ -195,7 +195,7 @@ export function CityPickerDialog<T>({
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
-      <DialogContent className="flex max-h-[min(85vh,720px)] w-full max-w-2xl flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
+      <DialogContent className="flex h-[min(85vh,720px)] min-h-0 w-full max-w-2xl flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
         <DialogHeader className="shrink-0 border-b px-4 py-3">
           <DialogTitle className="text-base font-medium text-brand-title">{title}</DialogTitle>
           <div className="mt-2">
@@ -210,7 +210,101 @@ export function CityPickerDialog<T>({
           </div>
         </DialogHeader>
 
-        <div className="relative min-h-0 flex-1 overflow-y-auto" onScroll={handleListScroll}>
+        <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+          <div className="min-h-0 flex-1 overflow-y-auto pr-6" onScroll={handleListScroll}>
+            {isSearching ? (
+              <div className="pb-4">
+                {visibleSearchResults.length === 0 ? (
+                  <p className="py-10 text-center text-sm text-[#999999]">没有符合条件的数据</p>
+                ) : (
+                  <ul>
+                    {visibleSearchResults.map((row) => (
+                      <li key={row.id}>
+                        <SearchResultRow
+                          row={row}
+                          showCode={showCodeInSearch}
+                          onSelect={handleSelect}
+                        />
+                      </li>
+                    ))}
+                    {visibleCount < searchResults.length ? (
+                      <li className="p-3 text-center text-xs text-[#999999]">加载更多…</li>
+                    ) : null}
+                  </ul>
+                )}
+              </div>
+            ) : (
+              <>
+                {showHistory && historyRows.length > 0 ? (
+                  <section className="pb-2 pt-3">
+                    <div className="flex items-center justify-between px-4 pb-2">
+                      <h3 className="text-xs font-medium text-[#666666]">{historyTitle}</h3>
+                      <button
+                        type="button"
+                        className="text-xs text-[#999999] hover:opacity-70"
+                        onClick={handleClearHistory}
+                      >
+                        清除
+                      </button>
+                    </div>
+                    <div className={`grid ${hotGridClass} gap-2 px-4`}>
+                      {historyRows.map((row) => (
+                        <CityChip
+                          key={row.id}
+                          label={row.name}
+                          onClick={() => handleSelect(row.item)}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                ) : null}
+
+                {hotItems.length > 0 ? (
+                  <section className="pb-2">
+                    <h3 className="px-4 pb-2 pt-2 text-xs font-medium text-[#666666]">
+                      {hotTitle}
+                    </h3>
+                    <div className={`grid ${hotGridClass} gap-2 px-4`}>
+                      {hotItems.map((row) => (
+                        <CityChip
+                          key={row.id}
+                          label={row.name}
+                          onClick={() => handleSelect(row.item)}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                ) : null}
+
+                <ul className="pb-8">
+                  {letters.map((letter) => (
+                    <li key={letter}>
+                      <div
+                        ref={(el) => {
+                          letterRefs.current[letter] = el;
+                        }}
+                        className="bg-[#e8eef8] px-4 py-1.5 text-sm font-semibold text-[#333333]"
+                      >
+                        {letter}
+                      </div>
+                      <ul>
+                        {groups[letter]?.map((row) => (
+                          <li key={row.id}>
+                            <PickerListRow
+                              row={row}
+                              showCode={showCodeInBrowse}
+                              onSelect={handleSelect}
+                            />
+                          </li>
+                        ))}
+                      </ul>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
+
           {!isSearching && letters.length > 0 ? (
             <div className="pointer-events-none absolute inset-y-0 right-1 z-10 flex w-5 flex-col items-center justify-center gap-0.5">
               {letters.map((letter) => (
@@ -225,96 +319,6 @@ export function CityPickerDialog<T>({
               ))}
             </div>
           ) : null}
-
-          {isSearching ? (
-            <div className="pb-4">
-              {visibleSearchResults.length === 0 ? (
-                <p className="py-10 text-center text-sm text-[#999999]">没有符合条件的数据</p>
-              ) : (
-                <ul>
-                  {visibleSearchResults.map((row) => (
-                    <li key={row.id}>
-                      <SearchResultRow
-                        row={row}
-                        showCode={showCodeInSearch}
-                        onSelect={handleSelect}
-                      />
-                    </li>
-                  ))}
-                  {visibleCount < searchResults.length ? (
-                    <li className="p-3 text-center text-xs text-[#999999]">加载更多…</li>
-                  ) : null}
-                </ul>
-              )}
-            </div>
-          ) : (
-            <>
-              {showHistory && historyRows.length > 0 ? (
-                <section className="pb-2 pt-3">
-                  <div className="flex items-center justify-between px-4 pb-2">
-                    <h3 className="text-xs font-medium text-[#666666]">{historyTitle}</h3>
-                    <button
-                      type="button"
-                      className="text-xs text-[#999999] hover:opacity-70"
-                      onClick={handleClearHistory}
-                    >
-                      清除
-                    </button>
-                  </div>
-                  <div className={`grid ${hotGridClass} gap-2 px-4`}>
-                    {historyRows.map((row) => (
-                      <CityChip
-                        key={row.id}
-                        label={row.name}
-                        onClick={() => handleSelect(row.item)}
-                      />
-                    ))}
-                  </div>
-                </section>
-              ) : null}
-
-              {hotItems.length > 0 ? (
-                <section className="pb-2">
-                  <h3 className="px-4 pb-2 pt-2 text-xs font-medium text-[#666666]">{hotTitle}</h3>
-                  <div className={`grid ${hotGridClass} gap-2 px-4`}>
-                    {hotItems.map((row) => (
-                      <CityChip
-                        key={row.id}
-                        label={row.name}
-                        onClick={() => handleSelect(row.item)}
-                      />
-                    ))}
-                  </div>
-                </section>
-              ) : null}
-
-              <ul className="pb-8">
-                {letters.map((letter) => (
-                  <li key={letter}>
-                    <div
-                      ref={(el) => {
-                        letterRefs.current[letter] = el;
-                      }}
-                      className="bg-[#e8eef8] px-4 py-1.5 text-sm font-semibold text-[#333333]"
-                    >
-                      {letter}
-                    </div>
-                    <ul>
-                      {groups[letter]?.map((row) => (
-                        <li key={row.id}>
-                          <PickerListRow
-                            row={row}
-                            showCode={showCodeInBrowse}
-                            onSelect={handleSelect}
-                          />
-                        </li>
-                      ))}
-                    </ul>
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
         </div>
       </DialogContent>
     </Dialog>
