@@ -5,6 +5,11 @@ import { RootLayout } from "@/app/layouts/RootLayout";
 import { PasswordLoginPage } from "@/pages/login/PasswordLoginPage";
 import { WebHomePage } from "@/pages/home/WebHomePage";
 import { PlaceholderPage } from "@/pages/PlaceholderPage";
+import { WebOrderListPage } from "@/pages/order/WebOrderListPage";
+import { WebOrderFlightDetailPage } from "@/pages/order/WebOrderFlightDetailPage";
+import { WebOrderTrainDetailPage } from "@/pages/order/WebOrderTrainDetailPage";
+import { WebOrderHotelDetailPage } from "@/pages/order/WebOrderHotelDetailPage";
+import { WebOrderPayPage } from "@/pages/order/WebOrderPayPage";
 import { isAuthenticated } from "@/lib/auth";
 
 function LoginEntryRedirect() {
@@ -36,7 +41,15 @@ export const router = createBrowserRouter([
           },
           {
             path: "orders",
-            element: <PlaceholderPage title="订单" description="订单列表页面将在后续阶段实现。" />,
+            children: [
+              { index: true, element: <WebOrderListPage /> },
+              { path: "flight/:orderId", element: <WebOrderFlightDetailPage /> },
+              { path: "train/:orderId", element: <WebOrderTrainDetailPage /> },
+              { path: "hotel/:orderId", element: <WebOrderHotelDetailPage /> },
+              { path: "flight/:orderId/pay", element: <WebOrderPayPage productType="Flight" /> },
+              { path: "train/:orderId/pay", element: <WebOrderPayPage productType="Train" /> },
+              { path: "hotel/:orderId/pay", element: <WebOrderPayPage productType="Hotel" /> },
+            ],
           },
           {
             path: "mine",

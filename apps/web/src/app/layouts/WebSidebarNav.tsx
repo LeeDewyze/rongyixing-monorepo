@@ -32,7 +32,7 @@ export function WebSidebarNav() {
           to={item.to}
           end={item.end}
           className={({ isActive }) =>
-            `flex min-h-11 flex-col items-center justify-center gap-2 rounded-lg px-2 py-1 text-xs transition-colors pointer-coarse:min-h-12 pc:flex-row pc:justify-start pc:gap-3 pc:px-4 pc:py-3 pc:text-sm ${
+            `flex min-h-11 flex-col items-center justify-center gap-2 rounded-lg px-2 py-2.5 text-xs transition-colors pointer-coarse:min-h-12 pc:flex-row pc:justify-start pc:gap-3 pc:px-4 pc:py-4 pc:text-sm ${
               isActive
                 ? "bg-brand-primary/10 font-medium text-brand-primary"
                 : "text-[#666666] hover:bg-muted/60"

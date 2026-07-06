@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
+import { WEB_MAIN_PADDING_CLASS } from "@/components/WebShell";
 import { CityPickerDialog } from "@/components/search/CityPickerDialog";
 import { WebBusinessPanel } from "@/components/home/WebBusinessPanel";
 import { WebFlightSearchPanel } from "@/components/home/WebFlightSearchPanel";
@@ -190,7 +191,7 @@ export function WebHomePage() {
   }
 
   return (
-    <div className="w-full">
+    <div className={`w-full ${WEB_MAIN_PADDING_CLASS}`}>
       <WebHomeTopCard
         travelMode={travelMode}
         activeProduct={activeProduct}

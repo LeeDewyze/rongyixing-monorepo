@@ -3,6 +3,9 @@ import type { ReactNode } from "react";
 import { WebSidebarNav } from "@/app/layouts/WebSidebarNav";
 import { getAppName } from "@/lib/env";
 
+/** Standard inset for pages inside WebShell main (not used on full-bleed order list). */
+export const WEB_MAIN_PADDING_CLASS = "p-4 pad:p-6 pc:p-8 pointer-coarse:p-5";
+
 interface WebShellProps {
   children: ReactNode;
 }
@@ -22,7 +25,7 @@ export function WebShell({ children }: WebShellProps) {
             <WebSidebarNav />
           </div>
         </aside>
-        <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain p-4 pad:p-6 pc:p-8 pointer-coarse:p-5">
+        <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain">
           {children}
         </main>
       </div>

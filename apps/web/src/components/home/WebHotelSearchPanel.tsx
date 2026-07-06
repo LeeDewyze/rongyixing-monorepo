@@ -25,8 +25,17 @@ interface WebHotelSearchPanelProps {
 
 const FIELD_LABEL_CLASS =
   "block text-xs font-normal leading-none text-[#666666] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
-const FIELD_VALUE_CLASS =
-  "mt-2 block truncate text-[18px] font-normal leading-none text-[#010101] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
+const FIELD_VALUE_TEXT =
+  "truncate text-[18px] font-normal leading-none text-[#010101] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
+const FIELD_VALUE_CLASS = `mt-2 block ${FIELD_VALUE_TEXT}`;
+
+function ChevronDownIcon() {
+  return (
+    <svg viewBox="0 0 12 12" className="size-4 shrink-0 text-[#666666]" aria-hidden>
+      <path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  );
+}
 
 export function WebHotelSearchPanel({
   city,
@@ -54,10 +63,14 @@ export function WebHotelSearchPanel({
           <button
             type="button"
             className="min-w-0 max-w-[38%] flex-1 shrink-0 text-left"
+            title={destinationLabel}
             onClick={onCitySelect}
           >
             <span className={FIELD_LABEL_CLASS}>目的地</span>
-            <span className={FIELD_VALUE_CLASS}>{destinationLabel}</span>
+            <span className="mt-2 flex min-w-0 items-center gap-0.5">
+              <span className={`${FIELD_VALUE_TEXT} min-w-0 flex-1`}>{destinationLabel}</span>
+              <ChevronDownIcon />
+            </span>
           </button>
 
           <div className="min-w-0 flex-1">
@@ -67,7 +80,7 @@ export function WebHotelSearchPanel({
               value={keyword}
               placeholder="位置/品牌/酒店"
               onChange={(e) => onKeywordChange(e.target.value)}
-              className={`${FIELD_VALUE_CLASS} w-full border-0 bg-transparent p-0 outline-none placeholder:font-normal placeholder:text-[#999999]`}
+              className={`mt-2 w-full border-0 bg-transparent p-0 outline-none ${FIELD_VALUE_TEXT} placeholder:font-normal placeholder:text-[#999999]`}
             />
           </div>
 

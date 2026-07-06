@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { TrainStation } from "@ryx/shared-types";
 
 import { WebCalendarIcon, WebSearchButton } from "@/components/home/WebSearchField";
-import { DatePickerDialog } from "@/components/search/DatePickerDialog";
+import { DatePickerDialog, TRAIN_CALENDAR_CONFIG } from "@/components/search/DatePickerDialog";
 import { HOME_ASSETS } from "@/config/home-assets";
 import { formatHotelDateShort, relativeDayLabel } from "@/lib/date-search";
 import { displayStationName } from "@/lib/train-search";
@@ -95,6 +95,7 @@ export function WebTrainSearchPanel({
         open={datePickerOpen}
         title="选择出发日期"
         value={date}
+        config={TRAIN_CALENDAR_CONFIG}
         onClose={() => setDatePickerOpen(false)}
         onConfirm={onDateChange}
       />
