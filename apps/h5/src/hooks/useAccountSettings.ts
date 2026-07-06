@@ -4,30 +4,17 @@ import { useNavigate } from "react-router-dom";
 import { getApi, resetApi } from "@/lib/api";
 import { clearSession } from "@/lib/session";
 
+export async function logoutMutationFn(): Promise<void> {
+  // Legacy account-setting uses LoginService.logout() → ApiLoginUrl-Home-Logout only.
+  await getApi().authProxy.logout();
+}
+
 export function useLogout() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async () => {
-      const api = getApi();
-      let accountFailed = false;
-      let authFailed = false;
-
-      try {
-        await api.account.logout();
-      } catch {
-        accountFailed = true;
-      }
-
-      try {
-        await api.authProxy.logout();
-      } catch {
-        authFailed = true;
-      }
-
-      return { accountFailed, authFailed };
-    },
+    mutationFn: logoutMutationFn,
     onSettled: () => {
       clearSession();
       queryClient.clear();
