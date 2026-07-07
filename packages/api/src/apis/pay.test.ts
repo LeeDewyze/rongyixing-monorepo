@@ -4,7 +4,7 @@ import { createPayApi } from "./pay.js";
 
 describe("createPayApi", () => {
   it("uses tourist order pay methods when channel is tourist", async () => {
-    const send = vi.fn().mockResolvedValue({});
+    const send = vi.fn().mockResolvedValueOnce({}).mockResolvedValueOnce({});
     const api = createPayApi({ send } as never);
 
     await api.getTotalPayAmount({ channel: "tourist", ProductType: "Flight", OrderId: "ord-1" });
@@ -17,6 +17,30 @@ describe("createPayApi", () => {
     expect(send).toHaveBeenNthCalledWith(2, {
       method: "TmcTouristOrderUrl-Order-GetOrderPays",
       data: { OrderId: "ord-1" },
+    });
+  });
+
+  it("normalizes total pay amount aliases", async () => {
+    const send = vi.fn().mockResolvedValue({ PayAmount: "¥375.50", OrderPayHoldTime: "8" });
+    const api = createPayApi({ send } as never);
+
+    await expect(api.getTotalPayAmount({ OrderId: "ord-amount" })).resolves.toEqual({
+      PayAmount: "¥375.50",
+      OrderPayHoldTime: "8",
+      TotalPayAmount: 375.5,
+      PayHoldTime: 8,
+    });
+  });
+
+  it("normalizes case-insensitive legacy pay amount aliases", async () => {
+    const send = vi.fn().mockResolvedValue({ totalpayamount: "610", payholdtime: "7" });
+    const api = createPayApi({ send } as never);
+
+    await expect(api.getTotalPayAmount({ OrderId: "ord-lowercase" })).resolves.toEqual({
+      totalpayamount: "610",
+      payholdtime: "7",
+      TotalPayAmount: 610,
+      PayHoldTime: 7,
     });
   });
 

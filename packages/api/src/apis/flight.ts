@@ -32,6 +32,7 @@ export interface FlightApi {
   getFlightDetail(params: FlightDetailParams): Promise<FlightDetailResult>;
   getFlightPolicy(params: FlightPolicyParams): Promise<FlightPolicyPassengerResult[]>;
   initializeBook(params: FlightInitBookParams): Promise<FlightInitBookResponse>;
+  validateBook(params: FlightBookParams): Promise<unknown>;
   submitBook(params: FlightBookParams): Promise<FlightBookResponse>;
 }
 
@@ -96,6 +97,16 @@ export function createFlightApi(proxy: ProxyClient): FlightApi {
         method: isTouristChannel(params)
           ? TOURIST_FLIGHT_BOOK_METHODS.INIT
           : BOOK_METHODS.FLIGHT_INITIALIZE,
+        data: stripChannel(stripFlightOrderBookDto(params)),
+        timeoutMs: 60_000,
+      });
+    },
+    validateBook(params) {
+      if (!isTouristChannel(params)) {
+        return Promise.resolve(null);
+      }
+      return proxy.send<unknown>({
+        method: TOURIST_FLIGHT_BOOK_METHODS.VALIDATE,
         data: stripChannel(stripFlightOrderBookDto(params)),
         timeoutMs: 60_000,
       });

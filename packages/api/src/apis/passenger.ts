@@ -77,12 +77,15 @@ function normalizeCredentialsList(
   res:
     | PassengerCredential[]
     | { Credentials?: PassengerCredential[] }
+    | Record<string, PassengerCredential[] | undefined>
     | null
     | undefined,
 ): PassengerCredential[] {
   if (!res) return [];
   if (Array.isArray(res)) return res;
-  return res.Credentials ?? [];
+  if (Array.isArray(res.Credentials)) return res.Credentials;
+  const firstList = Object.values(res).find(Array.isArray);
+  return firstList ?? [];
 }
 
 export function createPassengerApi(proxy: ProxyClient): PassengerApi {
@@ -103,13 +106,15 @@ export function createPassengerApi(proxy: ProxyClient): PassengerApi {
     },
     async getCredentials(input) {
       const accountId = typeof input === "string" ? input : input.accountId;
-      const method =
-        typeof input !== "string" && input.channel === "tourist"
-          ? BOOK_METHODS.HOME_CREDENTIALS_36
-          : TMC_METHODS.CREDENTIALS_LIST;
-      const res = await proxy.send<PassengerCredential[] | { Credentials?: PassengerCredential[] }>({
+      const isTourist = typeof input !== "string" && input.channel === "tourist";
+      const method = isTourist ? BOOK_METHODS.HOME_CREDENTIALS_36 : TMC_METHODS.CREDENTIALS_LIST;
+      const res = await proxy.send<
+        | PassengerCredential[]
+        | { Credentials?: PassengerCredential[] }
+        | Record<string, PassengerCredential[] | undefined>
+      >({
         method,
-        data: { accountId },
+        data: isTourist ? { AccountIds: accountId } : { accountId },
       });
       return normalizeCredentialsList(res);
     },

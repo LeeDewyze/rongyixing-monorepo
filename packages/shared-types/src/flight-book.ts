@@ -193,7 +193,8 @@ export interface FlightInitBookResponse {
   IllegalReasons?: string[];
   ExpenseTypes?: { Id: string; Name: string; Tag?: string }[];
   Staffs?: FlightInitStaff[];
-  Insurances?: Record<string, FlightInsuranceProduct[] | null>;
+  Insurances?: Record<string, FlightInsuranceProduct[] | null> | FlightInsuranceProduct[];
+  Linkman?: FlightBookLinkmanDto;
   Tmc?: Record<string, unknown>;
   OutNumbers?: Record<string, string[]>;
   TmcServices?: FlightTmcAgent[];

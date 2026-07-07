@@ -77,6 +77,7 @@ export function FlightListPage() {
     [searchParams],
   );
   const productChannel = resolveProductChannel(travelMode);
+  const isBusinessMode = productChannel === "tmc";
 
   const listParams: FlightSearchParams = {
     Date: searchParams.get("date") ?? "",
@@ -357,7 +358,7 @@ export function FlightListPage() {
   async function openCabins(flightId: string) {
     const segment = displayed.find((s) => s.Id === flightId);
     if (!segment) return;
-    if (selectedPassengers.length === 0) {
+    if (isBusinessMode && selectedPassengers.length === 0) {
       setPassengerAlertOpen(true);
       return;
     }
@@ -370,9 +371,9 @@ export function FlightListPage() {
         listParams,
         searchParams,
         passengers: selectedPassengers,
-        fetchPolicy: productChannel === "tmc",
+        fetchPolicy: isBusinessMode,
       });
-      if (productChannel === "tmc" && !policyResults.length && !isAgent) {
+      if (isBusinessMode && !policyResults.length && !isAgent) {
         window.alert(FLIGHT_NO_POLICY_SEATS_MESSAGE);
         return;
       }
@@ -550,7 +551,10 @@ export function FlightListPage() {
         onConfirm={handlePassengerAlertConfirm}
       />
 
-      <FlightPolicyLoadingOverlay open={openingCabinsId != null} />
+      <FlightPolicyLoadingOverlay
+        open={openingCabinsId != null}
+        message={isBusinessMode ? undefined : "正在获取舱位信息"}
+      />
     </div>
   );
 }

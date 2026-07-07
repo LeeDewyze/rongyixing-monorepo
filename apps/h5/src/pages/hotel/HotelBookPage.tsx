@@ -71,7 +71,7 @@ import { TAB_ID_TO_PARAM } from "@/lib/order-list-params";
 import { formatApiError } from "@/lib/formatApiError";
 import { FLIGHT_NOTIFY_LANGUAGE_OPTIONS } from "@/lib/flight-book-notify";
 import { replacePassengerCredential } from "@/lib/passenger-select-logic";
-import { clearPassengerSelection } from "@/lib/passenger-selection";
+import { buildPassengerSelectPath, clearPassengerSelection } from "@/lib/passenger-selection";
 import { scrollH5MainToTop } from "@/lib/scroll-h5-main";
 import {
   isBusinessTravelMode,
@@ -139,6 +139,7 @@ export function HotelBookPage() {
   );
   const isBusinessMode = isBusinessTravelMode(travelMode);
   const productChannel = resolveProductChannel(travelMode);
+  const bookReturnTo = `/hotel/${encodeURIComponent(hotelId)}/book?${searchParams.toString()}`;
 
   useLayoutEffect(() => {
     scrollH5MainToTop();
@@ -146,13 +147,13 @@ export function HotelBookPage() {
 
   useEffect(() => {
     if (leavingAfterSubmitRef.current) return;
-    if (!selection || passengers.length === 0) {
+    if (!selection || (isBusinessMode && passengers.length === 0)) {
       setRedirecting(true);
       const detailUrl = selection ? buildHotelBookDetailUrl(selection) : null;
       const target = detailUrl ?? (hotelId ? `/hotel/${encodeURIComponent(hotelId)}` : "/home");
       navigate(target, { replace: true });
     }
-  }, [hotelId, navigate, passengers.length, selection]);
+  }, [hotelId, isBusinessMode, navigate, passengers.length, selection]);
 
   const arrivalOptions = useMemo(
     () => (selection ? resolveHotelArrivalTimeOptions(selection, selection.checkIn) : []),
@@ -266,6 +267,10 @@ export function HotelBookPage() {
 
   async function handleSubmit() {
     if (!selection) return;
+    if (passengers.length === 0) {
+      setAlertMessage("请选择入住人");
+      return;
+    }
 
     const validationError = validateHotelBookForms({
       passengers,
@@ -423,6 +428,24 @@ export function HotelBookPage() {
 
         {selection.policyRules?.length ? (
           <HotelBookPolicyBanner rules={selection.policyRules} />
+        ) : null}
+
+        {!isBusinessMode && passengers.length === 0 ? (
+          <HotelBookRoomSection
+            roomIndex={1}
+            passenger={
+              <button
+                type="button"
+                className="flex h-12 w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-[#BBD6FF] bg-[#F7FBFF] text-[14px] font-medium text-brand-primary active:opacity-80"
+                onClick={() => navigate(buildPassengerSelectPath(ProductType.Hotel, bookReturnTo))}
+              >
+                <span className="text-[18px] leading-none" aria-hidden>
+                  +
+                </span>
+                选择入住人
+              </button>
+            }
+          />
         ) : null}
 
         {passengers.map((passenger, index) => {

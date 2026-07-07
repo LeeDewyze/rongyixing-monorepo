@@ -1,4 +1,8 @@
-import type { OrderPayChannel, PayCreateResponse } from "@ryx/shared-types";
+import type {
+  OrderPayChannel,
+  PayCreateResponse,
+  PayTotalAmountResponse,
+} from "@ryx/shared-types";
 
 /** Legacy PaylineType used by H5 personal pay: 2=支付宝, 3=微信, 7=工行。 */
 export function resolveLegacyPayType(payType: string): string {
@@ -43,6 +47,57 @@ export function normalizeOrderPayChannels(raw: unknown): OrderPayChannel[] {
   }
 
   return [];
+}
+
+function readAmount(value: unknown): number | undefined {
+  if (typeof value === "number") return Number.isFinite(value) ? value : undefined;
+  if (typeof value !== "string") return undefined;
+  const normalized = value.replace(/[¥,\s]/g, "");
+  const amount = Number(normalized);
+  return Number.isFinite(amount) ? amount : undefined;
+}
+
+function readAmountByAliases(data: Record<string, unknown>, aliases: string[]): number | undefined {
+  for (const alias of aliases) {
+    const exact = readAmount(data[alias]);
+    if (exact != null) return exact;
+  }
+
+  const normalizedAliases = new Set(aliases.map((alias) => alias.toLowerCase()));
+  for (const [key, value] of Object.entries(data)) {
+    if (!normalizedAliases.has(key.toLowerCase())) continue;
+    const amount = readAmount(value);
+    if (amount != null) return amount;
+  }
+  return undefined;
+}
+
+export function normalizePayTotalAmount(raw: unknown): PayTotalAmountResponse {
+  if (!raw || typeof raw !== "object") {
+    return { TotalPayAmount: 0 };
+  }
+  const data = raw as Record<string, unknown>;
+  const totalPayAmount = readAmountByAliases(data, [
+    "TotalPayAmount",
+    "PayAmount",
+    "TotalAmount",
+    "Amount",
+    "PayMoney",
+    "OrderAmount",
+    "NeedPayAmount",
+    "ActualAmount",
+    "PaymentAmount",
+  ]) ?? 0;
+  const payHoldTime = readAmountByAliases(data, [
+    "PayHoldTime",
+    "OrderPayHoldTime",
+    "HoldMinute",
+  ]);
+  return {
+    ...(data as unknown as Partial<PayTotalAmountResponse>),
+    TotalPayAmount: totalPayAmount,
+    PayHoldTime: payHoldTime,
+  };
 }
 
 export function buildLegacyPayCreatePayload(input: {

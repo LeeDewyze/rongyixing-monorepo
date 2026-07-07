@@ -75,8 +75,8 @@ describe("resolvePayFailureMessage", () => {
   });
 });
 
-describe("legacy H5 train pay", () => {
-  it("only redirects Alipay and WeChat for tourist train H5 pay", () => {
+describe("legacy H5 tourist pay", () => {
+  it("redirects Alipay and WeChat for tourist train/flight H5 pay", () => {
     expect(resolveLegacyH5PayType("Alipay")).toBe("2");
     expect(resolveLegacyH5PayType("Wechatpay")).toBe("3");
     expect(resolveLegacyH5PayType("Icbcpay")).toBeUndefined();
@@ -85,6 +85,13 @@ describe("legacy H5 train pay", () => {
         channel: "tourist",
         productType: "Train",
         payType: "Alipay",
+      }),
+    ).toBe(true);
+    expect(
+      shouldUseLegacyH5PayRedirect({
+        channel: "tourist",
+        productType: "Flight",
+        payType: "Wechatpay",
       }),
     ).toBe(true);
     expect(

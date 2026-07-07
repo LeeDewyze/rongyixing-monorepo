@@ -39,7 +39,7 @@ describe("stripFlightOrderBookDto", () => {
 
     expect(segment.detailResultForVerify).toBeUndefined();
     expect(segment.flightListResult).toBeNull();
-    expect(cabin.Variables).toBeNull();
+    expect(cabin.Variables).toEqual({ Baggage: "20KG" });
     expect(cabin.FlightFareBasics?.[0]).not.toHaveProperty("flightAndTaxFeesInfos");
     expect(policy.FlightDescription).toBeNull();
     expect(policy.Setting).toBeNull();

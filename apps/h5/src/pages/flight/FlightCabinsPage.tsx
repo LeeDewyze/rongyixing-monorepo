@@ -421,7 +421,7 @@ export function FlightCabinsPage() {
       showPolicyAlert("该舱位已售罄");
       return;
     }
-    if (selectedPassengers.length === 0) {
+    if (isBusinessMode && selectedPassengers.length === 0) {
       navigate(buildPassengerSelectPath(ProductType.Flight, cabinsReturnTo));
       return;
     }

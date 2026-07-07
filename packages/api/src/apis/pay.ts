@@ -17,6 +17,7 @@ import {
   buildLegacyPayProcessPayload,
   isLegacyIcbcPayType,
   normalizeOrderPayChannels,
+  normalizePayTotalAmount,
   normalizePayCreateResponse,
 } from "./pay-adapter.js";
 
@@ -48,8 +49,8 @@ function stripPayControl<T extends { channel?: string; ProductType?: string }>(
 
 export function createPayApi(proxy: ProxyClient): PayApi {
   return {
-    getTotalPayAmount(params) {
-      return proxy.send<PayTotalAmountResponse>({
+    async getTotalPayAmount(params) {
+      const result = await proxy.send<unknown>({
         method: orderPayMethods(params).GET_TOTAL_PAY_AMOUNT,
         data: {
           Channel: "App",
@@ -57,6 +58,7 @@ export function createPayApi(proxy: ProxyClient): PayApi {
           Key: params.Key ?? "",
         },
       });
+      return normalizePayTotalAmount(result);
     },
     async getOrderPays(params) {
       const result = await proxy.send<unknown>({

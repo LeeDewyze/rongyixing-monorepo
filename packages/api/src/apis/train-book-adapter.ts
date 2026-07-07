@@ -8,6 +8,16 @@ import type {
 } from "@ryx/shared-types";
 
 const BERTH_SUFFIX_PATTERN = /[上中下]$/;
+const TRAIN_ENTITY_DISPLAY_FIELD_DENYLIST = [
+  "FromCityName",
+  "ToCityName",
+  "FromCityCode",
+  "ToCityCode",
+  "FromAirportName",
+  "ToAirportName",
+  "FromAirport",
+  "ToAirport",
+] as const;
 
 /** Strip 上/中/下 suffix from berth seat names for Policy/Book payloads. */
 export function stripBerthSeatTypeName(name: string | undefined): string | undefined {
@@ -124,7 +134,7 @@ function stripTrainEntityForInit(
   if (!train) return train;
 
   const { InsuranceProducts: _insurance, Seats, ...rest } = train;
-  const next: TrainBookEntityDto = { ...rest };
+  const next = stripUnsupportedTrainEntityFields({ ...rest }) as TrainBookEntityDto;
   if (Seats?.length) {
     next.Seats = Seats.map((seat) =>
       stripSeatPolicyColorForInit(seat as Record<string, unknown>),
@@ -142,10 +152,20 @@ function stripTrainEntityForBook(
   const { OriginalSearchResultSeats, Seats, ...rest } = train;
   const wireSeats = OriginalSearchResultSeats?.length ? OriginalSearchResultSeats : Seats;
   return {
-    ...rest,
+    ...stripUnsupportedTrainEntityFields({ ...rest }),
     ...(wireSeats?.length ? { Seats: wireSeats } : {}),
     ...(OriginalSearchResultSeats?.length ? { OriginalSearchResultSeats } : {}),
   };
+}
+
+function stripUnsupportedTrainEntityFields(
+  train: Record<string, unknown>,
+): Record<string, unknown> {
+  const next = { ...train };
+  for (const field of TRAIN_ENTITY_DISPLAY_FIELD_DENYLIST) {
+    delete next[field];
+  }
+  return next;
 }
 
 function stripCredentialsForWire(
