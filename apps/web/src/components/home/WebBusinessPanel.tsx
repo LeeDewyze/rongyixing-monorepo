@@ -1,11 +1,28 @@
+import { useNavigate } from "react-router-dom";
+
 import { HOME_ASSETS } from "@/config/home-assets";
 import { WebSectionTitle } from "@/components/home/WebSectionTitle";
 
 const SHORTCUTS = [
-  { id: "apply", label: "出差申请", icon: HOME_ASSETS.business.apply },
-  { id: "my-approval", label: "我的申请", icon: HOME_ASSETS.business.myApproval },
-  { id: "pending", label: "待我审批", icon: HOME_ASSETS.business.pending },
-  { id: "done", label: "已审任务", icon: HOME_ASSETS.business.done },
+  { id: "apply", label: "出差申请", icon: HOME_ASSETS.business.apply, to: "/travel/apply" },
+  {
+    id: "my-approval",
+    label: "我的申请",
+    icon: HOME_ASSETS.business.myApproval,
+    to: "/travel/approval?tab=mine",
+  },
+  {
+    id: "pending",
+    label: "待我审批",
+    icon: HOME_ASSETS.business.pending,
+    to: "/travel/approval?tab=pending",
+  },
+  {
+    id: "done",
+    label: "已审任务",
+    icon: HOME_ASSETS.business.done,
+    to: "/travel/approval?tab=done",
+  },
 ] as const;
 
 const BUSINESS_PANEL_GRADIENT =
@@ -23,6 +40,8 @@ function MenuChevronRightIcon() {
 }
 
 export function WebBusinessPanel() {
+  const navigate = useNavigate();
+
   return (
     <section className="mt-5">
       <div
@@ -37,6 +56,7 @@ export function WebBusinessPanel() {
               type="button"
               className="flex min-h-14 items-center gap-3 rounded-xl bg-white px-4 py-3 text-left shadow-sm transition-colors hover:bg-[#FAFBFC] pointer-coarse:min-h-[60px]"
               aria-label={item.label}
+              onClick={() => navigate(item.to)}
             >
               <img src={item.icon} alt="" className="size-8 shrink-0 object-contain" aria-hidden />
               <span className="min-w-0 flex-1 text-[18px] font-medium leading-none text-[#666666] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]">

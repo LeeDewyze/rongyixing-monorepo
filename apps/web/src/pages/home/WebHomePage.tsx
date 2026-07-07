@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 
 import { WEB_MAIN_PADDING_CLASS } from "@/components/WebShell";
 import { CityPickerDialog } from "@/components/search/CityPickerDialog";
 import { WebBusinessPanel } from "@/components/home/WebBusinessPanel";
+import { WebHomeNoticeStrip } from "@/components/home/WebHomeNoticeStrip";
 import { WebFlightSearchPanel } from "@/components/home/WebFlightSearchPanel";
 import {
   WebHomeTopCard,
@@ -13,6 +15,8 @@ import {
 import { WebHotelSearchPanel } from "@/components/home/WebHotelSearchPanel";
 import { WebTrainSearchPanel } from "@/components/home/WebTrainSearchPanel";
 import { useHomeBanners } from "@/hooks/useHomeBanners";
+import { getApi } from "@/lib/api";
+import { getApiMode } from "@/lib/env";
 import { useFlightSearchForm } from "@/hooks/useFlightSearchForm";
 import { useHotelSearchForm } from "@/hooks/useHotelSearchForm";
 import { useTrainSearchForm } from "@/hooks/useTrainSearchForm";
@@ -45,6 +49,13 @@ export function WebHomePage() {
   const trainForm = useTrainSearchForm();
   const flightForm = useFlightSearchForm();
   const bannerQuery = useHomeBanners();
+  const { data: notices = [] } = useQuery({
+    queryKey: ["home", "notices"],
+    queryFn: () => getApi().notice.getList({ PageIndex: 0, PageSize: 20 }),
+    enabled: getApiMode() !== "mock",
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
 
   useEffect(() => {
     setActiveProduct(parseHomeProduct(searchParams));
@@ -211,6 +222,12 @@ export function WebHomePage() {
         }}
         onProductChange={handleProductChange}
         searchPanel={renderSearchPanel()}
+        notice={
+          <WebHomeNoticeStrip
+            notices={notices}
+            onClick={() => navigate("/notice?bulletinType=agentNotice")}
+          />
+        }
       />
 
       {travelMode === "business" ? <WebBusinessPanel /> : null}

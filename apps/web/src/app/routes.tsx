@@ -45,6 +45,10 @@ import { HotelSearchPage } from "@/pages/hotel/HotelSearchPage";
 import { PassengerSelectPage } from "@/pages/passenger/PassengerSelectPage";
 import { PassengerCredentialPage } from "@/pages/passenger/PassengerCredentialPage";
 import { CredentialListPage } from "@/pages/credential/CredentialListPage";
+import { OpenUrlPage } from "@/pages/open-url/OpenUrlPage";
+import { TravelApplyPage } from "@/pages/travel/TravelApplyPage";
+import { TravelApprovalPage } from "@/pages/travel/TravelApprovalPage";
+import { TravelTaskPage } from "@/pages/travel/TravelTaskPage";
 import { isAuthenticated } from "@/lib/auth";
 
 function LoginEntryRedirect() {
@@ -160,6 +164,16 @@ export const router = createBrowserRouter([
             ],
           },
           { path: "credentials", element: <CredentialListPage /> },
+          { path: "open-url", element: <OpenUrlPage /> },
+          {
+            path: "travel",
+            children: [
+              { path: "apply", element: <TravelApplyPage /> },
+              { path: "approval", element: <TravelApprovalPage /> },
+              { path: "workflow", element: <Navigate to="/travel/approval?tab=mine" replace /> },
+              { path: "task", element: <TravelTaskPage /> },
+            ],
+          },
           { path: "*", element: <NotFoundPage /> },
         ],
       },

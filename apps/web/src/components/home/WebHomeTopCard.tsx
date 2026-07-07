@@ -16,6 +16,7 @@ interface WebHomeTopCardProps {
   onTravelModeChange: (mode: HomeTravelMode) => void;
   onProductChange: (product: HomeProductId) => void;
   searchPanel: ReactNode;
+  notice?: ReactNode;
 }
 
 const PRODUCTS: { id: HomeProductId; label: string }[] = [
@@ -87,6 +88,7 @@ export function WebHomeTopCard({
   onTravelModeChange,
   onProductChange,
   searchPanel,
+  notice,
 }: WebHomeTopCardProps) {
   const slides = bannerSlides && bannerSlides.length > 0 ? bannerSlides : [];
   const showBannerPlaceholder = bannerLoading || slides.length === 0;
@@ -102,6 +104,8 @@ export function WebHomeTopCard({
       ) : (
         <WebBannerCarousel slides={slides} onBannerClick={onBannerClick} />
       )}
+
+      {notice ? <div className="relative mx-auto mt-3 max-w-[640px] px-1">{notice}</div> : null}
 
       <div className="relative mt-4 pad:mt-5 pc:mt-6">
         <div className="overflow-hidden rounded-2xl bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)]">

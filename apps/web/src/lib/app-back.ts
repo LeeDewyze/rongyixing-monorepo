@@ -5,12 +5,12 @@ import { useNavigate } from "react-router-dom";
 export function useHomeBack() {
   const navigate = useNavigate();
   return useCallback(() => {
-    navigate("/home");
+    navigate("/");
   }, [navigate]);
 }
 
 /** Browser back when possible; otherwise navigate to fallback. */
-export function useSmartBack(fallback = "/home") {
+export function useSmartBack(fallback = "/") {
   const navigate = useNavigate();
   return useCallback(() => {
     const idx = (window.history.state as { idx?: number } | null)?.idx;

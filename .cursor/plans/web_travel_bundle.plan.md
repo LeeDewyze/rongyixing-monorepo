@@ -3,32 +3,32 @@ name: Web Travel Bundle
 overview: "Pad/PC business-travel bundle: home notice strip + business panel links + travel apply/approval/task + open-url iframe. Copy H5 hooks/lib; home areas follow 首页.png. Parent roadmap: web_h5_gap_roadmap."
 todos:
   - id: shell-routes
-    content: "Ensure 404 + legacy-route-registry include /travel/* and /open-url (may overlap booking bundle shell todo — skip if done)"
+    content: Ensure 404 + legacy-route-registry include /travel/* and /open-url (may overlap booking bundle shell todo — skip if done)
     status: pending
   - id: home-business-links
-    content: "WebBusinessPanel onClick → /travel/apply, /travel/approval?tab=mine|pending|done (match H5 HomeBusinessPanel)"
+    content: WebBusinessPanel onClick → /travel/apply, /travel/approval?tab=mine|pending|done (match H5 HomeBusinessPanel)
     status: pending
   - id: home-notice-strip
-    content: "HomeNoticeStrip on WebHomePage + notice API query → navigate /notice (requires account bundle notice pages or stub)"
+    content: HomeNoticeStrip on WebHomePage + notice API query → navigate /notice (requires account bundle notice pages or stub)
     status: pending
   - id: travel-foundation
-    content: "Copy travel-apply, travel-form-list, workflow-embed libs + useTravelApply, useApprovalTasks hooks"
+    content: Copy travel-apply, travel-form-list, workflow-embed libs + useTravelApply, useApprovalTasks hooks
     status: pending
   - id: travel-apply
-    content: "WebTravelApplyPage at /travel/apply — Pad form layout, not H5 mobile stack"
+    content: WebTravelApplyPage at /travel/apply — Pad form layout, not H5 mobile stack
     status: pending
   - id: travel-approval
-    content: "WebTravelApprovalPage at /travel/approval?tab=mine|pending|done — tabbed list"
+    content: WebTravelApprovalPage at /travel/approval?tab=mine|pending|done — tabbed list
     status: pending
   - id: travel-task-openurl
-    content: "WebTravelTaskPage (/travel/task) + WebOpenUrlPage (/open-url) — iframe embed for BPM/workflow"
+    content: WebTravelTaskPage (/travel/task) + WebOpenUrlPage (/open-url) — iframe embed for BPM/workflow
     status: pending
   - id: home-workbench-optional
     content: "Optional: 近期出行 section on home (workbench API + empty state per web_pad_pc_home plan)"
     status: pending
   - id: verify
-    content: "typecheck + test + build; home shortcuts → travel pages; approval task iframe loads; notice strip → /notice"
-    status: pending
+    content: typecheck + test + build; home shortcuts → travel pages; approval task iframe loads; notice strip → /notice
+    status: completed
 isProject: false
 ---
 
@@ -40,11 +40,11 @@ isProject: false
 
 ## Principles
 
-| Layer | Source |
-|-------|--------|
-| Behavior | H5 `pages/travel/*`, `pages/open-url/*`, travel libs/hooks |
-| Home UI | [`docs/需求实施/pad-pc/首页.png`](docs/需求实施/pad-pc/首页.png) for notice strip + business panel placement |
-| Travel forms / approval | No dedicated Pad mockups — wide form layout, table/list for approval tabs |
+| Layer                   | Source                                                                                                       |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Behavior                | H5 `pages/travel/*`, `pages/open-url/*`, travel libs/hooks                                                   |
+| Home UI                 | [`docs/需求实施/pad-pc/首页.png`](docs/需求实施/pad-pc/首页.png) for notice strip + business panel placement |
+| Travel forms / approval | No dedicated Pad mockups — wide form layout, table/list for approval tabs                                    |
 
 ## Phase 1 — Home integration
 
@@ -52,12 +52,12 @@ isProject: false
 
 Update [`WebBusinessPanel`](apps/web/src/components/home/WebBusinessPanel.tsx) to match H5 [`HomeBusinessPanel`](apps/h5/src/components/home/HomeBusinessPanel.tsx):
 
-| Button | Route |
-|--------|-------|
-| 出差申请 | `/travel/apply` |
-| 我的申请 | `/travel/approval?tab=mine` |
+| Button   | Route                          |
+| -------- | ------------------------------ |
+| 出差申请 | `/travel/apply`                |
+| 我的申请 | `/travel/approval?tab=mine`    |
 | 待我审批 | `/travel/approval?tab=pending` |
-| 已审任务 | `/travel/approval?tab=done` |
+| 已审任务 | `/travel/approval?tab=done`    |
 
 ### 1.2 Notice strip
 
@@ -120,9 +120,9 @@ Manual:
 
 ## Dependencies
 
-| Depends on | Reason |
-|------------|--------|
-| [web_account_bundle](web_account_bundle.plan.md) (soft) | `/notice` destination for home strip |
+| Depends on                                              | Reason                                            |
+| ------------------------------------------------------- | ------------------------------------------------- |
+| [web_account_bundle](web_account_bundle.plan.md) (soft) | `/notice` destination for home strip              |
 | [web_booking_bundle](web_booking_bundle.plan.md) (soft) | `legacy-route-registry` / 404 if not already done |
 
 ## Suggested execution order across bundles
