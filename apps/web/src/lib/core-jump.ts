@@ -104,8 +104,23 @@ async function postCheckUrl(
   }
 }
 
+function buildOpenUrlSearch(url: string, props: CoreJumpQuery): string {
+  const params = new URLSearchParams();
+  const openUrl = url.includes("workflow.") ? buildWorkflowOpenUrl(url) : url;
+  params.set("url", openUrl);
+  if (props.title) params.set("title", String(props.title));
+  if (props.Name) params.set("name", String(props.Name));
+  if (props.isHideTitle != null) params.set("isHideTitle", String(props.isHideTitle));
+  for (const [key, value] of Object.entries(props)) {
+    if (value == null || typeof value === "object") continue;
+    if (["url", "title", "name", "isHideTitle"].includes(key)) continue;
+    params.set(key, String(value));
+  }
+  return params.toString();
+}
+
 async function handleHttpUrl(
-  _navigate: NavigateFunction,
+  navigate: NavigateFunction,
   url: string,
   props: CoreJumpQuery,
 ): Promise<boolean> {
@@ -122,8 +137,8 @@ async function handleHttpUrl(
     return true;
   }
 
-  // Pad/PC: external links open in a new tab (H5 uses in-app /open-url iframe).
-  window.open(openUrl, "_blank", "noopener,noreferrer");
+  // Pad/PC: keep external pages inside WebShell main column (same as H5 /open-url).
+  navigate(`/open-url?${buildOpenUrlSearch(url, props)}`);
   return true;
 }
 
