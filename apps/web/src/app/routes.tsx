@@ -4,8 +4,21 @@ import { RequireAuth } from "@/app/layouts/RequireAuth";
 import { RootLayout } from "@/app/layouts/RootLayout";
 import { PasswordLoginPage } from "@/pages/login/PasswordLoginPage";
 import { WebHomePage } from "@/pages/home/WebHomePage";
-import { PlaceholderPage } from "@/pages/PlaceholderPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
+import { WebProfilePage } from "@/pages/profile/WebProfilePage";
+import { ProfileCenterPage } from "@/pages/profile/ProfileCenterPage";
+import { SettingsPage } from "@/pages/settings/SettingsPage";
+import { AccountSecurityPage } from "@/pages/settings/AccountSecurityPage";
+import { AccountDeletionPage } from "@/pages/settings/AccountDeletionPage";
+import { BindMobilePage } from "@/pages/settings/BindMobilePage";
+import { ChangePasswordPage } from "@/pages/settings/ChangePasswordPage";
+import { LoginDevicesPage } from "@/pages/settings/LoginDevicesPage";
+import { MessageNotificationPage } from "@/pages/settings/MessageNotificationPage";
+import { ContactUsPage } from "@/pages/contact/ContactUsPage";
+import { NoticeListPage } from "@/pages/notice/NoticeListPage";
+import { NoticeDetailPage } from "@/pages/notice/NoticeDetailPage";
+import { AccountCardListPage } from "@/pages/account-card/AccountCardListPage";
+import { AccountCardFormPage } from "@/pages/account-card/AccountCardFormPage";
 import { WebOrderListPage } from "@/pages/order/WebOrderListPage";
 import { WebOrderFlightDetailPage } from "@/pages/order/WebOrderFlightDetailPage";
 import { WebOrderTrainDetailPage } from "@/pages/order/WebOrderTrainDetailPage";
@@ -70,7 +83,40 @@ export const router = createBrowserRouter([
               { path: "hotel/:orderId/pay", element: <WebOrderPayPage productType="Hotel" /> },
             ],
           },
-          { path: "mine", element: <PlaceholderPage title="我的" description="个人中心页面将在后续阶段实现。" /> },
+          { path: "mine", element: <WebProfilePage /> },
+          {
+            path: "profile",
+            children: [{ path: "center", element: <ProfileCenterPage /> }],
+          },
+          {
+            path: "settings",
+            children: [
+              { index: true, element: <SettingsPage /> },
+              { path: "security", element: <AccountSecurityPage /> },
+              { path: "account-deletion", element: <AccountDeletionPage /> },
+              { path: "mobile", element: <BindMobilePage /> },
+              { path: "password", element: <ChangePasswordPage /> },
+              { path: "devices", element: <LoginDevicesPage /> },
+              { path: "notifications", element: <MessageNotificationPage /> },
+            ],
+          },
+          { path: "me/settings", element: <Navigate to="/settings" replace /> },
+          { path: "contact", element: <ContactUsPage /> },
+          {
+            path: "notice",
+            children: [
+              { index: true, element: <NoticeListPage /> },
+              { path: ":noticeId", element: <NoticeDetailPage /> },
+            ],
+          },
+          {
+            path: "bank-cards",
+            children: [
+              { index: true, element: <AccountCardListPage /> },
+              { path: "new", element: <AccountCardFormPage /> },
+              { path: ":cardId", element: <AccountCardFormPage /> },
+            ],
+          },
           { path: "flight/select-city", element: <FlightSelectCityPage /> },
           {
             path: "flight",

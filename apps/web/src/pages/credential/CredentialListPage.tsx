@@ -76,7 +76,7 @@ export function CredentialListPage() {
   const [pageError, setPageError] = useState("");
 
   const removeStaff = useRemoveStaffCredential();
-  const returnTo = searchParams.get("returnTo") || "/home/mine";
+  const returnTo = searchParams.get("returnTo") || "/mine";
 
   const credentials = useMemo(
     () =>
