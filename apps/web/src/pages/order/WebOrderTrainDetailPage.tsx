@@ -3,6 +3,7 @@ import type { TrainPassengerInfo, TrainScheduleParams } from "@ryx/shared-types"
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { HotelOrderApprovalSection } from "@/components/order/hotel/HotelOrderApprovalSection";
+import { HotelOrderDetailHeader } from "@/components/order/hotel/HotelOrderDetailHeader";
 import { FlightOrderContactCard } from "@/components/order/flight/FlightOrderContactCard";
 import { TrainOrderBillSheet } from "@/components/order/train/TrainOrderBillSheet";
 import { TrainOrderCancelDialog } from "@/components/order/train/TrainOrderCancelDialog";
@@ -17,6 +18,7 @@ import { TrainOrderRefundDialog } from "@/components/order/train/TrainOrderRefun
 import { TrainOrderTravelerCard } from "@/components/order/train/TrainOrderTravelerCard";
 import { WebOrderToast } from "@/components/order/WebOrderDetailShell";
 import { TrainScheduleSheet } from "@/components/train/TrainScheduleSheet";
+import { usePageHeader } from "@/components/layout";
 import {
   useCancelTrainOrder,
   useAbolishTrainTicket,
@@ -40,25 +42,12 @@ import {
 import { buildTrainScheduleParamsFromTrip } from "@/lib/train-schedule";
 import { parseOrderListScope } from "@/lib/order-list-params";
 import { buildOrderPayPath } from "@/lib/order-page-utils";
+import { ORDER_DETAIL_PAGE_BACKGROUND } from "@/lib/order-detail-chrome";
 import { getOrderListPath } from "@/lib/order-routes";
+import { WEB_PAGE_BODY, WEB_PAGE_ROOT } from "@/lib/web-page-layout";
 
 interface OrderDetailLocationState {
   action?: "cancel" | "refund";
-}
-
-function OrderDetailBackButton({ onBack }: { onBack: () => void }) {
-  return (
-    <button
-      type="button"
-      className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white text-brand-title shadow-sm hover:bg-[#FAFBFC]"
-      aria-label="返回"
-      onClick={onBack}
-    >
-      <svg viewBox="0 0 20 20" className="size-5" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M12 5l-5 5 5 5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </button>
-  );
 }
 
 export function WebOrderTrainDetailPage() {
@@ -124,6 +113,8 @@ export function WebOrderTrainDetailPage() {
     }
     leaveDetail();
   }, [billOpen, explainOpen, leaveDetail]);
+
+  usePageHeader({ visible: false });
 
   useEffect(() => {
     setSelectedTicketIndex(0);
@@ -264,12 +255,10 @@ export function WebOrderTrainDetailPage() {
     refundMutation.isPending;
 
   return (
-    <div className="min-h-full bg-[#F5F6F9]">
-      <div className="mx-auto max-w-[960px] px-4 py-4">
-        <div className="mb-4 flex items-center gap-3">
-          <OrderDetailBackButton onBack={handleBack} />
-        </div>
+    <div className={WEB_PAGE_ROOT} style={ORDER_DETAIL_PAGE_BACKGROUND}>
+      <HotelOrderDetailHeader onBack={handleBack} variant="form" embedded />
 
+      <div className={WEB_PAGE_BODY}>
         {showHoldBanner && payHoldSecondsRemaining != null ? (
           <TrainOrderHoldBanner
             payHoldSecondsRemaining={payHoldSecondsRemaining}
@@ -278,60 +267,62 @@ export function WebOrderTrainDetailPage() {
         ) : null}
 
         {isLoading ? (
-          <p className="text-center text-sm text-[#999999]">加载中…</p>
+          <p className="px-4 pt-3 text-center text-sm text-[#999999]">加载中…</p>
         ) : isError || !detail ? (
-          <p className="text-center text-sm text-[#FF4D4F]">
+          <p className="px-4 pt-3 text-center text-sm text-[#FF4D4F]">
             {formatApiError(error ?? new Error("订单不存在"))}
           </p>
         ) : (
-          <div className={`space-y-3${showFooter ? " pb-24" : ""}`}>
-            <TrainOrderInfoCard
-              detail={detail}
-              transactionId={selectedTicket?.Id}
-              outNumbers={selectedTicket?.Traveler?.OutNumbers}
-              onShowBill={() => setBillOpen(true)}
-            />
+          <div className="mx-auto max-w-[960px] space-y-3 px-4 pb-6 pt-3">
+              <TrainOrderInfoCard
+                detail={detail}
+                transactionId={selectedTicket?.Id}
+                outNumbers={selectedTicket?.Traveler?.OutNumbers}
+                onShowBill={() => setBillOpen(true)}
+              />
 
-            <TrainOrderPassengerTabs
-              tickets={detail.Tickets}
-              selectedIndex={selectedTicketIndex}
-              onSelect={setSelectedTicketIndex}
-            />
+              <TrainOrderPassengerTabs
+                tickets={detail.Tickets}
+                selectedIndex={selectedTicketIndex}
+                onSelect={setSelectedTicketIndex}
+              />
 
-            {selectedTicket ? (
-              <>
-                <TrainOrderJourneyCard
-                  ticket={selectedTicket}
-                  onShowExplain={() => setExplainOpen(true)}
-                  onShowSchedule={() => {
-                    const params = buildTrainScheduleParamsFromTrip(selectedTicket.Trips[0]);
-                    if (params) setScheduleParams(params);
-                  }}
-                />
-                <TrainOrderTravelerCard ticket={selectedTicket} />
-              </>
-            ) : null}
+              {selectedTicket ? (
+                <>
+                  <TrainOrderJourneyCard
+                    ticket={selectedTicket}
+                    onShowExplain={() => setExplainOpen(true)}
+                    onShowSchedule={() => {
+                      const params = buildTrainScheduleParamsFromTrip(selectedTicket.Trips[0]);
+                      if (params) setScheduleParams(params);
+                    }}
+                  />
+                  <TrainOrderTravelerCard ticket={selectedTicket} />
+                </>
+              ) : null}
 
-            <FlightOrderContactCard contact={detail.Contact} />
+              <FlightOrderContactCard contact={detail.Contact} />
 
-            <HotelOrderApprovalSection histories={detail.Histories ?? []} />
+              <HotelOrderApprovalSection histories={detail.Histories ?? []} />
           </div>
         )}
       </div>
 
+      {detail && showFooter ? (
+        <TrainOrderDetailFooter
+          actions={footerActions}
+          payHoldSecondsRemaining={payHoldSecondsRemaining}
+          pending={pending}
+          onCancel={() => setCancelOpen(true)}
+          onPay={handlePay}
+          onIssue={() => setIssueOpen(true)}
+          onRefund={() => void openRefundDialog()}
+          onExchange={() => void runExchange()}
+        />
+      ) : null}
+
       {detail ? (
         <>
-          <TrainOrderDetailFooter
-            actions={footerActions}
-            payHoldSecondsRemaining={payHoldSecondsRemaining}
-            pending={pending}
-            onCancel={() => setCancelOpen(true)}
-            onPay={handlePay}
-            onIssue={() => setIssueOpen(true)}
-            onRefund={() => void openRefundDialog()}
-            onExchange={() => void runExchange()}
-          />
-
           <TrainOrderBillSheet
             open={billOpen}
             ticket={selectedTicket}

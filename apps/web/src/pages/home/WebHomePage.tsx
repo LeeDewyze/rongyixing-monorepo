@@ -191,7 +191,7 @@ export function WebHomePage() {
   }
 
   return (
-    <div className={`w-full ${WEB_MAIN_PADDING_CLASS}`}>
+    <div className={`h-full w-full overflow-y-auto overscroll-y-contain ${WEB_MAIN_PADDING_CLASS}`}>
       <WebHomeTopCard
         travelMode={travelMode}
         activeProduct={activeProduct}

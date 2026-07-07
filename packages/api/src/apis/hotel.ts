@@ -195,7 +195,7 @@ function normalizeHotelKeywordSearchResponse(res: unknown): HotelKeywordSearchRe
   const items = Array.isArray(res)
     ? res
     : res && typeof res === "object" && Array.isArray((res as { Data?: unknown }).Data)
-      ? ((res as { Data: unknown[] }).Data)
+      ? (res as { Data: unknown[] }).Data
       : [];
 
   return (items as HotelKeywordSearchItem[])
@@ -990,6 +990,33 @@ export function buildHotelDetailRequest(params: HotelDetailParams): Record<strin
   return data;
 }
 
+function resolveHotelContactFields(
+  hotel: LegacyHotelDetailEntity,
+): Pick<HotelDetailResponse, "Address" | "Star" | "Phone" | "Lat" | "Lng"> {
+  const vars = hotel.VariablesObj ?? parseVariablesObject(hotel.Variables);
+  const latRaw = hotel.Lat ?? vars?.Lat ?? vars?.lat;
+  const lngRaw = hotel.Lng ?? vars?.Lng ?? vars?.lng;
+  const lat = latRaw != null ? Number(latRaw) : undefined;
+  const lng = lngRaw != null ? Number(lngRaw) : undefined;
+  const categoryRaw =
+    hotel.Category ??
+    (typeof vars?.Category === "string" || typeof vars?.Category === "number"
+      ? vars.Category
+      : undefined);
+  const phone =
+    hotel.Phone ??
+    (typeof vars?.Phone === "string" ? vars.Phone : undefined) ??
+    (typeof vars?.Tel === "string" ? vars.Tel : undefined);
+
+  return {
+    Address: hotel.Address,
+    Star: parseHotelStar(categoryRaw) ?? parseHotelStar(hotel.Grade),
+    Phone: phone,
+    Lat: Number.isFinite(lat) ? lat : undefined,
+    Lng: Number.isFinite(lng) ? lng : undefined,
+  };
+}
+
 export function normalizeHotelDetailResponse(
   res: unknown,
   params?: HotelDetailParams,
@@ -1009,9 +1036,16 @@ export function normalizeHotelDetailResponse(
     const shaped = payload as unknown as HotelDetailResponse;
     const nestedHotel = payload.Hotel as LegacyHotelDetailEntity | undefined;
     if (!nestedHotel) return shaped;
+    const contact = resolveHotelContactFields(nestedHotel);
     const info = resolveHotelInfoFields(nestedHotel);
     return {
       ...shaped,
+      Address: shaped.Address ?? contact.Address,
+      Star: shaped.Star ?? contact.Star,
+      Phone: shaped.Phone ?? contact.Phone,
+      Lat: shaped.Lat ?? contact.Lat,
+      Lng: shaped.Lng ?? contact.Lng,
+      ImageUrls: shaped.ImageUrls ?? extractHotelImageUrls(nestedHotel),
       CheckInOutTime: shaped.CheckInOutTime ?? info.CheckInOutTime,
       BookingNotice: shaped.BookingNotice ?? info.BookingNotice,
       OpeningDate: shaped.OpeningDate ?? info.OpeningDate,
@@ -1021,8 +1055,7 @@ export function normalizeHotelDetailResponse(
   }
 
   const hotel = (payload.Hotel ?? payload) as LegacyHotelDetailEntity;
-  const lat = hotel.Lat != null ? Number(hotel.Lat) : undefined;
-  const lng = hotel.Lng != null ? Number(hotel.Lng) : undefined;
+  const contact = resolveHotelContactFields(hotel);
   const roomDefaultImg = resolveRoomDefaultImg(payload);
   const roomImageIndex = buildRoomImageIndex(collectHotelGalleryImages(hotel));
 
@@ -1031,11 +1064,11 @@ export function normalizeHotelDetailResponse(
   return {
     HotelId: hotel.Id ?? params?.HotelId ?? "",
     HotelName: hotel.Name ?? "",
-    Address: hotel.Address,
-    Star: parseHotelStar(hotel.Category),
-    Phone: hotel.Phone,
-    Lat: Number.isFinite(lat) ? lat : undefined,
-    Lng: Number.isFinite(lng) ? lng : undefined,
+    Address: contact.Address,
+    Star: contact.Star,
+    Phone: contact.Phone,
+    Lat: contact.Lat,
+    Lng: contact.Lng,
     ImageUrls: extractHotelImageUrls(hotel),
     Rooms: (hotel.Rooms ?? []).map((room, index) =>
       mapLegacyRoom(room, index, roomImageIndex, roomDefaultImg),
@@ -1139,9 +1172,7 @@ function normalizeHotelCities(
     .filter((city) => Boolean(city.Code && city.Name));
 }
 
-function normalizeHotelCityByMap(
-  res: unknown,
-): HotelCity | null {
+function normalizeHotelCityByMap(res: unknown): HotelCity | null {
   if (!res || typeof res !== "object") return null;
   const payload = res as Record<string, unknown>;
   const data = payload.Data ?? payload.data ?? payload.City ?? payload.city;
@@ -1245,7 +1276,9 @@ export function createHotelApi(proxy: ProxyClient): HotelApi {
     },
     async getList(params) {
       const res = await proxy.send<unknown>({
-        method: isTouristChannel(params) ? TOURIST_HOTEL_FLOW_METHODS.LIST : HOTEL_FLOW_METHODS.LIST,
+        method: isTouristChannel(params)
+          ? TOURIST_HOTEL_FLOW_METHODS.LIST
+          : HOTEL_FLOW_METHODS.LIST,
         data: buildHotelListRequest(params),
       });
       return normalizeHotelListResponse(res);

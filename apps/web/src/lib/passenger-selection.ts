@@ -1,8 +1,8 @@
 import type { PassengerBookInfo, PassengerCredential, ProductType } from "@ryx/shared-types";
-import { credentialKey, ProductType as PT } from "@ryx/shared-types";
+import { ProductType as PT } from "@ryx/shared-types";
 
 import { getApiMode } from "@/lib/env";
-import { enrichPassengerBookInfo } from "@/lib/passenger-select-logic";
+import { enrichPassengerBookInfo, credentialsMatch } from "@/lib/passenger-select-logic";
 
 function isMockPassengerEntry(item: PassengerBookInfo): boolean {
   const id = String(item.id ?? "");
@@ -124,12 +124,8 @@ export function removeCredentialFromPassengerSelections(
   forType: ProductType | undefined,
   credential: PassengerCredential,
 ): void {
-  const key = credentialKey(credential);
-
   function remove(items: PassengerBookInfo[]): PassengerBookInfo[] {
-    return items.filter(
-      (item) => item.credential.Id !== credential.Id && credentialKey(item.credential) !== key,
-    );
+    return items.filter((item) => !credentialsMatch(item.credential, credential));
   }
 
   for (const productType of selectionTargetProducts(forType)) {

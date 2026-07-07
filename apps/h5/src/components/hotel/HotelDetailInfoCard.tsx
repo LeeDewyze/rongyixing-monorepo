@@ -78,13 +78,19 @@ export function HotelDetailInfoCard({
       className={`-mt-8 relative z-[1] mx-3 overflow-hidden rounded-xl bg-white shadow-[0_2px_12px_rgba(0,0,0,0.06)] ${HOTEL_DETAIL_FONT}`}
     >
       <div className="px-4 pb-4 pt-3.5">
-        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-          <h1 className="text-[17px] font-semibold leading-snug text-[#333333]">{name}</h1>
-          {stars > 0 ? <StarRating count={stars} /> : null}
+        <div className="flex items-start justify-between gap-2">
+          <h1 className="min-w-0 flex-1 text-[17px] font-semibold leading-snug text-[#333333]">
+            {name}
+          </h1>
+          {stars > 0 ? (
+            <div className="shrink-0 pt-0.5">
+              <StarRating count={stars} />
+            </div>
+          ) : null}
         </div>
 
         {address ? (
-          <div className="mt-2.5 flex items-center gap-2">
+          <div className="mt-2.5 flex items-start gap-2">
             <PinIcon />
             <p className="min-w-0 flex-1 text-[13px] leading-[1.55] text-[#666666]">{address}</p>
           </div>

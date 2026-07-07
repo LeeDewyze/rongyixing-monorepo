@@ -12,6 +12,8 @@ export const ORDER_DETAIL_HEADER_FALLBACK_HEIGHT = 48;
 interface HotelOrderDetailHeaderProps {
   onBack: () => void;
   variant?: "legacy" | "form";
+  /** Sticky header inside WebShell main column (not viewport-fixed). */
+  embedded?: boolean;
 }
 
 function BackIcon() {
@@ -30,14 +32,18 @@ function BackIcon() {
 }
 
 export const HotelOrderDetailHeader = forwardRef<HTMLDivElement, HotelOrderDetailHeaderProps>(
-  function HotelOrderDetailHeader({ onBack, variant = "legacy" }, ref) {
+  function HotelOrderDetailHeader({ onBack, variant = "legacy", embedded = false }, ref) {
     const isFormVariant = variant === "form";
 
     return (
       <div
         ref={ref}
-        className={`fixed inset-x-0 top-0 z-30 mx-auto w-full max-w-lg overflow-hidden ${
-          isFormVariant ? "" : "shadow-[0_2px_12px_rgba(142,200,255,0.35)]"
+        className={`${
+          embedded
+            ? "sticky top-0 z-50 shrink-0 w-full overflow-hidden"
+            : `fixed inset-x-0 top-0 z-30 mx-auto w-full max-w-lg overflow-hidden ${
+                isFormVariant ? "" : "shadow-[0_2px_12px_rgba(142,200,255,0.35)]"
+              }`
         } ${HOTEL_DETAIL_FONT}`}
         style={{
           background: isFormVariant ? "var(--brand-form-header-gradient)" : HOTEL_HEADER_GRADIENT,

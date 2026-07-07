@@ -25,9 +25,7 @@ export function WebShell({ children }: WebShellProps) {
             <WebSidebarNav />
           </div>
         </aside>
-        <main className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain">
-          {children}
-        </main>
+        <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">{children}</main>
       </div>
     </div>
   );

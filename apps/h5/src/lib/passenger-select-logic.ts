@@ -57,6 +57,23 @@ export function enrichPassengerBookInfo(info: PassengerBookInfo): PassengerBookI
   return { ...info, credential };
 }
 
+/** Match credentials across list rows (HideNumber) and persisted selection (full Number). */
+export function credentialsMatch(a: PassengerCredential, b: PassengerCredential): boolean {
+  if (a.Id && b.Id && a.Id === b.Id) return true;
+
+  if (credentialTypeValue(a) !== credentialTypeValue(b)) return false;
+
+  const keyA = credentialKey(a);
+  const keyB = credentialKey(b);
+  if (keyA && keyA === keyB && !keyA.startsWith(":")) return true;
+
+  const hideA = a.HideNumber ?? a.HideCredentialsNumber ?? "";
+  const hideB = b.HideNumber ?? b.HideCredentialsNumber ?? "";
+  if (hideA && hideB && hideA === hideB) return true;
+
+  return false;
+}
+
 export function createBookInfo(
   passenger: StaffPassenger | MemberPassenger,
   credential: PassengerCredential,
@@ -89,9 +106,7 @@ export function replacePassengerCredential(
   return items.map((item) => {
     const itemAccountId = resolvePassengerAccountId(item.passenger);
     const samePerson =
-      targetAccountId && itemAccountId
-        ? itemAccountId === targetAccountId
-        : item.id === target.id;
+      targetAccountId && itemAccountId ? itemAccountId === targetAccountId : item.id === target.id;
     return samePerson ? createBookInfo(item.passenger, credential, item.isNotWhitelist) : item;
   });
 }
@@ -102,11 +117,9 @@ export function toggleSelection(
   checked: boolean,
   forType: ProductType,
 ): { items: PassengerBookInfo[]; error?: string } {
-  const key = credentialKey(info.credential);
-
   if (!checked) {
     return {
-      items: current.filter((i) => credentialKey(i.credential) !== key),
+      items: current.filter((i) => !credentialsMatch(i.credential, info.credential)),
     };
   }
 
@@ -123,12 +136,13 @@ export function toggleSelection(
     const accountId = info.credential.AccountId;
     if (!accountId) return true;
     const existingAccount =
-      i.credential.AccountId ??
-      ("AccountId" in i.passenger ? i.passenger.AccountId : undefined);
+      i.credential.AccountId ?? ("AccountId" in i.passenger ? i.passenger.AccountId : undefined);
     return existingAccount !== accountId;
   });
 
-  const deduped = withoutSameAccount.filter((i) => credentialKey(i.credential) !== key);
+  const deduped = withoutSameAccount.filter(
+    (i) => !credentialsMatch(i.credential, info.credential),
+  );
 
   if (deduped.length >= max) {
     return { items: current, error: `最多选择${max}位出行人` };
@@ -158,8 +172,7 @@ export function isSelected(
   selected: PassengerBookInfo[],
   credential: PassengerCredential,
 ): boolean {
-  const key = credentialKey(credential);
-  return selected.some((i) => credentialKey(i.credential) === key);
+  return selected.some((i) => credentialsMatch(i.credential, credential));
 }
 
 /** Drop selection entries for a deleted external passenger or staff credential. */
@@ -168,8 +181,7 @@ export function removeDeletedFromSelection(
   target: { passengerId?: string; credential?: PassengerCredential },
 ): PassengerBookInfo[] {
   if (target.credential) {
-    const key = credentialKey(target.credential);
-    return current.filter((i) => credentialKey(i.credential) !== key);
+    return current.filter((i) => !credentialsMatch(i.credential, target.credential!));
   }
   if (target.passengerId) {
     return current.filter((i) => {

@@ -523,6 +523,29 @@ describe("buildHotelDetailRequest", () => {
 });
 
 describe("normalizeHotelDetailResponse", () => {
+  it("merges contact fields from nested Hotel on pre-shaped detail payload", () => {
+    const result = normalizeHotelDetailResponse({
+      HotelId: "10627",
+      HotelName: "北京朝阳望京科技园亚朵酒店",
+      Address: "宏昌路望京西园1区119号楼北侧",
+      Rooms: [{ RoomId: "R001", RoomName: "高级大床房", Plans: [] }],
+      Hotel: {
+        Id: "10627",
+        Name: "北京朝阳望京科技园亚朵酒店",
+        Address: "宏昌路望京西园1区119号楼北侧",
+        Category: "4",
+        Phone: "010-12345678",
+        Lat: 39.99,
+        Lng: 116.48,
+      },
+    });
+
+    expect(result.Star).toBe(4);
+    expect(result.Phone).toBe("010-12345678");
+    expect(result.Lat).toBe(39.99);
+    expect(result.Lng).toBe(116.48);
+  });
+
   it("maps legacy Hotel tree with rooms and plans", () => {
     const result = normalizeHotelDetailResponse(
       {

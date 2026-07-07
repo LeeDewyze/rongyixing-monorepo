@@ -1,0 +1,27 @@
+@keyframes flight-list-timeout-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes flight-list-timeout-panel-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.flight-list-timeout-backdrop {
+  animation: flight-list-timeout-backdrop-in 0.22s ease-out both;
+}
+
+.flight-list-timeout-panel {
+  animation: flight-list-timeout-panel-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}

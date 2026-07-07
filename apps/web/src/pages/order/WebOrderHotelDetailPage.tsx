@@ -8,11 +8,13 @@ import {
   HotelOrderSmsSheet,
 } from "@/components/order/hotel/HotelOrderSmsSheet";
 import { HotelOrderDetailFooter } from "@/components/order/hotel/HotelOrderDetailFooter";
+import { HotelOrderDetailHeader } from "@/components/order/hotel/HotelOrderDetailHeader";
 import { HotelOrderHotelInfoCard } from "@/components/order/hotel/HotelOrderHotelInfoCard";
 import { HotelOrderInfoCard } from "@/components/order/hotel/HotelOrderInfoCard";
 import { HotelOrderRoomTabs } from "@/components/order/hotel/HotelOrderRoomTabs";
 import { HotelOrderTravelerCard } from "@/components/order/hotel/HotelOrderTravelerCard";
 import { WebOrderToast } from "@/components/order/WebOrderDetailShell";
+import { usePageHeader } from "@/components/layout";
 import {
   useCancelHotelOrder,
   useHotelOrderDetail,
@@ -29,25 +31,12 @@ import {
 } from "@/lib/hotel-order-detail";
 import { parseOrderListScope } from "@/lib/order-list-params";
 import { buildOrderPayPath } from "@/lib/order-page-utils";
+import { ORDER_DETAIL_PAGE_BACKGROUND } from "@/lib/order-detail-chrome";
 import { getOrderListPath } from "@/lib/order-routes";
+import { WEB_PAGE_BODY, WEB_PAGE_ROOT } from "@/lib/web-page-layout";
 
 interface OrderDetailLocationState {
   action?: "cancel";
-}
-
-function OrderDetailBackButton({ onBack }: { onBack: () => void }) {
-  return (
-    <button
-      type="button"
-      className="flex size-10 shrink-0 items-center justify-center rounded-full bg-white text-brand-title shadow-sm hover:bg-[#FAFBFC]"
-      aria-label="返回"
-      onClick={onBack}
-    >
-      <svg viewBox="0 0 20 20" className="size-5" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M12 5l-5 5 5 5" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </button>
-  );
 }
 
 export function WebOrderHotelDetailPage() {
@@ -102,6 +91,8 @@ export function WebOrderHotelDetailPage() {
     }
     leaveDetail();
   }, [billOpen, leaveDetail, smsOpen]);
+
+  usePageHeader({ visible: false });
 
   useEffect(() => {
     if (!openCancelOnMountRef.current || !detail?.Actions?.showCancel) {
@@ -210,72 +201,72 @@ export function WebOrderHotelDetailPage() {
   const pending = cancelMutation.isPending || sms.send.isPending || sms.confirm.isPending;
 
   return (
-    <div className="min-h-full bg-[#F5F6F9]">
-      <div className="mx-auto max-w-[960px] px-4 py-4">
-        <div className="mb-4 flex items-center gap-3">
-          <OrderDetailBackButton onBack={handleBack} />
-        </div>
+    <div className={WEB_PAGE_ROOT} style={ORDER_DETAIL_PAGE_BACKGROUND}>
+      <HotelOrderDetailHeader onBack={handleBack} variant="form" embedded />
 
+      <div className={WEB_PAGE_BODY}>
         {isLoading ? (
-          <p className="text-center text-sm text-[#999999]">加载中…</p>
+          <p className="px-4 pt-3 text-center text-sm text-[#999999]">加载中…</p>
         ) : isError || !detail ? (
-          <p className="text-center text-sm text-[#FF4D4F]">
+          <p className="px-4 pt-3 text-center text-sm text-[#FF4D4F]">
             {formatApiError(error ?? new Error("订单不存在"))}
           </p>
         ) : (
-          <div className={`space-y-3${showFooter ? " pb-24" : ""}`}>
-            <HotelOrderInfoCard
-              detail={detail}
-              transactionId={selectedRoom?.Id}
-              onShowBill={() => setBillOpen(true)}
-            />
+          <div className="mx-auto max-w-[960px] space-y-3 px-4 pb-6 pt-3">
+              <HotelOrderInfoCard
+                detail={detail}
+                transactionId={selectedRoom?.Id}
+                onShowBill={() => setBillOpen(true)}
+              />
 
-            <HotelOrderRoomTabs
-              roomCount={detail.Rooms.length}
-              selectedIndex={selectedRoomIndex}
-              onSelect={setSelectedRoomIndex}
-            />
+              <HotelOrderRoomTabs
+                roomCount={detail.Rooms.length}
+                selectedIndex={selectedRoomIndex}
+                onSelect={setSelectedRoomIndex}
+              />
 
-            {selectedRoom ? (
-              <>
-                <HotelOrderHotelInfoCard room={selectedRoom} />
-                <HotelOrderTravelerCard room={selectedRoom} hideViolation={hideViolation} />
-              </>
-            ) : null}
+              {selectedRoom ? (
+                <>
+                  <HotelOrderHotelInfoCard room={selectedRoom} />
+                  <HotelOrderTravelerCard room={selectedRoom} hideViolation={hideViolation} />
+                </>
+              ) : null}
 
-            <HotelOrderApprovalSection histories={detail.Histories} />
+              <HotelOrderApprovalSection histories={detail.Histories} />
 
-            {detail.Actions.smsAction === "readOnly" && detail.Actions.smsReadOnlyText ? (
-              <p className="text-center text-[13px] text-[#666666]">
-                {detail.Actions.smsReadOnlyText}
-              </p>
-            ) : null}
-            {detail.Actions.smsError ? (
-              <p className="text-center text-[13px] text-[#FF4D4F]">{detail.Actions.smsError}</p>
-            ) : null}
+              {detail.Actions.smsAction === "readOnly" && detail.Actions.smsReadOnlyText ? (
+                <p className="text-center text-[13px] text-[#666666]">
+                  {detail.Actions.smsReadOnlyText}
+                </p>
+              ) : null}
+              {detail.Actions.smsError ? (
+                <p className="text-center text-[13px] text-[#FF4D4F]">{detail.Actions.smsError}</p>
+              ) : null}
 
-            {showInspurRepush ? (
-              <button
-                type="button"
-                className="w-full rounded-xl bg-white py-3 text-[14px] font-medium text-brand-primary shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
-                onClick={() => showToast("重推浪潮功能即将上线")}
-              >
-                重推浪潮
-              </button>
-            ) : null}
+              {showInspurRepush ? (
+                <button
+                  type="button"
+                  className="w-full rounded-xl bg-white py-3 text-[14px] font-medium text-brand-primary shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
+                  onClick={() => showToast("重推浪潮功能即将上线")}
+                >
+                  重推浪潮
+                </button>
+              ) : null}
           </div>
         )}
       </div>
 
+      {detail && showFooter ? (
+        <HotelOrderDetailFooter
+          actions={detail.Actions}
+          pending={pending}
+          onCancel={handleCancelClick}
+          onPay={handlePay}
+        />
+      ) : null}
+
       {detail ? (
         <>
-          <HotelOrderDetailFooter
-            actions={detail.Actions}
-            pending={pending}
-            onCancel={handleCancelClick}
-            onPay={handlePay}
-          />
-
           <HotelOrderBillSheet
             open={billOpen}
             lines={billLines}

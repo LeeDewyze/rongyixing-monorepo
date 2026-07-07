@@ -19,7 +19,7 @@ function registerAliases(paths: string[], target: RouteEntry): void {
 }
 
 registerAliases(["tab-tmc-home_ryx", "tabs_ryx", "tabs"], { pathname: "/" });
-registerAliases(["tab-tmc-trip_ryx"], { pathname: "/" });
+registerAliases(["tab-tmc-trip_ryx"], { pathname: "/orders", search: "?scope=pendingTravel" });
 registerAliases(["tab-tmc-my_ryx"], { pathname: "/mine" });
 
 registerAliases(["tmc-flight-search", "tmc-flight-search_ryx"], {
@@ -35,7 +35,27 @@ registerAliases(["tmc-hotel-search", "tmc-hotel-search_ryx"], {
   search: "?product=hotel",
 });
 
+registerAliases(["tmc-hotel-list", "tmc-hotel-list_ryx"], { pathname: "/hotel/list" });
+registerAliases(["tmc-flight-list", "tmc-flight-list_ryx"], { pathname: "/flight/list" });
+registerAliases(["tmc-train-list", "tmc-train-list_ryx"], { pathname: "/train/list" });
+registerAliases(["tmc-flight-book", "tmc-flight-book_ryx"], { pathname: "/flight/book" });
+registerAliases(["tmc-train-book", "tmc-train-book_ryx"], { pathname: "/train/book" });
+
 registerAliases(["tmc-order-list", "tmc-order-list_ryx"], { pathname: "/orders" });
+registerAliases(["tmc-bulletin-list", "tmc-bulletin-list_ryx"], { pathname: "/notice" });
+registerAliases(["tmc-approval-task"], { pathname: "/travel/approval" });
+registerAliases(["gobusiness", "goBusiness"], { pathname: "/travel/apply" });
+registerAliases(["tmc-select-passenger", "tmc-select-passenger_ryx"], {
+  pathname: "/passenger/select",
+});
+
+registerAliases(["account-setting", "account-setting_ryx"], { pathname: "/settings" });
+registerAliases(["account-security", "account-security_ryx"], { pathname: "/settings/security" });
+registerAliases(["account-logout", "account-logout_ryx"], {
+  pathname: "/settings/account-deletion",
+});
+registerAliases(["member-credential-list"], { pathname: "/credentials" });
+registerAliases(["open-url"], { pathname: "/open-url" });
 
 registerAliases(["login"], { pathname: "/login" });
 registerAliases(["login/password"], { pathname: "/login/password" });
@@ -106,4 +126,8 @@ export function resolveLegacyRoute(pathWithQuery: string): LegacyRouteTarget | u
     }
   }
   return undefined;
+}
+
+export function listLegacyRouteKeys(): string[] {
+  return Object.keys(ROUTE_ENTRIES);
 }

@@ -1,5 +1,7 @@
 import type { FlightInitBookResponse, PassengerBookInfo } from "@ryx/shared-types";
 
+import { resolvePassengerServiceFee } from "@/lib/flight-book";
+
 /** Legacy `OrderTravelPayType`. */
 export const FLIGHT_PAY_TYPE_COMPANY = 1;
 export const FLIGHT_PAY_TYPE_PERSON = 2;
@@ -76,9 +78,8 @@ export function resolveTotalServiceFee(
   serviceFees?: Record<string, number | string>,
 ): number {
   if (!serviceFees || passengers.length === 0) return 0;
-  return passengers.reduce((sum, passenger) => {
-    const fee = serviceFees[passenger.id];
-    const amount = typeof fee === "string" ? Number(fee) : fee;
-    return sum + (Number.isFinite(amount) ? Number(amount) : 0);
-  }, 0);
+  return passengers.reduce(
+    (sum, passenger) => sum + resolvePassengerServiceFee(passenger, serviceFees),
+    0,
+  );
 }

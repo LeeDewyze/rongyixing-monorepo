@@ -407,7 +407,7 @@ export function WebOrderListPage() {
   }, [toastMessage]);
 
   return (
-    <div className={`min-h-full bg-[#F5F6F9] ${ORDER_FONT}`}>
+    <div className={`h-full overflow-y-auto bg-[#F5F6F9] ${ORDER_FONT}`}>
       <header className="sticky top-0 z-20">
         <div
           className="order-list-header--embedded overflow-visible"
