@@ -38,32 +38,34 @@ export function getCenteredTrackOffsetPx(trackIndex: number): number {
 type LoopSlide = HomeBannerSlide & { loopKey: string };
 
 function BannerSlideImage({ src }: { src: string }) {
-  const [currentSrc, setCurrentSrc] = useState(() => normalizeBannerImageUrl(src));
-  const [failed, setFailed] = useState(false);
+  const candidates = useMemo(() => {
+    const trimmed = src.trim();
+    if (!trimmed) return [] as string[];
+
+    const normalized = normalizeBannerImageUrl(trimmed);
+    const list = [normalized];
+    if (trimmed !== normalized) list.push(trimmed);
+    return [...new Set(list)];
+  }, [src]);
+
+  const [candidateIndex, setCandidateIndex] = useState(0);
 
   useEffect(() => {
-    setCurrentSrc(normalizeBannerImageUrl(src));
-    setFailed(false);
+    setCandidateIndex(0);
   }, [src]);
 
   const handleError = useCallback(() => {
-    if (failed) return;
-    if (!currentSrc.startsWith("https://")) {
-      const trimmed = src.trim();
-      if (trimmed.startsWith("http://")) {
-        setCurrentSrc(`https://${trimmed.slice("http://".length)}`);
-        return;
-      }
-    }
-    setFailed(true);
-  }, [currentSrc, failed, src]);
+    setCandidateIndex((index) => index + 1);
+  }, []);
 
-  if (failed) {
+  const currentSrc = candidates[candidateIndex];
+  if (!currentSrc || candidateIndex >= candidates.length) {
     return <div className="size-full bg-[#E8EAEF]" aria-hidden />;
   }
 
   return (
     <img
+      key={currentSrc}
       src={currentSrc}
       alt=""
       className="pointer-events-none size-full object-cover object-center"
@@ -109,57 +111,83 @@ export function WebBannerCarousel({ slides, onBannerClick }: WebBannerCarouselPr
   const trackIndexRef = useRef(canCycle ? 1 : 0);
   const isLoopResettingRef = useRef(false);
   const realIndex = getLoopRealIndex(trackIndex, count);
+  const slidesKey = useMemo(() => slides.map((slide) => slide.id).join("|"), [slides]);
 
   trackIndexRef.current = trackIndex;
 
   useEffect(() => {
     setTrackIndex(canCycle ? 1 : 0);
+    trackIndexRef.current = canCycle ? 1 : 0;
     setEnableTransition(true);
     setDragOffset(0);
     setIsDragging(false);
-  }, [canCycle, slides]);
+    isLoopResettingRef.current = false;
+  }, [canCycle, slidesKey]);
 
   useEffect(() => {
     slides.forEach((slide) => {
       const image = new Image();
       image.src = slide.imageUrl;
     });
-  }, [slides]);
+  }, [slidesKey, slides]);
 
   useEffect(() => {
     if (!canCycle) return;
     const timer = window.setInterval(() => {
       if (pausedRef.current || isLoopResettingRef.current) return;
-      setTrackIndex((value) => value + 1);
+      setTrackIndex((value) => {
+        if (value >= count + 1) return value;
+        return value + 1;
+      });
     }, AUTOPLAY_MS);
     return () => window.clearInterval(timer);
-  }, [canCycle]);
+  }, [canCycle, count]);
 
   const jumpWithoutTransition = useCallback((index: number) => {
     isLoopResettingRef.current = true;
     setEnableTransition(false);
     setTrackIndex(index);
     trackIndexRef.current = index;
-    requestAnimationFrame(() => {
-      trackRef.current?.offsetHeight;
+  }, []);
+
+  useEffect(() => {
+    if (enableTransition) return;
+    const frame = requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         setEnableTransition(true);
         isLoopResettingRef.current = false;
       });
     });
-  }, []);
+    return () => cancelAnimationFrame(frame);
+  }, [enableTransition, trackIndex]);
 
   const handleTrackTransitionEnd = useCallback(
     (event: React.TransitionEvent<HTMLDivElement>) => {
-      if (event.propertyName !== "transform" || event.target !== event.currentTarget) return;
-      if (!canCycle || isDragging || isLoopResettingRef.current) return;
+      if (event.currentTarget !== trackRef.current) return;
+      if (event.propertyName !== "transform") return;
+      if (!canCycle || isLoopResettingRef.current) return;
 
       const index = trackIndexRef.current;
       if (index === count + 1) jumpWithoutTransition(1);
       else if (index === 0) jumpWithoutTransition(count);
     },
-    [canCycle, count, isDragging, jumpWithoutTransition],
+    [canCycle, count, jumpWithoutTransition],
   );
+
+  useEffect(() => {
+    if (!canCycle || isLoopResettingRef.current) return;
+    const index = trackIndexRef.current;
+    if (index !== count + 1 && index !== 0) return;
+
+    const timer = window.setTimeout(() => {
+      if (isLoopResettingRef.current) return;
+      const current = trackIndexRef.current;
+      if (current === count + 1) jumpWithoutTransition(1);
+      else if (current === 0) jumpWithoutTransition(count);
+    }, TRANSITION_MS + 100);
+
+    return () => window.clearTimeout(timer);
+  }, [trackIndex, canCycle, count, jumpWithoutTransition]);
 
   const finishDrag = useCallback(
     (clientX: number) => {

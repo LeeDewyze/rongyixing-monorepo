@@ -91,7 +91,7 @@ export function WebHomeTopCard({
   notice,
 }: WebHomeTopCardProps) {
   const slides = bannerSlides && bannerSlides.length > 0 ? bannerSlides : [];
-  const showBannerPlaceholder = bannerLoading || slides.length === 0;
+  const showBannerPlaceholder = slides.length === 0 && bannerLoading;
 
   return (
     <div className="relative">
@@ -101,9 +101,9 @@ export function WebHomeTopCard({
             className={`mx-auto h-[220px] w-full max-w-[440px] rounded-2xl bg-[#E8EAEF] ${bannerLoading ? "animate-pulse" : ""}`}
           />
         </div>
-      ) : (
+      ) : slides.length > 0 ? (
         <WebBannerCarousel slides={slides} onBannerClick={onBannerClick} />
-      )}
+      ) : null}
 
       {notice ? <div className="relative mx-auto mt-3 max-w-[640px] px-1">{notice}</div> : null}
 

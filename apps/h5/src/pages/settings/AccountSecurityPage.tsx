@@ -6,7 +6,6 @@ import { SettingsMenuIcon } from "@/components/settings/SettingsMenuIcon";
 import { SettingsPageChrome } from "@/components/settings/SettingsPageChrome";
 import { SettingsSectionLabel } from "@/components/settings/SettingsSectionLabel";
 import { useMemberProfile } from "@/hooks/useMemberProfile";
-import { ACCOUNT_DELETION_ENTRY_HINT, ACCOUNT_DELETION_ENTRY_LABEL } from "@/lib/account-deletion";
 
 function displayMobile(mobile?: string): string {
   return mobile?.trim() || "未绑定";
@@ -50,13 +49,6 @@ export function AccountSecurityPage() {
               icon={<SettingsMenuIcon variant="history" />}
               value="登录设备管理"
               onClick={() => navigate("/settings/devices")}
-            />
-            <SettingsMenuRow
-              label={ACCOUNT_DELETION_ENTRY_LABEL}
-              icon={<SettingsMenuIcon variant="accountDelete" />}
-              value={ACCOUNT_DELETION_ENTRY_HINT}
-              valueTone="hint"
-              onClick={() => navigate("/settings/account-deletion")}
               borderless
             />
           </SettingsMenuCard>

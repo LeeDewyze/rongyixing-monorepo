@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 
 import { getApi } from "@/lib/api";
 import { filterPersonalizedBanners, resolveBannerSlides } from "@/lib/home-banners";
@@ -20,5 +20,6 @@ export function useHomeBanners() {
     enabled: canFetch,
     staleTime: 5 * 60 * 1000,
     retry: false,
+    placeholderData: keepPreviousData,
   });
 }
