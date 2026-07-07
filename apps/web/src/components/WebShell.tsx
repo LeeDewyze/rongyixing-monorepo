@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 
 import { WebSidebarNav } from "@/app/layouts/WebSidebarNav";
-import { getAppName } from "@/lib/env";
 
 /** Standard inset for pages inside WebShell main (not used on full-bleed order list). */
 export const WEB_MAIN_PADDING_CLASS = "p-4 pad:p-6 pc:p-8 pointer-coarse:p-5";
@@ -18,9 +17,7 @@ export function WebShell({ children }: WebShellProps) {
       </div>
       <div className="mx-auto flex min-h-0 w-full max-w-[1600px] flex-1 overflow-hidden">
         <aside className="hidden h-full w-[88px] shrink-0 border-r bg-white px-2 pad:flex pad:flex-col pc:w-56 pc:px-4 pc:py-4">
-          <p className="mb-4 hidden text-lg font-semibold text-brand-title pc:block">
-            {getAppName()}
-          </p>
+          <p className="mb-4 hidden text-lg font-semibold text-brand-title pc:block">融易行</p>
           <div className="flex flex-1 flex-col justify-center pc:flex-none pc:justify-start">
             <WebSidebarNav />
           </div>

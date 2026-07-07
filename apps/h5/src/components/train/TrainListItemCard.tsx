@@ -104,9 +104,24 @@ function TrainRouteMiddle({
   );
 }
 
+const LOWEST_PRICE_GRADIENT_STYLE = {
+  background:
+    "linear-gradient(180deg, #D7FFF0 0%, rgba(215, 255, 240, 0.72) 38%, rgba(215, 255, 240, 0.28) 62%, rgba(215, 255, 240, 0.06) 82%, transparent 100%)",
+};
+
+function LowestPriceGradient() {
+  return (
+    <div
+      className="pointer-events-none absolute inset-x-0 top-0 z-0 h-14 rounded-t-lg"
+      style={LOWEST_PRICE_GRADIENT_STYLE}
+      aria-hidden
+    />
+  );
+}
+
 function LowestPriceBadge() {
   return (
-    <span className="absolute left-0 top-0 flex h-4 min-w-[54px] items-center justify-center rounded-tl-lg bg-[#34C759] px-1.5 text-[10px] font-normal leading-[100%] tracking-[0] text-white [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]">
+    <span className="absolute left-0 top-0 z-[2] flex h-4 min-w-[54px] items-center justify-center rounded-tl-lg bg-[#34C759] px-1.5 text-[10px] font-normal leading-[100%] tracking-[0] text-white [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]">
       价格最低
     </span>
   );
@@ -179,12 +194,9 @@ export function TrainListItemCard({
 
   return (
     <div
-      className={`relative z-0 w-full overflow-hidden rounded-lg text-left shadow-[0_2px_8px_rgba(0,0,0,0.06)] transition ${canExpand || expanded || scheduleOpen || scheduleFetchEnabled ? "active:scale-[0.99]" : ""} ${expanded || scheduleOpen ? "" : "min-h-[96px]"} ${
-        isLowest
-          ? "bg-white bg-[linear-gradient(184.36deg,#D7FFF0_5.34%,#FFFFFF_98.28%)] bg-[length:100%_48px] bg-top bg-no-repeat"
-          : "bg-white"
-      }`}
+      className={`relative z-0 w-full overflow-hidden rounded-lg bg-white text-left shadow-[0_2px_8px_rgba(0,0,0,0.06)] transition ${canExpand || expanded || scheduleOpen || scheduleFetchEnabled ? "active:scale-[0.99]" : ""} ${expanded || scheduleOpen ? "" : "min-h-[96px]"}`}
     >
+      {isLowest ? <LowestPriceGradient /> : null}
       {isLowest ? <LowestPriceBadge /> : null}
 
       <div

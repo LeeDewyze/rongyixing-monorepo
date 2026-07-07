@@ -32,13 +32,25 @@ function resolveFlightPriceColor(variant: FlightCardVariant): string {
 
 const FLIGHT_SCARCE_BADGE_CLASS = `flex h-4 min-w-[36px] shrink-0 items-center justify-center whitespace-nowrap rounded border border-[#FF383C] bg-[#FF383C1A] px-1 text-[10px] font-normal leading-[100%] tracking-[0] text-[#FF383C] ${FONT}`;
 
-const DIRECT_LOWEST_CARD_CLASS =
-  "bg-white bg-[linear-gradient(184.36deg,#D7FFF0_5.34%,#FFFFFF_98.28%)] bg-[length:100%_48px] bg-top bg-no-repeat";
+const DIRECT_LOWEST_GRADIENT_STYLE = {
+  background:
+    "linear-gradient(180deg, #D7FFF0 0%, rgba(215, 255, 240, 0.72) 38%, rgba(215, 255, 240, 0.28) 62%, rgba(215, 255, 240, 0.06) 82%, transparent 100%)",
+};
+
+function DirectLowestGradient() {
+  return (
+    <div
+      className="pointer-events-none absolute inset-x-0 top-0 z-0 h-14 rounded-t-lg"
+      style={DIRECT_LOWEST_GRADIENT_STYLE}
+      aria-hidden
+    />
+  );
+}
 
 function DirectLowestBadge() {
   return (
     <span
-      className={`absolute left-0 top-0 z-[1] flex h-4 min-w-[54px] items-center justify-center rounded-tl-lg bg-[#34C759] px-1.5 text-[10px] font-normal leading-[100%] tracking-[0] text-white ${FONT}`}
+      className={`absolute left-0 top-0 z-[2] flex h-4 min-w-[54px] items-center justify-center rounded-tl-lg bg-[#34C759] px-1.5 text-[10px] font-normal leading-[100%] tracking-[0] text-white ${FONT}`}
     >
       直飞低价
     </span>
@@ -107,8 +119,8 @@ export function FlightSegmentCard({
   const metaLine = formatFlightListMetaLine(segment);
   const arrivalDayTip = formatArrivalDateBadge(segment.TakeoffTime, segment.ArrivalTime);
 
-  const topGradient = isDirectLowest
-    ? DIRECT_LOWEST_CARD_CLASS
+  const cardSurfaceClass = isDirectLowest
+    ? "bg-white"
     : isTransferLowest
       ? "bg-gradient-to-b from-[#fff7ed] to-white"
       : "bg-white";
@@ -124,8 +136,9 @@ export function FlightSegmentCard({
       type="button"
       disabled={loading}
       onClick={onClick}
-      className={`relative z-0 min-h-[96px] w-full overflow-hidden rounded-lg text-left shadow-[0_2px_8px_rgba(0,0,0,0.06)] transition active:scale-[0.99] disabled:pointer-events-none disabled:opacity-60 ${topGradient}`}
+      className={`relative z-0 min-h-[96px] w-full overflow-hidden rounded-lg text-left shadow-[0_2px_8px_rgba(0,0,0,0.06)] transition active:scale-[0.99] disabled:pointer-events-none disabled:opacity-60 ${cardSurfaceClass}`}
     >
+      {isDirectLowest ? <DirectLowestGradient /> : null}
       {isDirectLowest ? <DirectLowestBadge /> : null}
 
       {isTransferLowest ? (

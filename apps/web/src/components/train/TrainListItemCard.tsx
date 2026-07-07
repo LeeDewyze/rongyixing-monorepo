@@ -15,28 +15,63 @@ import {
 } from "@/utils/train-list";
 
 import { TrainScheduleTable } from "./TrainScheduleTable";
-import { TrainSeatRow } from "./TrainSeatRow";
+import { TrainSeatPreview, TrainSeatRow } from "./TrainSeatRow";
 
-const TRAIN_TIME_CLASS =
-  "text-[16px] font-medium leading-[100%] tracking-[0] text-brand-title [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
+const FONT = "[font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
 
-const TRAIN_STATION_CLASS =
-  "truncate text-[14px] font-normal leading-[100%] tracking-[0] text-[#666666] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
+const TRAIN_TIME_CLASS = `whitespace-nowrap text-[24px] font-[500] not-italic leading-[100%] tracking-[0] text-[#010101] ${FONT}`;
 
-const TRAIN_DURATION_CLASS =
-  "text-[11px] font-normal leading-[100%] tracking-[0] text-[#666666] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
+const TRAIN_STATION_CLASS = `truncate text-[16px] font-[400] not-italic leading-[100%] tracking-[0] text-[#666666] ${FONT}`;
 
-const TRAIN_CODE_CLASS =
-  "text-[11px] font-normal leading-[100%] tracking-[0] text-[#666666] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
+const TRAIN_DURATION_CLASS = `text-[11px] font-normal leading-[100%] tracking-[0] text-[#666666] ${FONT}`;
 
-const TRAIN_DAY_TIP_CLASS =
-  "absolute right-0 bottom-full mb-0.5 whitespace-nowrap text-[10px] font-normal leading-[100%] tracking-[0] text-brand-title [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
+const TRAIN_CODE_CLASS = `text-[11px] font-normal leading-[100%] tracking-[0] text-[#666666] ${FONT}`;
 
-const TRAIN_PRICE_CLASS =
-  "text-[24px] font-medium leading-[100%] tracking-[0] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
+const TRAIN_DAY_OFFSET_CLASS = `ml-1 whitespace-nowrap text-[16px] font-[400] not-italic leading-[100%] tracking-[0] text-[#666666] ${FONT}`;
 
-const TRAIN_SCARCE_BADGE_CLASS =
-  "flex h-4 min-w-[36px] shrink-0 items-center justify-center whitespace-nowrap rounded border border-[#FF383C] bg-[#FF383C1A] px-1 text-[10px] font-normal leading-[100%] tracking-[0] text-[#FF383C] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
+const TRAIN_PRICE_CLASS = `whitespace-nowrap text-[24px] font-[500] not-italic leading-none tracking-[0] ${FONT}`;
+
+const TRAIN_PRICE_COLOR_LOWEST = "text-[#34C759]";
+
+const TRAIN_PRICE_COLOR_DEFAULT = "text-[#FF383C]";
+
+const TRAIN_SCARCE_BADGE_CLASS = `flex h-5 min-w-[40px] shrink-0 items-center justify-center whitespace-nowrap rounded border border-[#FF383C] bg-[#FF383C1A] px-1.5 text-[10px] font-normal leading-none tracking-[0] text-[#FF383C] ${FONT}`;
+
+const TRAIN_CARD_GRID_CLASS =
+  "grid w-full grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)_auto] items-center gap-x-5 pc:gap-x-6";
+
+const TRAIN_ROUTE_ROW_CLASS = "flex items-center gap-x-3 pl-2 pc:gap-x-4 pc:pl-3";
+
+const TRAIN_ROUTE_DEPART_COL_CLASS = "w-[4.5rem] shrink-0 pc:w-[5rem]";
+
+const TRAIN_ROUTE_ARROW_COL_CLASS = "w-[5rem] shrink-0 pc:w-[5.5rem]";
+
+const TRAIN_ROUTE_ARRIVE_COL_CLASS = "w-[5.25rem] shrink-0 pc:w-[5.75rem] -ml-1 pc:-ml-2";
+
+const DIRECT_LOWEST_GRADIENT_STYLE = {
+  background:
+    "linear-gradient(180deg, #D7FFF0 0%, rgba(215, 255, 240, 0.72) 38%, rgba(215, 255, 240, 0.28) 62%, rgba(215, 255, 240, 0.06) 82%, transparent 100%)",
+};
+
+function LowestPriceGradient() {
+  return (
+    <div
+      className="pointer-events-none absolute inset-x-0 top-0 z-0 h-14 rounded-t-lg"
+      style={DIRECT_LOWEST_GRADIENT_STYLE}
+      aria-hidden
+    />
+  );
+}
+
+function LowestPriceBadge() {
+  return (
+    <span
+      className={`absolute left-0 top-0 z-[2] flex h-5 min-w-[56px] items-center justify-center rounded-tl-lg bg-[#34C759] px-2 text-[11px] font-normal leading-none tracking-[0] text-white ${FONT}`}
+    >
+      价格最低
+    </span>
+  );
+}
 
 interface TrainListItemCardProps {
   train: TrainItem;
@@ -74,7 +109,9 @@ function TrainRouteMiddle({
   onToggleSchedule: () => void;
 }) {
   return (
-    <div className="flex w-full min-w-16 flex-col items-center gap-0.5">
+    <div
+      className={`flex flex-col items-start justify-center gap-0.5 ${TRAIN_ROUTE_ARROW_COL_CLASS}`}
+    >
       {durationLabel ? (
         <span className={TRAIN_DURATION_CLASS}>{durationLabel}</span>
       ) : (
@@ -83,9 +120,9 @@ function TrainRouteMiddle({
       <img
         src={trainRouteArrow}
         alt=""
-        width={64}
+        width={56}
         height={12}
-        className="h-3 w-16 shrink-0 object-contain"
+        className="h-3 w-12 shrink-0 object-contain object-left"
         aria-hidden
       />
       <button
@@ -104,10 +141,13 @@ function TrainRouteMiddle({
   );
 }
 
-function LowestPriceBadge() {
+function BookActionChip() {
   return (
-    <span className="absolute left-0 top-0 flex h-4 min-w-[54px] items-center justify-center rounded-tl-lg bg-[#34C759] px-1.5 text-[10px] font-normal leading-[100%] tracking-[0] text-white [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]">
-      价格最低
+    <span
+      className={`inline-flex h-10 w-[120px] shrink-0 items-center justify-center rounded-lg bg-gradient-to-l from-[#2768FA] to-[#33A1F9] text-[14px] font-medium leading-none text-white shadow-[0_2px_8px_rgba(39,104,250,0.24)] ${FONT}`}
+      aria-hidden
+    >
+      订票
     </span>
   );
 }
@@ -141,7 +181,7 @@ export function TrainListItemCard({
   ]);
 
   const isLowest = Boolean(train.isLowestPrice);
-  const priceColor = isLowest ? "text-[#16a34a]" : "text-[#FF383C]";
+  const priceColor = isLowest ? TRAIN_PRICE_COLOR_LOWEST : TRAIN_PRICE_COLOR_DEFAULT;
   const arrivalDayTip = getTrainArrivalDayTip(train);
   const durationLabel = formatTrainDuration(train);
   const canExpand = hasAvailableTrainSeats(train.Seats);
@@ -177,14 +217,16 @@ export function TrainListItemCard({
     onToggle();
   }
 
+  const cardRadiusClass = isLowest ? "rounded-lg" : "rounded-xl";
+  const contentPadding = isLowest ? "py-4 pl-4 pr-4 pt-7" : "p-4";
+
   return (
     <div
-      className={`relative z-0 w-full overflow-hidden rounded-lg text-left shadow-[0_2px_8px_rgba(0,0,0,0.06)] transition ${canExpand || expanded || scheduleOpen || scheduleFetchEnabled ? "active:scale-[0.99]" : ""} ${expanded || scheduleOpen ? "" : "min-h-[96px]"} ${
-        isLowest
-          ? "bg-white bg-[linear-gradient(184.36deg,#D7FFF0_5.34%,#FFFFFF_98.28%)] bg-[length:100%_48px] bg-top bg-no-repeat"
-          : "bg-white"
-      }`}
+      className={`relative z-0 min-h-[100px] w-full overflow-hidden bg-white text-left shadow-[0_2px_8px_rgba(0,0,0,0.06)] ring-1 ring-black/[0.03] transition hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] ${
+        canExpand || expanded || scheduleOpen || scheduleFetchEnabled ? "active:scale-[0.995]" : ""
+      } ${cardRadiusClass}`}
     >
+      {isLowest ? <LowestPriceGradient /> : null}
       {isLowest ? <LowestPriceBadge /> : null}
 
       <div
@@ -196,50 +238,55 @@ export function TrainListItemCard({
           event.preventDefault();
           handleCardClick();
         }}
-        className={`relative z-[1] px-3 pb-2 ${isLowest ? "pt-[26px]" : "pt-4"} ${canExpand || expanded || scheduleOpen ? "cursor-pointer" : ""}`}
+        className={`relative z-[1] ${contentPadding} ${canExpand || expanded || scheduleOpen ? "cursor-pointer" : ""}`}
       >
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex min-w-0 flex-1 items-start gap-2.5">
-            <div className="flex shrink-0 flex-col gap-2">
+        <div className={TRAIN_CARD_GRID_CLASS}>
+          <div className={TRAIN_ROUTE_ROW_CLASS}>
+            <div className={`flex flex-col items-start gap-1 ${TRAIN_ROUTE_DEPART_COL_CLASS}`}>
               <p className={TRAIN_TIME_CLASS}>{formatTrainClock(train.StartTime)}</p>
-              <p className={TRAIN_STATION_CLASS}>{train.FromStation}</p>
+              <p className={`w-full ${TRAIN_STATION_CLASS}`}>{train.FromStation}</p>
             </div>
 
-            <div className="flex shrink-0 flex-col items-center px-2.5">
-              <TrainRouteMiddle
-                trainCode={train.TrainCode}
-                durationLabel={durationLabel}
-                scheduleOpen={scheduleOpen}
-                onToggleSchedule={handleScheduleToggle}
-              />
-            </div>
+            <TrainRouteMiddle
+              trainCode={train.TrainCode}
+              durationLabel={durationLabel}
+              scheduleOpen={scheduleOpen}
+              onToggleSchedule={handleScheduleToggle}
+            />
 
-            <div className="flex shrink-0 flex-col gap-2">
-              <div className="relative w-fit">
-                <p className={TRAIN_TIME_CLASS}>{formatTrainClock(train.ArrivalTime)}</p>
+            <div className={`flex flex-col items-start gap-1 ${TRAIN_ROUTE_ARRIVE_COL_CLASS}`}>
+              <p className={TRAIN_TIME_CLASS}>
+                {formatTrainClock(train.ArrivalTime)}
                 {arrivalDayTip ? (
-                  <span className={TRAIN_DAY_TIP_CLASS}>{arrivalDayTip}</span>
+                  <span className={TRAIN_DAY_OFFSET_CLASS}>{arrivalDayTip}</span>
                 ) : null}
-              </div>
-              <p className={TRAIN_STATION_CLASS}>{train.ToStation}</p>
+              </p>
+              <p className={`w-full ${TRAIN_STATION_CLASS}`}>{train.ToStation}</p>
             </div>
           </div>
 
-          <div className="flex shrink-0 items-center justify-end gap-1 pl-1">
+          <div className="min-w-0 -ml-4 pc:-ml-5">
+            {!expanded ? <TrainSeatPreview seats={train.Seats ?? []} layout="inline" /> : null}
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pc:gap-4">
             {shouldShowScarceTrainBadge(train) ? (
               <span className={TRAIN_SCARCE_BADGE_CLASS}>剩{minSeatCount(train)}张</span>
             ) : null}
             <p className={`${TRAIN_PRICE_CLASS} ${priceColor}`}>¥{train.LowestPrice ?? 0}</p>
+            <BookActionChip />
           </div>
         </div>
 
-        <TrainSeatRow
-          seats={train.Seats ?? []}
-          expanded={expanded}
-          isAgent={isAgent}
-          policyChecked={policyChecked}
-          onBookAttempt={onBookAttempt}
-        />
+        {expanded ? (
+          <TrainSeatRow
+            seats={train.Seats ?? []}
+            expanded
+            isAgent={isAgent}
+            policyChecked={policyChecked}
+            onBookAttempt={onBookAttempt}
+          />
+        ) : null}
       </div>
 
       {scheduleOpen ? (

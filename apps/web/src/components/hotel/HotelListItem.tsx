@@ -5,8 +5,13 @@ interface HotelListItemProps {
   onClick: () => void;
 }
 
+/** Figma pad list card — 544×112, radius 8px, shadow 0 2px 4px #0000001A */
+export const HOTEL_LIST_CARD_CLASS =
+  "h-[112px] overflow-hidden rounded-lg bg-white shadow-[0_2px_4px_rgba(0,0,0,0.1)]";
+
 /** Figma — contracted hotel badge on list thumbnail. */
-const CONTRACT_HOTEL_BADGE_GRADIENT = "linear-gradient(270deg, var(--brand-btn-end) 0%, var(--brand-btn-start) 100%)";
+const CONTRACT_HOTEL_BADGE_GRADIENT =
+  "linear-gradient(270deg, var(--brand-btn-end) 0%, var(--brand-btn-start) 100%)";
 
 function StarRating({ count }: { count: number }) {
   return (
@@ -76,10 +81,10 @@ export function HotelListItem({ hotel, onClick }: HotelListItemProps) {
   return (
     <button
       type="button"
-      className="flex w-full gap-3 p-3 text-left active:scale-[0.99] active:opacity-90"
+      className={`${HOTEL_LIST_CARD_CLASS} flex w-full gap-3 p-3 text-left active:scale-[0.99] active:opacity-90`}
       onClick={onClick}
     >
-      <div className="relative size-24 shrink-0 overflow-hidden rounded-lg bg-[#E5E7EB]">
+      <div className="relative size-[88px] shrink-0 overflow-hidden rounded-lg bg-[#E5E7EB]">
         {hotel.ImageUrl ? (
           <img src={hotel.ImageUrl} alt="" className="size-full object-cover" loading="lazy" />
         ) : null}
@@ -93,25 +98,23 @@ export function HotelListItem({ hotel, onClick }: HotelListItemProps) {
         ) : null}
       </div>
 
-      <div className="flex min-h-24 min-w-0 flex-1 flex-col">
-        <div className="min-h-12 shrink-0">
-          <h3 className="line-clamp-2 text-base font-medium leading-6 tracking-[0.35px] text-[#333333] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]">
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col justify-between">
+        <div className="min-w-0 shrink-0">
+          <h3 className="line-clamp-2 text-[14px] font-medium leading-5 tracking-[0.35px] text-[#333333] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]">
             {hotel.HotelName}
           </h3>
+
+          {stars > 0 || score ? (
+            <div className="mt-0.5 flex h-[14px] items-center gap-2 overflow-hidden">
+              {score ? (
+                <span className="shrink-0 text-[12px] font-medium leading-none text-[#E72932]">
+                  {score}
+                </span>
+              ) : null}
+              {stars > 0 ? <StarRating count={stars} /> : null}
+            </div>
+          ) : null}
         </div>
-
-        {stars > 0 || score ? (
-          <div className="mt-1 flex h-[18px] shrink-0 items-center gap-2 overflow-hidden">
-            {score ? (
-              <span className="shrink-0 text-[12px] font-medium leading-none text-[#E72932]">
-                {score}
-              </span>
-            ) : null}
-            {stars > 0 ? <StarRating count={stars} /> : null}
-          </div>
-        ) : null}
-
-        <div className="min-h-0 flex-1" aria-hidden />
 
         <div className="flex shrink-0 items-end justify-between gap-2">
           {hotel.Address || hotel.Distance ? (

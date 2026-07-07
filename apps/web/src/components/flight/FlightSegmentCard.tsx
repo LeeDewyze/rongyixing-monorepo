@@ -46,13 +46,25 @@ const FLIGHT_ROUTE_ARROW_COL_CLASS = "w-[5.5rem] shrink-0 pc:w-[6rem]";
 
 const FLIGHT_ROUTE_ARRIVE_COL_CLASS = "w-[5.75rem] shrink-0 pc:w-[6.25rem]";
 
-const DIRECT_LOWEST_CARD_CLASS =
-  "bg-white bg-[linear-gradient(184.36deg,#D7FFF0_5.34%,#FFFFFF_98.28%)] bg-[length:100%_48px] bg-top bg-no-repeat";
+const DIRECT_LOWEST_GRADIENT_STYLE = {
+  background:
+    "linear-gradient(180deg, #D7FFF0 0%, rgba(215, 255, 240, 0.72) 38%, rgba(215, 255, 240, 0.28) 62%, rgba(215, 255, 240, 0.06) 82%, transparent 100%)",
+};
+
+function DirectLowestGradient() {
+  return (
+    <div
+      className="pointer-events-none absolute inset-x-0 top-0 z-0 h-14 rounded-t-lg"
+      style={DIRECT_LOWEST_GRADIENT_STYLE}
+      aria-hidden
+    />
+  );
+}
 
 function DirectLowestBadge() {
   return (
     <span
-      className={`absolute left-0 top-0 z-[2] flex h-5 min-w-[56px] items-center justify-center rounded-tl-xl bg-[#34C759] px-2 text-[11px] font-normal leading-none tracking-[0] text-white ${FONT}`}
+      className={`absolute left-0 top-0 z-[2] flex h-5 min-w-[56px] items-center justify-center rounded-tl-lg bg-[#34C759] px-2 text-[11px] font-normal leading-none tracking-[0] text-white ${FONT}`}
     >
       价格最低
     </span>
@@ -141,11 +153,13 @@ export function FlightSegmentCard({
   const planeSubtitle = formatFlightListPlaneSubtitle(segment);
   const arrivalDayOffset = formatArrivalDayOffsetLabel(segment.TakeoffTime, segment.ArrivalTime);
 
-  const topGradient = isDirectLowest
-    ? DIRECT_LOWEST_CARD_CLASS
+  const cardSurfaceClass = isDirectLowest
+    ? "bg-white"
     : isTransferLowest
       ? "bg-gradient-to-b from-[#fff7ed] to-white"
       : "bg-white";
+
+  const cardRadiusClass = isDirectLowest ? "rounded-lg" : "rounded-xl";
 
   const contentPadding = isDirectLowest ? "py-4 pl-4 pr-4 pt-7" : "p-4";
 
@@ -154,8 +168,9 @@ export function FlightSegmentCard({
       type="button"
       disabled={loading}
       onClick={onClick}
-      className={`relative z-0 min-h-[100px] w-full overflow-hidden rounded-xl text-left shadow-[0_2px_8px_rgba(0,0,0,0.06)] ring-1 ring-black/[0.03] transition hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] active:scale-[0.995] disabled:pointer-events-none disabled:opacity-60 ${topGradient}`}
+      className={`relative z-0 min-h-[100px] w-full overflow-hidden text-left shadow-[0_2px_8px_rgba(0,0,0,0.06)] ring-1 ring-black/[0.03] transition hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] active:scale-[0.995] disabled:pointer-events-none disabled:opacity-60 ${cardRadiusClass} ${cardSurfaceClass}`}
     >
+      {isDirectLowest ? <DirectLowestGradient /> : null}
       {isDirectLowest ? <DirectLowestBadge /> : null}
 
       {isTransferLowest ? (

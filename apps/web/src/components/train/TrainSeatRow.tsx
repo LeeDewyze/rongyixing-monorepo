@@ -57,6 +57,48 @@ function getExpandedAvailabilityClass(
   return SEAT_AVAILABILITY_AVAILABLE_CLASS;
 }
 
+function SeatPreviewItem({ seat }: { seat: TrainSeat }) {
+  const availability = formatSeatAvailability(seat.Count);
+  return (
+    <span className="whitespace-nowrap">
+      <span className={SEAT_TYPE_PREVIEW_CLASS}>
+        {formatSeatTypeDisplayName(seat.SeatTypeName)}
+      </span>{" "}
+      <span className={getPreviewAvailabilityClass(availability)}>{availability.text}</span>
+    </span>
+  );
+}
+
+export function TrainSeatPreview({
+  seats,
+  layout = "below",
+}: {
+  seats: TrainSeat[];
+  layout?: "below" | "inline";
+}) {
+  if (!seats.length) return null;
+
+  const previewSeats = seats.slice(0, COLLAPSED_SEAT_PREVIEW_LIMIT);
+
+  if (layout === "inline") {
+    return (
+      <div className="grid grid-cols-4 gap-x-[15px] gap-y-1">
+        {seats.map((seat) => (
+          <SeatPreviewItem key={seat.SeatTypeName} seat={seat} />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-2 grid grid-cols-4 gap-x-[15px] gap-y-1 border-t border-[#f0f0f0] pt-2">
+      {previewSeats.map((seat) => (
+        <SeatPreviewItem key={seat.SeatTypeName} seat={seat} />
+      ))}
+    </div>
+  );
+}
+
 function BerthPriceLine({ bedInfos }: { bedInfos: TrainBedInfo[] }) {
   return (
     <div
@@ -146,25 +188,7 @@ export function TrainSeatRow({
   if (!seats.length) return null;
 
   if (!expanded) {
-    const previewSeats = seats.slice(0, COLLAPSED_SEAT_PREVIEW_LIMIT);
-
-    return (
-      <div className="mt-2 grid grid-cols-4 gap-x-5 gap-y-1 border-t border-[#f0f0f0] pt-2">
-        {previewSeats.map((seat) => {
-          const availability = formatSeatAvailability(seat.Count);
-          return (
-            <span key={seat.SeatTypeName} className="whitespace-nowrap">
-              <span className={SEAT_TYPE_PREVIEW_CLASS}>
-                {formatSeatTypeDisplayName(seat.SeatTypeName)}
-              </span>{" "}
-              <span className={getPreviewAvailabilityClass(availability)}>
-                {availability.text}
-              </span>
-            </span>
-          );
-        })}
-      </div>
-    );
+    return <TrainSeatPreview seats={seats} layout="below" />;
   }
 
   const availableSeats = filterAvailableTrainSeats(seats);

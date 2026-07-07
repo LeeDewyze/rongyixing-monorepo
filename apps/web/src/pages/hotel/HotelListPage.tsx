@@ -10,7 +10,7 @@ import {
   resolveHotelListEmptyVariant,
 } from "@/components/hotel/HotelListEmptyState";
 import { HotelListHeader } from "@/components/hotel/HotelListHeader";
-import { HotelListItem } from "@/components/hotel/HotelListItem";
+import { HotelListItem, HOTEL_LIST_CARD_CLASS } from "@/components/hotel/HotelListItem";
 import { HotelListToolbar, type HotelListToolbarId } from "@/components/hotel/HotelListToolbar";
 import { HotelStayDatePickerSheet } from "@/components/hotel/HotelStayDatePickerSheet";
 import { CityPicker } from "@/components/search";
@@ -43,6 +43,7 @@ import { WEB_PAGE_BODY, WEB_PAGE_ROOT, WEB_PAGE_STICKY_HEADER } from "@/lib/web-
 
 const HOTEL_LIST_FONT =
   "[font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
+const HOTEL_LIST_GRID_CLASS = "grid grid-cols-2 gap-2";
 const BASIC_FILTER_SECTIONS: HotelListFilterSection[] = ["sort", "star", "category", "price"];
 const LOCATION_FILTER_SECTIONS: HotelListFilterSection[] = ["location"];
 const AMENITY_FILTER_SECTIONS: HotelListFilterSection[] = ["brand", "theme", "service", "facility"];
@@ -83,11 +84,11 @@ function useInfiniteScrollTrigger(
 
 function HotelListSkeleton() {
   return (
-    <div className="flex flex-col gap-2">
+    <div className={HOTEL_LIST_GRID_CLASS}>
       {Array.from({ length: 4 }, (_, i) => (
-        <div key={i} className="flex gap-3 rounded-lg bg-white p-3">
-          <div className="size-24 shrink-0 animate-pulse rounded-lg bg-[#E5E7EB]" />
-          <div className="flex min-h-24 flex-1 flex-col justify-between py-0.5">
+        <div key={i} className={`flex gap-3 p-3 ${HOTEL_LIST_CARD_CLASS}`}>
+          <div className="size-[88px] shrink-0 animate-pulse rounded-lg bg-[#E5E7EB]" />
+          <div className="flex min-h-0 flex-1 flex-col justify-between py-0.5">
             <div className="space-y-2">
               <div className="h-4 w-full animate-pulse rounded bg-[#E5E7EB]" />
               <div className="h-4 w-3/4 animate-pulse rounded bg-[#E5E7EB]" />
@@ -489,9 +490,9 @@ export function HotelListPage() {
           ) : null}
 
           {!citiesLoading && !isInitialLoading && hotels.length > 0 ? (
-            <ul className="flex flex-col gap-2">
+            <ul className={HOTEL_LIST_GRID_CLASS}>
               {hotels.map((hotel) => (
-                <li key={hotel.HotelId} className="overflow-hidden rounded-lg bg-white">
+                <li key={hotel.HotelId} className="min-w-0">
                   <HotelListItem hotel={hotel} onClick={() => openDetail(hotel)} />
                 </li>
               ))}
