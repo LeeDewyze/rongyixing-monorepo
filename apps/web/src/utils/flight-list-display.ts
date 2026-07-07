@@ -245,6 +245,51 @@ export function formatOrderTripAirlineFlightLabel(trip: TripAirlineDisplayInput)
   return [airlineShort, flightNo].filter(Boolean).join("");
 }
 
+/** Compact cross-day hint beside arrival time, e.g. `+1天`. */
+export function formatArrivalDayOffsetLabel(
+  takeoffTime: string | undefined,
+  arrivalTime: string | undefined,
+): string | undefined {
+  const depDate = takeoffTime?.slice(0, 10);
+  const arrDate = arrivalTime?.slice(0, 10);
+  if (!depDate || !arrDate || depDate === arrDate) return undefined;
+  const dep = parseLocalDate(depDate);
+  const arr = parseLocalDate(arrDate);
+  if (!dep || !arr) return "+1天";
+  const diff = Math.round((arr.getTime() - dep.getTime()) / 86_400_000);
+  return diff > 0 ? `+${diff}天` : undefined;
+}
+
+/** List card airport line — same rules as H5 `formatAirportLabel`, e.g. `北京大兴`, `北京首都 T3`. */
+export function formatFlightListAirportLine(
+  cityName: string | undefined,
+  airportName: string | undefined,
+  terminal: string | undefined,
+): string {
+  const airport = shortAirportName(airportName ?? cityName);
+  const term = terminal?.trim() ?? "";
+  return term ? `${airport} ${term}` : airport;
+}
+
+/** Pad/PC list card airline + flight number, e.g. `国航CA1915`. */
+export function formatFlightListAirlineFlightLabel(
+  segment: Pick<FlightSegment, "AirlineName" | "Airline" | "Number" | "FlightNumber">,
+): string {
+  const flightNo = (segment.Number ?? segment.FlightNumber ?? "").trim();
+  const airlineShort = shortAirlineName(segment.AirlineName ?? segment.Airline);
+  return [airlineShort, flightNo].filter(Boolean).join("");
+}
+
+/** Pad/PC list card plane subtitle, e.g. `空客321（中）`. */
+export function formatFlightListPlaneSubtitle(
+  segment: Pick<FlightSegment, "PlaneType" | "PlaneTypeDescribe">,
+): string {
+  const describe = formatFlightListPlaneLabel(segment.PlaneTypeDescribe, segment.PlaneType);
+  if (describe) return describe;
+  const code = segment.PlaneType?.trim();
+  return code ? `机型 ${code}` : "";
+}
+
 /** List card airline short name, e.g. 东方航空 → 东航, 中国国航 → 国航 */
 export function shortAirlineName(name: string | undefined): string {
   if (!name) return "";

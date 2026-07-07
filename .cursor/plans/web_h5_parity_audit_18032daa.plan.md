@@ -9,7 +9,7 @@ todos:
     content: "Optional: add /trips → /orders?scope=pendingTravel redirect for legacy deep links"
     status: pending
   - id: parity-account-deletion-entry
-    content: Decide and either restore account deletion entry on Web AccountSecurityPage or document intentional hide
+    content: Implement account deletion entry on both H5 and Web AccountSecurityPage (route exists on both, entry row pending per account_deletion_feature plan)
     status: pending
   - id: commit-banner-fix
     content: Commit uncommitted WebBannerCarousel / useHomeBanners fixes if not yet committed
@@ -141,11 +141,11 @@ Bundle B 已落地：
 - [`WebProfilePage`](apps/web/src/pages/profile/WebProfilePage.tsx) — Pad 设计稿布局（非 H5 菜单列表，**入口等价**）
 - 设置 7 页、证件、银行卡、联系、公告：路由齐全
 
-**唯一行为差异：**
+**双方均未实现（非 Web 遗漏）：**
 
-- H5 [`AccountSecurityPage`](apps/h5/src/pages/settings/AccountSecurityPage.tsx) 有「注销账号」入口
-- Web [`AccountSecurityPage`](apps/web/src/pages/settings/AccountSecurityPage.tsx) **隐藏了该入口**（路由 `/settings/account-deletion` 仍存在）
-- 若要求严格 1:1，需恢复入口；若为 Pad 产品决策，应文档化
+- 「注销账号」入口：[`AccountSecurityPage`](apps/h5/src/pages/settings/AccountSecurityPage.tsx) 与 Web 版本代码完全相同，**双方均无**该入口行
+- 路由 `/settings/account-deletion` 双方均已注册；[`account_deletion_feature`](.cursor/plans/account_deletion_feature_00b59b9a.plan.md) 仍为 pending
+- 待该计划实施时，双方 AccountSecurityPage 应同步添加入口
 
 ### 出差审批 — 对齐
 
@@ -179,7 +179,7 @@ Bundle C 已落地：
 
 ### P1 — 小缺口（若要求严格 1:1）
 
-1. **注销账号入口**：在 Web `AccountSecurityPage` 恢复与 H5 一致的菜单行（或确认产品永久隐藏并写入文档）
+1. **注销账号入口**：双方 `AccountSecurityPage` 均缺入口（路由已注册）；实施 `account_deletion_feature` 时双方同步加入
 2. **Legacy `/trips` redirect**：在 [`routes.tsx`](apps/web/src/app/routes.tsx) 增加 `{ path: "trips", element: <Navigate to="/orders?scope=pendingTravel" /> }`
 3. **提交轮播图修复**（若尚未 commit）
 

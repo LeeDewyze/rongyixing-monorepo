@@ -29,9 +29,18 @@ export function FlightBookPassengerSection({
 
       {seatPicker ? <div className="pb-4">{seatPicker}</div> : null}
 
-      {notifyLanguage ? <div className="pb-4">{notifyLanguage}</div> : null}
-
-      {serviceFee ? <div className="pb-4">{serviceFee}</div> : null}
+      {notifyLanguage || serviceFee ? (
+        <div className="pb-4">
+          {notifyLanguage && serviceFee ? (
+            <div className="flex items-stretch gap-3">
+              <div className="min-w-0 flex-1">{notifyLanguage}</div>
+              <div className="min-w-0 flex-1">{serviceFee}</div>
+            </div>
+          ) : (
+            (notifyLanguage ?? serviceFee)
+          )}
+        </div>
+      ) : null}
     </section>
   );
 }

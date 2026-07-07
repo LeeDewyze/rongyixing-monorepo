@@ -4,17 +4,19 @@ import {
   HOTEL_DETAIL_FONT,
   HOTEL_ORDER_AMOUNT_VALUE,
   HOTEL_ORDER_LINK_ACTION,
-  HOTEL_ORDER_ROW_LABEL,
   HOTEL_ORDER_SECTION_TITLE,
 } from "@/components/hotel/hotel-detail-chrome";
+import {
+  ORDER_DETAIL_INSET_CELL_CLASS,
+  ORDER_DETAIL_INSET_LABEL_CLASS,
+  OrderDetailInsetCell,
+} from "@/components/order/OrderDetailInsetCell";
 import { OrderStatusBadge } from "@/components/order/OrderStatusBadge";
 import {
   formatOrderDateTime,
   formatPayHoldCountdownZh,
   formatTravelPayType,
 } from "@/lib/flight-order-detail";
-
-import { HotelOrderDetailRow } from "../hotel/HotelOrderDetailRow";
 
 interface FlightOrderInfoCardProps {
   detail: HotelOrderDetail;
@@ -52,18 +54,20 @@ export function FlightOrderInfoCard({
         </div>
       </div>
 
-      <HotelOrderDetailRow label="订单编号" value={detail.OrderNumber ?? detail.OrderId} />
-      {transactionId ? <HotelOrderDetailRow label="事务号" value={transactionId} /> : null}
-      <HotelOrderDetailRow label="付款方式" value={formatTravelPayType(detail.TravelPayType)} />
-      <HotelOrderDetailRow label="完成时间" value={formatOrderDateTime(detail.InsertTime)} />
-      <div className="flex items-center justify-between gap-4 py-1.5">
-        <span className={HOTEL_ORDER_ROW_LABEL}>订单金额</span>
-        <span className="flex items-center gap-2">
-          <span className={HOTEL_ORDER_AMOUNT_VALUE}>¥{detail.TotalAmount ?? "—"}</span>
-          <button type="button" className={HOTEL_ORDER_LINK_ACTION} onClick={onShowBill}>
-            应付明细
-          </button>
-        </span>
+      <div className="grid grid-cols-2 gap-3">
+        <OrderDetailInsetCell label="订单编号" value={detail.OrderNumber ?? detail.OrderId} />
+        {transactionId ? <OrderDetailInsetCell label="事务号" value={transactionId} /> : null}
+        <OrderDetailInsetCell label="付款方式" value={formatTravelPayType(detail.TravelPayType)} />
+        <OrderDetailInsetCell label="完成时间" value={formatOrderDateTime(detail.InsertTime)} />
+        <div className={ORDER_DETAIL_INSET_CELL_CLASS}>
+          <span className={ORDER_DETAIL_INSET_LABEL_CLASS}>订单金额</span>
+          <span className="flex shrink-0 items-center gap-2">
+            <span className={HOTEL_ORDER_AMOUNT_VALUE}>¥{detail.TotalAmount ?? "—"}</span>
+            <button type="button" className={HOTEL_ORDER_LINK_ACTION} onClick={onShowBill}>
+              应付明细
+            </button>
+          </span>
+        </div>
       </div>
     </section>
   );

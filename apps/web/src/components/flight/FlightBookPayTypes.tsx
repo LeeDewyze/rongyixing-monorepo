@@ -51,11 +51,11 @@ export function FlightBookPayTypes({
       </button>
 
       {expanded ? (
-        <div className="mt-3 space-y-2 border-t border-[#F0F0F0] pt-3">
+        <div className="mt-3 grid grid-cols-2 gap-3 border-t border-[#F0F0F0] pt-3">
           {options.map((option) => (
             <label
               key={option.value}
-              className="flex cursor-pointer items-center gap-3 rounded-lg bg-[#F6F8FC] px-3 py-3.5"
+              className="flex min-h-12 cursor-pointer items-center gap-3 rounded-lg bg-[#F6F8FC] px-3 py-3.5"
             >
               <div className="min-w-0 flex-1">
                 <p className={payTypeOptionLabelClass}>

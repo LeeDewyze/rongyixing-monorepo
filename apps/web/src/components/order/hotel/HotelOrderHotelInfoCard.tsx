@@ -4,6 +4,7 @@ import {
   HOTEL_DETAIL_FONT,
   HOTEL_ORDER_SECTION_TITLE,
 } from "@/components/hotel/hotel-detail-chrome";
+import { OrderDetailInsetCell } from "@/components/order/OrderDetailInsetCell";
 import {
   computeStayNights,
   formatActualStayRange,
@@ -11,8 +12,6 @@ import {
   formatOrderBreakfastLabel,
   formatStayRange,
 } from "@/lib/hotel-order-detail";
-
-import { HotelOrderDetailRow } from "./HotelOrderDetailRow";
 
 interface HotelOrderHotelInfoCardProps {
   room: HotelOrderRoom;
@@ -31,61 +30,59 @@ export function HotelOrderHotelInfoCard({ room }: HotelOrderHotelInfoCardProps) 
     >
       <h2 className={`mb-3 ${HOTEL_ORDER_SECTION_TITLE}`}>酒店信息</h2>
 
-      <HotelOrderDetailRow label="酒店名称" value={room.HotelName ?? "—"} />
-      <HotelOrderDetailRow
-        label="房型名称"
-        value={
-          roomNameWithBreakfast ? (
-            <span className="line-clamp-1 w-full break-all text-right">
-              {roomNameWithBreakfast}
-            </span>
-          ) : (
-            "—"
-          )
-        }
-      />
-      <HotelOrderDetailRow
-        label="酒店状态"
-        value={
-          <>
-            {room.StatusName ?? "—"}
-            {room.ExceptionMessage ? (
-              <span className="text-[#FF4D4F]"> ({room.ExceptionMessage})</span>
-            ) : null}
-          </>
-        }
-      />
-      <HotelOrderDetailRow
-        label="入离日期"
-        value={formatStayRange(room.BeginDate, room.EndDate, nights)}
-      />
-      <HotelOrderDetailRow
-        label="实际入离"
-        value={formatActualStayRange(room.CheckinTime, room.CheckoutTime)}
-      />
-      <HotelOrderDetailRow label="地址" value={room.HotelAddress ?? "—"} />
-      <HotelOrderDetailRow label="支付方式" value={formatHotelPaymentType(room.PaymentType)} />
-      <HotelOrderDetailRow
-        label="支付金额"
-        value={room.RoomFee != null ? `¥${room.RoomFee}` : "—"}
-      />
-      <HotelOrderDetailRow label="发票类型" value={room.HotelInvoice ?? "—"} />
-      <HotelOrderDetailRow
-        label="酒店电话"
-        value={
-          room.HotelContact ? (
-            <a href={`tel:${room.HotelContact}`} className="text-brand-primary">
-              {room.HotelContact}
-            </a>
-          ) : (
-            "—"
-          )
-        }
-      />
-      <HotelOrderDetailRow label="供应商" value={room.SupplierName ?? "—"} />
+      <div className="grid grid-cols-2 gap-3">
+        <OrderDetailInsetCell label="酒店名称" value={room.HotelName ?? "—"} multilineValue />
+        <OrderDetailInsetCell
+          label="房型名称"
+          value={roomNameWithBreakfast ?? "—"}
+          multilineValue
+        />
+        <OrderDetailInsetCell
+          label="酒店状态"
+          value={
+            <>
+              {room.StatusName ?? "—"}
+              {room.ExceptionMessage ? (
+                <span className="text-[#FF4D4F]"> ({room.ExceptionMessage})</span>
+              ) : null}
+            </>
+          }
+          multilineValue
+        />
+        <OrderDetailInsetCell
+          label="入离日期"
+          value={formatStayRange(room.BeginDate, room.EndDate, nights)}
+          multilineValue
+        />
+        <OrderDetailInsetCell
+          label="实际入离"
+          value={formatActualStayRange(room.CheckinTime, room.CheckoutTime)}
+          multilineValue
+        />
+        <OrderDetailInsetCell label="地址" value={room.HotelAddress ?? "—"} multilineValue />
+        <OrderDetailInsetCell label="支付方式" value={formatHotelPaymentType(room.PaymentType)} />
+        <OrderDetailInsetCell
+          label="支付金额"
+          value={room.RoomFee != null ? `¥${room.RoomFee}` : "—"}
+        />
+        <OrderDetailInsetCell label="发票类型" value={room.HotelInvoice ?? "—"} />
+        <OrderDetailInsetCell
+          label="酒店电话"
+          value={
+            room.HotelContact ? (
+              <a href={`tel:${room.HotelContact}`} className="text-brand-primary">
+                {room.HotelContact}
+              </a>
+            ) : (
+              "—"
+            )
+          }
+        />
+        <OrderDetailInsetCell label="供应商" value={room.SupplierName ?? "—"} />
+      </div>
 
       {room.RuleDescription ? (
-        <div className="border-t border-[#F0F0F0] pt-2">
+        <div className="mt-3 border-t border-[#F0F0F0] pt-2">
           <p className="pb-2 text-[13px] leading-relaxed text-[#FF9500]">{room.RuleDescription}</p>
         </div>
       ) : null}

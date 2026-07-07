@@ -71,54 +71,56 @@ export function FlightBookFooter({
         {billOpen && billBreakdown ? <FlightBookBillSheet breakdown={billBreakdown} /> : null}
 
         <div className="bg-white px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
-          <label className="mb-2.5 flex cursor-pointer items-center gap-2 text-[12px] leading-snug text-[#666666]">
-            <span className="relative flex size-5 shrink-0 items-center justify-center">
-              <input
-                type="checkbox"
-                checked={agreed}
-                onChange={(e) => onAgreedChange(e.target.checked)}
-                className="peer absolute inset-0 opacity-0"
-              />
-              <span className="size-5 rounded-full border border-[#b8b8b8] peer-checked:border-brand-accent peer-checked:bg-brand-accent" />
-              <span className="pointer-events-none absolute hidden text-[13px] leading-none text-white peer-checked:block">
-                ✓
-              </span>
-            </span>
-            <span>
-              我已阅读并同意
-              {showTicketNotice ? (
+          <div className="flex items-center gap-3">
+            <div className="flex min-w-0 flex-1 items-center">
+              <div className="flex h-9 shrink-0 items-center gap-2">
+                <p className="m-0 shrink-0 text-[13px] leading-none text-[#666666]">总计</p>
+                <p className="m-0 text-[25px] font-semibold leading-none text-[#FF4D4F]">
+                  ¥{Number.isFinite(amount) ? amount : "—"}
+                </p>
                 <button
                   type="button"
-                  className="text-brand-accent"
-                  onClick={(event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    onShowTicketNotice?.();
-                  }}
+                  className="inline-flex items-center gap-1 text-[13px] leading-none text-brand-primary"
+                  aria-expanded={billOpen}
+                  onClick={onBillToggle}
                 >
-                  购票须知
+                  明细
+                  <BillChevron open={billOpen} />
                 </button>
-              ) : (
-                <span className="text-brand-accent">购票须知</span>
-              )}
-            </span>
-          </label>
+              </div>
 
-          <div className="flex items-center gap-3">
-            <div className="flex h-9 min-w-0 flex-1 items-center gap-2">
-              <p className="m-0 shrink-0 text-[13px] leading-none text-[#666666]">总计</p>
-              <p className="m-0 text-[25px] font-semibold leading-none text-[#FF4D4F]">
-                ¥{Number.isFinite(amount) ? amount : "—"}
-              </p>
-              <button
-                type="button"
-                className="inline-flex items-center gap-1 text-[13px] leading-none text-brand-primary"
-                aria-expanded={billOpen}
-                onClick={onBillToggle}
-              >
-                明细
-                <BillChevron open={billOpen} />
-              </button>
+              <label className="ml-[30px] flex min-w-0 cursor-pointer items-center gap-2 text-[12px] leading-snug text-[#666666]">
+                <span className="relative flex size-5 shrink-0 items-center justify-center">
+                  <input
+                    type="checkbox"
+                    checked={agreed}
+                    onChange={(e) => onAgreedChange(e.target.checked)}
+                    className="peer absolute inset-0 opacity-0"
+                  />
+                  <span className="size-5 rounded-full border border-[#b8b8b8] peer-checked:border-brand-accent peer-checked:bg-brand-accent" />
+                  <span className="pointer-events-none absolute hidden text-[13px] leading-none text-white peer-checked:block">
+                    ✓
+                  </span>
+                </span>
+                <span className="truncate">
+                  我已阅读并同意
+                  {showTicketNotice ? (
+                    <button
+                      type="button"
+                      className="text-brand-accent"
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        onShowTicketNotice?.();
+                      }}
+                    >
+                      购票须知
+                    </button>
+                  ) : (
+                    <span className="text-brand-accent">购票须知</span>
+                  )}
+                </span>
+              </label>
             </div>
 
             <div className="flex shrink-0 items-center gap-2">

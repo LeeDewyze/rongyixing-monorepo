@@ -4,8 +4,7 @@ import {
   HOTEL_DETAIL_FONT,
   HOTEL_ORDER_SECTION_TITLE,
 } from "@/components/hotel/hotel-detail-chrome";
-
-import { HotelOrderDetailRow } from "../hotel/HotelOrderDetailRow";
+import { OrderDetailInsetCell } from "@/components/order/OrderDetailInsetCell";
 
 interface FlightOrderContactCardProps {
   contact?: OrderContact;
@@ -22,9 +21,11 @@ export function FlightOrderContactCard({ contact }: FlightOrderContactCardProps)
     >
       <h2 className={`mb-3 ${HOTEL_ORDER_SECTION_TITLE}`}>联系人信息</h2>
 
-      <HotelOrderDetailRow label="姓名" value={displayOrEmpty(contact?.Name)} />
-      <HotelOrderDetailRow label="邮箱" value={displayOrEmpty(contact?.Email)} />
-      <HotelOrderDetailRow label="电话" value={displayOrEmpty(contact?.Mobile)} />
+      <div className="grid grid-cols-3 gap-3">
+        <OrderDetailInsetCell label="姓名" value={displayOrEmpty(contact?.Name)} />
+        <OrderDetailInsetCell label="邮箱" value={displayOrEmpty(contact?.Email)} />
+        <OrderDetailInsetCell label="电话" value={displayOrEmpty(contact?.Mobile)} />
+      </div>
     </section>
   );
 }

@@ -2,9 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import {
   formatArrivalDateBadge,
+  formatArrivalDayOffsetLabel,
   formatCabinsDepartTitle,
+  formatFlightListAirlineFlightLabel,
+  formatFlightListAirportLine,
   formatFlightListMetaLine,
   formatFlightListPlaneLabel,
+  formatFlightListPlaneSubtitle,
   formatFlightLocationLabel,
   formatFlightMealLabel,
   formatFlightMetaDuration,
@@ -26,6 +30,26 @@ describe("flight-list-display cabins helpers", () => {
 
   it("shows arrival cross-day badge", () => {
     expect(formatArrivalDateBadge("2026-01-05T22:05:00", "2026-01-06T00:30:00")).toBe("1月06日");
+    expect(formatArrivalDayOffsetLabel("2026-01-05T22:05:00", "2026-01-06T00:30:00")).toBe("+1天");
+  });
+
+  it("formats pad list airport and airline labels", () => {
+    expect(formatFlightListAirportLine("北京市", "北京大兴国际机场", undefined)).toBe("北京大兴");
+    expect(formatFlightListAirportLine("北京市", "北京首都国际机场", "T3")).toBe("北京首都 T3");
+    expect(formatFlightListAirportLine("长沙市", "长沙黄花国际机场", "T2")).toBe("长沙黄花 T2");
+    expect(formatFlightListAirportLine("上海市", "浦东国际机场", "T2")).toBe("浦东 T2");
+    expect(
+      formatFlightListAirlineFlightLabel({
+        AirlineName: "中国国航",
+        Number: "CA1915",
+      }),
+    ).toBe("国航CA1915");
+    expect(
+      formatFlightListPlaneSubtitle({
+        PlaneTypeDescribe: "空客A321(中)",
+        PlaneType: "321",
+      }),
+    ).toBe("空客A321（中）");
   });
 
   it("formats meal and duration meta", () => {

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import { HOTEL_DETAIL_FONT } from "@/components/hotel/hotel-detail-chrome";
 import type { FlightFareRuleSheetRow } from "@/lib/flight-detail";
+import { WEB_PAGE_OVERLAY } from "@/lib/web-page-layout";
 
 export function FareRulesSheetCloseButton({ onClose }: { onClose: () => void }) {
   return (
@@ -43,12 +44,15 @@ export function FareRulesBottomSheet({
   if (!open) return null;
 
   return (
-    <div
-      className={`fixed inset-0 z-50 flex flex-col justify-end bg-black/45 ${HOTEL_DETAIL_FONT}`}
-    >
-      <button type="button" className="flex-1" aria-label="关闭" onClick={onClose} />
+    <div className={`${WEB_PAGE_OVERLAY} ${HOTEL_DETAIL_FONT}`}>
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/45"
+        aria-label="关闭"
+        onClick={onClose}
+      />
       <div
-        className="flex max-h-[70vh] flex-col overflow-hidden rounded-t-[20px] bg-white pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-10px_40px_rgba(0,0,0,0.12)]"
+        className="relative z-10 flex w-full max-h-[70vh] flex-col overflow-hidden rounded-t-[20px] bg-white pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-10px_40px_rgba(0,0,0,0.12)]"
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}

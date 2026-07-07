@@ -24,5 +24,8 @@ export const WEB_PAGE_FULL_WIDTH = "w-full";
 export const WEB_PAGE_BOTTOM_BAR =
   "z-40 shrink-0 w-full border-t border-[#eeeeee] bg-white pb-[max(0.25rem,env(safe-area-inset-bottom))] shadow-[0_-2px_8px_rgba(0,0,0,0.04)]";
 
+/** Modal / bottom sheet overlay scoped to WEB_PAGE_ROOT (not viewport-fixed). */
+export const WEB_PAGE_OVERLAY = "absolute inset-0 z-50 flex flex-col justify-end";
+
 /** Picker / form shell — fills main column (not viewport-fixed). */
 export const WEB_PAGE_PICKER_ROOT = "flex h-full min-h-0 w-full flex-col overflow-hidden";
