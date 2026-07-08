@@ -1,10 +1,15 @@
 import type { FlightInsuranceProduct } from "@ryx/shared-types";
 
 export function resolvePassengerInsuranceProducts(
-  insurances: Record<string, FlightInsuranceProduct[] | null> | undefined,
+  insurances:
+    | Record<string, FlightInsuranceProduct[] | null>
+    | FlightInsuranceProduct[]
+    | undefined,
   passenger: { id: string; passenger: { AccountId?: string; Id?: string } },
 ): FlightInsuranceProduct[] {
   if (!insurances) return [];
+  if (Array.isArray(insurances)) return insurances;
+
   const keys = [
     passenger.id,
     passenger.passenger.AccountId,

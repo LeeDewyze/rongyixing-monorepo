@@ -185,15 +185,42 @@ VITE_API_MODE=mock pnpm --filter @ryx/web dev
 
 Log in at `/login/password` before using home, orders, or booking flows.
 
+### Single-IP Test Deployment
+
+When a test environment has only one IP and no domain names, deploy H5 and Web as two
+services behind one server Nginx entry:
+
+```text
+http://<server-ip>/h5/   -> @ryx/h5
+http://<server-ip>/web/  -> @ryx/web
+```
+
+The apps support sub-path deployment through `VITE_BASE_PATH`:
+
+```bash
+VITE_BASE_PATH=/h5/ pnpm --filter @ryx/h5 build
+VITE_BASE_PATH=/web/ pnpm --filter @ryx/web build
+```
+
+For Docker-based test deployment, use:
+
+```bash
+deploy/scripts/deploy-ip-prefix.sh
+```
+
+This builds `ryx-h5` on `127.0.0.1:18080`, `ryx-web` on `127.0.0.1:18081`, and installs
+`deploy/nginx/ip-prefix.conf` so the public IP can route `/h5/` and `/web/` to the two services.
+
 ### Environment Variables
 
-| Variable              | App    | Description                            |
-| --------------------- | ------ | -------------------------------------- |
-| `VITE_APP_NAME`       | h5/web | Display name in the app shell          |
-| `VITE_APP_ID`         | h5/web | App id for `/Home/Setting` bootstrap   |
-| `VITE_API_BASE_URL`   | h5/web | Backend / proxy gateway base URL       |
-| `VITE_API_MODE`       | h5/web | `mock`, `proxy` (default), or `direct` |
-| `VITE_API_MOCK_DELAY` | h5/web | Artificial delay (ms) in mock mode     |
+| Variable              | App    | Description                             |
+| --------------------- | ------ | --------------------------------------- |
+| `VITE_APP_NAME`       | h5/web | Display name in the app shell           |
+| `VITE_APP_ID`         | h5/web | App id for `/Home/Setting` bootstrap    |
+| `VITE_BASE_PATH`      | h5/web | Browser base path, e.g. `/h5/`, `/web/` |
+| `VITE_API_BASE_URL`   | h5/web | Backend / proxy gateway base URL        |
+| `VITE_API_MODE`       | h5/web | `mock`, `proxy` (default), or `direct`  |
+| `VITE_API_MOCK_DELAY` | h5/web | Artificial delay (ms) in mock mode      |
 
 Read env vars only in `apps/*/src/lib/env.ts`. Extend `src/vite-env.d.ts` when adding new variables.
 

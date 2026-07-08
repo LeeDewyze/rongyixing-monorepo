@@ -44,11 +44,19 @@ function createRyxServiceProxies(): Record<string, object> {
   return proxies;
 }
 
+function normalizeViteBase(value: string | undefined): string {
+  const raw = value?.trim();
+  if (!raw || raw === "/") return "/";
+  return `/${raw.replace(/^\/+|\/+$/g, "")}/`;
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, __dirname, "");
   const apiBase = env.VITE_API_BASE_URL || "https://app.rongtrip.cn";
+  const appBase = normalizeViteBase(process.env.VITE_BASE_PATH ?? env.VITE_BASE_PATH);
 
   return {
+    base: appBase,
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {

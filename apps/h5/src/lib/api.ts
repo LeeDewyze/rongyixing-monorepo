@@ -10,6 +10,7 @@ import {
   getRequestLanguage,
   getTicketName,
 } from "@/lib/request-context";
+import { stripAppBasePath, withAppBasePath } from "@/lib/base-path";
 import { clearSession, getTicket } from "@/lib/session";
 import { isTouristMethod, sendWithTouristContext } from "@/lib/tourist-context";
 
@@ -77,8 +78,11 @@ export function getApi() {
       onUnauthorized: () => {
         clearSession();
         const path = `${window.location.pathname}${window.location.search}`;
-        if (!path.startsWith("/login")) {
-          window.location.href = `/login/password?returnTo=${encodeURIComponent(path)}`;
+        const routerPath = stripAppBasePath(path);
+        if (!routerPath.startsWith("/login")) {
+          window.location.href = withAppBasePath(
+            `/login/password?returnTo=${encodeURIComponent(path)}`,
+          );
         }
       },
     });

@@ -5,6 +5,7 @@ import { Button } from "@ryx/ui/components/ui/button";
 
 import { usePasswordLogin } from "@/hooks/useAuth";
 import { isAuthenticated } from "@/lib/auth";
+import { resolveInternalReturnTo } from "@/lib/base-path";
 import { getApiMode, getAppName } from "@/lib/env";
 import { formatApiError } from "@/lib/formatApiError";
 import {
@@ -62,7 +63,7 @@ export function PasswordLoginPage() {
       } else {
         clearRememberedCredentials();
       }
-      navigate(returnTo?.startsWith("/") && !returnTo.startsWith("/login") ? returnTo : "/");
+      navigate(resolveInternalReturnTo(returnTo, "/"));
     } catch {
       // Error surfaced via login.error
     }
@@ -73,12 +74,7 @@ export function PasswordLoginPage() {
   const errorMessage = login.error ? formatApiError(login.error, "generic") : null;
 
   if (isAuthenticated()) {
-    return (
-      <Navigate
-        to={returnTo?.startsWith("/") && !returnTo.startsWith("/login") ? returnTo : "/"}
-        replace
-      />
-    );
+    return <Navigate to={resolveInternalReturnTo(returnTo, "/")} replace />;
   }
 
   return (

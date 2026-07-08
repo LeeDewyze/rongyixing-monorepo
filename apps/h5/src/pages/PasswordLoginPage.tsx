@@ -6,6 +6,7 @@ import { DesignScreen } from "@/components/DesignScreen";
 import { designCqw, designHeightPercent, designWidthPercent } from "@/config/design";
 import { LOGIN_FONT, PASSWORD_LOGIN_LAYOUT, PASSWORD_LOGIN_SHARED } from "@/config/password-login";
 import { usePasswordLogin } from "@/hooks/useAuth";
+import { resolveInternalReturnTo } from "@/lib/base-path";
 import { getApiMode } from "@/lib/env";
 import {
   clearRememberedCredentials,
@@ -128,7 +129,7 @@ export function PasswordLoginPage() {
       } else {
         clearRememberedCredentials();
       }
-      navigate(returnTo?.startsWith("/") ? returnTo : "/home");
+      navigate(resolveInternalReturnTo(returnTo, "/home"));
     } catch {
       // Error surfaced via login.error
     }
