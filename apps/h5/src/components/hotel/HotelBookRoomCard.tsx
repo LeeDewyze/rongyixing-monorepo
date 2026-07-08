@@ -22,7 +22,7 @@ export function HotelBookRoomCard({
   return (
     <FlightBookExpandableSummaryCard
       surface="plain"
-      className="overflow-hidden rounded-xl ring-1 ring-[#EEF1F6]"
+      className="overflow-hidden rounded-xl bg-[#F8FAFF] ring-1 ring-[#DCE8FF]"
       name={passengerName}
       subtitle={credentialSubtitle}
       expanded={expanded}

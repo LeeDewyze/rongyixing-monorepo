@@ -13,6 +13,28 @@ const DEFAULT_HOTEL_ACTIONS: HotelOrderActionFlags = {
   smsAction: "none",
 };
 
+function shouldFallbackShowPay(detail: HotelOrderDetail): boolean {
+  if (detail.isShowPayButton) return true;
+  if (detail.Status === "WaitPay") return true;
+  return /待支付|等待支付|待付款/.test(detail.StatusName ?? "");
+}
+
+function shouldFallbackShowCancel(detail: HotelOrderDetail): boolean {
+  if (detail.Status === "WaitPay") return true;
+  return /待支付|等待支付|待付款/.test(detail.StatusName ?? "");
+}
+
+function coerceHotelOrderActions(detail: HotelOrderDetail): HotelOrderActionFlags {
+  const actions = detail.Actions ?? DEFAULT_HOTEL_ACTIONS;
+  return {
+    ...DEFAULT_HOTEL_ACTIONS,
+    ...actions,
+    showPay: Boolean(actions.showPay || shouldFallbackShowPay(detail)),
+    showCancel: Boolean(actions.showCancel || shouldFallbackShowCancel(detail)),
+    smsAction: actions.smsAction ?? DEFAULT_HOTEL_ACTIONS.smsAction,
+  };
+}
+
 export type CoercedHotelOrderDetail = HotelOrderDetail & {
   Rooms: HotelOrderRoom[];
   BillItems: HotelOrderBillLine[];
@@ -27,12 +49,7 @@ export function coerceHotelOrderDetail(detail: HotelOrderDetail): CoercedHotelOr
     Rooms: detail.Rooms ?? [],
     BillItems: detail.BillItems ?? [],
     Histories: detail.Histories ?? [],
-    Actions:
-      detail.Actions ??
-      ({
-        ...DEFAULT_HOTEL_ACTIONS,
-        showPay: Boolean(detail.isShowPayButton),
-      } satisfies HotelOrderActionFlags),
+    Actions: coerceHotelOrderActions(detail),
     ShowServiceFee: detail.ShowServiceFee ?? true,
   };
 }

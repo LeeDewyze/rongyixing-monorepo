@@ -156,6 +156,20 @@ describe("normalizeHotelOrderDetail", () => {
     expect(detail.Actions.showPay).toBe(false);
   });
 
+  it("falls back to pay and cancel actions for wait-pay legacy hotel detail", () => {
+    const detail = normalizeHotelOrderDetail({
+      Order: {
+        Id: "ORD-WAIT-PAY",
+        Status: "WaitPay",
+        StatusName: "等待支付",
+        OrderHotels: [{ Id: "H1", Key: "k1" }],
+      },
+    });
+
+    expect(detail.Actions.showPay).toBe(true);
+    expect(detail.Actions.showCancel).toBe(true);
+  });
+
   it("passes through already-normalized detail", () => {
     const normalized = {
       OrderId: "ORD-N",
@@ -166,6 +180,21 @@ describe("normalizeHotelOrderDetail", () => {
       ShowServiceFee: true,
     };
     expect(normalizeHotelOrderDetail(normalized).OrderId).toBe("ORD-N");
+  });
+
+  it("coerces wait-pay actions for already-normalized hotel detail", () => {
+    const detail = normalizeHotelOrderDetail({
+      OrderId: "ORD-WAIT-N",
+      StatusName: "等待支付",
+      Rooms: [{ Id: "R1", Key: "k1", HotelName: "Hotel" }],
+      BillItems: [],
+      Histories: [],
+      Actions: { showPay: false, showCancel: false, smsAction: "none" as const },
+      ShowServiceFee: true,
+    });
+
+    expect(detail.Actions.showPay).toBe(true);
+    expect(detail.Actions.showCancel).toBe(true);
   });
 
   it("reads OrderPassengers from payload root like legacy OrderDetailModel", () => {

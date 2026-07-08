@@ -42,43 +42,56 @@ export function HotelBookSummaryCard({
   const roomDetail = [roomName, breakfastLabel].filter(Boolean).join(" ");
 
   return (
-    <section
-      className={`overflow-hidden rounded-xl bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] ${HOTEL_DETAIL_FONT}`}
-    >
-      <div className="px-2 pt-3.5 pb-3">
-        <h2 className="text-[16px] font-medium leading-none text-brand-title">{hotelName}</h2>
+    <div className={`px-3 pb-3 pt-2 ${HOTEL_DETAIL_FONT}`}>
+      <section
+        className="overflow-hidden rounded-lg px-3.5 pb-3 pt-3 shadow-[0_8px_22px_rgba(39,104,250,0.16)]"
+        style={{
+          background: "linear-gradient(270deg, #2768FA 0%, #33A1F9 100%)",
+        }}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <h2 className="truncate text-[17px] font-medium leading-tight text-white">
+              {hotelName}
+            </h2>
+            <p className="mt-2 text-[13px] leading-none text-white/90">
+              {formatStayDate(checkIn)} 至 {formatStayDate(checkOut)}
+            </p>
+          </div>
 
-        <div className="mt-3 flex h-[60px] w-full flex-col justify-center gap-4 rounded-lg bg-[#F5F6F9] px-3">
-          <div className="flex items-center justify-start">
-            <span className="text-[14px] leading-none text-[#333333]">
-              {formatStayDate(checkIn)}
-            </span>
-            <span className="ml-4 shrink-0 text-[12px] font-medium leading-none text-[#FF4D4F]">
-              共{nights}晚
-            </span>
-            <span className="ml-4 text-[14px] leading-none text-[#333333]">
-              {formatStayDate(checkOut)}
+          <div className="shrink-0 rounded-full bg-white/18 px-2.5 py-1 ring-1 ring-white/25">
+            <span className="text-[12px] font-medium leading-none text-white">{nights}晚</span>
+          </div>
+        </div>
+
+        <div className="mt-3 rounded-[8px] bg-white px-3 py-3">
+          <p className="text-[15px] font-medium leading-tight text-[#010101]">{roomName}</p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {breakfastLabel ? (
+              <span className="rounded-full bg-[#F3F7FF] px-2 py-1 text-[12px] leading-none text-brand-primary">
+                {breakfastLabel}
+              </span>
+            ) : null}
+            <span className="rounded-full bg-[#FFF7E8] px-2 py-1 text-[12px] leading-none text-[#FF8D1A]">
+              {cancelLabel}
             </span>
           </div>
-          {roomDetail ? (
-            <p className="text-[14px] font-normal leading-none text-[#666666]">{roomDetail}</p>
+          {roomDetail && roomDetail !== roomName ? (
+            <p className="mt-2 truncate text-[13px] text-[#666666]">{roomDetail}</p>
           ) : null}
         </div>
 
-        <div className="mt-3 flex items-center justify-between">
-          <span className="text-[14px] font-normal leading-none text-[#666666]">
-            <span className="text-[#FF4D4F]">*</span>
-            {cancelLabel}
-          </span>
+        <div className="mt-2 flex items-center justify-between">
+          <span className="text-[12px] leading-none text-white/90">预订前请确认入住政策</span>
           <button
             type="button"
             onClick={onOpenNotice}
-            className="text-right text-[12px] font-normal leading-none text-brand-primary"
+            className="rounded-full bg-white/18 px-2.5 py-1 text-right text-[12px] font-medium leading-none text-white ring-1 ring-white/25 active:opacity-80"
           >
             订房必读
           </button>
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
   );
 }

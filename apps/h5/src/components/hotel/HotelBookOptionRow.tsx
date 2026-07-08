@@ -25,7 +25,7 @@ export function HotelBookOptionRow({
       onClick={onClick}
       className={
         variant === "card"
-          ? "flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left active:bg-[#FAFBFC]"
+          ? "flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left active:bg-[#F3F7FF]"
           : "flex w-full items-center gap-3 py-3 text-left active:opacity-70"
       }
     >
@@ -41,7 +41,7 @@ export function HotelBookOptionRow({
       </span>
       {variant === "card" ? (
         <span className="flex min-w-0 items-center gap-2">
-          <span className="truncate text-[14px] text-[#999999]">{value}</span>
+          <span className="truncate text-[14px] text-[#666666]">{value}</span>
           <BookOptionChevron />
         </span>
       ) : (
@@ -59,7 +59,7 @@ export function HotelBookOptionRow({
 
   return (
     <div
-      className={`overflow-hidden rounded-xl bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] ${HOTEL_DETAIL_FONT}`}
+      className={`overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-[#EEF1F6] ${HOTEL_DETAIL_FONT}`}
     >
       {button}
     </div>

@@ -284,6 +284,7 @@ export interface HotelBookRoomPlanDto {
   BookType?: number;
   Key?: string;
   Variables?: string;
+  VariablesObj?: Record<string, unknown>;
   RoomPlanPrices?: { Date?: string; Price?: number }[];
   RoomPlanRules?: { Description?: string }[];
   Room?: { Id?: number | string; Name?: string; Hotel?: HotelBookRoomHotelDto };
@@ -311,10 +312,11 @@ export interface HotelBookCredentialsDto {
 
 /** Legacy PassengerDto for hotel Initialize/Book. */
 export interface HotelBookPassengerDto {
-  ClientId: string;
+  ClientId?: string;
   RoomPlan: HotelBookRoomPlanDto;
   Credentials: HotelBookCredentialsDto;
   Mobile?: string;
+  RoomCount?: number;
   CheckinTime?: string;
   MessageLang?: string;
   TravelPayType?: number;
@@ -329,6 +331,8 @@ export interface HotelBookPassengerDto {
   OrderCard?: HotelOrderCardDto;
   /** Legacy submit-only fields (not sent on Initialize). */
   CustomerName?: string;
+  CustomerCredentials?: string;
+  CustomerCredentialsType?: string;
   Email?: string;
   IllegalPolicy?: string;
   CostCenterCode?: string;
@@ -380,6 +384,11 @@ export interface HotelInitStaff {
 
 export interface HotelInitBookResponse {
   OrderAmount?: number;
+  RoomPlans?: {
+    PassengerClientId?: string | number;
+    GuaranteeStartTime?: string;
+    GuaranteeEndTime?: string;
+  }[];
   ServiceFees?: Record<string, number | string>;
   PayTypes?: Record<string, string>;
   IllegalReasons?: string[];

@@ -1,8 +1,6 @@
-import {
-  HOTEL_CHROME,
-  HOTEL_DETAIL_FONT,
-  HOTEL_HEADER_GRADIENT,
-} from "@/components/hotel/hotel-detail-chrome";
+import { forwardRef } from "react";
+
+import { HOTEL_CHROME, HOTEL_DETAIL_FONT } from "@/components/hotel/hotel-detail-chrome";
 
 interface HotelBookHeaderProps {
   onBack: () => void;
@@ -23,34 +21,36 @@ function BackIcon() {
   );
 }
 
-export function HotelBookHeader({ onBack }: HotelBookHeaderProps) {
-  return (
-    <div
-      className={`fixed inset-x-0 top-0 z-30 shadow-[0_2px_12px_rgba(142,200,255,0.35)] ${HOTEL_DETAIL_FONT}`}
-      style={{ background: HOTEL_HEADER_GRADIENT }}
-    >
-      <div className="pt-[env(safe-area-inset-top)]">
-        <div className="flex h-12 items-center px-2.5">
-          <button
-            type="button"
-            onClick={onBack}
-            className="flex h-10 w-9 shrink-0 items-center justify-center rounded-full active:bg-white/40"
-            aria-label="返回"
-          >
-            <BackIcon />
-          </button>
+export const HotelBookHeader = forwardRef<HTMLDivElement, HotelBookHeaderProps>(
+  function HotelBookHeader({ onBack }, ref) {
+    return (
+      <div
+        ref={ref}
+        className={`fixed inset-x-0 top-0 z-30 w-full ${HOTEL_DETAIL_FONT}`}
+        style={{ background: "var(--brand-form-header-gradient)" }}
+      >
+        <div className="pt-[env(safe-area-inset-top)]">
+          <div className="relative flex h-11 items-center px-1">
+            <button
+              type="button"
+              onClick={onBack}
+              className="flex h-11 w-11 shrink-0 items-center justify-center text-2xl text-brand-title active:opacity-70"
+              aria-label="返回"
+            >
+              <BackIcon />
+            </button>
 
-          <h1
-            className="min-w-0 flex-1 text-center text-[16px] font-semibold leading-tight tracking-tight"
-            style={{ color: HOTEL_CHROME.title }}
-          >
-            填写订单
-          </h1>
+            <h1
+              className="pointer-events-none absolute inset-x-11 truncate text-center text-base font-semibold"
+              style={{ color: HOTEL_CHROME.title }}
+            >
+              填写订单
+            </h1>
 
-          {/* Balance back button width for centered title */}
-          <span className="w-9 shrink-0" aria-hidden />
+            <span className="w-11 shrink-0" aria-hidden />
+          </div>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  },
+);

@@ -2,13 +2,49 @@ import { describe, expect, it } from "vitest";
 import { inferCredentialTypeLabelFromMaskedNumber } from "@ryx/shared-types";
 
 import {
+  coerceHotelOrderDetail,
   filterBillLinesForRoom,
   formatOrderBreakfastLabel,
   formatOrderDateTime,
   formatTravelerCredentialDisplay,
   normalizeTravelerCredentialTypeLabel,
+  shouldShowFooter,
   shouldShowTravelerCredentialType,
 } from "./hotel-order-detail.js";
+
+describe("coerceHotelOrderDetail", () => {
+  it("keeps pay footer visible when legacy pay flag is outside Actions", () => {
+    const detail = coerceHotelOrderDetail({
+      OrderId: "40390000000016",
+      Status: "WaitPay",
+      isShowPayButton: true,
+      Actions: {
+        showPay: false,
+        showCancel: false,
+        smsAction: "none",
+      },
+    });
+
+    expect(detail.Actions.showPay).toBe(true);
+    expect(shouldShowFooter(detail.Actions)).toBe(true);
+  });
+
+  it("shows pay and cancel footer for wait-pay hotel detail even without explicit action flags", () => {
+    const detail = coerceHotelOrderDetail({
+      OrderId: "40390000000016",
+      StatusName: "等待支付",
+      Actions: {
+        showPay: false,
+        showCancel: false,
+        smsAction: "none",
+      },
+    });
+
+    expect(detail.Actions.showPay).toBe(true);
+    expect(detail.Actions.showCancel).toBe(true);
+    expect(shouldShowFooter(detail.Actions)).toBe(true);
+  });
+});
 
 describe("formatOrderBreakfastLabel", () => {
   it("matches legacy Breakfast>0 ? N份早餐 : 无早餐", () => {

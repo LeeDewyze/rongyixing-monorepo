@@ -44,6 +44,10 @@ function readPayButton(variables?: LegacyRecord, fallback?: boolean): boolean | 
   return fallback;
 }
 
+function isWaitPayStatus(status?: string, statusName?: string): boolean {
+  return status === "WaitPay" || /待支付|等待支付|待付款/.test(statusName ?? "");
+}
+
 function isNormalizedOrderDetail(data: LegacyRecord): boolean {
   return typeof data.OrderId === "string" && typeof data.ProductType === "string";
 }
@@ -624,15 +628,32 @@ function resolveSmsAction(
 function buildActionFlags(order: LegacyRecord, firstRoom?: HotelOrderRoom): HotelOrderActionFlags {
   const variables = parseVariablesObj(order);
   const status = readString(order.Status);
-  const showPay = Boolean(variables?.isPay) && status !== "WaitHandle";
+  const statusName = readString(order.StatusName);
+  const waitPay = isWaitPayStatus(status, statusName);
+  const showPay = status !== "WaitHandle" && Boolean(variables?.isPay ?? waitPay);
   const firstRoomVars = firstRoom?.Variables;
   const sms = resolveSmsAction(firstRoomVars);
 
   return {
     showPay,
-    showCancel: Boolean(variables?.isShowCancelButton),
+    showCancel: Boolean(variables?.isShowCancelButton ?? waitPay),
     cancelOrderHotelId: firstRoom?.Id,
     ...sms,
+  };
+}
+
+function coerceNormalizedHotelActions(detail: HotelOrderDetail): HotelOrderActionFlags {
+  const actions = detail.Actions ?? {
+    showPay: false,
+    showCancel: false,
+    smsAction: "none" as const,
+  };
+  const waitPay = isWaitPayStatus(detail.Status, detail.StatusName);
+  return {
+    ...actions,
+    showPay: Boolean(actions.showPay || detail.isShowPayButton || waitPay),
+    showCancel: Boolean(actions.showCancel || waitPay),
+    smsAction: actions.smsAction ?? "none",
   };
 }
 
@@ -1336,11 +1357,7 @@ export function normalizeHotelOrderDetail(data: unknown): OrderDetailResponse {
       Rooms: detail.Rooms ?? [],
       BillItems: detail.BillItems ?? [],
       Histories: detail.Histories ?? [],
-      Actions: detail.Actions ?? {
-        showPay: Boolean(detail.isShowPayButton),
-        showCancel: false,
-        smsAction: "none",
-      },
+      Actions: coerceNormalizedHotelActions(detail),
       ShowServiceFee: detail.ShowServiceFee ?? true,
     });
   }

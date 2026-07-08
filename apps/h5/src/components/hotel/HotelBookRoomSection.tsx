@@ -16,15 +16,15 @@ export function HotelBookRoomSection({
 }: HotelBookRoomSectionProps) {
   return (
     <section
-      className={`overflow-hidden rounded-xl bg-white shadow-[0_2px_8px_rgba(0,0,0,0.04)] ${HOTEL_DETAIL_FONT}`}
+      className={`overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-[#EEF1F6] ${HOTEL_DETAIL_FONT}`}
     >
-      <div className="flex items-center border-b border-[#F0F2F5] bg-[#FAFBFC] px-3.5 py-2.5">
-        <span className="inline-flex h-[22px] items-center rounded-[4px] bg-brand-primary px-2 text-[12px] font-medium leading-none text-white">
+      <div className="flex items-center border-b border-[#EEF1F6] bg-[#F6F9FF] px-3.5 py-2.5">
+        <span className="inline-flex h-[22px] items-center rounded-[4px] bg-brand-primary px-2 text-[12px] font-medium leading-none text-white shadow-[0_2px_6px_rgba(39,104,250,0.22)]">
           房间{roomIndex}
         </span>
       </div>
 
-      <div className="px-3 pb-4 pt-3">{passenger}</div>
+      <div className="px-3 pb-4 pt-3.5">{passenger}</div>
 
       {serviceFee ? <div className="px-3 pb-4">{serviceFee}</div> : null}
     </section>

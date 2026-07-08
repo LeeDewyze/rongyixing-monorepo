@@ -293,6 +293,89 @@ describe("buildHotelOrderBookDto", () => {
     expect(dto.Passengers[0]?.OutNumbers).toBeNull();
     expect(dto.Passengers[0]?.TravelType).toBe(2);
   });
+
+  it("strips business fields and restores legacy tourist hotel book payload", () => {
+    const forms = {
+      p1: {
+        ...createHotelPassengerBookForm(passengers[0]!, "2026-06-20 14:00"),
+        approvalId: "approval-1",
+        illegalReason: "超标",
+        expenseTypeId: "expense-1",
+        costCenter: { code: "CC", name: "成本中心" },
+        organization: { code: "ORG", name: "组织" },
+        outNumbers: { TravelNumber: "TN-001" },
+      },
+    };
+    const initDto = buildHotelInitBookDto({
+      selection,
+      passengers,
+      travelMode: "personal",
+      channel: "tourist",
+    });
+    const roomPlan = initDto.Passengers[0]!.RoomPlan;
+    roomPlan.VariablesObj = {
+      ...(roomPlan.VariablesObj ?? {}),
+      RoomPlanUniqueId: "room-plan-key",
+      IsSelfPayAmount: true,
+    };
+    roomPlan.Variables = JSON.stringify(roomPlan.VariablesObj);
+
+    const prepared = prepareHotelBookSubmitDto(
+      buildHotelOrderBookDto({
+        selection,
+        passengers,
+        forms,
+        travelMode: "personal",
+        channel: "tourist",
+        travelPayType: 2,
+        globalArrivalTime: "2026-06-20 14:00",
+        initDto,
+        init: {
+          RoomPlans: [
+            {
+              PassengerClientId: "acc1",
+              GuaranteeStartTime: "9999-12-31 23:59",
+              GuaranteeEndTime: "9999-12-31 23:59",
+            },
+          ],
+        },
+      }),
+    );
+
+    const passenger = prepared.Passengers[0]!;
+    const variables = JSON.parse(passenger.RoomPlan.Variables ?? "{}") as Record<string, unknown>;
+
+    expect(prepared).toMatchObject({
+      channel: "tourist",
+      Channel: "客户H5",
+      IsFromOffline: false,
+    });
+    expect(prepared.TravelFormId).toBeUndefined();
+    expect(prepared.TravelPayType).toBeUndefined();
+    expect(prepared.Linkmans).toBeUndefined();
+    expect(passenger.ClientId).toBeUndefined();
+    expect(passenger.RoomCount).toBe(1);
+    expect(passenger.CheckinTime).toBe("2026-06-20 14:00");
+    expect(passenger.CustomerName).toBe("张三");
+    expect(passenger.CustomerCredentials).toBe("410928199001015121");
+    expect(passenger.CustomerCredentialsType).toBe("1");
+    expect(passenger.Credentials).toEqual({
+      Name: "张三",
+      Number: "410928199001015121",
+      Type: 1,
+    });
+    expect(passenger.TravelPayType).toBeUndefined();
+    expect(passenger.TravelType).toBeUndefined();
+    expect(passenger.ApprovalId).toBeUndefined();
+    expect(passenger.CostCenterCode).toBeUndefined();
+    expect(passenger.OrganizationCode).toBeUndefined();
+    expect(passenger.OutNumbers).toBeUndefined();
+    expect(variables.IsSelfPayAmount).toBe(false);
+    expect(variables.GuaranteeStartTime).toBe("9999-12-31 23:59");
+    expect(variables.GuaranteeEndTime).toBe("9999-12-31 23:59");
+    expect(passenger.RoomPlan.VariablesObj?.IsSelfPayAmount).toBe(false);
+    expect(passenger.RoomPlan.SupplierNumber).toBe("SUP-1");
+  });
 });
 
 describe("resolveHotelArrivalTimeOptions", () => {
