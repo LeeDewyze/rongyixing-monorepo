@@ -201,6 +201,7 @@ export function HotelListPage() {
     [searchParams],
   );
   const productChannel = resolveProductChannel(travelMode);
+  const isBusinessMode = productChannel === "tmc";
   const { data: tmc } = useQuery({
     queryKey: ["tmc", "getTmc", "hotel-list"],
     queryFn: () => getApi().tmc.getTmc(),
@@ -280,7 +281,7 @@ export function HotelListPage() {
       Keyword: keyword || undefined,
       HotelType: hotelType,
       TravelFormId: travelFormId || undefined,
-      Passengers: passengerIds || undefined,
+      Passengers: isBusinessMode ? passengerIds || undefined : undefined,
       StaffCityCode: staffCityCode,
     };
     if (keywordType === "hotel" && hotelId) {
@@ -315,6 +316,7 @@ export function HotelListPage() {
     lng,
     hotelType,
     travelFormId,
+    isBusinessMode,
     passengerIds,
     staffCityCode,
     productChannel,

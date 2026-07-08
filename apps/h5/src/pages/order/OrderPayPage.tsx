@@ -54,6 +54,22 @@ function payChannelIcon(label: string): string {
   return label.slice(0, 1) || "付";
 }
 
+function resolveDisplayPayAmount(input: {
+  override?: number;
+  payTotal?: number;
+  selfPayAmount?: number;
+  orderTotal?: number;
+}): number | undefined {
+  const { override, payTotal, selfPayAmount, orderTotal } = input;
+  if (override != null) return override;
+  if (payTotal != null && Number.isFinite(payTotal) && payTotal > 0) return payTotal;
+  if (selfPayAmount != null && Number.isFinite(selfPayAmount) && selfPayAmount > 0) {
+    return selfPayAmount;
+  }
+  if (orderTotal != null && Number.isFinite(orderTotal) && orderTotal > 0) return orderTotal;
+  return payTotal ?? selfPayAmount ?? orderTotal;
+}
+
 export function OrderPayPage({
   title,
   orderId,
@@ -105,7 +121,12 @@ export function OrderPayPage({
     }
   }, [pays, selected]);
 
-  const amount = amountOverride ?? payTotal?.TotalPayAmount ?? order?.TotalAmount;
+  const amount = resolveDisplayPayAmount({
+    override: amountOverride,
+    payTotal: payTotal?.TotalPayAmount,
+    selfPayAmount: order?.SelfPayAmount,
+    orderTotal: order?.TotalAmount,
+  });
   const isLoading = totalLoading || paysLoading;
   const isPending = payCreate.isPending || payProcess.isPending;
   const channels = pays ?? [];

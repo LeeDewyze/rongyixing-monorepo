@@ -20,7 +20,6 @@ function stripFlightCabin(cabin: FlightFare | undefined): FlightFare | undefined
   if (!cabin) return cabin;
   return {
     ...cabin,
-    Variables: null as unknown as undefined,
     FlightFareBasics: stripFareBasics(cabin.FlightFareBasics),
   };
 }

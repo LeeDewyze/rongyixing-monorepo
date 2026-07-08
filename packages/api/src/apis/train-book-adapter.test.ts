@@ -126,7 +126,14 @@ describe("stripTrainInitBookDto", () => {
           Mobile: "13800000000",
           Credentials: { Id: "c1", Name: "张三" },
           Policy: { Name: "主要负责人" },
-          Train: { TrainNo: "G1", BookSeatType: 10, BookSeatLocation: "" },
+          Train: {
+            TrainNo: "G1",
+            BookSeatType: 10,
+            BookSeatLocation: "",
+            FromCityName: "北京",
+            ToCityName: "上海",
+            Key: "anti-tamper-key",
+          },
         },
       ],
     });
@@ -134,7 +141,12 @@ describe("stripTrainInitBookDto", () => {
     expect(result).not.toHaveProperty("Channel");
     expect(result.Passengers[0]).toEqual({
       ClientId: "passenger-1",
-      Train: { TrainNo: "G1", BookSeatType: 10, BookSeatLocation: "" },
+      Train: {
+        TrainNo: "G1",
+        BookSeatType: 10,
+        BookSeatLocation: "",
+        Key: "anti-tamper-key",
+      },
     });
   });
 
@@ -285,6 +297,10 @@ describe("prepareTrainBookSubmitDto", () => {
             TrainNo: "G1",
             BookSeatType: 10,
             BookSeatLocation: "",
+            FromCityName: "北京",
+            ToCityName: "上海",
+            Key: "anti-tamper-key",
+            TrainSecrets: "anti-tamper-secrets",
             Seats: displaySeats,
             OriginalSearchResultSeats: originalSeats,
             InsuranceProducts: [],
@@ -353,6 +369,12 @@ describe("prepareTrainBookSubmitDto", () => {
     expect(result.Passengers[0]?.Train?.Seats).toEqual(originalSeats);
     expect(result.Passengers[0]?.Train?.OriginalSearchResultSeats).toEqual(originalSeats);
     expect(result.Passengers[0]?.Train?.InsuranceProducts).toEqual([]);
+    expect(result.Passengers[0]?.Train).not.toHaveProperty("FromCityName");
+    expect(result.Passengers[0]?.Train).not.toHaveProperty("ToCityName");
+    expect(result.Passengers[0]?.Train).toMatchObject({
+      Key: "anti-tamper-key",
+      TrainSecrets: "anti-tamper-secrets",
+    });
   });
 
   it("derives tourist credential surname and givenname from Name when missing", () => {

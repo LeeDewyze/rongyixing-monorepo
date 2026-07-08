@@ -21,6 +21,8 @@ function resolveStaffAccountId(passenger: PassengerBookInfo): string | undefined
       ? String(passenger.passenger.AccountId)
       : undefined;
   if (fromPassenger) return fromPassenger;
+  const passengerId = "Id" in passenger.passenger ? passenger.passenger.Id : undefined;
+  if (passengerId) return String(passengerId);
   return passenger.credential.AccountId ? String(passenger.credential.AccountId) : undefined;
 }
 

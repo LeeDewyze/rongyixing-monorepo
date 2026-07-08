@@ -49,4 +49,10 @@ export function useFlightSubmitBook() {
   });
 }
 
+export function useFlightValidateBook() {
+  return useMutation({
+    mutationFn: (params: FlightBookParams) => getApi().flight.validateBook(params),
+  });
+}
+
 export { useTravelForms } from "@/hooks/useHotelBook";

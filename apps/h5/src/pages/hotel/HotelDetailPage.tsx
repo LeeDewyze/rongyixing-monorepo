@@ -32,7 +32,7 @@ import {
 } from "@/lib/hotel-book-policy";
 import { saveHotelGalleryImages } from "@/lib/hotel-gallery-session";
 import { saveHotelBookSelection } from "@/lib/hotel-book-session";
-import { loadHomeTravelMode } from "@/lib/flight-travel-mode";
+import { isBusinessTravelMode, loadHomeTravelMode } from "@/lib/flight-travel-mode";
 import { formatApiError } from "@/lib/formatApiError";
 import { navigateBack } from "@/lib/navigation";
 import { hasAgentIdentity } from "@/lib/flight-book-save-order";
@@ -70,6 +70,7 @@ export function HotelDetailPage() {
     () => (query.channel === "tourist" ? "personal" : loadHomeTravelMode()),
     [query.channel],
   );
+  const isBusinessMode = isBusinessTravelMode(travelMode);
 
   const { selected: selectedPassengers } = usePassengerSelection(ProductType.Hotel);
   const { data: identity } = useIdentity();
@@ -92,26 +93,28 @@ export function HotelDetailPage() {
   const detailReady = isSuccess && Boolean(data) && !isFetching;
 
   const policyParams = useMemo(() => {
-    if (!detailReady || selectedPassengers.length === 0) return null;
+    if (!isBusinessMode || !detailReady || selectedPassengers.length === 0) return null;
     return buildHotelPolicyParams({
       detail: data!,
       passengers: selectedPassengers,
       cityCode: query.cityCode,
     });
-  }, [data, detailReady, query.cityCode, selectedPassengers]);
+  }, [data, detailReady, isBusinessMode, query.cityCode, selectedPassengers]);
 
   const {
     data: policyResults,
     isLoading: isPolicyLoading,
     isFetching: isPolicyFetching,
     refetch: refetchPolicy,
-  } = useHotelPolicy(policyParams, detailReady && selectedPassengers.length > 0);
+  } = useHotelPolicy(policyParams, isBusinessMode && detailReady && selectedPassengers.length > 0);
   const isPolicyChecking =
-    selectedPassengers.length > 0 && (!detailReady || isPolicyLoading || isPolicyFetching);
+    isBusinessMode &&
+    selectedPassengers.length > 0 &&
+    (!detailReady || isPolicyLoading || isPolicyFetching);
 
   const policyColors = useMemo(
     () =>
-      !detailReady || selectedPassengers.length === 0 || isPolicyChecking
+      !isBusinessMode || !detailReady || selectedPassengers.length === 0 || isPolicyChecking
         ? {}
         : buildPolicyColorMap({
             results: policyResults,
@@ -123,6 +126,7 @@ export function HotelDetailPage() {
       data,
       detailReady,
       filterPassengerId,
+      isBusinessMode,
       isPolicyChecking,
       policyFilterEnabled,
       policyResults,
@@ -196,6 +200,7 @@ export function HotelDetailPage() {
   }
 
   function requirePassengersBeforeAction(): boolean {
+    if (!isBusinessMode) return true;
     if (selectedPassengers.length > 0) return true;
     setPassengerRequiredOpen(true);
     return false;
@@ -214,7 +219,7 @@ export function HotelDetailPage() {
       setPolicyFilterEnabled(true);
       setFilterPassengerId(passengerId);
     }
-    if (detailReady && selectedPassengers.length > 0) {
+    if (isBusinessMode && detailReady && selectedPassengers.length > 0) {
       await refetchPolicy();
     }
   }
@@ -230,9 +235,12 @@ export function HotelDetailPage() {
 
   function handleBook(plan: HotelRoomPlan) {
     if (!requirePassengersBeforeAction() || !data) return;
-    const policyChecked = detailReady && selectedPassengers.length > 0 && !isPolicyChecking;
+    const policyChecked =
+      isBusinessMode && detailReady && selectedPassengers.length > 0 && !isPolicyChecking;
     const displayColor = resolvePlanPolicyColor(plan, policyColors);
-    const bookColor = resolvePlanBookingPolicyColor(plan, policyResults, selectedPassengers);
+    const bookColor = isBusinessMode
+      ? resolvePlanBookingPolicyColor(plan, policyResults, selectedPassengers)
+      : undefined;
     const alertMessage = resolveHotelPlanBookAlertMessage({
       plan,
       displayColor,
@@ -242,11 +250,11 @@ export function HotelDetailPage() {
       isAgent,
       policyChecked,
     });
-    if (alertMessage) {
+    if (isBusinessMode && alertMessage) {
       setPolicyAlertMessage(alertMessage);
       return;
     }
-    if (!isHotelPlanBookable(bookColor, isAgent, policyChecked)) {
+    if (isBusinessMode && !isHotelPlanBookable(bookColor, isAgent, policyChecked)) {
       return;
     }
 
@@ -265,7 +273,9 @@ export function HotelDetailPage() {
       hotelPhone: data.Phone,
       room,
       plan,
-      policyRules: resolvePlanPolicyRules(plan, policyResults, selectedPassengers),
+      policyRules: isBusinessMode
+        ? resolvePlanPolicyRules(plan, policyResults, selectedPassengers)
+        : [],
       checkInOutTime: data.CheckInOutTime,
       bookingNotice: data.BookingNotice,
       travelMode,
@@ -354,7 +364,7 @@ export function HotelDetailPage() {
             hotelName={data.HotelName}
             passengerCount={selectedPassengers.length}
             passengerHref={passengerHref}
-            canFilterPolicy={selectedPassengers.length > 0}
+            canFilterPolicy={isBusinessMode && selectedPassengers.length > 0}
             onBack={handleBack}
             onOpenPolicyFilter={() => setPolicyFilterOpen(true)}
           />
@@ -416,7 +426,7 @@ export function HotelDetailPage() {
       />
 
       <HotelPolicyFilterSheet
-        open={policyFilterOpen}
+        open={isBusinessMode && policyFilterOpen}
         passengers={selectedPassengers}
         showAllSelected={!policyFilterEnabled}
         selectedPassengerId={filterPassengerId}
