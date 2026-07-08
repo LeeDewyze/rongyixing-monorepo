@@ -145,21 +145,55 @@ rongyixing-monorepo/
 # Install dependencies
 pnpm install
 
-# Copy env files
+# Copy env files (one per app)
 cp apps/h5/.env.example apps/h5/.env
 cp apps/web/.env.example apps/web/.env
-
-# Start dev servers
-pnpm dev:h5    # http://localhost:5173
-pnpm dev:web   # http://localhost:5174
 ```
+
+### Mobile H5 (`@ryx/h5`)
+
+```bash
+pnpm dev:h5          # http://localhost:5173
+pnpm dev:h5:mock     # same, with VITE_API_MODE=mock
+pnpm dev:h5:test     # staging mode
+```
+
+H5 builds workspace packages (`shared-types`, `api`, `mock`) before starting Vite.
+
+### Pad + PC Web (`@ryx/web`)
+
+```bash
+pnpm dev:web         # http://localhost:5174
+```
+
+Open [http://localhost:5174](http://localhost:5174) in the browser. Use DevTools device mode or a wide window to exercise layout:
+
+| Viewport       | What to expect                                 |
+| -------------- | ---------------------------------------------- |
+| &lt; 768px     | Single column; soft hint to use H5 on phones   |
+| 768px – 1439px | Pad layout — icon sidebar, main content column |
+| ≥ 1440px       | PC layout — wider sidebar with labels          |
+
+**Mock API (no backend):**
+
+```bash
+pnpm build:workspace
+VITE_API_MODE=mock pnpm --filter @ryx/web dev
+```
+
+**Proxy API (default):** set `VITE_API_MODE=proxy` in `apps/web/.env` (or omit it). Vite proxies `/Home/Proxy` and `/__ryx/*` to the configured `VITE_API_BASE_URL` / rtesp dev hosts — see `apps/web/vite.config.ts`.
+
+Log in at `/login/password` before using home, orders, or booking flows.
 
 ### Environment Variables
 
-| Variable            | Description                   |
-| ------------------- | ----------------------------- |
-| `VITE_APP_NAME`     | Display name in the app shell |
-| `VITE_API_BASE_URL` | Backend API base URL          |
+| Variable              | App    | Description                            |
+| --------------------- | ------ | -------------------------------------- |
+| `VITE_APP_NAME`       | h5/web | Display name in the app shell          |
+| `VITE_APP_ID`         | h5/web | App id for `/Home/Setting` bootstrap   |
+| `VITE_API_BASE_URL`   | h5/web | Backend / proxy gateway base URL       |
+| `VITE_API_MODE`       | h5/web | `mock`, `proxy` (default), or `direct` |
+| `VITE_API_MOCK_DELAY` | h5/web | Artificial delay (ms) in mock mode     |
 
 Read env vars only in `apps/*/src/lib/env.ts`. Extend `src/vite-env.d.ts` when adding new variables.
 
@@ -179,48 +213,49 @@ const login = await getApi().authProxy.login({ Name: "demo", Password: "123456" 
 > **页面迁移 ≈28%**（6 done + 4 partial / 29 页）  
 > **下一批**：Wave 2 Tab 壳 + 首页工作台
 
-| 阶段 | 进度 | 说明 |
-|------|------|------|
-| P0–P2 基础设施 | ✅ | METHODS 字典 + Proxy + Mock |
-| 页面矩阵 | ✅ | 29 页 × Wave 1–8 |
-| Wave 3 酒店 | [~] | mock 可跑 `/hotel` |
-| Wave 2 首页/Tab | [ ] | 建议下一批 |
+| 阶段            | 进度 | 说明                        |
+| --------------- | ---- | --------------------------- |
+| P0–P2 基础设施  | ✅   | METHODS 字典 + Proxy + Mock |
+| 页面矩阵        | ✅   | 29 页 × Wave 1–8            |
+| Wave 3 酒店     | [~]  | mock 可跑 `/hotel`          |
+| Wave 2 首页/Tab | [ ]  | 建议下一批                  |
 
-| 文档 | 说明 |
-|------|------|
-| [docs/api/PAGE-API-MATRIX.md](docs/api/PAGE-API-MATRIX.md) | **页面→接口（主文档）** |
-| [docs/api/task-list.md](docs/api/task-list.md) | 执行看板 |
-| [docs/api/H5-RYX-MIGRATION.md](docs/api/H5-RYX-MIGRATION.md) | 路由/Tab 对照 |
-| [docs/接口迁移方案.md](docs/接口迁移方案.md) | 接口层方案 |
+| 文档                                                         | 说明                    |
+| ------------------------------------------------------------ | ----------------------- |
+| [docs/api/PAGE-API-MATRIX.md](docs/api/PAGE-API-MATRIX.md)   | **页面→接口（主文档）** |
+| [docs/api/task-list.md](docs/api/task-list.md)               | 执行看板                |
+| [docs/api/H5-RYX-MIGRATION.md](docs/api/H5-RYX-MIGRATION.md) | 路由/Tab 对照           |
+| [docs/接口迁移方案.md](docs/接口迁移方案.md)                 | 接口层方案              |
 
 ---
 
-| Command          | Description                                      |
-| ---------------- | ------------------------------------------------ |
-| `pnpm dev:h5`    | Start H5 dev server (:5173)                      |
-| `pnpm dev:h5:mock` | H5 dev with `VITE_API_MODE=mock`               |
-| `pnpm dev:h5:test` | H5 dev against staging env                     |
-| `pnpm dev:web`   | Start Web dev server (:5174)                     |
-| `pnpm analyze-ryx-scope` | ryx 迁移范围分析 → METHODS-RYX-SCOPE.md |
-| `pnpm analyze-ryx-pages` | 页面→接口矩阵 → PAGE-API-MATRIX.md |
-| `pnpm check:mock-coverage` | Verify mock handlers for flow Methods  |
-| `pnpm verify:mock` | Smoke-test domain APIs in mock mode              |
-| `pnpm build`     | Build all workspace packages (topological order) |
-| `pnpm test`      | Run tests across workspaces                      |
-| `pnpm typecheck` | Type-check all packages                          |
-| `pnpm lint`      | Lint the repository                              |
-| `pnpm audit`     | Security audit (run before merging)              |
+| Command                    | Description                                      |
+| -------------------------- | ------------------------------------------------ |
+| `pnpm dev:h5`              | Start H5 dev server (:5173)                      |
+| `pnpm dev:h5:mock`         | H5 dev with `VITE_API_MODE=mock`                 |
+| `pnpm dev:h5:test`         | H5 dev against staging env                       |
+| `pnpm dev:web`             | Start Web dev server (:5174)                     |
+| `pnpm build:workspace`     | Build shared-types, api, mock (for mock mode)    |
+| `pnpm analyze-ryx-scope`   | ryx 迁移范围分析 → METHODS-RYX-SCOPE.md          |
+| `pnpm analyze-ryx-pages`   | 页面→接口矩阵 → PAGE-API-MATRIX.md               |
+| `pnpm check:mock-coverage` | Verify mock handlers for flow Methods            |
+| `pnpm verify:mock`         | Smoke-test domain APIs in mock mode              |
+| `pnpm build`               | Build all workspace packages (topological order) |
+| `pnpm test`                | Run tests across workspaces                      |
+| `pnpm typecheck`           | Type-check all packages                          |
+| `pnpm lint`                | Lint the repository                              |
+| `pnpm audit`               | Security audit (run before merging)              |
 
 ## Workspace Packages
 
-| Package             | Description                                          |
-| ------------------- | ---------------------------------------------------- |
-| `@ryx/h5`           | Mobile H5 application                                |
-| `@ryx/web`          | Pad + PC responsive application                      |
-| `@ryx/api`          | Proxy client, domain APIs, Method constants        |
-| `@ryx/mock`         | Mock registry & handlers (S1–S5)                   |
-| `@ryx/ui`           | Shared shadcn/ui component library                   |
-| `@ryx/shared-types` | Shared TypeScript DTOs                               |
+| Package             | Description                                 |
+| ------------------- | ------------------------------------------- |
+| `@ryx/h5`           | Mobile H5 application                       |
+| `@ryx/web`          | Pad + PC responsive application             |
+| `@ryx/api`          | Proxy client, domain APIs, Method constants |
+| `@ryx/mock`         | Mock registry & handlers (S1–S5)            |
+| `@ryx/ui`           | Shared shadcn/ui component library          |
+| `@ryx/shared-types` | Shared TypeScript DTOs                      |
 
 ## Development Conventions
 
@@ -235,14 +270,14 @@ Detailed standards: [`.cursor/rules/`](.cursor/rules/) and [`CLAUDE.md`](CLAUDE.
 
 ## Documentation
 
-| Document | Description |
-| -------- | ----------- |
-| [docs/需求.md](docs/需求.md) | Product requirements |
-| [docs/接口迁移方案.md](docs/接口迁移方案.md) | beeantmobile → rongyixing 迁移方案与进度 |
-| [docs/api/task-list.md](docs/api/task-list.md) | 模块级迁移看板（P0–P7、M1–M9） |
-| [docs/api/domains/hotel.md](docs/api/domains/hotel.md) | Hotel domain API & routes |
-| [docs/api/METHODS.json](docs/api/METHODS.json) | Auto-extracted Method inventory |
-| [docs/api/METHODS-RYX-SCOPE.md](docs/api/METHODS-RYX-SCOPE.md) | ryx 实际迁移范围（354 vs 159） |
+| Document                                                       | Description                              |
+| -------------------------------------------------------------- | ---------------------------------------- |
+| [docs/需求.md](docs/需求.md)                                   | Product requirements                     |
+| [docs/接口迁移方案.md](docs/接口迁移方案.md)                   | beeantmobile → rongyixing 迁移方案与进度 |
+| [docs/api/task-list.md](docs/api/task-list.md)                 | 模块级迁移看板（P0–P7、M1–M9）           |
+| [docs/api/domains/hotel.md](docs/api/domains/hotel.md)         | Hotel domain API & routes                |
+| [docs/api/METHODS.json](docs/api/METHODS.json)                 | Auto-extracted Method inventory          |
+| [docs/api/METHODS-RYX-SCOPE.md](docs/api/METHODS-RYX-SCOPE.md) | ryx 实际迁移范围（354 vs 159）           |
 
 ## Security
 
