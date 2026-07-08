@@ -282,7 +282,7 @@ export function HotelListPage() {
       HotelType: hotelType,
       TravelFormId: travelFormId || undefined,
       Passengers: isBusinessMode ? passengerIds || undefined : undefined,
-      StaffCityCode: staffCityCode,
+      StaffCityCode: isBusinessMode ? staffCityCode : undefined,
     };
     if (keywordType === "hotel" && hotelId) {
       return applyHotelListFilterParams(

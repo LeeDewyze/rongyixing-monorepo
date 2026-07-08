@@ -60,6 +60,7 @@ import {
 import { pollHotelCheckPay, shouldNavigateToPay } from "@/lib/hotel-book-check-pay";
 import {
   parseHotelPayTypeOptions,
+  filterHotelPersonalPayTypeOptions,
   resolveDefaultHotelPayType,
   resolveHotelBookTmcFlags,
   resolveHotelHoldMinutes,
@@ -214,10 +215,10 @@ export function HotelBookPage() {
     arrivalTime,
   );
 
-  const payOptions = useMemo(
-    () => parseHotelPayTypeOptions(initBook.data?.PayTypes),
-    [initBook.data?.PayTypes],
-  );
+  const payOptions = useMemo(() => {
+    const options = parseHotelPayTypeOptions(initBook.data?.PayTypes);
+    return isBusinessMode ? options : filterHotelPersonalPayTypeOptions(options);
+  }, [initBook.data?.PayTypes, isBusinessMode]);
 
   useEffect(() => {
     if (!payOptions.length) return;
@@ -535,12 +536,14 @@ export function HotelBookPage() {
           />
         ) : null}
 
-        <HotelBookPayTypes
-          options={payOptions}
-          value={resolvedPayType}
-          personHoldMinutes={personHoldMinutes}
-          onChange={setTravelPayType}
-        />
+        {isBusinessMode ? (
+          <HotelBookPayTypes
+            options={payOptions}
+            value={resolvedPayType}
+            personHoldMinutes={personHoldMinutes}
+            onChange={setTravelPayType}
+          />
+        ) : null}
       </div>
 
       <HotelBookFooter

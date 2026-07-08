@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  filterHotelPersonalPayTypeOptions,
   HOTEL_PAY_TYPE_COMPANY,
   HOTEL_PAY_TYPE_PERSON,
   parseHotelPayTypeOptions,
@@ -19,5 +20,19 @@ describe("parseHotelPayTypeOptions", () => {
       { value: HOTEL_PAY_TYPE_COMPANY, label: "公付" },
       { value: HOTEL_PAY_TYPE_PERSON, label: "个付（请在20分钟内完成支付）" },
     ]);
+  });
+
+  it("keeps only personal pay for tourist hotel book", () => {
+    expect(
+      filterHotelPersonalPayTypeOptions([
+        { value: HOTEL_PAY_TYPE_COMPANY, label: "公付" },
+        { value: HOTEL_PAY_TYPE_PERSON, label: "个付（请在20分钟内完成支付）" },
+      ]),
+    ).toEqual([{ value: HOTEL_PAY_TYPE_PERSON, label: "个付（请在20分钟内完成支付）" }]);
+  });
+
+  it("falls back to personal pay when initialize does not include it", () => {
+    expect(filterHotelPersonalPayTypeOptions([{ value: HOTEL_PAY_TYPE_COMPANY, label: "公付" }]))
+      .toEqual([{ value: HOTEL_PAY_TYPE_PERSON, label: "个付（请在20分钟内完成支付）" }]);
   });
 });

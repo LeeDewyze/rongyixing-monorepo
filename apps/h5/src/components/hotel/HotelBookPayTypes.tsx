@@ -16,6 +16,10 @@ function resolveSelectedPayTypeLabel(options: HotelPayTypeOption[], value: numbe
   return option?.label ?? "";
 }
 
+function stripPayTypeCountdown(label: string): string {
+  return label.replace(/（请在\d+分钟内完成支付）/g, "").trim();
+}
+
 export function HotelBookPayTypes({
   options,
   value,
@@ -56,7 +60,7 @@ export function HotelBookPayTypes({
             >
               <div className="min-w-0 flex-1">
                 <p className="text-[16px] font-medium text-[#333333]">
-                  {option.label}
+                  {stripPayTypeCountdown(option.label)}
                   {option.value === HOTEL_PAY_TYPE_PERSON ? (
                     <span className="ml-2 text-[13px] font-normal text-[#666666]">
                       （请在{personHoldMinutes}分钟内完成支付）
