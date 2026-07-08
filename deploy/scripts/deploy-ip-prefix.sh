@@ -5,7 +5,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 COMPOSE_FILE="${ROOT_DIR}/deploy/docker/docker-compose.ip-prefix.yml"
 SERVER_NGINX_CONF="${ROOT_DIR}/deploy/nginx/ip-prefix.conf"
-SERVER_NGINX_TARGET="${SERVER_NGINX_TARGET:-/etc/nginx/conf.d/rongyixing-ip-prefix.conf}"
+SERVER_NGINX_TARGET="${SERVER_NGINX_TARGET:-/etc/nginx/conf.d/rtesp.songguoren.site.conf}"
+STALE_SERVER_NGINX_TARGET="${STALE_SERVER_NGINX_TARGET:-/etc/nginx/conf.d/rongyixing-ip-prefix.conf}"
 RYX_H5_PORT="${RYX_H5_PORT:-18080}"
 RYX_WEB_PORT="${RYX_WEB_PORT:-18081}"
 INSTALL_SERVER_NGINX="${INSTALL_SERVER_NGINX:-1}"
@@ -23,6 +24,8 @@ Environment:
   INSTALL_SERVER_NGINX=1         Install/reload server Nginx entry config by default.
   INSTALL_SERVER_NGINX=0         Only build/start Docker services; skip server Nginx.
   SERVER_NGINX_TARGET=...        Target path for server Nginx config.
+                                  Default overwrites the old H5 entry to avoid duplicate default_server.
+  STALE_SERVER_NGINX_TARGET=...  Stale previous target to remove before nginx -t.
   VITE_APP_ID=...                Docker build arg; default com.ronglvonline.app.
   VITE_API_MODE=proxy            Docker build arg.
   VITE_API_BASE_URL=             Docker build arg; empty means same-origin proxy.
@@ -103,6 +106,11 @@ if [[ "${INSTALL_SERVER_NGINX}" == "1" ]]; then
 
   log "install server Nginx config to ${SERVER_NGINX_TARGET}"
   run_sudo install -m 0644 "${SERVER_NGINX_CONF}" "${SERVER_NGINX_TARGET}"
+
+  if [[ "${STALE_SERVER_NGINX_TARGET}" != "${SERVER_NGINX_TARGET}" ]]; then
+    log "remove stale server Nginx config ${STALE_SERVER_NGINX_TARGET}"
+    run_sudo rm -f "${STALE_SERVER_NGINX_TARGET}"
+  fi
 
   log "validate server Nginx config"
   run_sudo nginx -t
