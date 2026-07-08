@@ -169,7 +169,8 @@ Reference files:
 ### Page Shell
 
 - Use a full viewport root: `relative h-dvh overflow-hidden bg-[#F5F6F9]`.
-- Keep the navigation/search header fixed at the top with `z-50`, `max-w-lg`, and safe-area padding.
+- Keep the navigation/search header fixed at the top with `z-50` and safe-area padding.
+- Result-list chrome should span the viewport width in embedded browser/webview contexts; reserve `max-w-lg` for modal sheets or phone-framed detail pages.
 - Scroll only the content container below the measured header height, not the whole body.
 - When a modify/search/filter sheet is open, lock the content scroller with `overflow-hidden`.
 - Use content padding `px-3 py-3` and bottom padding that accounts for fixed bottom actions plus `env(safe-area-inset-bottom)`.

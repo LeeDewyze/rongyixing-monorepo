@@ -81,7 +81,7 @@ export function FlightListToolbar({
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#eeeeee] bg-white pb-[max(0.25rem,env(safe-area-inset-bottom))] shadow-[0_-2px_8px_rgba(0,0,0,0.04)]">
-      <div className="mx-auto grid max-w-lg grid-cols-3">
+      <div className="grid w-full grid-cols-3">
         <ToolbarItem
           active={filterActive}
           hint={filtered ? "已筛选" : "筛选"}
