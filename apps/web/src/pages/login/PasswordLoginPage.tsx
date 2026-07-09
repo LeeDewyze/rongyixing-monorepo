@@ -17,12 +17,15 @@ import {
 const inputClassName =
   "h-11 w-full rounded-lg border border-[#E5E7EB] bg-white px-3 text-base text-brand-title outline-none placeholder:text-[#999999] focus:border-brand-primary pc:h-12";
 
+const DEFAULT_LOGIN_ACCOUNT = "T18610773065";
+const DEFAULT_LOGIN_PASSWORD = "Temp123456";
+
 function getInitialFormState() {
   const remembered = loadRememberedCredentials();
   return {
-    account: remembered?.account ?? "",
-    password: remembered?.password ?? "",
-    rememberChecked: remembered !== null,
+    account: remembered?.account ?? DEFAULT_LOGIN_ACCOUNT,
+    password: remembered?.password ?? DEFAULT_LOGIN_PASSWORD,
+    rememberChecked: true,
   };
 }
 

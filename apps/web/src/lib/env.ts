@@ -26,6 +26,11 @@ export function getLegacyAppBaseUrl(): string {
 const API_MODE_KEY = "ryx_api_mode";
 
 export function getApiMode(): "mock" | "proxy" | "direct" {
+  const forcedMode = import.meta.env.VITE_FORCE_API_MODE;
+  if (forcedMode === "mock" || forcedMode === "proxy" || forcedMode === "direct") {
+    return forcedMode;
+  }
+
   const session = sessionStorage.getItem(API_MODE_KEY);
   if (session === "mock" || session === "proxy" || session === "direct") {
     return session;

@@ -47,6 +47,7 @@ function createRyxServiceProxies(): Record<string, object> {
 function normalizeViteBase(value: string | undefined): string {
   const raw = value?.trim();
   if (!raw || raw === "/") return "/";
+  if (raw === "." || raw === "./") return "./";
   return `/${raw.replace(/^\/+|\/+$/g, "")}/`;
 }
 

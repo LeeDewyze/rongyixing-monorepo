@@ -1,0 +1,47 @@
+{
+  "name": "@ryx/windows",
+  "version": "0.1.0",
+  "description": "RongYiXing Windows desktop shell",
+  "author": "RongYiXing",
+  "private": true,
+  "main": "src/main.cjs",
+  "scripts": {
+    "configure": "node scripts/write-runtime-config.mjs",
+    "copy:web": "node scripts/copy-web-dist.mjs",
+    "dev": "RYX_WINDOWS_DEV_SERVER=http://localhost:5174 electron .",
+    "start": "pnpm run configure && pnpm run copy:web && electron .",
+    "pack": "pnpm run configure && pnpm run copy:web && electron-builder --win --dir",
+    "dist": "pnpm run configure && pnpm run copy:web && electron-builder --win nsis"
+  },
+  "devDependencies": {
+    "electron": "^43.1.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "cn.rongtrip.rongyixing.windows",
+    "productName": "融易行",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "src/**/*",
+      "generated/**/*",
+      "web-dist/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "artifactName": "${productName}-${version}-setup.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  }
+}
