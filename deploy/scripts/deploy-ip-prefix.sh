@@ -30,6 +30,8 @@ Environment:
   VITE_API_MODE=proxy            Docker build arg.
   VITE_API_BASE_URL=             Docker build arg; empty means same-origin proxy.
   VITE_API_DOMAIN=rtesp.com      Docker build arg.
+  NPM_CONFIG_REGISTRY=https://registry.npmmirror.com
+                                  Docker build npm/pnpm registry.
 EOF
 }
 
