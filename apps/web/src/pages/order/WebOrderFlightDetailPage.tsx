@@ -31,6 +31,8 @@ import {
   getSelectedTicket,
   resolveCancelTarget,
   shouldShowFlightFooter,
+  suppressFlightFooterActions,
+  suppressFlightTicketActions,
 } from "@/lib/flight-order-detail";
 import { parseOrderListScope } from "@/lib/order-list-params";
 import { buildOrderPayPath } from "@/lib/order-page-utils";
@@ -90,6 +92,7 @@ export function WebOrderFlightDetailPage() {
   const [refundKind, setRefundKind] = useState<FlightRefundKind>("voluntary");
   const [explainOpen, setExplainOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [suppressFooterActions, setSuppressFooterActions] = useState(false);
 
   const leaveDetail = useCallback(() => {
     navigate(getOrderListPath("flight", { channel, scope: listScope }), { replace: true });
@@ -116,6 +119,7 @@ export function WebOrderFlightDetailPage() {
 
   useEffect(() => {
     setSelectedTicketIndex(0);
+    setSuppressFooterActions(false);
     cancelTicketIdRef.current = (location.state as OrderDetailLocationState | null)?.ticketId;
     cancelFromListRef.current =
       (location.state as OrderDetailLocationState | null)?.action === "cancel" &&
@@ -164,6 +168,15 @@ export function WebOrderFlightDetailPage() {
   const selectedTicket = useMemo(
     () => (detail ? getSelectedTicket(detail, selectedTicketIndex) : undefined),
     [detail, selectedTicketIndex],
+  );
+  const footerActions = useMemo(() => {
+    const actions = detail?.Actions;
+    if (!actions) return undefined;
+    return suppressFooterActions ? suppressFlightFooterActions(actions) : actions;
+  }, [detail?.Actions, suppressFooterActions]);
+  const footerTicket = useMemo(
+    () => (suppressFooterActions ? suppressFlightTicketActions(selectedTicket) : selectedTicket),
+    [selectedTicket, suppressFooterActions],
   );
 
   const refundInfo = useFlightTicketRefundInfo(
@@ -252,6 +265,7 @@ export function WebOrderFlightDetailPage() {
       }
       setCancelOpen(false);
       cancelFromListRef.current = false;
+      setSuppressFooterActions(true);
       showToast("订单已取消");
       void refetch();
     } catch (err) {
@@ -296,8 +310,8 @@ export function WebOrderFlightDetailPage() {
     showToast,
   ]);
 
-  const showFooter = detail
-    ? shouldShowFlightFooter(detail.Actions, payHoldSecondsRemaining, selectedTicket)
+  const showFooter = footerActions
+    ? shouldShowFlightFooter(footerActions, payHoldSecondsRemaining, footerTicket)
     : false;
   const pending =
     cancelMutation.isPending || refundMutation.isPending || nonVoluntaryRefundMutation.isPending;
@@ -357,8 +371,8 @@ export function WebOrderFlightDetailPage() {
 
       {detail && showFooter ? (
         <FlightOrderDetailFooter
-          actions={detail.Actions}
-          selectedTicket={selectedTicket}
+          actions={footerActions ?? detail.Actions}
+          selectedTicket={footerTicket}
           payHoldSecondsRemaining={payHoldSecondsRemaining}
           pending={pending}
           onCancel={() => setCancelOpen(true)}

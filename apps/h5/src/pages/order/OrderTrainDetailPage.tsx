@@ -40,6 +40,7 @@ import {
   mergeTrainFooterActions,
   shouldShowTrainFooter,
   shouldShowTrainOrderHoldBanner,
+  suppressTrainFooterActions,
 } from "@/lib/train-order-detail";
 import { buildTrainScheduleParamsFromTrip } from "@/lib/train-schedule";
 import { parseOrderListScope } from "@/lib/order-list-params";
@@ -89,11 +90,6 @@ export function OrderTrainDetailPage() {
   const refundMutation = useRefundTrainOrder();
   const payHoldSecondsRemaining = useTrainPayHoldCountdown(detail?.PayHoldMinutes);
 
-  const showHoldBanner = useMemo(
-    () => detail != null && shouldShowTrainOrderHoldBanner(payHoldSecondsRemaining, detail.Actions),
-    [detail, payHoldSecondsRemaining],
-  );
-
   const [selectedTicketIndex, setSelectedTicketIndex] = useState(0);
   const [billOpen, setBillOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
@@ -103,6 +99,7 @@ export function OrderTrainDetailPage() {
   const [explainOpen, setExplainOpen] = useState(false);
   const [scheduleParams, setScheduleParams] = useState<TrainScheduleParams | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [suppressFooterActions, setSuppressFooterActions] = useState(false);
   const scheduleQuery = useTrainSchedule(scheduleParams);
 
   const leaveDetail = useCallback(() => {
@@ -129,12 +126,6 @@ export function OrderTrainDetailPage() {
   }, [orderId, location.pathname]);
 
   useLayoutEffect(() => {
-    if (!detail) return;
-    contentRef.current?.scrollTo({ top: 0 });
-    scrollH5MainToTopAfterLayout();
-  }, [detail?.OrderId, showHoldBanner]);
-
-  useLayoutEffect(() => {
     const header = headerRef.current;
     if (!header) {
       return;
@@ -152,6 +143,7 @@ export function OrderTrainDetailPage() {
 
   useEffect(() => {
     setSelectedTicketIndex(0);
+    setSuppressFooterActions(false);
   }, [orderId]);
 
   useEffect(() => {
@@ -167,10 +159,21 @@ export function OrderTrainDetailPage() {
     [detail, selectedTicketIndex],
   );
 
-  const footerActions = useMemo(
-    () => mergeTrainFooterActions(detail?.Actions, selectedTicket),
-    [detail?.Actions, selectedTicket],
+  const footerActions = useMemo(() => {
+    const merged = mergeTrainFooterActions(detail?.Actions, selectedTicket);
+    return suppressFooterActions ? suppressTrainFooterActions(merged) : merged;
+  }, [detail?.Actions, selectedTicket, suppressFooterActions]);
+
+  const showHoldBanner = useMemo(
+    () => detail != null && shouldShowTrainOrderHoldBanner(payHoldSecondsRemaining, footerActions),
+    [detail, footerActions, payHoldSecondsRemaining],
   );
+
+  useLayoutEffect(() => {
+    if (!detail) return;
+    contentRef.current?.scrollTo({ top: 0 });
+    scrollH5MainToTopAfterLayout();
+  }, [detail?.OrderId, showHoldBanner]);
 
   const billLines = useMemo(() => {
     if (!detail || !selectedTicket) return [];
@@ -212,6 +215,7 @@ export function OrderTrainDetailPage() {
         });
       }
       setCancelOpen(false);
+      setSuppressFooterActions(true);
       showToast("订单已取消");
       await refetch();
     } catch (err) {
@@ -309,7 +313,7 @@ export function OrderTrainDetailPage() {
         {showHoldBanner && payHoldSecondsRemaining != null ? (
           <TrainOrderHoldBanner
             payHoldSecondsRemaining={payHoldSecondsRemaining}
-            actions={detail?.Actions}
+            actions={footerActions}
           />
         ) : null}
         {isLoading ? (

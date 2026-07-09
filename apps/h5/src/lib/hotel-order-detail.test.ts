@@ -10,6 +10,7 @@ import {
   normalizeTravelerCredentialTypeLabel,
   shouldShowFooter,
   shouldShowTravelerCredentialType,
+  suppressHotelFooterActions,
 } from "./hotel-order-detail.js";
 
 describe("coerceHotelOrderDetail", () => {
@@ -43,6 +44,18 @@ describe("coerceHotelOrderDetail", () => {
     expect(detail.Actions.showPay).toBe(true);
     expect(detail.Actions.showCancel).toBe(true);
     expect(shouldShowFooter(detail.Actions)).toBe(true);
+  });
+
+  it("hides footer after local cancel suppression", () => {
+    expect(
+      shouldShowFooter(
+        suppressHotelFooterActions({
+          showPay: true,
+          showCancel: true,
+          smsAction: "sendCode",
+        }),
+      ),
+    ).toBe(false);
   });
 });
 

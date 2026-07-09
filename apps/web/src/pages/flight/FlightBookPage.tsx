@@ -3,8 +3,11 @@ import { useNavigate } from "react-router-dom";
 import {
   ProductType,
   type FlightAuthorizedContact,
+  type FlightBookLinkmanDto,
   type FlightOutNumberField,
+  type PassengerBookInfo,
 } from "@ryx/shared-types";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { FlightBookAgentPicker } from "@/components/flight/FlightBookAgentPicker";
 import { FlightBookApproverSheet } from "@/components/flight/FlightBookApproverSheet";
 import { FlightBookCostCenterSheet } from "@/components/flight/FlightBookCostCenterSheet";
@@ -41,6 +44,8 @@ import { FlightCabinsHeader } from "@/components/flight/FlightCabinsHeader";
 import { FlightBookTicketNoticeSheet } from "@/components/flight/FlightBookTicketNoticeSheet";
 import { FlightFareRulesSheet } from "@/components/flight/FlightFareRulesSheet";
 import { usePageHeader } from "@/components/layout";
+import { PassengerSelectAlertDialog } from "@/components/passenger";
+import { TrainBookLinkmanCard } from "@/components/train/TrainBookLinkmanCard";
 import { useFlightPriceTimeout } from "@/hooks/useFlightPriceTimeout";
 import { useBookOrgCostVisibility } from "@/hooks/useBookOrgCostVisibility";
 import { useFlightBookPassengerForms } from "@/hooks/useFlightBookPassengerForms";
@@ -49,6 +54,7 @@ import {
   useFlightBookSelection,
   useFlightInitBook,
   useFlightSubmitBook,
+  useFlightValidateBook,
 } from "@/hooks/useFlightBook";
 import { shouldShowApproverPicker } from "@/lib/flight-book-approval";
 import {
@@ -59,12 +65,14 @@ import {
   resolveFlightBookOrderId,
   resolveFlightTicketNoticeRules,
   resolvePassengerServiceFee,
+  validateFlightOrderLinkman,
 } from "@/lib/flight-book";
 import {
   FLIGHT_NOTIFY_LANGUAGE_DEFAULT,
   type FlightNotifyLanguage,
 } from "@/lib/flight-book-notify";
 import {
+  FLIGHT_PAY_TYPE_PERSON,
   parseFlightPayTypeOptions,
   resolveDefaultFlightPayType,
   resolveInitialFlightBookAgentId,
@@ -85,7 +93,11 @@ import {
 } from "@/lib/flight-book-travel";
 import { canSaveFlightOrder } from "@/lib/flight-book-save-order";
 import { resolvePassengerPolicyFromSelection } from "@/lib/flight-book-policy";
-import { buildCabinsHref, clearFlightBookSelection } from "@/lib/flight-book-session";
+import {
+  buildCabinsHref,
+  clearFlightBookSelection,
+  type FlightBookSelection,
+} from "@/lib/flight-book-session";
 import { navigateBack } from "@/lib/navigation";
 import { usePassengerSelection } from "@/hooks/usePassenger";
 import { replacePassengerCredential } from "@/lib/passenger-select-logic";
@@ -102,6 +114,7 @@ import {
 import { isFlightListTimedOut, buildFlightListRefreshHref } from "@/lib/flight-list-refresh";
 import { formatApiError } from "@/lib/formatApiError";
 import { clearPassengerSelection } from "@/lib/passenger-selection";
+import { pollFlightCheckPay, shouldNavigateToPay } from "@/lib/flight-book-check-pay";
 import {
   isBusinessTravelMode,
   loadHomeTravelMode,
@@ -111,16 +124,36 @@ import { WEB_PAGE_BODY, WEB_PAGE_ROOT, WEB_PAGE_STICKY_HEADER } from "@/lib/web-
 
 const FLIGHT_BOOK_PAGE_BACKGROUND = { background: "var(--brand-form-header-gradient)" };
 
+function shouldValidateTouristFlightBook(selection: FlightBookSelection): boolean {
+  const fare = selection.fare as {
+    IsAgreement?: boolean;
+    FareType?: number | string;
+    FareTypeName?: string;
+    TypeName?: string;
+  };
+  const segment = selection.segment as { IsAgreement?: boolean };
+  const text = `${fare.FareTypeName ?? ""}${fare.TypeName ?? ""}`;
+  return (
+    Boolean(fare.IsAgreement || segment.IsAgreement) ||
+    text.includes("协议") ||
+    text.includes("军警") ||
+    String(fare.FareType ?? "") === "3"
+  );
+}
+
 export function FlightBookPage() {
   const navigate = useNavigate();
   const skipEmptySelectionRedirectRef = useRef(false);
   const { selection } = useFlightBookSelection();
   const { selected, setSelected } = usePassengerSelection(ProductType.Flight);
   const submitBook = useFlightSubmitBook();
+  const validateBook = useFlightValidateBook();
 
   const [travelPayType, setTravelPayType] = useState<number | null>(null);
   const [agentId, setAgentId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [checkingPay, setCheckingPay] = useState(false);
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [agreed, setAgreed] = useState(false);
   const [rulesOpen, setRulesOpen] = useState(false);
   const [ticketNoticeOpen, setTicketNoticeOpen] = useState(false);
@@ -131,6 +164,10 @@ export function FlightBookPage() {
     FLIGHT_NOTIFY_LANGUAGE_DEFAULT,
   );
   const [authorizedContacts, setAuthorizedContacts] = useState<FlightAuthorizedContact[]>([]);
+  const [orderLinkman, setOrderLinkman] = useState<FlightBookLinkmanDto>({});
+  const [removePassengerTarget, setRemovePassengerTarget] = useState<PassengerBookInfo | null>(
+    null,
+  );
   const [addContactOpen, setAddContactOpen] = useState(false);
   const [orgSheetPassengerId, setOrgSheetPassengerId] = useState<string | null>(null);
   const [costSheetPassengerId, setCostSheetPassengerId] = useState<string | null>(null);
@@ -170,7 +207,9 @@ export function FlightBookPage() {
   const initBook = useFlightInitBook(initParams);
   const initStaffs = initBook.data?.Staffs;
   const { forms, orderedForms, updateForm } = useFlightBookPassengerForms(selected, initStaffs);
-  const { showOrganizations, showCostCenter, organizations } = useBookOrgCostVisibility();
+  const { showOrganizations, showCostCenter, organizations } = useBookOrgCostVisibility({
+    enabled: isBusinessMode,
+  });
 
   const payOptions = useMemo(
     () => parseFlightPayTypeOptions(initBook.data?.PayTypes),
@@ -219,17 +258,20 @@ export function FlightBookPage() {
   }, [flightPolicy, initBook.data, initStaffs, isBusinessMode, selected, selection]);
   const primaryTravelPassenger = useMemo(() => resolvePrimaryTravelPassenger(selected), [selected]);
 
-  const resolvedPayType = travelPayType ?? resolveDefaultFlightPayType(payOptions);
+  const resolvedPayType = isBusinessMode
+    ? travelPayType ?? resolveDefaultFlightPayType(payOptions)
+    : FLIGHT_PAY_TYPE_PERSON;
   const personHoldMinutes = resolveFlightHoldMinutes(initBook.data);
 
   const showSaveOrder = useMemo(
     () =>
+      isBusinessMode &&
       canSaveFlightOrder({
         identity,
         segment: selection?.segment,
         cabinsQuery: selection?.cabinsQuery,
       }),
-    [identity, selection?.cabinsQuery, selection?.segment],
+    [identity, isBusinessMode, selection?.cabinsQuery, selection?.segment],
   );
   const resolvedAgentId =
     agentId ?? (tmcAgents.length === 1 ? String(tmcAgents[0]?.Id ?? "") : undefined);
@@ -251,9 +293,9 @@ export function FlightBookPage() {
   }
 
   useEffect(() => {
-    if (travelPayType != null || !payOptions.length) return;
+    if (!isBusinessMode || travelPayType != null || !payOptions.length) return;
     setTravelPayType(resolveDefaultFlightPayType(payOptions));
-  }, [payOptions, travelPayType]);
+  }, [isBusinessMode, payOptions, travelPayType]);
 
   // Legacy: after Initialize, default selectedTmcAgent to tmcAgents[0] if unset.
   useEffect(() => {
@@ -263,6 +305,24 @@ export function FlightBookPage() {
       setAgentId(nextAgentId);
     }
   }, [agentId, initBook.data, tmcAgents]);
+
+  useEffect(() => {
+    if (isBusinessMode) return;
+    if (orderLinkman.Name || orderLinkman.Mobile || orderLinkman.Email) return;
+    const initialLinkman = initBook.data?.Linkman;
+    if (!initialLinkman) return;
+    setOrderLinkman({
+      Name: initialLinkman.Name ?? "",
+      Mobile: initialLinkman.Mobile ?? "",
+      Email: initialLinkman.Email ?? "",
+    });
+  }, [
+    initBook.data?.Linkman,
+    isBusinessMode,
+    orderLinkman.Email,
+    orderLinkman.Mobile,
+    orderLinkman.Name,
+  ]);
 
   useEffect(() => {
     if (!expenseTypes.length || !primaryTravelPassenger) return;
@@ -357,8 +417,13 @@ export function FlightBookPage() {
     resolveFlightBookDisplayAmount(selection, selected, serviceFees) + totalInsurance;
   const timedOut = isFlightListTimedOut(selection.priceSnapshotAt);
   const isInitBlocking = initBook.isFetching && !initBook.data;
-  const isPending = isSubmitting || submitBook.isPending || isInitBlocking;
-  const submitPendingLabel = "提交中…";
+  const isPending =
+    isSubmitting ||
+    submitBook.isPending ||
+    validateBook.isPending ||
+    isInitBlocking ||
+    checkingPay;
+  const submitPendingLabel = checkingPay ? "确认中…" : "提交中…";
   const initError = initBook.error;
   const submitError = submitBook.error;
 
@@ -370,13 +435,22 @@ export function FlightBookPage() {
     navigateBack(navigate, buildCabinsHref(selection));
   }
 
+  function showAlert(message: string) {
+    setAlertMessage(message);
+  }
+
+  function removePassengerFromBook(target: PassengerBookInfo) {
+    setSelected(selected.filter((item) => item.id !== target.id));
+    setRemovePassengerTarget(null);
+  }
+
   async function submitOrder(isSave: boolean) {
     if (!selection || selected.length === 0 || !initParams) {
-      window.alert("订单信息不完整，请返回舱位页重新选择");
+      showAlert("订单信息不完整，请返回舱位页重新选择");
       return;
     }
     if (!agreed) {
-      window.alert("请先阅读并同意购票须知");
+      showAlert("请先阅读并同意购票须知");
       return;
     }
     if (timedOut) {
@@ -384,7 +458,7 @@ export function FlightBookPage() {
       return;
     }
     if (tmcAgents.length > 1 && !resolvedAgentId) {
-      window.alert("请选择服务商");
+      showAlert("请选择服务商");
       return;
     }
 
@@ -400,7 +474,7 @@ export function FlightBookPage() {
         if (invalidPassenger) {
           updateForm(invalidPassenger.id, { expanded: true });
         }
-        window.alert(passengerValidationError);
+        showAlert(passengerValidationError);
         return;
       }
 
@@ -414,7 +488,7 @@ export function FlightBookPage() {
         showApproverPickerByPassenger,
       });
       if (travelValidationError) {
-        window.alert(travelValidationError);
+        showAlert(travelValidationError);
         return;
       }
 
@@ -426,18 +500,26 @@ export function FlightBookPage() {
         tmcHasInsurance,
       });
       if (insuranceValidationError) {
-        window.alert(insuranceValidationError);
+        showAlert(insuranceValidationError);
         return;
       }
 
       if (!isBusinessMode && authorizedContacts.length > 0) {
         setAuthorizedContacts([]);
       }
+      const orderLinkmanValidationError = !isBusinessMode
+        ? validateFlightOrderLinkman(orderLinkman)
+        : null;
+      if (orderLinkmanValidationError) {
+        showAlert(orderLinkmanValidationError);
+        return;
+      }
+
       const contactValidationError = isBusinessMode
         ? validateAuthorizedContacts(authorizedContacts)
         : null;
       if (contactValidationError) {
-        window.alert(contactValidationError);
+        showAlert(contactValidationError);
         return;
       }
 
@@ -448,6 +530,7 @@ export function FlightBookPage() {
         travelPayType: resolvedPayType,
         messageLang: notifyLanguage,
         authorizedContacts: isBusinessMode ? authorizedContacts : [],
+        orderLinkman: isBusinessMode ? undefined : orderLinkman,
         agentId: resolvedAgentId,
         channel: productChannel,
         isSave,
@@ -459,16 +542,52 @@ export function FlightBookPage() {
         travelMode,
       });
 
+      if (
+        productChannel === "tourist" &&
+        !isSave &&
+        shouldValidateTouristFlightBook(selection)
+      ) {
+        await validateBook.mutateAsync(bookDto);
+      }
+
       const result = await submitBook.mutateAsync(bookDto);
       const orderId = resolveFlightBookOrderId(result);
 
       if (isSave) {
-        window.alert("订单已保存");
+        showAlert("订单已保存");
         if (orderId) {
           finishBookNavigation("/orders", { bookedOrderId: orderId, product: "flight" });
         } else {
           finishBookNavigation("/orders");
         }
+        return;
+      }
+
+      if (result.IsCheckPay && result.TradeNo) {
+        setCheckingPay(true);
+        const checkPayReady = await pollFlightCheckPay(result.TradeNo, {
+          channel: productChannel,
+          productType: "Flight",
+        });
+        if (shouldNavigateToPay({ travelPayType: resolvedPayType, checkPayReady }) && orderId) {
+          const channelQuery = productChannel === "tourist" ? "?channel=tourist" : "";
+          finishBookNavigation(`/flight/pay/${encodeURIComponent(orderId)}${channelQuery}`, {
+            bookedOrderId: orderId,
+            product: "flight",
+          });
+          return;
+        }
+      }
+
+      if (
+        productChannel === "tourist" &&
+        shouldNavigateToPay({ travelPayType: resolvedPayType, checkPayReady: true }) &&
+        orderId
+      ) {
+        finishBookNavigation(`/flight/pay/${encodeURIComponent(orderId)}?channel=tourist`, {
+          bookedOrderId: orderId,
+          product: "flight",
+        });
         return;
       }
 
@@ -486,9 +605,10 @@ export function FlightBookPage() {
 
       finishBookNavigation("/orders");
     } catch (error) {
-      window.alert(formatApiError(error));
+      showAlert(formatApiError(error));
     } finally {
       setIsSubmitting(false);
+      setCheckingPay(false);
     }
   }
 
@@ -528,6 +648,8 @@ export function FlightBookPage() {
                   forms={orderedForms}
                   showOrganizations={isBusinessMode && showOrganizations}
                   showCostCenter={isBusinessMode && showCostCenter}
+                  allowAddPassenger={!isBusinessMode}
+                  onRemove={!isBusinessMode ? setRemovePassengerTarget : undefined}
                   onUpdateForm={updateForm}
                   onOpenOrganization={setOrgSheetPassengerId}
                   onOpenCostCenter={setCostSheetPassengerId}
@@ -576,6 +698,7 @@ export function FlightBookPage() {
                         form={form}
                         showOrganizations={isBusinessMode && showOrganizations}
                         showCostCenter={isBusinessMode && showCostCenter}
+                        onRemove={!isBusinessMode ? setRemovePassengerTarget : undefined}
                         onUpdateForm={updateForm}
                         onOpenOrganization={setOrgSheetPassengerId}
                         onOpenCostCenter={setCostSheetPassengerId}
@@ -606,6 +729,18 @@ export function FlightBookPage() {
             </>
           )}
 
+          {!isBusinessMode ? (
+            <TrainBookLinkmanCard
+              linkman={orderLinkman}
+              onChange={(patch) =>
+                setOrderLinkman((current) => ({
+                  ...current,
+                  ...patch,
+                }))
+              }
+            />
+          ) : null}
+
           {!initBook.isFetching && isBusinessMode ? (
             <FlightBookAuthorizedContacts
               contacts={authorizedContacts}
@@ -633,13 +768,18 @@ export function FlightBookPage() {
             const form = forms[passenger.id];
             if (!form) return null;
             const insuranceProducts = insurancesByPassenger[passenger.id] ?? [];
-            return isBusinessMode && tmcHasInsurance ? (
+            const showInsurance = isBusinessMode ? tmcHasInsurance : insuranceProducts.length > 0;
+            return showInsurance ? (
               <FlightBookInsurance
                 key={passenger.id}
                 products={insuranceProducts}
                 selectedId={form.selectedInsuranceId}
-                mandatory={isMandatoryFlightInsurance(passenger, tmcInsuranceFlags)}
-                selectionLocked={isMandatoryFlightInsurance(passenger, tmcInsuranceFlags)}
+                mandatory={
+                  isBusinessMode && isMandatoryFlightInsurance(passenger, tmcInsuranceFlags)
+                }
+                selectionLocked={
+                  isBusinessMode && isMandatoryFlightInsurance(passenger, tmcInsuranceFlags)
+                }
                 onSelect={(selectedInsuranceId) =>
                   updateForm(passenger.id, { selectedInsuranceId })
                 }
@@ -706,6 +846,42 @@ export function FlightBookPage() {
         onShowTicketNotice={() => setTicketNoticeOpen(true)}
         onSubmit={() => void submitOrder(false)}
         onSave={() => void submitOrder(true)}
+      />
+
+      {checkingPay ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-8">
+          <div className="w-full max-w-[18rem] rounded-2xl bg-white px-5 py-6 text-center shadow-lg">
+            <div className="mx-auto size-8 animate-spin rounded-full border-2 border-[#DCE8FF] border-t-[#2768FA]" />
+            <p className="mt-4 text-[16px] font-semibold text-[#222222]">正在确认预订状态</p>
+            <p className="mt-2 text-[13px] leading-relaxed text-[#666666]">
+              订单已提交，请稍候，确认后将进入支付页面
+            </p>
+          </div>
+        </div>
+      ) : null}
+
+      <ConfirmDialog
+        open={removePassengerTarget != null}
+        title="移除旅客"
+        message={
+          removePassengerTarget
+            ? `确定从当前订单移除「${removePassengerTarget.credential.Name ?? "该旅客"}」？`
+            : ""
+        }
+        confirmLabel="移除"
+        variant="destructive"
+        onConfirm={() => {
+          if (removePassengerTarget) {
+            removePassengerFromBook(removePassengerTarget);
+          }
+        }}
+        onCancel={() => setRemovePassengerTarget(null)}
+      />
+
+      <PassengerSelectAlertDialog
+        open={Boolean(alertMessage)}
+        message={alertMessage ?? ""}
+        onClose={() => setAlertMessage(null)}
       />
 
       <FlightBookTicketNoticeSheet

@@ -59,6 +59,7 @@ import {
 } from "@/lib/hotel-book";
 import { pollHotelCheckPay, shouldNavigateToPay } from "@/lib/hotel-book-check-pay";
 import {
+  filterHotelPersonalPayTypeOptions,
   parseHotelPayTypeOptions,
   resolveDefaultHotelPayType,
   resolveHotelBookTmcFlags,
@@ -71,7 +72,7 @@ import { TAB_ID_TO_PARAM } from "@/lib/order-list-params";
 import { formatApiError } from "@/lib/formatApiError";
 import { FLIGHT_NOTIFY_LANGUAGE_OPTIONS } from "@/lib/flight-book-notify";
 import { replacePassengerCredential } from "@/lib/passenger-select-logic";
-import { clearPassengerSelection } from "@/lib/passenger-selection";
+import { buildPassengerSelectPath, clearPassengerSelection } from "@/lib/passenger-selection";
 import { scrollH5MainToTop } from "@/lib/scroll-h5-main";
 import {
   isBusinessTravelMode,
@@ -108,6 +109,7 @@ export function HotelBookPage() {
   const [travelPayType, setTravelPayType] = useState<number | null>(null);
   const [agreed, setAgreed] = useState(false);
   const [authorizedContacts, setAuthorizedContacts] = useState<FlightAuthorizedContact[]>([]);
+  const [checkingPay, setCheckingPay] = useState(false);
   const [creditCard, setCreditCard] = useState<HotelCreditCardForm>(() =>
     createEmptyHotelCreditCardForm(),
   );
@@ -140,6 +142,7 @@ export function HotelBookPage() {
   );
   const isBusinessMode = isBusinessTravelMode(travelMode);
   const productChannel = resolveProductChannel(travelMode);
+  const bookReturnTo = `/hotel/${encodeURIComponent(hotelId)}/book?${searchParams.toString()}`;
 
   useLayoutEffect(() => {
     scrollH5MainToTop();
@@ -147,13 +150,13 @@ export function HotelBookPage() {
 
   useEffect(() => {
     if (leavingAfterSubmitRef.current) return;
-    if (!selection || passengers.length === 0) {
+    if (!selection || (isBusinessMode && passengers.length === 0)) {
       setRedirecting(true);
       const detailUrl = selection ? buildHotelBookDetailUrl(selection) : null;
       const target = detailUrl ?? (hotelId ? `/hotel/${encodeURIComponent(hotelId)}` : "/home");
       navigate(target, { replace: true });
     }
-  }, [hotelId, navigate, passengers.length, selection]);
+  }, [hotelId, isBusinessMode, navigate, passengers.length, selection]);
 
   const arrivalOptions = useMemo(
     () => (selection ? resolveHotelArrivalTimeOptions(selection, selection.checkIn) : []),
@@ -214,10 +217,10 @@ export function HotelBookPage() {
     arrivalTime,
   );
 
-  const payOptions = useMemo(
-    () => parseHotelPayTypeOptions(initBook.data?.PayTypes),
-    [initBook.data?.PayTypes],
-  );
+  const payOptions = useMemo(() => {
+    const options = parseHotelPayTypeOptions(initBook.data?.PayTypes);
+    return isBusinessMode ? options : filterHotelPersonalPayTypeOptions(options);
+  }, [initBook.data?.PayTypes, isBusinessMode]);
 
   useEffect(() => {
     if (!payOptions.length) return;
@@ -266,6 +269,10 @@ export function HotelBookPage() {
 
   async function handleSubmit() {
     if (!selection) return;
+    if (passengers.length === 0) {
+      setAlertMessage("请选择入住人");
+      return;
+    }
 
     const validationError = validateHotelBookForms({
       passengers,
@@ -325,6 +332,7 @@ export function HotelBookPage() {
           creditCard: showCreditCard ? creditCard : undefined,
           outNumberFieldsByPassenger,
           initDto: initParams ?? undefined,
+          init: initBook.data,
           travelMode,
           channel: productChannel,
           authorizedContacts: isBusinessMode ? authorizedContacts : [],
@@ -335,20 +343,25 @@ export function HotelBookPage() {
       const orderId = resolveHotelBookOrderId(result);
 
       if (result.IsCheckPay && result.TradeNo) {
-        const checkPayReady = await pollHotelCheckPay(result.TradeNo, {
-          channel: productChannel,
-          productType: "Hotel",
-        });
-        if (shouldNavigateToPay({ travelPayType: payType, checkPayReady })) {
-          leavingAfterSubmitRef.current = true;
-          clearPassengerSelection(ProductType.Hotel);
-          clearHotelBookSelection();
-          const payPath =
-            productChannel === "tourist"
-              ? `/hotel/pay/${encodeURIComponent(orderId)}?channel=tourist`
-              : `/hotel/pay/${encodeURIComponent(orderId)}`;
-          navigate(payPath, { replace: true });
-          return;
+        setCheckingPay(true);
+        try {
+          const checkPayReady = await pollHotelCheckPay(result.TradeNo, {
+            channel: productChannel,
+            productType: "Hotel",
+          });
+          if (shouldNavigateToPay({ travelPayType: payType, checkPayReady })) {
+            leavingAfterSubmitRef.current = true;
+            clearPassengerSelection(ProductType.Hotel);
+            clearHotelBookSelection();
+            const payPath =
+              productChannel === "tourist"
+                ? `/hotel/pay/${encodeURIComponent(orderId)}?channel=tourist`
+                : `/hotel/pay/${encodeURIComponent(orderId)}`;
+            navigate(payPath, { replace: true });
+            return;
+          }
+        } finally {
+          setCheckingPay(false);
         }
       }
 
@@ -381,6 +394,7 @@ export function HotelBookPage() {
   }
 
   const resolvedPayType = travelPayType ?? resolveDefaultHotelPayType(payOptions);
+  const isSubmittingOrChecking = submitBook.isPending || checkingPay;
 
   return (
     <div className={`${WEB_PAGE_ROOT} bg-[#F5F6F9]`}>
@@ -423,6 +437,24 @@ export function HotelBookPage() {
 
         {selection.policyRules?.length ? (
           <HotelBookPolicyBanner rules={selection.policyRules} />
+        ) : null}
+
+        {!isBusinessMode && passengers.length === 0 ? (
+          <HotelBookRoomSection
+            roomIndex={1}
+            passenger={
+              <button
+                type="button"
+                className="flex h-12 w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-[#8DB7FF] bg-[#F3F7FF] text-[14px] font-medium text-brand-primary active:opacity-80"
+                onClick={() => navigate(buildPassengerSelectPath(ProductType.Hotel, bookReturnTo))}
+              >
+                <span className="text-[18px] leading-none" aria-hidden>
+                  +
+                </span>
+                选择入住人
+              </button>
+            }
+          />
         ) : null}
 
         {passengers.map((passenger, index) => {
@@ -514,18 +546,20 @@ export function HotelBookPage() {
           />
         ) : null}
 
-        <HotelBookPayTypes
-          options={payOptions}
-          value={resolvedPayType}
-          personHoldMinutes={personHoldMinutes}
-          onChange={setTravelPayType}
-        />
+        {isBusinessMode ? (
+          <HotelBookPayTypes
+            options={payOptions}
+            value={resolvedPayType}
+            personHoldMinutes={personHoldMinutes}
+            onChange={setTravelPayType}
+          />
+        ) : null}
       </div>
 
       <HotelBookFooter
         amount={displayAmount}
-        disabled={submitBook.isPending}
-        pending={submitBook.isPending}
+        disabled={isSubmittingOrChecking}
+        pending={isSubmittingOrChecking}
         billOpen={billOpen}
         billNights={billNights}
         serviceFee={serviceFeeTotal}
@@ -533,6 +567,22 @@ export function HotelBookPage() {
         onBillToggle={() => setBillOpen((open) => !open)}
         onSubmit={() => void handleSubmit()}
       />
+
+      {checkingPay ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 px-8">
+          <div className="w-full max-w-[18rem] rounded-2xl bg-white px-5 py-6 text-center shadow-lg">
+            <div className="mx-auto size-8 animate-spin rounded-full border-2 border-[#DCE8FF] border-t-[#2768FA]" />
+            <p className="mt-4 text-[16px] font-semibold text-[#222222]">
+              {productChannel === "tourist" ? "正在确认预订状态" : "正在确认支付状态"}
+            </p>
+            <p className="mt-2 text-[13px] leading-relaxed text-[#666666]">
+              {productChannel === "tourist"
+                ? "订单已提交，请稍候，确认后将进入订单详情"
+                : "订单已提交，请稍候，确认后将进入支付页面"}
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       <HotelBookArrivalTimeSheet
         open={arrivalSheetOpen}
@@ -583,7 +633,7 @@ export function HotelBookPage() {
         open={warmReminderOpen}
         paragraphs={warmReminderParagraphs}
         agreed={agreed}
-        pending={submitBook.isPending}
+        pending={isSubmittingOrChecking}
         showCreditCard={showCreditCard}
         onAgreedChange={setAgreed}
         onConfirm={() => {

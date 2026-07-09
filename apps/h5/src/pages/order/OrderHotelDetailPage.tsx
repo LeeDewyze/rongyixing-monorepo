@@ -30,6 +30,7 @@ import {
   filterBillLinesForRoom,
   getCancelOrderHotelId,
   getSelectedRoom,
+  suppressHotelFooterActions,
 } from "@/lib/hotel-order-detail";
 import { parseOrderListScope } from "@/lib/order-list-params";
 import { getOrderListPath } from "@/lib/order-routes";
@@ -81,6 +82,7 @@ export function OrderHotelDetailPage() {
   const [cancelOpen, setCancelOpen] = useState(false);
   const [smsOpen, setSmsOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [suppressFooterActions, setSuppressFooterActions] = useState(false);
 
   const leaveDetail = useCallback(() => {
     navigate(getOrderListPath("hotel", { channel, scope: listScope }), { replace: true });
@@ -103,6 +105,7 @@ export function OrderHotelDetailPage() {
   useLayoutEffect(() => {
     contentRef.current?.scrollTo({ top: 0 });
     scrollH5MainToTop();
+    setSuppressFooterActions(false);
   }, [orderId]);
 
   useLayoutEffect(() => {
@@ -168,6 +171,7 @@ export function OrderHotelDetailPage() {
         Channel: resolveAppChannel(),
       });
       setCancelOpen(false);
+      setSuppressFooterActions(true);
       showToast("订单已取消");
       void refetch();
     } catch (err) {
@@ -227,7 +231,12 @@ export function OrderHotelDetailPage() {
   );
 
   const smsMode = detail?.Actions.smsAction === "confirmCode" ? "confirmCode" : "sendCode";
-  const showFooter = Boolean(detail?.Actions.showPay || detail?.Actions.showCancel);
+  const footerActions = useMemo(() => {
+    const actions = detail?.Actions;
+    if (!actions) return undefined;
+    return suppressFooterActions ? suppressHotelFooterActions(actions) : actions;
+  }, [detail?.Actions, suppressFooterActions]);
+  const showFooter = Boolean(footerActions?.showPay || footerActions?.showCancel);
   const pending = cancelMutation.isPending || sms.send.isPending || sms.confirm.isPending;
 
   return (
@@ -298,7 +307,7 @@ export function OrderHotelDetailPage() {
       {detail ? (
         <>
           <HotelOrderDetailFooter
-            actions={detail.Actions}
+            actions={footerActions ?? detail.Actions}
             pending={pending}
             onCancel={handleCancelClick}
             onPay={handlePay}

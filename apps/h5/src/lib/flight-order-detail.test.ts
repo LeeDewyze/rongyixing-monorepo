@@ -6,6 +6,8 @@ import {
   resolveCancelTarget,
   shouldPollFlightOrderDetail,
   shouldShowFlightFooter,
+  suppressFlightFooterActions,
+  suppressFlightTicketActions,
 } from "@/lib/flight-order-detail";
 
 function makeDetail(ticketCount: number): CoercedFlightOrderDetail {
@@ -57,6 +59,18 @@ describe("shouldShowFlightFooter", () => {
     const actions = { showPay: false, showCancel: false, smsAction: "none" as const };
     const ticket = { Id: "T1", Key: "k1", Trips: [], Actions: { showRefund: true } };
     expect(shouldShowFlightFooter(actions, null, ticket)).toBe(true);
+  });
+
+  it("hides footer after local cancel suppression", () => {
+    const actions = { showPay: true, showCancel: true, smsAction: "none" as const };
+    const ticket = { Id: "T1", Key: "k1", Trips: [], Actions: { showRefund: true } };
+    expect(
+      shouldShowFlightFooter(
+        suppressFlightFooterActions(actions),
+        120,
+        suppressFlightTicketActions(ticket),
+      ),
+    ).toBe(false);
   });
 });
 

@@ -65,7 +65,9 @@ export function shouldUseLegacyH5PayRedirect(input: {
 }): boolean {
   return (
     input.channel === "tourist" &&
-    input.productType === "Train" &&
+    (input.productType === "Train" ||
+      input.productType === "Flight" ||
+      input.productType === "Hotel") &&
     resolveLegacyH5PayType(input.payType) != null
   );
 }

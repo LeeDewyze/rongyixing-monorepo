@@ -106,6 +106,7 @@ interface FlightBookPassengerCardProps {
   form: FlightPassengerBookForm;
   showOrganizations: boolean;
   showCostCenter: boolean;
+  onRemove?: (passenger: PassengerBookInfo) => void;
   onUpdateForm: (passengerId: string, patch: Partial<FlightPassengerBookForm>) => void;
   onOpenOrganization: (passengerId: string) => void;
   onOpenCostCenter: (passengerId: string) => void;
@@ -117,6 +118,7 @@ export function FlightBookPassengerCard({
   form,
   showOrganizations,
   showCostCenter,
+  onRemove,
   onUpdateForm,
   onOpenOrganization,
   onOpenCostCenter,
@@ -124,6 +126,23 @@ export function FlightBookPassengerCard({
 }: FlightBookPassengerCardProps) {
   const canSwitchCredential = Boolean(resolveStaffAccountId(passenger));
   const credentialLine = `${credentialDisplayType(passenger.credential)}：${credentialDisplayNumber(passenger.credential)}`;
+  const footerAction =
+    canSwitchCredential || onRemove ? (
+      <div className="flex shrink-0 items-center gap-2">
+        {canSwitchCredential ? (
+          <FlightBookCredentialSwitchButton onClick={() => onChangeCredential(passenger)} />
+        ) : null}
+        {onRemove ? (
+          <button
+            type="button"
+            className="rounded-full px-1.5 py-0.5 text-[12px] font-medium text-[#FF4D4F] active:bg-[#fff1f0]"
+            onClick={() => onRemove(passenger)}
+          >
+            移除
+          </button>
+        ) : null}
+      </div>
+    ) : null;
 
   return (
     <FlightBookExpandableSummaryCard
@@ -133,11 +152,7 @@ export function FlightBookPassengerCard({
       subtitle={credentialLine}
       expanded={form.expanded}
       onToggleExpanded={() => onUpdateForm(passenger.id, { expanded: !form.expanded })}
-      footerAction={
-        canSwitchCredential ? (
-          <FlightBookCredentialSwitchButton onClick={() => onChangeCredential(passenger)} />
-        ) : null
-      }
+      footerAction={footerAction}
     >
       <DetailRow label="联系电话">
         <ContactCheckboxList
@@ -275,6 +290,8 @@ interface FlightBookPassengersProps {
   forms: FlightPassengerBookForm[];
   showOrganizations: boolean;
   showCostCenter: boolean;
+  allowAddPassenger?: boolean;
+  onRemove?: (passenger: PassengerBookInfo) => void;
   onUpdateForm: (passengerId: string, patch: Partial<FlightPassengerBookForm>) => void;
   onOpenOrganization: (passengerId: string) => void;
   onOpenCostCenter: (passengerId: string) => void;
@@ -287,6 +304,8 @@ export function FlightBookPassengers({
   forms,
   showOrganizations,
   showCostCenter,
+  allowAddPassenger = false,
+  onRemove,
   onUpdateForm,
   onOpenOrganization,
   onOpenCostCenter,
@@ -318,6 +337,7 @@ export function FlightBookPassengers({
             form={form}
             showOrganizations={showOrganizations}
             showCostCenter={showCostCenter}
+            onRemove={onRemove}
             onUpdateForm={onUpdateForm}
             onOpenOrganization={onOpenOrganization}
             onOpenCostCenter={onOpenCostCenter}
@@ -325,6 +345,17 @@ export function FlightBookPassengers({
           />
         );
       })}
+      {allowAddPassenger ? (
+        <Link
+          to={selectPath}
+          className="flex h-11 items-center justify-center gap-1.5 text-[14px] font-medium text-brand-primary active:opacity-80"
+        >
+          <span className="text-[18px] leading-none" aria-hidden>
+            +
+          </span>
+          添加旅客
+        </Link>
+      ) : null}
     </div>
   );
 }

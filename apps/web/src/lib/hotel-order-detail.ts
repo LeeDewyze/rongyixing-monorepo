@@ -196,6 +196,17 @@ export function resolveFooterActions(detail: HotelOrderDetail): HotelOrderAction
   return coerceHotelOrderDetail(detail).Actions;
 }
 
+export function suppressHotelFooterActions(actions: HotelOrderActionFlags): HotelOrderActionFlags {
+  return {
+    ...actions,
+    showPay: false,
+    showCancel: false,
+    showRefund: false,
+    showExchange: false,
+    smsAction: "none",
+  };
+}
+
 export function getCancelOrderHotelId(detail: HotelOrderDetail): string | undefined {
   const actions = detail.Actions;
   return actions?.cancelOrderHotelId ?? detail.Rooms?.[0]?.Id;

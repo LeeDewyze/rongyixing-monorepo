@@ -28,6 +28,7 @@ import {
   filterBillLinesForRoom,
   getCancelOrderHotelId,
   getSelectedRoom,
+  suppressHotelFooterActions,
 } from "@/lib/hotel-order-detail";
 import { parseOrderListScope } from "@/lib/order-list-params";
 import { buildOrderPayPath } from "@/lib/order-page-utils";
@@ -75,6 +76,7 @@ export function WebOrderHotelDetailPage() {
   const [cancelOpen, setCancelOpen] = useState(false);
   const [smsOpen, setSmsOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [suppressFooterActions, setSuppressFooterActions] = useState(false);
 
   const leaveDetail = useCallback(() => {
     navigate(getOrderListPath("hotel", { channel, scope: listScope }), { replace: true });
@@ -93,6 +95,10 @@ export function WebOrderHotelDetailPage() {
   }, [billOpen, leaveDetail, smsOpen]);
 
   usePageHeader({ visible: false });
+
+  useEffect(() => {
+    setSuppressFooterActions(false);
+  }, [orderId]);
 
   useEffect(() => {
     if (!openCancelOnMountRef.current || !detail?.Actions?.showCancel) {
@@ -138,6 +144,7 @@ export function WebOrderHotelDetailPage() {
         Channel: resolveAppChannel(),
       });
       setCancelOpen(false);
+      setSuppressFooterActions(true);
       showToast("订单已取消");
       void refetch();
     } catch (err) {
@@ -197,7 +204,12 @@ export function WebOrderHotelDetailPage() {
   );
 
   const smsMode = detail?.Actions.smsAction === "confirmCode" ? "confirmCode" : "sendCode";
-  const showFooter = Boolean(detail?.Actions.showPay || detail?.Actions.showCancel);
+  const footerActions = useMemo(() => {
+    const actions = detail?.Actions;
+    if (!actions) return undefined;
+    return suppressFooterActions ? suppressHotelFooterActions(actions) : actions;
+  }, [detail?.Actions, suppressFooterActions]);
+  const showFooter = Boolean(footerActions?.showPay || footerActions?.showCancel);
   const pending = cancelMutation.isPending || sms.send.isPending || sms.confirm.isPending;
 
   return (
@@ -258,7 +270,7 @@ export function WebOrderHotelDetailPage() {
 
       {detail && showFooter ? (
         <HotelOrderDetailFooter
-          actions={detail.Actions}
+          actions={footerActions ?? detail.Actions}
           pending={pending}
           onCancel={handleCancelClick}
           onPay={handlePay}

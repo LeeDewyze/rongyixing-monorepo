@@ -38,6 +38,15 @@ export function parseHotelPayTypeOptions(
   return visible.length ? visible : DEFAULT_PAY_OPTIONS;
 }
 
+export function filterHotelPersonalPayTypeOptions(
+  options: HotelPayTypeOption[],
+): HotelPayTypeOption[] {
+  const personal = options.filter((item) => item.value === HOTEL_PAY_TYPE_PERSON);
+  return personal.length
+    ? personal
+    : DEFAULT_PAY_OPTIONS.filter((item) => item.value === HOTEL_PAY_TYPE_PERSON);
+}
+
 export function resolveDefaultHotelPayType(options: HotelPayTypeOption[]): number {
   return (
     options.find((item) => item.value === HOTEL_PAY_TYPE_COMPANY)?.value ??

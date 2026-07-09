@@ -118,6 +118,32 @@ export function shouldShowFlightFooter(
   );
 }
 
+export function suppressFlightFooterActions(
+  actions: HotelOrderActionFlags,
+): HotelOrderActionFlags {
+  return {
+    ...actions,
+    showPay: false,
+    showCancel: false,
+    showRefund: false,
+    showExchange: false,
+  };
+}
+
+export function suppressFlightTicketActions(
+  ticket?: FlightOrderTicket,
+): FlightOrderTicket | undefined {
+  if (!ticket?.Actions) return ticket;
+  return {
+    ...ticket,
+    Actions: {
+      ...ticket.Actions,
+      showCancel: false,
+      showRefund: false,
+    },
+  };
+}
+
 export function formatPayHoldCountdownZh(totalSeconds: number): string {
   const safe = Math.max(0, Math.floor(totalSeconds));
   const minutes = Math.floor(safe / 60);

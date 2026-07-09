@@ -268,7 +268,11 @@ describe("buildHotelOrderBookDto", () => {
       initDto,
     });
 
-    expect(bookDto.Passengers[0]?.RoomPlan).toEqual(initRoomPlan);
+    expect(bookDto.Passengers[0]?.RoomPlan).toMatchObject(initRoomPlan ?? {});
+    expect(bookDto.Passengers[0]?.RoomPlan.VariablesObj).toEqual({
+      ArrivalTime: ["2026-06-20 14:00", "2026-06-20 18:00"],
+      RoomRateRule: "不可取消",
+    });
   });
 
   it("omits travel form fields in personal mode", () => {

@@ -1,5 +1,6 @@
 import type {
   FlightAuthorizedContact,
+  FlightBookLinkmanDto,
   FlightBookPassengerDto,
   FlightBookPolicy,
   FlightInsuranceProduct,
@@ -72,6 +73,28 @@ function mergeTravelNumberOutNumbers(
   }
   if (!travelNumber) return outNumbers;
   return { ...outNumbers, TravelNumber: travelNumber };
+}
+
+function normalizeFlightOrderLinkman(
+  linkman?: FlightBookLinkmanDto,
+): FlightBookLinkmanDto | null {
+  const Name = linkman?.Name?.trim() ?? "";
+  const Mobile = linkman?.Mobile?.trim() ?? "";
+  const Email = linkman?.Email?.trim() ?? "";
+  if (!Name && !Mobile && !Email) return null;
+  return {
+    Name,
+    Mobile,
+    Email: Email || undefined,
+  };
+}
+
+export function validateFlightOrderLinkman(linkman?: FlightBookLinkmanDto): string | null {
+  const normalized = normalizeFlightOrderLinkman(linkman);
+  if (!normalized?.Name) return "请填写联系人姓名";
+  if (!normalized.Mobile) return "请填写联系人手机号";
+  if (!/^1\d{10}$/.test(normalized.Mobile)) return "请输入正确的联系人手机号";
+  return null;
 }
 
 function resolvePassengerAccountId(info: PassengerBookInfo): string | undefined {
@@ -245,6 +268,7 @@ export function buildFlightOrderBookDto(input: {
   travelPayType?: number;
   messageLang?: string;
   authorizedContacts?: FlightAuthorizedContact[];
+  orderLinkman?: FlightBookLinkmanDto;
   agentId?: string;
   channel?: "tmc" | "tourist";
   isSave?: boolean;
@@ -264,6 +288,7 @@ export function buildFlightOrderBookDto(input: {
     travelPayType,
     messageLang,
     authorizedContacts,
+    orderLinkman,
     agentId,
     channel,
     isSave,
@@ -281,6 +306,7 @@ export function buildFlightOrderBookDto(input: {
   const detailSnapshot = selection.detailSnapshot;
   const resolvedTravelType = travelType ?? resolveFlightTravelType(travelMode);
   const includeTravelForm = isBusinessTravelMode(travelMode);
+  const normalizedOrderLinkman = normalizeFlightOrderLinkman(orderLinkman);
   const sharedTravelNumber = includeTravelForm
     ? travelNumber ?? passengers.map(resolvePassengerTravelNumber).find(Boolean)
     : undefined;
@@ -402,7 +428,9 @@ export function buildFlightOrderBookDto(input: {
   dto.IsFromOffline = saveOrder;
   dto.IsForbidAutoIssue = saveOrder;
 
-  if (authorizedContacts?.length) {
+  if (normalizedOrderLinkman) {
+    dto.Linkmans = [normalizedOrderLinkman];
+  } else if (authorizedContacts?.length) {
     dto.Linkmans = buildAuthorizedLinkmans(authorizedContacts);
   }
 

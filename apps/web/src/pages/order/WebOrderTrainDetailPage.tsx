@@ -38,6 +38,7 @@ import {
   mergeTrainFooterActions,
   shouldShowTrainFooter,
   shouldShowTrainOrderHoldBanner,
+  suppressTrainFooterActions,
 } from "@/lib/train-order-detail";
 import { buildTrainScheduleParamsFromTrip } from "@/lib/train-schedule";
 import { parseOrderListScope } from "@/lib/order-list-params";
@@ -82,11 +83,6 @@ export function WebOrderTrainDetailPage() {
   const refundMutation = useRefundTrainOrder();
   const payHoldSecondsRemaining = useTrainPayHoldCountdown(detail?.PayHoldMinutes);
 
-  const showHoldBanner = useMemo(
-    () => detail != null && shouldShowTrainOrderHoldBanner(payHoldSecondsRemaining, detail.Actions),
-    [detail, payHoldSecondsRemaining],
-  );
-
   const [selectedTicketIndex, setSelectedTicketIndex] = useState(0);
   const [billOpen, setBillOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
@@ -96,6 +92,7 @@ export function WebOrderTrainDetailPage() {
   const [explainOpen, setExplainOpen] = useState(false);
   const [scheduleParams, setScheduleParams] = useState<TrainScheduleParams | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+  const [suppressFooterActions, setSuppressFooterActions] = useState(false);
   const scheduleQuery = useTrainSchedule(scheduleParams);
 
   const leaveDetail = useCallback(() => {
@@ -118,6 +115,7 @@ export function WebOrderTrainDetailPage() {
 
   useEffect(() => {
     setSelectedTicketIndex(0);
+    setSuppressFooterActions(false);
   }, [orderId]);
 
   useEffect(() => {
@@ -133,9 +131,14 @@ export function WebOrderTrainDetailPage() {
     [detail, selectedTicketIndex],
   );
 
-  const footerActions = useMemo(
-    () => mergeTrainFooterActions(detail?.Actions, selectedTicket),
-    [detail?.Actions, selectedTicket],
+  const footerActions = useMemo(() => {
+    const merged = mergeTrainFooterActions(detail?.Actions, selectedTicket);
+    return suppressFooterActions ? suppressTrainFooterActions(merged) : merged;
+  }, [detail?.Actions, selectedTicket, suppressFooterActions]);
+
+  const showHoldBanner = useMemo(
+    () => detail != null && shouldShowTrainOrderHoldBanner(payHoldSecondsRemaining, footerActions),
+    [detail, footerActions, payHoldSecondsRemaining],
   );
 
   const billLines = useMemo(() => {
@@ -175,6 +178,7 @@ export function WebOrderTrainDetailPage() {
         });
       }
       setCancelOpen(false);
+      setSuppressFooterActions(true);
       showToast("订单已取消");
       await refetch();
     } catch (err) {
@@ -262,7 +266,7 @@ export function WebOrderTrainDetailPage() {
         {showHoldBanner && payHoldSecondsRemaining != null ? (
           <TrainOrderHoldBanner
             payHoldSecondsRemaining={payHoldSecondsRemaining}
-            actions={detail?.Actions}
+            actions={footerActions}
           />
         ) : null}
 
@@ -274,36 +278,36 @@ export function WebOrderTrainDetailPage() {
           </p>
         ) : (
           <div className="mx-auto max-w-[960px] space-y-3 px-4 pb-6 pt-3">
-              <TrainOrderInfoCard
-                detail={detail}
-                transactionId={selectedTicket?.Id}
-                outNumbers={selectedTicket?.Traveler?.OutNumbers}
-                onShowBill={() => setBillOpen(true)}
-              />
+            <TrainOrderInfoCard
+              detail={detail}
+              transactionId={selectedTicket?.Id}
+              outNumbers={selectedTicket?.Traveler?.OutNumbers}
+              onShowBill={() => setBillOpen(true)}
+            />
 
-              <TrainOrderPassengerTabs
-                tickets={detail.Tickets}
-                selectedIndex={selectedTicketIndex}
-                onSelect={setSelectedTicketIndex}
-              />
+            <TrainOrderPassengerTabs
+              tickets={detail.Tickets}
+              selectedIndex={selectedTicketIndex}
+              onSelect={setSelectedTicketIndex}
+            />
 
-              {selectedTicket ? (
-                <>
-                  <TrainOrderJourneyCard
-                    ticket={selectedTicket}
-                    onShowExplain={() => setExplainOpen(true)}
-                    onShowSchedule={() => {
-                      const params = buildTrainScheduleParamsFromTrip(selectedTicket.Trips[0]);
-                      if (params) setScheduleParams(params);
-                    }}
-                  />
-                  <TrainOrderTravelerCard ticket={selectedTicket} />
-                </>
-              ) : null}
+            {selectedTicket ? (
+              <>
+                <TrainOrderJourneyCard
+                  ticket={selectedTicket}
+                  onShowExplain={() => setExplainOpen(true)}
+                  onShowSchedule={() => {
+                    const params = buildTrainScheduleParamsFromTrip(selectedTicket.Trips[0]);
+                    if (params) setScheduleParams(params);
+                  }}
+                />
+                <TrainOrderTravelerCard ticket={selectedTicket} />
+              </>
+            ) : null}
 
-              <FlightOrderContactCard contact={detail.Contact} />
+            <FlightOrderContactCard contact={detail.Contact} />
 
-              <HotelOrderApprovalSection histories={detail.Histories ?? []} />
+            <HotelOrderApprovalSection histories={detail.Histories ?? []} />
           </div>
         )}
       </div>

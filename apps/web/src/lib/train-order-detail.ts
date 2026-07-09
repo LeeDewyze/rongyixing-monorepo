@@ -153,6 +153,17 @@ export function shouldShowTrainFooter(
   return actions.showPay || actions.showCancel;
 }
 
+export function suppressTrainFooterActions(actions: HotelOrderActionFlags): HotelOrderActionFlags {
+  return {
+    ...actions,
+    showPay: false,
+    showCancel: false,
+    showIssue: false,
+    showRefund: false,
+    showExchange: false,
+  };
+}
+
 export function shouldShowTrainOrderHoldBanner(
   payHoldSecondsRemaining: number | null,
   actions?: HotelOrderActionFlags,
