@@ -3,6 +3,8 @@ import type { HotelRoom, HotelRoomPlan } from "@ryx/shared-types";
 import { buildHotelDetailUrl } from "@/utils/hotel-detail";
 import type { HomeTravelMode } from "@/config/home-assets";
 
+// Session snapshot for the current hotel booking flow; guest selection remains
+// product-scoped in ryx_passenger_selection_2.
 const STORAGE_KEY = "ryx_hotel_book_selection";
 export const HOTEL_BOOK_SELECTION_EVENT = "ryx-hotel-book-selection-change";
 

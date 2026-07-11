@@ -4,6 +4,8 @@ import type { FlightBookPolicy } from "@ryx/shared-types";
 import type { FlightCabinsQuery } from "@/lib/flight-detail";
 import type { HomeTravelMode } from "@/config/home-assets";
 
+// Session snapshot for the current flight booking flow; passenger selection remains
+// product-scoped in ryx_passenger_selection_1.
 const STORAGE_KEY = "ryx_flight_book_selection";
 export const FLIGHT_BOOK_SELECTION_EVENT = "ryx-flight-book-selection-change";
 

@@ -19,6 +19,8 @@ export function sanitizePassengerSelection(items: PassengerBookInfo[]): Passenge
   return items.filter((item) => !isMockPassengerEntry(item));
 }
 
+// Current passenger selection is product-scoped and shared by list/book/select pages.
+// Business flow snapshots live in *_book_selection / *_exchange_session instead.
 const STORAGE_PREFIX = "ryx_passenger_selection_";
 export const PASSENGER_SELECTION_EVENT = "ryx-passenger-selection-change";
 const PASSENGER_SELECTION_PRODUCT_TYPES: ProductType[] = [

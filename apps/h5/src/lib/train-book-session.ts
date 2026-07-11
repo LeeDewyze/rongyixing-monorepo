@@ -2,6 +2,8 @@ import type { TrainBookPolicy, TrainItem, TrainSearchParams, TrainSeat } from "@
 import type { PassengerBookInfo } from "@ryx/shared-types";
 import type { HomeTravelMode } from "@/config/home-assets";
 
+// Session snapshot for the current train booking flow; passengers here are fixed
+// at seat selection time for policy/price context, not the global selection source.
 const STORAGE_KEY = "ryx_train_book_selection";
 export const TRAIN_BOOK_SELECTION_EVENT = "ryx-train-book-selection-change";
 
@@ -12,6 +14,7 @@ export interface TrainBookSelection {
   /** Home-Search raw train entity for Initialize/Book — falls back to train.searchSnapshot. */
   trainSnapshot?: Record<string, unknown>;
   policy?: TrainBookPolicy;
+  /** Snapshot from ryx_passenger_selection_3 when the seat was selected. */
   passengers: PassengerBookInfo[];
   selectedAt: number;
   travelMode?: HomeTravelMode;
