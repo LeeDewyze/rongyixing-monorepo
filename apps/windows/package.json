@@ -10,8 +10,8 @@
     "copy:web": "node scripts/copy-web-dist.mjs",
     "dev": "RYX_WINDOWS_DEV_SERVER=http://localhost:5174 electron .",
     "start": "pnpm run configure && pnpm run copy:web && electron .",
-    "pack": "pnpm run configure && pnpm run copy:web && electron-builder --win --dir",
-    "dist": "pnpm run configure && pnpm run copy:web && electron-builder --win nsis"
+    "pack": "pnpm run configure && pnpm run copy:web && electron-builder --win --dir --x64",
+    "dist": "pnpm run configure && pnpm run copy:web && electron-builder --win nsis --x64"
   },
   "devDependencies": {
     "electron": "^43.1.0",
