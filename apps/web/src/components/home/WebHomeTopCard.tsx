@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 import type { HomeProductId, HomeTravelMode } from "@/config/home-assets";
 import { HOME_ASSETS } from "@/config/home-assets";
-import { WebBannerCarousel } from "@/components/home/WebBannerCarousel";
+import { BANNER_SLIDE_MAX_WIDTH, WebBannerCarousel } from "@/components/home/WebBannerCarousel";
 import type { HomeBannerSlide } from "@/lib/home-banners";
 
 export type { HomeProductId, HomeTravelMode };
@@ -98,16 +98,17 @@ export function WebHomeTopCard({
       {showBannerPlaceholder ? (
         <div aria-hidden>
           <div
-            className={`mx-auto h-[220px] w-full max-w-[440px] rounded-2xl bg-[#E8EAEF] ${bannerLoading ? "animate-pulse" : ""}`}
+            className={`aspect-[2/1] w-full min-h-[220px] max-h-[280px] rounded-2xl bg-[#E8EAEF] ${bannerLoading ? "animate-pulse" : ""}`}
+            style={{ maxWidth: BANNER_SLIDE_MAX_WIDTH }}
           />
         </div>
       ) : slides.length > 0 ? (
         <WebBannerCarousel slides={slides} onBannerClick={onBannerClick} />
       ) : null}
 
-      {notice ? <div className="relative mx-auto mt-3 max-w-[640px] px-1">{notice}</div> : null}
+      {notice ? <div className="relative my-2 w-full px-1 pad:my-3 pc:my-4">{notice}</div> : null}
 
-      <div className="relative mt-4 pad:mt-5 pc:mt-6">
+      <div className={notice ? "relative" : "relative mt-2 pad:mt-3 pc:mt-4"}>
         <div className="overflow-hidden rounded-2xl bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)]">
           <TravelModeTabs travelMode={travelMode} onTravelModeChange={onTravelModeChange} />
 

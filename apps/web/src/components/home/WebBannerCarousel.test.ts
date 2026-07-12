@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   getLoopRealIndex,
   getCenteredTrackOffsetPx,
+  resolveBannerSlideSize,
   resolveLoopTrackIndex,
 } from "@/components/home/WebBannerCarousel";
 
@@ -22,5 +23,12 @@ describe("WebBannerCarousel loop helpers", () => {
   it("centers the active slide in the track", () => {
     expect(getCenteredTrackOffsetPx(0)).toBe(220);
     expect(getCenteredTrackOffsetPx(1)).toBe(676);
+  });
+
+  it("scales banner slides with container width within bounds", () => {
+    expect(resolveBannerSlideSize(400)).toEqual({ width: 440, height: 220 });
+    expect(resolveBannerSlideSize(900)).toEqual({ width: 450, height: 225 });
+    expect(resolveBannerSlideSize(1312)).toEqual({ width: 560, height: 280 });
+    expect(resolveBannerSlideSize(2000)).toEqual({ width: 560, height: 280 });
   });
 });

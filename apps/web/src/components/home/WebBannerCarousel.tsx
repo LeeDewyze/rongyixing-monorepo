@@ -3,15 +3,31 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { HomeBannerSlide } from "@/lib/home-banners";
 import { normalizeBannerImageUrl } from "@/lib/home-banners";
 
-/** Design spec: 440 × 220 slide with adjacent peek. */
-export const BANNER_SLIDE_WIDTH = 440;
-export const BANNER_SLIDE_HEIGHT = 220;
+/** Design baseline: 440 × 220; modest scale on wider main columns. */
+export const BANNER_SLIDE_MIN_WIDTH = 440;
+export const BANNER_SLIDE_MAX_WIDTH = 560;
 export const BANNER_SLIDE_GAP = 16;
+export const BANNER_SLIDE_ASPECT = 0.5;
+export const BANNER_SLIDE_WIDTH_RATIO = 0.5;
+
+/** @deprecated Use BANNER_SLIDE_MIN_WIDTH — kept for existing imports/tests. */
+export const BANNER_SLIDE_WIDTH = BANNER_SLIDE_MIN_WIDTH;
+/** @deprecated Derived from min width and aspect ratio. */
+export const BANNER_SLIDE_HEIGHT = Math.round(BANNER_SLIDE_MIN_WIDTH * BANNER_SLIDE_ASPECT);
 
 const AUTOPLAY_MS = 3000;
 const TRANSITION_MS = 500;
 const SWIPE_THRESHOLD_PX = 40;
 const DRAG_START_THRESHOLD_PX = 8;
+
+export function resolveBannerSlideSize(containerWidth: number): { width: number; height: number } {
+  const safeWidth = Number.isFinite(containerWidth) ? containerWidth : 0;
+  const width = Math.min(
+    BANNER_SLIDE_MAX_WIDTH,
+    Math.max(BANNER_SLIDE_MIN_WIDTH, Math.round(safeWidth * BANNER_SLIDE_WIDTH_RATIO)),
+  );
+  return { width, height: Math.round(width * BANNER_SLIDE_ASPECT) };
+}
 
 export function getLoopRealIndex(trackIndex: number, realCount: number): number {
   if (realCount <= 1) return 0;
@@ -30,10 +46,13 @@ export function resolveLoopTrackIndex(
   return deltaX < 0 ? trackIndex + 1 : trackIndex - 1;
 }
 
-export function getCenteredTrackOffsetPx(trackIndex: number): number {
-  const slideStep = BANNER_SLIDE_WIDTH + BANNER_SLIDE_GAP;
-  const slideCenter = trackIndex * slideStep + BANNER_SLIDE_WIDTH / 2;
-  return slideCenter;
+export function getCenteredTrackOffsetPx(
+  trackIndex: number,
+  slideWidth = BANNER_SLIDE_MIN_WIDTH,
+  gap = BANNER_SLIDE_GAP,
+): number {
+  const slideStep = slideWidth + gap;
+  return trackIndex * slideStep + slideWidth / 2;
 }
 
 type LoopSlide = HomeBannerSlide & { loopKey: string };
@@ -83,10 +102,12 @@ interface WebBannerCarouselProps {
   onBannerClick?: (slide: HomeBannerSlide) => void;
 }
 
-/** Pad/PC banner carousel — centered 440×220 slide with side peek; dots on active slide bottom. */
+/** Pad/PC banner carousel — fluid slide width (440–960) with side peek. */
 export function WebBannerCarousel({ slides, onBannerClick }: WebBannerCarouselProps) {
   const count = slides.length;
   const canCycle = count > 1;
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const [slideSize, setSlideSize] = useState(() => resolveBannerSlideSize(BANNER_SLIDE_MIN_WIDTH));
 
   const loopSlides = useMemo<LoopSlide[]>(() => {
     if (!canCycle) {
@@ -117,6 +138,20 @@ export function WebBannerCarousel({ slides, onBannerClick }: WebBannerCarouselPr
   const slidesKey = useMemo(() => slides.map((slide) => slide.id).join("|"), [slides]);
 
   trackIndexRef.current = trackIndex;
+
+  useEffect(() => {
+    const node = viewportRef.current;
+    if (!node) return;
+
+    const updateSize = () => {
+      setSlideSize(resolveBannerSlideSize(node.clientWidth));
+    };
+
+    updateSize();
+    const observer = new ResizeObserver(updateSize);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     setTrackIndex(canCycle ? 1 : 0);
@@ -289,12 +324,13 @@ export function WebBannerCarousel({ slides, onBannerClick }: WebBannerCarouselPr
 
   if (count === 0) return null;
 
-  const trackOffsetPx = getCenteredTrackOffsetPx(trackIndex);
+  const trackOffsetPx = getCenteredTrackOffsetPx(trackIndex, slideSize.width, BANNER_SLIDE_GAP);
 
   return (
-    <div className="relative w-full">
+    <div ref={viewportRef} className="relative w-full">
       <div
-        className="relative h-[220px] w-full touch-pan-y overflow-hidden rounded-2xl"
+        className="relative w-full touch-pan-y overflow-hidden rounded-2xl"
+        style={{ height: slideSize.height }}
         aria-roledescription="carousel"
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
@@ -303,10 +339,11 @@ export function WebBannerCarousel({ slides, onBannerClick }: WebBannerCarouselPr
       >
         <div
           ref={trackRef}
-          className={`flex h-full items-stretch gap-4 will-change-transform ${
+          className={`flex h-full items-stretch will-change-transform ${
             isDragging || !enableTransition ? "" : "transition-transform duration-500 ease-in-out"
           }`}
           style={{
+            gap: BANNER_SLIDE_GAP,
             transform: `translateX(calc(50% - ${trackOffsetPx}px + ${dragOffset}px))`,
             transitionDuration: isDragging || !enableTransition ? undefined : `${TRANSITION_MS}ms`,
           }}
@@ -316,9 +353,10 @@ export function WebBannerCarousel({ slides, onBannerClick }: WebBannerCarouselPr
             <button
               key={slide.loopKey}
               type="button"
-              className={`relative h-[220px] w-[440px] shrink-0 overflow-hidden rounded-2xl border-none bg-transparent p-0 shadow-[0_4px_16px_rgba(0,0,0,0.08)] ${
+              className={`relative shrink-0 overflow-hidden rounded-2xl border-none bg-transparent p-0 shadow-[0_4px_16px_rgba(0,0,0,0.08)] ${
                 index === trackIndex ? "z-10" : "z-0"
               }`}
+              style={{ width: slideSize.width, height: slideSize.height }}
               onClick={index === trackIndex ? handleActiveSlideClick : undefined}
               aria-label={slide.banner?.Title ?? slide.banner?.Name ?? "轮播图"}
             >

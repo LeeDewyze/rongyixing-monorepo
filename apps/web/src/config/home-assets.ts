@@ -77,9 +77,9 @@ export const HOME_ASSETS = {
     apply: businessApplyIcon,
     /** Figma 38:5857 */
     myApproval: businessMyApprovalIcon,
-    /** Pending approval — orange clipboard with clock */
+    /** Pending approval — blue clipboard with clock */
     pending: businessPendingIcon,
-    /** Completed tasks — green clipboard with checkmark */
+    /** Completed tasks — blue clipboard with checkmark */
     done: businessDoneIcon,
     /** H5 profile settings menu row chevron */
     chevronRight: menuChevronRightIcon,
