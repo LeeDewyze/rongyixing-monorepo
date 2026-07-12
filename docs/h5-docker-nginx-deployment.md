@@ -217,6 +217,7 @@ Docker 内 Nginx 代理规则与 `apps/h5/vite.config.ts` 的 Vite dev proxy 对
 | `/__ryx/ApiPasswordUrl/*` | `http://pass-api.rtesp.com/*` |
 | `/__ryx/ApiLoginUrl/*` | `http://login-api.rtesp.com/*` |
 | `/__ryx/ApiHomeUrl/*` | `http://api.rtesp.com/*` |
+| `/__ryx/FeatureRonglvUrl/*` | `http://ronglv-feature.rtesp.com/*` |
 | `/__ryx/TmcTouristFlightUrl/*` | `http://flight-tourist-tmc.rtesp.com/*` |
 | `/__ryx/TmcTouristTrainUrl/*` | `http://train-tourist-tmc.rtesp.com/*` |
 | `/__ryx/TmcTouristHotelUrl/*` | `http://hotel-tourist-tmc.rtesp.com/*` |

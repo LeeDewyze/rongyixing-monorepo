@@ -35,6 +35,7 @@ const DEV_RYX_SERVICE_TARGETS: Record<string, string> = {
   ApiPasswordUrl: "http://pass-api.rtesp.com",
   ApiLoginUrl: "http://login-api.rtesp.com",
   ApiHomeUrl: DEV_API_HOME_TARGET,
+  FeatureRonglvUrl: DEV_JYX_PROXY_TARGET,
   TmcTouristFlightUrl: "http://flight-tourist-tmc.rtesp.com",
   TmcTouristTrainUrl: "http://train-tourist-tmc.rtesp.com",
   TmcTouristHotelUrl: "http://hotel-tourist-tmc.rtesp.com",
