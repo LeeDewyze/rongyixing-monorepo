@@ -3,7 +3,9 @@
  * Source file: pUno5QvNulmKFvvGMDt4Ak — icon sheet `37:5465` + page `10:213`.
  */
 import businessApplyIcon from "@/assets/home/business-apply.png";
+import businessDoneIcon from "@/assets/home/business-done.svg";
 import businessMyApprovalIcon from "@/assets/home/business-my-approval.png";
+import businessPendingIcon from "@/assets/home/business-pending.svg";
 import carActiveIcon from "@/assets/home/car-active.png";
 import flightActiveIcon from "@/assets/home/flight-active.png";
 import flightDefaultIcon from "@/assets/home/flight-default.png";
@@ -68,9 +70,10 @@ export const HOME_ASSETS = {
     apply: businessApplyIcon,
     /** Figma 38:5857 */
     myApproval: businessMyApprovalIcon,
-    /** Figma 10:326 — same stamp icon as my approval */
-    pending: businessMyApprovalIcon,
-    done: businessMyApprovalIcon,
+    /** Pending approval — orange clipboard with clock */
+    pending: businessPendingIcon,
+    /** Completed tasks — green clipboard with checkmark */
+    done: businessDoneIcon,
   },
   tabBar: {
     home: {

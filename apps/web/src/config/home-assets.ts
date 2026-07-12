@@ -3,6 +3,8 @@
  * Source file: pUno5QvNulmKFvvGMDt4Ak — icon sheet `37:5465` + page `10:213`.
  */
 import businessApplyIcon from "@/assets/home/business-apply.png";
+import businessDoneIcon from "@/assets/home/business-done.svg";
+import businessPendingIcon from "@/assets/home/business-pending.svg";
 import calendarIcon from "@/assets/home/calendar.png";
 import menuChevronRightIcon from "@/assets/home/menu-chevron-right.png";
 import businessMyApprovalIcon from "@/assets/home/business-my-approval.png";
@@ -75,9 +77,10 @@ export const HOME_ASSETS = {
     apply: businessApplyIcon,
     /** Figma 38:5857 */
     myApproval: businessMyApprovalIcon,
-    /** Figma 10:326 — same stamp icon as my approval */
-    pending: businessMyApprovalIcon,
-    done: businessMyApprovalIcon,
+    /** Pending approval — orange clipboard with clock */
+    pending: businessPendingIcon,
+    /** Completed tasks — green clipboard with checkmark */
+    done: businessDoneIcon,
     /** H5 profile settings menu row chevron */
     chevronRight: menuChevronRightIcon,
   },
