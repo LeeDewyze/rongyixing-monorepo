@@ -18,6 +18,32 @@ protocol.registerSchemesAsPrivileged([
 
 const isMac = process.platform === "darwin";
 
+const DEFAULT_API_BASE_URL = "http://app.rtesp.com";
+const DEFAULT_JYX_PROXY_TARGET = "http://ronglv-feature.rtesp.com";
+const DEFAULT_API_HOME_TARGET = "http://api.rtesp.com";
+
+const DEFAULT_RYX_SERVICE_TARGETS = {
+  TmcApiHomeUrl: "http://api-tmc.rtesp.com",
+  TmcApiHotelUrl: "http://hotel-api-tmc.rtesp.com",
+  TmcApiFlightUrl: "http://flight-api-tmc.rtesp.com",
+  TmcApiTrainUrl: "http://train-api-tmc.rtesp.com",
+  TmcApiBookUrl: "http://book-api-tmc.rtesp.com",
+  TmcApiOrderUrl: "http://order-api-tmc.rtesp.com",
+  WorkflowApiUrl: "http://api-workflow.rtesp.com",
+  ApiMemberUrl: "http://member-api.rtesp.com",
+  ApiAccountUrl: "http://account-api.rtesp.com",
+  HrApiUrl: "http://api-hr.rtesp.com",
+  ApiPasswordUrl: "http://pass-api.rtesp.com",
+  ApiLoginUrl: "http://login-api.rtesp.com",
+  ApiHomeUrl: DEFAULT_API_HOME_TARGET,
+  FeatureRonglvUrl: DEFAULT_JYX_PROXY_TARGET,
+  TmcTouristFlightUrl: "http://flight-tourist-tmc.rtesp.com",
+  TmcTouristTrainUrl: "http://train-tourist-tmc.rtesp.com",
+  TmcTouristHotelUrl: "http://hotel-tourist-tmc.rtesp.com",
+  TmcTouristBookUrl: "http://book-tourist-tmc.rtesp.com",
+  TmcTouristOrderUrl: "http://order-tourist-tmc.rtesp.com",
+};
+
 function readRuntimeConfig() {
   const configPath = path.resolve(__dirname, "..", "generated", "runtime-config.json");
   try {
@@ -38,6 +64,81 @@ function getStartupUrl() {
   return "ryx://app/";
 }
 
+function trimTrailingSlash(value) {
+  return value.replace(/\/$/, "");
+}
+
+function getProxyConfig() {
+  const runtimeConfig = readRuntimeConfig();
+  return {
+    apiBaseUrl:
+      process.env.RYX_WINDOWS_API_BASE_URL?.trim() ||
+      runtimeConfig.apiBaseUrl ||
+      DEFAULT_API_BASE_URL,
+    apiHomeUrl:
+      process.env.RYX_WINDOWS_API_HOME_URL?.trim() ||
+      runtimeConfig.apiHomeUrl ||
+      DEFAULT_API_HOME_TARGET,
+    jyxUrl:
+      process.env.RYX_WINDOWS_JYX_URL?.trim() ||
+      runtimeConfig.jyxUrl ||
+      DEFAULT_JYX_PROXY_TARGET,
+    serviceTargets: {
+      ...DEFAULT_RYX_SERVICE_TARGETS,
+      ...(runtimeConfig.serviceTargets || {}),
+    },
+  };
+}
+
+function resolveProxyTarget(requestUrl) {
+  const config = getProxyConfig();
+  const url = new URL(requestUrl);
+  const pathname = decodeURIComponent(url.pathname);
+  const search = url.search || "";
+
+  if (pathname === "/Home/Setting" || pathname === "/Home/Proxy") {
+    return `${trimTrailingSlash(config.apiBaseUrl)}${pathname}${search}`;
+  }
+
+  if (pathname.startsWith("/Identity")) {
+    return `${trimTrailingSlash(config.apiHomeUrl)}${pathname}${search}`;
+  }
+
+  if (pathname.startsWith("/Jyx")) {
+    return `${trimTrailingSlash(config.jyxUrl)}${pathname}${search}`;
+  }
+
+  const ryxPrefix = "/__ryx/";
+  if (pathname.startsWith(ryxPrefix)) {
+    const rest = pathname.slice(ryxPrefix.length);
+    const slashIndex = rest.indexOf("/");
+    const urlKey = slashIndex === -1 ? rest : rest.slice(0, slashIndex);
+    const targetBase = config.serviceTargets[urlKey];
+    if (!targetBase) return null;
+    const targetPath = slashIndex === -1 ? "/" : rest.slice(slashIndex);
+    return `${trimTrailingSlash(targetBase)}${targetPath}${search}`;
+  }
+
+  return null;
+}
+
+async function forwardProxyRequest(request, targetUrl) {
+  const headers = Object.fromEntries(request.headers.entries());
+  delete headers.host;
+  delete headers["content-length"];
+
+  const options = {
+    method: request.method,
+    headers,
+  };
+
+  if (request.method !== "GET" && request.method !== "HEAD") {
+    options.body = Buffer.from(await request.arrayBuffer());
+  }
+
+  return net.fetch(targetUrl, options);
+}
+
 function resolveBundledWebPath(requestUrl) {
   const webRoot = path.resolve(__dirname, "..", "web-dist");
   const indexPath = path.join(webRoot, "index.html");
@@ -51,7 +152,12 @@ function resolveBundledWebPath(requestUrl) {
 }
 
 function registerBundledWebProtocol() {
-  protocol.handle("ryx", (request) => {
+  protocol.handle("ryx", async (request) => {
+    const proxyTarget = resolveProxyTarget(request.url);
+    if (proxyTarget) {
+      return forwardProxyRequest(request, proxyTarget);
+    }
+
     const filePath = resolveBundledWebPath(request.url);
     return net.fetch(pathToFileURL(filePath).toString());
   });
@@ -118,4 +224,3 @@ app.whenReady().then(() => {
 app.on("window-all-closed", () => {
   if (!isMac) app.quit();
 });
-
