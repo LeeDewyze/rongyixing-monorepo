@@ -60,6 +60,24 @@ cd deploy/release/out/rongyixing-h5-web-dist
 ./install-dist.sh
 ```
 
+当前测试服务器已存在 80 端口主入口配置：
+
+```text
+/etc/nginx/conf.d/rtesp.songguoren.site.conf
+```
+
+如果直接新增默认配置 `/etc/nginx/conf.d/rongyixing-dist.conf`，可能出现
+`conflicting server name "_" on 0.0.0.0:80, ignored`，导致新配置没有接管
+`/h5/`、`/web/`。该服务器推荐用固定入口文件安装：
+
+```bash
+cd deploy/release/out/rongyixing-h5-web-dist
+SERVER_NGINX_TARGET=/etc/nginx/conf.d/rtesp.songguoren.site.conf ./install-dist.sh
+```
+
+这会覆盖 `rtesp.songguoren.site.conf` 文件内容，但不会让 Nginx 忽略其他
+`/etc/nginx/conf.d/*.conf` 配置。若该文件不是融易行入口，先备份再执行。
+
 默认行为：
 
 ```text
