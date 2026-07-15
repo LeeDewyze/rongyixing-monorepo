@@ -6,8 +6,9 @@ ROOT_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 OUT_ROOT="${OUT_ROOT:-${SCRIPT_DIR}/out}"
 PACKAGE_NAME="${PACKAGE_NAME:-rongyixing-h5-web-dist}"
 TIMESTAMP="${TIMESTAMP:-$(date +%Y%m%d%H%M%S)}"
-PACKAGE_DIR="${OUT_ROOT}/${PACKAGE_NAME}-${TIMESTAMP}"
-ARCHIVE_PATH="${PACKAGE_DIR}.tar.gz"
+PACKAGE_DIR="${OUT_ROOT}/${PACKAGE_NAME}"
+ARCHIVE_PATH="${OUT_ROOT}/${PACKAGE_NAME}-${TIMESTAMP}.tar.gz"
+CREATE_ARCHIVE="${CREATE_ARCHIVE:-0}"
 
 log() {
   printf '[ryx-dist-package] %s\n' "$*"
@@ -20,10 +21,12 @@ Usage:
 
 Environment:
   OUT_ROOT=deploy/release/out              Output directory for generated package.
-  PACKAGE_NAME=rongyixing-h5-web-dist      Package name prefix.
+  PACKAGE_NAME=rongyixing-h5-web-dist      Fixed package directory name.
   TIMESTAMP=YYYYmmddHHMMSS                 Optional fixed package timestamp.
   VITE_H5_BASE_PATH=/h5/                   H5 public base path.
   VITE_WEB_BASE_PATH=/web/                 Web public base path.
+  CREATE_ARCHIVE=0                         Only create the uploadable package directory.
+  CREATE_ARCHIVE=1                         Also create tar.gz archive after directory package.
 EOF
   exit 0
 fi
@@ -58,18 +61,53 @@ cp "${SCRIPT_DIR}/README.md" "${PACKAGE_DIR}/README.md"
 cp "${SCRIPT_DIR}/nginx/rongyixing-dist.conf.template" "${PACKAGE_DIR}/nginx/rongyixing-dist.conf.template"
 chmod +x "${PACKAGE_DIR}/install-dist.sh"
 
+BUILD_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+GIT_COMMIT="$(git rev-parse HEAD 2>/dev/null || true)"
+GIT_BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
+BUILD_README="${PACKAGE_DIR}/README-${TIMESTAMP}.md"
+
 cat >"${PACKAGE_DIR}/VERSION.txt" <<EOF
 name=${PACKAGE_NAME}
-build_time=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-git_commit=$(git rev-parse HEAD 2>/dev/null || true)
-git_branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)
+build_time=${BUILD_TIME}
+build_timestamp=${TIMESTAMP}
+git_commit=${GIT_COMMIT}
+git_branch=${GIT_BRANCH}
 h5_base_path=${H5_BASE_PATH}
 web_base_path=${WEB_BASE_PATH}
 EOF
 
-log "create archive ${ARCHIVE_PATH}"
-tar -C "${OUT_ROOT}" -czf "${ARCHIVE_PATH}" "$(basename "${PACKAGE_DIR}")"
+cat >"${BUILD_README}" <<EOF
+# RongYiXing H5/Web Dist Build ${TIMESTAMP}
+
+Build time: ${BUILD_TIME}
+
+Git branch: ${GIT_BRANCH}
+
+Git commit: ${GIT_COMMIT}
+
+Install on server:
+
+\`\`\`bash
+cd deploy/release/out/${PACKAGE_NAME}
+./install-dist.sh
+\`\`\`
+
+Access after install:
+
+\`\`\`text
+http://<server-ip>/h5/
+http://<server-ip>/web/
+http://<server-ip>/?ticket=xxxx
+\`\`\`
+EOF
+
+if [[ "${CREATE_ARCHIVE}" == "1" ]]; then
+  log "create archive ${ARCHIVE_PATH}"
+  tar -C "${OUT_ROOT}" -czf "${ARCHIVE_PATH}" "$(basename "${PACKAGE_DIR}")"
+fi
 
 log "done"
 log "package directory: ${PACKAGE_DIR}"
-log "archive: ${ARCHIVE_PATH}"
+if [[ "${CREATE_ARCHIVE}" == "1" ]]; then
+  log "archive: ${ARCHIVE_PATH}"
+fi
