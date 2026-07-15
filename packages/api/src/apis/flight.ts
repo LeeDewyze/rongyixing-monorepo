@@ -40,9 +40,24 @@ function isTouristChannel(params?: { channel?: string }): boolean {
   return params?.channel === "tourist";
 }
 
+function isExchangeFlightFlow(params?: { TicketId?: string; IsExchange?: boolean }): boolean {
+  return Boolean(params?.TicketId || params?.IsExchange);
+}
+
 function stripChannel<T extends { channel?: string }>(params: T): Omit<T, "channel"> {
   const { channel: _channel, ...rest } = params;
   return rest;
+}
+
+function stripFlightFlowParams<
+  T extends { channel?: string; TicketId?: string; IsExchange?: boolean },
+>(params: T): Omit<T, "channel"> & { ExchangeTicketId?: string } {
+  const data = stripChannel(params) as Omit<T, "channel"> & { ExchangeTicketId?: string };
+  if (params.TicketId) {
+    data.ExchangeTicketId = params.TicketId;
+    delete (data as { TicketId?: string }).TicketId;
+  }
+  return data;
 }
 
 export function createFlightApi(proxy: ProxyClient): FlightApi {
@@ -63,10 +78,14 @@ export function createFlightApi(proxy: ProxyClient): FlightApi {
     },
     searchFlights(params) {
       return proxy.send<FlightListResult>({
-        method: isTouristChannel(params)
-          ? TOURIST_FLIGHT_FLOW_METHODS.HOME_INDEX
-          : FLIGHT_FLOW_METHODS.HOME_INDEX,
-        data: stripChannel(params),
+        method: isExchangeFlightFlow(params)
+          ? isTouristChannel(params)
+            ? TOURIST_FLIGHT_FLOW_METHODS.HOME_EXCHANGE
+            : FLIGHT_FLOW_METHODS.HOME_EXCHANGE
+          : isTouristChannel(params)
+            ? TOURIST_FLIGHT_FLOW_METHODS.HOME_INDEX
+            : FLIGHT_FLOW_METHODS.HOME_INDEX,
+        data: stripFlightFlowParams(params),
         version: "2.0",
         requestTimeout: 60,
         timeoutMs: 60_000,
@@ -74,10 +93,14 @@ export function createFlightApi(proxy: ProxyClient): FlightApi {
     },
     async getFlightDetail(params) {
       const raw = await proxy.send<unknown>({
-        method: isTouristChannel(params)
-          ? TOURIST_FLIGHT_FLOW_METHODS.HOME_DETAIL
-          : FLIGHT_FLOW_METHODS.HOME_DETAIL,
-        data: stripChannel(params),
+        method: isExchangeFlightFlow(params)
+          ? isTouristChannel(params)
+            ? TOURIST_FLIGHT_FLOW_METHODS.HOME_EXCHANGE_DETAIL
+            : FLIGHT_FLOW_METHODS.HOME_EXCHANGEDETAIL
+          : isTouristChannel(params)
+            ? TOURIST_FLIGHT_FLOW_METHODS.HOME_DETAIL
+            : FLIGHT_FLOW_METHODS.HOME_DETAIL,
+        data: stripFlightFlowParams(params),
         version: "2.0",
         requestTimeout: 60,
         timeoutMs: 60_000,
@@ -94,15 +117,18 @@ export function createFlightApi(proxy: ProxyClient): FlightApi {
     },
     initializeBook(params) {
       return proxy.send<FlightInitBookResponse>({
-        method: isTouristChannel(params)
-          ? TOURIST_FLIGHT_BOOK_METHODS.INIT
-          : BOOK_METHODS.FLIGHT_INITIALIZE,
+        method:
+          isTouristChannel(params) && isExchangeFlightFlow(params)
+            ? TOURIST_FLIGHT_BOOK_METHODS.EXCHANGE_INIT
+            : isTouristChannel(params)
+              ? TOURIST_FLIGHT_BOOK_METHODS.INIT
+              : BOOK_METHODS.FLIGHT_INITIALIZE,
         data: stripChannel(stripFlightOrderBookDto(params)),
         timeoutMs: 60_000,
       });
     },
     validateBook(params) {
-      if (!isTouristChannel(params)) {
+      if (!isTouristChannel(params) || isExchangeFlightFlow(params)) {
         return Promise.resolve(null);
       }
       return proxy.send<unknown>({
@@ -113,9 +139,13 @@ export function createFlightApi(proxy: ProxyClient): FlightApi {
     },
     submitBook(params) {
       return proxy.send<FlightBookResponse>({
-        method: isTouristChannel(params)
-          ? TOURIST_FLIGHT_BOOK_METHODS.BOOK
-          : BOOK_METHODS.FLIGHT_BOOK,
+        method: isExchangeFlightFlow(params)
+          ? isTouristChannel(params)
+            ? TOURIST_FLIGHT_BOOK_METHODS.EXCHANGE_BOOK
+            : BOOK_METHODS.FLIGHT_EXCHANGEBOOK
+          : isTouristChannel(params)
+            ? TOURIST_FLIGHT_BOOK_METHODS.BOOK
+            : BOOK_METHODS.FLIGHT_BOOK,
         data: stripChannel(stripFlightOrderBookDto(params)),
         timeoutMs: 60_000,
       });

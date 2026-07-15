@@ -18,6 +18,7 @@ import { useFlightList } from "@/hooks/useFlight";
 import { useFlightSearchForm } from "@/hooks/useFlightSearchForm";
 import { usePassengerSelection } from "@/hooks/usePassenger";
 import {
+  buildHomeExchangeParams,
   buildFlightListSearchParams,
   buildHomeIndexParams,
   resolveListCitiesFromQuery,
@@ -39,6 +40,11 @@ import {
   resolveProductChannel,
   resolveTravelModeFromProductChannel,
 } from "@/lib/flight-travel-mode";
+import {
+  FLIGHT_EXCHANGE_SESSION_EVENT,
+  isFlightExchangeListActive,
+  syncFlightExchangeSessionForListUrl,
+} from "@/lib/flight-exchange-session";
 import {
   applyFlightFilters,
   buildFilterOptions,
@@ -143,6 +149,21 @@ export function FlightListPage() {
   const [headerHeight, setHeaderHeight] = useState(FALLBACK_HEADER_HEIGHT);
   const [passengerAlertOpen, setPassengerAlertOpen] = useState(false);
   const [openingCabinsId, setOpeningCabinsId] = useState<string | null>(null);
+  const [exchangeSession, setExchangeSession] = useState(() =>
+    syncFlightExchangeSessionForListUrl(searchParams),
+  );
+
+  useEffect(() => {
+    setExchangeSession(syncFlightExchangeSessionForListUrl(searchParams));
+  }, [searchParams]);
+
+  useEffect(() => {
+    function syncExchangeSession() {
+      setExchangeSession(syncFlightExchangeSessionForListUrl(searchParams));
+    }
+    window.addEventListener(FLIGHT_EXCHANGE_SESSION_EVENT, syncExchangeSession);
+    return () => window.removeEventListener(FLIGHT_EXCHANGE_SESSION_EVENT, syncExchangeSession);
+  }, [searchParams]);
 
   const resolvedListCities = useMemo(
     () =>
@@ -169,13 +190,31 @@ export function FlightListPage() {
 
   const apiListParams = useMemo((): FlightSearchParams | null => {
     if (!hasListQuery || !resolvedListCities) return null;
+    if (isFlightExchangeListActive(searchParams, exchangeSession) && exchangeSession?.ticketId) {
+      return buildHomeExchangeParams({
+        fromCity: resolvedListCities.fromCity,
+        toCity: resolvedListCities.toCity,
+        date: listParams.Date,
+        channel: productChannel,
+        ticketId: exchangeSession.ticketId,
+        bookType:
+          exchangeSession.exchangeInfo.BookType ?? searchParams.get("bookType") ?? undefined,
+      });
+    }
     return buildHomeIndexParams(
       resolvedListCities.fromCity,
       resolvedListCities.toCity,
       listParams.Date,
       productChannel,
     );
-  }, [hasListQuery, resolvedListCities, listParams.Date, productChannel]);
+  }, [
+    exchangeSession,
+    hasListQuery,
+    listParams.Date,
+    productChannel,
+    resolvedListCities,
+    searchParams,
+  ]);
 
   const { data, isLoading, isFetching, error, refetch, dataUpdatedAt } =
     useFlightList(apiListParams);

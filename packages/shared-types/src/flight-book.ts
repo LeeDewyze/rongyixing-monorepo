@@ -182,6 +182,9 @@ export interface FlightOrderBookDto {
   TravelPayType?: number;
   IsFromOffline?: boolean;
   IsForbidAutoIssue?: boolean;
+  TicketId?: string;
+  ExchangeTicketId?: string;
+  IsExchange?: boolean;
 }
 
 export type FlightInitBookParams = FlightOrderBookDto;

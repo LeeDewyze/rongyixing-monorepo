@@ -42,11 +42,11 @@ export interface FlightCabinsQuery {
   planeTypeDescribe: string;
   meal: string;
   airlineSrc: string;
+  ticketId?: string;
+  exchange?: string;
 }
 
-export function parseFlightCabinsQuery(
-  searchParams: URLSearchParams,
-): FlightCabinsQuery {
+export function parseFlightCabinsQuery(searchParams: URLSearchParams): FlightCabinsQuery {
   return {
     date: searchParams.get("date") ?? "",
     channel: (searchParams.get("channel") as FlightCabinsQuery["channel"]) ?? undefined,
@@ -72,12 +72,15 @@ export function parseFlightCabinsQuery(
     planeTypeDescribe: searchParams.get("planeTypeDescribe") ?? "",
     meal: searchParams.get("meal") ?? "",
     airlineSrc: searchParams.get("airlineSrc") ?? "",
+    ticketId: searchParams.get("ticketId") ?? "",
+    exchange: searchParams.get("exchange") ?? undefined,
   };
 }
 
 export function buildFlightDetailParams(
   query: FlightCabinsQuery,
   passengerCount: number,
+  options?: { ticketId?: string; isExchange?: boolean },
 ): FlightDetailParams | null {
   const date = query.takeoffTime.slice(0, 10) || query.date;
   const fromAirport = query.fromAirport || query.fromCode;
@@ -100,6 +103,11 @@ export function buildFlightDetailParams(
   };
   if (query.bookType) {
     params.BookType = query.bookType;
+  }
+  const exchangeTicketId = options?.ticketId ?? query.ticketId;
+  if (exchangeTicketId) {
+    params.TicketId = exchangeTicketId;
+    params.IsExchange = options?.isExchange ?? query.exchange === "1";
   }
   return params;
 }
@@ -176,7 +184,9 @@ export function resolveDetailSegment(
   };
 }
 
-export function normalizeFlightDetailData(result: FlightDetailResult | undefined): FlightDetailResult {
+export function normalizeFlightDetailData(
+  result: FlightDetailResult | undefined,
+): FlightDetailResult {
   if (!result) return {};
   return normalizeFlightDetailResponse(result);
 }
@@ -333,9 +343,8 @@ export function prepareFlightFareRulesForSheet(fare: FlightFare): FlightFareRule
 
     const rawDetails = rule.VariablesObj?.Details;
     const details = Array.isArray(rawDetails)
-      ? rawDetails.filter(
-          (item): item is { name: string; value: unknown } =>
-            Boolean(item && typeof item === "object" && "name" in item),
+      ? rawDetails.filter((item): item is { name: string; value: unknown } =>
+          Boolean(item && typeof item === "object" && "name" in item),
         )
       : undefined;
 
@@ -348,4 +357,8 @@ export function prepareFlightFareRulesForSheet(fare: FlightFare): FlightFareRule
   });
 }
 
-export { applyLegacyInitDetailResult, normalizeFlightDetailResponse, resolveCheckedBaggage } from "@ryx/api";
+export {
+  applyLegacyInitDetailResult,
+  normalizeFlightDetailResponse,
+  resolveCheckedBaggage,
+} from "@ryx/api";

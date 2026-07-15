@@ -9,6 +9,7 @@ interface FlightBookFooterProps {
   disabled: boolean;
   pending: boolean;
   pendingLabel?: string;
+  submitLabel?: string;
   showTicketNotice?: boolean;
   showSaveOrder?: boolean;
   billOpen: boolean;
@@ -45,6 +46,7 @@ export function FlightBookFooter({
   disabled,
   pending,
   pendingLabel,
+  submitLabel = "生成订单",
   showTicketNotice = false,
   showSaveOrder = false,
   billOpen,
@@ -137,7 +139,7 @@ export function FlightBookFooter({
                 className="flex h-9 w-[120px] shrink-0 items-center justify-center rounded-[24px] bg-[linear-gradient(270deg,var(--brand-btn-end)_0%,var(--brand-btn-start)_100%)] text-[14px] font-medium leading-none text-white disabled:bg-none disabled:bg-[#CCCCCC] active:opacity-90"
                 onClick={onSubmit}
               >
-                {pending ? (pendingLabel ?? "提交中…") : "生成订单"}
+                {pending ? (pendingLabel ?? "提交中…") : submitLabel}
               </button>
             </div>
           </div>

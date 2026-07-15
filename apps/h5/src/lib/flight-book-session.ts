@@ -1,4 +1,9 @@
-import type { FlightDetailResult, FlightFare, FlightListResult, FlightSegment } from "@ryx/shared-types";
+import type {
+  FlightDetailResult,
+  FlightFare,
+  FlightListResult,
+  FlightSegment,
+} from "@ryx/shared-types";
 import type { FlightBookPolicy } from "@ryx/shared-types";
 
 import type { FlightCabinsQuery } from "@/lib/flight-detail";
@@ -24,6 +29,12 @@ export interface FlightBookSelection {
   priceSnapshotAt: number;
   selectedAt: number;
   travelMode?: HomeTravelMode;
+  isExchange?: boolean;
+  exchangeTicketId?: string;
+  exchangeOrderId?: string;
+  exchangePassengerMobile?: string;
+  exchangeTravelPayType?: number;
+  exchangeOriginalTicketPrice?: number;
 }
 
 function notifyChange(): void {

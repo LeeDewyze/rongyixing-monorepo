@@ -290,6 +290,8 @@ export type {
   FlightCancelParams,
   FlightNonVoluntaryRefundParams,
   FlightOrderTicket,
+  FlightExchangeInfo,
+  FlightExchangeInfoParams,
   FlightOrderTrip,
   FlightRefundParams,
   FlightTicketRefundInfo,

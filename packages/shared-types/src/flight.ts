@@ -35,6 +35,9 @@ export interface FlightSearchParams {
   ToCode: string;
   FromAsAirport?: boolean;
   ToAsAirport?: boolean;
+  TicketId?: string;
+  BookType?: string | number;
+  IsExchange?: boolean;
 }
 
 export interface FlightSegment {
@@ -135,6 +138,8 @@ export interface FlightDetailParams {
   DetailKey?: string;
   BookType?: string;
   Lang?: string;
+  TicketId?: string;
+  IsExchange?: boolean;
 }
 
 export interface FlightTax {

@@ -115,6 +115,7 @@ import { isFlightListTimedOut, buildFlightListRefreshHref } from "@/lib/flight-l
 import { formatApiError } from "@/lib/formatApiError";
 import { clearPassengerSelection } from "@/lib/passenger-selection";
 import { pollFlightCheckPay, shouldNavigateToPay } from "@/lib/flight-book-check-pay";
+import { clearFlightExchangeSession } from "@/lib/flight-exchange-session";
 import {
   isBusinessTravelMode,
   loadHomeTravelMode,
@@ -189,6 +190,7 @@ export function FlightBookPage() {
   const travelMode = selection?.travelMode ?? loadHomeTravelMode();
   const isBusinessMode = isBusinessTravelMode(travelMode);
   const productChannel = resolveProductChannel(travelMode);
+  const isExchangeBook = Boolean(selection?.isExchange && selection.exchangeTicketId);
 
   const initParams = useMemo(() => {
     if (!selection || selected.length === 0) return null;
@@ -242,7 +244,7 @@ export function FlightBookPage() {
     return map;
   }, [initBook.data?.Insurances, selected]);
   const showApproverPickerByPassenger = useMemo(() => {
-    if (!isBusinessMode) return {};
+    if (!isBusinessMode || isExchangeBook) return {};
     const map: Record<string, boolean> = {};
     for (const passenger of selected) {
       const staff = findInitStaffForPassenger(passenger, initStaffs);
@@ -257,23 +259,35 @@ export function FlightBookPage() {
       });
     }
     return map;
-  }, [flightPolicy, initBook.data, initStaffs, isBusinessMode, selected, selection]);
+  }, [
+    flightPolicy,
+    initBook.data,
+    initStaffs,
+    isBusinessMode,
+    isExchangeBook,
+    selected,
+    selection,
+  ]);
   const primaryTravelPassenger = useMemo(() => resolvePrimaryTravelPassenger(selected), [selected]);
 
-  const resolvedPayType = isBusinessMode
-    ? travelPayType ?? resolveDefaultFlightPayType(payOptions)
-    : FLIGHT_PAY_TYPE_PERSON;
+  const resolvedPayType =
+    isExchangeBook && selection?.exchangeTravelPayType != null
+      ? selection.exchangeTravelPayType
+      : isBusinessMode
+        ? (travelPayType ?? resolveDefaultFlightPayType(payOptions))
+        : FLIGHT_PAY_TYPE_PERSON;
   const personHoldMinutes = resolveFlightHoldMinutes(initBook.data);
 
   const showSaveOrder = useMemo(
     () =>
+      !isExchangeBook &&
       isBusinessMode &&
       canSaveFlightOrder({
         identity,
         segment: selection?.segment,
         cabinsQuery: selection?.cabinsQuery,
       }),
-    [identity, isBusinessMode, selection?.cabinsQuery, selection?.segment],
+    [identity, isBusinessMode, isExchangeBook, selection?.cabinsQuery, selection?.segment],
   );
   const resolvedAgentId =
     agentId ?? (tmcAgents.length === 1 ? String(tmcAgents[0]?.Id ?? "") : undefined);
@@ -303,13 +317,14 @@ export function FlightBookPage() {
     skipEmptySelectionRedirectRef.current = true;
     navigate(path, { replace: true, state });
     clearFlightBookSelection();
+    clearFlightExchangeSession();
     clearPassengerSelection(ProductType.Flight);
   }
 
   useEffect(() => {
-    if (!isBusinessMode || travelPayType != null || !payOptions.length) return;
+    if (!isBusinessMode || isExchangeBook || travelPayType != null || !payOptions.length) return;
     setTravelPayType(resolveDefaultFlightPayType(payOptions));
-  }, [isBusinessMode, payOptions, travelPayType]);
+  }, [isBusinessMode, isExchangeBook, payOptions, travelPayType]);
 
   // Legacy: after Initialize, default selectedTmcAgent to tmcAgents[0] if unset.
   useEffect(() => {
@@ -427,16 +442,15 @@ export function FlightBookPage() {
     return null;
   }
 
+  const initOrderAmount = Number(initBook.data?.OrderAmount);
   const orderAmount =
-    resolveFlightBookDisplayAmount(selection, selected, serviceFees) + totalInsurance;
+    isExchangeBook && Number.isFinite(initOrderAmount)
+      ? initOrderAmount
+      : resolveFlightBookDisplayAmount(selection, selected, serviceFees) + totalInsurance;
   const timedOut = isFlightListTimedOut(selection.priceSnapshotAt);
   const isInitBlocking = initBook.isFetching && !initBook.data;
   const isPending =
-    isSubmitting ||
-    submitBook.isPending ||
-    validateBook.isPending ||
-    isInitBlocking ||
-    checkingPay;
+    isSubmitting || submitBook.isPending || validateBook.isPending || isInitBlocking || checkingPay;
   const submitPendingLabel = checkingPay ? "确认中…" : "提交中…";
   const initError = initBook.error;
   const submitError = submitBook.error;
@@ -559,6 +573,7 @@ export function FlightBookPage() {
       if (
         productChannel === "tourist" &&
         !isSave &&
+        !isExchangeBook &&
         shouldValidateTouristFlightBook(selection)
       ) {
         await validateBook.mutateAsync(bookDto);
@@ -633,7 +648,10 @@ export function FlightBookPage() {
         className="fixed inset-x-0 top-0 z-30 mx-auto w-full max-w-lg overflow-hidden"
         style={FLIGHT_BOOK_PAGE_BACKGROUND}
       >
-        <FlightCabinsHeader title="确认信息及预订" onBack={handleBack} />
+        <FlightCabinsHeader
+          title={isExchangeBook ? "确认改签" : "确认信息及预订"}
+          onBack={handleBack}
+        />
       </div>
 
       <div
@@ -664,8 +682,10 @@ export function FlightBookPage() {
                   forms={orderedForms}
                   showOrganizations={isBusinessMode && showOrganizations}
                   showCostCenter={isBusinessMode && showCostCenter}
-                  allowAddPassenger={!isBusinessMode}
-                  onRemove={!isBusinessMode ? setRemovePassengerTarget : undefined}
+                  allowAddPassenger={!isBusinessMode && !isExchangeBook}
+                  onRemove={
+                    !isBusinessMode && !isExchangeBook ? setRemovePassengerTarget : undefined
+                  }
                   onUpdateForm={updateForm}
                   onOpenOrganization={setOrgSheetPassengerId}
                   onOpenCostCenter={setCostSheetPassengerId}
@@ -714,7 +734,9 @@ export function FlightBookPage() {
                         form={form}
                         showOrganizations={isBusinessMode && showOrganizations}
                         showCostCenter={isBusinessMode && showCostCenter}
-                        onRemove={!isBusinessMode ? setRemovePassengerTarget : undefined}
+                        onRemove={
+                          !isBusinessMode && !isExchangeBook ? setRemovePassengerTarget : undefined
+                        }
                         onUpdateForm={updateForm}
                         onOpenOrganization={setOrgSheetPassengerId}
                         onOpenCostCenter={setCostSheetPassengerId}
@@ -826,7 +848,7 @@ export function FlightBookPage() {
             />
           ) : null}
 
-          {!initBook.isFetching && isBusinessMode ? (
+          {!initBook.isFetching && isBusinessMode && !isExchangeBook ? (
             <FlightBookPayTypes
               options={payOptions}
               value={resolvedPayType}
@@ -852,6 +874,7 @@ export function FlightBookPage() {
         agreed={agreed}
         pending={isPending}
         pendingLabel={submitPendingLabel}
+        submitLabel={isExchangeBook ? "改签预订" : undefined}
         disabled={selected.length === 0 || isPending || initBook.isError}
         showTicketNotice={ticketNoticeRules.length > 0}
         showSaveOrder={showSaveOrder}

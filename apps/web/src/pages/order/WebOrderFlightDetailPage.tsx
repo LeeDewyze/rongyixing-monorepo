@@ -26,6 +26,7 @@ import {
 import { useInspurRepush } from "@/hooks/useHotelOrderDetail";
 import { resolveAppChannel } from "@/lib/app-channel";
 import { formatApiError } from "@/lib/formatApiError";
+import { startFlightExchangeFlow } from "@/lib/flight-order-actions";
 import {
   filterBillLinesForTicket,
   getSelectedTicket,
@@ -93,6 +94,7 @@ export function WebOrderFlightDetailPage() {
   const [explainOpen, setExplainOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [suppressFooterActions, setSuppressFooterActions] = useState(false);
+  const [exchangePending, setExchangePending] = useState(false);
 
   const leaveDetail = useCallback(() => {
     navigate(getOrderListPath("flight", { channel, scope: listScope }), { replace: true });
@@ -310,11 +312,35 @@ export function WebOrderFlightDetailPage() {
     showToast,
   ]);
 
+  const runExchange = useCallback(async () => {
+    if (!detail || !selectedTicket) return;
+    if (!selectedTicket.Actions?.showExchange) {
+      showToast("该客票暂不可改签");
+      return;
+    }
+    setExchangePending(true);
+    try {
+      await startFlightExchangeFlow({
+        channel,
+        ticketId: selectedTicket.Id,
+        orderId: detail.OrderId,
+        navigate,
+      });
+    } catch (err) {
+      showToast(formatApiError(err));
+    } finally {
+      setExchangePending(false);
+    }
+  }, [channel, detail, navigate, selectedTicket, showToast]);
+
   const showFooter = footerActions
     ? shouldShowFlightFooter(footerActions, payHoldSecondsRemaining, footerTicket)
     : false;
   const pending =
-    cancelMutation.isPending || refundMutation.isPending || nonVoluntaryRefundMutation.isPending;
+    cancelMutation.isPending ||
+    refundMutation.isPending ||
+    nonVoluntaryRefundMutation.isPending ||
+    exchangePending;
 
   return (
     <div className={WEB_PAGE_ROOT} style={ORDER_DETAIL_PAGE_BACKGROUND}>
@@ -329,42 +355,42 @@ export function WebOrderFlightDetailPage() {
           </p>
         ) : (
           <div className="mx-auto max-w-[960px] space-y-3 px-4 pb-6 pt-3">
-              <FlightOrderInfoCard
-                detail={detail}
-                transactionId={selectedTicket?.Id}
-                payHoldSecondsRemaining={payHoldSecondsRemaining}
-                onShowBill={() => setBillOpen(true)}
-              />
+            <FlightOrderInfoCard
+              detail={detail}
+              transactionId={selectedTicket?.Id}
+              payHoldSecondsRemaining={payHoldSecondsRemaining}
+              onShowBill={() => setBillOpen(true)}
+            />
 
-              <FlightOrderPassengerTabs
-                tickets={detail.Tickets}
-                selectedIndex={selectedTicketIndex}
-                onSelect={setSelectedTicketIndex}
-              />
+            <FlightOrderPassengerTabs
+              tickets={detail.Tickets}
+              selectedIndex={selectedTicketIndex}
+              onSelect={setSelectedTicketIndex}
+            />
 
-              {selectedTicket ? (
-                <>
-                  <FlightOrderSegmentCard
-                    ticket={selectedTicket}
-                    onShowExplain={() => setExplainOpen(true)}
-                  />
-                  <FlightOrderTravelerCard ticket={selectedTicket} />
-                </>
-              ) : null}
+            {selectedTicket ? (
+              <>
+                <FlightOrderSegmentCard
+                  ticket={selectedTicket}
+                  onShowExplain={() => setExplainOpen(true)}
+                />
+                <FlightOrderTravelerCard ticket={selectedTicket} />
+              </>
+            ) : null}
 
-              <FlightOrderContactCard contact={detail.Contact} />
+            <FlightOrderContactCard contact={detail.Contact} />
 
-              <HotelOrderApprovalSection histories={detail.Histories ?? []} />
+            <HotelOrderApprovalSection histories={detail.Histories ?? []} />
 
-              {showInspurRepush ? (
-                <button
-                  type="button"
-                  className="w-full rounded-xl bg-white py-3 text-[14px] font-medium text-[#2768FA] shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
-                  onClick={() => showToast("重推浪潮功能即将上线")}
-                >
-                  重推浪潮
-                </button>
-              ) : null}
+            {showInspurRepush ? (
+              <button
+                type="button"
+                className="w-full rounded-xl bg-white py-3 text-[14px] font-medium text-[#2768FA] shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
+                onClick={() => showToast("重推浪潮功能即将上线")}
+              >
+                重推浪潮
+              </button>
+            ) : null}
           </div>
         )}
       </div>
@@ -381,6 +407,7 @@ export function WebOrderFlightDetailPage() {
             setRefundKind("voluntary");
             setRefundOpen(true);
           }}
+          onExchange={() => void runExchange()}
         />
       ) : null}
 

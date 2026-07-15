@@ -327,6 +327,33 @@ describe("normalizeHotelOrderDetail", () => {
 });
 
 describe("normalizeFlightOrderDetail", () => {
+  it("maps ticket-level flight exchange action from Variables", () => {
+    const detail = normalizeFlightOrderDetail({
+      Order: {
+        Id: "ORD-FLT-EX",
+        OrderFlightTickets: [
+          {
+            Id: "T1",
+            Key: "k1",
+            Variables: JSON.stringify({
+              isShowRefundButton: true,
+              isShowExchangeButton: true,
+            }),
+            Passenger: { Id: "p1", Name: "郭某某" },
+            OrderFlightTrips: [{ FlightNumber: "KN6777", BookType: 2 }],
+          },
+        ],
+      },
+    });
+
+    expect(detail.Tickets?.[0]?.Actions).toEqual({
+      showCancel: false,
+      showRefund: true,
+      showExchange: true,
+    });
+    expect(detail.Tickets?.[0]?.Trips[0]?.BookType).toBe("2");
+  });
+
   it("maps legacy flight order with tickets, travelers, and pay actions", () => {
     const detail = normalizeFlightOrderDetail({
       Order: {

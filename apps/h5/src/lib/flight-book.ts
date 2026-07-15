@@ -31,10 +31,7 @@ import {
   resolvePassengerFormMobile,
 } from "@/lib/flight-book-passenger-form";
 import type { FlightBookSelection } from "@/lib/flight-book-session";
-import {
-  isBusinessTravelMode,
-  resolveFlightTravelType,
-} from "@/lib/flight-travel-mode";
+import { isBusinessTravelMode, resolveFlightTravelType } from "@/lib/flight-travel-mode";
 import { resolveTravelFormPassengerId } from "@/lib/flight-book-travel";
 import type { HomeTravelMode } from "@/config/home-assets";
 
@@ -75,9 +72,7 @@ function mergeTravelNumberOutNumbers(
   return { ...outNumbers, TravelNumber: travelNumber };
 }
 
-function normalizeFlightOrderLinkman(
-  linkman?: FlightBookLinkmanDto,
-): FlightBookLinkmanDto | null {
+function normalizeFlightOrderLinkman(linkman?: FlightBookLinkmanDto): FlightBookLinkmanDto | null {
   const Name = linkman?.Name?.trim() ?? "";
   const Mobile = linkman?.Mobile?.trim() ?? "";
   const Email = linkman?.Email?.trim() ?? "";
@@ -95,6 +90,12 @@ export function validateFlightOrderLinkman(linkman?: FlightBookLinkmanDto): stri
   if (!normalized.Mobile) return "请填写联系人手机号";
   if (!/^1\d{10}$/.test(normalized.Mobile)) return "请输入正确的联系人手机号";
   return null;
+}
+
+function applyFlightExchangeFields(dto: FlightOrderBookDto, selection: FlightBookSelection): void {
+  if (!selection.isExchange || !selection.exchangeTicketId) return;
+  dto.TicketId = selection.exchangeTicketId;
+  dto.IsExchange = true;
 }
 
 function resolvePassengerAccountId(info: PassengerBookInfo): string | undefined {
@@ -125,9 +126,7 @@ function resolvePassengerFlightPolicyForBook(
   fallback?: FlightBookPolicy,
 ): FlightBookPolicy | undefined {
   return (
-    selection.flightPoliciesByPassengerId?.[passenger.id] ??
-    fallback ??
-    selection.flightPolicy
+    selection.flightPoliciesByPassengerId?.[passenger.id] ?? fallback ?? selection.flightPolicy
   );
 }
 
@@ -138,10 +137,7 @@ export function buildSubmitCredentials(
 ): Record<string, unknown> {
   const cred = info.credential;
   const passengerPolicy = resolvePassengerTravelPolicy(info);
-  const hideNumber =
-    cred.HideNumber ??
-    cred.HideCredentialsNumber ??
-    credentialDisplayNumber(cred);
+  const hideNumber = cred.HideNumber ?? cred.HideCredentialsNumber ?? credentialDisplayNumber(cred);
   const credType = cred.CredentialsType ?? cred.Type;
 
   return {
@@ -257,6 +253,8 @@ export function buildFlightInitBookDto(input: {
     dto.AgentId = agentId;
   }
 
+  applyFlightExchangeFields(dto, selection);
+
   return dto;
 }
 
@@ -301,14 +299,13 @@ export function buildFlightOrderBookDto(input: {
     travelMode,
   } = input;
   const defaultPolicy = flightPolicy ?? selection.flightPolicy;
-  const policiesByPassenger =
-    flightPoliciesByPassenger ?? selection.flightPoliciesByPassengerId;
+  const policiesByPassenger = flightPoliciesByPassenger ?? selection.flightPoliciesByPassengerId;
   const detailSnapshot = selection.detailSnapshot;
   const resolvedTravelType = travelType ?? resolveFlightTravelType(travelMode);
   const includeTravelForm = isBusinessTravelMode(travelMode);
   const normalizedOrderLinkman = normalizeFlightOrderLinkman(orderLinkman);
   const sharedTravelNumber = includeTravelForm
-    ? travelNumber ?? passengers.map(resolvePassengerTravelNumber).find(Boolean)
+    ? (travelNumber ?? passengers.map(resolvePassengerTravelNumber).find(Boolean))
     : undefined;
 
   const passengerDtos: FlightBookPassengerDto[] = passengers.map((info) => {
@@ -354,8 +351,8 @@ export function buildFlightOrderBookDto(input: {
       resolvedCabin,
     );
 
-    const mobile = form ? resolvePassengerFormMobile(form) : cred.Mobile ?? "";
-    const email = form ? resolvePassengerFormEmail(form) ?? "" : "";
+    const mobile = form ? resolvePassengerFormMobile(form) : (cred.Mobile ?? "");
+    const email = form ? (resolvePassengerFormEmail(form) ?? "") : "";
 
     const passenger: FlightBookPassengerDto = {
       ClientId: accountId,
@@ -434,6 +431,8 @@ export function buildFlightOrderBookDto(input: {
     dto.Linkmans = buildAuthorizedLinkmans(authorizedContacts);
   }
 
+  applyFlightExchangeFields(dto, selection);
+
   return dto;
 }
 
@@ -473,10 +472,11 @@ function toAmount(value: unknown): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-export function resolveFlightFareTaxLines(fare: import("@ryx/shared-types").FlightFare): FlightBookBillTaxLine[] {
+export function resolveFlightFareTaxLines(
+  fare: import("@ryx/shared-types").FlightFare,
+): FlightBookBillTaxLine[] {
   const taxs =
-    fare.FlightFareBasics?.flatMap((basic) => basic.FlightTaxs ?? []) ??
-    ([] as FlightTax[]);
+    fare.FlightFareBasics?.flatMap((basic) => basic.FlightTaxs ?? []) ?? ([] as FlightTax[]);
   if (taxs.length > 0) {
     return taxs.map((item) => ({
       name: item.Name ?? "税费",

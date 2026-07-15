@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import type { FlightDetailResult, FlightFare, FlightSegment, PassengerBookInfo } from "@ryx/shared-types";
+import type {
+  FlightDetailResult,
+  FlightFare,
+  FlightSegment,
+  PassengerBookInfo,
+} from "@ryx/shared-types";
 
 import {
   buildPolicyRulesMap,
@@ -136,10 +141,17 @@ describe("serializeFlightsForPolicy", () => {
           {
             ...segment,
             detailResult: { FlightFares: [] },
-            Cabins: [{ Code: "Y", FlightFareBasics: [{ CabinCode: "Y", flightAndTaxFeesInfos: [{ x: 1 }] }] }],
+            Cabins: [
+              {
+                Code: "Y",
+                FlightFareBasics: [{ CabinCode: "Y", flightAndTaxFeesInfos: [{ x: 1 }] }],
+              },
+            ],
           },
         ],
-        FlightFares: [{ Code: "Y", FlightFareBasics: [{ CabinCode: "Y", flightAndTaxFeesInfos: [{ x: 1 }] }] }],
+        FlightFares: [
+          { Code: "Y", FlightFareBasics: [{ CabinCode: "Y", flightAndTaxFeesInfos: [{ x: 1 }] }] },
+        ],
       },
     });
     const parsed = JSON.parse(json) as {
@@ -250,6 +262,20 @@ describe("buildFlightOrderBookDto", () => {
     });
     expect(dto.TravelPayType).toBe(2);
     expect(dto.Passengers[0]?.TravelPayType).toBe(0);
+  });
+
+  it("sets root TicketId for exchange book payload", () => {
+    const dto = buildFlightOrderBookDto({
+      selection: {
+        ...selection,
+        isExchange: true,
+        exchangeTicketId: "FL-TICKET-1",
+      },
+      passengers,
+    });
+    expect(dto.TicketId).toBe("FL-TICKET-1");
+    expect(dto.IsExchange).toBe(true);
+    expect(dto.ExchangeTicketId).toBeUndefined();
   });
 
   it("sets MessageLang on each passenger for Book API (Legacy combindInfo.notifyLanguage)", () => {
@@ -580,16 +606,12 @@ describe("resolveFlightBookDisplayAmount", () => {
       ],
     };
     const taxedSelection = { ...selection, fare: taxedFare };
-    expect(
-      resolveFlightBookDisplayAmount(taxedSelection, passengers, { "acc-1": 10 }),
-    ).toBe(590);
+    expect(resolveFlightBookDisplayAmount(taxedSelection, passengers, { "acc-1": 10 })).toBe(590);
   });
 
   it("multiplies base fare by passenger count", () => {
     expect(resolveFlightBookDisplayAmount(selection, passengers)).toBe(680);
-    expect(
-      resolveFlightBookDisplayAmount(selection, [passengers[0]!, passengers[0]!]),
-    ).toBe(1360);
+    expect(resolveFlightBookDisplayAmount(selection, [passengers[0]!, passengers[0]!])).toBe(1360);
   });
 });
 
