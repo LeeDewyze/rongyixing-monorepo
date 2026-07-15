@@ -8,10 +8,12 @@ import "@ryx/ui/globals.css";
 import { router } from "@/app/routes";
 import { DevMenu } from "@/components/DevMenu";
 import { bootstrapApi } from "@/lib/api";
+import { bootstrapExternalTicket } from "@/lib/external-ticket";
 import { queryClient } from "@/lib/query";
 
 async function main() {
   await bootstrapApi();
+  await bootstrapExternalTicket("/home");
 
   createRoot(document.getElementById("root")!).render(
     <StrictMode>

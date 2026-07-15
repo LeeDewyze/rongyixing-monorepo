@@ -7,6 +7,7 @@ import "@ryx/ui/globals.css";
 
 import { router } from "@/app/routes";
 import { bootstrapApi } from "@/lib/api";
+import { bootstrapExternalTicket } from "@/lib/external-ticket";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -19,6 +20,7 @@ const queryClient = new QueryClient({
 
 async function main() {
   await bootstrapApi();
+  await bootstrapExternalTicket("/");
 
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
