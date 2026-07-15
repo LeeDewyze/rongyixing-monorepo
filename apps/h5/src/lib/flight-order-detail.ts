@@ -111,6 +111,9 @@ export function shouldShowFlightFooter(
   if (selectedTicket?.Actions?.showRefund) {
     return true;
   }
+  if (selectedTicket?.Actions?.showExchange) {
+    return true;
+  }
   return (
     payHoldSecondsRemaining != null &&
     payHoldSecondsRemaining > 0 &&
@@ -118,9 +121,7 @@ export function shouldShowFlightFooter(
   );
 }
 
-export function suppressFlightFooterActions(
-  actions: HotelOrderActionFlags,
-): HotelOrderActionFlags {
+export function suppressFlightFooterActions(actions: HotelOrderActionFlags): HotelOrderActionFlags {
   return {
     ...actions,
     showPay: false,
@@ -140,6 +141,7 @@ export function suppressFlightTicketActions(
       ...ticket.Actions,
       showCancel: false,
       showRefund: false,
+      showExchange: false,
     },
   };
 }

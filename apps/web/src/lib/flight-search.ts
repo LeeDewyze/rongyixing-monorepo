@@ -1,11 +1,6 @@
 import type { FlightSearchParams, Trafficline } from "@ryx/shared-types";
 
-import {
-  buildDateRange,
-  formatDateLabel,
-  formatDayChip,
-  todayDateString,
-} from "./date-search";
+import { buildDateRange, formatDateLabel, formatDayChip, todayDateString } from "./date-search";
 
 export { buildDateRange, formatDayChip, todayDateString };
 
@@ -40,9 +35,7 @@ export function displayCityName(city: Trafficline) {
   if (city.Tag === "Airport" && city.CityName) {
     return city.CityName.replace("国际", "").replace("机场", "");
   }
-  return (city.Nickname ?? city.Name)
-    .replace("国际", "")
-    .replace("机场", "");
+  return (city.Nickname ?? city.Name).replace("国际", "").replace("机场", "");
 }
 
 /** Browse / hot chip label — legacy getItem with isShowAirports=false. */
@@ -101,16 +94,13 @@ export function resolveCityFromAirports(
     if (airport) return airport;
   } else if (asAirport === false) {
     const city = airports.find(
-      (c) =>
-        c.Tag === "AirportCity" &&
-        (c.Code === code || c.AirportCityCode === code),
+      (c) => c.Tag === "AirportCity" && (c.Code === code || c.AirportCityCode === code),
     );
     if (city) return city;
   }
 
   const found =
-    airports.find((c) => c.Code === code) ??
-    airports.find((c) => c.AirportCityCode === code);
+    airports.find((c) => c.Code === code) ?? airports.find((c) => c.AirportCityCode === code);
   if (found) return found;
   if (!code) return fallback;
   return {
@@ -139,6 +129,22 @@ export function buildHomeIndexParams(
     FromAsAirport: fromAsAirport,
     ToAsAirport: toAsAirport,
     channel,
+  };
+}
+
+export function buildHomeExchangeParams(input: {
+  fromCity: Trafficline;
+  toCity: Trafficline;
+  date: string;
+  channel?: FlightSearchParams["channel"];
+  ticketId: string;
+  bookType?: string | number;
+}): FlightSearchParams {
+  return {
+    ...buildHomeIndexParams(input.fromCity, input.toCity, input.date, input.channel),
+    TicketId: input.ticketId,
+    BookType: input.bookType,
+    IsExchange: true,
   };
 }
 
@@ -193,18 +199,8 @@ export function resolveListCitiesFromQuery(
     return null;
   }
   return {
-    fromCity: cityFromQuery(
-      airports,
-      query.fromCode,
-      query.fromName,
-      query.fromAsAirport,
-    ),
-    toCity: cityFromQuery(
-      airports,
-      query.toCode,
-      query.toName,
-      query.toAsAirport,
-    ),
+    fromCity: cityFromQuery(airports, query.fromCode, query.fromName, query.fromAsAirport),
+    toCity: cityFromQuery(airports, query.toCode, query.toName, query.toAsAirport),
   };
 }
 
@@ -225,8 +221,7 @@ export function cityFromQuery(
   if (name) {
     const cityByName = airports.find(
       (c) =>
-        c.Tag === "AirportCity" &&
-        (c.Name === name || c.Nickname === name || c.CityName === name),
+        c.Tag === "AirportCity" && (c.Name === name || c.Nickname === name || c.CityName === name),
     );
     if (cityByName) {
       return cityByName;

@@ -16,9 +16,7 @@ import { FlightCabinsTabs } from "@/components/flight/FlightCabinsTabs";
 import { FlightPolicyFilterSheet } from "@/components/flight/FlightPolicyFilterSheet";
 import { FlightPolicyAlertDialog } from "@/components/flight/FlightPolicyAlertDialog";
 import { FlightCabinsSkeleton } from "@/components/flight/FlightCabinsSkeleton";
-import {
-  FLIGHT_CABINS_CHROME,
-} from "@/components/flight/flight-cabins-chrome";
+import { FLIGHT_CABINS_CHROME } from "@/components/flight/flight-cabins-chrome";
 import { formatCabinsDepartTitle } from "@/utils/flight-list-display";
 import { usePageHeader } from "@/components/layout";
 import { useFlightDetail, useFlightPolicy } from "@/hooks/useFlight";
@@ -63,12 +61,13 @@ import {
 import { buildFlightPolicySessionKey, loadFlightPolicySession } from "@/lib/flight-policy-session";
 import { isSelfBookType, resolveDefaultPolicyFilterPassengerId } from "@/lib/flight-self-book";
 import { hasAgentIdentity } from "@/lib/flight-book-save-order";
-import {
-  isBusinessTravelMode,
-  loadHomeTravelMode,
-} from "@/lib/flight-travel-mode";
+import { isBusinessTravelMode, loadHomeTravelMode } from "@/lib/flight-travel-mode";
 import { navigateBack } from "@/lib/navigation";
 import { useIdentity } from "@/hooks/useIdentity";
+import {
+  FLIGHT_EXCHANGE_SESSION_EVENT,
+  loadFlightExchangeSession,
+} from "@/lib/flight-exchange-session";
 
 const FALLBACK_HEADER_HEIGHT = 56;
 
@@ -90,6 +89,17 @@ export function FlightCabinsPage() {
   const listHref = searchParams.toString()
     ? `/flight/list?${searchParams.toString()}`
     : "/flight/list";
+  const [exchangeSession, setExchangeSession] = useState(() => loadFlightExchangeSession());
+  const exchangeTicketId = exchangeSession?.ticketId ?? query.ticketId;
+  const isExchangeBook = query.exchange === "1" && Boolean(exchangeTicketId);
+
+  useEffect(() => {
+    function syncExchangeSession() {
+      setExchangeSession(loadFlightExchangeSession());
+    }
+    window.addEventListener(FLIGHT_EXCHANGE_SESSION_EVENT, syncExchangeSession);
+    return () => window.removeEventListener(FLIGHT_EXCHANGE_SESSION_EVENT, syncExchangeSession);
+  }, []);
 
   const listParams = useMemo(
     () => ({
@@ -103,8 +113,13 @@ export function FlightCabinsPage() {
   );
 
   const detailParams = useMemo(
-    () => buildFlightDetailParams(query, selectedPassengers.length),
-    [query, selectedPassengers.length],
+    () =>
+      buildFlightDetailParams(
+        query,
+        selectedPassengers.length,
+        isExchangeBook ? { ticketId: exchangeTicketId, isExchange: true } : undefined,
+      ),
+    [exchangeTicketId, isExchangeBook, query, selectedPassengers.length],
   );
 
   const policySessionKey = useMemo(() => {
@@ -163,7 +178,7 @@ export function FlightCabinsPage() {
   });
 
   const policyResults = isBusinessMode
-    ? policyQueryData ?? cachedPolicySession?.policyResults
+    ? (policyQueryData ?? cachedPolicySession?.policyResults)
     : undefined;
   const isPolicyChecking =
     selectedPassengers.length > 0 &&
@@ -374,7 +389,11 @@ export function FlightCabinsPage() {
 
     for (const passenger of selectedPassengers) {
       const passengerPolicy = flightPoliciesByPassengerId[passenger.id];
-      if (isBusinessMode && passengerPolicy && !isFlightPolicyBookAllowed(passengerPolicy, isAgent)) {
+      if (
+        isBusinessMode &&
+        passengerPolicy &&
+        !isFlightPolicyBookAllowed(passengerPolicy, isAgent)
+      ) {
         showPolicyAlert(formatFlightPolicyBookBlockMessage(passengerPolicy, passenger));
         return;
       }
@@ -392,6 +411,12 @@ export function FlightCabinsPage() {
       priceSnapshotAt: priceSnapshotAt || Date.now(),
       selectedAt: Date.now(),
       travelMode,
+      isExchange: isExchangeBook,
+      exchangeTicketId: isExchangeBook ? exchangeTicketId : undefined,
+      exchangeOrderId: exchangeSession?.orderId,
+      exchangePassengerMobile: exchangeSession?.exchangeInfo.PassengerMobile,
+      exchangeTravelPayType: exchangeSession?.exchangeInfo.TravelPayType,
+      exchangeOriginalTicketPrice: exchangeSession?.exchangeInfo.OriginalTicketPrice,
     });
     navigate("/flight/book");
   }

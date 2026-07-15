@@ -12,6 +12,7 @@ interface FlightOrderDetailFooterProps {
   onCancel: () => void;
   onPay: () => void;
   onRefund?: () => void;
+  onExchange?: () => void;
 }
 
 export function FlightOrderDetailFooter({
@@ -22,6 +23,7 @@ export function FlightOrderDetailFooter({
   onCancel,
   onPay,
   onRefund,
+  onExchange,
 }: FlightOrderDetailFooterProps) {
   if (!shouldShowFlightFooter(actions, payHoldSecondsRemaining, selectedTicket)) {
     return null;
@@ -32,6 +34,7 @@ export function FlightOrderDetailFooter({
     payHoldSecondsRemaining > 0 &&
     (actions.showPay || actions.showCancel);
   const showRefund = Boolean(selectedTicket?.Actions?.showRefund);
+  const showExchange = Boolean(selectedTicket?.Actions?.showExchange);
 
   return (
     <div className={`${WEB_PAGE_BOTTOM_BAR} px-4 pt-3 ${HOTEL_DETAIL_FONT}`}>
@@ -44,6 +47,16 @@ export function FlightOrderDetailFooter({
             className="flex h-11 flex-1 items-center justify-center rounded-[24px] border border-[#2768FA] bg-white text-[15px] font-medium text-[#2768FA] disabled:opacity-50"
           >
             退票
+          </button>
+        ) : null}
+        {showExchange ? (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={onExchange}
+            className="flex h-11 flex-1 items-center justify-center rounded-[24px] border border-[#2768FA] bg-white text-[15px] font-medium text-[#2768FA] disabled:opacity-50"
+          >
+            改签
           </button>
         ) : null}
         {showHoldActions && actions.showCancel ? (

@@ -13,8 +13,8 @@ import { getApi } from "@/lib/api";
 import { getApiMode } from "@/lib/env";
 import { getTicket } from "@/lib/session";
 
-function canQueryFlightList(): boolean {
-  return getApiMode() === "mock" || Boolean(getTicket());
+function canQueryFlightList(params?: { TicketId?: string }): boolean {
+  return getApiMode() === "mock" || Boolean(getTicket()) || Boolean(params?.TicketId);
 }
 
 export function useFlightAirports(options?: { enabled?: boolean }) {
@@ -37,7 +37,9 @@ export function useFlightList(params: FlightSearchParams | null) {
       }
       return api.flight.searchFlights(params!);
     },
-    enabled: Boolean(params?.Date && params?.FromCode && params?.ToCode && canQueryFlightList()),
+    enabled: Boolean(
+      params?.Date && params?.FromCode && params?.ToCode && canQueryFlightList(params),
+    ),
     staleTime: FLIGHT_LIST_STALE_MS,
     refetchOnWindowFocus: false,
     retry: (failureCount, error) => {
@@ -65,7 +67,7 @@ export function useFlightDetail(params: FlightDetailParams | null) {
         params?.FromCode &&
         params?.ToCode &&
         params?.FlightNumber &&
-        canQueryFlightList(),
+        canQueryFlightList(params),
     ),
     staleTime: 0,
     refetchOnMount: "always",

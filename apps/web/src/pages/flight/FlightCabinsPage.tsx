@@ -65,6 +65,10 @@ import { isBusinessTravelMode, loadHomeTravelMode } from "@/lib/flight-travel-mo
 import { navigateBack } from "@/lib/navigation";
 import { WEB_PAGE_BODY, WEB_PAGE_ROOT, WEB_PAGE_STICKY_HEADER } from "@/lib/web-page-layout";
 import { useIdentity } from "@/hooks/useIdentity";
+import {
+  FLIGHT_EXCHANGE_SESSION_EVENT,
+  loadFlightExchangeSession,
+} from "@/lib/flight-exchange-session";
 
 export function FlightCabinsPage() {
   const navigate = useNavigate();
@@ -84,6 +88,17 @@ export function FlightCabinsPage() {
   const listHref = searchParams.toString()
     ? `/flight/list?${searchParams.toString()}`
     : "/flight/list";
+  const [exchangeSession, setExchangeSession] = useState(() => loadFlightExchangeSession());
+  const exchangeTicketId = exchangeSession?.ticketId ?? query.ticketId;
+  const isExchangeBook = query.exchange === "1" && Boolean(exchangeTicketId);
+
+  useEffect(() => {
+    function syncExchangeSession() {
+      setExchangeSession(loadFlightExchangeSession());
+    }
+    window.addEventListener(FLIGHT_EXCHANGE_SESSION_EVENT, syncExchangeSession);
+    return () => window.removeEventListener(FLIGHT_EXCHANGE_SESSION_EVENT, syncExchangeSession);
+  }, []);
 
   const listParams = useMemo(
     () => ({
@@ -97,8 +112,13 @@ export function FlightCabinsPage() {
   );
 
   const detailParams = useMemo(
-    () => buildFlightDetailParams(query, selectedPassengers.length),
-    [query, selectedPassengers.length],
+    () =>
+      buildFlightDetailParams(
+        query,
+        selectedPassengers.length,
+        isExchangeBook ? { ticketId: exchangeTicketId, isExchange: true } : undefined,
+      ),
+    [exchangeTicketId, isExchangeBook, query, selectedPassengers.length],
   );
 
   const policySessionKey = useMemo(() => {
@@ -377,6 +397,12 @@ export function FlightCabinsPage() {
       priceSnapshotAt: priceSnapshotAt || Date.now(),
       selectedAt: Date.now(),
       travelMode,
+      isExchange: isExchangeBook,
+      exchangeTicketId: isExchangeBook ? exchangeTicketId : undefined,
+      exchangeOrderId: exchangeSession?.orderId,
+      exchangePassengerMobile: exchangeSession?.exchangeInfo.PassengerMobile,
+      exchangeTravelPayType: exchangeSession?.exchangeInfo.TravelPayType,
+      exchangeOriginalTicketPrice: exchangeSession?.exchangeInfo.OriginalTicketPrice,
     });
     navigate("/flight/book");
   }

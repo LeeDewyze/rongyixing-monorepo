@@ -44,6 +44,12 @@ function readPayButton(variables?: LegacyRecord, fallback?: boolean): boolean | 
   return fallback;
 }
 
+function readStringOrNumber(value: unknown): string | number | undefined {
+  const text = readString(value);
+  if (text) return text;
+  return readNumber(value) ?? undefined;
+}
+
 function isWaitPayStatus(status?: string, statusName?: string): boolean {
   return status === "WaitPay" || /待支付|等待支付|待付款/.test(statusName ?? "");
 }
@@ -781,6 +787,10 @@ function resolveFlightCabinTypeLabel(
 
 function mapFlightTrip(trip: LegacyRecord): FlightOrderTrip {
   return {
+    FromCode: readString(trip.FromCode ?? trip.FromAirport ?? trip.FromAirportCode) || undefined,
+    ToCode: readString(trip.ToCode ?? trip.ToAirport ?? trip.ToAirportCode) || undefined,
+    FromAirport: readString(trip.FromAirport ?? trip.FromCode) || undefined,
+    ToAirport: readString(trip.ToAirport ?? trip.ToCode) || undefined,
     FromCityName: readString(trip.FromCityName) || undefined,
     ToCityName: readString(trip.ToCityName) || undefined,
     FromAirportName: readString(trip.FromAirportName) || undefined,
@@ -805,6 +815,7 @@ function mapFlightTrip(trip: LegacyRecord): FlightOrderTrip {
     AirlineSrc: readString(trip.AirlineSrc ?? trip.AirlineLogo) || undefined,
     CodeShareAirlineName:
       readString(trip.CodeShareAirlineName ?? trip.ShareAirlineName) || undefined,
+    BookType: readStringOrNumber(trip.BookType),
   };
 }
 
@@ -827,6 +838,7 @@ function enrichFlightTripFromTicket(trip: FlightOrderTrip, ticket: LegacyRecord)
     IsStop: trip.IsStop || Boolean(ticket.IsStop ?? ticketVariables?.IsStop),
     IsTransfer: trip.IsTransfer || Boolean(ticket.IsTransfer ?? ticketVariables?.IsTransfer),
     StopCities: trip.StopCities ?? (readString(ticket.StopCities) || undefined),
+    BookType: trip.BookType ?? readStringOrNumber(ticket.BookType ?? ticketVariables?.BookType),
   };
 }
 
@@ -858,10 +870,14 @@ function sortFlightTicketsForTabs(tickets: FlightOrderTicket[]): FlightOrderTick
 
 function mapFlightTicketActions(ticket: LegacyRecord) {
   const ticketVariables = parseVariablesObj(ticket);
-  return {
+  const actions = {
     showCancel: Boolean(ticketVariables?.isShowCancelButton),
     showRefund: Boolean(ticketVariables?.isShowRefundButton),
   };
+  if (ticketVariables?.isShowExchangeButton) {
+    return { ...actions, showExchange: true };
+  }
+  return actions;
 }
 
 function mapFlightTicket(

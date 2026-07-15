@@ -46,6 +46,7 @@ import { resolveAppChannel } from "@/lib/app-channel";
 import { getApi } from "@/lib/api";
 import { formatApiError } from "@/lib/formatApiError";
 import { loadHomeTravelMode } from "@/lib/flight-travel-mode";
+import { startFlightExchangeFlow } from "@/lib/flight-order-actions";
 import { startTrainExchangeFlow } from "@/lib/train-order-actions";
 import {
   buildOrderListSearchParams,
@@ -247,6 +248,20 @@ export function WebOrderListPage() {
           showToast("功能即将上线");
           return;
         case "exchange":
+          if (item.tabId === OrderListTabId.Flight) {
+            const ticket = resolveFlightActionTicket(item as OrderFlightListItem);
+            if (!ticket) {
+              showToast("无法获取客票信息");
+              return;
+            }
+            void startFlightExchangeFlow({
+              channel: productChannel,
+              ticketId: ticket.TicketId,
+              orderId: item.OrderId,
+              navigate,
+            }).catch((err) => showToast(formatApiError(err)));
+            return;
+          }
           if (item.tabId === OrderListTabId.Train) {
             const ticket = resolveTrainActionTicket(item as OrderTrainListItem);
             if (!ticket) {

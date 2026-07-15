@@ -48,6 +48,7 @@ import { resolveAppChannel } from "@/lib/app-channel";
 import { getApi } from "@/lib/api";
 import { formatApiError } from "@/lib/formatApiError";
 import { loadHomeTravelMode } from "@/lib/flight-travel-mode";
+import { startFlightExchangeFlow } from "@/lib/flight-order-actions";
 import { startTrainExchangeFlow } from "@/lib/train-order-actions";
 import {
   buildOrderListSearchParams,
@@ -336,7 +337,18 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
           return;
         case "exchange":
           if (item.tabId === OrderListTabId.Flight) {
-            setToastMessage("机票改签即将上线");
+            const flightItem = item as OrderFlightListItem;
+            const ticket = resolveFlightActionTicket(flightItem);
+            if (!ticket) {
+              setToastMessage("无法获取客票信息");
+              return;
+            }
+            void startFlightExchangeFlow({
+              channel: productChannel,
+              ticketId: ticket.TicketId,
+              orderId: flightItem.OrderId,
+              navigate,
+            }).catch((error) => setToastMessage(formatApiError(error)));
             return;
           }
           if (item.tabId === OrderListTabId.Train) {

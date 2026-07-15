@@ -28,6 +28,7 @@ import {
 import { useInspurRepush } from "@/hooks/useHotelOrderDetail";
 import { resolveAppChannel } from "@/lib/app-channel";
 import { formatApiError } from "@/lib/formatApiError";
+import { startFlightExchangeFlow } from "@/lib/flight-order-actions";
 import {
   filterBillLinesForTicket,
   getSelectedTicket,
@@ -99,6 +100,7 @@ export function OrderFlightDetailPage() {
   const [explainOpen, setExplainOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [suppressFooterActions, setSuppressFooterActions] = useState(false);
+  const [exchangePending, setExchangePending] = useState(false);
 
   const leaveDetail = useCallback(() => {
     navigate(getOrderListPath("flight", { channel, scope: listScope }), { replace: true });
@@ -340,11 +342,35 @@ export function OrderFlightDetailPage() {
     showToast,
   ]);
 
+  const runExchange = useCallback(async () => {
+    if (!detail || !selectedTicket) return;
+    if (!selectedTicket.Actions?.showExchange) {
+      showToast("该客票暂不可改签");
+      return;
+    }
+    setExchangePending(true);
+    try {
+      await startFlightExchangeFlow({
+        channel,
+        ticketId: selectedTicket.Id,
+        orderId: detail.OrderId,
+        navigate,
+      });
+    } catch (err) {
+      showToast(formatApiError(err));
+    } finally {
+      setExchangePending(false);
+    }
+  }, [channel, detail, navigate, selectedTicket, showToast]);
+
   const showFooter = footerActions
     ? shouldShowFlightFooter(footerActions, payHoldSecondsRemaining, footerTicket)
     : false;
   const pending =
-    cancelMutation.isPending || refundMutation.isPending || nonVoluntaryRefundMutation.isPending;
+    cancelMutation.isPending ||
+    refundMutation.isPending ||
+    nonVoluntaryRefundMutation.isPending ||
+    exchangePending;
 
   return (
     <div className="relative h-dvh overflow-hidden" style={ORDER_FLIGHT_DETAIL_BACKGROUND}>
@@ -419,6 +445,7 @@ export function OrderFlightDetailPage() {
               setRefundKind("voluntary");
               setRefundOpen(true);
             }}
+            onExchange={() => void runExchange()}
           />
 
           <FlightOrderBillSheet

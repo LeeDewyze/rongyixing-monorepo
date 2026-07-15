@@ -2,6 +2,10 @@ import type { HotelOrderBillLine, HotelOrderHistory, HotelOrderTraveler } from "
 import type { TrainOrderTicket } from "./train-order.js";
 
 export interface FlightOrderTrip {
+  FromCode?: string;
+  ToCode?: string;
+  FromAirport?: string;
+  ToAirport?: string;
   FromCityName?: string;
   ToCityName?: string;
   FromAirportName?: string;
@@ -23,6 +27,7 @@ export interface FlightOrderTrip {
   AirlineName?: string;
   AirlineSrc?: string;
   CodeShareAirlineName?: string;
+  BookType?: string | number;
 }
 
 export interface FlightOrderTicket {
@@ -40,7 +45,33 @@ export interface FlightOrderTicket {
   Actions?: {
     showCancel?: boolean;
     showRefund?: boolean;
+    showExchange?: boolean;
   };
+}
+
+export interface FlightExchangeInfoParams {
+  channel?: "tmc" | "tourist";
+  TicketId: string;
+  OrderId?: string;
+}
+
+export interface FlightExchangeInfo {
+  TicketId?: string;
+  OrderId?: string;
+  Date?: string;
+  FromCode?: string;
+  ToCode?: string;
+  FromName?: string;
+  ToName?: string;
+  FromAirport?: string;
+  ToAirport?: string;
+  FromAsAirport?: boolean;
+  ToAsAirport?: boolean;
+  FlightNumber?: string;
+  BookType?: string | number;
+  TravelPayType?: number;
+  OriginalTicketPrice?: number;
+  PassengerMobile?: string;
 }
 
 export interface FlightCancelParams {
