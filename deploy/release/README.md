@@ -36,6 +36,25 @@ deploy/release/out/rongyixing-h5-web-dist-<timestamp>.tar.gz
 VITE_H5_BASE_PATH=/h5/ VITE_WEB_BASE_PATH=/web/ deploy/release/build-dist-package.sh
 ```
 
+只生成可上传目录，不生成压缩包：
+
+```bash
+CREATE_ARCHIVE=0 deploy/release/build-dist-package.sh
+```
+
+直接把本地已构建目录上传到服务器：
+
+```bash
+REMOTE=root@<server-ip> deploy/release/upload-dist-to-server.sh
+```
+
+上传后在服务器执行：
+
+```bash
+cd /tmp/rongyixing-release/rongyixing-h5-web-dist-<timestamp>
+./install-dist.sh
+```
+
 ## 服务器安装
 
 把 tar.gz 上传到服务器后执行：

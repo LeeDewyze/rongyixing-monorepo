@@ -8,6 +8,7 @@ PACKAGE_NAME="${PACKAGE_NAME:-rongyixing-h5-web-dist}"
 TIMESTAMP="${TIMESTAMP:-$(date +%Y%m%d%H%M%S)}"
 PACKAGE_DIR="${OUT_ROOT}/${PACKAGE_NAME}-${TIMESTAMP}"
 ARCHIVE_PATH="${PACKAGE_DIR}.tar.gz"
+CREATE_ARCHIVE="${CREATE_ARCHIVE:-1}"
 
 log() {
   printf '[ryx-dist-package] %s\n' "$*"
@@ -24,6 +25,8 @@ Environment:
   TIMESTAMP=YYYYmmddHHMMSS                 Optional fixed package timestamp.
   VITE_H5_BASE_PATH=/h5/                   H5 public base path.
   VITE_WEB_BASE_PATH=/web/                 Web public base path.
+  CREATE_ARCHIVE=1                         Create tar.gz archive after directory package.
+  CREATE_ARCHIVE=0                         Only create the uploadable package directory.
 EOF
   exit 0
 fi
@@ -67,9 +70,13 @@ h5_base_path=${H5_BASE_PATH}
 web_base_path=${WEB_BASE_PATH}
 EOF
 
-log "create archive ${ARCHIVE_PATH}"
-tar -C "${OUT_ROOT}" -czf "${ARCHIVE_PATH}" "$(basename "${PACKAGE_DIR}")"
+if [[ "${CREATE_ARCHIVE}" == "1" ]]; then
+  log "create archive ${ARCHIVE_PATH}"
+  tar -C "${OUT_ROOT}" -czf "${ARCHIVE_PATH}" "$(basename "${PACKAGE_DIR}")"
+fi
 
 log "done"
 log "package directory: ${PACKAGE_DIR}"
-log "archive: ${ARCHIVE_PATH}"
+if [[ "${CREATE_ARCHIVE}" == "1" ]]; then
+  log "archive: ${ARCHIVE_PATH}"
+fi
