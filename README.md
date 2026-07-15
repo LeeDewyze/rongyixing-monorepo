@@ -219,8 +219,8 @@ For customer delivery without source code, build a static H5/Web package:
 deploy/release/build-dist-package.sh
 ```
 
-The generated directory is written to `deploy/release/out/` and contains only `h5/dist`,
-`web/dist`, Nginx template, and install helper. See `deploy/release/README.md`.
+The generated directory is `deploy/release/out/rongyixing-h5-web-dist/` and contains only
+`h5/dist`, `web/dist`, Nginx template, and install helper. See `deploy/release/README.md`.
 
 ### Environment Variables
 

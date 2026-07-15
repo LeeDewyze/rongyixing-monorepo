@@ -27,8 +27,11 @@ Web -> /web/
 产物位置：
 
 ```text
-deploy/release/out/rongyixing-h5-web-dist-<timestamp>/
+deploy/release/out/rongyixing-h5-web-dist/
 ```
+
+目录路径固定不带日期。每次构建会重建该目录，并在目录内生成
+`README-<timestamp>.md` 和 `VERSION.txt` 记录本次构建信息。
 
 如需调整前缀，可以在构建时指定：
 
@@ -53,7 +56,7 @@ CREATE_ARCHIVE=1 deploy/release/build-dist-package.sh
 如果构建目录已经提交到 GitHub，服务器拉取代码后执行：
 
 ```bash
-cd deploy/release/out/rongyixing-h5-web-dist-<timestamp>
+cd deploy/release/out/rongyixing-h5-web-dist
 ./install-dist.sh
 ```
 
