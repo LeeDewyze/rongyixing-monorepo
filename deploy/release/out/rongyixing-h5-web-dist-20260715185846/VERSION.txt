@@ -1,0 +1,6 @@
+name=rongyixing-h5-web-dist
+build_time=2026-07-15T10:59:02Z
+git_commit=e6967c0ef880c74cdb22613c5119842ac1763e93
+git_branch=develop
+h5_base_path=/h5/
+web_base_path=/web/

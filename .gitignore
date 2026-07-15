@@ -9,7 +9,10 @@ node_modules/
 # TypeScript / build
 dist/
 *.tsbuildinfo
-deploy/release/out/
+deploy/release/out/*
+!deploy/release/out/rongyixing-h5-web-dist-*/
+!deploy/release/out/rongyixing-h5-web-dist-*/**
+deploy/release/out/*.tar.gz
 
 # Vite
 .vite/
