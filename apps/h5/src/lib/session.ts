@@ -4,6 +4,7 @@ const ACCESS_TOKEN_KEY = "accessToken";
 const WEBSOCKET_URL_KEY = "websocketUrl";
 const LOGIN_USER_NAME_KEY = "loginUserName";
 const LOGIN_USER_ID_KEY = "loginUserId";
+const TICKET_NAME_KEY = "ticketName";
 
 export function getTicket(): string | null {
   return localStorage.getItem(TICKET_KEY);
@@ -11,6 +12,10 @@ export function getTicket(): string | null {
 
 export function setTicket(ticket: string): void {
   localStorage.setItem(TICKET_KEY, ticket);
+}
+
+export function setTicketName(ticketName: string): void {
+  localStorage.setItem(TICKET_NAME_KEY, ticketName);
 }
 
 export function getLoginToken(): string | null {
@@ -46,6 +51,7 @@ export function clearSession(): void {
   localStorage.removeItem(WEBSOCKET_URL_KEY);
   localStorage.removeItem(LOGIN_USER_NAME_KEY);
   localStorage.removeItem(LOGIN_USER_ID_KEY);
+  localStorage.removeItem(TICKET_NAME_KEY);
 }
 
 export function saveLoginResult(result: {
