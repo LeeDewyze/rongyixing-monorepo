@@ -211,6 +211,17 @@ deploy/scripts/deploy-ip-prefix.sh
 This builds `ryx-h5` on `127.0.0.1:18080`, `ryx-web` on `127.0.0.1:18081`, and installs
 `deploy/nginx/ip-prefix.conf` so the public IP can route `/h5/` and `/web/` to the two services.
 
+### Dist-Only Delivery
+
+For customer delivery without source code, build a static H5/Web package:
+
+```bash
+deploy/release/build-dist-package.sh
+```
+
+The generated archive is written to `deploy/release/out/` and contains only `h5/dist`,
+`web/dist`, Nginx template, and install helper. See `deploy/release/README.md`.
+
 ### Environment Variables
 
 | Variable              | App    | Description                             |

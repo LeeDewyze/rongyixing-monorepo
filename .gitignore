@@ -9,6 +9,7 @@ node_modules/
 # TypeScript / build
 dist/
 *.tsbuildinfo
+deploy/release/out/
 
 # Vite
 .vite/

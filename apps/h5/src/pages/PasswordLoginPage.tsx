@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
-import passwordBg from "@/assets/login/password-bg.png";
+import passwordBg from "@/assets/login/password-bg.jpg";
 import { DesignScreen } from "@/components/DesignScreen";
 import { designCqw, designHeightPercent, designWidthPercent } from "@/config/design";
 import { LOGIN_FONT, PASSWORD_LOGIN_LAYOUT, PASSWORD_LOGIN_SHARED } from "@/config/password-login";
