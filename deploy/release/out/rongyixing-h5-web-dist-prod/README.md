@@ -17,20 +17,21 @@
 deploy/release/build-dist-package.sh
 ```
 
-脚本会按固定前缀构建：
+默认同时构建测试和生产两套环境，产物会写入固定目录：
 
 ```text
-H5  -> /h5/
-Web -> /web/
+deploy/release/out/rongyixing-h5-web-dist-test/
+deploy/release/out/rongyixing-h5-web-dist-prod/
 ```
 
-产物位置：
+默认会同时生成测试和生产两套包。如果只想构建其中一套：
 
-```text
-deploy/release/out/rongyixing-h5-web-dist/
+```bash
+DEPLOY_ENV=test deploy/release/build-dist-package.sh
+DEPLOY_ENV=prod deploy/release/build-dist-package.sh
 ```
 
-目录路径固定不带日期。每次构建会重建该目录，并在目录内生成
+目录路径固定不带日期。每次构建会重建目标目录，并在目录内生成
 `README-<timestamp>.md` 和 `VERSION.txt` 记录本次构建信息。
 
 如需调整前缀，可以在构建时指定：
@@ -53,20 +54,50 @@ CREATE_ARCHIVE=1 deploy/release/build-dist-package.sh
 
 ## 服务器安装
 
+安装脚本会根据包里的 `VERSION.txt` 自动识别 `test` 或 `prod`。
 如果构建目录已经提交到 GitHub，服务器拉取代码后执行：
 
 ```bash
-cd deploy/release/out/rongyixing-h5-web-dist
+cd deploy/release/out/rongyixing-h5-web-dist-test
 ./install-dist.sh
 ```
 
-默认行为：
+测试环境默认使用：
 
 ```text
-静态文件安装目录：/opt/rongyixing
-Nginx 配置文件：  /etc/nginx/conf.d/rongyixing-dist.conf
-监听端口：        80
-server_name：     _
+安装目录：/opt/rongyixing-test
+Nginx 文件：/etc/nginx/conf.d/rongyixing-test.conf
+端口：80
+后端域名：rtesp.com
+```
+
+生产环境默认使用：
+
+```text
+安装目录：/opt/rongyixing-prod
+Nginx 文件：/etc/nginx/conf.d/rongyixing-prod.conf
+端口：18088
+后端域名：rongtrip.cn
+```
+
+如果要在同一台机器同时放两套环境，直接分别执行两次：
+
+```bash
+cd deploy/release/out/rongyixing-h5-web-dist-test
+./install-dist.sh
+
+cd deploy/release/out/rongyixing-h5-web-dist-prod
+./install-dist.sh
+```
+
+如果要临时覆盖安装参数，也可以显式传参：
+
+```bash
+DEPLOY_ENV=test \
+INSTALL_DIR=/opt/rongyixing-test \
+SERVER_NGINX_TARGET=/etc/nginx/conf.d/rongyixing-test.conf \
+LISTEN=80 \
+./install-dist.sh
 ```
 
 访问地址：
@@ -119,4 +150,5 @@ HEALTH_BASE_URL=http://192.168.1.10 ./install-dist.sh
 - `/Home/`、`/Jyx/`、`/Identity/`：legacy 网关/身份/融旅功能入口
 - `/__ryx/<UrlKey>/`：TMC、登录、会员、HR、流程、因私订单等接口的同源反向代理
 
-如果客户环境的后端域名不同，需要调整 `nginx/rongyixing-dist.conf.template` 里的 `proxy_pass` 目标后再执行安装。
+如果客户环境的后端域名不同，可以通过 `BACKEND_DOMAIN_SUFFIX` 覆盖；
+如果差异不是单纯的域名后缀替换，再直接改 `nginx/rongyixing-dist.conf.template`。

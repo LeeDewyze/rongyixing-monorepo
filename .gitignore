@@ -10,8 +10,10 @@ node_modules/
 dist/
 *.tsbuildinfo
 deploy/release/out/*
-!deploy/release/out/rongyixing-h5-web-dist/
-!deploy/release/out/rongyixing-h5-web-dist/**
+!deploy/release/out/rongyixing-h5-web-dist-test/
+!deploy/release/out/rongyixing-h5-web-dist-test/**
+!deploy/release/out/rongyixing-h5-web-dist-prod/
+!deploy/release/out/rongyixing-h5-web-dist-prod/**
 deploy/release/out/*.tar.gz
 
 # Vite
