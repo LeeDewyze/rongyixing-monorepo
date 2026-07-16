@@ -4,10 +4,10 @@ set -Eeuo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 OUT_ROOT="${OUT_ROOT:-${SCRIPT_DIR}/out}"
-PACKAGE_NAME="${PACKAGE_NAME:-rongyixing-h5-web-dist}"
+DEPLOY_ENV="${DEPLOY_ENV:-all}"
+PACKAGE_NAME="${PACKAGE_NAME:-}"
+PACKAGE_NAME_PREFIX="${PACKAGE_NAME_PREFIX:-rongyixing-h5-web-dist}"
 TIMESTAMP="${TIMESTAMP:-$(date +%Y%m%d%H%M%S)}"
-PACKAGE_DIR="${OUT_ROOT}/${PACKAGE_NAME}"
-ARCHIVE_PATH="${OUT_ROOT}/${PACKAGE_NAME}-${TIMESTAMP}.tar.gz"
 CREATE_ARCHIVE="${CREATE_ARCHIVE:-0}"
 
 log() {
@@ -20,11 +20,17 @@ Usage:
   deploy/release/build-dist-package.sh
 
 Environment:
-  OUT_ROOT=deploy/release/out              Output directory for generated package.
-  PACKAGE_NAME=rongyixing-h5-web-dist      Fixed package directory name.
+  OUT_ROOT=deploy/release/out              Output directory for generated packages.
+  DEPLOY_ENV=all|test|prod                 Build target environment; all builds test and prod.
+  PACKAGE_NAME_PREFIX=rongyixing-h5-web-dist
+                                            Prefix used for all/test/prod package names.
+  PACKAGE_NAME=                            Single-env package name override.
   TIMESTAMP=YYYYmmddHHMMSS                 Optional fixed package timestamp.
   VITE_H5_BASE_PATH=/h5/                   H5 public base path.
   VITE_WEB_BASE_PATH=/web/                 Web public base path.
+  VITE_API_BASE_URL=                       Single-env app portal base URL override.
+  VITE_API_DOMAIN=                         Single-env legacy domain fallback override.
+  VITE_API_MODE=proxy                     API mode embedded into the bundle.
   CREATE_ARCHIVE=0                         Only create the uploadable package directory.
   CREATE_ARCHIVE=1                         Also create tar.gz archive after directory package.
 EOF
@@ -40,74 +46,162 @@ cd "${ROOT_DIR}"
 
 H5_BASE_PATH="${VITE_H5_BASE_PATH:-/h5/}"
 WEB_BASE_PATH="${VITE_WEB_BASE_PATH:-/web/}"
+VITE_API_MODE="${VITE_API_MODE:-proxy}"
 
-log "build workspace packages"
-pnpm build:workspace
+case "${DEPLOY_ENV}" in
+  all)
+    BUILD_ENVS=(test prod)
+    ;;
+  test|prod)
+    BUILD_ENVS=("${DEPLOY_ENV}")
+    ;;
+  *)
+    log "unsupported DEPLOY_ENV: ${DEPLOY_ENV}"
+    exit 1
+    ;;
+esac
 
-log "build H5 with VITE_BASE_PATH=${H5_BASE_PATH}"
-VITE_BASE_PATH="${H5_BASE_PATH}" pnpm --filter @ryx/h5 build
+if [[ "${DEPLOY_ENV}" == "all" && -n "${PACKAGE_NAME}" ]]; then
+  log "PACKAGE_NAME is only supported for single-env builds; use PACKAGE_NAME_PREFIX with DEPLOY_ENV=all"
+  exit 1
+fi
 
-log "build Web with VITE_BASE_PATH=${WEB_BASE_PATH}"
-VITE_BASE_PATH="${WEB_BASE_PATH}" pnpm --filter @ryx/web build
+resolve_env_defaults() {
+  local env_name="$1"
+  case "${env_name}" in
+    test)
+      ENV_API_BASE_URL="http://app.rtesp.com"
+      ENV_API_DOMAIN="rtesp.com"
+      ENV_ACCESS_BASE_URL="http://<server-ip>"
+      ;;
+    prod)
+      ENV_API_BASE_URL="https://app.rongtrip.cn"
+      ENV_API_DOMAIN="rongtrip.cn"
+      ENV_ACCESS_BASE_URL="http://<server-ip>:18088"
+      ;;
+    *)
+      log "unsupported build env: ${env_name}"
+      exit 1
+      ;;
+  esac
+}
 
-log "prepare package directory ${PACKAGE_DIR}"
-rm -rf "${PACKAGE_DIR}" "${ARCHIVE_PATH}"
-mkdir -p "${PACKAGE_DIR}/h5" "${PACKAGE_DIR}/web" "${PACKAGE_DIR}/nginx"
+package_name_for_env() {
+  local env_name="$1"
+  if [[ -n "${PACKAGE_NAME}" ]]; then
+    printf '%s' "${PACKAGE_NAME}"
+  else
+    printf '%s-%s' "${PACKAGE_NAME_PREFIX}" "${env_name}"
+  fi
+}
 
-cp -a "${ROOT_DIR}/apps/h5/dist" "${PACKAGE_DIR}/h5/dist"
-cp -a "${ROOT_DIR}/apps/web/dist" "${PACKAGE_DIR}/web/dist"
-cp "${SCRIPT_DIR}/install-dist.sh" "${PACKAGE_DIR}/install-dist.sh"
-cp "${SCRIPT_DIR}/README.md" "${PACKAGE_DIR}/README.md"
-cp "${SCRIPT_DIR}/nginx/rongyixing-dist.conf.template" "${PACKAGE_DIR}/nginx/rongyixing-dist.conf.template"
-chmod +x "${PACKAGE_DIR}/install-dist.sh"
+write_package_files() {
+  local env_name="$1"
+  local package_name="$2"
+  local package_dir="$3"
+  local api_base_url="$4"
+  local api_domain="$5"
+  local access_base_url="$6"
+  local build_time git_commit git_branch build_readme
 
-BUILD_TIME="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-GIT_COMMIT="$(git rev-parse HEAD 2>/dev/null || true)"
-GIT_BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
-BUILD_README="${PACKAGE_DIR}/README-${TIMESTAMP}.md"
+  build_time="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  git_commit="$(git rev-parse HEAD 2>/dev/null || true)"
+  git_branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
+  build_readme="${package_dir}/README-${TIMESTAMP}.md"
 
-cat >"${PACKAGE_DIR}/VERSION.txt" <<EOF
-name=${PACKAGE_NAME}
-build_time=${BUILD_TIME}
+  cp -a "${ROOT_DIR}/apps/h5/dist" "${package_dir}/h5/dist"
+  cp -a "${ROOT_DIR}/apps/web/dist" "${package_dir}/web/dist"
+  cp "${SCRIPT_DIR}/install-dist.sh" "${package_dir}/install-dist.sh"
+  cp "${SCRIPT_DIR}/README.md" "${package_dir}/README.md"
+  cp "${SCRIPT_DIR}/nginx/rongyixing-dist.conf.template" "${package_dir}/nginx/rongyixing-dist.conf.template"
+  chmod +x "${package_dir}/install-dist.sh"
+
+  cat >"${package_dir}/VERSION.txt" <<EOF
+name=${package_name}
+build_time=${build_time}
 build_timestamp=${TIMESTAMP}
-git_commit=${GIT_COMMIT}
-git_branch=${GIT_BRANCH}
+deploy_env=${env_name}
+git_commit=${git_commit}
+git_branch=${git_branch}
+api_base_url=${api_base_url}
+api_domain=${api_domain}
 h5_base_path=${H5_BASE_PATH}
 web_base_path=${WEB_BASE_PATH}
 EOF
 
-cat >"${BUILD_README}" <<EOF
-# RongYiXing H5/Web Dist Build ${TIMESTAMP}
+  cat >"${build_readme}" <<EOF
+# RongYiXing H5/Web ${env_name} Dist Build ${TIMESTAMP}
 
-Build time: ${BUILD_TIME}
+Build time: ${build_time}
 
-Git branch: ${GIT_BRANCH}
+Git branch: ${git_branch}
 
-Git commit: ${GIT_COMMIT}
+Git commit: ${git_commit}
 
 Install on server:
 
 \`\`\`bash
-cd deploy/release/out/${PACKAGE_NAME}
+cd deploy/release/out/${package_name}
 ./install-dist.sh
 \`\`\`
 
 Access after install:
 
 \`\`\`text
-http://<server-ip>/h5/
-http://<server-ip>/web/
-http://<server-ip>/?ticket=xxxx
+${access_base_url}/h5/
+${access_base_url}/web/
+${access_base_url}/?ticket=xxxx
 \`\`\`
 EOF
+}
 
-if [[ "${CREATE_ARCHIVE}" == "1" ]]; then
-  log "create archive ${ARCHIVE_PATH}"
-  tar -C "${OUT_ROOT}" -czf "${ARCHIVE_PATH}" "$(basename "${PACKAGE_DIR}")"
-fi
+build_env_package() {
+  local env_name="$1"
+  local package_name package_dir archive_path api_base_url api_domain access_base_url
+
+  resolve_env_defaults "${env_name}"
+  api_base_url="${VITE_API_BASE_URL:-${ENV_API_BASE_URL}}"
+  api_domain="${VITE_API_DOMAIN:-${ENV_API_DOMAIN}}"
+  access_base_url="${ENV_ACCESS_BASE_URL}"
+  package_name="$(package_name_for_env "${env_name}")"
+  package_dir="${OUT_ROOT}/${package_name}"
+  archive_path="${OUT_ROOT}/${package_name}-${TIMESTAMP}.tar.gz"
+
+  log "build ${env_name} H5 with VITE_BASE_PATH=${H5_BASE_PATH}, VITE_API_BASE_URL=${api_base_url}"
+  VITE_BASE_PATH="${H5_BASE_PATH}" \
+  VITE_API_BASE_URL="${api_base_url}" \
+  VITE_API_DOMAIN="${api_domain}" \
+  VITE_API_MODE="${VITE_API_MODE}" \
+  pnpm --filter @ryx/h5 build
+
+  log "build ${env_name} Web with VITE_BASE_PATH=${WEB_BASE_PATH}, VITE_API_BASE_URL=${api_base_url}"
+  VITE_BASE_PATH="${WEB_BASE_PATH}" \
+  VITE_API_BASE_URL="${api_base_url}" \
+  VITE_API_DOMAIN="${api_domain}" \
+  VITE_API_MODE="${VITE_API_MODE}" \
+  pnpm --filter @ryx/web build
+
+  log "prepare package directory ${package_dir}"
+  rm -rf "${package_dir}" "${archive_path}"
+  mkdir -p "${package_dir}/h5" "${package_dir}/web" "${package_dir}/nginx"
+  write_package_files "${env_name}" "${package_name}" "${package_dir}" "${api_base_url}" "${api_domain}" "${access_base_url}"
+
+  if [[ "${CREATE_ARCHIVE}" == "1" ]]; then
+    log "create archive ${archive_path}"
+    tar -C "${OUT_ROOT}" -czf "${archive_path}" "$(basename "${package_dir}")"
+  fi
+
+  log "package directory: ${package_dir}"
+  if [[ "${CREATE_ARCHIVE}" == "1" ]]; then
+    log "archive: ${archive_path}"
+  fi
+}
+
+log "build workspace packages"
+pnpm build:workspace
+
+for env_name in "${BUILD_ENVS[@]}"; do
+  build_env_package "${env_name}"
+done
 
 log "done"
-log "package directory: ${PACKAGE_DIR}"
-if [[ "${CREATE_ARCHIVE}" == "1" ]]; then
-  log "archive: ${ARCHIVE_PATH}"
-fi
