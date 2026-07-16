@@ -28,6 +28,7 @@ import { HotelSearchPage } from "@/pages/hotel/HotelSearchPage";
 import { PassengerSelectPage } from "@/pages/passenger/PassengerSelectPage";
 import { PassengerCredentialPage } from "@/pages/passenger/PassengerCredentialPage";
 import { PasswordLoginPage } from "@/pages/PasswordLoginPage";
+import { ForgotPasswordPage } from "@/pages/ForgotPasswordPage";
 import { ProfileCenterPage } from "@/pages/profile/ProfileCenterPage";
 import { SplashPage } from "@/pages/SplashPage";
 import { TrainListPage } from "@/pages/train/TrainListPage";
@@ -65,6 +66,10 @@ export const router = createBrowserRouter(
     {
       path: "/login/password",
       element: <PasswordLoginPage />,
+    },
+    {
+      path: "/login/forgot-password",
+      element: <ForgotPasswordPage />,
     },
     {
       path: "/home",

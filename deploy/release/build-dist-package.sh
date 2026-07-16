@@ -4,6 +4,7 @@ set -Eeuo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 OUT_ROOT="${OUT_ROOT:-${SCRIPT_DIR}/out}"
+INSTALL_SCRIPT_TEMPLATE="${INSTALL_SCRIPT_TEMPLATE:-${SCRIPT_DIR}/templates/install-dist.sh}"
 DEPLOY_ENV="${DEPLOY_ENV:-all}"
 PACKAGE_NAME="${PACKAGE_NAME:-}"
 PACKAGE_NAME_PREFIX="${PACKAGE_NAME_PREFIX:-rongyixing-h5-web-dist}"
@@ -111,7 +112,7 @@ write_package_files() {
 
   cp -a "${ROOT_DIR}/apps/h5/dist" "${package_dir}/h5/dist"
   cp -a "${ROOT_DIR}/apps/web/dist" "${package_dir}/web/dist"
-  cp "${SCRIPT_DIR}/install-dist.sh" "${package_dir}/install-dist.sh"
+  cp "${INSTALL_SCRIPT_TEMPLATE}" "${package_dir}/install-dist.sh"
   cp "${SCRIPT_DIR}/README.md" "${package_dir}/README.md"
   cp "${SCRIPT_DIR}/nginx/rongyixing-dist.conf.template" "${package_dir}/nginx/rongyixing-dist.conf.template"
   chmod +x "${package_dir}/install-dist.sh"
