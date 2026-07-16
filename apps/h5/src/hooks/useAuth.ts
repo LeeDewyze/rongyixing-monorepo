@@ -5,6 +5,15 @@ import { getApiMode } from "@/lib/env";
 import { getDeviceId, getDeviceName } from "@/lib/request-context";
 import { saveLoginResult, setWebSocketUrl } from "@/lib/session";
 
+async function loadWebSocketUrlAfterLogin(mode: string, ticket?: string) {
+  if (mode === "mock" || !ticket) return;
+  const ws = await getApi().identity.getWebSocketUrl();
+  if (!ws?.Url) {
+    throw new Error("GetWebSocketUrl returned empty Url");
+  }
+  setWebSocketUrl(ws.Url);
+}
+
 export function usePasswordLogin() {
   return useMutation({
     mutationFn: async (params: { Name: string; Password: string }) => {
@@ -24,14 +33,7 @@ export function usePasswordLogin() {
 
       // Save ticket before /Home/Proxy so GetWebSocketUrl can read it.
       saveLoginResult(result);
-
-      if (mode !== "mock" && result.Ticket) {
-        const ws = await api.identity.getWebSocketUrl();
-        if (!ws?.Url) {
-          throw new Error("GetWebSocketUrl returned empty Url");
-        }
-        setWebSocketUrl(ws.Url);
-      }
+      await loadWebSocketUrlAfterLogin(mode, result.Ticket);
 
       return result;
     },
@@ -40,9 +42,19 @@ export function usePasswordLogin() {
 
 export function useMobileLogin() {
   return useMutation({
-    mutationFn: (params: { Mobile: string; Code: string }) =>
-      getApi().authProxy.mobileLogin(params),
-    onSuccess: (data) => saveLoginResult(data),
+    mutationFn: async (params: { Mobile: string; Code: string }) => {
+      const mode = getApiMode();
+      const result = await getApi().authProxy.mobileLogin({
+        Mobile: params.Mobile,
+        Code: params.Code,
+        Device: getDeviceId(),
+      });
+
+      saveLoginResult(result);
+      await loadWebSocketUrlAfterLogin(mode, result.Ticket);
+
+      return result;
+    },
   });
 }
 
