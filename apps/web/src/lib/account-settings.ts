@@ -37,6 +37,22 @@ export function validatePasswordComplexity(password: string): string | null {
   return null;
 }
 
+export function validateForgotPasswordReset(input: {
+  password: string;
+  confirmPassword: string;
+}): string | null {
+  if (!input.password.trim()) return "请输入新密码";
+  if (!input.confirmPassword.trim()) return "请再次输入新密码";
+  if (input.password !== input.confirmPassword) return "两次输入的新密码不一致";
+  if (input.password.length < 8 || input.password.length > 30) {
+    return "密码长度只能在8-30位字符之间";
+  }
+  if (!/[a-z]/.test(input.password) || !/[A-Z]/.test(input.password)) {
+    return "密码必须包含大小写字母";
+  }
+  return null;
+}
+
 export function validateMobileNumber(mobile: string): string | null {
   const trimmed = mobile.trim();
   if (!trimmed) return "请输入手机号";

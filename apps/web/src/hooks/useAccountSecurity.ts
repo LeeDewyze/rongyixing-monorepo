@@ -1,6 +1,11 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import type { ModifyPasswordParams } from "@ryx/shared-types";
+import type {
+  ForgotPasswordResetParams,
+  ForgotPasswordSendCodeParams,
+  ForgotPasswordValidateParams,
+  ModifyPasswordParams,
+} from "@ryx/shared-types";
 
 import { getApi } from "@/lib/api";
 
@@ -12,6 +17,30 @@ export function useModifyPassword() {
       void queryClient.invalidateQueries({ queryKey: ["account", "home-summary"] });
     },
   });
+}
+
+export function useForgotPasswordFlow() {
+  const checkAccount = useMutation({
+    mutationFn: (name: string) =>
+      getApi().accountSecurity.checkForgotPasswordAccount({ Name: name }),
+  });
+
+  const sendCode = useMutation({
+    mutationFn: (params: ForgotPasswordSendCodeParams) =>
+      getApi().accountSecurity.sendForgotPasswordCode(params),
+  });
+
+  const validateCode = useMutation({
+    mutationFn: (params: ForgotPasswordValidateParams) =>
+      getApi().accountSecurity.validateForgotPasswordCode(params),
+  });
+
+  const resetPassword = useMutation({
+    mutationFn: (params: ForgotPasswordResetParams) =>
+      getApi().accountSecurity.resetForgotPassword(params),
+  });
+
+  return { checkAccount, sendCode, validateCode, resetPassword };
 }
 
 export function useMobileSecurity() {

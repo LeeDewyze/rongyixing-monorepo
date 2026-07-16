@@ -2,6 +2,12 @@ import type {
   EmailSecurityActionParams,
   EmailSecurityLoad,
   EmailSecuritySendCodeParams,
+  ForgotPasswordCheckParams,
+  ForgotPasswordCheckResult,
+  ForgotPasswordResetParams,
+  ForgotPasswordSendCodeParams,
+  ForgotPasswordSendCodeResult,
+  ForgotPasswordValidateParams,
   LoginDeviceItem,
   MobileSecurityActionParams,
   MobileSecurityLoad,
@@ -15,6 +21,14 @@ import type { ProxyClient } from "../proxy/proxy-client.js";
 
 export interface AccountSecurityApi {
   modifyPassword(params: ModifyPasswordParams): Promise<boolean>;
+  checkForgotPasswordAccount(
+    params: ForgotPasswordCheckParams,
+  ): Promise<ForgotPasswordCheckResult>;
+  sendForgotPasswordCode(
+    params: ForgotPasswordSendCodeParams,
+  ): Promise<ForgotPasswordSendCodeResult>;
+  validateForgotPasswordCode(params: ForgotPasswordValidateParams): Promise<boolean>;
+  resetForgotPassword(params: ForgotPasswordResetParams): Promise<boolean>;
   loadMobile(): Promise<MobileSecurityLoad>;
   sendMobileCode(params: MobileSecuritySendCodeParams): Promise<boolean>;
   submitMobileAction(params: MobileSecurityActionParams): Promise<boolean>;
@@ -31,6 +45,50 @@ export function createAccountSecurityApi(proxy: ProxyClient): AccountSecurityApi
       return proxy.send<boolean>({
         method: PASSWORD_FLOW_METHODS.PASSWORD_MODIFY,
         data: params,
+      });
+    },
+    checkForgotPasswordAccount(params) {
+      return proxy.send<ForgotPasswordCheckResult>({
+        method: PASSWORD_FLOW_METHODS.HOME_ACTION,
+        data: {
+          Name: params.Name,
+          Action: "Check",
+        },
+        isShowLoading: true,
+      });
+    },
+    sendForgotPasswordCode(params) {
+      return proxy.send<ForgotPasswordSendCodeResult>({
+        method: PASSWORD_FLOW_METHODS.HOME_SENDCODE,
+        data: {
+          Name: params.Name,
+          ValidateType: params.ValidateType,
+        },
+        isShowLoading: true,
+      });
+    },
+    validateForgotPasswordCode(params) {
+      return proxy.send<boolean>({
+        method: PASSWORD_FLOW_METHODS.HOME_ACTION,
+        data: {
+          Name: params.Name,
+          ValidateType: params.ValidateType,
+          ValidateValue: params.ValidateValue,
+          Action: "Valid",
+        },
+        isShowLoading: true,
+      });
+    },
+    resetForgotPassword(params) {
+      return proxy.send<boolean>({
+        method: PASSWORD_FLOW_METHODS.HOME_ACTION,
+        data: {
+          Name: params.Name,
+          Password: params.Password,
+          SurePassword: params.SurePassword,
+          Action: "Reset",
+        },
+        isShowLoading: true,
       });
     },
     loadMobile() {

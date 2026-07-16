@@ -59,6 +59,7 @@ registerAliases(["open-url"], { pathname: "/open-url" });
 
 registerAliases(["login"], { pathname: "/login" });
 registerAliases(["login/password"], { pathname: "/login/password" });
+registerAliases(["password-check", "password-check_ryx"], { pathname: "/login/forgot-password" });
 
 /** Mirrors ryx `AppHelper.getNormalizedPath`. */
 export function getNormalizedLegacyPath(path: string): string {

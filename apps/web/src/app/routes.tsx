@@ -3,6 +3,7 @@ import { Navigate, createBrowserRouter } from "react-router-dom";
 import { RequireAuth } from "@/app/layouts/RequireAuth";
 import { RootLayout } from "@/app/layouts/RootLayout";
 import { PasswordLoginPage } from "@/pages/login/PasswordLoginPage";
+import { ForgotPasswordPage } from "@/pages/login/ForgotPasswordPage";
 import { WebHomePage } from "@/pages/home/WebHomePage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { WebProfilePage } from "@/pages/profile/WebProfilePage";
@@ -68,6 +69,10 @@ export const router = createBrowserRouter(
     {
       path: "/login/password",
       element: <PasswordLoginPage />,
+    },
+    {
+      path: "/login/forgot-password",
+      element: <ForgotPasswordPage />,
     },
     {
       element: <RequireAuth />,

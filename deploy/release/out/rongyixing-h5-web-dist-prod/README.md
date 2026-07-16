@@ -1,6 +1,6 @@
 # H5/Web Dist 交付部署
 
-这个目录用于生成和安装只包含构建产物的交付包。交付包包含：
+这个目录用于生成只包含构建产物的交付包。生成后的交付包包含：
 
 - `h5/dist`：H5 静态资源
 - `web/dist`：Pad/PC Web 静态资源
@@ -8,6 +8,8 @@
 - `nginx/rongyixing-dist.conf.template`：Nginx 配置模板
 
 交付包不包含 `apps/`、`packages/` 等源码目录。
+源码侧安装脚本模板位于 `templates/install-dist.sh`，不要在 `deploy/release`
+根目录执行安装。
 
 ## 生成交付包
 
@@ -55,7 +57,7 @@ CREATE_ARCHIVE=1 deploy/release/build-dist-package.sh
 ## 服务器安装
 
 安装脚本会根据包里的 `VERSION.txt` 自动识别 `test` 或 `prod`。
-如果构建目录已经提交到 GitHub，服务器拉取代码后执行：
+如果构建目录已经提交到 GitHub，服务器拉取代码后执行包内的：
 
 ```bash
 cd deploy/release/out/rongyixing-h5-web-dist-test

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   formatVerificationError,
   validateEmailAddress,
+  validateForgotPasswordReset,
   validateMobileNumber,
   validatePasswordChange,
   validateVerificationCode,
@@ -37,6 +38,33 @@ describe("account-settings validation", () => {
         oldPassword: "Old123!@",
         newPassword: validPassword,
         confirmPassword: "Diff12345",
+      }),
+    ).toBe("两次输入的新密码不一致");
+  });
+
+  it("validates legacy forgot password reset rules", () => {
+    expect(
+      validateForgotPasswordReset({
+        password: "Aa123456",
+        confirmPassword: "Aa123456",
+      }),
+    ).toBeNull();
+    expect(
+      validateForgotPasswordReset({
+        password: "aa123456",
+        confirmPassword: "aa123456",
+      }),
+    ).toBe("密码必须包含大小写字母");
+    expect(
+      validateForgotPasswordReset({
+        password: "Aa123",
+        confirmPassword: "Aa123",
+      }),
+    ).toBe("密码长度只能在8-30位字符之间");
+    expect(
+      validateForgotPasswordReset({
+        password: "Aa123456",
+        confirmPassword: "Aa123457",
       }),
     ).toBe("两次输入的新密码不一致");
   });

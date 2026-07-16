@@ -27,6 +27,43 @@ export interface ModifyPasswordParams {
   SurePassword: string;
 }
 
+export interface ForgotPasswordValidType {
+  Name: string;
+  Type: string;
+  Value?: string;
+}
+
+export interface ForgotPasswordCheckParams {
+  Name: string;
+}
+
+export interface ForgotPasswordCheckResult {
+  ValidTypes?: ForgotPasswordValidType[];
+  AccountId?: string;
+}
+
+export interface ForgotPasswordSendCodeParams {
+  Name: string;
+  ValidateType: string;
+}
+
+export interface ForgotPasswordSendCodeResult {
+  SendInterval?: number;
+  ExpiredInterval?: number;
+}
+
+export interface ForgotPasswordValidateParams {
+  Name: string;
+  ValidateType: string;
+  ValidateValue: string;
+}
+
+export interface ForgotPasswordResetParams {
+  Name: string;
+  Password: string;
+  SurePassword: string;
+}
+
 export interface LoginDeviceItem {
   Id: string;
   Name: string;

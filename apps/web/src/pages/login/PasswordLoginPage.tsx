@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { LegalDocumentSheet } from "@/components/contact/LegalDocumentSheet";
 import { useMobileLogin, usePasswordLogin, useSendLoginCode } from "@/hooks/useAuth";
@@ -593,7 +593,12 @@ export function PasswordLoginPage() {
                     />
                     <span>记住账号</span>
                   </label>
-                  <span className="font-medium text-brand-primary">忘记密码请联系管理员</span>
+                  <Link
+                    to="/login/forgot-password"
+                    className="font-medium text-brand-primary transition-colors hover:text-brand-btn-start hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/30"
+                  >
+                    忘记密码
+                  </Link>
                 </div>
               ) : (
                 <p className="mt-4 min-h-6 text-[14px] text-[#667085]">
