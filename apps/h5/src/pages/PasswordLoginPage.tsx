@@ -1,12 +1,18 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import passwordBg from "@/assets/login/password-bg.jpg";
+import { LegalDocumentSheet } from "@/components/contact/LegalDocumentSheet";
 import { DesignScreen } from "@/components/DesignScreen";
 import { designCqw, designHeightPercent, designWidthPercent } from "@/config/design";
 import { LOGIN_FONT, PASSWORD_LOGIN_LAYOUT, PASSWORD_LOGIN_SHARED } from "@/config/password-login";
-import { usePasswordLogin } from "@/hooks/useAuth";
+import { useMobileLogin, usePasswordLogin, useSendLoginCode } from "@/hooks/useAuth";
 import { resolveInternalReturnTo } from "@/lib/base-path";
+import {
+  contactUrlOptionsFromApiConfig,
+  getPrivacyPolicyUrl,
+  getUserAgreementUrl,
+} from "@/lib/contact-us";
 import { getApiMode } from "@/lib/env";
 import {
   clearRememberedCredentials,
@@ -15,6 +21,10 @@ import {
 } from "@/lib/remember-credentials";
 
 const { overlay, agreement } = PASSWORD_LOGIN_SHARED;
+
+type LoginMode = "password" | "sms";
+type LegalDoc = "agreement" | "privacy" | null;
+const FORM_OFFSET = 72;
 
 const {
   title,
@@ -97,16 +107,48 @@ export function PasswordLoginPage() {
   const [searchParams] = useSearchParams();
   const returnTo = searchParams.get("returnTo");
   const login = usePasswordLogin();
+  const mobileLogin = useMobileLogin();
+  const sendCode = useSendLoginCode();
   const initialForm = getInitialFormState();
+  const [loginMode, setLoginMode] = useState<LoginMode>("password");
   const [account, setAccount] = useState(initialForm.account);
   const [password, setPassword] = useState(initialForm.password);
+  const [mobile, setMobile] = useState("");
+  const [smsCode, setSmsCode] = useState("");
+  const [codeSent, setCodeSent] = useState(false);
+  const [countdown, setCountdown] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberChecked, setRememberChecked] = useState(initialForm.rememberChecked);
   const [agreed, setAgreed] = useState(true);
   const [formHint, setFormHint] = useState<string | null>(null);
+  const [legalDoc, setLegalDoc] = useState<LegalDoc>(null);
+
+  useEffect(() => {
+    if (countdown <= 0) return;
+    const timer = window.setTimeout(() => setCountdown((value) => Math.max(0, value - 1)), 1000);
+    return () => window.clearTimeout(timer);
+  }, [countdown]);
+
+  const legalOptions = contactUrlOptionsFromApiConfig();
+  const legalTitle =
+    legalDoc === "agreement" ? "融易行用户协议" : legalDoc === "privacy" ? "隐私政策" : "";
+  const legalUrl =
+    legalDoc === "agreement"
+      ? getUserAgreementUrl(legalOptions)
+      : legalDoc === "privacy"
+        ? getPrivacyPolicyUrl(legalOptions)
+        : "";
+
+  function navigateAfterLogin() {
+    navigate(resolveInternalReturnTo(returnTo, "/home"));
+  }
 
   async function handleLogin() {
-    if (login.isPending) return;
+    if (login.isPending || mobileLogin.isPending) return;
+    if (loginMode === "sms") {
+      await handleSmsLogin();
+      return;
+    }
 
     if (!account.trim()) {
       setFormHint("请输入账号");
@@ -129,13 +171,74 @@ export function PasswordLoginPage() {
       } else {
         clearRememberedCredentials();
       }
-      navigate(resolveInternalReturnTo(returnTo, "/home"));
+      navigateAfterLogin();
     } catch {
       // Error surfaced via login.error
     }
   }
 
-  const canSubmit = agreed && account.trim().length > 0 && password.length > 0;
+  async function handleSendCode() {
+    if (sendCode.isPending || countdown > 0) return;
+    const trimmedMobile = mobile.trim();
+    if (!trimmedMobile) {
+      setFormHint("请输入手机号");
+      return;
+    }
+    if (!/^1\d{10}$/.test(trimmedMobile)) {
+      setFormHint("请输入正确的手机号");
+      return;
+    }
+
+    setFormHint(null);
+    try {
+      await sendCode.mutateAsync(trimmedMobile);
+      setCodeSent(true);
+      setSmsCode("");
+      setCountdown(60);
+      setFormHint("验证码已发送");
+    } catch {
+      // Error surfaced via sendCode.error
+    }
+  }
+
+  async function handleSmsLogin() {
+    if (!mobile.trim()) {
+      setFormHint("请输入手机号");
+      return;
+    }
+    if (!/^1\d{10}$/.test(mobile.trim())) {
+      setFormHint("请输入正确的手机号");
+      return;
+    }
+    if (!smsCode.trim()) {
+      setFormHint("请输入验证码");
+      return;
+    }
+    if (!agreed) {
+      setFormHint("请先阅读并同意用户协议");
+      return;
+    }
+
+    setFormHint(null);
+    try {
+      await mobileLogin.mutateAsync({ Mobile: mobile.trim(), Code: smsCode.trim() });
+      navigateAfterLogin();
+    } catch {
+      // Error surfaced via mobileLogin.error
+    }
+  }
+
+  function openLegalDoc(doc: Exclude<LegalDoc, null>) {
+    setLegalDoc(doc);
+  }
+
+  const pending = login.isPending || mobileLogin.isPending;
+  const authError = loginMode === "password" ? login.error : mobileLogin.error || sendCode.error;
+  const canSubmit =
+    agreed &&
+    (loginMode === "password"
+      ? account.trim().length > 0 && password.length > 0
+      : mobile.trim().length > 0 && smsCode.trim().length > 0);
   const apiMode = import.meta.env.DEV ? getApiMode() : null;
 
   return (
@@ -163,14 +266,45 @@ export function PasswordLoginPage() {
             color: title.color,
           }}
         >
-          {title.text}
+          {loginMode === "password" ? title.text : "短信验证码登录"}
         </h1>
+
+        <div
+          className="absolute flex rounded-full bg-white/15 p-1"
+          style={{
+            left: designWidthPercent(40),
+            top: designHeightPercent(320),
+            width: designWidthPercent(330),
+            height: designCqw(58),
+            backdropFilter: "blur(10px)",
+          }}
+        >
+          {(["password", "sms"] as const).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              className="flex flex-1 items-center justify-center rounded-full border-none p-0"
+              style={{
+                background: loginMode === mode ? "rgba(255,255,255,0.92)" : "transparent",
+                color: loginMode === mode ? "var(--brand-primary)" : "rgba(255,255,255,0.72)",
+                fontSize: designCqw(24),
+                fontWeight: loginMode === mode ? 600 : 400,
+              }}
+              onClick={() => {
+                setLoginMode(mode);
+                setFormHint(null);
+              }}
+            >
+              {mode === "password" ? "账号登录" : "短信登录"}
+            </button>
+          ))}
+        </div>
 
         <div
           className="absolute border-b border-white/90"
           style={{
             left: designWidthPercent(accountInput.left),
-            top: designHeightPercent(accountInput.top),
+            top: designHeightPercent(accountInput.top + FORM_OFFSET),
             width: designWidthPercent(accountInput.width),
             paddingBottom: designCqw(20),
           }}
@@ -178,15 +312,21 @@ export function PasswordLoginPage() {
           <div className="flex items-center" style={{ gap: designCqw(12) }}>
             <input
               type="text"
-              autoComplete="username"
-              placeholder={accountInput.placeholder}
-              value={account}
-              onChange={(e) => setAccount(e.target.value)}
+              autoComplete={loginMode === "password" ? "username" : "tel"}
+              inputMode={loginMode === "password" ? "text" : "tel"}
+              placeholder={loginMode === "password" ? accountInput.placeholder : "请输入手机号"}
+              value={loginMode === "password" ? account : mobile}
+              onChange={(e) =>
+                loginMode === "password" ? setAccount(e.target.value) : setMobile(e.target.value)
+              }
               className="min-w-0 flex-1 border-none bg-transparent p-0 text-white outline-none"
               style={{ fontSize: designCqw(accountInput.fontSize), caretColor: "#33a1f9" }}
             />
-            {account ? (
-              <InputClearButton onClear={() => setAccount("")} size={inputClear.size} />
+            {(loginMode === "password" ? account : mobile) ? (
+              <InputClearButton
+                onClear={() => (loginMode === "password" ? setAccount("") : setMobile(""))}
+                size={inputClear.size}
+              />
             ) : null}
           </div>
         </div>
@@ -195,18 +335,21 @@ export function PasswordLoginPage() {
           className="absolute border-b border-white/90"
           style={{
             left: designWidthPercent(passwordInput.left),
-            top: designHeightPercent(passwordInput.top),
+            top: designHeightPercent(passwordInput.top + FORM_OFFSET),
             width: designWidthPercent(passwordInput.width),
             paddingBottom: designCqw(20),
           }}
         >
           <div className="flex min-w-0 items-center">
             <input
-              type={showPassword ? "text" : "password"}
-              autoComplete="current-password"
-              placeholder={passwordInput.placeholder}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              type={loginMode === "password" && !showPassword ? "password" : "text"}
+              autoComplete={loginMode === "password" ? "current-password" : "one-time-code"}
+              inputMode={loginMode === "password" ? "text" : "numeric"}
+              placeholder={loginMode === "password" ? passwordInput.placeholder : "请输入验证码"}
+              value={loginMode === "password" ? password : smsCode}
+              onChange={(e) =>
+                loginMode === "password" ? setPassword(e.target.value) : setSmsCode(e.target.value)
+              }
               className="min-w-0 flex-1 border-none bg-transparent p-0 text-white outline-none"
               style={{ fontSize: designCqw(passwordInput.fontSize), caretColor: "#33a1f9" }}
             />
@@ -214,14 +357,35 @@ export function PasswordLoginPage() {
               className="relative z-10 flex shrink-0 items-center"
               style={{ gap: designCqw(passwordInput.actionGap), marginLeft: designCqw(8) }}
             >
-              {password ? (
-                <InputClearButton onClear={() => setPassword("")} size={inputClear.size} />
+              {(loginMode === "password" ? password : smsCode) ? (
+                <InputClearButton
+                  onClear={() => (loginMode === "password" ? setPassword("") : setSmsCode(""))}
+                  size={inputClear.size}
+                />
               ) : null}
-              <PasswordVisibilityToggle
-                visible={showPassword}
-                onToggle={() => setShowPassword((v) => !v)}
-                size={passwordInput.toggleSize}
-              />
+              {loginMode === "password" ? (
+                <PasswordVisibilityToggle
+                  visible={showPassword}
+                  onToggle={() => setShowPassword((v) => !v)}
+                  size={passwordInput.toggleSize}
+                />
+              ) : (
+                <button
+                  type="button"
+                  className="rounded-full border-none bg-white/15 px-2 py-1 text-white disabled:opacity-55"
+                  style={{ fontSize: designCqw(22) }}
+                  disabled={sendCode.isPending || countdown > 0}
+                  onClick={() => void handleSendCode()}
+                >
+                  {countdown > 0
+                    ? `${countdown}s`
+                    : sendCode.isPending
+                      ? "发送中"
+                      : codeSent
+                        ? "重发"
+                        : "获取验证码"}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -238,7 +402,7 @@ export function PasswordLoginPage() {
             className="absolute text-white/50"
             style={{
               left: designWidthPercent(button.left),
-              top: `calc(${designHeightPercent(button.top)} - ${designCqw(36)})`,
+              top: `calc(${designHeightPercent(button.top + FORM_OFFSET)} - ${designCqw(36)})`,
               fontSize: designCqw(22),
             }}
           >
@@ -251,19 +415,19 @@ export function PasswordLoginPage() {
           className="absolute flex items-center justify-center border-none text-white"
           style={{
             left: designWidthPercent(button.left),
-            top: designHeightPercent(button.top),
+            top: designHeightPercent(button.top + FORM_OFFSET),
             width: designWidthPercent(button.width),
             height: designCqw(button.height),
             borderRadius: designCqw(button.borderRadius),
             background: button.gradient,
             fontSize: designCqw(button.fontSize),
             fontWeight: 500,
-            opacity: login.isPending ? 0.7 : canSubmit ? 1 : 0.55,
+            opacity: pending ? 0.7 : canSubmit ? 1 : 0.55,
           }}
-          disabled={login.isPending}
+          disabled={pending}
           onClick={() => void handleLogin()}
         >
-          {login.isPending ? "登录中…" : button.text}
+          {pending ? "登录中…" : button.text}
         </button>
 
         {formHint ? (
@@ -271,7 +435,9 @@ export function PasswordLoginPage() {
             className="absolute text-amber-200"
             style={{
               left: designWidthPercent(button.left),
-              top: `calc(${designHeightPercent(button.top)} + ${designCqw(button.height + 12)})`,
+              top: `calc(${designHeightPercent(button.top + FORM_OFFSET)} + ${designCqw(
+                button.height + 12,
+              )})`,
               fontSize: designCqw(24),
             }}
           >
@@ -279,64 +445,70 @@ export function PasswordLoginPage() {
           </p>
         ) : null}
 
-        {login.error ? (
+        {authError ? (
           <p
             className="absolute text-red-300"
             style={{
               left: designWidthPercent(button.left),
-              top: `calc(${designHeightPercent(button.top)} + ${designCqw(button.height + 12)})`,
+              top: `calc(${designHeightPercent(button.top + FORM_OFFSET)} + ${designCqw(
+                button.height + 12,
+              )})`,
               fontSize: designCqw(24),
             }}
           >
-            {login.error instanceof Error ? login.error.message : "登录失败"}
+            {authError instanceof Error ? authError.message : "登录失败"}
           </p>
         ) : null}
 
-        <label
-          className="absolute flex cursor-pointer items-center"
-          style={{
-            left: designWidthPercent(rememberPasswordRow.left),
-            top: designHeightPercent(rememberPasswordRow.top),
-            gap: designCqw(12),
-            fontSize: designCqw(rememberPasswordRow.fontSize),
-            color: rememberPasswordRow.color,
-            lineHeight: "normal",
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={rememberChecked}
-            onChange={(e) => {
-              const checked = e.target.checked;
-              setRememberChecked(checked);
-              if (!checked) {
-                clearRememberedCredentials();
-              }
-            }}
-            className="login-remember-checkbox shrink-0 appearance-none rounded-full border border-white/70 bg-transparent"
+        {loginMode === "password" ? (
+          <label
+            className="absolute flex cursor-pointer items-center"
             style={{
-              width: designCqw(rememberPasswordRow.checkboxSize),
-              height: designCqw(rememberPasswordRow.checkboxSize),
+              left: designWidthPercent(rememberPasswordRow.left),
+              top: designHeightPercent(rememberPasswordRow.top + FORM_OFFSET),
+              gap: designCqw(12),
+              fontSize: designCqw(rememberPasswordRow.fontSize),
+              color: rememberPasswordRow.color,
+              lineHeight: "normal",
             }}
-          />
-          <span className="whitespace-nowrap">{rememberPasswordRow.text}</span>
-        </label>
+          >
+            <input
+              type="checkbox"
+              checked={rememberChecked}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setRememberChecked(checked);
+                if (!checked) {
+                  clearRememberedCredentials();
+                }
+              }}
+              className="login-remember-checkbox shrink-0 appearance-none rounded-full border border-white/70 bg-transparent"
+              style={{
+                width: designCqw(rememberPasswordRow.checkboxSize),
+                height: designCqw(rememberPasswordRow.checkboxSize),
+              }}
+            />
+            <span className="whitespace-nowrap">{rememberPasswordRow.text}</span>
+          </label>
+        ) : null}
 
-        <Link
-          to="/login/forgot-password"
-          className="absolute no-underline"
-          style={{
-            right: designWidthPercent(forgotPasswordLink.right),
-            top: designHeightPercent(forgotPasswordLink.top),
-            fontSize: designCqw(forgotPasswordLink.fontSize),
-            fontWeight: forgotPasswordLink.fontWeight,
-            lineHeight: "normal",
-            letterSpacing: 0,
-            color: forgotPasswordLink.color,
-          }}
-        >
-          {forgotPasswordLink.text}
-        </Link>
+        {loginMode === "password" ? (
+          <Link
+            to="/login/forgot-password"
+            className="absolute no-underline"
+            style={{
+              right: designWidthPercent(forgotPasswordLink.right),
+              top: designHeightPercent(forgotPasswordLink.top + FORM_OFFSET),
+              fontSize: designCqw(forgotPasswordLink.fontSize),
+              fontWeight: forgotPasswordLink.fontWeight,
+              lineHeight: "normal",
+              letterSpacing: 0,
+              color: forgotPasswordLink.color,
+            }}
+          >
+            {forgotPasswordLink.text}
+          </Link>
+        ) : null}
 
         <style>{`
           .login-remember-checkbox:checked {
@@ -349,8 +521,11 @@ export function PasswordLoginPage() {
           }
         `}</style>
 
-        <label
+        <div
           className="absolute flex cursor-pointer items-center"
+          role="checkbox"
+          aria-checked={agreed}
+          tabIndex={0}
           style={{
             left: designWidthPercent(agreement.left),
             bottom: designHeightPercent(agreement.bottom),
@@ -358,6 +533,22 @@ export function PasswordLoginPage() {
             fontSize: designCqw(agreement.fontSize),
             color: agreement.color,
             lineHeight: 1.4,
+          }}
+          onClick={() => {
+            setAgreed((value) => {
+              const next = !value;
+              if (next) setFormHint(null);
+              return next;
+            });
+          }}
+          onKeyDown={(event) => {
+            if (event.key !== " " && event.key !== "Enter") return;
+            event.preventDefault();
+            setAgreed((value) => {
+              const next = !value;
+              if (next) setFormHint(null);
+              return next;
+            });
           }}
         >
           <input
@@ -367,6 +558,7 @@ export function PasswordLoginPage() {
               setAgreed(e.target.checked);
               if (e.target.checked) setFormHint(null);
             }}
+            onClick={(event) => event.stopPropagation()}
             className="login-agreement-checkbox shrink-0 appearance-none rounded-full border border-white/70 bg-transparent"
             style={{
               width: designCqw(agreement.checkboxSize),
@@ -385,9 +577,40 @@ export function PasswordLoginPage() {
           `}</style>
           <span className="whitespace-nowrap">
             {agreement.text}
-            <span style={{ color: agreement.linkColor }}>{agreement.linkText}</span>
+            <button
+              type="button"
+              className="border-none bg-transparent p-0"
+              style={{ color: agreement.linkColor, font: "inherit" }}
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                openLegalDoc("agreement");
+              }}
+            >
+              用户协议
+            </button>
+            和
+            <button
+              type="button"
+              className="border-none bg-transparent p-0"
+              style={{ color: agreement.linkColor, font: "inherit" }}
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                openLegalDoc("privacy");
+              }}
+            >
+              隐私政策
+            </button>
           </span>
-        </label>
+        </div>
+
+        <LegalDocumentSheet
+          open={legalDoc !== null}
+          title={legalTitle}
+          url={legalUrl}
+          onClose={() => setLegalDoc(null)}
+        />
       </div>
     </DesignScreen>
   );
