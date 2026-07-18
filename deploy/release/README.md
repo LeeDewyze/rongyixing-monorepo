@@ -5,10 +5,11 @@
 - `h5/dist`：H5 静态资源
 - `web/dist`：Pad/PC Web 静态资源
 - `install-dist.sh`：服务器安装脚本
+- `install-static-dist.sh`：只替换静态资源的安装脚本
 - `nginx/rongyixing-dist.conf.template`：Nginx 配置模板
 
 交付包不包含 `apps/`、`packages/` 等源码目录。
-源码侧安装脚本模板位于 `templates/install-dist.sh`，不要在 `deploy/release`
+源码侧安装脚本模板位于 `templates/install-dist.sh` 和 `templates/install-static-dist.sh`，不要在 `deploy/release`
 根目录执行安装。
 
 ## 生成交付包
@@ -64,6 +65,13 @@ cd deploy/release/out/rongyixing-h5-web-dist-test
 ./install-dist.sh
 ```
 
+如果只想替换静态资源，不改 Nginx 配置，可以执行：
+
+```bash
+cd deploy/release/out/rongyixing-h5-web-dist-test
+./install-static-dist.sh
+```
+
 测试环境默认使用：
 
 ```text
@@ -100,6 +108,13 @@ INSTALL_DIR=/opt/rongyixing-test \
 SERVER_NGINX_TARGET=/etc/nginx/conf.d/rongyixing-test.conf \
 LISTEN=80 \
 ./install-dist.sh
+```
+
+只更新静态目录时，常用命令是：
+
+```bash
+INSTALL_DIR=/opt/rongyixing-test ./install-static-dist.sh
+INSTALL_DIR=/opt/rongyixing-prod ./install-static-dist.sh
 ```
 
 访问地址：
