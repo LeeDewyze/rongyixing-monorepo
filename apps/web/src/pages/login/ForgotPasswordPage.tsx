@@ -96,7 +96,9 @@ function StepIndicator({ step }: { step: ForgotStep }) {
           <div
             key={item}
             className={`rounded-xl border px-3 py-3 ${
-              active ? "border-brand-primary/30 bg-brand-primary/5" : "border-[#E5ECF7] bg-[#F8FAFF]"
+              active
+                ? "border-brand-primary/30 bg-brand-primary/5"
+                : "border-[#E5ECF7] bg-[#F8FAFF]"
             }`}
           >
             <span
@@ -106,7 +108,9 @@ function StepIndicator({ step }: { step: ForgotStep }) {
             >
               {index + 1}
             </span>
-            <p className={`mt-2 text-[14px] font-medium ${active ? "text-brand-primary" : "text-[#667085]"}`}>
+            <p
+              className={`mt-2 text-[14px] font-medium ${active ? "text-brand-primary" : "text-[#667085]"}`}
+            >
               {STEP_LABELS[item]}
             </p>
           </div>
@@ -259,7 +263,10 @@ export function ForgotPasswordPage() {
       }}
     >
       <div className="relative z-10 flex h-full flex-col overflow-y-auto">
-        <div className="mx-auto flex w-full flex-1 flex-col justify-center px-6 py-8" style={{ maxWidth: 920 }}>
+        <div
+          className="mx-auto flex w-full flex-1 flex-col justify-center px-6 py-8"
+          style={{ maxWidth: 920 }}
+        >
           <button
             type="button"
             className="mb-5 inline-flex h-10 w-fit items-center gap-2 rounded-full bg-white/70 px-4 text-[14px] font-medium text-brand-primary shadow-[0_10px_28px_rgba(39,104,250,0.08)] backdrop-blur-xl transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/30 active:scale-[0.98]"
@@ -272,9 +279,11 @@ export function ForgotPasswordPage() {
           <main className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
             <section className="pt-4">
               <p className="text-[15px] font-semibold text-brand-primary">融易行账户安全</p>
-              <h1 className="mt-3 text-[42px] font-bold leading-tight text-brand-title">找回密码</h1>
+              <h1 className="mt-3 text-[42px] font-bold leading-tight text-brand-title">
+                找回密码
+              </h1>
               <p className="mt-4 max-w-[24rem] text-[17px] leading-8 text-[#344054]">
-                按 legacy 安全流程校验账户信息，验证通过后即可设置新的登录密码。
+                请验证账户信息，验证通过后即可设置新的登录密码。
               </p>
             </section>
 
@@ -326,7 +335,9 @@ export function ForgotPasswordPage() {
                           />
                           <span className="min-w-0 flex-1 text-[15px] text-brand-title">
                             {item.Name}
-                            {item.Value ? <span className="ml-2 text-[#667085]">{item.Value}</span> : null}
+                            {item.Value ? (
+                              <span className="ml-2 text-[#667085]">{item.Value}</span>
+                            ) : null}
                           </span>
                         </label>
                       ))}
@@ -424,7 +435,10 @@ export function ForgotPasswordPage() {
               ) : null}
 
               {message ? (
-                <p className="mt-5 rounded-xl bg-[#FFF7E8] px-4 py-3 text-[14px] leading-relaxed text-[#B35A00]" role="alert">
+                <p
+                  className="mt-5 rounded-xl bg-[#FFF7E8] px-4 py-3 text-[14px] leading-relaxed text-[#B35A00]"
+                  role="alert"
+                >
                   {message}
                 </p>
               ) : null}

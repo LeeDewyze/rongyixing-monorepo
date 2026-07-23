@@ -109,7 +109,9 @@ function StepIndicator({ step }: { step: ForgotStep }) {
               {STEP_LABELS[item]}
             </span>
             {index < items.length - 1 ? (
-              <span className={`h-px flex-1 ${index < activeIndex ? "bg-brand-primary" : "bg-[#DDE5F2]"}`} />
+              <span
+                className={`h-px flex-1 ${index < activeIndex ? "bg-brand-primary" : "bg-[#DDE5F2]"}`}
+              />
             ) : null}
           </div>
         );
@@ -276,7 +278,7 @@ export function ForgotPasswordPage() {
             {step === "done" ? "重置完成" : STEP_LABELS[step]}
           </h2>
           <p className="mt-2 text-[14px] leading-relaxed text-[#5C6678]">
-            按 legacy 安全流程校验账户信息，验证通过后即可设置新的登录密码。
+            请验证账户信息，验证通过后即可设置新的登录密码。
           </p>
         </section>
 
@@ -328,7 +330,9 @@ export function ForgotPasswordPage() {
                       />
                       <span className="min-w-0 flex-1 text-[15px] text-brand-title">
                         {item.Name}
-                        {item.Value ? <span className="ml-2 text-[#8A94A6]">{item.Value}</span> : null}
+                        {item.Value ? (
+                          <span className="ml-2 text-[#8A94A6]">{item.Value}</span>
+                        ) : null}
                       </span>
                     </label>
                   ))}
@@ -426,7 +430,10 @@ export function ForgotPasswordPage() {
           ) : null}
 
           {message ? (
-            <p className="mt-4 rounded-xl bg-[#FFF7E8] px-3 py-2 text-[13px] leading-relaxed text-[#B35A00]" role="alert">
+            <p
+              className="mt-4 rounded-xl bg-[#FFF7E8] px-3 py-2 text-[13px] leading-relaxed text-[#B35A00]"
+              role="alert"
+            >
               {message}
             </p>
           ) : null}
