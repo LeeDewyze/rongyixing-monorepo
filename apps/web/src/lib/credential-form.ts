@@ -10,7 +10,11 @@ import {
   type StaffCredentialApiPayload,
 } from "@ryx/shared-types";
 
-import { normalizeCredentialName, validateCredentialName, validateCredentialNumber } from "./credential-name";
+import {
+  normalizeCredentialName,
+  validateCredentialName,
+  validateCredentialNumber,
+} from "./credential-name";
 
 /** Legacy `member-credential-management` onAddCredential defaults. */
 const LEGACY_CN_COUNTRY = {
@@ -19,9 +23,17 @@ const LEGACY_CN_COUNTRY = {
 };
 
 /** Legacy `calendarService.getFormatedDate` on non-iOS — `YYYY-MM-DD`. */
+const CREDENTIAL_DATE_PREFIX_RE = /^(\d{4}-\d{2}-\d{2})/;
+
+export function normalizeCredentialDate(value?: string): string {
+  const trimmed = value?.trim();
+  if (!trimmed) return "";
+  return trimmed.match(CREDENTIAL_DATE_PREFIX_RE)?.[1] ?? trimmed;
+}
+
 function formatCredentialDate(value?: string): string | undefined {
-  if (!value?.trim()) return undefined;
-  return value.trim();
+  const normalized = normalizeCredentialDate(value);
+  return normalized || undefined;
 }
 
 function sharedCredentialFields(values: CredentialFormValues, type: number, idCard: boolean) {
@@ -131,9 +143,7 @@ export function credentialFormFromPassenger(
     Mobile: passenger.Mobile ?? "",
     Gender: passenger.Gender ?? "M",
     PassengerType:
-      typeof passenger.PassengerType === "number"
-        ? passenger.PassengerType
-        : PASSENGER_TYPE_ADULT,
+      typeof passenger.PassengerType === "number" ? passenger.PassengerType : PASSENGER_TYPE_ADULT,
     StaffId: staffId,
     AccountId: passenger.Id,
   };
@@ -177,7 +187,9 @@ export function credentialFormFromCredential(
 ): CredentialFormValues {
   const rawType = credential.CredentialsType ?? credential.Type;
   const type =
-    typeof rawType === "string" ? Number(rawType) || CredentialType.IdCard : Number(rawType) || CredentialType.IdCard;
+    typeof rawType === "string"
+      ? Number(rawType) || CredentialType.IdCard
+      : Number(rawType) || CredentialType.IdCard;
   return {
     Id: credential.Id,
     Type: type,
@@ -185,8 +197,8 @@ export function credentialFormFromCredential(
     Number: credential.Number ?? "",
     Mobile: credential.Mobile ?? "",
     Gender: credential.Gender ?? "M",
-    Birthday: credential.Birthday ?? "",
-    ExpirationDate: credential.ExpirationDate ?? "",
+    Birthday: normalizeCredentialDate(credential.Birthday),
+    ExpirationDate: normalizeCredentialDate(credential.ExpirationDate),
     Surname: credential.Surname,
     Givenname: credential.Givenname,
     AccountId: credential.AccountId,
