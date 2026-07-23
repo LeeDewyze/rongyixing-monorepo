@@ -1,14 +1,12 @@
+import { FLIGHT_CITY_SEARCH_PLACEHOLDER } from "@/lib/flight-search";
+
 interface FlightCitySearchBarProps {
   value: string;
   onChange: (value: string) => void;
   onSearch?: () => void;
 }
 
-export function FlightCitySearchBar({
-  value,
-  onChange,
-  onSearch,
-}: FlightCitySearchBarProps) {
+export function FlightCitySearchBar({ value, onChange, onSearch }: FlightCitySearchBarProps) {
   return (
     <div className="mx-4 mt-3 rounded-xl bg-white px-3 py-2 shadow-sm">
       <div className="flex items-center gap-2">
@@ -26,9 +24,9 @@ export function FlightCitySearchBar({
                 onSearch?.();
               }
             }}
-            placeholder="搜索城市或车站名称"
+            placeholder={FLIGHT_CITY_SEARCH_PLACEHOLDER}
             className="min-h-11 flex-1 border-none bg-transparent text-sm text-[#1F2937] outline-none placeholder:text-[#9CA3AF]"
-            aria-label="Search city or station"
+            aria-label="Search city or airport"
           />
         </div>
         <button

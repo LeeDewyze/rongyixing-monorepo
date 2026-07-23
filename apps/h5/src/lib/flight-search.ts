@@ -6,6 +6,7 @@ export { buildDateRange, formatDayChip, todayDateString };
 
 export const FLIGHT_STORAGE_FROM = "ryx_flight_fromCity";
 export const FLIGHT_STORAGE_TO = "ryx_flight_toCity";
+export const FLIGHT_CITY_SEARCH_PLACEHOLDER = "搜索城市或机场名称";
 
 export const DEFAULT_FLIGHT_FROM: Trafficline = {
   Id: "9278",

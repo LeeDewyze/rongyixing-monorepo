@@ -5,6 +5,7 @@ import { CITY_HISTORY_KEYS } from "@/lib/city-picker";
 import {
   displayTrafficlineBrowseName,
   displayTrafficlineSearchName,
+  FLIGHT_CITY_SEARCH_PLACEHOLDER,
 } from "@/lib/flight-search";
 
 const flightCityAdapter = {
@@ -62,7 +63,7 @@ export function FlightCityPicker({
       historyKey={CITY_HISTORY_KEYS.flight}
       onClose={onClose}
       onSelect={onSelect}
-      searchPlaceholder="搜索城市或车站名称"
+      searchPlaceholder={FLIGHT_CITY_SEARCH_PLACEHOLDER}
       hotTitle="热门城市"
       historyTitle="历史记录"
       showCodeInSearch

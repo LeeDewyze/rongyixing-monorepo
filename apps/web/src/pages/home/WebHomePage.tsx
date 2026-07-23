@@ -23,6 +23,7 @@ import { useTrainSearchForm } from "@/hooks/useTrainSearchForm";
 import { CITY_HISTORY_KEYS } from "@/lib/city-picker";
 import { onHomeBannerJump } from "@/lib/core-jump";
 import { flightCityPickerAdapter } from "@/lib/flight-city-picker";
+import { FLIGHT_CITY_SEARCH_PLACEHOLDER } from "@/lib/flight-search";
 import { formatApiError } from "@/lib/formatApiError";
 import { resolveHotelCityByLocation } from "@/lib/geolocation";
 import { buildHomeProductSearch, parseHomeProduct } from "@/lib/home-params";
@@ -243,7 +244,7 @@ export function WebHomePage() {
         items={flightForm.airports}
         title="选择出发城市"
         historyKey={CITY_HISTORY_KEYS.flight}
-        searchPlaceholder="搜索城市或车站名称"
+        searchPlaceholder={FLIGHT_CITY_SEARCH_PLACEHOLDER}
         hotTitle="热门城市"
         historyTitle="历史记录"
         showCodeInSearch
@@ -259,7 +260,7 @@ export function WebHomePage() {
         items={flightForm.airports}
         title="选择到达城市"
         historyKey={CITY_HISTORY_KEYS.flight}
-        searchPlaceholder="搜索城市或车站名称"
+        searchPlaceholder={FLIGHT_CITY_SEARCH_PLACEHOLDER}
         hotTitle="热门城市"
         historyTitle="历史记录"
         showCodeInSearch
