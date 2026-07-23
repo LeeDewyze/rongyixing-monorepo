@@ -60,7 +60,12 @@ function ResultTypeIcon({ type }: { type: HotelKeywordSearchResult["type"] }) {
           stroke="currentColor"
           strokeWidth="1.8"
         />
-        <path d="M4 20h16M9 8h1.5M13.5 8H15M9 12h1.5M13.5 12H15M11 20v-4h2v4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        <path
+          d="M4 20h16M9 8h1.5M13.5 8H15M9 12h1.5M13.5 12H15M11 20v-4h2v4"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
       </svg>
     );
   }
@@ -77,7 +82,11 @@ function ResultTypeIcon({ type }: { type: HotelKeywordSearchResult["type"] }) {
   );
 }
 
-function keywordReturnPath(params: URLSearchParams, selected?: HotelKeywordSearchResult, text?: string) {
+function keywordReturnPath(
+  params: URLSearchParams,
+  selected?: HotelKeywordSearchResult,
+  text?: string,
+) {
   const next = new URLSearchParams();
   const cityCode = params.get("cityCode") ?? "";
   const cityName = params.get("cityName") ?? cityCode;
@@ -122,9 +131,8 @@ export function HotelKeywordSearchPage() {
   const cityName = searchParams.get("cityName") ?? cityCode;
   const initialKeyword = searchParams.get("keyword") ?? "";
   const travelMode = useMemo(() => loadHomeTravelMode(), []);
-  const productChannel = searchParams.get("channel") === "tourist"
-    ? "tourist"
-    : resolveProductChannel(travelMode);
+  const productChannel =
+    searchParams.get("channel") === "tourist" ? "tourist" : resolveProductChannel(travelMode);
   const [keyword, setKeyword] = useState(initialKeyword);
   const [debouncedKeyword, setDebouncedKeyword] = useState(initialKeyword.trim());
 
@@ -215,7 +223,8 @@ export function HotelKeywordSearchPage() {
                 type="search"
                 value={keyword}
                 placeholder="地名/酒店/关键词"
-                className="min-w-0 flex-1 border-0 bg-transparent text-[15px] font-medium text-brand-title outline-none placeholder:font-normal placeholder:text-[#B0B0B0]"
+                enterKeyHint="search"
+                className="min-w-0 flex-1 border-0 bg-transparent text-[15px] font-medium text-brand-title outline-none placeholder:font-normal placeholder:text-[#B0B0B0] [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
                 onChange={(event) => setKeyword(event.target.value)}
               />
               {keyword ? (

@@ -223,7 +223,8 @@ export function HotelKeywordSearchPage() {
                 type="search"
                 value={keyword}
                 placeholder="地名/酒店/关键词"
-                className="min-w-0 flex-1 border-0 bg-transparent text-[15px] font-medium text-brand-title outline-none placeholder:font-normal placeholder:text-[#B0B0B0]"
+                enterKeyHint="search"
+                className="min-w-0 flex-1 border-0 bg-transparent text-[15px] font-medium text-brand-title outline-none placeholder:font-normal placeholder:text-[#B0B0B0] [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
                 onChange={(event) => setKeyword(event.target.value)}
               />
               {keyword ? (
