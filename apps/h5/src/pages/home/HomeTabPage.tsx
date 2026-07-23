@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { ProductType } from "@ryx/shared-types";
 
 import { FlightCityPickerHostFromForm } from "@/components/flight/common";
 import { HomeBusinessPanel } from "@/components/home/HomeBusinessPanel";
@@ -28,6 +29,7 @@ import { buildHomeProductSearch, parseHomeProduct } from "@/lib/home-params";
 import { CITY_HISTORY_KEYS, displayHotelCity, hotelCityPickerAdapter } from "@/lib/hotel-search";
 import { resolveHotelCityByLocation } from "@/lib/geolocation";
 import { loadHomeTravelMode, saveHomeTravelMode } from "@/lib/flight-travel-mode";
+import { clearPassengerSelection } from "@/lib/passenger-selection";
 import { trainStationPickerAdapter } from "@/lib/train-search";
 
 function HomeSearchPanelError({ error }: { error: unknown }) {
@@ -72,16 +74,19 @@ export function HomeTabPage() {
 
   function handleHotelSearch() {
     if (hotelForm.validate()) return;
+    clearPassengerSelection(ProductType.Hotel);
     navigate(`/hotel/list?${hotelForm.buildSearchParams(keyword).toString()}`);
   }
 
   function handleTrainSearch() {
     if (trainForm.validate()) return;
+    clearPassengerSelection(ProductType.Train);
     navigate(`/train/list?${trainForm.buildSearchParams().toString()}`);
   }
 
   function handleFlightSearch() {
     if (flightForm.validate()) return;
+    clearPassengerSelection(ProductType.Flight);
     navigate(`/flight/list?${flightForm.buildSearchParams().toString()}`);
   }
 

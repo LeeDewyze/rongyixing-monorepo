@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { ProductType } from "@ryx/shared-types";
 import { useQuery } from "@tanstack/react-query";
 
 import { WEB_MAIN_PADDING_CLASS } from "@/components/WebShell";
@@ -28,6 +29,7 @@ import { formatApiError } from "@/lib/formatApiError";
 import { resolveHotelCityByLocation } from "@/lib/geolocation";
 import { buildHomeProductSearch, parseHomeProduct } from "@/lib/home-params";
 import { loadHomeTravelMode, saveHomeTravelMode } from "@/lib/flight-travel-mode";
+import { clearPassengerSelection } from "@/lib/passenger-selection";
 import { displayHotelCity, hotelCityPickerAdapter } from "@/lib/hotel-search";
 import { trainStationPickerAdapter } from "@/lib/train-search";
 
@@ -69,16 +71,19 @@ export function WebHomePage() {
 
   function handleHotelSearch() {
     if (hotelForm.validate()) return;
+    clearPassengerSelection(ProductType.Hotel);
     navigate(`/hotel/list?${hotelForm.buildSearchParams(keyword).toString()}`);
   }
 
   function handleTrainSearch() {
     if (trainForm.validate()) return;
+    clearPassengerSelection(ProductType.Train);
     navigate(`/train/list?${trainForm.buildSearchParams().toString()}`);
   }
 
   function handleFlightSearch() {
     if (flightForm.validate()) return;
+    clearPassengerSelection(ProductType.Flight);
     navigate(`/flight/list?${flightForm.buildSearchParams().toString()}`);
   }
 
