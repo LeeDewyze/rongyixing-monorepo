@@ -5,7 +5,7 @@ import {
   createInitialHotelListFilter,
   HOTEL_LIST_CATEGORY_OPTIONS,
   HOTEL_LIST_PRICE_RANGES,
-  HOTEL_LIST_SORT_OPTIONS,
+  HOTEL_LIST_SORT_CHOICES,
   HOTEL_LIST_STAR_OPTIONS,
   isHotelListFilterSectionActive,
   type HotelListFilterSection,
@@ -57,7 +57,13 @@ function CloseButton({ onClose }: { onClose: () => void }) {
       aria-label="关闭"
       onClick={onClose}
     >
-      <svg viewBox="0 0 20 20" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <svg
+        viewBox="0 0 20 20"
+        className="size-4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+      >
         <path d="M6 6l8 8M14 6l-8 8" strokeLinecap="round" />
       </svg>
     </button>
@@ -81,7 +87,12 @@ function CheckboxMark({ checked }: { checked: boolean }) {
       className={`flight-filter-sheet__checkbox${checked ? " flight-filter-sheet__checkbox--checked" : ""}`}
       aria-hidden
     >
-      <svg viewBox="0 0 12 12" className="flight-filter-sheet__checkbox-icon" fill="none" aria-hidden>
+      <svg
+        viewBox="0 0 12 12"
+        className="flight-filter-sheet__checkbox-icon"
+        fill="none"
+        aria-hidden
+      >
         <path
           d="M2.5 6l2.2 2.2 4.8-4.8"
           stroke="currentColor"
@@ -132,7 +143,12 @@ function toggleLimitedString(values: string[], id: string, limit = 3): string[] 
   return [...values, id].slice(-limit);
 }
 
-function toggleStringWithinGroup(values: string[], id: string, groupIds: string[], limit = 3): string[] {
+function toggleStringWithinGroup(
+  values: string[],
+  id: string,
+  groupIds: string[],
+  limit = 3,
+): string[] {
   if (values.includes(id)) return values.filter((value) => value !== id);
   const groupSet = new Set(groupIds);
   const selectedInGroup = values.filter((value) => groupSet.has(value));
@@ -167,7 +183,8 @@ function formatGeoGroup(tag?: string): string {
 
 function parseGeoVariables(geo: HotelGeo): Record<string, unknown> {
   if (geo.VariablesObj && typeof geo.VariablesObj === "object") return geo.VariablesObj;
-  if (geo.Variables && typeof geo.Variables === "object") return geo.Variables as Record<string, unknown>;
+  if (geo.Variables && typeof geo.Variables === "object")
+    return geo.Variables as Record<string, unknown>;
   if (typeof geo.Variables === "string") {
     try {
       const parsed = JSON.parse(geo.Variables) as unknown;
@@ -210,7 +227,13 @@ function EmptyPanel({ message }: { message: string }) {
   return (
     <div className={`flex flex-col items-center justify-center px-6 py-16 text-center ${FONT}`}>
       <span className="mb-2 flex size-12 items-center justify-center rounded-full bg-[#F5F7FA] text-[#B0B8C4]">
-        <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <svg
+          viewBox="0 0 24 24"
+          className="size-6"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+        >
           <path d="M4 8h16M4 12h10M4 16h6" strokeLinecap="round" />
         </svg>
       </span>
@@ -228,11 +251,11 @@ function SortPanel({
 }) {
   return (
     <>
-      {HOTEL_LIST_SORT_OPTIONS.map((option) => {
+      {HOTEL_LIST_SORT_CHOICES.map((option) => {
         const selected = filter.orderby === option.id;
         return (
           <FilterRow
-            key={option.id || "default"}
+            key={option.id}
             label={option.label}
             selected={selected}
             control={<RadioMark selected={selected} />}
@@ -392,16 +415,19 @@ function LocationPanel({
   onChange: (filter: HotelListFilterState) => void;
 }) {
   const geos = conditions?.Geos ?? [];
-  const grouped = geos.reduce<Record<string, { tag: string; label: string; items: HotelGeo[] }>>((acc, geo) => {
-    const tag = geo.Tag || "Other";
-    const label = formatGeoGroup(geo.Tag);
-    acc[tag] = {
-      tag,
-      label,
-      items: [...(acc[tag]?.items ?? []), geo],
-    };
-    return acc;
-  }, {});
+  const grouped = geos.reduce<Record<string, { tag: string; label: string; items: HotelGeo[] }>>(
+    (acc, geo) => {
+      const tag = geo.Tag || "Other";
+      const label = formatGeoGroup(geo.Tag);
+      acc[tag] = {
+        tag,
+        label,
+        items: [...(acc[tag]?.items ?? []), geo],
+      };
+      return acc;
+    },
+    {},
+  );
   const orderedGroups = [
     "Metro",
     "Mall",
@@ -425,18 +451,16 @@ function LocationPanel({
   const [activeGeoTag, setActiveGeoTag] = useState(fallbackGroup?.tag ?? "");
   const activeGroup = geoGroups.find((group) => group.tag === activeGeoTag) ?? fallbackGroup;
   const isMetroGroup = activeGroup?.tag === "Metro";
-  const metroLines =
-    isMetroGroup
-      ? Array.from(new Set(activeGroup.items.map(getGeoLineName).map((line) => line || "全部")))
-      : [];
+  const metroLines = isMetroGroup
+    ? Array.from(new Set(activeGroup.items.map(getGeoLineName).map((line) => line || "全部")))
+    : [];
   const [activeMetroLine, setActiveMetroLine] = useState(metroLines[0] ?? "");
-  const displayItems =
-    isMetroGroup
-      ? activeGroup.items.filter((geo) => {
-          const line = getGeoLineName(geo) || "全部";
-          return line === (activeMetroLine || metroLines[0]);
-        })
-      : (activeGroup?.items ?? []);
+  const displayItems = isMetroGroup
+    ? activeGroup.items.filter((geo) => {
+        const line = getGeoLineName(geo) || "全部";
+        return line === (activeMetroLine || metroLines[0]);
+      })
+    : (activeGroup?.items ?? []);
 
   useEffect(() => {
     if (!activeGroup && fallbackGroup) {
@@ -466,13 +490,15 @@ function LocationPanel({
         <button
           type="button"
           className={`flex min-h-11 w-full items-center px-3 text-left text-[13px] ${
-            filter.geos.length === 0 ? "bg-white font-semibold text-brand-primary" : "text-[#666666]"
+            filter.geos.length === 0
+              ? "bg-white font-semibold text-brand-primary"
+              : "text-[#666666]"
           }`}
           onClick={() => onChange({ ...filter, geoGroup: "", geos: [] })}
         >
           不限
         </button>
-        {geoGroups.map((group) => (
+        {geoGroups.map((group) =>
           (() => {
             const dirty = group.items.some((geo) => filter.geos.includes(geo.Id));
             return (
@@ -501,8 +527,8 @@ function LocationPanel({
                 ) : null}
               </button>
             );
-          })()
-        ))}
+          })(),
+        )}
       </div>
 
       {isMetroGroup ? (
@@ -630,7 +656,9 @@ function BrandSection({
   return (
     <section className={`border-b border-[#F5F6F9] px-4 py-4 ${FONT}`}>
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h3 className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[#333333]">{title}</h3>
+        <h3 className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[#333333]">
+          {title}
+        </h3>
         <button
           type="button"
           className={`shrink-0 text-[12px] ${hasSelected ? "text-brand-primary" : "text-[#999999]"}`}
@@ -679,7 +707,10 @@ function BrandPanel({
   const popularBrands = uniqueOptionsById(brands).slice(0, 8);
   const tagSections = BRAND_TAG_SECTIONS.map((section) => ({
     ...section,
-    brands: uniqueOptionsById(brands.filter((brand) => brand.Tag === section.tag)).slice(0, section.limit),
+    brands: uniqueOptionsById(brands.filter((brand) => brand.Tag === section.tag)).slice(
+      0,
+      section.limit,
+    ),
   }));
   const displayedIds = new Set<string>([
     ...popularBrands.map((brand) => brand.Id),
@@ -708,7 +739,14 @@ function BrandPanel({
           title={section.title}
           brands={section.brands}
           selectedIds={selectedIds}
-          onClear={() => onChange(clearStringGroup(selectedIds, section.brands.map((brand) => brand.Id)))}
+          onClear={() =>
+            onChange(
+              clearStringGroup(
+                selectedIds,
+                section.brands.map((brand) => brand.Id),
+              ),
+            )
+          }
           onToggle={(id, groupIds) => onChange(toggleStringWithinGroup(selectedIds, id, groupIds))}
         />
       ))}
@@ -716,7 +754,10 @@ function BrandPanel({
   );
 }
 
-function selectAmenities(conditions: HotelConditionResponse | undefined, tag: string): HotelAmenity[] {
+function selectAmenities(
+  conditions: HotelConditionResponse | undefined,
+  tag: string,
+): HotelAmenity[] {
   return (conditions?.Amenities ?? []).filter((item) => item.Tag === tag);
 }
 
@@ -751,6 +792,8 @@ export function HotelListFilterSheet({
   );
   const fallbackTab = tabs[0]?.id ?? initialSection;
   const showSidebar = tabs.length > 1;
+  const isSortOnly = visibleSections?.length === 1 && visibleSections[0] === "sort";
+  const sheetTitle = isSortOnly ? "推荐排序" : "酒店筛选";
 
   useEffect(() => {
     if (open) {
@@ -802,7 +845,7 @@ export function HotelListFilterSheet({
         <header className={`flight-filter-sheet__header relative px-4 pb-4 pt-5 ${FONT}`}>
           <div className="flex items-center justify-between">
             <CloseButton onClose={onClose} />
-            <h2 className="text-[17px] font-semibold text-brand-title">酒店筛选</h2>
+            <h2 className="text-[17px] font-semibold text-brand-title">{sheetTitle}</h2>
             <span className="size-8" aria-hidden />
           </div>
         </header>
@@ -850,7 +893,11 @@ export function HotelListFilterSheet({
                   <BrandPanel
                     brands={conditions?.Brands ?? []}
                     selectedIds={filter.brands}
-                    emptyMessage={getConditionEmptyMessage(conditionsLoading, conditionsError, "品牌")}
+                    emptyMessage={getConditionEmptyMessage(
+                      conditionsLoading,
+                      conditionsError,
+                      "品牌",
+                    )}
                     onChange={(brands) => onChange({ ...filter, brands })}
                   />
                 ) : null}
@@ -859,7 +906,11 @@ export function HotelListFilterSheet({
                     title="主题"
                     options={selectAmenities(conditions, "Theme")}
                     selectedIds={filter.themes}
-                    emptyMessage={getConditionEmptyMessage(conditionsLoading, conditionsError, "主题")}
+                    emptyMessage={getConditionEmptyMessage(
+                      conditionsLoading,
+                      conditionsError,
+                      "主题",
+                    )}
                     onClear={() => onChange({ ...filter, themes: [] })}
                     onToggle={(id) =>
                       onChange({ ...filter, themes: toggleLimitedString(filter.themes, id) })
@@ -871,7 +922,11 @@ export function HotelListFilterSheet({
                     title="服务"
                     options={selectAmenities(conditions, "Service")}
                     selectedIds={filter.services}
-                    emptyMessage={getConditionEmptyMessage(conditionsLoading, conditionsError, "服务")}
+                    emptyMessage={getConditionEmptyMessage(
+                      conditionsLoading,
+                      conditionsError,
+                      "服务",
+                    )}
                     onClear={() => onChange({ ...filter, services: [] })}
                     onToggle={(id) =>
                       onChange({ ...filter, services: toggleLimitedString(filter.services, id) })
@@ -883,7 +938,11 @@ export function HotelListFilterSheet({
                     title="设施"
                     options={selectAmenities(conditions, "Facility")}
                     selectedIds={filter.facilities}
-                    emptyMessage={getConditionEmptyMessage(conditionsLoading, conditionsError, "设施")}
+                    emptyMessage={getConditionEmptyMessage(
+                      conditionsLoading,
+                      conditionsError,
+                      "设施",
+                    )}
                     onClear={() => onChange({ ...filter, facilities: [] })}
                     onToggle={(id) =>
                       onChange({
@@ -902,7 +961,9 @@ export function HotelListFilterSheet({
               <button
                 type="button"
                 className="flex h-11 flex-1 items-center justify-center rounded-xl border border-[#5099fe] text-[15px] font-medium text-[#5099fe] active:bg-[#F0F6FF]"
-                onClick={() => onChange(createInitialHotelListFilter())}
+                onClick={() =>
+                  onChange(isSortOnly ? { ...filter, orderby: "" } : createInitialHotelListFilter())
+                }
               >
                 重置
               </button>

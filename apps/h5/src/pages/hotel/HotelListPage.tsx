@@ -29,6 +29,7 @@ import {
   applyHotelListFilterParams,
   createInitialHotelListFilter,
   isHotelListFilterActive,
+  isHotelListSortActive,
   type HotelListFilterSection,
   type HotelListFilterState,
 } from "@/lib/hotel-list-filters";
@@ -43,7 +44,8 @@ import {
 const FALLBACK_HEADER_HEIGHT = 56;
 const HOTEL_LIST_FONT =
   "[font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
-const BASIC_FILTER_SECTIONS: HotelListFilterSection[] = ["sort", "star", "category", "price"];
+const SORT_FILTER_SECTIONS: HotelListFilterSection[] = ["sort"];
+const PRICE_STAR_FILTER_SECTIONS: HotelListFilterSection[] = ["star", "category", "price"];
 const LOCATION_FILTER_SECTIONS: HotelListFilterSection[] = ["location"];
 const AMENITY_FILTER_SECTIONS: HotelListFilterSection[] = ["brand", "theme", "service", "facility"];
 
@@ -164,7 +166,7 @@ export function HotelListPage() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [filterInitialSection, setFilterInitialSection] = useState<HotelListFilterSection>("sort");
   const [filterVisibleSections, setFilterVisibleSections] =
-    useState<HotelListFilterSection[]>(BASIC_FILTER_SECTIONS);
+    useState<HotelListFilterSection[]>(SORT_FILTER_SECTIONS);
   const [filterDraft, setFilterDraft] = useState<HotelListFilterState>(
     createInitialHotelListFilter,
   );
@@ -365,6 +367,16 @@ export function HotelListPage() {
   }, []);
 
   const filterActive = isHotelListFilterActive(filterApplied);
+  const sortActive = isHotelListSortActive(filterApplied);
+  const toolbarActiveId: HotelListToolbarId | null = filterOpen
+    ? activeFilter
+    : sortActive
+      ? "recommended"
+      : filterActive
+        ? activeFilter
+        : activeFilter === "location"
+          ? activeFilter
+          : null;
 
   function openFilterSheet(id: HotelListToolbarId) {
     setActiveFilter(id);
@@ -372,7 +384,7 @@ export function HotelListPage() {
       id === "location"
         ? "location"
         : id === "priceStar"
-          ? "price"
+          ? "star"
           : id === "filter"
             ? "brand"
             : "sort",
@@ -382,7 +394,9 @@ export function HotelListPage() {
         ? LOCATION_FILTER_SECTIONS
         : id === "filter"
           ? AMENITY_FILTER_SECTIONS
-          : BASIC_FILTER_SECTIONS,
+          : id === "priceStar"
+            ? PRICE_STAR_FILTER_SECTIONS
+            : SORT_FILTER_SECTIONS,
     );
     setFilterDraft(filterApplied);
     setFilterOpen(true);
@@ -540,7 +554,7 @@ export function HotelListPage() {
       </div>
 
       <HotelListToolbar
-        activeId={filterActive ? activeFilter : activeFilter === "location" ? activeFilter : null}
+        activeId={toolbarActiveId}
         filtered={filterActive}
         onSelect={openFilterSheet}
       />

@@ -42,6 +42,11 @@ export const HOTEL_LIST_SORT_OPTIONS: { id: HotelListSortOrder; label: string }[
   { id: "CategoryDesc", label: "星级倒序" },
 ];
 
+/** Sort choices shown in the recommended panel (default sort is implicit, not a filter). */
+export const HOTEL_LIST_SORT_CHOICES = HOTEL_LIST_SORT_OPTIONS.filter(
+  (option): option is { id: Exclude<HotelListSortOrder, "">; label: string } => Boolean(option.id),
+);
+
 export const HOTEL_LIST_STAR_OPTIONS = [
   { id: 3, label: "三星/舒适" },
   { id: 4, label: "四星/高档" },
@@ -81,8 +86,7 @@ export function createInitialHotelListFilter(): HotelListFilterState {
 
 export function isHotelListFilterActive(filter: HotelListFilterState): boolean {
   return Boolean(
-    filter.orderby ||
-      filter.stars.length ||
+    filter.stars.length ||
       filter.categories.length ||
       filter.priceRangeId ||
       filter.customBeginPrice.trim() ||
@@ -95,6 +99,10 @@ export function isHotelListFilterActive(filter: HotelListFilterState): boolean {
   );
 }
 
+export function isHotelListSortActive(filter: HotelListFilterState): boolean {
+  return Boolean(filter.orderby);
+}
+
 export function isHotelListFilterSectionActive(
   filter: HotelListFilterState,
   section: HotelListFilterSection,
@@ -104,8 +112,8 @@ export function isHotelListFilterSectionActive(
   if (section === "category") return filter.categories.length > 0;
   if (section === "price") {
     return Boolean(
-    filter.priceRangeId || filter.customBeginPrice.trim() || filter.customEndPrice.trim(),
-  );
+      filter.priceRangeId || filter.customBeginPrice.trim() || filter.customEndPrice.trim(),
+    );
   }
   if (section === "location") return filter.geos.length > 0;
   if (section === "brand") return filter.brands.length > 0;
