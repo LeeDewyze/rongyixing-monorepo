@@ -82,6 +82,11 @@ export default defineConfig(({ mode }) => {
           target: apiBase,
           changeOrigin: true,
         },
+        "/legal-doc": {
+          target: apiBase,
+          changeOrigin: true,
+          rewrite: (requestPath: string) => requestPath.replace(/^\/legal-doc/, "") || "/",
+        },
         ...createRyxServiceProxies(),
         "/Identity": {
           target: DEV_API_HOME_TARGET,

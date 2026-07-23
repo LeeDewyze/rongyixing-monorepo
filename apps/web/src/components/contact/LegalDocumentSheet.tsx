@@ -1,3 +1,6 @@
+import { useEffect, useRef, useState } from "react";
+import { loadLegalDocumentIframeSrc } from "@ryx/api";
+
 import "./legal-document-sheet.css";
 
 interface LegalDocumentSheetProps {
@@ -7,9 +10,58 @@ interface LegalDocumentSheetProps {
   onClose: () => void;
 }
 
+const BLOB_IFRAME_SANDBOX =
+  "allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox";
+
 /** Full-screen legal document viewer — slides up with brand gradient header. */
 export function LegalDocumentSheet({ open, title, url, onClose }: LegalDocumentSheetProps) {
+  const [iframeSrc, setIframeSrc] = useState("");
+  const [loading, setLoading] = useState(false);
+  const blobUrlRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!open || !url) {
+      setIframeSrc("");
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+
+    void loadLegalDocumentIframeSrc(url, {
+      pageOrigin: window.location.origin,
+      useDevProxy: import.meta.env.DEV,
+    }).then((src) => {
+      if (cancelled) {
+        if (src.startsWith("blob:")) {
+          URL.revokeObjectURL(src);
+        }
+        return;
+      }
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current);
+        blobUrlRef.current = null;
+      }
+      if (src.startsWith("blob:")) {
+        blobUrlRef.current = src;
+      }
+      setIframeSrc(src);
+      setLoading(false);
+    });
+
+    return () => {
+      cancelled = true;
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current);
+        blobUrlRef.current = null;
+      }
+    };
+  }, [open, url]);
+
   if (!open || !url) return null;
+
+  const usesBlobSrc = iframeSrc.startsWith("blob:");
 
   return (
     <div className="absolute inset-0 z-[60] flex flex-col">
@@ -31,7 +83,18 @@ export function LegalDocumentSheet({ open, title, url, onClose }: LegalDocumentS
           </div>
         </div>
 
-        <iframe title={title} src={url} className="min-h-0 w-full flex-1 border-0 bg-white" />
+        {loading ? (
+          <div className="flex min-h-0 flex-1 items-center justify-center text-sm text-[#8A94A6]">
+            加载中…
+          </div>
+        ) : (
+          <iframe
+            title={title}
+            src={iframeSrc || undefined}
+            className="min-h-0 w-full flex-1 border-0 bg-white"
+            sandbox={usesBlobSrc ? BLOB_IFRAME_SANDBOX : undefined}
+          />
+        )}
       </div>
     </div>
   );

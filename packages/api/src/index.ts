@@ -69,6 +69,12 @@ export {
 export { stripFlightOrderBookDto } from "./apis/flight-book-adapter.js";
 export { createOrderApi, type OrderApi } from "./apis/order.js";
 export {
+  injectLegalDocumentInterceptors,
+  loadLegalDocumentIframeSrc,
+  toFetchableLegalDocumentUrl,
+  type LegalDocumentFetchOptions,
+} from "./apis/legal-document.js";
+export {
   normalizeFlightOrderDetail,
   normalizeHotelOrderDetail,
   normalizeTrainOrderDetail,
