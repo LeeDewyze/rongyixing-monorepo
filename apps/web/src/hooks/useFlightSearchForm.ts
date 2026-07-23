@@ -7,6 +7,7 @@ import {
   cityFromQuery,
   loadDefaultSearchForm,
   persistFlightCities,
+  persistFlightSearchDate,
   type FlightSearchQueryInitial,
   validateFlightSearch,
 } from "@/lib/flight-search";
@@ -40,6 +41,10 @@ export function useFlightSearchForm(options: UseFlightSearchFormOptions = {}) {
       persistFlightCities(fromCity, toCity);
     }
   }, [fromCity, toCity, persistCities]);
+
+  useEffect(() => {
+    persistFlightSearchDate(date);
+  }, [date]);
 
   const resetFromStorage = useCallback(() => {
     const next = loadDefaultSearchForm();

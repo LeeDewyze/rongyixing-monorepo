@@ -7,6 +7,7 @@ import {
   buildTrainListSearchParams,
   loadDefaultTrainSearchForm,
   persistTrainStations,
+  persistTrainSearchDate,
   stationFromQuery,
   validateTrainSearch,
 } from "@/lib/train-search";
@@ -44,6 +45,10 @@ export function useTrainSearchForm(options?: { enabled?: boolean }) {
   useEffect(() => {
     persistTrainStations(fromStation, toStation);
   }, [fromStation, toStation]);
+
+  useEffect(() => {
+    persistTrainSearchDate(date);
+  }, [date]);
 
   const resetFromQuery = useCallback(
     (initial: TrainSearchQueryInitial) => {

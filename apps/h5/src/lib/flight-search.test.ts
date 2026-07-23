@@ -1,12 +1,16 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Trafficline } from "@ryx/shared-types";
 
 import {
   buildFlightListSearchParams,
   buildHomeIndexParams,
   cityFromQuery,
+  FLIGHT_STORAGE_DATE,
+  loadStoredFlightDate,
+  persistFlightSearchDate,
   resolveFlightLocationCode,
 } from "./flight-search";
+import { todayDateString } from "./date-search";
 
 const airports: Trafficline[] = [
   {
@@ -106,5 +110,51 @@ describe("buildFlightListSearchParams", () => {
     expect(params.get("toAsAirport")).toBe("false");
     expect(params.get("fromAsAirport")).toBe("false");
     expect(params.get("channel")).toBe("tourist");
+  });
+});
+
+describe("flight search date persistence", () => {
+  beforeEach(() => {
+    vi.stubGlobal(
+      "localStorage",
+      (() => {
+        const store = new Map<string, string>();
+        return {
+          getItem: (key: string) => store.get(key) ?? null,
+          setItem: (key: string, value: string) => {
+            store.set(key, value);
+          },
+          removeItem: (key: string) => {
+            store.delete(key);
+          },
+          clear: () => {
+            store.clear();
+          },
+        };
+      })(),
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("loads today when storage is empty", () => {
+    expect(loadStoredFlightDate()).toBe(todayDateString());
+  });
+
+  it("loads a stored future date", () => {
+    localStorage.setItem(FLIGHT_STORAGE_DATE, "2026-08-31");
+    expect(loadStoredFlightDate()).toBe("2026-08-31");
+  });
+
+  it("falls back to today for past stored dates", () => {
+    localStorage.setItem(FLIGHT_STORAGE_DATE, "2020-01-01");
+    expect(loadStoredFlightDate()).toBe(todayDateString());
+  });
+
+  it("persists selected date", () => {
+    persistFlightSearchDate("2026-08-31");
+    expect(localStorage.getItem(FLIGHT_STORAGE_DATE)).toBe("2026-08-31");
   });
 });

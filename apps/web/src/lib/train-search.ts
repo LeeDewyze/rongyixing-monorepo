@@ -1,10 +1,11 @@
 import type { TrainStation } from "@ryx/shared-types";
 
 import { CITY_HISTORY_KEYS } from "./city-picker";
-import { todayDateString } from "./date-search";
+import { parseLocalDate, todayDateString } from "./date-search";
 
 export const TRAIN_STORAGE_FROM = "ryx_train_fromStation";
 export const TRAIN_STORAGE_TO = "ryx_train_toStation";
+export const TRAIN_STORAGE_DATE = "ryx_train_search_date";
 
 export const DEFAULT_TRAIN_FROM: TrainStation = {
   Id: "1",
@@ -44,11 +45,30 @@ export function persistTrainStations(from: TrainStation, to: TrainStation) {
   localStorage.setItem(TRAIN_STORAGE_TO, JSON.stringify(to));
 }
 
+export function loadStoredTrainDate(): string {
+  const today = todayDateString();
+  try {
+    const raw = localStorage.getItem(TRAIN_STORAGE_DATE);
+    if (raw && parseLocalDate(raw) && raw >= today) {
+      return raw;
+    }
+  } catch {
+    /* ignore */
+  }
+  return today;
+}
+
+export function persistTrainSearchDate(date: string) {
+  if (!parseLocalDate(date)) return;
+  const today = todayDateString();
+  localStorage.setItem(TRAIN_STORAGE_DATE, date >= today ? date : today);
+}
+
 export function loadDefaultTrainSearchForm() {
   return {
     fromStation: loadStoredStation(TRAIN_STORAGE_FROM, DEFAULT_TRAIN_FROM),
     toStation: loadStoredStation(TRAIN_STORAGE_TO, DEFAULT_TRAIN_TO),
-    date: todayDateString(),
+    date: loadStoredTrainDate(),
   };
 }
 
@@ -111,9 +131,7 @@ export const trainStationPickerAdapter = {
   getPinyin: (station: TrainStation) => station.Pinyin,
   getIsHot: (station: TrainStation) => Boolean(station.IsHot),
   getSearchValues: (station: TrainStation) =>
-    [station.Code, station.Name, station.Nickname, station.Pinyin].filter(
-      Boolean,
-    ) as string[],
+    [station.Code, station.Name, station.Nickname, station.Pinyin].filter(Boolean) as string[],
 };
 
 export { CITY_HISTORY_KEYS };

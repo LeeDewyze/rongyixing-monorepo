@@ -1,11 +1,18 @@
 import type { FlightSearchParams, Trafficline } from "@ryx/shared-types";
 
-import { buildDateRange, formatDateLabel, formatDayChip, todayDateString } from "./date-search";
+import {
+  buildDateRange,
+  formatDateLabel,
+  formatDayChip,
+  parseLocalDate,
+  todayDateString,
+} from "./date-search";
 
 export { buildDateRange, formatDayChip, todayDateString };
 
 export const FLIGHT_STORAGE_FROM = "ryx_flight_fromCity";
 export const FLIGHT_STORAGE_TO = "ryx_flight_toCity";
+export const FLIGHT_STORAGE_DATE = "ryx_flight_search_date";
 export const FLIGHT_CITY_SEARCH_PLACEHOLDER = "搜索城市或机场名称";
 
 export const DEFAULT_FLIGHT_FROM: Trafficline = {
@@ -68,6 +75,25 @@ export function loadStoredCity(key: string, fallback: Trafficline): Trafficline 
 export function persistFlightCities(fromCity: Trafficline, toCity: Trafficline) {
   localStorage.setItem(FLIGHT_STORAGE_FROM, JSON.stringify(fromCity));
   localStorage.setItem(FLIGHT_STORAGE_TO, JSON.stringify(toCity));
+}
+
+export function loadStoredFlightDate(): string {
+  const today = todayDateString();
+  try {
+    const raw = localStorage.getItem(FLIGHT_STORAGE_DATE);
+    if (raw && parseLocalDate(raw) && raw >= today) {
+      return raw;
+    }
+  } catch {
+    /* ignore */
+  }
+  return today;
+}
+
+export function persistFlightSearchDate(date: string) {
+  if (!parseLocalDate(date)) return;
+  const today = todayDateString();
+  localStorage.setItem(FLIGHT_STORAGE_DATE, date >= today ? date : today);
 }
 
 /** Legacy: Tag=Airport → airport code; Tag=AirportCity → AirportCityCode. */
@@ -247,7 +273,7 @@ export function loadDefaultSearchForm(): {
   return {
     fromCity: loadStoredCity(FLIGHT_STORAGE_FROM, DEFAULT_FLIGHT_FROM),
     toCity: loadStoredCity(FLIGHT_STORAGE_TO, DEFAULT_FLIGHT_TO),
-    date: todayDateString(),
+    date: loadStoredFlightDate(),
   };
 }
 
