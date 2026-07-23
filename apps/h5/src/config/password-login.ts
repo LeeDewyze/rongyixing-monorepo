@@ -22,12 +22,18 @@ export const PASSWORD_LOGIN_LAYOUT = {
     color: "#FFFFFF",
     text: "账号密码登录",
   },
+  loginModeTabs: {
+    left: 40,
+    top: 352,
+    width: 330,
+    height: 58,
+  },
   inputClear: {
     size: 28,
   },
   accountInput: {
     left: 40,
-    top: 339,
+    top: 371,
     width: 670,
     fontSize: 32,
     placeholder: "请输入账号",
@@ -35,7 +41,7 @@ export const PASSWORD_LOGIN_LAYOUT = {
   },
   passwordInput: {
     left: 40,
-    top: 448,
+    top: 480,
     width: 670,
     fontSize: 32,
     placeholder: "登录密码",
@@ -45,7 +51,7 @@ export const PASSWORD_LOGIN_LAYOUT = {
   },
   button: {
     left: 40,
-    top: 568,
+    top: 600,
     width: 670,
     height: 84,
     borderRadius: 12,
@@ -55,7 +61,7 @@ export const PASSWORD_LOGIN_LAYOUT = {
   },
   forgotPasswordLink: {
     right: 40,
-    top: 708,
+    top: 740,
     fontSize: 24,
     fontWeight: 400,
     color: "#FFFFFF",
@@ -63,7 +69,7 @@ export const PASSWORD_LOGIN_LAYOUT = {
   },
   rememberPassword: {
     left: 40,
-    top: 708,
+    top: 740,
     fontSize: 24,
     checkboxSize: 28,
     checkboxCheckedBg: "var(--brand-btn-start)",

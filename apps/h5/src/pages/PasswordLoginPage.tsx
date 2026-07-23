@@ -4,6 +4,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import passwordBg from "@/assets/login/password-bg.jpg";
 import { LegalDocumentSheet } from "@/components/contact/LegalDocumentSheet";
 import { DesignScreen } from "@/components/DesignScreen";
+import { PageToast } from "@/components/layout/PageToast";
 import { designCqw, designHeightPercent, designWidthPercent } from "@/config/design";
 import { LOGIN_FONT, PASSWORD_LOGIN_LAYOUT, PASSWORD_LOGIN_SHARED } from "@/config/password-login";
 import { useMobileLogin, usePasswordLogin, useSendLoginCode } from "@/hooks/useAuth";
@@ -24,10 +25,13 @@ const { overlay, agreement } = PASSWORD_LOGIN_SHARED;
 
 type LoginMode = "password" | "sms";
 type LegalDoc = "agreement" | "privacy" | null;
+type ToastState = { message: string; tone: "success" | "error" } | null;
 const FORM_OFFSET = 72;
+const TOAST_DURATION_MS = 2500;
 
 const {
   title,
+  loginModeTabs,
   accountInput,
   passwordInput,
   button,
@@ -120,14 +124,24 @@ export function PasswordLoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberChecked, setRememberChecked] = useState(initialForm.rememberChecked);
   const [agreed, setAgreed] = useState(true);
-  const [formHint, setFormHint] = useState<string | null>(null);
+  const [toast, setToast] = useState<ToastState>(null);
   const [legalDoc, setLegalDoc] = useState<LegalDoc>(null);
+
+  function showToast(message: string, tone: "success" | "error" = "error") {
+    setToast({ message, tone });
+  }
 
   useEffect(() => {
     if (countdown <= 0) return;
     const timer = window.setTimeout(() => setCountdown((value) => Math.max(0, value - 1)), 1000);
     return () => window.clearTimeout(timer);
   }, [countdown]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = window.setTimeout(() => setToast(null), TOAST_DURATION_MS);
+    return () => window.clearTimeout(timer);
+  }, [toast]);
 
   const legalOptions = contactUrlOptionsFromApiConfig();
   const legalTitle =
@@ -151,19 +165,19 @@ export function PasswordLoginPage() {
     }
 
     if (!account.trim()) {
-      setFormHint("请输入账号");
+      showToast("请输入账号");
       return;
     }
     if (!password) {
-      setFormHint("请输入密码");
+      showToast("请输入密码");
       return;
     }
     if (!agreed) {
-      setFormHint("请先阅读并同意用户协议");
+      showToast("请先阅读并同意用户协议");
       return;
     }
 
-    setFormHint(null);
+    setToast(null);
     try {
       await login.mutateAsync({ Name: account.trim(), Password: password });
       if (rememberChecked) {
@@ -181,21 +195,21 @@ export function PasswordLoginPage() {
     if (sendCode.isPending || countdown > 0) return;
     const trimmedMobile = mobile.trim();
     if (!trimmedMobile) {
-      setFormHint("请输入手机号");
+      showToast("请输入手机号");
       return;
     }
     if (!/^1\d{10}$/.test(trimmedMobile)) {
-      setFormHint("请输入正确的手机号");
+      showToast("请输入正确的手机号");
       return;
     }
 
-    setFormHint(null);
+    setToast(null);
     try {
       await sendCode.mutateAsync(trimmedMobile);
       setCodeSent(true);
       setSmsCode("");
       setCountdown(60);
-      setFormHint("验证码已发送");
+      showToast("验证码已发送", "success");
     } catch {
       // Error surfaced via sendCode.error
     }
@@ -203,23 +217,23 @@ export function PasswordLoginPage() {
 
   async function handleSmsLogin() {
     if (!mobile.trim()) {
-      setFormHint("请输入手机号");
+      showToast("请输入手机号");
       return;
     }
     if (!/^1\d{10}$/.test(mobile.trim())) {
-      setFormHint("请输入正确的手机号");
+      showToast("请输入正确的手机号");
       return;
     }
     if (!smsCode.trim()) {
-      setFormHint("请输入验证码");
+      showToast("请输入验证码");
       return;
     }
     if (!agreed) {
-      setFormHint("请先阅读并同意用户协议");
+      showToast("请先阅读并同意用户协议");
       return;
     }
 
-    setFormHint(null);
+    setToast(null);
     try {
       await mobileLogin.mutateAsync({ Mobile: mobile.trim(), Code: smsCode.trim() });
       navigateAfterLogin();
@@ -240,6 +254,11 @@ export function PasswordLoginPage() {
       ? account.trim().length > 0 && password.length > 0
       : mobile.trim().length > 0 && smsCode.trim().length > 0);
   const apiMode = import.meta.env.DEV ? getApiMode() : null;
+
+  useEffect(() => {
+    if (!authError) return;
+    showToast(authError instanceof Error ? authError.message : "登录失败");
+  }, [authError]);
 
   return (
     <DesignScreen>
@@ -272,10 +291,10 @@ export function PasswordLoginPage() {
         <div
           className="absolute flex rounded-full bg-white/15 p-1"
           style={{
-            left: designWidthPercent(40),
-            top: designHeightPercent(320),
-            width: designWidthPercent(330),
-            height: designCqw(58),
+            left: designWidthPercent(loginModeTabs.left),
+            top: designHeightPercent(loginModeTabs.top),
+            width: designWidthPercent(loginModeTabs.width),
+            height: designCqw(loginModeTabs.height),
             backdropFilter: "blur(10px)",
           }}
         >
@@ -292,7 +311,7 @@ export function PasswordLoginPage() {
               }}
               onClick={() => {
                 setLoginMode(mode);
-                setFormHint(null);
+                setToast(null);
               }}
             >
               {mode === "password" ? "账号登录" : "短信登录"}
@@ -430,36 +449,6 @@ export function PasswordLoginPage() {
           {pending ? "登录中…" : button.text}
         </button>
 
-        {formHint ? (
-          <p
-            className="absolute text-amber-200"
-            style={{
-              left: designWidthPercent(button.left),
-              top: `calc(${designHeightPercent(button.top + FORM_OFFSET)} + ${designCqw(
-                button.height + 12,
-              )})`,
-              fontSize: designCqw(24),
-            }}
-          >
-            {formHint}
-          </p>
-        ) : null}
-
-        {authError ? (
-          <p
-            className="absolute text-red-300"
-            style={{
-              left: designWidthPercent(button.left),
-              top: `calc(${designHeightPercent(button.top + FORM_OFFSET)} + ${designCqw(
-                button.height + 12,
-              )})`,
-              fontSize: designCqw(24),
-            }}
-          >
-            {authError instanceof Error ? authError.message : "登录失败"}
-          </p>
-        ) : null}
-
         {loginMode === "password" ? (
           <label
             className="absolute flex cursor-pointer items-center"
@@ -537,7 +526,7 @@ export function PasswordLoginPage() {
           onClick={() => {
             setAgreed((value) => {
               const next = !value;
-              if (next) setFormHint(null);
+              if (next) setToast(null);
               return next;
             });
           }}
@@ -546,7 +535,7 @@ export function PasswordLoginPage() {
             event.preventDefault();
             setAgreed((value) => {
               const next = !value;
-              if (next) setFormHint(null);
+              if (next) setToast(null);
               return next;
             });
           }}
@@ -556,7 +545,7 @@ export function PasswordLoginPage() {
             checked={agreed}
             onChange={(e) => {
               setAgreed(e.target.checked);
-              if (e.target.checked) setFormHint(null);
+              if (e.target.checked) setToast(null);
             }}
             onClick={(event) => event.stopPropagation()}
             className="login-agreement-checkbox shrink-0 appearance-none rounded-full border border-white/70 bg-transparent"
@@ -612,6 +601,8 @@ export function PasswordLoginPage() {
           onClose={() => setLegalDoc(null)}
         />
       </div>
+
+      <PageToast message={toast?.message ?? null} tone={toast?.tone} placement="center" />
     </DesignScreen>
   );
 }
