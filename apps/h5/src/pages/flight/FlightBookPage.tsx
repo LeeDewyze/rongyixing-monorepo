@@ -96,6 +96,7 @@ import { resolvePassengerPolicyFromSelection } from "@/lib/flight-book-policy";
 import {
   buildCabinsHref,
   clearFlightBookSelection,
+  markFlightBookExitToHome,
   type FlightBookSelection,
 } from "@/lib/flight-book-session";
 import { navigateBack } from "@/lib/navigation";
@@ -315,6 +316,7 @@ export function FlightBookPage() {
     state?: { bookedOrderId: string; product: "flight" },
   ) {
     skipEmptySelectionRedirectRef.current = true;
+    markFlightBookExitToHome();
     navigate(path, { replace: true, state });
     clearFlightBookSelection();
     clearFlightExchangeSession();

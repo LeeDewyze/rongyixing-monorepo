@@ -12,6 +12,7 @@ import type { HomeTravelMode } from "@/config/home-assets";
 // Session snapshot for the current flight booking flow; passenger selection remains
 // product-scoped in ryx_passenger_selection_1.
 const STORAGE_KEY = "ryx_flight_book_selection";
+const BOOK_EXIT_HOME_KEY = "ryx_flight_book_exit_home";
 export const FLIGHT_BOOK_SELECTION_EVENT = "ryx-flight-book-selection-change";
 
 export interface FlightBookSelection {
@@ -61,6 +62,17 @@ export function saveFlightBookSelection(selection: FlightBookSelection): void {
 export function clearFlightBookSelection(): void {
   sessionStorage.removeItem(STORAGE_KEY);
   notifyChange();
+}
+
+/** After submit, order detail back should exit to flight home instead of book history. */
+export function markFlightBookExitToHome(): void {
+  sessionStorage.setItem(BOOK_EXIT_HOME_KEY, "1");
+}
+
+export function consumeFlightBookExitToHome(): boolean {
+  if (sessionStorage.getItem(BOOK_EXIT_HOME_KEY) !== "1") return false;
+  sessionStorage.removeItem(BOOK_EXIT_HOME_KEY);
+  return true;
 }
 
 export function buildCabinsHref(selection: FlightBookSelection): string {

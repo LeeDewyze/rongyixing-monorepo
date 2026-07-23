@@ -39,6 +39,7 @@ import {
 } from "@/lib/flight-order-detail";
 import { parseOrderListScope } from "@/lib/order-list-params";
 import { getOrderListPath } from "@/lib/order-routes";
+import { consumeFlightBookExitToHome } from "@/lib/flight-book-session";
 import { scrollH5MainToTop } from "@/lib/scroll-h5-main";
 
 const FOOTER_OFFSET = "calc(4.5rem + env(safe-area-inset-bottom))";
@@ -47,6 +48,8 @@ const ORDER_FLIGHT_DETAIL_BACKGROUND = { background: "var(--brand-form-header-gr
 interface OrderDetailLocationState {
   action?: "cancel" | "refund";
   ticketId?: string;
+  bookedOrderId?: string;
+  product?: "flight";
 }
 
 type FlightRefundKind = "voluntary" | "nonVoluntary";
@@ -115,8 +118,15 @@ export function OrderFlightDetailPage() {
       setExplainOpen(false);
       return;
     }
+    const fromBookFlow =
+      (location.state as OrderDetailLocationState | null)?.bookedOrderId === orderId ||
+      consumeFlightBookExitToHome();
+    if (fromBookFlow) {
+      navigate("/home?product=flight", { replace: true });
+      return;
+    }
     leaveDetail();
-  }, [billOpen, explainOpen, leaveDetail]);
+  }, [billOpen, explainOpen, leaveDetail, location.state, navigate, orderId]);
 
   usePageHeader({ visible: false });
 
