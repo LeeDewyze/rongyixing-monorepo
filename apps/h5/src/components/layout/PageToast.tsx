@@ -15,8 +15,8 @@ export function PageToast({
 
   const placementClassName =
     placement === "center"
-      ? "pointer-events-none fixed inset-0 z-50 flex items-center justify-center px-6"
-      : "pointer-events-none fixed inset-x-0 bottom-24 z-50 flex justify-center px-6";
+      ? "pointer-events-none fixed inset-0 z-[90] flex items-center justify-center px-6"
+      : "pointer-events-none fixed inset-x-0 bottom-24 z-[90] flex justify-center px-6";
 
   return (
     <div className={`${placementClassName} ${className}`}>

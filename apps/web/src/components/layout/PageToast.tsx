@@ -9,7 +9,7 @@ export function PageToast({ message, tone = "error", className = "" }: PageToast
 
   return (
     <div
-      className={`pointer-events-none fixed inset-x-0 bottom-24 z-50 flex justify-center px-6 ${className}`}
+      className={`pointer-events-none fixed inset-x-0 bottom-24 z-[90] flex justify-center px-6 ${className}`}
     >
       <p
         className={`rounded-xl px-4 py-2.5 text-[13px] text-white shadow-lg ${

@@ -7,6 +7,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { CredentialFormShell } from "@/components/passenger/CredentialFormShell";
 import { PassengerCredentialForm } from "@/components/passenger/PassengerCredentialForm";
 import { usePageHeader } from "@/components/layout";
+import { PageToast } from "@/components/layout/PageToast";
 import {
   useRemoveExternalPassenger,
   useRemoveStaffCredential,
@@ -81,6 +82,8 @@ function credentialSelectionPatch(values: CredentialFormValues): Partial<Passeng
   };
 }
 
+const CREDENTIAL_TOAST_DURATION_MS = 2500;
+
 export function PassengerCredentialPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -113,6 +116,7 @@ export function PassengerCredentialPage() {
 
   const [values, setValues] = useState<CredentialFormValues>(initialValues);
   const [error, setError] = useState("");
+  const [toast, setToast] = useState<string | null>(null);
   const [showExternalDeleteConfirm, setShowExternalDeleteConfirm] = useState(false);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
@@ -128,7 +132,7 @@ export function PassengerCredentialPage() {
   const shouldConfirmDiscard =
     mode !== "self" && addNew && hasCredentialFormChanges(values, initialValues);
   const fixedName =
-    mode === "self"
+    mode === "self" && !addNew
       ? normalizeCredentialName(memberProfile?.RealName ?? memberProfile?.Name ?? "")
       : "";
   const title = isExternalMode
@@ -148,16 +152,26 @@ export function PassengerCredentialPage() {
   const backTo = returnTo;
 
   useEffect(() => {
-    if (mode !== "self" || !fixedName) return;
+    if (mode !== "self" || !fixedName || addNew) return;
     setValues((current) => credentialFormWithFixedName(current, fixedName));
-  }, [fixedName, mode]);
+  }, [addNew, fixedName, mode]);
 
   usePageHeader({ visible: false });
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = window.setTimeout(() => setToast(null), CREDENTIAL_TOAST_DURATION_MS);
+    return () => window.clearTimeout(timer);
+  }, [toast]);
+
+  function showToast(message: string) {
+    setToast(message);
+  }
 
   async function handleSave() {
     const submitValues =
       mode === "self" && fixedName ? credentialFormWithFixedName(values, fixedName) : values;
-    if (mode === "self" && !fixedName) {
+    if (mode === "self" && !addNew && !fixedName) {
       setError("未获取到真实姓名");
       return;
     }
@@ -167,6 +181,7 @@ export function PassengerCredentialPage() {
       return;
     }
     setError("");
+    setToast(null);
     try {
       if (mode === "external") {
         await saveExternal.mutateAsync(submitValues);
@@ -182,7 +197,7 @@ export function PassengerCredentialPage() {
       }
       navigate(returnTo, { replace: true });
     } catch (err) {
-      setError(formatApiError(err));
+      showToast(formatApiError(err));
     }
   }
 
@@ -218,7 +233,7 @@ export function PassengerCredentialPage() {
       });
       navigate(returnTo, { replace: true });
     } catch (err) {
-      setError(formatApiError(err));
+      showToast(formatApiError(err));
     }
   }
 
@@ -237,7 +252,7 @@ export function PassengerCredentialPage() {
       setShowExternalDeleteConfirm(false);
       navigate(returnTo, { replace: true });
     } catch (err) {
-      setError(formatApiError(err));
+      showToast(formatApiError(err));
     }
   }
 
@@ -302,6 +317,8 @@ export function PassengerCredentialPage() {
         onConfirm={() => navigate(backTo)}
         onCancel={() => setShowDiscardConfirm(false)}
       />
+
+      <PageToast message={toast} placement="center" />
     </>
   );
 }
