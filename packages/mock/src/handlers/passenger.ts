@@ -81,6 +81,8 @@ export function createPassengerMockHandlers(): Record<
         Country: body.Country,
         IssueCountry: body.IssueCountry,
         Gender: readGender(body.Gender),
+        Birthday: body.Birthday != null ? String(body.Birthday) : undefined,
+        ExpirationDate: body.ExpirationDate != null ? String(body.ExpirationDate) : undefined,
       };
       mockPassengers.unshift(entry);
       return successResponse(entry.Id);
@@ -106,6 +108,11 @@ export function createPassengerMockHandlers(): Record<
           CredentialNo: number,
           CredentialType: type,
           Gender: readGender(body.Gender, mockPassengers[idx].Gender),
+          Birthday: body.Birthday != null ? String(body.Birthday) : mockPassengers[idx].Birthday,
+          ExpirationDate:
+            body.ExpirationDate != null
+              ? String(body.ExpirationDate)
+              : mockPassengers[idx].ExpirationDate,
         };
         return successResponse(mockPassengers[idx]);
       }

@@ -3,7 +3,6 @@ import {
   CredentialType,
   LEGACY_MEMBER_CREDENTIAL_TYPE_OPTIONS,
   PASSENGER_TYPE_ADULT,
-  credentialTypeValue,
   isIdCardType,
   memberToCredential,
   type ExternalPassengerApiPayload,
@@ -136,16 +135,10 @@ export function credentialFormFromPassenger(
 ): CredentialFormValues {
   const cred = memberToCredential(passenger);
   return {
-    Id: passenger.Id,
-    Type: credentialTypeValue(cred) || CredentialType.IdCard,
-    Name: passenger.Name,
-    Number: cred.Number ?? "",
-    Mobile: passenger.Mobile ?? "",
-    Gender: passenger.Gender ?? "M",
+    ...credentialFormFromCredential(cred, staffId),
+    Gender: passenger.Gender ?? cred.Gender ?? "M",
     PassengerType:
       typeof passenger.PassengerType === "number" ? passenger.PassengerType : PASSENGER_TYPE_ADULT,
-    StaffId: staffId,
-    AccountId: passenger.Id,
   };
 }
 

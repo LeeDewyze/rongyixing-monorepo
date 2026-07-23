@@ -193,23 +193,29 @@ export function memberToCredential(p: import("./member.js").MemberPassenger): Pa
     Id: p.Id,
     Name: p.Name,
     Mobile: p.Mobile,
+    Gender: p.Gender,
     Type: credType,
     TypeName: credTypeName,
     CredentialsType: credType,
     CredentialsTypeName: credTypeName,
     Number: number,
     HideNumber: hideNumber,
+    Birthday: p.Birthday,
+    ExpirationDate: p.ExpirationDate,
+    Surname: p.Surname,
+    Givenname: p.Givenname,
   };
 }
 
-export function toHotelBookPassenger(info: PassengerBookInfo): import("./hotel.js").HotelBookPassenger {
+export function toHotelBookPassenger(
+  info: PassengerBookInfo,
+): import("./hotel.js").HotelBookPassenger {
   const c = info.credential;
   return {
     Name: c.Name,
     Mobile: c.Mobile,
     CredentialNo: c.Number,
     CredentialType: String(c.CredentialsType ?? c.Type ?? ""),
-    travelFormId:
-      "travelFormId" in info.passenger ? info.passenger.travelFormId : undefined,
+    travelFormId: "travelFormId" in info.passenger ? info.passenger.travelFormId : undefined,
   };
 }

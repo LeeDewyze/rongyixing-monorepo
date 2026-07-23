@@ -6,6 +6,7 @@ import { CredentialType } from "@ryx/shared-types";
 import {
   credentialFormFromCredential,
   credentialFormWithFixedName,
+  credentialFormFromPassenger,
   credentialNameMatches,
   emptyCredentialForm,
   normalizeCredentialDate,
@@ -56,6 +57,24 @@ describe("credential date normalization", () => {
 
     expect(form.Birthday).toBe("1970-01-01");
     expect(form.ExpirationDate).toBe("2023-06-27");
+  });
+
+  it("maps external passenger dates when editing from passenger list", () => {
+    const form = credentialFormFromPassenger({
+      Id: "P100",
+      Name: "王五",
+      Mobile: "13800138003",
+      CredentialsType: CredentialType.Taiwan,
+      CredentialsTypeName: "台胞证",
+      Number: "T12345678",
+      Gender: "M",
+      Birthday: "1985-03-15T00:00:00",
+      ExpirationDate: "2030-12-31T00:00:00",
+    });
+
+    expect(form.Birthday).toBe("1985-03-15");
+    expect(form.ExpirationDate).toBe("2030-12-31");
+    expect(form.Type).toBe(CredentialType.Taiwan);
   });
 
   it("submits legacy date-only payload fields", () => {

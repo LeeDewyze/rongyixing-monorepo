@@ -19,6 +19,10 @@ export interface MemberPassenger {
   Policy?: Record<string, unknown>;
   /** Legacy passenger gender (M/F). */
   Gender?: string;
+  Birthday?: string;
+  ExpirationDate?: string;
+  Surname?: string;
+  Givenname?: string;
 }
 
 export interface PassengerListParams {
