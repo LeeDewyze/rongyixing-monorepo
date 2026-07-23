@@ -28,6 +28,13 @@ export function addDays(dateStr: string, days: number): string {
   return formatLocalDateString(d);
 }
 
+/** Legacy train booking window: today through today + 14 days (inclusive). */
+export const TRAIN_BOOKING_WINDOW_DAYS = 14;
+
+export function trainMaxSelectableDate(fromDate = todayDateString()): string {
+  return addDays(fromDate, TRAIN_BOOKING_WINDOW_DAYS);
+}
+
 export function formatDateLabel(dateStr: string): string {
   const d = parseLocalDate(dateStr);
   if (!d) return dateStr;
@@ -82,6 +89,7 @@ export function buildListDateStripRange(
 /** Legacy days-calendar_ryx: include today when a near-future date is selected. */
 export function buildTrainListDateStripRange(selectedDate: string): string[] {
   const today = todayDateString();
+  const maxDate = trainMaxSelectableDate(today);
   const anchor = parseLocalDate(selectedDate) ? selectedDate : today;
 
   const todayMs = parseLocalDate(today)?.getTime() ?? 0;
@@ -91,7 +99,9 @@ export function buildTrainListDateStripRange(selectedDate: string): string[] {
 
   const dates: string[] = [];
   for (let offset = -idx; offset < 7 + idx; offset += 1) {
-    dates.push(addDays(anchor, offset));
+    const date = addDays(anchor, offset);
+    if (date < today || date > maxDate) continue;
+    dates.push(date);
   }
   return dates;
 }

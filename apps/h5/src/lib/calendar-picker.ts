@@ -1,4 +1,10 @@
-import { addDays, formatLocalDateString, parseLocalDate, todayDateString } from "./date-search";
+import {
+  addDays,
+  formatLocalDateString,
+  parseLocalDate,
+  todayDateString,
+  trainMaxSelectableDate,
+} from "./date-search";
 
 export type CalendarProduct = "hotel" | "flight" | "train";
 
@@ -97,7 +103,7 @@ export function calendarMinSelectableDate(config: CalendarPickerConfig, now = ne
 /** Legacy train calendar allows booking within ~14 days. */
 export function calendarMaxSelectableDate(config: CalendarPickerConfig): string | undefined {
   if (config.product === "train") {
-    return addDays(todayDateString(), 14);
+    return trainMaxSelectableDate();
   }
   return undefined;
 }

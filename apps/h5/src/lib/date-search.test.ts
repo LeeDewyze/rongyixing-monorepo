@@ -8,6 +8,7 @@ import {
   parseLocalDate,
   relativeDayLabel,
   todayDateString,
+  trainMaxSelectableDate,
 } from "./date-search";
 
 describe("date-search", () => {
@@ -53,6 +54,17 @@ describe("date-search", () => {
     const range = buildTrainListDateStripRange(today);
     expect(range).toHaveLength(7);
     expect(range[0]).toBe(today);
+  });
+
+  it("buildTrainListDateStripRange does not exceed train booking window", () => {
+    const today = todayDateString();
+    const maxDate = trainMaxSelectableDate(today);
+    const nearMax = addDays(today, 10);
+    const range = buildTrainListDateStripRange(nearMax);
+
+    expect(range.every((date) => date >= today && date <= maxDate)).toBe(true);
+    expect(range.at(-1)).toBe(maxDate);
+    expect(range).not.toContain(addDays(maxDate, 1));
   });
 
   it("relativeDayLabel handles invalid date", () => {

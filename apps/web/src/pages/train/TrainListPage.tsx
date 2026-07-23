@@ -29,7 +29,7 @@ import { useTrainPolicy } from "@/hooks/useTrainBook";
 import { usePassengerSelection } from "@/hooks/usePassenger";
 import { useIdentity } from "@/hooks/useIdentity";
 import { TRAIN_CALENDAR_CONFIG } from "@/lib/calendar-picker";
-import { parseLocalDate, todayDateString } from "@/lib/date-search";
+import { parseLocalDate, todayDateString, trainMaxSelectableDate } from "@/lib/date-search";
 import { getApiMode } from "@/lib/env";
 import { formatApiError } from "@/lib/formatApiError";
 import { buildPassengerSelectPath } from "@/lib/passenger-selection";
@@ -131,9 +131,16 @@ export function TrainListPage() {
       return;
     }
     const today = todayDateString();
+    const maxDate = trainMaxSelectableDate(today);
     if (listParams.Date < today) {
       const params = new URLSearchParams(searchParams);
       params.set("date", today);
+      navigate(`/train/list?${params.toString()}`, { replace: true });
+      return;
+    }
+    if (listParams.Date > maxDate) {
+      const params = new URLSearchParams(searchParams);
+      params.set("date", maxDate);
       navigate(`/train/list?${params.toString()}`, { replace: true });
     }
   }, [listParams.Date, listParams.FromStation, listParams.ToStation, navigate, searchParams]);
