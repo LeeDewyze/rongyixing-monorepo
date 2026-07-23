@@ -201,6 +201,7 @@ function buildSegments(params: {
       FlyTimeName: "5h30m",
       LowestFare: "650",
       IsTransfer: true,
+      Transfer: { CityName: "福州" },
       PlaneTypeDescribe: "空客320(中)",
       RemainSeats: 2,
     },
@@ -285,6 +286,54 @@ export function createMockFlightDetail(params: {
   if (!segment) {
     return { FlightSegments: [], FlightFares: [] };
   }
+
+  if (segment.IsTransfer) {
+    const date = params.Date ?? segment.TakeoffTime?.slice(0, 10) ?? "2026-06-23";
+    const leg1: FlightSegment = {
+      ...segment,
+      Number: "MU2118",
+      FlightNumber: "MU2118",
+      AirlineName: "东方航空",
+      Airline: "MU",
+      FromCityName: segment.FromCityName ?? "北京",
+      FromAirportName: "大兴国际机场",
+      FromTerminal: "",
+      ToCityName: "西安",
+      ToAirportName: "咸阳国际机场",
+      ToTerminal: "T5",
+      TakeoffTime: `${date} 19:00:00`,
+      ArrivalTime: `${date} 21:00:00`,
+      FlyTimeName: "2h0m",
+      PlaneTypeDescribe: "空客A320(中)",
+      Meal: "有餐食",
+    };
+    const nextDay = new Date(`${date}T00:00:00`);
+    nextDay.setDate(nextDay.getDate() + 1);
+    const nextDate = nextDay.toISOString().slice(0, 10);
+    const leg2: FlightSegment = {
+      ...segment,
+      Number: "MU2227",
+      FlightNumber: "MU2227",
+      AirlineName: "东方航空",
+      Airline: "MU",
+      FromCityName: "西安",
+      FromAirportName: "咸阳国际机场",
+      FromTerminal: "T5",
+      ToCityName: segment.ToCityName ?? "上海",
+      ToAirportName: segment.ToAirportName ?? "虹桥T2",
+      ToTerminal: segment.ToTerminal ?? "T2",
+      TakeoffTime: `${nextDate} 07:35:00`,
+      ArrivalTime: `${nextDate} 11:40:00`,
+      FlyTimeName: "4h5m",
+      PlaneTypeDescribe: "空客A320(中)",
+      Meal: "有餐食",
+    };
+    return {
+      FlightSegments: [leg1, leg2],
+      FlightFares: mockCabinsForSegment(segment),
+    };
+  }
+
   return {
     FlightSegments: [{ ...segment }],
     FlightFares: mockCabinsForSegment(segment),

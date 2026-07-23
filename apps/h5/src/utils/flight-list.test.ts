@@ -22,6 +22,22 @@ describe("formatFlightTime", () => {
 });
 
 describe("normalizeFlightSegments", () => {
+  it("maps Duration to FlyTimeName when enriching segments", () => {
+    const [segment] = normalizeFlightSegments({
+      FlightViews: [
+        {
+          Price: "650",
+          Segment: {
+            Number: "MF8101",
+            Duration: "5h30m",
+            IsTransfer: true,
+          },
+        },
+      ],
+    });
+    expect(segment?.FlyTimeName).toBe("5h30m");
+  });
+
   it("assigns Id from FlightNos when FlightViews segment has no Id", () => {
     const segments = normalizeFlightSegments({
       FlightViews: [

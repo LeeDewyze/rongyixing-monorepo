@@ -14,6 +14,14 @@ import type {
   FlightSegment,
 } from "@ryx/shared-types";
 
+import { parseFlightTimestamp } from "@/utils/flight-list";
+import {
+  formatFlightLegDateTip,
+  formatFlightLocationLabel,
+  formatFlightMealLabel,
+  formatFlightMetaDuration,
+} from "@/utils/flight-list-display";
+
 /** Legacy FlightCabinType.Y | SeniorY */
 const ECONOMY_CABIN_TYPES = new Set([1, 8]);
 
@@ -181,7 +189,118 @@ export function resolveDetailSegment(
     ...merged,
     Number: detailSegment.Number || query.flightNumber,
     FlightNumber: detailSegment.FlightNumber || query.flightNumber,
+    IsTransfer: merged.IsTransfer ?? detailSegment.IsTransfer,
   };
+}
+
+export interface FlightTransferLayover {
+  cityLabel: string;
+  airportLabel: string;
+  waitDurationLabel?: string;
+}
+
+export interface FlightTransferLegView {
+  segment: FlightSegment;
+  fromLabel: string;
+  toLabel: string;
+  durationLabel?: string;
+  flightNo: string;
+  departureDayTip?: string;
+  arrivalDayTip?: string;
+  planeLabel: string;
+  mealLabel?: string;
+}
+
+export interface FlightTransferItinerary {
+  legs: FlightTransferLegView[];
+  layovers: FlightTransferLayover[];
+}
+
+function formatLayoverDuration(
+  arrivalTime: string | undefined,
+  nextTakeoffTime: string | undefined,
+): string | undefined {
+  const arrival = parseFlightTimestamp(arrivalTime);
+  const depart = parseFlightTimestamp(nextTakeoffTime);
+  if (!arrival || !depart || depart <= arrival) return undefined;
+
+  const totalMinutes = Math.round((depart - arrival) / 60_000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours > 0 && minutes > 0) return `${hours}h${minutes}m`;
+  if (hours > 0) return `${hours}h`;
+  return `${minutes}m`;
+}
+
+function resolveTransferCityLabel(segment: FlightSegment): string | undefined {
+  const transfer = segment.Transfer;
+  if (transfer && typeof transfer === "object") {
+    const city =
+      transfer.CityName ?? transfer.TransferCityName ?? transfer.City ?? transfer.AirportCityName;
+    if (city?.trim()) return city.trim();
+  }
+  return segment.ToCityName?.trim() || segment.FromCityName?.trim() || undefined;
+}
+
+/** Build cabins-page transfer itinerary from Home-Detail `FlightSegments`. */
+export function buildFlightTransferItinerary(
+  segments: FlightSegment[] | undefined,
+): FlightTransferItinerary | null {
+  if (!segments || segments.length < 2) return null;
+
+  const tripBaseDate = segments[0]?.TakeoffTime?.slice(0, 10);
+
+  const legs: FlightTransferLegView[] = segments.map((segment) => {
+    const flightNo = (segment.Number ?? segment.FlightNumber ?? "").trim();
+    const planeLabel = segment.PlaneTypeDescribe || segment.PlaneType || "";
+    const mealLabel = formatFlightMealLabel(segment.Meal);
+    const legTakeoffDate = segment.TakeoffTime?.slice(0, 10);
+
+    return {
+      segment,
+      fromLabel: formatFlightLocationLabel(
+        segment.FromCityName,
+        segment.FromAirportName,
+        segment.FromTerminal,
+      ),
+      toLabel: formatFlightLocationLabel(
+        segment.ToCityName,
+        segment.ToAirportName,
+        segment.ToTerminal,
+      ),
+      durationLabel: formatFlightMetaDuration(segment.FlyTimeName ?? segment.Duration),
+      flightNo,
+      departureDayTip: formatFlightLegDateTip(segment.TakeoffTime, tripBaseDate),
+      arrivalDayTip: formatFlightLegDateTip(segment.ArrivalTime, legTakeoffDate),
+      planeLabel,
+      mealLabel,
+    };
+  });
+
+  const layovers: FlightTransferLayover[] = [];
+  for (let index = 0; index < segments.length - 1; index += 1) {
+    const current = segments[index]!;
+    const next = segments[index + 1]!;
+    const city =
+      resolveTransferCityLabel(current) ??
+      resolveTransferCityLabel(next) ??
+      current.ToCityName ??
+      next.FromCityName ??
+      "中转";
+    const transferTime = current.Transfer?.TransferTime?.trim();
+    layovers.push({
+      cityLabel: city,
+      airportLabel: formatFlightLocationLabel(
+        current.ToCityName,
+        current.ToAirportName,
+        current.ToTerminal,
+      ),
+      waitDurationLabel:
+        transferTime || formatLayoverDuration(current.ArrivalTime, next.TakeoffTime),
+    });
+  }
+
+  return { legs, layovers };
 }
 
 export function normalizeFlightDetailData(

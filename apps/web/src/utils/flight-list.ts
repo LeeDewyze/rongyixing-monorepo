@@ -8,9 +8,7 @@ import type {
 
 export function parseFlightTimestamp(value: string | undefined): number {
   if (!value) return 0;
-  const normalized = value.includes("T")
-    ? value
-    : value.replace(" ", "T");
+  const normalized = value.includes("T") ? value : value.replace(" ", "T");
   const ts = Date.parse(normalized);
   return Number.isFinite(ts) ? ts : 0;
 }
@@ -20,6 +18,7 @@ export function enrichSegment(seg: FlightSegment): FlightSegment {
     ...seg,
     Number: seg.Number || seg.FlightNumber || "",
     FlightNumber: seg.FlightNumber || seg.Number,
+    FlyTimeName: seg.FlyTimeName ?? seg.Duration,
     TakeoffTimeStamp: seg.TakeoffTimeStamp ?? parseFlightTimestamp(seg.TakeoffTime ?? ""),
     ArrivalTimeStamp: seg.ArrivalTimeStamp ?? parseFlightTimestamp(seg.ArrivalTime ?? ""),
   };
@@ -47,25 +46,23 @@ export function normalizeFlightSegments(result: FlightListResult | undefined): F
   if (!result) return [];
 
   if (result.FlightViews?.length) {
-    return result.FlightViews
-      .map((view) => {
-        const seg = view.Segment;
-        if (!seg) return null;
-        const detailKey = seg.DetailKey ?? seg.Data ?? view.Data;
-        return enrichSegment({
-          ...seg,
-          Id: resolveFlightSegmentId(
-            { ...seg, DetailKey: detailKey, Data: seg.Data ?? view.Data },
-            view,
-          ),
-          LowestFare: seg.LowestFare ?? view.Price,
-          Number: seg.Number || seg.FlightNumber || "",
-          Data: seg.Data ?? view.Data,
-          DetailKey: detailKey,
-          BookType: seg.BookType ?? view.BookType,
-        });
-      })
-      .filter((s): s is FlightSegment => Boolean(s));
+    return result.FlightViews.map((view) => {
+      const seg = view.Segment;
+      if (!seg) return null;
+      const detailKey = seg.DetailKey ?? seg.Data ?? view.Data;
+      return enrichSegment({
+        ...seg,
+        Id: resolveFlightSegmentId(
+          { ...seg, DetailKey: detailKey, Data: seg.Data ?? view.Data },
+          view,
+        ),
+        LowestFare: seg.LowestFare ?? view.Price,
+        Number: seg.Number || seg.FlightNumber || "",
+        Data: seg.Data ?? view.Data,
+        DetailKey: detailKey,
+        BookType: seg.BookType ?? view.BookType,
+      });
+    }).filter((s): s is FlightSegment => Boolean(s));
   }
 
   return (result.Result?.FlightSegments ?? []).map(enrichSegment);
@@ -175,10 +172,7 @@ export function resetFlightFilterDraft(filter: FlightFilterCondition): FlightFil
 
 export function buildFilterOptions(segments: FlightSegment[]): FlightFilterCondition {
   const filter = createInitialFilter();
-  const pushUnique = (
-    list: FlightFilterOption[],
-    item: FlightFilterOption,
-  ) => {
+  const pushUnique = (list: FlightFilterOption[], item: FlightFilterOption) => {
     if (!list.some((x) => x.id === item.id)) list.push(item);
   };
 

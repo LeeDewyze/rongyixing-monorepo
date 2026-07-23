@@ -1,7 +1,16 @@
+import { useState } from "react";
+
 import type { FlightSegment } from "@ryx/shared-types";
 
+import { SummaryCollapseButton } from "@/components/book/SummaryCollapseButton";
 import { FLIGHT_CABINS_FONT } from "@/components/flight/flight-cabins-chrome";
 import summaryRouteArrow from "@/assets/flight/summary-route-arrow.png";
+import {
+  buildFlightTransferItinerary,
+  type FlightTransferItinerary,
+  type FlightTransferLegView,
+  type FlightTransferLayover,
+} from "@/lib/flight-detail";
 import { formatFlightTime } from "@/utils/flight-list";
 import {
   formatArrivalDateBadge,
@@ -12,6 +21,7 @@ import {
 
 interface FlightCabinsSummaryProps {
   segment: FlightSegment;
+  detailSegments?: FlightSegment[];
 }
 
 function AirlineLogo({ segment }: { segment: FlightSegment }) {
@@ -47,7 +57,204 @@ function MetaChip({
   );
 }
 
-export function FlightCabinsSummary({ segment }: FlightCabinsSummaryProps) {
+function RouteSummaryRow({
+  takeoffTime,
+  arrivalTime,
+  fromLabel,
+  toLabel,
+  durationLabel,
+  flightNo,
+  routeMiddleLabel,
+  routeMiddleSubLabel,
+  departureDayTip,
+  arrivalDayTip,
+}: {
+  takeoffTime?: string;
+  arrivalTime?: string;
+  fromLabel: string;
+  toLabel: string;
+  durationLabel?: string;
+  flightNo?: string;
+  routeMiddleLabel?: string;
+  routeMiddleSubLabel?: string;
+  departureDayTip?: string;
+  arrivalDayTip?: string;
+}) {
+  return (
+    <div className="grid grid-cols-[minmax(0,1fr)_7.5rem_minmax(0,1fr)] items-start gap-x-2">
+      <div className="min-w-0">
+        {departureDayTip ? (
+          <p className="mb-1 whitespace-nowrap text-[11px] font-medium leading-none text-[#ff8d1a]">
+            {departureDayTip}
+          </p>
+        ) : null}
+        <p className="text-[16px] font-medium leading-none tabular-nums text-[#010101]">
+          {formatFlightTime(takeoffTime)}
+        </p>
+        <p className="mt-1 truncate text-[14px] font-normal leading-none text-[#666666]">
+          {fromLabel}
+        </p>
+      </div>
+
+      <div className="pt-1 text-center">
+        {durationLabel ? (
+          <p className="text-[12px] leading-none text-[#999999]">{durationLabel}</p>
+        ) : null}
+        <div
+          className={
+            durationLabel
+              ? "mt-1 flex items-center justify-center"
+              : "flex items-center justify-center"
+          }
+        >
+          <img
+            src={summaryRouteArrow}
+            alt=""
+            width={56}
+            height={12}
+            className="h-3 w-14 shrink-0 object-contain"
+            aria-hidden
+          />
+        </div>
+        {flightNo ? (
+          <p className="mt-1 truncate text-[11px] font-normal leading-none text-[#666666]">
+            {flightNo}
+          </p>
+        ) : routeMiddleLabel ? (
+          <p className="mt-1 flex items-center justify-center gap-1 leading-none">
+            <span className="truncate text-[11px] font-medium text-[#2768FA]">
+              {routeMiddleLabel}
+            </span>
+            {routeMiddleSubLabel ? (
+              <span className="shrink-0 text-[11px] font-normal text-[#999999]">
+                {routeMiddleSubLabel}
+              </span>
+            ) : null}
+          </p>
+        ) : null}
+      </div>
+
+      <div className="min-w-0 text-right">
+        {arrivalDayTip ? (
+          <p className="mb-1 whitespace-nowrap text-[11px] font-medium leading-none text-[#ff8d1a]">
+            {arrivalDayTip}
+          </p>
+        ) : null}
+        <p className="text-[16px] font-medium leading-none tabular-nums text-[#010101]">
+          {formatFlightTime(arrivalTime)}
+        </p>
+        <p className="mt-1 truncate text-[14px] font-normal leading-none text-[#666666]">
+          {toLabel}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function TransferLayoverRow({ layover }: { layover: FlightTransferLayover }) {
+  const title = layover.waitDurationLabel
+    ? `中转 · ${layover.cityLabel} ${layover.waitDurationLabel}`
+    : `中转 · ${layover.cityLabel}`;
+
+  return (
+    <div className="border-y border-dashed border-[#E8EDF5] py-2.5 text-center">
+      <p className="text-[11px] font-medium leading-none text-[#2768FA]">{title}</p>
+      {layover.airportLabel ? (
+        <p className="mt-1 truncate text-[10px] leading-none text-[#999999]">
+          {layover.airportLabel}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function TransferLegBlock({ leg }: { leg: FlightTransferLegView }) {
+  const metaParts = [leg.planeLabel, leg.mealLabel].filter(Boolean);
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <AirlineLogo segment={leg.segment} />
+        <p className="min-w-0 truncate text-[13px] font-medium leading-none text-[#010101]">
+          {[leg.segment.AirlineName, leg.flightNo].filter(Boolean).join(" ")}
+        </p>
+      </div>
+      <RouteSummaryRow
+        takeoffTime={leg.segment.TakeoffTime}
+        arrivalTime={leg.segment.ArrivalTime}
+        fromLabel={leg.fromLabel}
+        toLabel={leg.toLabel}
+        durationLabel={leg.durationLabel}
+        flightNo={leg.flightNo}
+        departureDayTip={leg.departureDayTip}
+        arrivalDayTip={leg.arrivalDayTip}
+      />
+      {metaParts.length > 0 ? (
+        <p className="truncate text-[11px] leading-none text-[#999999]">{metaParts.join(" · ")}</p>
+      ) : null}
+    </div>
+  );
+}
+
+function formatCollapsedTransferMiddle(layovers: FlightTransferLayover[]): {
+  waitDurationLabel?: string;
+  routeMiddleLabel?: string;
+} {
+  const primaryLayover = layovers[0];
+  if (!primaryLayover) return {};
+
+  return {
+    waitDurationLabel: primaryLayover.waitDurationLabel,
+    routeMiddleLabel: `中转 · ${primaryLayover.cityLabel}`,
+  };
+}
+
+function TransferRouteCard({
+  itinerary,
+  expanded,
+  durationLabel,
+}: {
+  itinerary: FlightTransferItinerary;
+  expanded: boolean;
+  durationLabel?: string;
+}) {
+  const firstLeg = itinerary.legs[0]!;
+  const lastLeg = itinerary.legs[itinerary.legs.length - 1]!;
+  const collapsedTransferMiddle = formatCollapsedTransferMiddle(itinerary.layovers);
+
+  return (
+    <div className="mt-3 rounded-[8px] bg-white px-3 py-3">
+      {expanded ? (
+        <div className="space-y-3">
+          {itinerary.legs.map((leg, index) => (
+            <div key={`${leg.flightNo}-${leg.segment.TakeoffTime ?? index}`}>
+              <TransferLegBlock leg={leg} />
+              {itinerary.layovers[index] ? (
+                <div className="mt-3">
+                  <TransferLayoverRow layover={itinerary.layovers[index]!} />
+                </div>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <RouteSummaryRow
+          takeoffTime={firstLeg.segment.TakeoffTime}
+          arrivalTime={lastLeg.segment.ArrivalTime}
+          fromLabel={firstLeg.fromLabel}
+          toLabel={lastLeg.toLabel}
+          durationLabel={durationLabel}
+          routeMiddleLabel={collapsedTransferMiddle.routeMiddleLabel}
+          routeMiddleSubLabel={collapsedTransferMiddle.waitDurationLabel}
+        />
+      )}
+    </div>
+  );
+}
+
+export function FlightCabinsSummary({ segment, detailSegments }: FlightCabinsSummaryProps) {
+  const [transferExpanded, setTransferExpanded] = useState(false);
+  const transferItinerary = buildFlightTransferItinerary(detailSegments);
   const arrivalDateBadge = formatArrivalDateBadge(segment.TakeoffTime, segment.ArrivalTime);
   const fromLabel = formatFlightLocationLabel(
     segment.FromCityName,
@@ -64,11 +271,25 @@ export function FlightCabinsSummary({ segment }: FlightCabinsSummaryProps) {
   const mealLabel = formatFlightMealLabel(segment.Meal);
   const airlineName = segment.AirlineName?.trim() ?? "";
   const flightNo = (segment.Number ?? segment.FlightNumber ?? "").trim();
-  const flightTitle = [airlineName, flightNo].filter(Boolean).join(" ");
+  const headerTitle = transferItinerary
+    ? [segment.FromCityName, segment.ToCityName].filter(Boolean).join(" — ") || "中转行程"
+    : [airlineName, flightNo].filter(Boolean).join(" ");
+  const headerSubtitle = transferItinerary
+    ? undefined
+    : [planeLabel, mealLabel].filter(Boolean).join(" · ");
 
   const metaChips = [planeLabel, durationLabel, mealLabel].filter((value): value is string =>
     Boolean(value),
   );
+
+  const metaChipRow =
+    metaChips.length > 0 ? (
+      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        {durationLabel ? <MetaChip>{durationLabel}</MetaChip> : null}
+        {planeLabel ? <MetaChip>{planeLabel}</MetaChip> : null}
+        {mealLabel ? <MetaChip variant="accent">{mealLabel}</MetaChip> : null}
+      </div>
+    ) : null;
 
   return (
     <div className={`px-3 pb-3 pt-2 ${FLIGHT_CABINS_FONT}`}>
@@ -81,70 +302,49 @@ export function FlightCabinsSummary({ segment }: FlightCabinsSummaryProps) {
             <div className="flex min-w-0 items-center gap-2">
               <AirlineLogo segment={segment} />
               <p className="min-w-0 flex-1 truncate text-[17px] font-medium leading-none">
-                {flightTitle || "航班详情"}
+                {headerTitle || "航班详情"}
               </p>
             </div>
-            <p className="mt-3 truncate text-[14px] font-normal leading-none text-white">
-              {[planeLabel, mealLabel].filter(Boolean).join(" · ")}
-            </p>
+            {headerSubtitle ? (
+              <p className="mt-3 truncate text-[14px] font-normal leading-none text-white">
+                {headerSubtitle}
+              </p>
+            ) : null}
           </div>
+          {transferItinerary ? (
+            <SummaryCollapseButton
+              expanded={transferExpanded}
+              detailLabel="行程详情"
+              onToggle={() => setTransferExpanded((value) => !value)}
+            />
+          ) : null}
         </div>
 
-        <div className="mt-3 h-16 rounded-[8px] bg-white px-3">
-          <div className="grid h-full grid-cols-[minmax(0,1fr)_7.5rem_minmax(0,1fr)] items-center gap-x-2">
-            <div className="min-w-0">
-              <p className="text-[16px] font-medium leading-none tabular-nums text-[#010101]">
-                {formatFlightTime(segment.TakeoffTime)}
-              </p>
-              <p className="mt-1 truncate text-[14px] font-normal leading-none text-[#666666]">
-                {fromLabel}
-              </p>
+        {transferItinerary ? (
+          <>
+            <TransferRouteCard
+              itinerary={transferItinerary}
+              expanded={transferExpanded}
+              durationLabel={durationLabel}
+            />
+            {metaChipRow}
+          </>
+        ) : (
+          <>
+            <div className="mt-3 min-h-16 rounded-[8px] bg-white px-3 py-3">
+              <RouteSummaryRow
+                takeoffTime={segment.TakeoffTime}
+                arrivalTime={segment.ArrivalTime}
+                fromLabel={fromLabel}
+                toLabel={toLabel}
+                durationLabel={durationLabel}
+                flightNo={flightNo}
+                arrivalDayTip={arrivalDateBadge}
+              />
             </div>
-
-            <div className="text-center">
-              {durationLabel ? (
-                <p className="text-[12px] leading-none text-[#999999]">{durationLabel}</p>
-              ) : null}
-              <div className="mt-1 flex items-center justify-center">
-                <img
-                  src={summaryRouteArrow}
-                  alt=""
-                  width={56}
-                  height={12}
-                  className="h-3 w-14 shrink-0 object-contain"
-                  aria-hidden
-                />
-              </div>
-              {flightNo ? (
-                <p className="mt-1 truncate text-[11px] font-normal leading-none text-[#666666]">
-                  {flightNo}
-                </p>
-              ) : null}
-            </div>
-
-            <div className="relative min-w-0 text-right">
-              {arrivalDateBadge ? (
-                <p className="absolute -top-4 right-0 whitespace-nowrap text-[11px] font-medium leading-none text-[#ff8d1a]">
-                  {arrivalDateBadge}
-                </p>
-              ) : null}
-              <p className="text-[16px] font-medium leading-none tabular-nums text-[#010101]">
-                {formatFlightTime(segment.ArrivalTime)}
-              </p>
-              <p className="mt-1 truncate text-[14px] font-normal leading-none text-[#666666]">
-                {toLabel}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {metaChips.length > 0 ? (
-          <div className="mt-2 flex flex-wrap items-center gap-1.5">
-            {durationLabel ? <MetaChip>{durationLabel}</MetaChip> : null}
-            {planeLabel ? <MetaChip>{planeLabel}</MetaChip> : null}
-            {mealLabel ? <MetaChip variant="accent">{mealLabel}</MetaChip> : null}
-          </div>
-        ) : null}
+            {metaChipRow}
+          </>
+        )}
       </div>
     </div>
   );

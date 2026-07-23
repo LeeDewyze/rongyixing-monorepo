@@ -487,7 +487,7 @@ export function FlightCabinsPage() {
       <div
         className={`${WEB_PAGE_BODY} pb-[max(1rem,env(safe-area-inset-bottom))] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden`}
       >
-        <FlightCabinsSummary segment={segment} />
+        <FlightCabinsSummary segment={segment} detailSegments={detail?.FlightSegments} />
 
         {isBusinessMode && policyFilterEnabled && filterPassengerName ? (
           <FlightCabinsPolicyBanner

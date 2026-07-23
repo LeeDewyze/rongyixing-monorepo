@@ -85,6 +85,21 @@ export function formatArrivalDateBadge(
   return `${month}月${day}日`;
 }
 
+/** Compact leg date label, e.g. `07-24`, when the day differs from a reference date. */
+export function formatFlightLegDateTip(
+  datetime: string | undefined,
+  referenceDate: string | undefined,
+): string | undefined {
+  const date = datetime?.slice(0, 10);
+  const reference = referenceDate?.slice(0, 10);
+  if (!date || !reference || date === reference) return undefined;
+  const d = parseLocalDate(date);
+  if (!d) return undefined;
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${month}-${day}`;
+}
+
 /** Legacy `flightMealType` pipe — supports IATA codes and API-localized labels. */
 export function formatFlightMealLabel(meal: string | undefined | null): string | undefined {
   if (meal == null || meal === "") return undefined;
@@ -117,6 +132,68 @@ export function formatFlightMealLabel(meal: string | undefined | null): string |
 export function formatFlightMetaDuration(flyTimeName: string | undefined): string | undefined {
   if (!flyTimeName) return undefined;
   return flyTimeName.startsWith("飞") ? flyTimeName : `飞${flyTimeName}`;
+}
+
+export type FlightRouteMiddleInput = Pick<
+  FlightSegment,
+  "IsTransfer" | "IsStop" | "StopCities" | "StopCity" | "FlyTimeName" | "Duration" | "Transfer"
+>;
+
+export interface FlightRouteMiddleDisplay {
+  durationLabel?: string;
+  routeLabel?: string;
+}
+
+function readFirstCityToken(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed) return undefined;
+  return trimmed.split(/[,，、]/)[0]?.trim() || undefined;
+}
+
+function readTransferCity(segment: FlightRouteMiddleInput): string | undefined {
+  const transfer = segment.Transfer;
+  if (transfer && typeof transfer === "object") {
+    const city =
+      transfer.CityName ?? transfer.TransferCityName ?? transfer.City ?? transfer.AirportCityName;
+    const normalized = readFirstCityToken(city);
+    if (normalized) return normalized;
+  }
+
+  if (typeof transfer === "string") {
+    const normalized = readFirstCityToken(transfer);
+    if (normalized) return normalized;
+  }
+
+  return (
+    readFirstCityToken(segment.StopCities ?? undefined) ??
+    readFirstCityToken(segment.StopCity ?? undefined)
+  );
+}
+
+/** List card route middle: duration above arrow, transfer/stop label below. */
+export function formatFlightRouteMiddleDisplay(
+  segment: FlightRouteMiddleInput,
+): FlightRouteMiddleDisplay {
+  const durationSource = segment.FlyTimeName?.trim() || segment.Duration?.trim();
+  const durationLabel = formatFlightMetaDuration(durationSource);
+
+  if (segment.IsTransfer) {
+    const city = readTransferCity(segment);
+    return {
+      durationLabel,
+      routeLabel: city ? `中转 · ${city}` : "中转",
+    };
+  }
+
+  if (segment.IsStop) {
+    const city = readTransferCity(segment);
+    return {
+      durationLabel,
+      routeLabel: city ? `经停 · ${city}` : "经停",
+    };
+  }
+
+  return {};
 }
 
 const CHINA_AIRLINE_IATA_NAMES: Record<string, string> = {

@@ -5,6 +5,7 @@ import { formatFlightTime } from "@/utils/flight-list";
 import {
   formatArrivalDateBadge,
   formatFlightListMetaLine,
+  formatFlightRouteMiddleDisplay,
   shortAirportName,
   shouldShowScarceBadge,
   type FlightCardVariant,
@@ -64,9 +65,18 @@ interface FlightSegmentCardProps {
   onClick?: () => void;
 }
 
-function FlightRouteMiddle({ transfer = false }: { transfer?: boolean }) {
+function FlightRouteMiddle({ segment }: { segment: FlightSegment }) {
+  const { durationLabel, routeLabel } = formatFlightRouteMiddleDisplay(segment);
+
   return (
-    <div className="flex flex-col items-center gap-0.5">
+    <div className="flex min-w-[4.5rem] max-w-[5.5rem] flex-col items-center gap-0.5">
+      {durationLabel ? (
+        <span className={`text-[10px] font-normal leading-none text-[#999999] ${FONT}`}>
+          {durationLabel}
+        </span>
+      ) : (
+        <span className="h-3" aria-hidden />
+      )}
       <img
         src={trainRouteArrow}
         alt=""
@@ -75,11 +85,11 @@ function FlightRouteMiddle({ transfer = false }: { transfer?: boolean }) {
         className="h-3 w-14 shrink-0 object-contain"
         aria-hidden
       />
-      {transfer ? (
+      {routeLabel ? (
         <span
-          className={`text-[10px] font-medium leading-[100%] tracking-[0] text-brand-accent ${FONT}`}
+          className={`whitespace-nowrap text-center text-[10px] font-medium leading-none tracking-[0] text-brand-accent ${FONT}`}
         >
-          转
+          {routeLabel}
         </span>
       ) : (
         <span className="h-3" aria-hidden />
@@ -114,10 +124,11 @@ export function FlightSegmentCard({
 }: FlightSegmentCardProps) {
   const isDirectLowest = variant === "direct-lowest";
   const isTransferLowest = variant === "transfer-lowest";
-  const isTransfer = variant === "transfer" || isTransferLowest;
   const priceColor = resolveFlightPriceColor(variant);
   const metaLine = formatFlightListMetaLine(segment);
   const arrivalDayTip = formatArrivalDateBadge(segment.TakeoffTime, segment.ArrivalTime);
+  const routeMiddle = formatFlightRouteMiddleDisplay(segment);
+  const showRouteMiddleSpacer = !routeMiddle.durationLabel && !routeMiddle.routeLabel;
 
   const cardSurfaceClass = isDirectLowest
     ? "bg-white"
@@ -162,8 +173,8 @@ export function FlightSegmentCard({
             </div>
 
             <div className="flex shrink-0 flex-col items-center gap-0.5 px-2.5">
-              <span className="h-3" aria-hidden />
-              <FlightRouteMiddle transfer={isTransfer} />
+              {showRouteMiddleSpacer ? <span className="h-3" aria-hidden /> : null}
+              <FlightRouteMiddle segment={segment} />
             </div>
 
             <div className="flex shrink-0 flex-col gap-2">

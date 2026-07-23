@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildFlightDetailParams,
+  buildFlightTransferItinerary,
   fareBaggageText,
   fareRemainCount,
   filterFaresForFlight,
@@ -66,15 +67,64 @@ describe("resolveDetailSegment", () => {
   });
 });
 
+describe("buildFlightTransferItinerary", () => {
+  it("builds legs and layover labels from detail segments", () => {
+    const itinerary = buildFlightTransferItinerary([
+      {
+        Number: "MU2118",
+        AirlineName: "东方航空",
+        FromCityName: "北京",
+        FromAirportName: "大兴国际机场",
+        ToCityName: "西安",
+        ToAirportName: "咸阳国际机场",
+        ToTerminal: "T5",
+        TakeoffTime: "2026-07-23 19:00:00",
+        ArrivalTime: "2026-07-23 21:00:00",
+        FlyTimeName: "2h0m",
+        PlaneTypeDescribe: "空客A320(中)",
+        Meal: "有餐食",
+      },
+      {
+        Number: "MU2227",
+        AirlineName: "东方航空",
+        FromCityName: "西安",
+        FromAirportName: "咸阳国际机场",
+        FromTerminal: "T5",
+        ToCityName: "克拉玛依",
+        ToAirportName: "克拉玛依机场",
+        ToTerminal: "T5",
+        TakeoffTime: "2026-07-24 07:35:00",
+        ArrivalTime: "2026-07-24 11:40:00",
+        FlyTimeName: "4h5m",
+        PlaneTypeDescribe: "空客A320(中)",
+        Meal: "有餐食",
+      },
+    ]);
+
+    expect(itinerary?.legs).toHaveLength(2);
+    expect(itinerary?.legs[0]?.flightNo).toBe("MU2118");
+    expect(itinerary?.legs[1]?.flightNo).toBe("MU2227");
+    expect(itinerary?.legs[1]?.departureDayTip).toBe("07-24");
+    expect(itinerary?.layovers[0]?.cityLabel).toBe("西安");
+    expect(itinerary?.layovers[0]?.airportLabel).toBe("西安·咸阳T5");
+    expect(itinerary?.layovers[0]?.waitDurationLabel).toBe("10h35m");
+  });
+
+  it("returns null for direct flights", () => {
+    expect(buildFlightTransferItinerary([{ Number: "KN5955" }])).toBeNull();
+    expect(buildFlightTransferItinerary(undefined)).toBeNull();
+  });
+});
+
 describe("buildFlightDetailParams", () => {
   it("uses airport codes and passenger count for Home-Detail", () => {
     expect(
       buildFlightDetailParams(
-      {
-        date: "2026-06-22",
-        channel: "tourist",
-        fromCode: "BJS",
-        toCode: "SHA",
+        {
+          date: "2026-06-22",
+          channel: "tourist",
+          fromCode: "BJS",
+          toCode: "SHA",
           fromName: "北京",
           toName: "上海",
           fromAsAirport: false,
@@ -114,11 +164,11 @@ describe("buildFlightDetailParams", () => {
 
   it("includes BookType when provided from list FlightViews", () => {
     const params = buildFlightDetailParams(
-        {
-          date: "2026-06-23",
-          channel: "tourist",
-          fromCode: "BJS",
-          toCode: "SHA",
+      {
+        date: "2026-06-23",
+        channel: "tourist",
+        fromCode: "BJS",
+        toCode: "SHA",
         fromName: "北京",
         toName: "上海",
         fromAsAirport: false,

@@ -506,7 +506,7 @@ export function FlightCabinsPage() {
         className="absolute inset-x-0 bottom-0 overflow-y-auto overscroll-y-contain pb-[max(1rem,env(safe-area-inset-bottom))] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         style={{ top: headerHeight }}
       >
-        <FlightCabinsSummary segment={segment} />
+        <FlightCabinsSummary segment={segment} detailSegments={detail?.FlightSegments} />
 
         {isBusinessMode && policyFilterEnabled && filterPassengerName ? (
           <FlightCabinsPolicyBanner

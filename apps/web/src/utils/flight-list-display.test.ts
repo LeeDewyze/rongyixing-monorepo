@@ -11,7 +11,9 @@ import {
   formatFlightListPlaneSubtitle,
   formatFlightLocationLabel,
   formatFlightMealLabel,
+  formatFlightLegDateTip,
   formatFlightMetaDuration,
+  formatFlightRouteMiddleDisplay,
   formatFlightOrderTripMetaLine,
   resolveFlightCardVariant,
   formatOrderTripAirlineFlightLabel,
@@ -57,6 +59,30 @@ describe("flight-list-display cabins helpers", () => {
     expect(formatFlightMealLabel("早餐")).toBe("早餐");
     expect(formatFlightMealLabel("点心")).toBe("点心");
     expect(formatFlightMetaDuration("2h25m")).toBe("飞2h25m");
+    expect(formatFlightLegDateTip("2026-07-24 07:35:00", "2026-07-23")).toBe("07-24");
+  });
+
+  it("formats route middle labels for transfer and stop flights", () => {
+    expect(
+      formatFlightRouteMiddleDisplay({
+        IsTransfer: true,
+        FlyTimeName: "5h30m",
+        Transfer: { CityName: "厦门" },
+      }),
+    ).toEqual({
+      durationLabel: "飞5h30m",
+      routeLabel: "中转 · 厦门",
+    });
+    expect(
+      formatFlightRouteMiddleDisplay({
+        IsStop: true,
+        FlyTimeName: "2h20m",
+        StopCity: "武汉",
+      }),
+    ).toEqual({
+      durationLabel: "飞2h20m",
+      routeLabel: "经停 · 武汉",
+    });
   });
 
   it("formats list card meta line with pipe separators", () => {

@@ -40,6 +40,17 @@ export interface FlightSearchParams {
   IsExchange?: boolean;
 }
 
+export interface FlightTransferInfo {
+  CityName?: string;
+  TransferCityName?: string;
+  City?: string;
+  AirportCityName?: string;
+  AirportName?: string;
+  TransferAirportName?: string;
+  TransferTime?: string;
+  Duration?: string;
+}
+
 export interface FlightSegment {
   Id?: string;
   Number?: string;
@@ -66,6 +77,13 @@ export interface FlightSegment {
   Tax?: string;
   IsStop?: boolean;
   IsTransfer?: boolean;
+  /** Stop / transfer city names from list API (`StopCities` or `StopCity`). */
+  StopCities?: string | null;
+  StopCity?: string | null;
+  /** Home-Index `FlightViews[].Segment.Duration` alias for total trip time. */
+  Duration?: string;
+  /** Transfer metadata from Home-Index list segment. */
+  Transfer?: FlightTransferInfo | null;
   IsAgreement?: boolean;
   isLowestPrice?: boolean;
   PlaneType?: string;

@@ -7,6 +7,7 @@ import {
   formatFlightListAirlineFlightLabel,
   formatFlightListAirportLine,
   formatFlightListPlaneSubtitle,
+  formatFlightRouteMiddleDisplay,
   shouldShowScarceBadge,
   type FlightCardVariant,
 } from "@/utils/flight-list-display";
@@ -96,24 +97,31 @@ function AirlineLogo({ segment }: { segment: FlightSegment }) {
   );
 }
 
-function FlightRouteMiddle({ transfer = false }: { transfer?: boolean }) {
+function FlightRouteMiddle({ segment }: { segment: FlightSegment }) {
+  const { durationLabel, routeLabel } = formatFlightRouteMiddleDisplay(segment);
+
   return (
     <div
-      className={`flex flex-col items-start justify-center gap-1 ${FLIGHT_ROUTE_ARROW_COL_CLASS}`}
+      className={`flex flex-col items-center justify-center gap-1 ${FLIGHT_ROUTE_ARROW_COL_CLASS}`}
     >
+      {durationLabel ? (
+        <span className={`text-[11px] font-normal leading-none text-[#999999] ${FONT}`}>
+          {durationLabel}
+        </span>
+      ) : null}
       <img
         src={trainRouteArrow}
         alt=""
         width={56}
         height={12}
-        className="h-3 w-14 shrink-0 object-contain object-left"
+        className="h-3 w-14 shrink-0 object-contain"
         aria-hidden
       />
-      {transfer ? (
+      {routeLabel ? (
         <span
-          className={`text-[11px] font-medium leading-none tracking-[0] text-brand-accent ${FONT}`}
+          className={`whitespace-nowrap text-center text-[11px] font-medium leading-none tracking-[0] text-brand-accent ${FONT}`}
         >
-          转
+          {routeLabel}
         </span>
       ) : null}
     </div>
@@ -147,7 +155,6 @@ export function FlightSegmentCard({
 }: FlightSegmentCardProps) {
   const isDirectLowest = variant === "direct-lowest";
   const isTransferLowest = variant === "transfer-lowest";
-  const isTransfer = variant === "transfer" || isTransferLowest;
   const priceColor = resolveFlightPriceColor(variant);
   const airlineFlightLabel = formatFlightListAirlineFlightLabel(segment);
   const planeSubtitle = formatFlightListPlaneSubtitle(segment);
@@ -203,7 +210,7 @@ export function FlightSegmentCard({
               </p>
             </div>
 
-            <FlightRouteMiddle transfer={isTransfer} />
+            <FlightRouteMiddle segment={segment} />
 
             <div className={`flex flex-col items-start gap-2 ${FLIGHT_ROUTE_ARRIVE_COL_CLASS}`}>
               <p className={FLIGHT_TIME_CLASS}>
