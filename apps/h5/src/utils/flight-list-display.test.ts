@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { FlightRouteMiddleInput } from "./flight-list-display";
 
 import {
   formatArrivalDateBadge,
@@ -75,7 +76,7 @@ describe("flight-list-display cabins helpers", () => {
         IsTransfer: true,
         Duration: 610,
         Transfer: { City: { Name: "厦门" } },
-      }),
+      } as unknown as FlightRouteMiddleInput),
     ).toEqual({
       durationLabel: "飞610",
       routeLabel: "中转 · 厦门",
@@ -85,7 +86,7 @@ describe("flight-list-display cabins helpers", () => {
         IsStop: true,
         FlyTimeName: "2h20m",
         StopCities: ["武汉", "长沙"],
-      }),
+      } as unknown as FlightRouteMiddleInput),
     ).toEqual({
       durationLabel: "飞2h20m",
       routeLabel: "经停 · 武汉",
