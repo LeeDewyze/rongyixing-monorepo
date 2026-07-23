@@ -29,6 +29,7 @@ import {
 } from "@/hooks/usePassengerCredential";
 import { credentialFormFromCredential } from "@/lib/credential-form";
 import { formatApiError } from "@/lib/formatApiError";
+import { navigateReturn } from "@/lib/navigation";
 import {
   buildCredentialPagePath,
   buildPassengerSelectReturnPath,
@@ -125,11 +126,11 @@ export function PassengerSelectPage() {
       setAlertMessage("请至少选择一位出行人");
       return;
     }
-    navigate(returnTo, { replace: true });
+    navigateReturn(navigate, returnTo);
   }
 
   function handleBack() {
-    navigate(returnTo, { replace: true });
+    navigateReturn(navigate, returnTo);
   }
 
   function openExternalAdd() {

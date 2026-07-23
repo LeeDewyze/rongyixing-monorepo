@@ -26,3 +26,19 @@ export function navigateBack(
   }
   navigate(fallback, { replace: true, ...options });
 }
+
+/**
+ * Return to the previous screen without duplicating `returnTo` on the history stack.
+ * Use when a child page was opened via push (e.g. passenger picker on top of list).
+ */
+export function navigateReturn(
+  navigate: NavigateFunction,
+  returnTo: string,
+  options?: NavigateOptions,
+): void {
+  if (canNavigateBack()) {
+    navigate(-1);
+    return;
+  }
+  navigate(returnTo, { replace: true, ...options });
+}

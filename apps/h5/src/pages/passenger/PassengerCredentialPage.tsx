@@ -23,6 +23,7 @@ import {
   validateCredentialForm,
 } from "@/lib/credential-form";
 import { formatApiError } from "@/lib/formatApiError";
+import { navigateReturn } from "@/lib/navigation";
 import { useMemberProfile } from "@/hooks/useMemberProfile";
 import { normalizeCredentialName } from "@/lib/credential-name";
 import {
@@ -195,7 +196,7 @@ export function PassengerCredentialPage() {
           credentialSelectionPatch(submitValues),
         );
       }
-      navigate(returnTo, { replace: true });
+      navigateReturn(navigate, returnTo);
     } catch (err) {
       showToast(formatApiError(err));
     }
@@ -206,7 +207,7 @@ export function PassengerCredentialPage() {
       setShowDiscardConfirm(true);
       return;
     }
-    navigate(backTo);
+    navigateReturn(navigate, backTo);
   }
 
   function handleRemoveClick() {
@@ -231,7 +232,7 @@ export function PassengerCredentialPage() {
         Number: values.Number,
         HideNumber: maskCredentialNumber(values.Number),
       });
-      navigate(returnTo, { replace: true });
+      navigateReturn(navigate, returnTo);
     } catch (err) {
       showToast(formatApiError(err));
     }
@@ -250,7 +251,7 @@ export function PassengerCredentialPage() {
         HideNumber: maskCredentialNumber(values.Number),
       });
       setShowExternalDeleteConfirm(false);
-      navigate(returnTo, { replace: true });
+      navigateReturn(navigate, returnTo);
     } catch (err) {
       showToast(formatApiError(err));
     }
@@ -314,7 +315,7 @@ export function PassengerCredentialPage() {
         confirmLabel="返回"
         cancelLabel="继续填写"
         variant="default"
-        onConfirm={() => navigate(backTo)}
+        onConfirm={() => navigateReturn(navigate, backTo)}
         onCancel={() => setShowDiscardConfirm(false)}
       />
 

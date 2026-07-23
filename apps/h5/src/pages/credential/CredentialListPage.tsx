@@ -15,6 +15,7 @@ import { useCredentialList } from "@/hooks/useCredentialList";
 import { useRemoveStaffCredential } from "@/hooks/usePassengerCredential";
 import { credentialFormFromCredential } from "@/lib/credential-form";
 import { formatApiError } from "@/lib/formatApiError";
+import { navigateReturn } from "@/lib/navigation";
 
 function CredentialCard({
   name,
@@ -120,9 +121,9 @@ export function CredentialListPage() {
         `/credentials?returnTo=${encodeURIComponent(returnTo)}`,
       )}`,
       {
-      state: {
-        credential,
-      },
+        state: {
+          credential,
+        },
       },
     );
   }
@@ -155,7 +156,7 @@ export function CredentialListPage() {
               type="button"
               className="flex size-10 shrink-0 items-center justify-center text-brand-title active:opacity-70"
               aria-label="返回"
-              onClick={() => navigate(returnTo, { replace: true })}
+              onClick={() => navigateReturn(navigate, returnTo)}
             >
               <svg
                 viewBox="0 0 20 20"
@@ -198,49 +199,49 @@ export function CredentialListPage() {
 
       <div className="flex h-full flex-col" style={{ paddingTop: headerHeight }}>
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain pb-4 pt-3 [-webkit-overflow-scrolling:touch]">
-        {credentialQuery.isLoading ? (
-          <p className="py-10 text-center text-sm text-[#999999]">加载中…</p>
-        ) : null}
+          {credentialQuery.isLoading ? (
+            <p className="py-10 text-center text-sm text-[#999999]">加载中…</p>
+          ) : null}
 
-        {credentialQuery.error ? (
-          <p className="mx-4 py-4 text-sm text-[#ff4d4f]">
-            {formatApiError(credentialQuery.error)}
-          </p>
-        ) : null}
+          {credentialQuery.error ? (
+            <p className="mx-4 py-4 text-sm text-[#ff4d4f]">
+              {formatApiError(credentialQuery.error)}
+            </p>
+          ) : null}
 
-        {pageError ? <p className="mx-4 py-2 text-sm text-[#ff4d4f]">{pageError}</p> : null}
+          {pageError ? <p className="mx-4 py-2 text-sm text-[#ff4d4f]">{pageError}</p> : null}
 
-        {!credentialQuery.isLoading ? (
-          <>
-            {credentials.map((c) => (
-              <CredentialCard
-                key={c.Id}
-                name={c.Name}
-                typeLabel={credentialDisplayType(c)}
-                number={displayCredentialNumber(c)}
-                mobile={c.Mobile}
-                orgName={c.OrgName}
-                onEdit={() => navigateEditCredential(c)}
-                onDelete={() => setDeleteTargetCredential(c)}
-              />
-            ))}
-            {credentials.length === 0 ? (
-              <p className="py-10 text-center text-sm text-[#999999]">暂无证件</p>
-            ) : null}
-          </>
-        ) : null}
+          {!credentialQuery.isLoading ? (
+            <>
+              {credentials.map((c) => (
+                <CredentialCard
+                  key={c.Id}
+                  name={c.Name}
+                  typeLabel={credentialDisplayType(c)}
+                  number={displayCredentialNumber(c)}
+                  mobile={c.Mobile}
+                  orgName={c.OrgName}
+                  onEdit={() => navigateEditCredential(c)}
+                  onDelete={() => setDeleteTargetCredential(c)}
+                />
+              ))}
+              {credentials.length === 0 ? (
+                <p className="py-10 text-center text-sm text-[#999999]">暂无证件</p>
+              ) : null}
+            </>
+          ) : null}
         </div>
 
         {/* Add button — pinned at bottom */}
         <div className="shrink-0 border-t border-[#ECECEC] bg-[#F5F6F9] px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
-        <button
-          type="button"
-          className="flex h-11 w-full items-center justify-center rounded-lg bg-gradient-to-r from-brand-btn-start to-brand-btn-end text-sm font-medium text-white active:opacity-90 disabled:opacity-50"
-          disabled={isRemoving}
-          onClick={navigateAdd}
-        >
-          添加证件
-        </button>
+          <button
+            type="button"
+            className="flex h-11 w-full items-center justify-center rounded-lg bg-gradient-to-r from-brand-btn-start to-brand-btn-end text-sm font-medium text-white active:opacity-90 disabled:opacity-50"
+            disabled={isRemoving}
+            onClick={navigateAdd}
+          >
+            添加证件
+          </button>
         </div>
       </div>
 

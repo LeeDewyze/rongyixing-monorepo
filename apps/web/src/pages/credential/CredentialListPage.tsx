@@ -15,6 +15,7 @@ import { useCredentialList } from "@/hooks/useCredentialList";
 import { useRemoveStaffCredential } from "@/hooks/usePassengerCredential";
 import { credentialFormFromCredential } from "@/lib/credential-form";
 import { formatApiError } from "@/lib/formatApiError";
+import { navigateReturn } from "@/lib/navigation";
 import { WEB_PAGE_BODY, WEB_PAGE_ROOT, WEB_PAGE_STICKY_HEADER } from "@/lib/web-page-layout";
 
 function CredentialCard({
@@ -131,7 +132,7 @@ export function CredentialListPage() {
               type="button"
               className="flex size-10 shrink-0 items-center justify-center text-brand-title active:opacity-70"
               aria-label="返回"
-              onClick={() => navigate(returnTo, { replace: true })}
+              onClick={() => navigateReturn(navigate, returnTo)}
             >
               <svg
                 viewBox="0 0 20 20"

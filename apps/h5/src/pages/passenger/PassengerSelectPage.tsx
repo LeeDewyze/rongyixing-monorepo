@@ -32,6 +32,7 @@ import {
   buildPassengerSelectReturnPath,
   credentialNavigationState,
 } from "@/lib/passenger-credential-nav";
+import { navigateReturn } from "@/lib/navigation";
 import { toggleSelection, removeDeletedFromSelection } from "@/lib/passenger-select-logic";
 
 export function PassengerSelectPage() {
@@ -93,11 +94,11 @@ export function PassengerSelectPage() {
       setAlertMessage("请至少选择一位出行人");
       return;
     }
-    navigate(returnTo, { replace: true });
+    navigateReturn(navigate, returnTo);
   }
 
   function handleBack() {
-    navigate(returnTo, { replace: true });
+    navigateReturn(navigate, returnTo);
   }
 
   function openExternalAdd() {
