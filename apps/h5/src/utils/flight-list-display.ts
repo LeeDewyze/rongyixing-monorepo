@@ -144,8 +144,26 @@ export interface FlightRouteMiddleDisplay {
   routeLabel?: string;
 }
 
-function readFirstCityToken(value: string | undefined): string | undefined {
-  const trimmed = value?.trim();
+function readOptionalDisplayString(value: unknown): string | undefined {
+  if (value == null) return undefined;
+  const trimmed = String(value).trim();
+  return trimmed || undefined;
+}
+
+function readFirstCityToken(value: unknown): string | undefined {
+  if (value == null) return undefined;
+  if (Array.isArray(value)) {
+    return readFirstCityToken(value[0]);
+  }
+  if (typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    return (
+      readFirstCityToken(record.Name) ??
+      readFirstCityToken(record.CityName) ??
+      readFirstCityToken(record.City)
+    );
+  }
+  const trimmed = String(value).trim();
   if (!trimmed) return undefined;
   return trimmed.split(/[,，、]/)[0]?.trim() || undefined;
 }
@@ -174,7 +192,8 @@ function readTransferCity(segment: FlightRouteMiddleInput): string | undefined {
 export function formatFlightRouteMiddleDisplay(
   segment: FlightRouteMiddleInput,
 ): FlightRouteMiddleDisplay {
-  const durationSource = segment.FlyTimeName?.trim() || segment.Duration?.trim();
+  const durationSource =
+    readOptionalDisplayString(segment.FlyTimeName) ?? readOptionalDisplayString(segment.Duration);
   const durationLabel = formatFlightMetaDuration(durationSource);
 
   if (segment.IsTransfer) {

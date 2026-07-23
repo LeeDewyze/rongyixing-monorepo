@@ -83,6 +83,16 @@ describe("flight-list-display cabins helpers", () => {
       durationLabel: "飞2h20m",
       routeLabel: "经停 · 武汉",
     });
+    expect(
+      formatFlightRouteMiddleDisplay({
+        IsTransfer: true,
+        Duration: 610,
+        Transfer: { City: { Name: "厦门" } },
+      }),
+    ).toEqual({
+      durationLabel: "飞610",
+      routeLabel: "中转 · 厦门",
+    });
   });
 
   it("formats list card meta line with pipe separators", () => {

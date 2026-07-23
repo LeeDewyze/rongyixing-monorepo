@@ -70,6 +70,26 @@ describe("flight-list-display cabins helpers", () => {
       routeLabel: "经停 · 武汉",
     });
     expect(formatFlightRouteMiddleDisplay({})).toEqual({});
+    expect(
+      formatFlightRouteMiddleDisplay({
+        IsTransfer: true,
+        Duration: 610,
+        Transfer: { City: { Name: "厦门" } },
+      }),
+    ).toEqual({
+      durationLabel: "飞610",
+      routeLabel: "中转 · 厦门",
+    });
+    expect(
+      formatFlightRouteMiddleDisplay({
+        IsStop: true,
+        FlyTimeName: "2h20m",
+        StopCities: ["武汉", "长沙"],
+      }),
+    ).toEqual({
+      durationLabel: "飞2h20m",
+      routeLabel: "经停 · 武汉",
+    });
   });
 
   it("formats list card meta line with pipe separators", () => {
