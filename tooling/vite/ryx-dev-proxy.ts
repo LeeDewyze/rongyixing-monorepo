@@ -14,6 +14,7 @@ type ProxyConfig = Record<string, string | ProxyEntry>;
 
 const SERVICE_HOST_PREFIXES: Record<string, string> = {
   TmcApiHomeUrl: "api-tmc",
+  MmsApiHomeUrl: "api-mms",
   TmcApiHotelUrl: "hotel-api-tmc",
   TmcApiFlightUrl: "flight-api-tmc",
   TmcApiTrainUrl: "train-api-tmc",

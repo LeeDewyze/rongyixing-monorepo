@@ -27,6 +27,8 @@ export { normalizeWorkbenchResponse } from "./workbench.js";
 export type { HomeBanner, HomeBannerLink, LegacyJumpTarget } from "./home-banner.js";
 export type { TmcData } from "./tmc-data.js";
 export type { BulletinNotice, NoticeListParams } from "./notice.js";
+export type { HomeBookProduct, RegionType } from "./region-type.js";
+export type { HomeSitemapItem } from "./sitemap.js";
 
 export type {
   DeviceLoginParams,

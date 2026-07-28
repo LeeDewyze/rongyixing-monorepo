@@ -15,6 +15,7 @@ import { createBookApi, type BookApi } from "./apis/book.js";
 import { createFlightApi, type FlightApi } from "./apis/flight.js";
 import { createHotelApi, type HotelApi } from "./apis/hotel.js";
 import { createMemberApi, type MemberApi } from "./apis/member.js";
+import { createMmsApi, type MmsApi } from "./apis/mms.js";
 import { createNoticeApi, type NoticeApi } from "./apis/notice.js";
 import { createOrderApi, type OrderApi } from "./apis/order.js";
 import { createPassengerApi, type PassengerApi } from "./apis/passenger.js";
@@ -82,6 +83,7 @@ export {
 export { createPayApi, type PayApi } from "./apis/pay.js";
 export { createPassengerApi, type PassengerApi } from "./apis/passenger.js";
 export { createMemberApi, type MemberApi } from "./apis/member.js";
+export { createMmsApi, type MmsApi } from "./apis/mms.js";
 export {
   createNoticeApi,
   type BulletinNotice,
@@ -101,6 +103,16 @@ export {
 } from "./apis/train-book-adapter.js";
 export { createTravelApi, type TravelApi } from "./apis/travel.js";
 export { createTmcApi, type TmcApi } from "./apis/tmc.js";
+export {
+  filterVisibleHomeProducts,
+  hasHomeProductBookRight,
+  HOME_BOOK_PRODUCTS,
+  normalizeRegionType,
+} from "./apis/region-type.js";
+export {
+  getVisibleHomeProductsFromSitemaps,
+  getVisibleHomeProductsFromWorkbenches,
+} from "./apis/home-product-visibility.js";
 export * from "./methods/account-flow.js";
 export * from "./methods/account-card-flow.js";
 export * from "./methods/password-flow.js";
@@ -148,6 +160,7 @@ export interface Api {
   order: OrderApi;
   pay: PayApi;
   member: MemberApi;
+  mms: MmsApi;
   notice: NoticeApi;
   accountCard: AccountCardApi;
   account: AccountApi;
@@ -201,6 +214,7 @@ export function createApi(config: CreateApiConfig): Api {
     order: createOrderApi(proxy),
     pay: createPayApi(proxy),
     member: createMemberApi(proxy),
+    mms: createMmsApi(proxy),
     notice: createNoticeApi(proxy),
     accountCard: createAccountCardApi(proxy),
     account: createAccountApi(proxy),

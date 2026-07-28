@@ -37,6 +37,22 @@ export function createTmcMockHandlers(): Record<string, (data: unknown) => IResp
         Url: "",
       });
     },
+    [TMC_METHODS.HOME_GETREGIONTYPE]: () =>
+      successResponse({
+        HasFlight: true,
+        HasInternationalFlight: true,
+        HasTrain: true,
+        HasHotel: true,
+        HasInternationalHotel: true,
+        HasGP: false,
+        HasCar: false,
+        HasRentalCar: false,
+      }),
+    [TMC_METHODS.HOME_TOURIST]: () =>
+      successResponse({
+        TouristTmcId: "10001",
+        TouristMmsId: "1",
+      }),
     [TMC_METHODS.HOME_GETACCOUNTWAITINGTASKS]: () => successResponse({ DataCount: 0 }),
     [TMC_METHODS.TMC_GETTMCDATA]: () => successResponse({ Telephone: "400-000-0000" }),
   };

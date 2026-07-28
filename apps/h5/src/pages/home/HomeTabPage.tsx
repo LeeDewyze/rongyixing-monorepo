@@ -17,6 +17,7 @@ import { HomeTrainSearchPanel } from "@/components/home/HomeTrainSearchPanel";
 import { CityPicker } from "@/components/search";
 import { PageToast } from "@/components/layout/PageToast";
 import { useHomeBanners } from "@/hooks/useHomeBanners";
+import { useVisibleHomeProducts } from "@/hooks/useVisibleHomeProducts";
 import { onHomeBannerJump } from "@/lib/core-jump";
 import { useFlightSearchForm } from "@/hooks/useFlightSearchForm";
 import { useHotelSearchForm } from "@/hooks/useHotelSearchForm";
@@ -55,6 +56,7 @@ export function HomeTabPage() {
   const flightForm = useFlightSearchForm();
   const apiMode = getApiMode();
   const bannerQuery = useHomeBanners();
+  const visibleProducts = useVisibleHomeProducts(travelMode);
   const { data: notices = [] } = useQuery({
     queryKey: ["home", "notices"],
     queryFn: () => getApi().notice.getList({ PageIndex: 0, PageSize: 20 }),
@@ -66,6 +68,15 @@ export function HomeTabPage() {
   useEffect(() => {
     setActiveProduct(parseHomeProduct(searchParams));
   }, [searchParams]);
+
+  useEffect(() => {
+    if (visibleProducts.length === 0) return;
+    if (!visibleProducts.includes(activeProduct)) {
+      const next = visibleProducts[0]!;
+      setActiveProduct(next);
+      setSearchParams(buildHomeProductSearch(next), { replace: true });
+    }
+  }, [activeProduct, setSearchParams, visibleProducts]);
 
   function handleProductChange(product: HomeProductId) {
     setActiveProduct(product);
@@ -156,6 +167,7 @@ export function HomeTabPage() {
       <HomeHeroSection
         travelMode={travelMode}
         activeProduct={activeProduct}
+        visibleProducts={visibleProducts}
         bannerSlides={bannerQuery.data}
         bannerLoading={bannerQuery.isLoading}
         onBannerClick={(slide) => {
@@ -179,9 +191,9 @@ export function HomeTabPage() {
         onProductChange={handleProductChange}
       />
 
-      {activeProduct === "flight" ? (
+      {activeProduct === "flight" && visibleProducts.includes("flight") ? (
         <div className="relative">
-          <HomeProductTabPointer product={activeProduct} />
+          <HomeProductTabPointer product={activeProduct} visibleProducts={visibleProducts} />
           {flightForm.error ? <HomeSearchPanelError error={flightForm.error} /> : null}
           <HomeFlightSearchPanel
             fromCity={flightForm.fromCity}
@@ -197,9 +209,9 @@ export function HomeTabPage() {
         </div>
       ) : null}
 
-      {activeProduct === "hotel" ? (
+      {activeProduct === "hotel" && visibleProducts.includes("hotel") ? (
         <div className="relative">
-          <HomeProductTabPointer product={activeProduct} />
+          <HomeProductTabPointer product={activeProduct} visibleProducts={visibleProducts} />
           {hotelForm.error ? <HomeSearchPanelError error={hotelForm.error} /> : null}
           <HomeHotelSearchPanel
             city={hotelForm.city}
@@ -219,9 +231,9 @@ export function HomeTabPage() {
         </div>
       ) : null}
 
-      {activeProduct === "train" ? (
+      {activeProduct === "train" && visibleProducts.includes("train") ? (
         <div className="relative">
-          <HomeProductTabPointer product={activeProduct} />
+          <HomeProductTabPointer product={activeProduct} visibleProducts={visibleProducts} />
           {trainForm.error ? <HomeSearchPanelError error={trainForm.error} /> : null}
           <HomeTrainSearchPanel
             fromStation={trainForm.fromStation}

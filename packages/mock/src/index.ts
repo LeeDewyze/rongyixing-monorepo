@@ -5,6 +5,7 @@ import { createAuthMockHandlers } from "./handlers/auth.js";
 import { createFlightMockHandlers } from "./handlers/flight.js";
 import { createHotelMockHandlers } from "./handlers/hotel.js";
 import { createMemberMockHandlers } from "./handlers/member.js";
+import { createMmsMockHandlers } from "./handlers/mms.js";
 import { createPassengerMockHandlers } from "./handlers/passenger.js";
 import { createOrderMockHandlers } from "./handlers/order.js";
 import { createTrainMockHandlers } from "./handlers/train.js";
@@ -19,6 +20,7 @@ export { MOCK_AIRPORTS } from "./fixtures/flight.js";
 export { createHotelMockHandlers, resetHotelMockStore } from "./handlers/hotel.js";
 export { createPassengerMockHandlers, MOCK_STAFF } from "./handlers/passenger.js";
 export { createMemberMockHandlers, MOCK_PASSENGERS } from "./handlers/member.js";
+export { createMmsMockHandlers } from "./handlers/mms.js";
 export { createOrderMockHandlers } from "./handlers/order.js";
 export { createTrainMockHandlers } from "./handlers/train.js";
 export { createTravelMockHandlers } from "./handlers/travel.js";
@@ -44,6 +46,7 @@ export function createDefaultMockRegistry() {
       createHotelMockHandlers(),
       createOrderMockHandlers(),
       createMemberMockHandlers(),
+      createMmsMockHandlers(),
       createPassengerMockHandlers(),
       createTrainMockHandlers(),
       createTmcMockHandlers(),
@@ -68,6 +71,7 @@ export function listDefaultMockMethods(): string[] {
       createHotelMockHandlers(),
       createOrderMockHandlers(),
       createMemberMockHandlers(),
+      createMmsMockHandlers(),
       createPassengerMockHandlers(),
       createTrainMockHandlers(),
       createTmcMockHandlers(),

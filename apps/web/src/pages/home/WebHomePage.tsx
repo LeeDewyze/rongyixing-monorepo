@@ -16,6 +16,7 @@ import {
 import { WebHotelSearchPanel } from "@/components/home/WebHotelSearchPanel";
 import { WebTrainSearchPanel } from "@/components/home/WebTrainSearchPanel";
 import { useHomeBanners } from "@/hooks/useHomeBanners";
+import { useVisibleHomeProducts } from "@/hooks/useVisibleHomeProducts";
 import { getApi } from "@/lib/api";
 import { getApiMode } from "@/lib/env";
 import { useFlightSearchForm } from "@/hooks/useFlightSearchForm";
@@ -52,6 +53,7 @@ export function WebHomePage() {
   const trainForm = useTrainSearchForm();
   const flightForm = useFlightSearchForm();
   const bannerQuery = useHomeBanners();
+  const visibleProducts = useVisibleHomeProducts(travelMode);
   const { data: notices = [] } = useQuery({
     queryKey: ["home", "notices"],
     queryFn: () => getApi().notice.getList({ PageIndex: 0, PageSize: 20 }),
@@ -63,6 +65,15 @@ export function WebHomePage() {
   useEffect(() => {
     setActiveProduct(parseHomeProduct(searchParams));
   }, [searchParams]);
+
+  useEffect(() => {
+    if (visibleProducts.length === 0) return;
+    if (!visibleProducts.includes(activeProduct)) {
+      const next = visibleProducts[0]!;
+      setActiveProduct(next);
+      setSearchParams(buildHomeProductSearch(next), { replace: true });
+    }
+  }, [activeProduct, setSearchParams, visibleProducts]);
 
   function handleProductChange(product: HomeProductId) {
     setActiveProduct(product);
@@ -212,6 +223,7 @@ export function WebHomePage() {
       <WebHomeTopCard
         travelMode={travelMode}
         activeProduct={activeProduct}
+        visibleProducts={visibleProducts}
         bannerSlides={bannerQuery.data}
         bannerLoading={bannerQuery.isLoading}
         onBannerClick={(slide) => {

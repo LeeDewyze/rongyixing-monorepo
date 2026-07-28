@@ -1,11 +1,18 @@
 import type { HomeProductId } from "@/config/home-assets";
 
-const PRODUCT_ORDER: HomeProductId[] = ["flight", "train", "hotel"];
+const DEFAULT_PRODUCT_ORDER: HomeProductId[] = ["flight", "train", "hotel"];
 
 /** White upward triangle on the search panel, aligned under the active product tab (Figma 10:252). */
-export function HomeProductTabPointer({ product }: { product: HomeProductId }) {
-  const index = PRODUCT_ORDER.indexOf(product);
-  const left = ((index + 0.5) / PRODUCT_ORDER.length) * 100;
+export function HomeProductTabPointer({
+  product,
+  visibleProducts = DEFAULT_PRODUCT_ORDER,
+}: {
+  product: HomeProductId;
+  visibleProducts?: HomeProductId[];
+}) {
+  const index = visibleProducts.indexOf(product);
+  if (index < 0) return null;
+  const left = ((index + 0.5) / visibleProducts.length) * 100;
 
   return (
     <div

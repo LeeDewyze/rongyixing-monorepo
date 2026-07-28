@@ -8,6 +8,7 @@ export type { HomeProductId, HomeTravelMode };
 interface HomeHeroSectionProps {
   travelMode: HomeTravelMode;
   activeProduct: HomeProductId;
+  visibleProducts?: HomeProductId[];
   bannerSlides?: HomeBannerSlide[];
   bannerLoading?: boolean;
   onBannerClick?: (slide: HomeBannerSlide) => void;
@@ -21,6 +22,12 @@ const PRODUCTS: { id: HomeProductId; label: string }[] = [
   { id: "train", label: "火车票" },
   { id: "hotel", label: "国内酒店" },
 ];
+
+const PRODUCT_GRID_COLS: Record<number, string> = {
+  1: "grid-cols-1",
+  2: "grid-cols-2",
+  3: "grid-cols-3",
+};
 
 /** Arc underline for travel-mode tabs (Figma smile indicator). */
 function TravelTabIndicator({ active }: { active: boolean }) {
@@ -56,6 +63,7 @@ function ProductIcon({ product, active }: { product: HomeProductId; active: bool
 export function HomeHeroSection({
   travelMode,
   activeProduct,
+  visibleProducts,
   bannerSlides,
   bannerLoading = false,
   onBannerClick,
@@ -66,6 +74,11 @@ export function HomeHeroSection({
   const isBusiness = travelMode === "business";
   const slides = bannerSlides && bannerSlides.length > 0 ? bannerSlides : [];
   const showBannerPlaceholder = bannerLoading || slides.length === 0;
+  const productEntries = PRODUCTS.filter((product) =>
+    (visibleProducts ?? PRODUCTS.map((item) => item.id)).includes(product.id),
+  );
+  const productGridClass =
+    PRODUCT_GRID_COLS[productEntries.length] ?? PRODUCT_GRID_COLS[3] ?? "grid-cols-3";
 
   return (
     <div className="relative shrink-0">
@@ -115,43 +128,45 @@ export function HomeHeroSection({
         </div>
 
         {/* Figma 10:213 — product entries on #F5F6F9, not white */}
-        <div className="mt-4 mb-3 bg-[#F5F6F9] px-3">
-          <div className="grid grid-cols-3 gap-1.5">
-            {PRODUCTS.map((product) => {
-              const active = activeProduct === product.id;
-              return (
-                <button
-                  key={product.id}
-                  type="button"
-                  aria-current={active ? "page" : undefined}
-                  className={`relative flex flex-col items-center gap-1.5 rounded-[16px] py-2.5 transition-[background-color,box-shadow] duration-200 ${
-                    active
-                      ? "bg-[#EEF5FF] shadow-[0_3px_10px_rgba(39,104,250,0.12)] ring-1 ring-[#BFD8FF]"
-                      : "bg-transparent text-[#999999] active:bg-white/60"
-                  }`}
-                  onClick={() => onProductChange(product.id)}
-                >
-                  <span className="flex size-[50px] items-center justify-center">
-                    <ProductIcon product={product.id} active={active} />
-                  </span>
-                  <span
-                    className={`text-[14px] leading-none ${
-                      active ? "font-semibold text-brand-primary" : "font-normal text-[#999999]"
+        {productEntries.length > 0 ? (
+          <div className="mt-4 mb-3 bg-[#F5F6F9] px-3">
+            <div className={`grid ${productGridClass} gap-1.5`}>
+              {productEntries.map((product) => {
+                const active = activeProduct === product.id;
+                return (
+                  <button
+                    key={product.id}
+                    type="button"
+                    aria-current={active ? "page" : undefined}
+                    className={`relative flex flex-col items-center gap-1.5 rounded-[16px] py-2.5 transition-[background-color,box-shadow] duration-200 ${
+                      active
+                        ? "bg-[#EEF5FF] shadow-[0_3px_10px_rgba(39,104,250,0.12)] ring-1 ring-[#BFD8FF]"
+                        : "bg-transparent text-[#999999] active:bg-white/60"
                     }`}
+                    onClick={() => onProductChange(product.id)}
                   >
-                    {product.label}
-                  </span>
-                  <span
-                    className={`h-0.5 w-6 shrink-0 rounded-full ${
-                      active ? "bg-brand-primary" : "bg-transparent"
-                    }`}
-                    aria-hidden
-                  />
-                </button>
-              );
-            })}
+                    <span className="flex size-[50px] items-center justify-center">
+                      <ProductIcon product={product.id} active={active} />
+                    </span>
+                    <span
+                      className={`text-[14px] leading-none ${
+                        active ? "font-semibold text-brand-primary" : "font-normal text-[#999999]"
+                      }`}
+                    >
+                      {product.label}
+                    </span>
+                    <span
+                      className={`h-0.5 w-6 shrink-0 rounded-full ${
+                        active ? "bg-brand-primary" : "bg-transparent"
+                      }`}
+                      aria-hidden
+                    />
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        ) : null}
       </div>
     </div>
   );
