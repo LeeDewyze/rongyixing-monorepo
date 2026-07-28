@@ -13,6 +13,7 @@ import {
 import { SettingsMenuIcon, settingsMenuIconForId } from "@/components/settings/SettingsMenuIcon";
 import { SettingsPageChrome } from "@/components/settings/SettingsPageChrome";
 import { SettingsSectionLabel } from "@/components/settings/SettingsSectionLabel";
+import { getAppVersion } from "@/lib/app-version";
 import { useLogout } from "@/hooks/useAccountSettings";
 
 const MENU_DESCRIPTIONS: Record<string, string> = {
@@ -55,6 +56,19 @@ export function SettingsPage() {
                 />
               );
             })}
+          </SettingsMenuCard>
+        </div>
+
+        <div>
+          <SettingsSectionLabel>版本信息</SettingsSectionLabel>
+          <SettingsMenuCard>
+            <SettingsMenuRow
+              label="版本号"
+              value={getAppVersion()}
+              valueTone="hint"
+              showChevron={false}
+              borderless
+            />
           </SettingsMenuCard>
         </div>
 
