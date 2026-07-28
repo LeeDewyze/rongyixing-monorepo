@@ -23,6 +23,7 @@ import {
   validateCredentialForm,
 } from "@/lib/credential-form";
 import { formatApiError } from "@/lib/formatApiError";
+import { showAppConfirmDialog } from "@/lib/app-confirm-dialog";
 import { navigateReturn } from "@/lib/navigation";
 import { useMemberProfile } from "@/hooks/useMemberProfile";
 import { normalizeCredentialName } from "@/lib/credential-name";
@@ -221,7 +222,13 @@ export function PassengerCredentialPage() {
 
   async function handleStaffRemove() {
     if (!values.Id) return;
-    if (!window.confirm("确定删除该证件？")) return;
+    const confirmed = await showAppConfirmDialog({
+      title: "删除证件",
+      message: "确定删除该证件？",
+      confirmLabel: "删除",
+      variant: "destructive",
+    });
+    if (!confirmed) return;
     try {
       await removeStaff.mutateAsync({ ...values, StaffId: staffId ?? values.StaffId });
       removeCredentialFromPassengerSelections(forType, {

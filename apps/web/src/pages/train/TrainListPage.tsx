@@ -465,7 +465,9 @@ export function TrainListPage() {
                 type="button"
                 className="mt-3 text-sm font-medium text-[#5099fe]"
                 onClick={() =>
-                  navigate(`/login/password?returnTo=${encodeURIComponent(listReturnTo)}`)
+                  navigate(`/login/password?returnTo=${encodeURIComponent(listReturnTo)}`, {
+                    replace: true,
+                  })
                 }
               >
                 去登录

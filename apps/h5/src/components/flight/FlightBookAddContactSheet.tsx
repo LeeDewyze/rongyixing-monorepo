@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { FlightAuthorizedContact, SearchLinkmanOption } from "@ryx/shared-types";
 
 import { useSearchLinkman } from "@/hooks/useSearchLinkman";
+import { showAppAlertDialog } from "@/lib/app-confirm-dialog";
 import { parseSearchLinkmanOption } from "@/lib/flight-book-contacts";
 import { formatApiError } from "@/lib/formatApiError";
 
@@ -32,11 +33,11 @@ export function FlightBookAddContactSheet({
   function handleSelect(item: SearchLinkmanOption) {
     const contact = parseSearchLinkmanOption(item);
     if (!contact) {
-      window.alert("联系人数据格式不正确，请重新选择");
+      void showAppAlertDialog("联系人数据格式不正确，请重新选择");
       return;
     }
     if (existingAccountIds.includes(contact.accountId)) {
-      window.alert("该账号已添加");
+      void showAppAlertDialog("该账号已添加");
       return;
     }
     onSelect(contact);

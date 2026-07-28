@@ -532,6 +532,7 @@ export function FlightCabinsPage() {
                   `/login/password?returnTo=${encodeURIComponent(
                     `/flight/${encodeURIComponent(flightId)}/cabins?${searchParams.toString()}`,
                   )}`,
+                  { replace: true },
                 )
               }
             >

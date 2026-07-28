@@ -6,6 +6,7 @@ import { RouterProvider } from "react-router-dom";
 import "@ryx/ui/globals.css";
 
 import { router } from "@/app/routes";
+import { AppConfirmDialogHost } from "@/components/AppConfirmDialogHost";
 import { DevMenu } from "@/components/DevMenu";
 import { bootstrapApi } from "@/lib/api";
 import { bootstrapExternalTicket } from "@/lib/external-ticket";
@@ -19,6 +20,7 @@ async function main() {
     <StrictMode>
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
+        <AppConfirmDialogHost />
         <DevMenu />
       </QueryClientProvider>
     </StrictMode>,

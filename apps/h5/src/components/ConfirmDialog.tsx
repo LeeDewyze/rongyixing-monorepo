@@ -7,6 +7,7 @@ interface ConfirmDialogProps {
   confirmLabel?: string;
   cancelLabel?: string;
   loading?: boolean;
+  showCancelButton?: boolean;
   /** Show top-right close control. Defaults to true. */
   showCloseButton?: boolean;
   /** Visual tone for icon and primary action. Defaults to destructive when confirmLabel is「删除」. */
@@ -105,6 +106,7 @@ export function ConfirmDialog({
   confirmLabel = "确定",
   cancelLabel = "取消",
   loading = false,
+  showCancelButton = true,
   showCloseButton = true,
   variant,
   onConfirm,
@@ -139,10 +141,7 @@ export function ConfirmDialog({
 
           <div className="flex min-h-8 items-center justify-center gap-2 px-8">
             {resolvedVariant === "destructive" ? <DestructiveIcon /> : <DefaultIcon />}
-            <h2
-              id={titleId}
-              className="text-[17px] font-semibold leading-tight text-[#333333]"
-            >
+            <h2 id={titleId} className="text-[17px] font-semibold leading-tight text-[#333333]">
               {title}
             </h2>
           </div>
@@ -153,14 +152,16 @@ export function ConfirmDialog({
 
         <div className="border-t border-[#F0F2F5] bg-[#FAFBFC] px-5 py-4">
           <div className="flex gap-3">
-            <button
-              type="button"
-              disabled={loading}
-              className="flex h-11 flex-1 items-center justify-center rounded-full border border-[#E8EBF0] bg-white text-[14px] font-medium text-[#666666] active:bg-[#F5F6F9] disabled:opacity-50"
-              onClick={onCancel}
-            >
-              {cancelLabel}
-            </button>
+            {showCancelButton ? (
+              <button
+                type="button"
+                disabled={loading}
+                className="flex h-11 flex-1 items-center justify-center rounded-full border border-[#E8EBF0] bg-white text-[14px] font-medium text-[#666666] active:bg-[#F5F6F9] disabled:opacity-50"
+                onClick={onCancel}
+              >
+                {cancelLabel}
+              </button>
+            ) : null}
             <button
               type="button"
               disabled={loading}

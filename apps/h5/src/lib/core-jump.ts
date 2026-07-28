@@ -2,6 +2,7 @@ import type { NavigateFunction } from "react-router-dom";
 import type { LegacyJumpTarget } from "@ryx/shared-types";
 
 import { buildWorkflowOpenUrl } from "@/lib/approval-task-url";
+import { showAppAlertDialog } from "@/lib/app-confirm-dialog";
 import { resolveLegacyRoute } from "@/lib/legacy-route-registry";
 import {
   getRequestDomain,
@@ -198,7 +199,9 @@ export async function coreJump(
       if (jumpInfo.checkUrl) {
         const checkResult = await postCheckUrl(jumpInfo.checkUrl, props);
         if (checkResult == null || !checkResult.Status) {
-          window.alert(checkResult == null ? "请求异常" : checkResult.Message || "请求异常");
+          await showAppAlertDialog(
+            checkResult == null ? "请求异常" : checkResult.Message || "请求异常",
+          );
           return false;
         }
         if (checkResult.Data) {
@@ -280,7 +283,7 @@ export async function onHomeBannerJump(
     });
   } catch (error) {
     console.error(error);
-    window.alert(error instanceof Error ? error.message : String(error));
+    await showAppAlertDialog(error instanceof Error ? error.message : String(error));
     return false;
   }
 }

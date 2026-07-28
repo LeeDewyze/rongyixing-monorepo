@@ -1,7 +1,8 @@
 import type { TmcData } from "@ryx/shared-types";
 
-import { getDomain } from "@/lib/domain";
 import { getApi } from "@/lib/api";
+import { showAppAlertDialog } from "@/lib/app-confirm-dialog";
+import { getDomain } from "@/lib/domain";
 
 /** Legacy `CONFIG.contactus.phone` fallback. */
 export const DEFAULT_CONTACT_PHONE = "010-89630300";
@@ -116,7 +117,7 @@ export function resolveContactPhone(
 
 export function dialContactPhone(phone: string): void {
   if (!phone.trim()) {
-    window.alert("请联系贵公司客服！");
+    void showAppAlertDialog("请联系贵公司客服！");
     return;
   }
   window.location.href = `tel:${phone.trim()}`;

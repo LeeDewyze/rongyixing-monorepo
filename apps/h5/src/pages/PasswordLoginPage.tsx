@@ -154,7 +154,7 @@ export function PasswordLoginPage() {
         : "";
 
   function navigateAfterLogin() {
-    navigate(resolveInternalReturnTo(returnTo, "/home"));
+    navigate(resolveInternalReturnTo(returnTo, "/home"), { replace: true });
   }
 
   async function handleLogin() {

@@ -34,6 +34,7 @@ import { FLIGHT_CALENDAR_CONFIG } from "@/lib/calendar-picker";
 import { buildPassengerSelectPath } from "@/lib/passenger-selection";
 import { getApiMode } from "@/lib/env";
 import { formatApiError } from "@/lib/formatApiError";
+import { showAppAlertDialog } from "@/lib/app-confirm-dialog";
 import { getTicket } from "@/lib/session";
 import {
   loadHomeTravelMode,
@@ -413,12 +414,12 @@ export function FlightListPage() {
         fetchPolicy: isBusinessMode,
       });
       if (isBusinessMode && !policyResults.length && !isAgent) {
-        window.alert(FLIGHT_NO_POLICY_SEATS_MESSAGE);
+        await showAppAlertDialog(FLIGHT_NO_POLICY_SEATS_MESSAGE);
         return;
       }
       navigate(buildCabinsPath(segment, searchParams));
     } catch (error) {
-      window.alert(formatApiError(error, "flight"));
+      await showAppAlertDialog(formatApiError(error, "flight"));
     } finally {
       setOpeningCabinsId(null);
     }
@@ -471,7 +472,9 @@ export function FlightListPage() {
                 type="button"
                 className="mt-3 text-sm font-medium text-[#5099fe]"
                 onClick={() =>
-                  navigate(`/login/password?returnTo=${encodeURIComponent(listReturnTo)}`)
+                  navigate(`/login/password?returnTo=${encodeURIComponent(listReturnTo)}`, {
+                    replace: true,
+                  })
                 }
               >
                 去登录

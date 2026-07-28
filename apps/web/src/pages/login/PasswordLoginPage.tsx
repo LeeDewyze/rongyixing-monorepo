@@ -320,7 +320,7 @@ export function PasswordLoginPage() {
         : "";
 
   function navigateAfterLogin() {
-    navigate(resolveInternalReturnTo(returnTo, "/"));
+    navigate(resolveInternalReturnTo(returnTo, "/"), { replace: true });
   }
 
   async function handleLogin() {

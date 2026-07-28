@@ -80,8 +80,8 @@ export function getApi() {
         const path = `${window.location.pathname}${window.location.search}`;
         const routerPath = stripAppBasePath(path);
         if (!routerPath.startsWith("/login")) {
-          window.location.href = withAppBasePath(
-            `/login/password?returnTo=${encodeURIComponent(path)}`,
+          window.location.replace(
+            withAppBasePath(`/login/password?returnTo=${encodeURIComponent(path)}`),
           );
         }
       },

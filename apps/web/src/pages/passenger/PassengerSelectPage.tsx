@@ -29,6 +29,7 @@ import {
 } from "@/hooks/usePassengerCredential";
 import { credentialFormFromCredential } from "@/lib/credential-form";
 import { formatApiError } from "@/lib/formatApiError";
+import { showAppConfirmDialog } from "@/lib/app-confirm-dialog";
 import { navigateReturn } from "@/lib/navigation";
 import {
   buildCredentialPagePath,
@@ -223,7 +224,13 @@ export function PassengerSelectPage() {
   }
 
   async function handleStaffCredentialRemove(staffId: string, credential: PassengerCredential) {
-    if (!window.confirm("确定删除该证件？")) return;
+    const confirmed = await showAppConfirmDialog({
+      title: "删除证件",
+      message: "确定删除该证件？",
+      confirmLabel: "删除",
+      variant: "destructive",
+    });
+    if (!confirmed) return;
     try {
       await removeStaffCredential.mutateAsync(credentialFormFromCredential(credential, staffId));
       pruneSelectedAfterDelete({ credential });
