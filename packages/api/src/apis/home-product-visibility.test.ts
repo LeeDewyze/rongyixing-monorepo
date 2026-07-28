@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   getVisibleHomeProductsFromSitemaps,
   getVisibleHomeProductsFromWorkbenches,
+  hasTravelApplyWorkbench,
 } from "./home-product-visibility.js";
 
 const workbenches = [
@@ -41,6 +42,28 @@ describe("getVisibleHomeProductsFromWorkbenches", () => {
         },
       ]),
     ).toEqual(["train"]);
+  });
+});
+
+describe("hasTravelApplyWorkbench", () => {
+  it("detects the travel-apply group configured by the TMC", () => {
+    expect(
+      hasTravelApplyWorkbench([
+        ...workbenches,
+        {
+          Name: "出差申请",
+          Value: [{ Name: "我的审批", Url: { path: "path://tmc-approval-task", tag: "TmcFlow" } }],
+        },
+      ]),
+    ).toBe(true);
+  });
+
+  it("hides the panel when the workbench omits the travel-apply group", () => {
+    expect(hasTravelApplyWorkbench(workbenches)).toBe(false);
+  });
+
+  it("hides the panel when the travel-apply group has no entries", () => {
+    expect(hasTravelApplyWorkbench([{ Name: "出差申请", Value: [] }])).toBe(false);
   });
 });
 

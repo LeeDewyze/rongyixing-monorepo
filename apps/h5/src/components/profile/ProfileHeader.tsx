@@ -56,7 +56,6 @@ interface ProfileHeaderProps {
 
 export function ProfileHeader({ profile, displayName, balance, messageCount }: ProfileHeaderProps) {
   const orgCode = profile.OrganizationCode ?? profile.Id;
-
   return (
     <header className="px-3 pb-14 pt-10" style={{ background: PROFILE_PAGE_GRADIENT }}>
       <div className="flex items-center gap-3">

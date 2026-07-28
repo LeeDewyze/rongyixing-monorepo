@@ -20,7 +20,6 @@ export function ProfilePadHeaderCard({
   messageCount,
 }: ProfilePadHeaderCardProps) {
   const orgCode = profile.OrganizationCode ?? profile.Id;
-
   return (
     <section className="rounded-2xl bg-white px-5 py-5 shadow-[0_4px_20px_rgba(15,23,42,0.06)] ring-1 ring-black/[0.03] pc:px-6 pc:py-6">
       <div className="flex items-center gap-4">

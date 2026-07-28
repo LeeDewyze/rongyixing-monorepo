@@ -112,6 +112,7 @@ export {
 export {
   getVisibleHomeProductsFromSitemaps,
   getVisibleHomeProductsFromWorkbenches,
+  hasTravelApplyWorkbench,
 } from "./apis/home-product-visibility.js";
 export * from "./methods/account-flow.js";
 export * from "./methods/account-card-flow.js";

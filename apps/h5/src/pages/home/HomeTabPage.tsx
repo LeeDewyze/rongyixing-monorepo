@@ -17,6 +17,7 @@ import { HomeTrainSearchPanel } from "@/components/home/HomeTrainSearchPanel";
 import { CityPicker } from "@/components/search";
 import { PageToast } from "@/components/layout/PageToast";
 import { useHomeBanners } from "@/hooks/useHomeBanners";
+import { useTravelApplyVisible } from "@/hooks/useTravelApplyVisible";
 import { useVisibleHomeProducts } from "@/hooks/useVisibleHomeProducts";
 import { onHomeBannerJump } from "@/lib/core-jump";
 import { useFlightSearchForm } from "@/hooks/useFlightSearchForm";
@@ -57,6 +58,7 @@ export function HomeTabPage() {
   const apiMode = getApiMode();
   const bannerQuery = useHomeBanners();
   const visibleProducts = useVisibleHomeProducts(travelMode);
+  const travelApplyVisible = useTravelApplyVisible(travelMode);
   const { data: notices = [] } = useQuery({
     queryKey: ["home", "notices"],
     queryFn: () => getApi().notice.getList({ PageIndex: 0, PageSize: 20 }),
@@ -249,7 +251,7 @@ export function HomeTabPage() {
         </div>
       ) : null}
 
-      {travelMode === "business" ? <HomeBusinessPanel /> : null}
+      {travelMode === "business" && travelApplyVisible ? <HomeBusinessPanel /> : null}
 
       <PageToast message={hotelLocationError} tone="error" />
 

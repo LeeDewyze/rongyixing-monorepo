@@ -16,6 +16,7 @@ import {
 import { WebHotelSearchPanel } from "@/components/home/WebHotelSearchPanel";
 import { WebTrainSearchPanel } from "@/components/home/WebTrainSearchPanel";
 import { useHomeBanners } from "@/hooks/useHomeBanners";
+import { useTravelApplyVisible } from "@/hooks/useTravelApplyVisible";
 import { useVisibleHomeProducts } from "@/hooks/useVisibleHomeProducts";
 import { getApi } from "@/lib/api";
 import { getApiMode } from "@/lib/env";
@@ -54,6 +55,7 @@ export function WebHomePage() {
   const flightForm = useFlightSearchForm();
   const bannerQuery = useHomeBanners();
   const visibleProducts = useVisibleHomeProducts(travelMode);
+  const travelApplyVisible = useTravelApplyVisible(travelMode);
   const { data: notices = [] } = useQuery({
     queryKey: ["home", "notices"],
     queryFn: () => getApi().notice.getList({ PageIndex: 0, PageSize: 20 }),
@@ -248,7 +250,7 @@ export function WebHomePage() {
         }
       />
 
-      {travelMode === "business" ? <WebBusinessPanel /> : null}
+      {travelMode === "business" && travelApplyVisible ? <WebBusinessPanel /> : null}
 
       {hotelLocationError ? (
         <p className="mt-2 text-center text-sm text-destructive" role="alert">

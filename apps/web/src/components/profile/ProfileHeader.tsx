@@ -47,7 +47,6 @@ interface ProfileHeaderProps {
 
 export function ProfileHeader({ profile, displayName, balance, messageCount }: ProfileHeaderProps) {
   const orgCode = profile.OrganizationCode ?? profile.Id;
-
   return (
     <header
       className="rounded-t-2xl px-3 pb-14 pt-6 pad:pt-8"
