@@ -5,6 +5,7 @@ import { normalizeBannerImageUrl } from "@/lib/home-banners";
 
 const AUTOPLAY_MS = 3000;
 const SWIPE_THRESHOLD_PX = 40;
+const DRAG_START_THRESHOLD_PX = 8;
 
 /** Map loop track index to the real slide index used by pagination dots. */
 export function getLoopRealIndex(trackIndex: number, realCount: number): number {
@@ -28,6 +29,10 @@ export function resolveLoopTrackIndex(
     return trackIndex + 1;
   }
   return trackIndex - 1;
+}
+
+export function shouldStartBannerDrag(deltaX: number, threshold = DRAG_START_THRESHOLD_PX): boolean {
+  return Math.abs(deltaX) >= threshold;
 }
 
 /** @deprecated Use resolveLoopTrackIndex for loop carousels. */
@@ -114,6 +119,8 @@ export function HomeBannerCarousel({ slides, onBannerClick }: HomeBannerCarousel
   const pausedRef = useRef(false);
   const dragStartXRef = useRef(0);
   const didSwipeRef = useRef(false);
+  const isDraggingRef = useRef(false);
+  const activePointerIdRef = useRef<number | null>(null);
   const realIndex = getLoopRealIndex(trackIndex, count);
 
   useEffect(() => {
@@ -121,6 +128,8 @@ export function HomeBannerCarousel({ slides, onBannerClick }: HomeBannerCarousel
     setEnableTransition(true);
     setDragOffset(0);
     setIsDragging(false);
+    isDraggingRef.current = false;
+    activePointerIdRef.current = null;
   }, [canCycle, slides]);
 
   useEffect(() => {
@@ -165,8 +174,10 @@ export function HomeBannerCarousel({ slides, onBannerClick }: HomeBannerCarousel
     (clientX: number) => {
       const deltaX = clientX - dragStartXRef.current;
       setIsDragging(false);
+      isDraggingRef.current = false;
       setDragOffset(0);
       pausedRef.current = false;
+      activePointerIdRef.current = null;
 
       if (Math.abs(deltaX) >= SWIPE_THRESHOLD_PX) {
         didSwipeRef.current = true;
@@ -179,45 +190,78 @@ export function HomeBannerCarousel({ slides, onBannerClick }: HomeBannerCarousel
   const handlePointerDown = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
       if (!canCycle) return;
+      if (event.pointerType === "mouse" && event.button !== 0) return;
       pausedRef.current = true;
       didSwipeRef.current = false;
+      isDraggingRef.current = false;
       dragStartXRef.current = event.clientX;
-      setIsDragging(true);
+      activePointerIdRef.current = event.pointerId;
+      setIsDragging(false);
       setDragOffset(0);
-      event.currentTarget.setPointerCapture(event.pointerId);
     },
     [canCycle],
   );
 
-  const handlePointerMove = useCallback(
-    (event: React.PointerEvent<HTMLDivElement>) => {
-      if (!isDragging) return;
-      setDragOffset(event.clientX - dragStartXRef.current);
-    },
-    [isDragging],
-  );
+  const handlePointerMove = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    if (activePointerIdRef.current !== event.pointerId) return;
+
+    const deltaX = event.clientX - dragStartXRef.current;
+    if (!isDraggingRef.current) {
+      if (!shouldStartBannerDrag(deltaX)) return;
+      isDraggingRef.current = true;
+      setIsDragging(true);
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
+
+    setDragOffset(deltaX);
+  }, []);
 
   const handlePointerUp = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
-      if (!isDragging) return;
-      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-        event.currentTarget.releasePointerCapture(event.pointerId);
+      if (activePointerIdRef.current !== event.pointerId) return;
+
+      if (isDraggingRef.current) {
+        if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+          event.currentTarget.releasePointerCapture(event.pointerId);
+        }
+        finishDrag(event.clientX);
+        return;
       }
-      finishDrag(event.clientX);
+
+      activePointerIdRef.current = null;
+      pausedRef.current = false;
     },
-    [finishDrag, isDragging],
+    [finishDrag],
   );
 
   const handlePointerCancel = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
-      if (!isDragging) return;
-      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-        event.currentTarget.releasePointerCapture(event.pointerId);
+      if (activePointerIdRef.current !== event.pointerId) return;
+
+      if (isDraggingRef.current) {
+        if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+          event.currentTarget.releasePointerCapture(event.pointerId);
+        }
+        finishDrag(event.clientX);
+        return;
       }
-      finishDrag(event.clientX);
+
+      activePointerIdRef.current = null;
+      pausedRef.current = false;
     },
-    [finishDrag, isDragging],
+    [finishDrag],
   );
+
+  const handleActiveSlideClick = useCallback(() => {
+    if (didSwipeRef.current) {
+      didSwipeRef.current = false;
+      return;
+    }
+    const slide = slides[realIndex];
+    if (slide?.banner?.Url) {
+      onBannerClick?.(slide);
+    }
+  }, [onBannerClick, realIndex, slides]);
 
   if (count === 0) {
     return null;
@@ -241,20 +285,12 @@ export function HomeBannerCarousel({ slides, onBannerClick }: HomeBannerCarousel
         }}
         onTransitionEnd={handleTrackTransitionEnd}
       >
-        {loopSlides.map((slide) => (
+        {loopSlides.map((slide, index) => (
           <button
             key={slide.loopKey}
             type="button"
             className="relative h-full min-w-full flex-[0_0_100%] border-none bg-transparent p-0"
-            onClick={() => {
-              if (didSwipeRef.current) {
-                didSwipeRef.current = false;
-                return;
-              }
-              if (slide.banner?.Url) {
-                onBannerClick?.(slide);
-              }
-            }}
+            onClick={index === trackIndex ? handleActiveSlideClick : undefined}
             aria-label={slide.banner?.Title ?? slide.banner?.Name ?? "轮播图"}
           >
             <BannerSlideImage src={slide.imageUrl} />

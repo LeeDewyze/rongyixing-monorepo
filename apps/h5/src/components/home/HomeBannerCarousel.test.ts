@@ -4,6 +4,7 @@ import {
   getLoopRealIndex,
   resolveLoopTrackIndex,
   resolveSwipeIndex,
+  shouldStartBannerDrag,
 } from "@/components/home/HomeBannerCarousel";
 
 describe("resolveLoopTrackIndex", () => {
@@ -45,5 +46,15 @@ describe("resolveSwipeIndex", () => {
 
   it("keeps index when swipe is below threshold", () => {
     expect(resolveSwipeIndex(1, 3, -10)).toBe(1);
+  });
+});
+
+describe("shouldStartBannerDrag", () => {
+  it("keeps a light tap as a click", () => {
+    expect(shouldStartBannerDrag(3)).toBe(false);
+  });
+
+  it("starts dragging once movement reaches threshold", () => {
+    expect(shouldStartBannerDrag(-8)).toBe(true);
   });
 });
