@@ -55,7 +55,6 @@ export const HOTEL_LIST_STAR_OPTIONS = [
 
 export const HOTEL_LIST_CATEGORY_OPTIONS = [
   { id: "Tmc", label: "协议酒店" },
-  { id: "GreenCloud", label: "旅发酒店" },
 ];
 
 export const HOTEL_LIST_PRICE_RANGES: HotelListPriceRange[] = [
@@ -140,9 +139,9 @@ export function applyHotelListFilterParams(
     next.Orderby = filter.orderby;
   }
 
-  const categories = [...filter.stars.map(String), ...filter.categories];
-  if (categories.length > 0) {
-    next.Categories = categories;
+  const stars = filter.stars.map(String);
+  if (stars.length > 0) {
+    next.Categories = stars;
   }
   if (filter.geos.length > 0) {
     next.Geos = filter.geos;

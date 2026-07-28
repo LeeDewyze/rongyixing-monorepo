@@ -1107,9 +1107,11 @@ function buildHotelListRequest(params: HotelListParams): Record<string, unknown>
     PageSize: params.PageSize ?? 20,
     IsLoadDetail: true,
     hotelType: params.HotelType ?? "Normal",
-    Stars: null,
-    Passengers: params.Passengers ?? "",
   };
+  if (!isTouristChannel(params)) {
+    data.Stars = null;
+    data.Passengers = params.Passengers ?? "";
+  }
   const cityName = params.CityName?.trim();
   if (cityName) {
     data.CityName = cityName;
@@ -1123,7 +1125,6 @@ function buildHotelListRequest(params: HotelListParams): Record<string, unknown>
     Orderby: "Orderby",
     BeginPrice: "BeginPrice",
     EndPrice: "EndPrice",
-    Categories: "Categories",
     Geos: "Geos",
     Brands: "Brands",
     Themes: "Themes",
@@ -1140,6 +1141,12 @@ function buildHotelListRequest(params: HotelListParams): Record<string, unknown>
     if (value == null || value === "") continue;
     if (Array.isArray(value) && value.length === 0) continue;
     data[requestKey] = value;
+  }
+  const starCategories = (params.Categories ?? []).filter((value) =>
+    /^\d+$/.test(String(value).trim()),
+  );
+  if (starCategories.length > 0) {
+    data.Categories = starCategories;
   }
   if (params.TravelFormId != null) {
     data.travelformid = params.TravelFormId;

@@ -54,6 +54,14 @@ function parseHotelType(value: string | null): HotelType | undefined {
   return undefined;
 }
 
+function resolveHotelTypeFilterCategories(hotelType: HotelType): string[] {
+  return hotelType === "Tmc" ? ["Tmc"] : [];
+}
+
+function resolveHotelTypeFromFilter(filter: HotelListFilterState): HotelType {
+  return filter.categories.includes("Tmc") ? "Tmc" : "Normal";
+}
+
 function useInfiniteScrollTrigger(
   onLoadMore: (() => void) | undefined,
   enabled: boolean,
@@ -234,6 +242,16 @@ export function HotelListPage() {
     navigate({ pathname: "/hotel/list", search: next.toString() }, { replace: true });
   }, [listReady, resolvedCity, cityCode, searchParams, navigate]);
 
+  useEffect(() => {
+    const categories = resolveHotelTypeFilterCategories(hotelType);
+    setFilterApplied((current) =>
+      current.categories.join(",") === categories.join(",") ? current : { ...current, categories },
+    );
+    setFilterDraft((current) =>
+      current.categories.join(",") === categories.join(",") ? current : { ...current, categories },
+    );
+  }, [hotelType]);
+
   usePageHeader({ visible: false });
 
   useLayoutEffect(() => {
@@ -405,6 +423,12 @@ export function HotelListPage() {
   function handleFilterConfirm() {
     setFilterApplied(filterDraft);
     setFilterOpen(false);
+    const nextHotelType = resolveHotelTypeFromFilter(filterDraft);
+    if (nextHotelType !== hotelType) {
+      const next = new URLSearchParams(searchParams);
+      next.set("hotelType", nextHotelType);
+      navigate({ pathname: "/hotel/list", search: next.toString() }, { replace: true });
+    }
   }
 
   if (!hasParams) return null;

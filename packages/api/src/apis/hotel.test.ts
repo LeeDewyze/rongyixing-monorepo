@@ -89,6 +89,68 @@ describe("createHotelApi (mock mode)", () => {
     });
   });
 
+  it("keeps only star values in Categories for tourist hotel list", async () => {
+    let capturedMethod = "";
+    let capturedData: Record<string, unknown> | undefined;
+    const proxyWithCapture = createProxyClient({
+      baseUrl: "https://example.com",
+      mode: "mock",
+      mockHandler: async (method, data) => {
+        capturedMethod = method;
+        capturedData = data as Record<string, unknown>;
+        return successResponse({ Hotels: [], TotalCount: 0 });
+      },
+    });
+    const api = createHotelApi(proxyWithCapture);
+    await api.getList({
+      channel: "tourist",
+      CityCode: "1101",
+      CityName: "北京",
+      CheckInDate: "2026-07-28",
+      CheckOutDate: "2026-07-29",
+      Categories: ["3", "Tmc"],
+      Passengers: "",
+    });
+
+    expect(capturedMethod).toBe(TOURIST_HOTEL_FLOW_METHODS.LIST);
+    expect(capturedData).toMatchObject({
+      CityCode: "1101",
+      CityName: "北京",
+      BeginDate: "2026-07-28",
+      EndDate: "2026-07-29",
+      Categories: ["3"],
+    });
+    expect(capturedData).not.toHaveProperty("Stars");
+    expect(capturedData).not.toHaveProperty("Passengers");
+  });
+
+  it("keeps legacy business list fields", async () => {
+    let capturedData: Record<string, unknown> | undefined;
+    const proxyWithCapture = createProxyClient({
+      baseUrl: "https://example.com",
+      mode: "mock",
+      mockHandler: async (_method, data) => {
+        capturedData = data as Record<string, unknown>;
+        return successResponse({ Hotels: [], TotalCount: 0 });
+      },
+    });
+    const api = createHotelApi(proxyWithCapture);
+    await api.getList({
+      channel: "tmc",
+      CityCode: "1101",
+      CheckInDate: "2026-07-28",
+      CheckOutDate: "2026-07-29",
+      Passengers: "staff-1",
+      StaffCityCode: "010",
+    });
+
+    expect(capturedData).toMatchObject({
+      Stars: null,
+      Passengers: "staff-1",
+      staffCityCode: "010",
+    });
+  });
+
   it("searchHotel calls legacy keyword search with city and keyword", async () => {
     let capturedMethod = "";
     let capturedData: unknown;
