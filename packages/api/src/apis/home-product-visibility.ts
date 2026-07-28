@@ -47,6 +47,17 @@ export function getVisibleHomeProductsFromWorkbenches(
   );
 }
 
+/** Legacy TMC home also exposes personal routes via the workbench group named 因私出行. */
+export function getVisibleHomeProductsFromPersonalWorkbench(
+  groups: readonly WorkbenchGroup[],
+): HomeBookProduct[] {
+  const items = groups.find((group) => group.Name === "因私出行")?.Value ?? [];
+
+  return (Object.keys(PERSONAL_PRODUCT_ROUTES) as HomeBookProduct[]).filter((product) =>
+    items.some((item) => readWorkbenchRoute(item).includes(PERSONAL_PRODUCT_ROUTES[product])),
+  );
+}
+
 /** Legacy home renders each workbench group as returned, so an absent group stays hidden. */
 export function hasTravelApplyWorkbench(groups: readonly WorkbenchGroup[]): boolean {
   const items = groups.find((group) => group.Name === "出差申请")?.Value ?? [];

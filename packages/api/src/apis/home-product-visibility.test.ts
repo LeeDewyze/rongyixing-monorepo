@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  getVisibleHomeProductsFromPersonalWorkbench,
   getVisibleHomeProductsFromSitemaps,
   getVisibleHomeProductsFromWorkbenches,
   hasTravelApplyWorkbench,
@@ -64,6 +65,12 @@ describe("hasTravelApplyWorkbench", () => {
 
   it("hides the panel when the travel-apply group has no entries", () => {
     expect(hasTravelApplyWorkbench([{ Name: "出差申请", Value: [] }])).toBe(false);
+  });
+});
+
+describe("getVisibleHomeProductsFromPersonalWorkbench", () => {
+  it("uses the personal workbench routes for personal mode", () => {
+    expect(getVisibleHomeProductsFromPersonalWorkbench(workbenches)).toEqual(["flight", "hotel"]);
   });
 });
 

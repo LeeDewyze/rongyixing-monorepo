@@ -111,6 +111,7 @@ export {
 } from "./apis/region-type.js";
 export {
   getVisibleHomeProductsFromSitemaps,
+  getVisibleHomeProductsFromPersonalWorkbench,
   getVisibleHomeProductsFromWorkbenches,
   hasTravelApplyWorkbench,
 } from "./apis/home-product-visibility.js";

@@ -1,15 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import {
-  getVisibleHomeProductsFromSitemaps,
-  getVisibleHomeProductsFromWorkbenches,
-} from "@ryx/api";
+import { getVisibleHomeProductsFromWorkbenches } from "@ryx/api";
 import type { HomeBookProduct } from "@ryx/shared-types";
 
 import type { HomeTravelMode } from "@/config/home-assets";
+import { loadPersonalVisibleHomeProducts } from "@/hooks/loadPersonalVisibleHomeProducts";
 import { getApi } from "@/lib/api";
-import { getApiMode, getAppId } from "@/lib/env";
+import { getApiMode } from "@/lib/env";
 import { getTicket } from "@/lib/session";
-import { resolveTouristContext } from "@/lib/tourist-context";
 
 export function useVisibleHomeProducts(travelMode: HomeTravelMode): HomeBookProduct[] {
   const hasTicket = Boolean(getTicket());
@@ -19,13 +16,7 @@ export function useVisibleHomeProducts(travelMode: HomeTravelMode): HomeBookProd
     queryKey: ["home", "visible-products", travelMode],
     queryFn: async () => {
       if (travelMode === "personal") {
-        const api = getApi();
-        const context = await resolveTouristContext({
-          appId: getAppId(),
-          sender: api.proxy,
-        });
-        const sitemaps = await api.mms.getSitemaps({ mmsId: context.TouristMmsId });
-        return getVisibleHomeProductsFromSitemaps(sitemaps);
+        return loadPersonalVisibleHomeProducts();
       }
 
       const workbenches = await getApi().tmc.getWorkbenches();
