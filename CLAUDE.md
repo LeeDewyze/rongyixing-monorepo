@@ -55,7 +55,9 @@ Standards live in `.cursor/rules/`:
 ## Commands
 
 ```bash
-pnpm install && pnpm dev:h5 && pnpm dev:web
+pnpm install
+pnpm dev:h5:test && pnpm dev:web:test
+pnpm dev:h5:prod && pnpm dev:web:prod
 pnpm build && pnpm test && pnpm typecheck && pnpm audit
 ```
 

@@ -1,6 +1,6 @@
 # Proxy 测试环境已知问题（待后续处理）
 
-> **环境**：`pnpm dev:h5:test` · `VITE_API_MODE=proxy` · `VITE_API_BASE_URL=http://app.rtesp.com`  
+> **环境**：`pnpm dev:h5:test` · `VITE_API_MODE=proxy` · `VITE_API_BASE_URL=http://app.rtesp.com` · `VITE_API_DOMAIN=rtesp.com`
 > **记录日期**：2026-06-24  
 > **状态**：阻塞 Proxy 联调验收，不阻塞 Mock / 单元测试
 

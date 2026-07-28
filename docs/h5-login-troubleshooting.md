@@ -46,14 +46,14 @@ In development, the app intentionally posts to same-origin paths to avoid CORS:
 
 | What you see in DevTools | What actually happens |
 |--------------------------|------------------------|
-| `http://localhost:5173/Jyx/LoginByRyx` | Vite proxies `/Jyx` → `ronglv-feature.rtesp.com` |
-| `http://localhost:5173/Home/Proxy` | Vite proxies `/Home` → `app.rtesp.com` (or `VITE_API_BASE_URL`) |
+| `http://localhost:5173/Jyx/LoginByRyx` | Vite proxies `/Jyx` → `ronglv-feature.<VITE_API_DOMAIN>` |
+| `http://localhost:5173/Home/Proxy` | Vite proxies `/Home` → `VITE_API_BASE_URL` |
 
 `rewriteDevProxyUrl` in `apps/h5/src/lib/api.ts` rewrites absolute login URLs to relative paths (e.g. `/Jyx/LoginByRyx`) so the Vite dev proxy can forward them.
 
 **Seeing `localhost:5173` in the Network tab is expected and correct.**
 
-## Root cause: Vite `/Jyx` proxy target mismatch
+## Root cause: Vite proxy environment mismatch
 
 ### Symptom
 
@@ -63,13 +63,17 @@ In development, the app intentionally posts to same-origin paths to avoid CORS:
 
 ### Cause
 
-The dev server proxies `/Jyx` to a **hardcoded origin** in `apps/h5/vite.config.ts` (`DEV_JYX_PROXY_TARGET`, default `http://ronglv-feature.rtesp.com`). If `/Home/Setting` returns a `LoginUrl` on a different host, `rewriteDevProxyUrl` still sends the browser to `/Jyx/...` on localhost, but Vite forwards to the wrong backend.
+The dev server proxies `/Jyx`, `/Identity`, and `/__ryx/*` through `tooling/vite/ryx-dev-proxy.ts`. The proxy target is derived from `VITE_API_DOMAIN`; `/Home/Setting` and `/Home/Proxy` use `VITE_API_BASE_URL`.
+
+If `VITE_API_BASE_URL` and `VITE_API_DOMAIN` point to different environments, `rewriteDevProxyUrl` still sends the browser to `/Jyx/...` on localhost, but Vite forwards login or service requests to the wrong backend.
 
 ### Fix
 
-1. Confirm `LoginUrl` from `/Home/Setting` matches `DEV_JYX_PROXY_TARGET` (same origin).
-2. If you point `VITE_API_BASE_URL` at another environment with a different login host, update `DEV_JYX_PROXY_TARGET` in `vite.config.ts` to that host's origin.
-3. **Restart** `pnpm dev:h5` after changing `vite.config.ts`.
+1. Use a paired command instead of hand-editing env values:
+   - `pnpm dev:h5:test` → `http://app.rtesp.com` + `rtesp.com`
+   - `pnpm dev:h5:prod` → `https://app.rongtrip.cn` + `rongtrip.cn`
+2. If you override env manually, keep `VITE_API_BASE_URL` and `VITE_API_DOMAIN` in the same environment.
+3. Restart Vite after changing env files or proxy config.
 
 ### Verification
 
@@ -108,7 +112,27 @@ Switching API mode via the DEV menu calls `resetApi()`, which clears `ryx_api_co
 
 **Clean up legacy env:** remove `VITE_API_TOKEN`, `VITE_LOGIN_URL`, and `VITE_FEATURE_RONGlv_URL` from `.env.development.local` if present — they are no longer read.
 
-## Recommended dev env (rtesp.com test)
+## Recommended dev envs
+
+Use the committed mode-specific env files:
+
+```text
+apps/h5/.env.test
+apps/h5/.env.prod
+apps/web/.env.test
+apps/web/.env.prod
+```
+
+Common commands:
+
+```bash
+pnpm dev:h5:test   # http://localhost:5173/h5/
+pnpm dev:web:test  # http://localhost:5174/web/
+pnpm dev:h5:prod   # http://localhost:5175/h5/
+pnpm dev:web:prod  # http://localhost:5176/web/
+```
+
+Test env values:
 
 ```bash
 VITE_APP_ID=com.ronglvonline.app
@@ -159,7 +183,7 @@ Expected result: `arm64`.
 1. **Restart dev server** after env or `vite.config.ts` changes.
 2. **Network tab:** login URL should be `localhost:5173/Jyx/LoginByRyx` in dev (proxied).
 3. **Response message:** `凭证错误` → Sign/Token/proxy; `用户名或密码错误` → credentials.
-4. **`DEV_JYX_PROXY_TARGET`:** in `vite.config.ts`, must match Setting `LoginUrl` origin.
+4. **`VITE_API_DOMAIN`:** must match the environment used by `VITE_API_BASE_URL`.
 5. **`VITE_API_BASE_URL`:** use `http://` for `app.rtesp.com`.
 6. **Same environment** for login host and `VITE_API_BASE_URL` / Domain.
 7. **Direct probe:** POST to `http://ronglv-feature.rtesp.com/Jyx/LoginByRyx` with computed Sign; if that works but localhost fails, suspect Vite proxy config.
@@ -169,7 +193,7 @@ Expected result: `arm64`.
 | Area | Location |
 |------|----------|
 | Dev URL rewrite | `apps/h5/src/lib/api.ts` — `rewriteDevProxyUrl` |
-| Vite proxy | `apps/h5/vite.config.ts` — `DEV_JYX_PROXY_TARGET`, `/Jyx`, `/Home` |
+| Vite proxy | `tooling/vite/ryx-dev-proxy.ts`, `apps/h5/vite.config.ts`, `apps/web/vite.config.ts` |
 | ApiConfig bootstrap | `apps/h5/src/lib/api.ts` — `bootstrapApi`, `clearApiConfigCache` |
 | Login URL resolution | `packages/api/src/proxy/resolve-url.ts` |
 | Sign | `packages/api/src/proxy/sign.ts` — `computeSign` |

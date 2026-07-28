@@ -55,6 +55,30 @@ CREATE_ARCHIVE=0 deploy/release/build-dist-package.sh
 CREATE_ARCHIVE=1 deploy/release/build-dist-package.sh
 ```
 
+## 本地 Vite 调试
+
+本地 Vite 调试也按 test/prod 拆分，便于在构建交付包前先验证接口环境：
+
+```bash
+pnpm dev:h5:test   # http://localhost:5173/h5/  -> rtesp.com
+pnpm dev:web:test  # http://localhost:5174/web/ -> rtesp.com
+pnpm dev:h5:prod   # http://localhost:5175/h5/  -> rongtrip.cn
+pnpm dev:web:prod  # http://localhost:5176/web/ -> rongtrip.cn
+```
+
+对应 env 文件：
+
+```text
+apps/h5/.env.test
+apps/h5/.env.prod
+apps/web/.env.test
+apps/web/.env.prod
+```
+
+Vite dev proxy 由 `tooling/vite/ryx-dev-proxy.ts` 统一生成，`/Home/*` 使用
+`VITE_API_BASE_URL`，`/Jyx`、`/Identity`、`/__ryx/*` 使用 `VITE_API_DOMAIN`
+派生出来的 legacy 服务域名。release 构建脚本沿用同一组域名约定。
+
 ## 服务器安装
 
 安装脚本会根据包里的 `VERSION.txt` 自动识别 `test` 或 `prod`。

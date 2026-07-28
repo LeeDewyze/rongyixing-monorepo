@@ -223,14 +223,16 @@ pnpm build && pnpm typecheck && pnpm test
 pnpm check:mock-coverage -- --domain all
 pnpm verify:mock
 pnpm dev:h5:mock                    # Mock：/hotel
-pnpm dev:h5:test                    # proxy 联调 app.rtesp.com
+pnpm dev:h5:test                    # proxy 联调 app.rtesp.com + rtesp.com
+pnpm dev:h5:prod                    # proxy 联调 app.rongtrip.cn + rongtrip.cn
 ```
 
-联调（`apps/h5/.env.staging`）：
+测试联调（`apps/h5/.env.test`）：
 
 ```env
 VITE_API_MODE=proxy
 VITE_API_BASE_URL=http://app.rtesp.com
+VITE_API_DOMAIN=rtesp.com
 ```
 
 ---

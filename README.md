@@ -145,7 +145,8 @@ rongyixing-monorepo/
 # Install dependencies
 pnpm install
 
-# Copy env files (one per app)
+# Optional: copy local override files when you need private overrides.
+# Committed env files already cover development/test/prod modes.
 cp apps/h5/.env.example apps/h5/.env
 cp apps/web/.env.example apps/web/.env
 ```
@@ -155,7 +156,8 @@ cp apps/web/.env.example apps/web/.env
 ```bash
 pnpm dev:h5          # http://localhost:5173
 pnpm dev:h5:mock     # same, with VITE_API_MODE=mock
-pnpm dev:h5:test     # staging mode
+pnpm dev:h5:test     # http://localhost:5173/h5/  -> rtesp test
+pnpm dev:h5:prod     # http://localhost:5175/h5/  -> rongtrip prod
 ```
 
 H5 builds workspace packages (`shared-types`, `api`, `mock`) before starting Vite.
@@ -164,6 +166,8 @@ H5 builds workspace packages (`shared-types`, `api`, `mock`) before starting Vit
 
 ```bash
 pnpm dev:web         # http://localhost:5174
+pnpm dev:web:test    # http://localhost:5174/web/ -> rtesp test
+pnpm dev:web:prod    # http://localhost:5176/web/ -> rongtrip prod
 ```
 
 Open [http://localhost:5174](http://localhost:5174) in the browser. Use DevTools device mode or a wide window to exercise layout:
@@ -181,9 +185,22 @@ pnpm build:workspace
 VITE_API_MODE=mock pnpm --filter @ryx/web dev
 ```
 
-**Proxy API (default):** set `VITE_API_MODE=proxy` in `apps/web/.env` (or omit it). Vite proxies `/Home/Proxy` and `/__ryx/*` to the configured `VITE_API_BASE_URL` / rtesp dev hosts — see `apps/web/vite.config.ts`.
+**Proxy API (default):** set `VITE_API_MODE=proxy` (or omit it). Vite proxies `/Home/Proxy`, `/Home/Setting`, `/Jyx`, `/Identity`, and `/__ryx/*` to the environment selected by `VITE_API_BASE_URL` + `VITE_API_DOMAIN`. Shared proxy mapping lives in `tooling/vite/ryx-dev-proxy.ts`.
 
 Log in at `/login/password` before using home, orders, or booking flows.
+
+### Local Vite Environment Matrix
+
+The release package has test/prod dist directories, and local Vite now mirrors that split:
+
+| Command | URL | Env file | Gateway | Legacy service suffix |
+| --- | --- | --- | --- | --- |
+| `pnpm dev:h5:test` | `http://localhost:5173/h5/` | `apps/h5/.env.test` | `http://app.rtesp.com` | `rtesp.com` |
+| `pnpm dev:web:test` | `http://localhost:5174/web/` | `apps/web/.env.test` | `http://app.rtesp.com` | `rtesp.com` |
+| `pnpm dev:h5:prod` | `http://localhost:5175/h5/` | `apps/h5/.env.prod` | `https://app.rongtrip.cn` | `rongtrip.cn` |
+| `pnpm dev:web:prod` | `http://localhost:5176/web/` | `apps/web/.env.prod` | `https://app.rongtrip.cn` | `rongtrip.cn` |
+
+`VITE_BASE_PATH` is set by these scripts so local routes use `/h5/` and `/web/`, matching Nginx and release deployment.
 
 ### Single-IP Test Deployment
 
@@ -219,8 +236,14 @@ For customer delivery without source code, build a static H5/Web package:
 deploy/release/build-dist-package.sh
 ```
 
-The generated directory is `deploy/release/out/rongyixing-h5-web-dist/` and contains only
-`h5/dist`, `web/dist`, Nginx template, and install helper. See `deploy/release/README.md`.
+The generated directories are:
+
+```text
+deploy/release/out/rongyixing-h5-web-dist-test/
+deploy/release/out/rongyixing-h5-web-dist-prod/
+```
+
+Each directory contains only `h5/dist`, `web/dist`, Nginx template, and install helpers. See `deploy/release/README.md`.
 
 ### Environment Variables
 
@@ -230,8 +253,10 @@ The generated directory is `deploy/release/out/rongyixing-h5-web-dist/` and cont
 | `VITE_APP_ID`         | h5/web | App id for `/Home/Setting` bootstrap    |
 | `VITE_BASE_PATH`      | h5/web | Browser base path, e.g. `/h5/`, `/web/` |
 | `VITE_API_BASE_URL`   | h5/web | Backend / proxy gateway base URL        |
+| `VITE_API_DOMAIN`     | h5/web | Legacy service suffix and signed domain |
 | `VITE_API_MODE`       | h5/web | `mock`, `proxy` (default), or `direct`  |
 | `VITE_API_MOCK_DELAY` | h5/web | Artificial delay (ms) in mock mode      |
+| `VITE_DEV_PORT`       | h5/web | Local Vite dev server port              |
 
 Read env vars only in `apps/*/src/lib/env.ts`. Extend `src/vite-env.d.ts` when adding new variables.
 
@@ -271,8 +296,11 @@ const login = await getApi().authProxy.login({ Name: "demo", Password: "123456" 
 | -------------------------- | ------------------------------------------------ |
 | `pnpm dev:h5`              | Start H5 dev server (:5173)                      |
 | `pnpm dev:h5:mock`         | H5 dev with `VITE_API_MODE=mock`                 |
-| `pnpm dev:h5:test`         | H5 dev against staging env                       |
+| `pnpm dev:h5:test`         | H5 dev against test env (:5173, `/h5/`)          |
+| `pnpm dev:h5:prod`         | H5 dev against prod env (:5175, `/h5/`)          |
 | `pnpm dev:web`             | Start Web dev server (:5174)                     |
+| `pnpm dev:web:test`        | Web dev against test env (:5174, `/web/`)        |
+| `pnpm dev:web:prod`        | Web dev against prod env (:5176, `/web/`)        |
 | `pnpm build:workspace`     | Build shared-types, api, mock (for mock mode)    |
 | `pnpm analyze-ryx-scope`   | ryx 迁移范围分析 → METHODS-RYX-SCOPE.md          |
 | `pnpm analyze-ryx-pages`   | 页面→接口矩阵 → PAGE-API-MATRIX.md               |
