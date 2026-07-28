@@ -1,110 +1,95 @@
+import type { BulletinNotice, NoticeListParams } from "@ryx/shared-types";
+
 import { TMC_METHODS } from "../methods/tmc.js";
 import type { ProxyClient } from "../proxy/proxy-client.js";
-import { createRequestEntity, encodeFormBody, toFormFields } from "../proxy/request-entity.js";
-import { computeSign, serializeData } from "../proxy/sign.js";
 
-export interface BulletinNotice {
-  Id: string | number;
-  Title: string;
-  InsertTime?: string;
-  Url?: string;
-}
-
-export interface NoticeListParams {
-  PageIndex?: number;
-  PageSize?: number;
-}
+export type { BulletinNotice, NoticeListParams };
 
 export interface NoticeApi {
   getList(params?: NoticeListParams): Promise<BulletinNotice[]>;
   getDetail(params: { NoticeId: string | number }): Promise<BulletinNotice>;
 }
 
-const NOTICE_API_BASE_URL = "http://api-tmc.rtesp.com";
-
-function readQueryParams(): URLSearchParams {
-  return new URLSearchParams(globalThis.location?.search ?? "");
+function readString(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
 }
 
-function getRequestDomain(): string {
-  const fromUrl = readQueryParams().get("domain");
-  if (fromUrl) return fromUrl;
-  return "rtesp.com";
+function readOptionalNoticeFields(
+  record: Record<string, unknown>,
+): Pick<BulletinNotice, "InsertTime" | "Description" | "Detail" | "FullFileName" | "Url"> {
+  return {
+    InsertTime: readString(record.InsertTime ?? record.insertTime) || undefined,
+    Description: readString(record.Description ?? record.description) || undefined,
+    Detail: readString(record.Detail ?? record.detail) || undefined,
+    FullFileName: readString(record.FullFileName ?? record.fullFileName) || undefined,
+    Url: readString(record.Url ?? record.url) || undefined,
+  };
 }
 
-function getRequestLanguage(): string {
-  const fromUrl = readQueryParams().get("language");
-  if (fromUrl) return fromUrl;
-  return "cn";
+function normalizeNoticeItem(
+  raw: unknown,
+  options?: { requireTitle?: boolean },
+): BulletinNotice | null {
+  if (!raw || typeof raw !== "object") return null;
+  const record = raw as Record<string, unknown>;
+  const requireTitle = options?.requireTitle !== false;
+  let title = readString(record.Title ?? record.title);
+  const optional = readOptionalNoticeFields(record);
+  if (!title) {
+    title = optional.Description?.slice(0, 80) ?? "";
+  }
+  if (requireTitle && !title) return null;
+  const id = record.Id ?? record.id;
+  if (id == null || id === "") return null;
+  return {
+    Id: typeof id === "number" || typeof id === "string" ? id : String(id),
+    Title: title || "通知",
+    ...optional,
+  };
 }
 
-function getApiRoot(): string {
-  const fromQuery = readQueryParams().get("root");
-  if (fromQuery) return fromQuery;
-  return "rl";
+export function normalizeNoticeList(raw: unknown): BulletinNotice[] {
+  const items = Array.isArray(raw)
+    ? raw
+    : Array.isArray((raw as { Data?: unknown })?.Data)
+      ? ((raw as { Data: unknown[] }).Data ?? [])
+      : [];
+  return items
+    .map((item) => normalizeNoticeItem(item))
+    .filter((item): item is BulletinNotice => item != null);
 }
 
-function getRequestExtraFields(): Record<string, string> {
-  return { root: getApiRoot() };
-}
-
-function unwrapNoticeList(payload: unknown): BulletinNotice[] {
-  if (!payload || typeof payload !== "object") return [];
-  const data = (payload as { Data?: unknown }).Data;
-  return Array.isArray(data) ? (data as BulletinNotice[]) : [];
-}
-
-function unwrapNoticeDetail(payload: unknown): BulletinNotice | null {
-  if (!payload || typeof payload !== "object") return null;
-  const data = (payload as { Data?: unknown }).Data;
-  return data && typeof data === "object" ? (data as BulletinNotice) : null;
-}
-
-function buildNoticeFormBody(
-  method: string,
-  data: unknown,
-  proxy: ProxyClient,
-  getTicket: () => string | null,
-): string {
-  const apiConfig = proxy.getApiConfig();
-  const req = createRequestEntity(method, data, {
-    getTicket,
-    getTicketName: () => "ticket",
-    getDomain: getRequestDomain,
-    getLanguage: getRequestLanguage,
-    getExtraFields: getRequestExtraFields,
-    token: apiConfig?.Token ?? "",
-  });
-  const dataStr = serializeData(req.Data);
-  const sign = computeSign(dataStr, req.Timestamp ?? 0, apiConfig?.Token ?? "");
-  return encodeFormBody(toFormFields(req, sign, { includeSign: true, includeToken: true }));
+export function normalizeNoticeDetail(raw: unknown): BulletinNotice | null {
+  if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+    return normalizeNoticeItem(raw, { requireTitle: false });
+  }
+  const nested = (raw as { Data?: unknown })?.Data;
+  if (nested && typeof nested === "object") {
+    return normalizeNoticeItem(nested, { requireTitle: false });
+  }
+  return null;
 }
 
 export function createNoticeApi(proxy: ProxyClient): NoticeApi {
   return {
     async getList(params = {}) {
-      const getTicket = () =>
-        globalThis.localStorage?.getItem("ticket") ??
-        globalThis.localStorage?.getItem("loginTicket") ??
-        null;
-      const response = await fetch(`${NOTICE_API_BASE_URL}/Notice/List`, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: buildNoticeFormBody(TMC_METHODS.NOTICE_LIST, params, proxy, getTicket),
+      const raw = await proxy.send<unknown>({
+        method: TMC_METHODS.NOTICE_LIST,
+        data: params,
       });
-      return unwrapNoticeList(await response.json());
+      return normalizeNoticeList(raw);
     },
     async getDetail(params) {
-      const getTicket = () =>
-        globalThis.localStorage?.getItem("ticket") ??
-        globalThis.localStorage?.getItem("loginTicket") ??
-        null;
-      const response = await fetch(`${NOTICE_API_BASE_URL}/Notice/Detail`, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: buildNoticeFormBody(TMC_METHODS.NOTICE_DETAIL, params, proxy, getTicket),
+      const raw = await proxy.send<unknown>({
+        method: TMC_METHODS.NOTICE_DETAIL,
+        data: params,
       });
-      return unwrapNoticeDetail(await response.json()) ?? (params as unknown as BulletinNotice);
+      return (
+        normalizeNoticeDetail(raw) ?? {
+          Id: params.NoticeId,
+          Title: "",
+        }
+      );
     },
   };
 }

@@ -28,8 +28,12 @@ export function createTmcMockHandlers(): Record<string, (data: unknown) => IResp
       const id = params?.NoticeId ?? 40000000003;
       return successResponse({
         Id: id,
-        Title: id === 40000000005 ? "火车票改签优化" : "123",
+        Title: id === 40000000005 ? "火车票改签优化" : "客服公告",
         InsertTime: "2025-05-06T09:43:26",
+        Description: "客服电话:010-89630300 周一8:30-周五17:30",
+        Detail:
+          "<p>如需帮助，请在工作时间拨打客服热线 <strong>010-89630300</strong>。</p><p>感谢您使用融易行。</p>",
+        FullFileName: "",
         Url: "",
       });
     },

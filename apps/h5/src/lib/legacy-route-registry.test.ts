@@ -44,4 +44,10 @@ describe("resolveLegacyRoute", () => {
     expect(resolveLegacyRoute("account-logout")?.pathname).toBe("/settings/account-deletion");
     expect(resolveLegacyRoute("account-logout_ryx")?.pathname).toBe("/settings/account-deletion");
   });
+
+  it("maps bulletin detail deep link with id query", () => {
+    expect(resolveLegacyRoute("tmc-bulletin-detail?id=40000000003")?.pathname).toBe(
+      "/notice/40000000003",
+    );
+  });
 });

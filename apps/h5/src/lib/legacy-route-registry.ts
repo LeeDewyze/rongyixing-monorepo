@@ -43,6 +43,9 @@ registerAliases(["tmc-train-book", "tmc-train-book_ryx"], { pathname: "/train/bo
 
 registerAliases(["tmc-order-list", "tmc-order-list_ryx"], { pathname: "/orders" });
 registerAliases(["tmc-bulletin-list", "tmc-bulletin-list_ryx"], { pathname: "/notice" });
+registerAliases(["tmc-bulletin-detail"], (query) => ({
+  pathname: `/notice/${encodeURIComponent(query.id ?? "")}`,
+}));
 registerAliases(["tmc-approval-task"], { pathname: "/travel/approval" });
 registerAliases(["gobusiness", "goBusiness"], { pathname: "/travel/apply" });
 registerAliases(["tmc-select-passenger", "tmc-select-passenger_ryx"], {

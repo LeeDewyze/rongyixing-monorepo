@@ -63,7 +63,7 @@ export function NoticeListPage() {
             </svg>
           </button>
           <h1 className="min-w-0 flex-1 text-center text-[17px] font-medium text-brand-title">
-            通知公告
+            公告内容
           </h1>
           <button
             type="button"
