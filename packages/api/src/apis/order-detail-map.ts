@@ -273,7 +273,10 @@ function resolveOrderPassenger(
   const passengerId = readString(hotelPassenger?.Id);
   let matched: LegacyRecord | null = null;
   if (passengerId) {
-    matched = orderPassengers.find((item) => readString(item.Id) === passengerId) ?? null;
+    const matches = orderPassengers.filter((item) => readString(item.Id) === passengerId);
+    if (matches.length > 0) {
+      matched = Object.assign({}, ...matches) as LegacyRecord;
+    }
   }
   if (!matched && roomKey) {
     matched = orderPassengers.find((item) => readString(item.Key) === roomKey) ?? null;
@@ -353,10 +356,40 @@ function resolveCredentialTypeName(
   return inferCredentialTypeLabelFromMaskedNumber(maskedNumber);
 }
 
+function resolveCredentialTypeCode(passenger: LegacyRecord): string | number | undefined {
+  const credential = resolvePassengerCredential(passenger);
+  const raw =
+    passenger.CredentialsType ??
+      passenger.CredentialType ??
+      credential?.CredentialsType ??
+      credential?.Type;
+  return readNumber(raw) ?? readString(raw) ?? undefined;
+}
+
 function resolveCredentialNumber(passenger: LegacyRecord): string | undefined {
   const credential = resolvePassengerCredential(passenger);
-  const hideNumber = readString(
+  const rawNumber = readString(
+    passenger.CredentialsNumber ??
+      passenger.CredentialNumber ??
+      credential?.Number ??
+      credential?.IdNumber,
+  );
+  if (rawNumber) {
+    return rawNumber;
+  }
+
+  return readString(
     passenger.HideCredentialsNumber ?? passenger.HideNumber ?? credential?.HideNumber,
+  );
+}
+
+function resolveCredentialHideNumber(passenger: LegacyRecord): string | undefined {
+  const credential = resolvePassengerCredential(passenger);
+  const hideNumber = readString(
+    passenger.HideCredentialsNumber ??
+      passenger.HideNumber ??
+      credential?.HideCredentialsNumber ??
+      credential?.HideNumber,
   );
   if (hideNumber) {
     return hideNumber;
@@ -440,11 +473,33 @@ function mapTraveler(
   const credentialNumber =
     resolveCredentialNumber(passenger) ??
     (hotelPassenger ? resolveCredentialNumber(hotelPassenger) : undefined);
+  const credentialHideNumber =
+    resolveCredentialHideNumber(passenger) ??
+    (hotelPassenger ? resolveCredentialHideNumber(hotelPassenger) : undefined);
+  const credentialTypeCode =
+    resolveCredentialTypeCode(passenger) ??
+    (hotelPassenger ? resolveCredentialTypeCode(hotelPassenger) : undefined);
+  const passengerAccount = asRecord(passenger.Account);
+  const hotelPassengerAccount = asRecord(hotelPassenger?.Account);
 
   return {
+    Id: readString(passenger.Id ?? hotelPassenger?.Id) || undefined,
+    AccountId:
+      readString(
+        passenger.AccountId ??
+          passengerAccount?.Id ??
+          hotelPassenger?.AccountId ??
+          hotelPassengerAccount?.Id,
+      ) || undefined,
     Name: readString(passenger.Name ?? hotelPassenger?.Name) || undefined,
-    CredentialType: resolveCredentialTypeName(passenger, credential ?? undefined, credentialNumber),
+    CredentialType: resolveCredentialTypeName(
+      passenger,
+      credential ?? undefined,
+      credentialHideNumber ?? credentialNumber,
+    ),
+    CredentialTypeCode: credentialTypeCode,
     CredentialNumber: credentialNumber,
+    CredentialHideNumber: credentialHideNumber,
     Mobile:
       readString(
         passenger.Mobile ?? passenger.Phone ?? hotelPassenger?.Mobile ?? hotelPassenger?.Phone,

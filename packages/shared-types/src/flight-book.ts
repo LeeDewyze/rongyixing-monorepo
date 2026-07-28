@@ -50,7 +50,8 @@ export interface FlightBookCredential {
 }
 
 export interface FlightBookPassengerDto {
-  ClientId: string;
+  /** Normal Book/Initialize uses ClientId; legacy ExchangeBook only sends cabin + segments. */
+  ClientId?: string;
   CardName?: string;
   CardNumber?: string;
   TicketNum?: string;

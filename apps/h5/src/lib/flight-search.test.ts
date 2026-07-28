@@ -3,6 +3,7 @@ import type { Trafficline } from "@ryx/shared-types";
 
 import {
   buildFlightListSearchParams,
+  buildHomeExchangeParams,
   buildHomeIndexParams,
   cityFromQuery,
   FLIGHT_STORAGE_DATE,
@@ -95,6 +96,52 @@ describe("buildHomeIndexParams", () => {
       FromAsAirport: false,
       ToAsAirport: false,
       channel: "tourist",
+    });
+  });
+});
+
+describe("buildHomeExchangeParams", () => {
+  it("falls back to legacy business BookType 2 when original ticket has no BookType", () => {
+    expect(
+      buildHomeExchangeParams({
+        fromCity: {
+          Id: "9278",
+          Tag: "AirportCity",
+          Code: "BJS",
+          AirportCityCode: "BJS",
+          Name: "北京",
+        },
+        toCity: airports[0]!,
+        date: "2026-07-15",
+        channel: "tmc",
+        ticketId: "FL-TICKET-1",
+      }),
+    ).toMatchObject({
+      TicketId: "FL-TICKET-1",
+      BookType: 2,
+      IsExchange: true,
+    });
+  });
+
+  it("keeps tourist exchange BookType empty when legacy has no original BookType", () => {
+    expect(
+      buildHomeExchangeParams({
+        fromCity: {
+          Id: "9278",
+          Tag: "AirportCity",
+          Code: "BJS",
+          AirportCityCode: "BJS",
+          Name: "北京",
+        },
+        toCity: airports[0]!,
+        date: "2026-07-15",
+        channel: "tourist",
+        ticketId: "FL-TICKET-1",
+      }),
+    ).toMatchObject({
+      TicketId: "FL-TICKET-1",
+      BookType: undefined,
+      IsExchange: true,
     });
   });
 });

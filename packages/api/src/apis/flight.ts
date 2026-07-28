@@ -57,6 +57,7 @@ function stripFlightFlowParams<
     data.ExchangeTicketId = params.TicketId;
     delete (data as { TicketId?: string }).TicketId;
   }
+  delete (data as { IsExchange?: boolean }).IsExchange;
   return data;
 }
 

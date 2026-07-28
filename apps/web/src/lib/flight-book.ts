@@ -98,6 +98,11 @@ function applyFlightExchangeFields(dto: FlightOrderBookDto, selection: FlightBoo
   dto.IsExchange = true;
 }
 
+function applyFlightExchangeTicketId(dto: FlightOrderBookDto, selection: FlightBookSelection): void {
+  if (!selection.exchangeTicketId) return;
+  dto.TicketId = selection.exchangeTicketId;
+}
+
 function resolvePassengerAccountId(info: PassengerBookInfo): string | undefined {
   return "AccountId" in info.passenger
     ? String(info.passenger.AccountId ?? "")
@@ -108,10 +113,9 @@ function resolveCredentialAccount(info: PassengerBookInfo): { Id?: string } | un
   return (info.credential as { Account?: { Id?: string } }).Account;
 }
 
-/** Initialize ClientId — aligned with proxy verify script (AccountId, not credential Id). */
+/** Legacy initialize uses passenger AccountId; final Book uses the same account identity. */
 export function resolveFlightInitClientId(info: PassengerBookInfo): string {
-  const accountId = resolvePassengerAccountId(info);
-  return String(accountId ?? info.credential.Id ?? info.id);
+  return String(resolvePassengerAccountId(info) ?? info.credential.Id ?? info.id);
 }
 
 function resolveInitTravelFormId(value?: string): string | undefined {
@@ -192,7 +196,9 @@ export function buildFlightInitBookDto(input: {
     detailSnapshot: selection.detailSnapshot,
   });
   const resolvedCabin = resolveFlightCabinCode(flightCabin, selection.segment);
-  const initSegments = resolveInitFlightSegments({ selection });
+  const initSegments = resolveInitFlightSegments({ selection }).map((segment) =>
+    syncSegmentWithFlightCabin(segment, resolvedCabin),
+  );
 
   const passengerDtos: FlightBookPassengerDto[] = passengers.map((info) => {
     const cred = info.credential;
@@ -433,6 +439,47 @@ export function buildFlightOrderBookDto(input: {
 
   applyFlightExchangeFields(dto, selection);
 
+  return dto;
+}
+
+/** Legacy `exchangeFlightTicket` — ExchangeBook only needs the new cabin/segments and TicketId. */
+export function buildFlightExchangeBookDto(input: {
+  selection: FlightBookSelection;
+  passengers: PassengerBookInfo[];
+  channel?: "tmc" | "tourist";
+}): FlightOrderBookDto {
+  const { selection, passengers, channel } = input;
+  const resolvedCabin = prepareBookFlightCabinDto({
+    flightPolicy: selection.flightPolicy,
+    fare: selection.fare,
+    detailSnapshot: selection.detailSnapshot,
+    segment: selection.segment,
+  });
+  const flightNo = (
+    selection.segment.Number ??
+    selection.segment.FlightNumber ??
+    selection.cabinsQuery.flightNumber ??
+    ""
+  ).toLowerCase();
+  const detailSegments =
+    selection.detailSnapshot?.FlightSegments?.filter(
+      (segment) =>
+        (segment.FlightNumber ?? segment.Number ?? "").toLowerCase() === flightNo,
+    ) ?? [];
+  const flightSegments = (detailSegments.length ? detailSegments : [selection.segment]).map(
+    normalizeFlightSegment,
+  );
+
+  const dto: FlightOrderBookDto = {
+    Passengers: passengers.map(() => ({
+      FlightCabin: resolvedCabin,
+      FlightSegments: flightSegments,
+    })),
+  };
+  if (channel) {
+    dto.channel = channel;
+  }
+  applyFlightExchangeTicketId(dto, selection);
   return dto;
 }
 

@@ -114,9 +114,7 @@ function normalizeFlightExchangeInfo(
     firstRecord(payload.OrderFlightTrip, payload.OrderFlightTrips, ticket.OrderFlightTrips) ?? {};
   const passenger = firstRecord(payload.Passenger, ticket.Passenger, payload.OrderPassengers);
 
-  const ticketId =
-    readString(payload.TicketId ?? payload.ExchangeTicketId ?? ticket.Id ?? params.TicketId) ||
-    params.TicketId;
+  const ticketId = params.TicketId;
   const orderId = readString(payload.OrderId ?? order.Id ?? order.OrderId ?? params.OrderId);
   const date = formatDateOnly(
     payload.Date ?? payload.GoDate ?? payload.DepartDate ?? trip.TakeoffTime ?? trip.DepartTime,
@@ -224,10 +222,8 @@ export function createOrderApi(proxy: ProxyClient): OrderApi {
     },
     getFlightTicketRefundInfo(params) {
       return proxy.send<FlightTicketRefundInfo>({
-        method: isTouristChannel(params)
-          ? TOURIST_ORDER_FLOW_METHODS.REFUND_FLIGHT
-          : ORDER_FLOW_METHODS.GET_FLIGHT_TICKET_REFUND_INFO,
-        data: stripChannel(params),
+        method: ORDER_FLOW_METHODS.GET_FLIGHT_TICKET_REFUND_INFO,
+        data: { Id: params.orderFlightTicket },
       });
     },
     refundFlight(params) {
@@ -278,7 +274,11 @@ export function createOrderApi(proxy: ProxyClient): OrderApi {
         method: isTouristChannel(params)
           ? TOURIST_ORDER_FLOW_METHODS.EXCHANGE_FLIGHT_INIT
           : ORDER_FLOW_METHODS.EXCHANGE_FLIGHT_INIT,
-        data: stripChannel(params),
+        data: {
+          OrderId: params.OrderId,
+          OrderFlightTicketId: params.TicketId,
+          ExchangeDate: params.ExchangeDate,
+        },
       });
       return normalizeFlightExchangeInfo(raw, params);
     },

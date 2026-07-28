@@ -209,10 +209,14 @@ export function resolveFlightCabinCode(
   segment: FlightSegment,
 ): FlightFare {
   const flightNumber = segment.Number ?? segment.FlightNumber ?? "";
-  if (cabin.Code || !cabin.CabinCodes || !flightNumber) {
+  if (cabin.Code) {
     return cabin;
   }
-  return { ...cabin, Code: cabin.CabinCodes[flightNumber] };
+  const code =
+    (flightNumber ? cabin.CabinCodes?.[flightNumber] : undefined) ??
+    cabin.BookCode ??
+    cabin.FlightFareBasics?.find((basic) => basic.CabinCode)?.CabinCode;
+  return code ? { ...cabin, Code: code } : cabin;
 }
 
 /** Legacy `getPolicyflightsAsync` — strip heavy fields before Home-Policy. */

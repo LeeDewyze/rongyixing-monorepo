@@ -53,6 +53,7 @@ export interface FlightExchangeInfoParams {
   channel?: "tmc" | "tourist";
   TicketId: string;
   OrderId?: string;
+  ExchangeDate?: string;
 }
 
 export interface FlightExchangeInfo {

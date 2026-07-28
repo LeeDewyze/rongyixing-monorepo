@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import { BOOK_METHODS } from "../methods/book.js";
 import { TMC_METHODS } from "../methods/tmc.js";
 import {
+  FLIGHT_FLOW_METHODS,
   TOURIST_FLIGHT_BOOK_METHODS,
   TOURIST_FLIGHT_FLOW_METHODS,
 } from "../methods/flight-flow.js";
@@ -83,6 +85,105 @@ describe("createFlightApi (mock mode)", () => {
       TOURIST_FLIGHT_BOOK_METHODS.BOOK,
     ]);
     for (const item of captured) {
+      expect(item.data).not.toHaveProperty("channel");
+    }
+  });
+
+  it("uses legacy business exchange list/detail and exchange book methods", async () => {
+    const captured: Array<{ method: string; data: Record<string, unknown> }> = [];
+    const proxyWithCapture = createProxyClient({
+      baseUrl: "https://example.com",
+      mode: "mock",
+      mockHandler: async (method, data) => {
+        captured.push({ method, data: data as Record<string, unknown> });
+        return successResponse({});
+      },
+    });
+    const api = createFlightApi(proxyWithCapture);
+
+    await api.searchFlights({
+      Date: "2026-07-15",
+      FromCode: "BJS",
+      ToCode: "SHA",
+      TicketId: "FL-TICKET-1",
+      IsExchange: true,
+      BookType: 2,
+    });
+    await api.getFlightDetail({
+      Date: "2026-07-15",
+      FromCode: "PEK",
+      ToCode: "SHA",
+      FlightNumber: "MU5100",
+      TicketId: "FL-TICKET-1",
+      IsExchange: true,
+      BookType: 2,
+    });
+    await api.initializeBook({
+      TicketId: "FL-TICKET-1",
+      IsExchange: true,
+      Passengers: [],
+    });
+    await api.submitBook({
+      TicketId: "FL-TICKET-1",
+      IsExchange: true,
+      Passengers: [],
+    });
+
+    expect(captured.map((item) => item.method)).toEqual([
+      FLIGHT_FLOW_METHODS.HOME_EXCHANGE,
+      FLIGHT_FLOW_METHODS.HOME_EXCHANGEDETAIL,
+      BOOK_METHODS.FLIGHT_INITIALIZE,
+      BOOK_METHODS.FLIGHT_EXCHANGEBOOK,
+    ]);
+    expect(captured[0]?.data).toMatchObject({
+      ExchangeTicketId: "FL-TICKET-1",
+      BookType: 2,
+    });
+    expect(captured[0]?.data).not.toHaveProperty("TicketId");
+    expect(captured[0]?.data).not.toHaveProperty("IsExchange");
+    expect(captured[1]?.data).toMatchObject({
+      ExchangeTicketId: "FL-TICKET-1",
+      BookType: 2,
+    });
+    expect(captured[1]?.data).not.toHaveProperty("TicketId");
+    expect(captured[1]?.data).not.toHaveProperty("IsExchange");
+    expect(captured[2]?.data).toMatchObject({
+      TicketId: "FL-TICKET-1",
+      IsExchange: true,
+    });
+  });
+
+  it("uses tourist exchange initialize and exchange book methods", async () => {
+    const captured: Array<{ method: string; data: Record<string, unknown> }> = [];
+    const proxyWithCapture = createProxyClient({
+      baseUrl: "https://example.com",
+      mode: "mock",
+      mockHandler: async (method, data) => {
+        captured.push({ method, data: data as Record<string, unknown> });
+        return successResponse({});
+      },
+    });
+    const api = createFlightApi(proxyWithCapture);
+
+    await api.initializeBook({
+      channel: "tourist",
+      TicketId: "FL-TICKET-1",
+      IsExchange: true,
+      Passengers: [],
+    });
+    await api.submitBook({
+      channel: "tourist",
+      TicketId: "FL-TICKET-1",
+      IsExchange: true,
+      Passengers: [],
+    });
+
+    expect(captured.map((item) => item.method)).toEqual([
+      TOURIST_FLIGHT_BOOK_METHODS.EXCHANGE_INIT,
+      TOURIST_FLIGHT_BOOK_METHODS.EXCHANGE_BOOK,
+    ]);
+    for (const item of captured) {
+      expect(item.data).toMatchObject({ TicketId: "FL-TICKET-1", IsExchange: true });
       expect(item.data).not.toHaveProperty("channel");
     }
   });

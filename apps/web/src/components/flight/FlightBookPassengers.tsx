@@ -43,12 +43,23 @@ const detailActionClass =
 function ContactCheckboxList({
   options,
   onChange,
+  readOnly = false,
 }: {
   options: FlightPassengerBookForm["mobileOptions"];
   onChange: (next: FlightPassengerBookForm["mobileOptions"]) => void;
+  readOnly?: boolean;
 }) {
   if (!options.length) {
     return <p className="text-right text-[14px] text-[#999999]">暂无</p>;
+  }
+
+  if (readOnly) {
+    const checked = options.filter((option) => option.checked).map((option) => option.value);
+    return (
+      <p className="text-right text-[14px] leading-tight text-[#333333]">
+        {(checked.length ? checked : options.map((option) => option.value)).join("，")}
+      </p>
+    );
   }
 
   return (
@@ -101,16 +112,30 @@ function resolveStaffAccountId(passenger: PassengerBookInfo): string | undefined
   return passenger.credential.AccountId ? String(passenger.credential.AccountId) : undefined;
 }
 
+function ReadOnlyDetailText({ value }: { value?: string }) {
+  const text = value?.trim();
+  return (
+    <p
+      className={
+        text ? "text-right text-[14px] text-[#333333]" : "text-right text-[14px] text-[#999999]"
+      }
+    >
+      {text || "暂无"}
+    </p>
+  );
+}
+
 interface FlightBookPassengerCardProps {
   passenger: PassengerBookInfo;
   form: FlightPassengerBookForm;
   showOrganizations: boolean;
   showCostCenter: boolean;
+  readOnly?: boolean;
   onRemove?: (passenger: PassengerBookInfo) => void;
   onUpdateForm: (passengerId: string, patch: Partial<FlightPassengerBookForm>) => void;
   onOpenOrganization: (passengerId: string) => void;
   onOpenCostCenter: (passengerId: string) => void;
-  onChangeCredential: (passenger: PassengerBookInfo) => void;
+  onChangeCredential?: (passenger: PassengerBookInfo) => void;
 }
 
 export function FlightBookPassengerCard({
@@ -118,21 +143,23 @@ export function FlightBookPassengerCard({
   form,
   showOrganizations,
   showCostCenter,
+  readOnly = false,
   onRemove,
   onUpdateForm,
   onOpenOrganization,
   onOpenCostCenter,
   onChangeCredential,
 }: FlightBookPassengerCardProps) {
-  const canSwitchCredential = Boolean(resolveStaffAccountId(passenger));
+  const canSwitchCredential =
+    !readOnly && Boolean(resolveStaffAccountId(passenger)) && Boolean(onChangeCredential);
   const credentialLine = `${credentialDisplayType(passenger.credential)}：${credentialDisplayNumber(passenger.credential)}`;
   const footerAction =
     canSwitchCredential || onRemove ? (
       <div className="flex shrink-0 items-center gap-2">
         {canSwitchCredential ? (
-          <FlightBookCredentialSwitchButton onClick={() => onChangeCredential(passenger)} />
+          <FlightBookCredentialSwitchButton onClick={() => onChangeCredential?.(passenger)} />
         ) : null}
-        {onRemove ? (
+        {!readOnly && onRemove ? (
           <button
             type="button"
             className="rounded-full px-1.5 py-0.5 text-[12px] font-medium text-[#FF4D4F] active:bg-[#fff1f0]"
@@ -158,6 +185,7 @@ export function FlightBookPassengerCard({
         <ContactCheckboxList
           options={form.mobileOptions}
           onChange={(mobileOptions) => onUpdateForm(passenger.id, { mobileOptions })}
+          readOnly={readOnly}
         />
       </DetailRow>
 
@@ -165,70 +193,99 @@ export function FlightBookPassengerCard({
         <ContactCheckboxList
           options={form.emailOptions}
           onChange={(emailOptions) => onUpdateForm(passenger.id, { emailOptions })}
+          readOnly={readOnly}
         />
       </DetailRow>
 
       {showOrganizations ? (
         <DetailRow label="部门">
-          <button
-            type="button"
-            className={detailActionClass}
-            disabled={hasOtherOrganizationInput(form)}
-            onClick={() => onOpenOrganization(passenger.id)}
-          >
-            <span className="truncate">
-              {hasOtherOrganizationInput(form)
-                ? "已填写其他部门"
-                : form.organization.name || "请选择"}
-            </span>
-            <span className="shrink-0 text-[16px] text-[#bbbbbb]" aria-hidden>
-              ›
-            </span>
-          </button>
+          {readOnly ? (
+            <ReadOnlyDetailText
+              value={
+                hasOtherOrganizationInput(form)
+                  ? form.otherOrganizationName
+                  : form.organization.name
+              }
+            />
+          ) : (
+            <button
+              type="button"
+              className={detailActionClass}
+              disabled={hasOtherOrganizationInput(form)}
+              onClick={() => onOpenOrganization(passenger.id)}
+            >
+              <span className="truncate">
+                {hasOtherOrganizationInput(form)
+                  ? "已填写其他部门"
+                  : form.organization.name || "请选择"}
+              </span>
+              <span className="shrink-0 text-[16px] text-[#bbbbbb]" aria-hidden>
+                ›
+              </span>
+            </button>
+          )}
         </DetailRow>
       ) : null}
 
       {showCostCenter ? (
         <DetailRow label="成本中心">
-          <button
-            type="button"
-            className={detailActionClass}
-            disabled={hasOtherCostCenterInput(form)}
-            onClick={() => onOpenCostCenter(passenger.id)}
-          >
-            <span className="truncate">
-              {hasOtherCostCenterInput(form)
-                ? "已填写其他成本中心"
-                : formatCostCenterDisplay(form.costCenter)}
-            </span>
-            <span className="shrink-0 text-[16px] text-[#bbbbbb]" aria-hidden>
-              ›
-            </span>
-          </button>
+          {readOnly ? (
+            <ReadOnlyDetailText
+              value={
+                hasOtherCostCenterInput(form)
+                  ? [form.otherCostCenterCode, form.otherCostCenterName].filter(Boolean).join("-")
+                  : formatCostCenterDisplay(form.costCenter)
+              }
+            />
+          ) : (
+            <button
+              type="button"
+              className={detailActionClass}
+              disabled={hasOtherCostCenterInput(form)}
+              onClick={() => onOpenCostCenter(passenger.id)}
+            >
+              <span className="truncate">
+                {hasOtherCostCenterInput(form)
+                  ? "已填写其他成本中心"
+                  : formatCostCenterDisplay(form.costCenter)}
+              </span>
+              <span className="shrink-0 text-[16px] text-[#bbbbbb]" aria-hidden>
+                ›
+              </span>
+            </button>
+          )}
         </DetailRow>
       ) : null}
 
       <DetailRow label="其他电话">
-        <input
-          type="tel"
-          value={form.otherMobile}
-          placeholder="请输入"
-          onChange={(event) => onUpdateForm(passenger.id, { otherMobile: event.target.value })}
-          className={detailValueClass}
-        />
+        {readOnly ? (
+          <ReadOnlyDetailText value={form.otherMobile} />
+        ) : (
+          <input
+            type="tel"
+            value={form.otherMobile}
+            placeholder="请输入"
+            onChange={(event) => onUpdateForm(passenger.id, { otherMobile: event.target.value })}
+            className={detailValueClass}
+          />
+        )}
       </DetailRow>
 
       <DetailRow label="其他邮箱">
-        <input
-          type="email"
-          value={form.otherEmail}
-          placeholder="请输入"
-          onChange={(event) => onUpdateForm(passenger.id, { otherEmail: event.target.value })}
-          className={detailValueClass}
-        />
+        {readOnly ? (
+          <ReadOnlyDetailText value={form.otherEmail} />
+        ) : (
+          <input
+            type="email"
+            value={form.otherEmail}
+            placeholder="请输入"
+            onChange={(event) => onUpdateForm(passenger.id, { otherEmail: event.target.value })}
+            className={detailValueClass}
+          />
+        )}
       </DetailRow>
 
-      {showOrganizations ? (
+      {showOrganizations && !readOnly ? (
         <DetailRow label="其他部门">
           <input
             type="text"
@@ -246,7 +303,7 @@ export function FlightBookPassengerCard({
         </DetailRow>
       ) : null}
 
-      {showCostCenter ? (
+      {showCostCenter && !readOnly ? (
         <>
           <DetailRow label="其他成本中心名称">
             <input
@@ -291,11 +348,12 @@ interface FlightBookPassengersProps {
   showOrganizations: boolean;
   showCostCenter: boolean;
   allowAddPassenger?: boolean;
+  readOnly?: boolean;
   onRemove?: (passenger: PassengerBookInfo) => void;
   onUpdateForm: (passengerId: string, patch: Partial<FlightPassengerBookForm>) => void;
   onOpenOrganization: (passengerId: string) => void;
   onOpenCostCenter: (passengerId: string) => void;
-  onChangeCredential: (passenger: PassengerBookInfo) => void;
+  onChangeCredential?: (passenger: PassengerBookInfo) => void;
 }
 
 export function FlightBookPassengers({
@@ -305,6 +363,7 @@ export function FlightBookPassengers({
   showOrganizations,
   showCostCenter,
   allowAddPassenger = false,
+  readOnly = false,
   onRemove,
   onUpdateForm,
   onOpenOrganization,
@@ -314,6 +373,13 @@ export function FlightBookPassengers({
   const selectPath = buildPassengerSelectPath(ProductType.Flight, returnTo);
 
   if (passengers.length === 0) {
+    if (readOnly) {
+      return (
+        <div className="rounded-xl bg-[#F8F9FC] px-3.5 py-3 text-[13px] text-[#999999] ring-1 ring-[#EEF1F6]">
+          暂无乘机人
+        </div>
+      );
+    }
     return (
       <div className="flex items-center justify-between rounded-xl bg-[#F8F9FC] px-3.5 py-3 ring-1 ring-[#EEF1F6]">
         <p className="text-[13px] text-[#999999]">请选择乘机人</p>
@@ -337,6 +403,7 @@ export function FlightBookPassengers({
             form={form}
             showOrganizations={showOrganizations}
             showCostCenter={showCostCenter}
+            readOnly={readOnly}
             onRemove={onRemove}
             onUpdateForm={onUpdateForm}
             onOpenOrganization={onOpenOrganization}

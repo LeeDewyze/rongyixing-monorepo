@@ -170,7 +170,7 @@ export function buildHomeExchangeParams(input: {
   return {
     ...buildHomeIndexParams(input.fromCity, input.toCity, input.date, input.channel),
     TicketId: input.ticketId,
-    BookType: input.bookType,
+    BookType: input.bookType ?? (input.channel === "tourist" ? undefined : 2),
     IsExchange: true,
   };
 }

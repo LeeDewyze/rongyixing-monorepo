@@ -354,6 +354,48 @@ describe("normalizeFlightOrderDetail", () => {
     expect(detail.Tickets?.[0]?.Trips[0]?.BookType).toBe("2");
   });
 
+  it("keeps flight ticket id separate from traveler account id for exchange", () => {
+    const detail = normalizeFlightOrderDetail({
+      OrderPassengers: [
+        {
+          Id: "PASSENGER-1",
+          Name: "孙雪",
+        },
+      ],
+      Order: {
+        Id: "ORD-FLT-EX",
+        OrderPassengers: [
+          {
+            Id: "PASSENGER-1",
+            Account: { Id: "68050000000037" },
+            Name: "孙雪",
+            CredentialsNumber: "411521198811171528",
+            HideCredentialsNumber: "411521********1528",
+            CredentialsType: 1,
+            CredentialsTypeName: "身份证",
+          },
+        ],
+        OrderFlightTickets: [
+          {
+            Id: "TICKET-1",
+            Key: "k1",
+            Passenger: {
+              Id: "PASSENGER-1",
+            },
+            OrderFlightTrips: [{ FlightNumber: "CZ8879" }],
+          },
+        ],
+      },
+    });
+
+    expect(detail.Tickets?.[0]?.Id).toBe("TICKET-1");
+    expect(detail.Tickets?.[0]?.Traveler?.Id).toBe("PASSENGER-1");
+    expect(detail.Tickets?.[0]?.Traveler?.AccountId).toBe("68050000000037");
+    expect(detail.Tickets?.[0]?.Traveler?.CredentialNumber).toBe("411521198811171528");
+    expect(detail.Tickets?.[0]?.Traveler?.CredentialHideNumber).toBe("411521********1528");
+    expect(detail.Tickets?.[0]?.Traveler?.CredentialTypeCode).toBe(1);
+  });
+
   it("maps legacy flight order with tickets, travelers, and pay actions", () => {
     const detail = normalizeFlightOrderDetail({
       Order: {
@@ -443,6 +485,7 @@ describe("normalizeFlightOrderDetail", () => {
     expect(detail.Tickets?.[0]?.Traveler?.Name).toBe("申晓杰");
     expect(detail.Tickets?.[0]?.Traveler?.CredentialType).toBe("护照");
     expect(detail.Tickets?.[0]?.Traveler?.CredentialNumber).toBe("EB68***94");
+    expect(detail.Tickets?.[0]?.Traveler?.CredentialHideNumber).toBe("EB68***94");
     expect(detail.Tickets?.[1]?.Traveler?.Name).toBe("郭某某");
     expect(detail.Tickets?.[0]?.Trips[0]?.FlightNumber).toBe("KN5955");
     expect(detail.PayHoldMinutes).toBe(8);

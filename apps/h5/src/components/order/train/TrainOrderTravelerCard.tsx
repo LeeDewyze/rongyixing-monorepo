@@ -32,7 +32,7 @@ export function TrainOrderTravelerCard({ ticket }: TrainOrderTravelerCardProps) 
 
       <HotelOrderDetailRow label="旅客姓名" value={formatPassengerName(ticket)} />
       <OrderTravelerCredentialRow
-        number={traveler?.CredentialNumber}
+        number={traveler?.CredentialHideNumber ?? traveler?.CredentialNumber}
         type={traveler?.CredentialType}
       />
       <HotelOrderDetailRow label="联系电话" value={displayOrEmpty(traveler?.Mobile)} />

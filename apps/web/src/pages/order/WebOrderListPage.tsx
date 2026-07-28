@@ -122,7 +122,7 @@ export function WebOrderListPage() {
 
   const flightCancelMutation = useCancelFlightOrder();
   const flightRefundInfo = useFlightTicketRefundInfo(
-    refundTicket
+    refundTicket && productChannel !== "tourist"
       ? { orderFlightTicket: refundTicket.ticket.TicketId, channel: productChannel }
       : null,
   );
@@ -258,6 +258,7 @@ export function WebOrderListPage() {
               channel: productChannel,
               ticketId: ticket.TicketId,
               orderId: item.OrderId,
+              exchangeDate: ticket.DepartTime.slice(0, 10),
               navigate,
             }).catch((err) => showToast(formatApiError(err)));
             return;

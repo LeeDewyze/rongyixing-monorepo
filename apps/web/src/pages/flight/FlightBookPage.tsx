@@ -58,6 +58,7 @@ import {
 } from "@/hooks/useFlightBook";
 import { shouldShowApproverPicker } from "@/lib/flight-book-approval";
 import {
+  buildFlightExchangeBookDto,
   buildFlightInitBookDto,
   buildFlightOrderBookDto,
   resolveFlightBookBillBreakdown,
@@ -192,6 +193,7 @@ export function FlightBookPage() {
   const isExchangeBook = Boolean(selection?.isExchange && selection.exchangeTicketId);
 
   const initParams = useMemo(() => {
+    if (isExchangeBook) return null;
     if (!selection || selected.length === 0) return null;
     return buildFlightInitBookDto({
       selection,
@@ -200,7 +202,7 @@ export function FlightBookPage() {
       travelMode,
       channel: productChannel,
     });
-  }, [agentId, productChannel, selection, selected, travelMode]);
+  }, [agentId, isExchangeBook, productChannel, selection, selected, travelMode]);
 
   const ticketNoticeRules = useMemo(
     () => resolveFlightTicketNoticeRules(selection?.detailSnapshot),
@@ -461,7 +463,7 @@ export function FlightBookPage() {
   }
 
   async function submitOrder(isSave: boolean) {
-    if (!selection || selected.length === 0 || !initParams) {
+    if (!selection || selected.length === 0 || (!isExchangeBook && !initParams)) {
       showAlert("订单信息不完整，请返回舱位页重新选择");
       return;
     }
@@ -481,6 +483,29 @@ export function FlightBookPage() {
     setIsSubmitting(true);
 
     try {
+      if (isExchangeBook) {
+        const exchangeDto = buildFlightExchangeBookDto({
+          selection,
+          passengers: selected,
+          channel: productChannel,
+        });
+        const result = await submitBook.mutateAsync(exchangeDto);
+        const orderId = resolveFlightBookOrderId(result);
+        if (orderId) {
+          const detailPath =
+            productChannel === "tourist"
+              ? `/orders/flight/${orderId}?channel=tourist`
+              : `/orders/flight/${orderId}`;
+          finishBookNavigation(detailPath, {
+            bookedOrderId: orderId,
+            product: "flight",
+          });
+          return;
+        }
+        finishBookNavigation("/orders");
+        return;
+      }
+
       const passengerValidationError = validatePassengerBookForms(selected, forms);
       if (passengerValidationError) {
         const invalidPassenger = selected.find((passenger) => {
@@ -669,6 +694,7 @@ export function FlightBookPage() {
                   showOrganizations={isBusinessMode && showOrganizations}
                   showCostCenter={isBusinessMode && showCostCenter}
                   allowAddPassenger={!isBusinessMode && !isExchangeBook}
+                  readOnly={isExchangeBook}
                   onRemove={
                     !isBusinessMode && !isExchangeBook ? setRemovePassengerTarget : undefined
                   }
@@ -679,7 +705,10 @@ export function FlightBookPage() {
                 />
               }
               notifyLanguage={
-                !initBook.isFetching && isBusinessMode && tmcFlags.isDisplayNotifyLanguage ? (
+                !isExchangeBook &&
+                !initBook.isFetching &&
+                isBusinessMode &&
+                tmcFlags.isDisplayNotifyLanguage ? (
                   <FlightBookNotifyLanguageRow
                     sectioned
                     notifyLanguage={notifyLanguage}
@@ -720,6 +749,7 @@ export function FlightBookPage() {
                         form={form}
                         showOrganizations={isBusinessMode && showOrganizations}
                         showCostCenter={isBusinessMode && showCostCenter}
+                        readOnly={isExchangeBook}
                         onRemove={
                           !isBusinessMode && !isExchangeBook ? setRemovePassengerTarget : undefined
                         }
@@ -738,7 +768,10 @@ export function FlightBookPage() {
                 );
               })}
 
-              {!initBook.isFetching && isBusinessMode && tmcFlags.isDisplayNotifyLanguage ? (
+              {!isExchangeBook &&
+              !initBook.isFetching &&
+              isBusinessMode &&
+              tmcFlags.isDisplayNotifyLanguage ? (
                 <section className="overflow-hidden rounded-xl bg-white px-3.5 py-3 shadow-sm ring-1 ring-[#EEF1F6]">
                   <FlightBookNotifyLanguageRow
                     sectioned
@@ -753,7 +786,7 @@ export function FlightBookPage() {
             </>
           )}
 
-          {!isBusinessMode ? (
+          {!isBusinessMode && !isExchangeBook ? (
             <TrainBookLinkmanCard
               linkman={orderLinkman}
               onChange={(patch) =>
@@ -765,7 +798,7 @@ export function FlightBookPage() {
             />
           ) : null}
 
-          {!initBook.isFetching && isBusinessMode ? (
+          {!isExchangeBook && !initBook.isFetching && isBusinessMode ? (
             <FlightBookAuthorizedContacts
               contacts={authorizedContacts}
               onAdd={() => setAddContactOpen(true)}
@@ -788,30 +821,37 @@ export function FlightBookPage() {
             />
           ) : null}
 
-          {selected.map((passenger) => {
-            const form = forms[passenger.id];
-            if (!form) return null;
-            const insuranceProducts = insurancesByPassenger[passenger.id] ?? [];
-            const showInsurance = isBusinessMode ? tmcHasInsurance : insuranceProducts.length > 0;
-            return showInsurance ? (
-              <FlightBookInsurance
-                key={passenger.id}
-                products={insuranceProducts}
-                selectedId={form.selectedInsuranceId}
-                mandatory={
-                  isBusinessMode && isMandatoryFlightInsurance(passenger, tmcInsuranceFlags)
-                }
-                selectionLocked={
-                  isBusinessMode && isMandatoryFlightInsurance(passenger, tmcInsuranceFlags)
-                }
-                onSelect={(selectedInsuranceId) =>
-                  updateForm(passenger.id, { selectedInsuranceId })
-                }
-              />
-            ) : null;
-          })}
+          {!isExchangeBook
+            ? selected.map((passenger) => {
+                const form = forms[passenger.id];
+                if (!form) return null;
+                const insuranceProducts = insurancesByPassenger[passenger.id] ?? [];
+                const showInsurance = isBusinessMode
+                  ? tmcHasInsurance
+                  : insuranceProducts.length > 0;
+                return showInsurance ? (
+                  <FlightBookInsurance
+                    key={passenger.id}
+                    products={insuranceProducts}
+                    selectedId={form.selectedInsuranceId}
+                    mandatory={
+                      isBusinessMode && isMandatoryFlightInsurance(passenger, tmcInsuranceFlags)
+                    }
+                    selectionLocked={
+                      isBusinessMode && isMandatoryFlightInsurance(passenger, tmcInsuranceFlags)
+                    }
+                    onSelect={(selectedInsuranceId) =>
+                      updateForm(passenger.id, { selectedInsuranceId })
+                    }
+                  />
+                ) : null;
+              })
+            : null}
 
-          {primaryTravelPassenger && forms[primaryTravelPassenger.id] && isBusinessMode ? (
+          {primaryTravelPassenger &&
+          forms[primaryTravelPassenger.id] &&
+          isBusinessMode &&
+          !isExchangeBook ? (
             <FlightBookTravelSection
               passenger={primaryTravelPassenger}
               form={forms[primaryTravelPassenger.id]!}
@@ -843,7 +883,7 @@ export function FlightBookPage() {
             />
           ) : null}
 
-          {initError ? (
+          {!isExchangeBook && initError ? (
             <p className="text-[13px] text-destructive">
               订单初始化失败：{formatApiError(initError)}
             </p>
@@ -861,7 +901,7 @@ export function FlightBookPage() {
         pending={isPending}
         pendingLabel={submitPendingLabel}
         submitLabel={isExchangeBook ? "改签预订" : undefined}
-        disabled={selected.length === 0 || isPending || initBook.isError}
+        disabled={selected.length === 0 || isPending || (!isExchangeBook && initBook.isError)}
         showTicketNotice={ticketNoticeRules.length > 0}
         showSaveOrder={showSaveOrder}
         billOpen={billOpen}

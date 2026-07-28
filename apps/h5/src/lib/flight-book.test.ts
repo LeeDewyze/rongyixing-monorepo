@@ -12,6 +12,7 @@ import {
   serializeFlightsForPolicy,
 } from "./flight-book-cabin";
 import {
+  buildFlightExchangeBookDto,
   buildFlightInitBookDto,
   buildFlightOrderBookDto,
   buildSubmitCredentials,
@@ -233,6 +234,56 @@ describe("buildFlightInitBookDto", () => {
     const dto = buildFlightInitBookDto({ selection, passengers, agentId: "" });
     expect(dto.AgentId).toBeUndefined();
   });
+
+  it("fills cabin code from book code and syncs segment cabin code on initialize", () => {
+    const dto = buildFlightInitBookDto({
+      selection: {
+        ...selection,
+        fare: {
+          ...selection.fare,
+          Code: undefined,
+          BookCode: "Y",
+          FlightFareBasics: [{ CabinCode: "Y", Count: 4 }],
+        },
+      },
+      passengers,
+    });
+
+    expect(dto.Passengers[0]?.FlightCabin?.Code).toBe("Y");
+    expect(dto.Passengers[0]?.FlightSegments?.[0]?.CabinCode).toBe("Y");
+  });
+
+  it("keeps full credential number on exchange initialize payload", () => {
+    const dto = buildFlightInitBookDto({
+      selection: {
+        ...selection,
+        isExchange: true,
+        exchangeTicketId: "21600000000391",
+      },
+      passengers: [
+        {
+          id: "flight-exchange-68050000000037",
+          passenger: { Id: "68050000000037", Name: "孙雪", AccountId: "68050000000037" },
+          credential: {
+            Id: "68050000000037:411521198811171528",
+            AccountId: "68050000000037",
+            Name: "孙雪",
+            Number: "411521198811171528",
+            HideNumber: "411521********1528",
+            Type: 1,
+            CredentialsType: 1,
+          },
+        },
+      ],
+    });
+
+    expect(dto.TicketId).toBe("21600000000391");
+    expect(dto.Passengers[0]?.ClientId).toBe("68050000000037");
+    expect(dto.Passengers[0]?.Credentials?.Number).toBe("411521198811171528");
+    expect(dto.Passengers[0]?.Credentials?.Type).toBe(1);
+    expect(dto.Passengers[0]?.Credentials?.CredentialsType).toBe(1);
+    expect(dto.Passengers[0]?.Credentials?.Account).toEqual({ Id: "68050000000037" });
+  });
 });
 
 describe("buildFlightOrderBookDto", () => {
@@ -276,6 +327,37 @@ describe("buildFlightOrderBookDto", () => {
     expect(dto.TicketId).toBe("FL-TICKET-1");
     expect(dto.IsExchange).toBe(true);
     expect(dto.ExchangeTicketId).toBeUndefined();
+  });
+
+  it("builds legacy ExchangeBook payload without normal passenger identity fields", () => {
+    const dto = buildFlightExchangeBookDto({
+      selection: {
+        ...selection,
+        isExchange: true,
+        exchangeTicketId: "FL-TICKET-1",
+        detailSnapshot: {
+          FlightSegments: [
+            { ...segment, FlightNumber: "KN5977", CabinCode: null as unknown as string },
+          ],
+          FlightFares: [
+            {
+              ...fare,
+              BookCode: "Y",
+              FlightFareBasics: [{ CabinCode: "Y" }],
+            },
+          ],
+        },
+      },
+      passengers,
+      channel: "tmc",
+    });
+    expect(dto).toMatchObject({ TicketId: "FL-TICKET-1", channel: "tmc" });
+    expect(dto.IsExchange).toBeUndefined();
+    expect(dto.ExchangeTicketId).toBeUndefined();
+    expect(dto.Passengers[0]?.ClientId).toBeUndefined();
+    expect(dto.Passengers[0]?.Credentials).toBeUndefined();
+    expect(dto.Passengers[0]?.FlightCabin?.BookCode).toBe("Y");
+    expect(dto.Passengers[0]?.FlightSegments?.[0]?.FlightNumber).toBe("KN5977");
   });
 
   it("sets MessageLang on each passenger for Book API (Legacy combindInfo.notifyLanguage)", () => {

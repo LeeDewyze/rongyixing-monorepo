@@ -454,9 +454,15 @@ export interface HotelOrderRoomVariables {
 }
 
 export interface HotelOrderTraveler {
+  Id?: string;
+  AccountId?: string;
   Name?: string;
   CredentialType?: string;
+  CredentialTypeCode?: string | number;
+  /** Full credential number for legacy booking/refund/exchange DTOs. */
   CredentialNumber?: string;
+  /** Masked credential number for order-detail display. */
+  CredentialHideNumber?: string;
   Mobile?: string;
   Email?: string;
   ExpenseType?: string;

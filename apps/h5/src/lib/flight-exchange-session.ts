@@ -1,4 +1,4 @@
-import type { FlightExchangeInfo, PassengerBookInfo } from "@ryx/shared-types";
+import type { FlightExchangeInfo, PassengerBookInfo, ProductChannel } from "@ryx/shared-types";
 
 // Exchange context only. If later pages need the traveler, write it through
 // passenger-selection so normal flight flow reads ryx_passenger_selection_1.
@@ -85,7 +85,10 @@ export function syncFlightExchangeSessionForListUrl(
   return fallback;
 }
 
-export function buildFlightExchangeListPath(info: FlightExchangeInfo): string {
+export function buildFlightExchangeListPath(
+  info: FlightExchangeInfo,
+  channel?: ProductChannel,
+): string {
   const params = new URLSearchParams();
   if (info.Date) params.set("date", info.Date.slice(0, 10));
   if (info.FromCode) params.set("fromCode", info.FromCode);
@@ -100,6 +103,7 @@ export function buildFlightExchangeListPath(info: FlightExchangeInfo): string {
   }
   if (info.TicketId) params.set("ticketId", info.TicketId);
   if (info.BookType != null) params.set("bookType", String(info.BookType));
+  if (channel) params.set("channel", channel);
   params.set("exchange", "1");
   return `/flight/list?${params.toString()}`;
 }

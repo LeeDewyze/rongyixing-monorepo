@@ -181,7 +181,7 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
   } = useOrderList({ tabId, scope, channel: productChannel });
   const flightCancelMutation = useCancelFlightOrder();
   const flightRefundInfo = useFlightTicketRefundInfo(
-    refundTicket
+    refundTicket && productChannel !== "tourist"
       ? { orderFlightTicket: refundTicket.ticket.TicketId, channel: productChannel }
       : null,
   );
@@ -347,6 +347,7 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
               channel: productChannel,
               ticketId: ticket.TicketId,
               orderId: flightItem.OrderId,
+              exchangeDate: ticket.DepartTime.slice(0, 10),
               navigate,
             }).catch((error) => setToastMessage(formatApiError(error)));
             return;

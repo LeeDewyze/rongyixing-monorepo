@@ -19,7 +19,8 @@ function displayOrEmpty(value?: string): string {
 }
 
 function formatCredentialValue(room: HotelOrderRoom) {
-  const number = room.Traveler?.CredentialNumber?.trim();
+  const number =
+    room.Traveler?.CredentialHideNumber?.trim() ?? room.Traveler?.CredentialNumber?.trim();
   if (!number) return "";
 
   const typeLabel =

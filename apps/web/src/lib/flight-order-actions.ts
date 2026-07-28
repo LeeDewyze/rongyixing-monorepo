@@ -6,6 +6,7 @@ import { clearFlightBookSelection } from "@/lib/flight-book-session";
 import { passengerBookInfoFromFlightTicket } from "@/lib/flight-exchange-passenger";
 import {
   buildFlightExchangeListPath,
+  clearFlightExchangeSession,
   saveFlightExchangeSession,
 } from "@/lib/flight-exchange-session";
 import { clearPassengerSelection, savePassengerSelection } from "@/lib/passenger-selection";
@@ -14,17 +15,23 @@ function matchFlightTicket(ticket: FlightOrderTicket, ticketId: string): boolean
   return ticket.Id === ticketId || ticket.Key === ticketId;
 }
 
+function formatExchangeDate(value?: string): string | undefined {
+  return value?.slice(0, 10) || undefined;
+}
+
 function mergeFlightExchangeInfo(input: {
   exchangeInfo: FlightExchangeInfo;
   ticket?: FlightOrderTicket;
   orderId?: string;
   ticketId: string;
+  exchangeDate?: string;
 }): FlightExchangeInfo {
   const trip = input.ticket?.Trips[0];
-  const date = input.exchangeInfo.Date ?? trip?.TakeoffTime?.slice(0, 10);
+  const date =
+    input.exchangeInfo.Date ?? input.exchangeDate ?? formatExchangeDate(trip?.TakeoffTime);
   return {
     ...input.exchangeInfo,
-    TicketId: input.exchangeInfo.TicketId ?? input.ticketId,
+    TicketId: input.ticketId,
     OrderId: input.exchangeInfo.OrderId ?? input.orderId,
     Date: date,
     FromCode: input.exchangeInfo.FromCode ?? trip?.FromCode ?? trip?.FromAirport,
@@ -46,14 +53,18 @@ export async function startFlightExchangeFlow(input: {
   channel?: "tmc" | "tourist";
   ticketId: string;
   orderId?: string;
+  exchangeDate?: string;
   navigate: (path: string) => void;
 }): Promise<void> {
   const api = getApi();
+  clearFlightBookSelection();
+  clearFlightExchangeSession();
   const [exchangeInfo, detail] = await Promise.all([
     api.order.getExchangeFlightTrip({
       channel: input.channel,
       TicketId: input.ticketId,
       OrderId: input.orderId,
+      ExchangeDate: input.exchangeDate,
     }),
     input.orderId
       ? api.order.getDetail({ channel: input.channel, OrderId: input.orderId }).catch(() => null)
@@ -61,12 +72,16 @@ export async function startFlightExchangeFlow(input: {
   ]);
 
   const tickets = (detail?.Tickets ?? []) as FlightOrderTicket[];
-  const ticket = tickets.find((item) => matchFlightTicket(item, input.ticketId)) ?? tickets[0];
+  const ticket = tickets.find((item) => matchFlightTicket(item, input.ticketId));
+  if (!ticket) {
+    throw new Error("无法获取原客票信息");
+  }
   const mergedInfo = mergeFlightExchangeInfo({
     exchangeInfo,
     ticket,
     orderId: input.orderId,
     ticketId: input.ticketId,
+    exchangeDate: input.exchangeDate,
   });
 
   if (!mergedInfo.Date || !mergedInfo.FromCode || !mergedInfo.ToCode) {
@@ -75,13 +90,12 @@ export async function startFlightExchangeFlow(input: {
 
   const passenger = ticket ? passengerBookInfoFromFlightTicket(ticket) : null;
   const passengers = passenger ? [passenger] : [];
-  if (passengers.length > 0) {
-    savePassengerSelection(ProductType.Flight, passengers);
-  } else {
+  if (passengers.length === 0) {
     clearPassengerSelection(ProductType.Flight);
+    throw new Error("无法获取改签乘机人信息");
   }
+  savePassengerSelection(ProductType.Flight, passengers);
 
-  clearFlightBookSelection();
   saveFlightExchangeSession({
     ticketId: input.ticketId,
     orderId: mergedInfo.OrderId,
@@ -89,5 +103,5 @@ export async function startFlightExchangeFlow(input: {
     passengers,
     startedAt: Date.now(),
   });
-  input.navigate(buildFlightExchangeListPath(mergedInfo));
+  input.navigate(buildFlightExchangeListPath(mergedInfo, input.channel));
 }

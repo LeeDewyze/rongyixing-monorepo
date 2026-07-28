@@ -35,7 +35,7 @@ export function HotelOrderTravelerCard({
       />
       <OrderTravelerCredentialRow
         label="证件号码"
-        number={traveler?.CredentialNumber}
+        number={traveler?.CredentialHideNumber ?? traveler?.CredentialNumber}
         type={traveler?.CredentialType}
       />
       <HotelOrderDetailRow label="联系电话" value={displayOrEmpty(traveler?.Mobile)} />

@@ -139,6 +139,47 @@ describe("createOrderApi list and detail channel routing", () => {
       data: { Id: "ORD-1", OrderId: "ORD-1" },
     });
   });
+
+  it("uses legacy refund info method and Id payload", async () => {
+    const send = vi.fn().mockResolvedValue({
+      CanAutoRefund: true,
+      RefundFee: "12.00",
+    });
+    const api = createOrderApi({ send } as never);
+
+    await api.getFlightTicketRefundInfo({ channel: "tourist", orderFlightTicket: "TICKET-1" });
+
+    expect(send).toHaveBeenCalledWith({
+      method: ORDER_FLOW_METHODS.GET_FLIGHT_TICKET_REFUND_INFO,
+      data: { Id: "TICKET-1" },
+    });
+  });
+
+  it("uses legacy flight exchange initialize payload", async () => {
+    const send = vi.fn().mockResolvedValue({
+      TicketId: "21600000000391",
+      Order: { Id: "ORD-1" },
+      OrderFlightTicket: { Id: "TICKET-1" },
+      OrderFlightTrip: { TakeoffTime: "2026-07-12T08:00:00" },
+    });
+    const api = createOrderApi({ send } as never);
+
+    const result = await api.getExchangeFlightTrip({
+      OrderId: "ORD-1",
+      TicketId: "TICKET-1",
+      ExchangeDate: "2026-07-12",
+    });
+
+    expect(send).toHaveBeenCalledWith({
+      method: ORDER_FLOW_METHODS.EXCHANGE_FLIGHT_INIT,
+      data: {
+        OrderId: "ORD-1",
+        OrderFlightTicketId: "TICKET-1",
+        ExchangeDate: "2026-07-12",
+      },
+    });
+    expect(result.TicketId).toBe("TICKET-1");
+  });
 });
 
 describe("normalizeOrderListResponse", () => {

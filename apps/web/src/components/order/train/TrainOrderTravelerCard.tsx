@@ -23,7 +23,8 @@ function displayOrEmpty(value?: string): string {
 }
 
 function formatCredentialValue(ticket: TrainOrderTicket) {
-  const number = ticket.Traveler?.CredentialNumber?.trim();
+  const number =
+    ticket.Traveler?.CredentialHideNumber?.trim() ?? ticket.Traveler?.CredentialNumber?.trim();
   if (!number) return "";
 
   const typeLabel =

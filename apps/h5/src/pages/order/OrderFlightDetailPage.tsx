@@ -219,7 +219,9 @@ export function OrderFlightDetailPage() {
   );
 
   const refundInfo = useFlightTicketRefundInfo(
-    refundOpen && selectedTicket ? { orderFlightTicket: selectedTicket.Id, channel } : null,
+    refundOpen && selectedTicket && channel !== "tourist"
+      ? { orderFlightTicket: selectedTicket.Id, channel }
+      : null,
   );
 
   useEffect(() => {
@@ -364,6 +366,7 @@ export function OrderFlightDetailPage() {
         channel,
         ticketId: selectedTicket.Id,
         orderId: detail.OrderId,
+        exchangeDate: selectedTicket.Trips[0]?.TakeoffTime?.slice(0, 10),
         navigate,
       });
     } catch (err) {
