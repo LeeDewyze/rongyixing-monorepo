@@ -41,12 +41,19 @@ function PersonalCenterButton() {
 interface ProfileHeaderProps {
   profile: MemberProfile;
   displayName: string;
+  /** TMC enterprise code from `GetTmc`, not member `OrganizationCode`. */
+  orgCode?: string;
   balance?: number;
   messageCount?: number;
 }
 
-export function ProfileHeader({ profile, displayName, balance, messageCount }: ProfileHeaderProps) {
-  const orgCode = profile.OrganizationCode ?? profile.Id;
+export function ProfileHeader({
+  profile,
+  displayName,
+  orgCode,
+  balance,
+  messageCount,
+}: ProfileHeaderProps) {
   return (
     <header
       className="rounded-t-2xl px-3 pb-14 pt-6 pad:pt-8"
@@ -63,7 +70,7 @@ export function ProfileHeader({ profile, displayName, balance, messageCount }: P
           </div>
           <p className="mt-2 flex items-center gap-1 text-[14px] font-normal leading-none tracking-normal text-brand-primary [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]">
             <BuildingIcon />
-            <span>组织编码：{orgCode}</span>
+            <span>组织编码：{orgCode?.trim() || "—"}</span>
           </p>
           {(balance != null && balance > 0) || (messageCount != null && messageCount > 0) ? (
             <div className="mt-2 flex items-center gap-3">

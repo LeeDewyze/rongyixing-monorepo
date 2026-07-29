@@ -2,6 +2,7 @@ import { ProfilePadHeaderCard } from "@/components/profile/ProfilePadHeaderCard"
 import { ProfilePadShortcutGrid } from "@/components/profile/ProfilePadShortcutGrid";
 import { WEB_MAIN_PADDING_CLASS } from "@/components/WebShell";
 import { useMemberProfile } from "@/hooks/useMemberProfile";
+import { useTmcInfo } from "@/hooks/useTmcInfo";
 import { useAccountBalance, useMessageCount } from "@/hooks/useAccount";
 import { formatApiError } from "@/lib/formatApiError";
 import { getLoginUserName } from "@/lib/session";
@@ -12,6 +13,7 @@ const PROFILE_TOP_GRADIENT =
 
 export function WebProfilePage() {
   const { data: profile, isLoading, error } = useMemberProfile();
+  const { data: tmc } = useTmcInfo();
   const { data: balance } = useAccountBalance();
   const { data: messageCount } = useMessageCount();
 
@@ -46,6 +48,7 @@ export function WebProfilePage() {
         <ProfilePadHeaderCard
           profile={profile}
           displayName={displayName}
+          orgCode={tmc?.Code}
           balance={balance}
           messageCount={messageCount}
         />

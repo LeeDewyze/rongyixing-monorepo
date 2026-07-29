@@ -3,12 +3,14 @@ import { ProfileMenuList } from "@/components/profile/ProfileMenuSection";
 import { ProfileServiceGrid } from "@/components/profile/ProfileServiceGrid";
 import { PROFILE_MENU_ITEMS } from "@/config/profile-menu";
 import { useMemberProfile } from "@/hooks/useMemberProfile";
+import { useTmcInfo } from "@/hooks/useTmcInfo";
 import { useAccountBalance, useMessageCount } from "@/hooks/useAccount";
 import { formatApiError } from "@/lib/formatApiError";
 import { getLoginUserName } from "@/lib/session";
 
 export function ProfileTabPage() {
   const { data: profile, isLoading, error } = useMemberProfile();
+  const { data: tmc } = useTmcInfo();
   const { data: balance } = useAccountBalance();
   const { data: messageCount } = useMessageCount();
 
@@ -35,6 +37,7 @@ export function ProfileTabPage() {
       <ProfileHeader
         profile={profile}
         displayName={displayName}
+        orgCode={tmc?.Code}
         balance={balance}
         messageCount={messageCount}
       />

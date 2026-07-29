@@ -8,6 +8,8 @@ import { ProfileAvatar } from "./ProfileAvatar";
 interface ProfilePadHeaderCardProps {
   profile: MemberProfile;
   displayName: string;
+  /** TMC enterprise code from `GetTmc`, not member `OrganizationCode`. */
+  orgCode?: string;
   balance?: number;
   messageCount?: number;
 }
@@ -16,10 +18,10 @@ interface ProfilePadHeaderCardProps {
 export function ProfilePadHeaderCard({
   profile,
   displayName,
+  orgCode,
   balance,
   messageCount,
 }: ProfilePadHeaderCardProps) {
-  const orgCode = profile.OrganizationCode ?? profile.Id;
   return (
     <section className="rounded-2xl bg-white px-5 py-5 shadow-[0_4px_20px_rgba(15,23,42,0.06)] ring-1 ring-black/[0.03] pc:px-6 pc:py-6">
       <div className="flex items-center gap-4">
@@ -36,7 +38,7 @@ export function ProfilePadHeaderCard({
               className="size-5 shrink-0 object-contain"
               aria-hidden
             />
-            <span className="truncate">组织编码：{orgCode}</span>
+            <span className="truncate">组织编码：{orgCode?.trim() || "—"}</span>
           </p>
           {(balance != null && balance > 0) || (messageCount != null && messageCount > 0) ? (
             <div className="mt-2 flex flex-wrap items-center gap-3">

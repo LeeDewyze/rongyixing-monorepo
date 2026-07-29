@@ -41,6 +41,8 @@ export interface TmcInfo {
   IsOpenHotelFreeStay?: boolean;
   Id?: string;
   Name?: string;
+  /** TMC enterprise code shown on profile header (legacy `GetTmc.Code`). */
+  Code?: string;
 }
 
 export const CREDENTIAL_TYPE_LABELS: Record<number, string> = {

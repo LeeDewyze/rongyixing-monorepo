@@ -10,6 +10,7 @@ const MOCK_TMC = {
   AllowHotelOutPolicySelfPay: true,
   Id: "TMC001",
   Name: "测试企业",
+  Code: "MOCK-TMC-CODE",
 };
 
 function hideNumber(num: string): string {
