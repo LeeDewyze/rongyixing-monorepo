@@ -36,7 +36,7 @@ export function HotelSearchPage() {
       title="酒店"
       subtitle="因公出行 · 国内酒店"
       theme="sky"
-      headerRight={<SearchPassengerButton forType={ProductType.Hotel} returnTo="/hotel" />}
+      headerRight={<SearchPassengerButton forType={ProductType.Hotel} returnTo="/?product=hotel" />}
     >
       <HotelSearchCard
         city={form.city}

@@ -230,7 +230,7 @@ export function HotelListPage() {
   const listReady = hasParams && !citiesLoading;
 
   useEffect(() => {
-    if (!hasParams) navigate("/hotel", { replace: true });
+    if (!hasParams) navigate("/?product=hotel", { replace: true });
   }, [hasParams, navigate]);
 
   useEffect(() => {
@@ -486,7 +486,7 @@ export function HotelListPage() {
           checkIn={checkIn}
           checkOut={checkOut}
           keyword={keyword}
-          onBack={() => navigateBack(navigate, "/hotel")}
+          onBack={() => navigateBack(navigate, "/?product=hotel")}
           onCityClick={() => setCityPickerOpen(true)}
           onDateClick={() => setDatePickerOpen(true)}
           onKeywordClick={goModifySearch}

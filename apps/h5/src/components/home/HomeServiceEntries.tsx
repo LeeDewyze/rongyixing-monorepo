@@ -61,7 +61,7 @@ const ENTRIES: ServiceEntry[] = [
     id: "hotel",
     label: "酒店",
     bg: "linear-gradient(180deg, #FFD66B 0%, #F5B942 100%)",
-    to: "/hotel",
+    to: "/home?product=hotel",
     icon: <HotelIcon />,
   },
 ];

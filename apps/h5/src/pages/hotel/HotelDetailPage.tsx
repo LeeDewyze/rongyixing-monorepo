@@ -154,7 +154,7 @@ export function HotelDetailPage() {
 
   useEffect(() => {
     if (!query.checkIn || !query.checkOut || !query.cityCode) {
-      navigate("/hotel", { replace: true });
+      navigate("/home?product=hotel", { replace: true });
     }
   }, [navigate, query.checkIn, query.checkOut, query.cityCode]);
 

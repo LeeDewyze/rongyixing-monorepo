@@ -35,7 +35,10 @@ registerAliases(["tmc-hotel-search", "tmc-hotel-search_ryx"], {
   search: "?product=hotel",
 });
 
-registerAliases(["tmc-hotel-list", "tmc-hotel-list_ryx"], { pathname: "/hotel/list" });
+registerAliases(["tmc-hotel-list", "tmc-hotel-list_ryx"], {
+  pathname: "/",
+  search: "?product=hotel",
+});
 registerAliases(["tmc-flight-list", "tmc-flight-list_ryx"], { pathname: "/flight/list" });
 registerAliases(["tmc-train-list", "tmc-train-list_ryx"], { pathname: "/train/list" });
 registerAliases(["tmc-flight-book", "tmc-flight-book_ryx"], { pathname: "/flight/book" });

@@ -1,6 +1,11 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
+import { showAppAlertDialog } from "@/lib/app-confirm-dialog";
 import { coreJump, onHomeBannerJump } from "@/lib/core-jump";
+
+vi.mock("@/lib/app-confirm-dialog", () => ({
+  showAppAlertDialog: vi.fn(() => Promise.resolve()),
+}));
 
 describe("coreJump path branch", () => {
   it("navigates to mapped home product route", async () => {
@@ -76,7 +81,6 @@ describe("coreJump checkUrl", () => {
 
   it("aborts jump when checkUrl fails", async () => {
     const navigate = vi.fn();
-    const alertSpy = vi.spyOn(window, "alert").mockImplementation(() => undefined);
     vi.spyOn(globalThis, "fetch").mockResolvedValue({
       json: async () => ({ Status: false, Message: "denied" }),
     } as Response);
@@ -90,7 +94,7 @@ describe("coreJump checkUrl", () => {
     );
 
     expect(ok).toBe(false);
-    expect(alertSpy).toHaveBeenCalledWith("denied");
+    expect(showAppAlertDialog).toHaveBeenCalledWith("denied");
     expect(navigate).not.toHaveBeenCalled();
   });
 

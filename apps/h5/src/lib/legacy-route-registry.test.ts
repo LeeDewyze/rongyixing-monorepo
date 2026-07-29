@@ -33,6 +33,10 @@ describe("resolveLegacyRoute", () => {
       pathname: "/home",
       search: "?product=hotel",
     });
+    expect(resolveLegacyRoute("tmc-hotel-list")).toEqual({
+      pathname: "/home",
+      search: "?product=hotel",
+    });
   });
 
   it("normalizes leading slash paths", () => {

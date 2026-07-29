@@ -42,7 +42,6 @@ import { HotelRoomDetailPage } from "@/pages/hotel/HotelRoomDetailPage";
 import { HotelBookPage } from "@/pages/hotel/HotelBookPage";
 import { HotelResultPage } from "@/pages/hotel/HotelResultPage";
 import { HotelPayPage } from "@/pages/hotel/HotelPayPage";
-import { HotelSearchPage } from "@/pages/hotel/HotelSearchPage";
 import { PassengerSelectPage } from "@/pages/passenger/PassengerSelectPage";
 import { PassengerCredentialPage } from "@/pages/passenger/PassengerCredentialPage";
 import { CredentialListPage } from "@/pages/credential/CredentialListPage";
@@ -152,7 +151,7 @@ export const router = createBrowserRouter(
             {
               path: "hotel",
               children: [
-                { index: true, element: <HotelSearchPage /> },
+                { index: true, element: <Navigate to="/?product=hotel" replace /> },
                 { path: "list", element: <HotelListPage /> },
                 { path: "keyword", element: <HotelKeywordSearchPage /> },
                 { path: ":hotelId/images", element: <HotelShowImagesPage /> },

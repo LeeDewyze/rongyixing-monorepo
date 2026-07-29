@@ -198,7 +198,7 @@ export function HotelKeywordSearchPage() {
               type="button"
               className="flex h-10 w-9 shrink-0 items-center justify-center rounded-full text-brand-title active:bg-white/40"
               aria-label="返回"
-              onClick={() => navigateBack(navigate, "/hotel")}
+              onClick={() => navigateBack(navigate, "/home?product=hotel")}
             >
               <BackIcon />
             </button>
