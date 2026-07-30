@@ -24,6 +24,14 @@ export function clearPreventAutoLogin(): void {
   sessionStorage.removeItem(PREVENT_AUTO_LOGIN_KEY);
 }
 
+function buildLoginRedirectPath(path: string, options: ForceLogoutOptions): string {
+  const returnTo = encodeURIComponent(path);
+  if (options.preventAutoLogin) {
+    return `/login/password?preventAutoLogin=1&returnTo=${returnTo}`;
+  }
+  return `/login/password?returnTo=${returnTo}`;
+}
+
 export async function performForceLogout(options: ForceLogoutOptions = {}): Promise<void> {
   if (isForcingLogout) return;
   isForcingLogout = true;
@@ -31,37 +39,30 @@ export async function performForceLogout(options: ForceLogoutOptions = {}): Prom
   const { stopSessionGuard } = await import("@/lib/session-guard");
   stopSessionGuard();
 
-  // Nothing to tear down; release the flag so a later login can be guarded again.
-  if (!getTicket()) {
-    isForcingLogout = false;
-    return;
-  }
+  const path = `${window.location.pathname}${window.location.search}`;
+  const routerPath = stripAppBasePath(path);
+  const onLoginPage = routerPath.startsWith("/login");
+  const hadTicket = Boolean(getTicket());
 
   if (options.preventAutoLogin) {
     sessionStorage.setItem(PREVENT_AUTO_LOGIN_KEY, "1");
   }
 
-  const path = `${window.location.pathname}${window.location.search}`;
-  const routerPath = stripAppBasePath(path);
-  const onLoginPage = routerPath.startsWith("/login");
-
-  if (!onLoginPage) {
+  if (!onLoginPage && hadTicket) {
     await showAppAlertDialog(options.message || "登录已失效，请重新登录");
   }
 
-  const { resetApi } = await import("@/lib/api");
-  clearSession();
-  queryClient.clear();
-  resetApi();
+  if (hadTicket) {
+    const { resetApi } = await import("@/lib/api");
+    clearSession();
+    queryClient.clear();
+    resetApi();
+  }
 
-  // Only a redirect unloads the page, so every other path must release the flag.
   if (onLoginPage) {
     isForcingLogout = false;
     return;
   }
 
-  const returnTo = encodeURIComponent(path);
-  window.location.replace(
-    withAppBasePath(`/login/password?preventAutoLogin=1&returnTo=${returnTo}`),
-  );
+  window.location.replace(withAppBasePath(buildLoginRedirectPath(path, options)));
 }

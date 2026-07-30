@@ -1,6 +1,7 @@
 import { Navigate, createBrowserRouter } from "react-router-dom";
 
 import { RootLayout } from "@/app/layouts/RootLayout";
+import { RequireAuth } from "@/app/layouts/RequireAuth";
 import { TabLayout } from "@/app/layouts/TabLayout";
 import { FlightCabinsPage } from "@/pages/flight/FlightCabinsPage";
 import { FlightBookPage } from "@/pages/flight/FlightBookPage";
@@ -71,143 +72,148 @@ export const router = createBrowserRouter(
       element: <ForgotPasswordPage />,
     },
     {
-      path: "/home",
-      element: <TabLayout />,
+      element: <RequireAuth />,
       children: [
-        { index: true, element: <HomeTabPage /> },
-        { path: "orders", element: <OrdersTabPage /> },
         {
-          path: "trips",
+          path: "/home",
+          element: <TabLayout />,
+          children: [
+            { index: true, element: <HomeTabPage /> },
+            { path: "orders", element: <OrdersTabPage /> },
+            {
+              path: "trips",
+              element: <OrderListRedirect to="/home/orders" />,
+            },
+            { path: "mine", element: <ProfileTabPage /> },
+          ],
+        },
+        {
+          path: "/trips",
           element: <OrderListRedirect to="/home/orders" />,
         },
-        { path: "mine", element: <ProfileTabPage /> },
-      ],
-    },
-    {
-      path: "/trips",
-      element: <OrderListRedirect to="/home/orders" />,
-    },
-    {
-      path: "/orders",
-      element: <RootLayout />,
-      children: [
-        { index: true, element: <OrderListPage /> },
-        { path: "hotel/:orderId", element: <OrderHotelDetailPage /> },
-        { path: "flight/:orderId", element: <OrderFlightDetailPage /> },
-        { path: "train/:orderId", element: <OrderTrainDetailPage /> },
-      ],
-    },
-    {
-      path: "/flight/select-city",
-      element: <FlightSelectCityPage />,
-    },
-    {
-      path: "/hotel",
-      element: <RootLayout />,
-      children: [
-        { index: true, element: <Navigate to="/home?product=hotel" replace /> },
-        { path: "list", element: <HotelListPage /> },
-        { path: "keyword", element: <HotelKeywordSearchPage /> },
-        { path: ":hotelId/images", element: <HotelShowImagesPage /> },
-        { path: ":hotelId", element: <HotelDetailPage /> },
-        { path: ":hotelId/room/:roomId", element: <HotelRoomDetailPage /> },
-        { path: ":hotelId/book", element: <HotelBookPage /> },
-        { path: "result/:orderId", element: <HotelResultPage /> },
-        { path: "pay/:orderId", element: <HotelPayPage /> },
-      ],
-    },
-    {
-      path: "/credentials",
-      element: <RootLayout />,
-      children: [{ index: true, element: <CredentialListPage /> }],
-    },
-    {
-      path: "/bank-cards",
-      element: <RootLayout />,
-      children: [
-        { index: true, element: <AccountCardListPage /> },
-        { path: "new", element: <AccountCardFormPage /> },
-        { path: ":cardId", element: <AccountCardFormPage /> },
-      ],
-    },
-    {
-      path: "/profile",
-      element: <RootLayout />,
-      children: [{ path: "center", element: <ProfileCenterPage /> }],
-    },
-    {
-      path: "/settings",
-      element: <RootLayout />,
-      children: [
-        { index: true, element: <SettingsPage /> },
-        { path: "security", element: <AccountSecurityPage /> },
-        { path: "account-deletion", element: <AccountDeletionPage /> },
-        { path: "mobile", element: <BindMobilePage /> },
-        { path: "password", element: <ChangePasswordPage /> },
-        { path: "devices", element: <LoginDevicesPage /> },
-        { path: "notifications", element: <MessageNotificationPage /> },
-      ],
-    },
-    {
-      path: "/me/settings",
-      element: <Navigate to="/settings" replace />,
-    },
-    {
-      path: "/contact",
-      element: <RootLayout />,
-      children: [{ index: true, element: <ContactUsPage /> }],
-    },
-    {
-      path: "/notice",
-      element: <RootLayout />,
-      children: [
-        { index: true, element: <NoticeListPage /> },
-        { path: ":noticeId", element: <NoticeDetailPage /> },
-      ],
-    },
-    {
-      path: "/open-url",
-      element: <RootLayout />,
-      children: [{ index: true, element: <OpenUrlPage /> }],
-    },
-    {
-      path: "/passenger",
-      element: <RootLayout />,
-      children: [
-        { path: "select", element: <PassengerSelectPage /> },
-        { path: "credential", element: <PassengerCredentialPage /> },
-      ],
-    },
-    {
-      path: "/flight",
-      element: <RootLayout />,
-      children: [
-        { index: true, element: <Navigate to="/home?product=flight" replace /> },
-        { path: "list", element: <FlightListPage /> },
-        { path: "book", element: <FlightBookPage /> },
-        { path: "result/:orderId", element: <FlightResultPage /> },
-        { path: "pay/:orderId", element: <FlightPayPage /> },
-        { path: ":flightId/cabins", element: <FlightCabinsPage /> },
-      ],
-    },
-    {
-      path: "/train",
-      element: <RootLayout />,
-      children: [
-        { index: true, element: <Navigate to="/home?product=train" replace /> },
-        { path: "list", element: <TrainListPage /> },
-        { path: "book", element: <TrainBookPage /> },
-        { path: "pay/:orderId", element: <TrainPayPage /> },
-      ],
-    },
-    {
-      path: "/travel",
-      element: <RootLayout />,
-      children: [
-        { path: "apply", element: <TravelApplyPage /> },
-        { path: "approval", element: <TravelApprovalPage /> },
-        { path: "workflow", element: <Navigate to="/travel/approval?tab=mine" replace /> },
-        { path: "task", element: <TravelTaskPage /> },
+        {
+          path: "/orders",
+          element: <RootLayout />,
+          children: [
+            { index: true, element: <OrderListPage /> },
+            { path: "hotel/:orderId", element: <OrderHotelDetailPage /> },
+            { path: "flight/:orderId", element: <OrderFlightDetailPage /> },
+            { path: "train/:orderId", element: <OrderTrainDetailPage /> },
+          ],
+        },
+        {
+          path: "/flight/select-city",
+          element: <FlightSelectCityPage />,
+        },
+        {
+          path: "/hotel",
+          element: <RootLayout />,
+          children: [
+            { index: true, element: <Navigate to="/home?product=hotel" replace /> },
+            { path: "list", element: <HotelListPage /> },
+            { path: "keyword", element: <HotelKeywordSearchPage /> },
+            { path: ":hotelId/images", element: <HotelShowImagesPage /> },
+            { path: ":hotelId", element: <HotelDetailPage /> },
+            { path: ":hotelId/room/:roomId", element: <HotelRoomDetailPage /> },
+            { path: ":hotelId/book", element: <HotelBookPage /> },
+            { path: "result/:orderId", element: <HotelResultPage /> },
+            { path: "pay/:orderId", element: <HotelPayPage /> },
+          ],
+        },
+        {
+          path: "/credentials",
+          element: <RootLayout />,
+          children: [{ index: true, element: <CredentialListPage /> }],
+        },
+        {
+          path: "/bank-cards",
+          element: <RootLayout />,
+          children: [
+            { index: true, element: <AccountCardListPage /> },
+            { path: "new", element: <AccountCardFormPage /> },
+            { path: ":cardId", element: <AccountCardFormPage /> },
+          ],
+        },
+        {
+          path: "/profile",
+          element: <RootLayout />,
+          children: [{ path: "center", element: <ProfileCenterPage /> }],
+        },
+        {
+          path: "/settings",
+          element: <RootLayout />,
+          children: [
+            { index: true, element: <SettingsPage /> },
+            { path: "security", element: <AccountSecurityPage /> },
+            { path: "account-deletion", element: <AccountDeletionPage /> },
+            { path: "mobile", element: <BindMobilePage /> },
+            { path: "password", element: <ChangePasswordPage /> },
+            { path: "devices", element: <LoginDevicesPage /> },
+            { path: "notifications", element: <MessageNotificationPage /> },
+          ],
+        },
+        {
+          path: "/me/settings",
+          element: <Navigate to="/settings" replace />,
+        },
+        {
+          path: "/contact",
+          element: <RootLayout />,
+          children: [{ index: true, element: <ContactUsPage /> }],
+        },
+        {
+          path: "/notice",
+          element: <RootLayout />,
+          children: [
+            { index: true, element: <NoticeListPage /> },
+            { path: ":noticeId", element: <NoticeDetailPage /> },
+          ],
+        },
+        {
+          path: "/open-url",
+          element: <RootLayout />,
+          children: [{ index: true, element: <OpenUrlPage /> }],
+        },
+        {
+          path: "/passenger",
+          element: <RootLayout />,
+          children: [
+            { path: "select", element: <PassengerSelectPage /> },
+            { path: "credential", element: <PassengerCredentialPage /> },
+          ],
+        },
+        {
+          path: "/flight",
+          element: <RootLayout />,
+          children: [
+            { index: true, element: <Navigate to="/home?product=flight" replace /> },
+            { path: "list", element: <FlightListPage /> },
+            { path: "book", element: <FlightBookPage /> },
+            { path: "result/:orderId", element: <FlightResultPage /> },
+            { path: "pay/:orderId", element: <FlightPayPage /> },
+            { path: ":flightId/cabins", element: <FlightCabinsPage /> },
+          ],
+        },
+        {
+          path: "/train",
+          element: <RootLayout />,
+          children: [
+            { index: true, element: <Navigate to="/home?product=train" replace /> },
+            { path: "list", element: <TrainListPage /> },
+            { path: "book", element: <TrainBookPage /> },
+            { path: "pay/:orderId", element: <TrainPayPage /> },
+          ],
+        },
+        {
+          path: "/travel",
+          element: <RootLayout />,
+          children: [
+            { path: "apply", element: <TravelApplyPage /> },
+            { path: "approval", element: <TravelApprovalPage /> },
+            { path: "workflow", element: <Navigate to="/travel/approval?tab=mine" replace /> },
+            { path: "task", element: <TravelTaskPage /> },
+          ],
+        },
       ],
     },
   ],

@@ -66,19 +66,31 @@ describe("performForceLogout", () => {
     expect(replace).toHaveBeenCalledWith("/login/password?preventAutoLogin=1&returnTo=%2Fhome");
   });
 
-  it("stays armed after a trigger that arrives without a session", async () => {
-    const { replace } = stubBrowser("/home");
+  it("redirects to login without alert when session is already missing", async () => {
+    const { replace } = stubBrowser("/home/mine");
     const { performForceLogout } = await loadForceLogout();
 
     mocks.ticket.value = null;
     await performForceLogout({ message: "登录已失效" });
     expect(mocks.showAppAlertDialog).not.toHaveBeenCalled();
-    expect(replace).not.toHaveBeenCalled();
+    expect(mocks.clearSession).not.toHaveBeenCalled();
+    expect(replace).toHaveBeenCalledWith("/login/password?returnTo=%2Fhome%2Fmine");
+  });
+
+  it("can force logout again after a no-session redirect releases the guard", async () => {
+    const { replace } = stubBrowser("/home");
+    const { performForceLogout: firstLogout } = await loadForceLogout();
+
+    mocks.ticket.value = null;
+    await firstLogout({ message: "登录已失效" });
+    expect(replace).toHaveBeenCalledTimes(1);
 
     mocks.ticket.value = "ticket-2";
-    await performForceLogout({ message: "您的账号已在其他设备登录" });
+    const { performForceLogout: secondLogout } = await loadForceLogout();
+    await secondLogout({ message: "您的账号已在其他设备登录", preventAutoLogin: true });
     expect(mocks.showAppAlertDialog).toHaveBeenCalledTimes(1);
-    expect(replace).toHaveBeenCalledTimes(1);
+    expect(replace).toHaveBeenCalledTimes(2);
+    expect(replace).toHaveBeenLastCalledWith("/login/password?preventAutoLogin=1&returnTo=%2Fhome");
   });
 
   it("clears the session without alert or redirect while already on the login page", async () => {

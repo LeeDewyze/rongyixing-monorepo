@@ -93,12 +93,12 @@ export function createProxyClient(config: ProxyClientConfig): ProxyClient {
   }
 
   function handleErrorCode(code: string | null | undefined, message: string): void {
-    if (!code) return;
-    const normalized = code.toLowerCase();
-    if (normalized === "nologin") {
+    const normalized = code?.trim().toLowerCase();
+    if (normalized === "nologin" || message.includes("登陆超时")) {
       config.onUnauthorized?.();
       return;
     }
+    if (!normalized) return;
     if (normalized === "noauthorize") {
       config.onNoAuthorize?.();
       return;
@@ -200,7 +200,7 @@ export function createProxyClient(config: ProxyClientConfig): ProxyClient {
 
       const payload = (await response.json()) as IResponse<TRes>;
       if (!opts?.skipGlobalErrorHandling && !payload.Status) {
-        handleErrorCode(payload.Code, payload.Message);
+        handleErrorCode(payload.Code, payload.Message ?? "");
       }
       return payload;
     } finally {
