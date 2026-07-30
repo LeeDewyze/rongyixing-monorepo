@@ -8,10 +8,9 @@ interface DesignScreenProps {
 export function DesignScreen({ children }: DesignScreenProps) {
   return (
     <div
-      className="relative mx-auto w-full overflow-hidden bg-[#0a1628] @container"
+      className="relative mx-auto w-full bg-[#0a1628] @container"
       style={{
         minHeight: "100dvh",
-        height: "100dvh",
         containerType: "inline-size",
       }}
     >

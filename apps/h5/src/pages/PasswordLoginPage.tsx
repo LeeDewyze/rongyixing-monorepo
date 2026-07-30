@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FocusEvent, type ReactNode } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import passwordBg from "@/assets/login/password-bg.jpg";
@@ -26,8 +26,8 @@ const { overlay, agreement } = PASSWORD_LOGIN_SHARED;
 type LoginMode = "password" | "sms";
 type LegalDoc = "agreement" | "privacy" | null;
 type ToastState = { message: string; tone: "success" | "error" } | null;
-const FORM_OFFSET = 72;
 const TOAST_DURATION_MS = 2500;
+const LOGIN_HORIZONTAL_PADDING = designWidthPercent(PASSWORD_LOGIN_SHARED.paddingX);
 
 const {
   title,
@@ -104,6 +104,27 @@ function PasswordVisibilityToggle({
       )}
     </button>
   );
+}
+
+function LoginFieldRow({ children }: { children: ReactNode }) {
+  return (
+    <div
+      className="border-b border-white/90"
+      style={{
+        minHeight: designCqw(72),
+        paddingBottom: designCqw(20),
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function scrollFocusedInputIntoView(event: FocusEvent<HTMLInputElement>) {
+  const target = event.currentTarget;
+  window.requestAnimationFrame(() => {
+    target.scrollIntoView({ block: "center", behavior: "smooth" });
+  });
 }
 
 export function PasswordLoginPage() {
@@ -265,259 +286,257 @@ export function PasswordLoginPage() {
       <img
         src={passwordBg}
         alt=""
-        className="absolute inset-0 h-full w-full object-cover object-bottom"
+        className="fixed inset-0 h-full w-full object-cover object-bottom"
         aria-hidden
       />
-      <div className="absolute inset-0" style={{ background: overlay.background }} aria-hidden />
+      <div className="fixed inset-0" style={{ background: overlay.background }} aria-hidden />
 
-      <div className="relative z-10 h-full w-full" style={{ fontFamily: LOGIN_FONT }}>
-        <h1
-          className="absolute m-0"
-          style={{
-            left: designWidthPercent(title.left),
-            top: designHeightPercent(title.top),
-            width: designWidthPercent(title.width),
-            minHeight: designHeightPercent(title.height),
-            fontSize: designCqw(title.fontSize),
-            fontWeight: title.fontWeight,
-            lineHeight: "normal",
-            letterSpacing: 0,
-            color: title.color,
-          }}
-        >
-          {loginMode === "password" ? title.text : "短信验证码登录"}
-        </h1>
-
+      <div
+        className="relative z-10 flex min-h-dvh w-full flex-col"
+        style={{ fontFamily: LOGIN_FONT }}
+      >
         <div
-          className="absolute flex rounded-full bg-white/15 p-1"
+          className="flex flex-1 flex-col overflow-y-auto overscroll-y-contain"
           style={{
-            left: designWidthPercent(loginModeTabs.left),
-            top: designHeightPercent(loginModeTabs.top),
-            width: designWidthPercent(loginModeTabs.width),
-            height: designCqw(loginModeTabs.height),
-            backdropFilter: "blur(10px)",
+            paddingLeft: LOGIN_HORIZONTAL_PADDING,
+            paddingRight: LOGIN_HORIZONTAL_PADDING,
           }}
         >
-          {(["password", "sms"] as const).map((mode) => (
-            <button
-              key={mode}
-              type="button"
-              className="flex flex-1 items-center justify-center rounded-full border-none p-0"
-              style={{
-                background: loginMode === mode ? "rgba(255,255,255,0.92)" : "transparent",
-                color: loginMode === mode ? "var(--brand-primary)" : "rgba(255,255,255,0.72)",
-                fontSize: designCqw(24),
-                fontWeight: loginMode === mode ? 600 : 400,
-              }}
-              onClick={() => {
-                setLoginMode(mode);
-                setToast(null);
-              }}
-            >
-              {mode === "password" ? "账号登录" : "短信登录"}
-            </button>
-          ))}
-        </div>
-
-        <div
-          className="absolute border-b border-white/90"
-          style={{
-            left: designWidthPercent(accountInput.left),
-            top: designHeightPercent(accountInput.top + FORM_OFFSET),
-            width: designWidthPercent(accountInput.width),
-            paddingBottom: designCqw(20),
-          }}
-        >
-          <div className="flex items-center" style={{ gap: designCqw(12) }}>
-            <input
-              type="text"
-              autoComplete={loginMode === "password" ? "username" : "tel"}
-              inputMode={loginMode === "password" ? "text" : "tel"}
-              placeholder={loginMode === "password" ? accountInput.placeholder : "请输入手机号"}
-              value={loginMode === "password" ? account : mobile}
-              onChange={(e) =>
-                loginMode === "password" ? setAccount(e.target.value) : setMobile(e.target.value)
-              }
-              className="min-w-0 flex-1 border-none bg-transparent p-0 text-white outline-none"
-              style={{ fontSize: designCqw(accountInput.fontSize), caretColor: "#33a1f9" }}
-            />
-            {(loginMode === "password" ? account : mobile) ? (
-              <InputClearButton
-                onClear={() => (loginMode === "password" ? setAccount("") : setMobile(""))}
-                size={inputClear.size}
-              />
-            ) : null}
-          </div>
-        </div>
-
-        <div
-          className="absolute border-b border-white/90"
-          style={{
-            left: designWidthPercent(passwordInput.left),
-            top: designHeightPercent(passwordInput.top + FORM_OFFSET),
-            width: designWidthPercent(passwordInput.width),
-            paddingBottom: designCqw(20),
-          }}
-        >
-          <div className="flex min-w-0 items-center">
-            <input
-              type={loginMode === "password" && !showPassword ? "password" : "text"}
-              autoComplete={loginMode === "password" ? "current-password" : "one-time-code"}
-              inputMode={loginMode === "password" ? "text" : "numeric"}
-              placeholder={loginMode === "password" ? passwordInput.placeholder : "请输入验证码"}
-              value={loginMode === "password" ? password : smsCode}
-              onChange={(e) =>
-                loginMode === "password" ? setPassword(e.target.value) : setSmsCode(e.target.value)
-              }
-              className="min-w-0 flex-1 border-none bg-transparent p-0 text-white outline-none"
-              style={{ fontSize: designCqw(passwordInput.fontSize), caretColor: "#33a1f9" }}
-            />
-            <div
-              className="relative z-10 flex shrink-0 items-center"
-              style={{ gap: designCqw(passwordInput.actionGap), marginLeft: designCqw(8) }}
-            >
-              {(loginMode === "password" ? password : smsCode) ? (
-                <InputClearButton
-                  onClear={() => (loginMode === "password" ? setPassword("") : setSmsCode(""))}
-                  size={inputClear.size}
-                />
-              ) : null}
-              {loginMode === "password" ? (
-                <PasswordVisibilityToggle
-                  visible={showPassword}
-                  onToggle={() => setShowPassword((v) => !v)}
-                  size={passwordInput.toggleSize}
-                />
-              ) : (
-                <button
-                  type="button"
-                  className="rounded-full border-none bg-white/15 px-2 py-1 text-white disabled:opacity-55"
-                  style={{ fontSize: designCqw(22) }}
-                  disabled={sendCode.isPending || countdown > 0}
-                  onClick={() => void handleSendCode()}
-                >
-                  {countdown > 0
-                    ? `${countdown}s`
-                    : sendCode.isPending
-                      ? "发送中"
-                      : codeSent
-                        ? "重发"
-                        : "获取验证码"}
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <style>{`
-          input::placeholder {
-            color: ${accountInput.placeholderColor};
-            font-size: ${designCqw(accountInput.fontSize)};
-          }
-        `}</style>
-
-        {import.meta.env.DEV && apiMode === "mock" ? (
-          <p
-            className="absolute text-white/50"
+          <h1
+            className="m-0"
             style={{
-              left: designWidthPercent(button.left),
-              top: `calc(${designHeightPercent(button.top + FORM_OFFSET)} - ${designCqw(36)})`,
-              fontSize: designCqw(22),
-            }}
-          >
-            开发 Mock 模式：不会发起网络请求
-          </p>
-        ) : null}
-
-        <button
-          type="button"
-          className="absolute flex items-center justify-center border-none text-white"
-          style={{
-            left: designWidthPercent(button.left),
-            top: designHeightPercent(button.top + FORM_OFFSET),
-            width: designWidthPercent(button.width),
-            height: designCqw(button.height),
-            borderRadius: designCqw(button.borderRadius),
-            background: button.gradient,
-            fontSize: designCqw(button.fontSize),
-            fontWeight: 500,
-            opacity: pending ? 0.7 : canSubmit ? 1 : 0.55,
-          }}
-          disabled={pending}
-          onClick={() => void handleLogin()}
-        >
-          {pending ? "登录中…" : button.text}
-        </button>
-
-        {loginMode === "password" ? (
-          <label
-            className="absolute flex cursor-pointer items-center"
-            style={{
-              left: designWidthPercent(rememberPasswordRow.left),
-              top: designHeightPercent(rememberPasswordRow.top + FORM_OFFSET),
-              gap: designCqw(12),
-              fontSize: designCqw(rememberPasswordRow.fontSize),
-              color: rememberPasswordRow.color,
-              lineHeight: "normal",
-            }}
-          >
-            <input
-              type="checkbox"
-              checked={rememberChecked}
-              onChange={(e) => {
-                const checked = e.target.checked;
-                setRememberChecked(checked);
-                if (!checked) {
-                  clearRememberedCredentials();
-                }
-              }}
-              className="login-remember-checkbox shrink-0 appearance-none rounded-full border border-white/70 bg-transparent"
-              style={{
-                width: designCqw(rememberPasswordRow.checkboxSize),
-                height: designCqw(rememberPasswordRow.checkboxSize),
-              }}
-            />
-            <span className="whitespace-nowrap">{rememberPasswordRow.text}</span>
-          </label>
-        ) : null}
-
-        {loginMode === "password" ? (
-          <Link
-            to="/login/forgot-password"
-            className="absolute no-underline"
-            style={{
-              right: designWidthPercent(forgotPasswordLink.right),
-              top: designHeightPercent(forgotPasswordLink.top + FORM_OFFSET),
-              fontSize: designCqw(forgotPasswordLink.fontSize),
-              fontWeight: forgotPasswordLink.fontWeight,
+              marginTop: designHeightPercent(title.top),
+              width: designWidthPercent(title.width),
+              minHeight: designHeightPercent(title.height),
+              fontSize: designCqw(title.fontSize),
+              fontWeight: title.fontWeight,
               lineHeight: "normal",
               letterSpacing: 0,
-              color: forgotPasswordLink.color,
+              color: title.color,
             }}
           >
-            {forgotPasswordLink.text}
-          </Link>
-        ) : null}
+            {loginMode === "password" ? title.text : "短信验证码登录"}
+          </h1>
 
-        <style>{`
-          .login-remember-checkbox:checked {
-            border-color: ${rememberPasswordRow.checkboxCheckedBg};
-            background-color: ${rememberPasswordRow.checkboxCheckedBg};
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 10' fill='none'%3E%3Cpath d='M1 5.2 4.4 8.6 11 1.4' stroke='%23ffffff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-            background-size: 58% 58%;
-            background-position: center;
-            background-repeat: no-repeat;
-          }
-        `}</style>
+          <div
+            className="flex rounded-full bg-white/15 p-1"
+            style={{
+              marginTop: designCqw(37),
+              width: designWidthPercent(loginModeTabs.width),
+              height: designCqw(loginModeTabs.height),
+              backdropFilter: "blur(10px)",
+            }}
+          >
+            {(["password", "sms"] as const).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                className="flex flex-1 items-center justify-center rounded-full border-none p-0"
+                style={{
+                  background: loginMode === mode ? "rgba(255,255,255,0.92)" : "transparent",
+                  color: loginMode === mode ? "var(--brand-primary)" : "rgba(255,255,255,0.72)",
+                  fontSize: designCqw(24),
+                  fontWeight: loginMode === mode ? 600 : 400,
+                }}
+                onClick={() => {
+                  setLoginMode(mode);
+                  setToast(null);
+                }}
+              >
+                {mode === "password" ? "账号登录" : "短信登录"}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex flex-col" style={{ marginTop: designCqw(33), gap: designCqw(57) }}>
+            <LoginFieldRow>
+              <div className="flex items-center" style={{ gap: designCqw(12) }}>
+                <input
+                  type="text"
+                  autoComplete={loginMode === "password" ? "username" : "tel"}
+                  inputMode={loginMode === "password" ? "text" : "tel"}
+                  placeholder={loginMode === "password" ? accountInput.placeholder : "请输入手机号"}
+                  value={loginMode === "password" ? account : mobile}
+                  onChange={(e) =>
+                    loginMode === "password"
+                      ? setAccount(e.target.value)
+                      : setMobile(e.target.value)
+                  }
+                  onFocus={scrollFocusedInputIntoView}
+                  className="min-w-0 flex-1 border-none bg-transparent p-0 text-white outline-none"
+                  style={{ fontSize: designCqw(accountInput.fontSize), caretColor: "#33a1f9" }}
+                />
+                {(loginMode === "password" ? account : mobile) ? (
+                  <InputClearButton
+                    onClear={() => (loginMode === "password" ? setAccount("") : setMobile(""))}
+                    size={inputClear.size}
+                  />
+                ) : null}
+              </div>
+            </LoginFieldRow>
+
+            <LoginFieldRow>
+              <div className="flex min-w-0 items-center">
+                <input
+                  type={loginMode === "password" && !showPassword ? "password" : "text"}
+                  autoComplete={loginMode === "password" ? "current-password" : "one-time-code"}
+                  inputMode={loginMode === "password" ? "text" : "numeric"}
+                  placeholder={
+                    loginMode === "password" ? passwordInput.placeholder : "请输入验证码"
+                  }
+                  value={loginMode === "password" ? password : smsCode}
+                  onChange={(e) =>
+                    loginMode === "password"
+                      ? setPassword(e.target.value)
+                      : setSmsCode(e.target.value)
+                  }
+                  onFocus={scrollFocusedInputIntoView}
+                  className="min-w-0 flex-1 border-none bg-transparent p-0 text-white outline-none"
+                  style={{ fontSize: designCqw(passwordInput.fontSize), caretColor: "#33a1f9" }}
+                />
+                <div
+                  className="relative z-10 flex shrink-0 items-center"
+                  style={{ gap: designCqw(passwordInput.actionGap), marginLeft: designCqw(8) }}
+                >
+                  {(loginMode === "password" ? password : smsCode) ? (
+                    <InputClearButton
+                      onClear={() => (loginMode === "password" ? setPassword("") : setSmsCode(""))}
+                      size={inputClear.size}
+                    />
+                  ) : null}
+                  {loginMode === "password" ? (
+                    <PasswordVisibilityToggle
+                      visible={showPassword}
+                      onToggle={() => setShowPassword((v) => !v)}
+                      size={passwordInput.toggleSize}
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      className="rounded-full border-none bg-white/15 px-2 py-1 text-white disabled:opacity-55"
+                      style={{ fontSize: designCqw(22) }}
+                      disabled={sendCode.isPending || countdown > 0}
+                      onClick={() => void handleSendCode()}
+                    >
+                      {countdown > 0
+                        ? `${countdown}s`
+                        : sendCode.isPending
+                          ? "发送中"
+                          : codeSent
+                            ? "重发"
+                            : "获取验证码"}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </LoginFieldRow>
+          </div>
+
+          <style>{`
+            input::placeholder {
+              color: ${accountInput.placeholderColor};
+              font-size: ${designCqw(accountInput.fontSize)};
+            }
+          `}</style>
+
+          {import.meta.env.DEV && apiMode === "mock" ? (
+            <p
+              className="text-white/50"
+              style={{
+                marginTop: designCqw(24),
+                fontSize: designCqw(22),
+              }}
+            >
+              开发 Mock 模式：不会发起网络请求
+            </p>
+          ) : null}
+
+          <button
+            type="button"
+            className="flex w-full items-center justify-center border-none text-white"
+            style={{
+              marginTop: designCqw(68),
+              height: designCqw(button.height),
+              borderRadius: designCqw(button.borderRadius),
+              background: button.gradient,
+              fontSize: designCqw(button.fontSize),
+              fontWeight: 500,
+              opacity: pending ? 0.7 : canSubmit ? 1 : 0.55,
+            }}
+            disabled={pending}
+            onClick={() => void handleLogin()}
+          >
+            {pending ? "登录中…" : button.text}
+          </button>
+
+          {loginMode === "password" ? (
+            <div className="flex items-center justify-between" style={{ marginTop: designCqw(40) }}>
+              <label
+                className="flex cursor-pointer items-center"
+                style={{
+                  gap: designCqw(12),
+                  fontSize: designCqw(rememberPasswordRow.fontSize),
+                  color: rememberPasswordRow.color,
+                  lineHeight: "normal",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={rememberChecked}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setRememberChecked(checked);
+                    if (!checked) {
+                      clearRememberedCredentials();
+                    }
+                  }}
+                  className="login-remember-checkbox shrink-0 appearance-none rounded-full border border-white/70 bg-transparent"
+                  style={{
+                    width: designCqw(rememberPasswordRow.checkboxSize),
+                    height: designCqw(rememberPasswordRow.checkboxSize),
+                  }}
+                />
+                <span className="whitespace-nowrap">{rememberPasswordRow.text}</span>
+              </label>
+              <Link
+                to="/login/forgot-password"
+                className="no-underline"
+                style={{
+                  fontSize: designCqw(forgotPasswordLink.fontSize),
+                  fontWeight: forgotPasswordLink.fontWeight,
+                  lineHeight: "normal",
+                  letterSpacing: 0,
+                  color: forgotPasswordLink.color,
+                }}
+              >
+                {forgotPasswordLink.text}
+              </Link>
+            </div>
+          ) : null}
+
+          <style>{`
+            .login-remember-checkbox:checked {
+              border-color: ${rememberPasswordRow.checkboxCheckedBg};
+              background-color: ${rememberPasswordRow.checkboxCheckedBg};
+              background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 10' fill='none'%3E%3Cpath d='M1 5.2 4.4 8.6 11 1.4' stroke='%23ffffff' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+              background-size: 58% 58%;
+              background-position: center;
+              background-repeat: no-repeat;
+            }
+          `}</style>
+        </div>
 
         <div
-          className="absolute flex cursor-pointer items-center"
+          className="flex shrink-0 cursor-pointer items-center"
           role="checkbox"
           aria-checked={agreed}
           tabIndex={0}
           style={{
-            left: designWidthPercent(agreement.left),
-            bottom: designHeightPercent(agreement.bottom),
+            marginTop: "auto",
+            paddingLeft: LOGIN_HORIZONTAL_PADDING,
+            paddingRight: LOGIN_HORIZONTAL_PADDING,
+            paddingTop: designCqw(32),
+            paddingBottom: `max(${designHeightPercent(agreement.bottom)}, env(safe-area-inset-bottom))`,
             gap: designCqw(12),
             fontSize: designCqw(agreement.fontSize),
             color: agreement.color,
