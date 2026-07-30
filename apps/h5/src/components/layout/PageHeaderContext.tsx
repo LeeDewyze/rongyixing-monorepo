@@ -1,11 +1,10 @@
 import {
   createContext,
   useContext,
-  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
-  useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 import { useNavigate } from "react-router-dom";
@@ -29,6 +28,14 @@ interface PageHeaderStore {
 const EMPTY_HEADER: PageHeaderState = { visible: false };
 
 const PageHeaderStoreContext = createContext<PageHeaderStore | null>(null);
+
+function subscribeEmptyHeader() {
+  return () => {};
+}
+
+function getEmptyHeader() {
+  return EMPTY_HEADER;
+}
 
 export function PageHeaderProvider({ children }: { children: ReactNode }) {
   const headerRef = useRef<PageHeaderState>(EMPTY_HEADER);
@@ -70,16 +77,14 @@ export function PageHeaderProvider({ children }: { children: ReactNode }) {
 export function PageHeaderSlot() {
   const store = useContext(PageHeaderStoreContext);
   const navigate = useNavigate();
-  const [, bump] = useState(0);
-
-  useEffect(() => {
-    if (!store) return;
-    return store.subscribe(() => bump((v) => v + 1));
-  }, [store]);
+  const header = useSyncExternalStore(
+    store?.subscribe ?? subscribeEmptyHeader,
+    store?.getHeader ?? getEmptyHeader,
+    getEmptyHeader,
+  );
 
   if (!store) return null;
 
-  const header = store.getHeader();
   if (!header.visible) return null;
 
   const extended =
