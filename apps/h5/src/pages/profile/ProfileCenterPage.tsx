@@ -11,6 +11,7 @@ import { PROFILE_ASSETS } from "@/config/profile-assets";
 import { ProfileAvatarCropSheet } from "@/components/profile/ProfileAvatarCropSheet";
 import { bumpAvatarCacheBuster, withAvatarCacheBuster } from "@/lib/avatar";
 import { getApi } from "@/lib/api";
+import { getDomain } from "@/lib/domain";
 import { getApiBaseUrl, getApiMode } from "@/lib/env";
 import { getTicket } from "@/lib/session";
 import { useProfileCenter } from "@/hooks/useProfileCenter";
@@ -182,7 +183,9 @@ export function ProfileCenterPage() {
   const [avatarError, setAvatarError] = useState("");
   const [avatarUrlOverride, setAvatarUrlOverride] = useState<string | null>(null);
 
-  const displayAvatar = withAvatarCacheBuster(avatarUrlOverride || profile?.HeadUrl || PROFILE_ASSETS.defaultAvatar);
+  const displayAvatar = withAvatarCacheBuster(
+    avatarUrlOverride || profile?.HeadUrl || PROFILE_ASSETS.defaultAvatar,
+  );
 
   useEffect(() => {
     return () => {
@@ -236,7 +239,7 @@ export function ProfileCenterPage() {
         Language: "cn",
         Ticket: getTicket() ?? "",
         TicketName: "",
-        Domain: apiConfig.Domain ?? "rtesp.com",
+        Domain: apiConfig.Domain ?? getDomain(),
         Method: AVATAR_UPLOAD_METHOD,
         Data: data,
         FileValue: fileValue,
@@ -401,7 +404,11 @@ export function ProfileCenterPage() {
             <SettingsMenuCard>
               <SettingsMenuRow label="姓名" value={display(profile.RealName)} showChevron={false} />
               <SettingsMenuRow label="账号" value={display(profile.Name)} showChevron={false} />
-              <SettingsMenuRow label="联系方式" value={display(profile.Mobile)} showChevron={false} />
+              <SettingsMenuRow
+                label="联系方式"
+                value={display(profile.Mobile)}
+                showChevron={false}
+              />
             </SettingsMenuCard>
 
             <div className="h-3" />

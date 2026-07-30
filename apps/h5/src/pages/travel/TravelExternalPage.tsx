@@ -13,7 +13,7 @@ interface TravelExternalPageProps {
   loadingHint?: string;
 }
 
-/** Legacy `CoreHelper.jump` — embed workflow.rtesp.com with session ticket. */
+/** Legacy `CoreHelper.jump` — embed the workflow site with session ticket. */
 export function TravelExternalPage({
   title,
   resolveUrl,

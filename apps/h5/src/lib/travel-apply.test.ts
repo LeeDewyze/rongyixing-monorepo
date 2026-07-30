@@ -1,7 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   buildTravelApplyBody,
+  fetchTravelApplyMeta,
   validateTravelApply,
   type TravelApplyMeta,
 } from "./travel-apply";
@@ -156,10 +157,7 @@ describe("travel apply form submit", () => {
       validateTravelApply({
         travelTypes: ["国内机票"],
         reason: "测试",
-        travelers: [
-          { account: meta.defaultAccount },
-          { account: meta.defaultAccount },
-        ],
+        travelers: [{ account: meta.defaultAccount }, { account: meta.defaultAccount }],
         segments: [
           {
             startDate: "2026-06-25",
@@ -170,5 +168,59 @@ describe("travel apply form submit", () => {
         ],
       }),
     ).toBe("出差人不能重复");
+  });
+});
+
+describe("travel apply workflow site", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  function stubApiConfig(workflowWebsiteUrl?: string) {
+    const setting = {
+      Token: "",
+      Urls: workflowWebsiteUrl ? { WorkflowWebsiteUrl: workflowWebsiteUrl } : {},
+    };
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => (key === "ryx_api_config" ? JSON.stringify(setting) : null),
+      setItem: () => {},
+    });
+  }
+
+  function stubFetch(response: Partial<Response>) {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      redirected: false,
+      url: "",
+      text: async () => "",
+      ...response,
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    return fetchMock;
+  }
+
+  it("resolves Form/Flow against WorkflowWebsiteUrl from ApiConfig", async () => {
+    stubApiConfig("https://workflow.rongtrip.cn");
+    const fetchMock = stubFetch({
+      text: async () => 'var datas = [];\nAddUrl: "/Form/Add?ticket=t"',
+    });
+
+    await fetchTravelApplyMeta("ticket-1");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://workflow.rongtrip.cn/Form/Flow?flowtag=Travel&ticket=ticket-1",
+      undefined,
+    );
+  });
+
+  it("reports an expired session when workflow redirects to the login site", async () => {
+    stubApiConfig("https://workflow.rongtrip.cn");
+    stubFetch({
+      redirected: true,
+      url: "https://login.rongtrip.cn/?url=https%3A%2F%2Fworkflow.rongtrip.cn%2FForm%2FFlow",
+      text: async () => "<html><title>用户登录</title></html>",
+    });
+
+    await expect(fetchTravelApplyMeta("expired")).rejects.toThrow("登录已过期，请重新登录");
   });
 });

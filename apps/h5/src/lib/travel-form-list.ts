@@ -2,8 +2,7 @@ import type { ApprovalTask } from "@ryx/shared-types";
 
 import { getRequestLanguage } from "@/lib/request-context";
 import { getTicket } from "@/lib/session";
-
-const WORKFLOW_SITE = "http://workflow.rtesp.com";
+import { getWorkflowSite } from "@/lib/workflow-site";
 
 const TRAVEL_FORM_STATUS: Record<number, string> = {
   1: "草稿",
@@ -56,7 +55,7 @@ export function buildTravelFormDetailUrl(ticket: string, formId: string): string
     CheckFlowType: "",
     FlowTag: "",
   });
-  return `${WORKFLOW_SITE}/Form/Detail?${params.toString()}`;
+  return `${getWorkflowSite()}/Form/Detail?${params.toString()}`;
 }
 
 /** Legacy open-url iframe params for embedded workflow pages. */
@@ -77,7 +76,7 @@ export function buildTravelFormDetailOpenUrl(formId: string): string | undefined
     isApp: "true",
     opentype: "iframe",
   });
-  return `${WORKFLOW_SITE}/Form/Detail?${params.toString()}`;
+  return `${getWorkflowSite()}/Form/Detail?${params.toString()}`;
 }
 
 /** Legacy workflow `Form/List?FlowTag=Travel` — applications submitted by current user. */
@@ -126,7 +125,7 @@ export async function fetchMyTravelApplications(ticket: string): Promise<Approva
     CheckFlowType: "",
     FlowTag: "Travel",
   });
-  const response = await fetch(`${WORKFLOW_SITE}/Form/List?${params.toString()}`);
+  const response = await fetch(`${getWorkflowSite()}/Form/List?${params.toString()}`);
   if (!response.ok) {
     throw new Error(`加载我的申请失败：HTTP ${response.status}`);
   }

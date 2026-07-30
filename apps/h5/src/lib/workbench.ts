@@ -1,8 +1,15 @@
 import type { WorkbenchGroup, WorkbenchItem } from "@ryx/shared-types";
 
-/** Default workflow URLs (from staging Workbench-Load capture). */
-export const TRAVEL_APPLY_FLOW_URL = "http://workflow.rtesp.com/Form/Flow?flowtag=Travel";
-export const TRAVEL_WORKFLOW_TASK_INDEX_URL = "http://workflow.rtesp.com/Task/Index";
+import { getWorkflowSite } from "@/lib/workflow-site";
+
+/** Defaults for when Workbench-Load omits the entry. */
+export function travelApplyFlowUrl(): string {
+  return `${getWorkflowSite()}/Form/Flow?flowtag=Travel`;
+}
+
+export function travelWorkflowTaskIndexUrl(): string {
+  return `${getWorkflowSite()}/Task/Index`;
+}
 
 export function withTicketParam(url: string, ticket: string): string {
   if (!url || url.startsWith("#")) return url;
@@ -22,7 +29,10 @@ export function readWorkbenchExternalUrl(item: WorkbenchItem | undefined): strin
   return item.Url.url || undefined;
 }
 
-export function findWorkbenchItem(groups: WorkbenchGroup[], itemName: string): WorkbenchItem | undefined {
+export function findWorkbenchItem(
+  groups: WorkbenchGroup[],
+  itemName: string,
+): WorkbenchItem | undefined {
   for (const group of groups) {
     const hit = group.Value?.find((item) => item.Name === itemName);
     if (hit) return hit;
@@ -32,12 +42,12 @@ export function findWorkbenchItem(groups: WorkbenchGroup[], itemName: string): W
 
 export function resolveTravelApplyUrl(groups: WorkbenchGroup[], ticket: string): string {
   const item = findWorkbenchItem(groups, "出差申请");
-  const base = readWorkbenchExternalUrl(item) ?? TRAVEL_APPLY_FLOW_URL;
+  const base = readWorkbenchExternalUrl(item) ?? travelApplyFlowUrl();
   return withTicketParam(base, ticket);
 }
 
 export function resolveTravelWorkflowIndexUrl(groups: WorkbenchGroup[], ticket: string): string {
   const item = findWorkbenchItem(groups, "我的审批");
-  const base = readWorkbenchExternalUrl(item) ?? TRAVEL_WORKFLOW_TASK_INDEX_URL;
+  const base = readWorkbenchExternalUrl(item) ?? travelWorkflowTaskIndexUrl();
   return withTicketParam(base, ticket);
 }

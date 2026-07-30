@@ -1,8 +1,8 @@
-const WORKFLOW_HOST = "workflow.rtesp.com";
+import { getWorkflowHost } from "@/lib/workflow-site";
 
 export function isWorkflowEmbedUrl(url: string): boolean {
   try {
-    return new URL(url).hostname === WORKFLOW_HOST;
+    return new URL(url).hostname === getWorkflowHost();
   } catch {
     return false;
   }
@@ -26,7 +26,7 @@ export function injectWorkflowPageTicket(html: string, ticket: string): string {
   );
 }
 
-/** srcdoc iframe needs base href so /js/* assets resolve to workflow.rtesp.com. */
+/** srcdoc iframe needs base href so /js/* assets resolve against the workflow site. */
 export function prepareWorkflowSrcdoc(html: string, origin: string): string {
   const baseTag = `<base href="${origin.replace(/\/$/, "")}/">`;
   if (html.includes("<head>")) {
@@ -43,7 +43,7 @@ export async function fetchWorkflowEmbedSrcdoc(url: string): Promise<string | un
     return undefined;
   }
 
-  if (parsed.hostname !== WORKFLOW_HOST) {
+  if (parsed.hostname !== getWorkflowHost()) {
     return undefined;
   }
 

@@ -1,3 +1,5 @@
+import { getAppBaseDomain } from "@/lib/env";
+
 const API_CONFIG_STORAGE_KEY = "ryx_api_config";
 const DOMAIN_STORAGE_KEY = "ryx_domain";
 
@@ -34,7 +36,8 @@ export function getDomain(): string {
     return fromEnv.trim();
   }
 
-  return "rtesp.com";
+  // Fallback when Setting not loaded — follow the configured app base host.
+  return getAppBaseDomain();
 }
 
 export function persistDomain(domain: string): void {

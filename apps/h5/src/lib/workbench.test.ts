@@ -1,23 +1,22 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import {
-  TRAVEL_APPLY_FLOW_URL,
-  withTicketParam,
-} from "./workbench";
+import { travelApplyFlowUrl, withTicketParam } from "./workbench";
 
 describe("withTicketParam", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it("sets ticket query param on workflow URL", () => {
-    expect(withTicketParam(TRAVEL_APPLY_FLOW_URL, "abc123")).toBe(
+    vi.stubEnv("VITE_API_BASE_URL", "http://app.rtesp.com");
+    expect(withTicketParam(travelApplyFlowUrl(), "abc123")).toBe(
       "http://workflow.rtesp.com/Form/Flow?flowtag=Travel&ticket=abc123",
     );
   });
 
   it("replaces existing ticket", () => {
-    expect(
-      withTicketParam(
-        "http://workflow.rtesp.com/Task/Index?ticket=old",
-        "new",
-      ),
-    ).toBe("http://workflow.rtesp.com/Task/Index?ticket=new");
+    expect(withTicketParam("http://workflow.rtesp.com/Task/Index?ticket=old", "new")).toBe(
+      "http://workflow.rtesp.com/Task/Index?ticket=new",
+    );
   });
 });

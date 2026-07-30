@@ -11,6 +11,7 @@ import { PROFILE_ASSETS } from "@/config/profile-assets";
 import { ProfileAvatarCropSheet } from "@/components/profile/ProfileAvatarCropSheet";
 import { bumpAvatarCacheBuster, withAvatarCacheBuster } from "@/lib/avatar";
 import { getApi } from "@/lib/api";
+import { getDomain } from "@/lib/domain";
 import { getApiBaseUrl, getApiMode } from "@/lib/env";
 import { getTicket } from "@/lib/session";
 import { useProfileCenter } from "@/hooks/useProfileCenter";
@@ -238,7 +239,7 @@ export function ProfileCenterPage() {
         Language: "cn",
         Ticket: getTicket() ?? "",
         TicketName: "",
-        Domain: apiConfig.Domain ?? "rtesp.com",
+        Domain: apiConfig.Domain ?? getDomain(),
         Method: AVATAR_UPLOAD_METHOD,
         Data: data,
         FileValue: fileValue,

@@ -1,3 +1,5 @@
+import { getAppBaseDomain } from "@/lib/env";
+
 const DEVICE_ID_KEY = "ryx_device_id";
 
 const QUERY_SKIP = new Set([
@@ -51,7 +53,7 @@ export function getDeviceName(): string {
 export function getRequestDomain(): string {
   const fromUrl = readQueryParams().get("domain");
   if (fromUrl) return fromUrl;
-  return import.meta.env.VITE_API_DOMAIN ?? "rtesp.com";
+  return import.meta.env.VITE_API_DOMAIN ?? getAppBaseDomain();
 }
 
 export function getRequestLanguage(): string {

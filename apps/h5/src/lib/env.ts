@@ -1,4 +1,5 @@
 const DEFAULT_APP_ID = "com.ronglvonline.app";
+const DEFAULT_APP_BASE_URL = "https://app.rongtrip.cn";
 
 export function getAppName(): string {
   return import.meta.env.VITE_APP_NAME ?? "RongYiXing H5";
@@ -18,7 +19,26 @@ export function getApiBaseUrl(): string {
 }
 
 export function getLegacyAppBaseUrl(): string {
-  return (import.meta.env.VITE_API_BASE_URL?.trim() || "https://app.rongtrip.cn").replace(/\/$/, "");
+  return (import.meta.env.VITE_API_BASE_URL?.trim() || DEFAULT_APP_BASE_URL).replace(/\/$/, "");
+}
+
+function parseAppBaseUrl(): URL {
+  try {
+    return new URL(getLegacyAppBaseUrl());
+  } catch {
+    return new URL(DEFAULT_APP_BASE_URL);
+  }
+}
+
+/** Host suffix of the configured app base: `app.rtesp.com` → `rtesp.com`. */
+export function getAppBaseDomain(): string {
+  const { hostname } = parseAppBaseUrl();
+  return hostname.startsWith("app.") ? hostname.slice("app.".length) : hostname;
+}
+
+/** Protocol of the configured app base — the test environment is http, production is https. */
+export function getAppBaseProtocol(): string {
+  return parseAppBaseUrl().protocol;
 }
 
 const API_MODE_KEY = "ryx_api_mode";

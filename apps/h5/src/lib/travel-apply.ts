@@ -1,6 +1,5 @@
 import { addDays, todayDateString } from "@/lib/date-search";
-
-const WORKFLOW_SITE = "http://workflow.rtesp.com";
+import { getWorkflowSite } from "@/lib/workflow-site";
 
 export interface TravelApplyRawControl {
   id: string | null;
@@ -76,7 +75,20 @@ interface FlowFormDefaultValue {
 
 function toAbsoluteWorkflowUrl(url: string): string {
   if (url.startsWith("http://") || url.startsWith("https://")) return url;
-  return `${WORKFLOW_SITE}${url.startsWith("/") ? "" : "/"}${url}`;
+  return `${getWorkflowSite()}${url.startsWith("/") ? "" : "/"}${url}`;
+}
+
+/**
+ * Workflow answers an unusable ticket with a 302 to the login site, and both hosts send
+ * `Access-Control-Allow-Origin: *`, so fetch silently resolves with the login page HTML.
+ */
+function isLoginRedirect(response: Response): boolean {
+  if (!response.redirected) return false;
+  try {
+    return new URL(response.url).hostname.startsWith("login.");
+  } catch {
+    return false;
+  }
 }
 
 async function fetchText(url: string, init?: RequestInit): Promise<string> {
@@ -85,6 +97,9 @@ async function fetchText(url: string, init?: RequestInit): Promise<string> {
     response = await fetch(url, init);
   } catch (error) {
     throw new Error(error instanceof Error ? error.message : "接口请求失败");
+  }
+  if (isLoginRedirect(response)) {
+    throw new Error("登录已过期，请重新登录");
   }
   if (!response.ok) {
     throw new Error(`请求失败(${response.status})`);
@@ -147,7 +162,12 @@ function normalizeOptions(value: unknown): TravelApplyOption[] {
   return value
     .map((item) => {
       if (!item || typeof item !== "object") return null;
-      const row = item as { label?: string; value?: string | number; Text?: string; Value?: string | number };
+      const row = item as {
+        label?: string;
+        value?: string | number;
+        Text?: string;
+        Value?: string | number;
+      };
       const label = row.label ?? row.Text ?? "";
       const optionValue = row.value ?? row.Value ?? label;
       if (!label) return null;
@@ -180,7 +200,9 @@ function normalizeCities(value: unknown): TravelApplyCity[] {
     .filter((item): item is TravelApplyCity => item != null);
 }
 
-async function fetchDefault(control: TravelApplyRawControl | undefined): Promise<TravelApplyOption> {
+async function fetchDefault(
+  control: TravelApplyRawControl | undefined,
+): Promise<TravelApplyOption> {
   if (!control?.defaultUrl) return { label: "", value: "" };
   try {
     return normalizeDefaultValue(await fetchJson<FlowFormDefaultValue>(control.defaultUrl));
@@ -248,7 +270,7 @@ export function defaultTravelApplyTraveler(defaultAccount: TravelApplyOption): T
 }
 
 export async function fetchTravelApplyMeta(ticket: string): Promise<TravelApplyMeta> {
-  const html = await fetchText(`${WORKFLOW_SITE}/Form/Flow?flowtag=Travel&ticket=${ticket}`);
+  const html = await fetchText(`${getWorkflowSite()}/Form/Flow?flowtag=Travel&ticket=${ticket}`);
   const controls = parseFlowControls(html);
   const addUrl = parseAddUrl(html);
   const workflowId = parseWorkflowId(html);
@@ -434,13 +456,7 @@ export function buildTravelApplyBody(
         );
         return;
       case "ToCityName":
-        appendDetail(
-          control,
-          segment.toCity.label,
-          segment.toCity.value,
-          "TravelDetail",
-          slaveRow,
-        );
+        appendDetail(control, segment.toCity.label, segment.toCity.value, "TravelDetail", slaveRow);
         return;
       default:
         break;
@@ -527,19 +543,28 @@ export async function fetchTravelFormData(
   formId: string,
 ): Promise<FormGetResponse | null> {
   const params = new URLSearchParams({ ticket, CheckFlowType: "", FlowTag: "Travel", Id: formId });
-  const url = `${WORKFLOW_SITE}/Form/Get?${params.toString()}`;
+  const url = `${getWorkflowSite()}/Form/Get?${params.toString()}`;
   try {
     const raw = await fetchJson<unknown>(url);
     if (!raw) return null;
     // Form/Get returns [{ datas: [...] }, {name, value}, ...]
     let controls: unknown[];
     if (Array.isArray(raw)) {
-      if (raw.length > 0 && raw[0] && typeof raw[0] === "object" && "datas" in (raw[0] as Record<string, unknown>)) {
+      if (
+        raw.length > 0 &&
+        raw[0] &&
+        typeof raw[0] === "object" &&
+        "datas" in (raw[0] as Record<string, unknown>)
+      ) {
         controls = (raw[0] as Record<string, unknown[]>).datas as unknown[];
       } else {
         controls = raw as unknown[];
       }
-    } else if (typeof raw === "object" && raw !== null && "datas" in (raw as Record<string, unknown>)) {
+    } else if (
+      typeof raw === "object" &&
+      raw !== null &&
+      "datas" in (raw as Record<string, unknown>)
+    ) {
       controls = (raw as Record<string, unknown[]>).datas as unknown[];
     } else {
       return null;
@@ -557,7 +582,12 @@ function readControlDefault(control: TravelApplyRawControl): string {
   if (raw == null) return "";
   if (typeof raw === "string") return raw;
   if (typeof raw === "object") {
-    const obj = raw as { label?: string; value?: string | number; Text?: string; Value?: string | number };
+    const obj = raw as {
+      label?: string;
+      value?: string | number;
+      Text?: string;
+      Value?: string | number;
+    };
     return String(obj.value ?? obj.Value ?? obj.label ?? obj.Text ?? "");
   }
   return String(raw);
@@ -574,7 +604,10 @@ export function parseFormDataToValues(
 
   const travelTypeCtrl = controls.find((c) => c.tag === "TravelType" && !c.slaves);
   const travelTypes = travelTypeCtrl
-    ? readControlDefault(travelTypeCtrl).split(",").map((s) => s.trim()).filter(Boolean)
+    ? readControlDefault(travelTypeCtrl)
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
     : [];
 
   const reasonCtrl = controls.find((c) => c.label === "出差事由" && !c.slaves);
@@ -614,7 +647,7 @@ export async function revokeTravelApply(
     CheckFlowType: "",
     FlowTag: "Travel",
   });
-  const url = `${WORKFLOW_SITE}/FormTask/Revoke?${params.toString()}`;
+  const url = `${getWorkflowSite()}/FormTask/Revoke?${params.toString()}`;
   const body = new URLSearchParams({ Id: String(formId) });
   return fetchJson<TravelApplySubmitResult>(url, {
     method: "POST",
