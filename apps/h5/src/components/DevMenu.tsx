@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { setMockIdentityCheckForceLogout } from "@ryx/mock";
 
 import { getApiMode, setApiMode, clearApiModeOverride } from "@/lib/env";
-import { resetApi } from "@/lib/api";
+import { getApi, resetApi } from "@/lib/api";
+import { performForceLogout } from "@/lib/force-logout";
 
 const MODES = [
   { value: "mock" as const, label: "Mock" },
@@ -20,6 +22,17 @@ export function DevMenu() {
     setApiMode(mode);
     resetApi();
     window.location.reload();
+  }
+
+  // Session guard polling stays off in mock mode, so drive one check by hand.
+  async function simulateKickOut() {
+    setMockIdentityCheckForceLogout(true);
+    try {
+      const result = await getApi().identity.check();
+      await performForceLogout({ message: result.message, preventAutoLogin: true });
+    } finally {
+      setMockIdentityCheckForceLogout(false);
+    }
   }
 
   return (
@@ -50,6 +63,15 @@ export function DevMenu() {
               {m.label}
             </button>
           ))}
+          {current === "mock" ? (
+            <button
+              type="button"
+              className="mt-2 block w-full rounded px-2 py-1 text-left text-sm hover:bg-muted"
+              onClick={() => void simulateKickOut()}
+            >
+              Simulate kick-out
+            </button>
+          ) : null}
         </div>
       ) : null}
     </>

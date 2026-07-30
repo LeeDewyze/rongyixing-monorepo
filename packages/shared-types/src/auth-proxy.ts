@@ -38,3 +38,9 @@ export interface LoginResultDto {
 export interface WebSocketUrlDto {
   Url: string;
 }
+
+/** Legacy Identity-Check: `IResponse.Status === true` means force logout. */
+export interface IdentityCheckResult {
+  forceLogout: boolean;
+  message?: string;
+}

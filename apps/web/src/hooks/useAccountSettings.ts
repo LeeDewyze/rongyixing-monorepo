@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import { getApi, resetApi } from "@/lib/api";
 import { clearSession } from "@/lib/session";
+import { stopSessionGuard } from "@/lib/session-guard";
 
 export async function logoutMutationFn(): Promise<void> {
   // Legacy account-setting uses LoginService.logout() → ApiLoginUrl-Home-Logout only.
@@ -16,6 +17,7 @@ export function useLogout() {
   return useMutation({
     mutationFn: logoutMutationFn,
     onSettled: () => {
+      stopSessionGuard();
       clearSession();
       queryClient.clear();
       resetApi();

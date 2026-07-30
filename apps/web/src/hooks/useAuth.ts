@@ -5,15 +5,26 @@ import { getApiMode } from "@/lib/env";
 import { preloadBusinessBookingPermission } from "@/lib/booking-permission-preload";
 import { queryClient } from "@/lib/query";
 import { getDeviceId, getDeviceName } from "@/lib/request-context";
+import { startSessionGuard } from "@/lib/session-guard";
 import { saveLoginResult, setWebSocketUrl } from "@/lib/session";
 
 async function loadWebSocketUrlAfterLogin(mode: string, ticket?: string) {
   if (mode === "mock" || !ticket) return;
-  const ws = await getApi().identity.getWebSocketUrl();
-  if (!ws?.Url) {
-    throw new Error("GetWebSocketUrl returned empty Url");
+  try {
+    const ws = await getApi().identity.getWebSocketUrl();
+    if (ws?.Url) {
+      setWebSocketUrl(ws.Url);
+    } else {
+      console.warn("[ryx] GetWebSocketUrl returned empty Url");
+    }
+  } catch (error) {
+    console.warn("[ryx] failed to load websocket url after login", error);
   }
-  setWebSocketUrl(ws.Url);
+}
+
+function startSessionGuardAfterLogin(mode: string): void {
+  if (mode === "mock") return;
+  startSessionGuard();
 }
 
 export function usePasswordLogin() {
@@ -34,6 +45,7 @@ export function usePasswordLogin() {
       saveLoginResult(result);
       await loadWebSocketUrlAfterLogin(mode, result.Ticket);
       await preloadBusinessBookingPermission(queryClient, { reset: true });
+      startSessionGuardAfterLogin(mode);
 
       return result;
     },
@@ -53,6 +65,7 @@ export function useMobileLogin() {
       saveLoginResult(result);
       await loadWebSocketUrlAfterLogin(mode, result.Ticket);
       await preloadBusinessBookingPermission(queryClient, { reset: true });
+      startSessionGuardAfterLogin(mode);
 
       return result;
     },

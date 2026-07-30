@@ -7,6 +7,7 @@ import "@ryx/ui/globals.css";
 
 import { router } from "@/app/routes";
 import { AppConfirmDialogHost } from "@/components/AppConfirmDialogHost";
+import { SessionGuardHost } from "@/components/SessionGuardHost";
 import { bootstrapApi } from "@/lib/api";
 import { preloadBusinessBookingPermission } from "@/lib/booking-permission-preload";
 import { bootstrapExternalTicket } from "@/lib/external-ticket";
@@ -22,6 +23,7 @@ async function main() {
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
         <AppConfirmDialogHost />
+        <SessionGuardHost />
       </QueryClientProvider>
     </StrictMode>,
   );

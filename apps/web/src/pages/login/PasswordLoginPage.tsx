@@ -9,6 +9,7 @@ import {
   getPrivacyPolicyUrl,
   getUserAgreementUrl,
 } from "@/lib/contact-us";
+import { clearPreventAutoLogin, PREVENT_AUTO_LOGIN_KEY } from "@/lib/force-logout";
 import {
   clearRememberedCredentials,
   loadRememberedCredentials,
@@ -48,14 +49,7 @@ function IconUser() {
         strokeWidth="2"
         strokeLinecap="round"
       />
-      <circle
-        cx="12"
-        cy="7"
-        r="4"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      />
+      <circle cx="12" cy="7" r="4" fill="none" stroke="currentColor" strokeWidth="2" />
     </svg>
   );
 }
@@ -149,7 +143,13 @@ function IconEye({ visible }: { visible: boolean }) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <path d="M4 4l16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M4 4l16 16"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -242,7 +242,10 @@ function HeroScene() {
         <div className="absolute left-[40px] right-[38px] bottom-[16px] h-[5px] rounded-full bg-brand-primary" />
       </div>
 
-      <div className="absolute hidden xl:block" style={{ left: 440, right: 68, bottom: 34, height: 230 }}>
+      <div
+        className="absolute hidden xl:block"
+        style={{ left: 440, right: 68, bottom: 34, height: 230 }}
+      >
         {[
           { left: 0, height: 154 },
           { left: 100, height: 210 },
@@ -302,6 +305,15 @@ export function PasswordLoginPage() {
   useEffect(() => {
     document.title = "融易行 - 登录";
   }, []);
+
+  useEffect(() => {
+    const preventAutoLogin = searchParams.get("preventAutoLogin");
+    if (preventAutoLogin === "1" || preventAutoLogin === "true") {
+      sessionStorage.setItem(PREVENT_AUTO_LOGIN_KEY, "1");
+    } else if (preventAutoLogin === "0" || preventAutoLogin === "false") {
+      clearPreventAutoLogin();
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (countdown <= 0) return;
@@ -430,9 +442,7 @@ export function PasswordLoginPage() {
         >
           <section className="flex min-w-0 flex-1 flex-col lg:pr-2">
             <div className="max-w-[760px]">
-              <h1
-                className="m-0 text-[clamp(4rem,5vw,7rem)] font-black leading-[0.94] tracking-tight text-white drop-shadow-[0_16px_46px_rgba(19,66,144,0.24)]"
-              >
+              <h1 className="m-0 text-[clamp(4rem,5vw,7rem)] font-black leading-[0.94] tracking-tight text-white drop-shadow-[0_16px_46px_rgba(19,66,144,0.24)]">
                 融易行
               </h1>
               <h2 className="mt-6 m-0 text-[clamp(2.25rem,2.9vw,3.25rem)] font-extrabold leading-[1.08] tracking-tight text-white">
@@ -504,7 +514,9 @@ export function PasswordLoginPage() {
                       onClear={() => setAccount("")}
                     />
                     <label className="block">
-                      <span className="mb-2 block text-[15px] font-medium text-[#344054]">密码</span>
+                      <span className="mb-2 block text-[15px] font-medium text-[#344054]">
+                        密码
+                      </span>
                       <div className="flex h-14 items-center gap-3 rounded-xl border border-[#D8E2F4] bg-[#F8FAFF] px-4 text-[#98A2B3] transition-shadow duration-200 focus-within:border-brand-primary/30 focus-within:bg-white focus-within:shadow-[0_0_0_4px_rgba(39,104,250,0.08)]">
                         <IconLock />
                         <input
@@ -667,11 +679,19 @@ export function PasswordLoginPage() {
 
               <p className="mt-7 text-center text-[14px] text-[#98A2B3]">
                 联系管理员 ·{" "}
-                <button type="button" className="hover:text-brand-primary" onClick={() => setLegalDoc("privacy")}>
+                <button
+                  type="button"
+                  className="hover:text-brand-primary"
+                  onClick={() => setLegalDoc("privacy")}
+                >
                   隐私政策
                 </button>{" "}
                 ·{" "}
-                <button type="button" className="hover:text-brand-primary" onClick={() => setLegalDoc("agreement")}>
+                <button
+                  type="button"
+                  className="hover:text-brand-primary"
+                  onClick={() => setLegalDoc("agreement")}
+                >
                   用户协议
                 </button>
               </p>

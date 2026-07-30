@@ -10,8 +10,8 @@ import {
   getRequestLanguage,
   getTicketName,
 } from "@/lib/request-context";
-import { stripAppBasePath, withAppBasePath } from "@/lib/base-path";
-import { clearSession, getTicket } from "@/lib/session";
+import { performForceLogout } from "@/lib/force-logout";
+import { getTicket } from "@/lib/session";
 import { isTouristMethod, sendWithTouristContext } from "@/lib/tourist-context";
 
 const API_CONFIG_STORAGE_KEY = "ryx_api_config";
@@ -76,14 +76,7 @@ export function getApi() {
       getAccessToken: () => localStorage.getItem("accessToken"),
       rewriteUrl: rewriteDevProxyUrl,
       onUnauthorized: () => {
-        clearSession();
-        const path = `${window.location.pathname}${window.location.search}`;
-        const routerPath = stripAppBasePath(path);
-        if (!routerPath.startsWith("/login")) {
-          window.location.replace(
-            withAppBasePath(`/login/password?returnTo=${encodeURIComponent(path)}`),
-          );
-        }
+        void performForceLogout({ message: "登录已失效，请重新登录" });
       },
     });
     attachTouristContextProxy(apiInstance);

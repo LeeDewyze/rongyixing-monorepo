@@ -32,6 +32,7 @@ export type { HomeSitemapItem } from "./sitemap.js";
 
 export type {
   DeviceLoginParams,
+  IdentityCheckResult,
   IdentityDto,
   LoginResultDto,
   MobileLoginParams,

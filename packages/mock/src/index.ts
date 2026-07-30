@@ -15,6 +15,7 @@ import { createMockHandler, createMockRegistry } from "./registry.js";
 
 export { createAccountCardMockHandlers } from "./handlers/account-card.js";
 export { createAuthMockHandlers, MOCK_IDENTITY, MOCK_LOGIN_RESULT } from "./handlers/auth.js";
+export { setMockIdentityCheckForceLogout } from "./fixtures/identity-check.js";
 export { createFlightMockHandlers } from "./handlers/flight.js";
 export { MOCK_AIRPORTS } from "./fixtures/flight.js";
 export { createHotelMockHandlers, resetHotelMockStore } from "./handlers/hotel.js";

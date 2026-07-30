@@ -1,6 +1,7 @@
 import { getApi } from "@/lib/api";
 import { resolveInternalReturnTo, stripAppBasePath, withAppBasePath } from "@/lib/base-path";
 import { getApiMode } from "@/lib/env";
+import { startSessionGuard } from "@/lib/session-guard";
 import {
   clearSession,
   saveLoginResult,
@@ -80,6 +81,7 @@ export async function bootstrapExternalTicket(fallbackPath = "/home"): Promise<v
       } catch (error) {
         console.warn("[ryx] external ticket: failed to load websocket url", error);
       }
+      startSessionGuard();
     }
   } catch (error) {
     console.warn("[ryx] external ticket: identity check failed", error);

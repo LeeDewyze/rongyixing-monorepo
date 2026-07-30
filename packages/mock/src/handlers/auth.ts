@@ -1,15 +1,10 @@
 import type { IResponse } from "@ryx/shared-types";
 import { AUTH_FLOW_METHODS, successResponse } from "@ryx/api";
 
-import {
-  mockIdentityGet,
-  mockLoginSuccess,
-} from "../fixtures/auth.js";
+import { mockIdentityCheckResponse } from "../fixtures/identity-check.js";
+import { mockIdentityGet, mockLoginSuccess } from "../fixtures/auth.js";
 
-export function createAuthMockHandlers(): Record<
-  string,
-  (data: unknown) => IResponse<unknown>
-> {
+export function createAuthMockHandlers(): Record<string, (data: unknown) => IResponse<unknown>> {
   return {
     [AUTH_FLOW_METHODS.DEVICE_LOGIN]: () => mockLoginSuccess(),
     [AUTH_FLOW_METHODS.LOGIN]: (data) => {
@@ -27,10 +22,12 @@ export function createAuthMockHandlers(): Record<
     [AUTH_FLOW_METHODS.MOBILE_LOGIN]: () => mockLoginSuccess(),
     [AUTH_FLOW_METHODS.LOGOUT]: () => successResponse(true),
     [AUTH_FLOW_METHODS.IDENTITY_GET]: () => mockIdentityGet(),
-    [AUTH_FLOW_METHODS.IDENTITY_CHECK]: () => successResponse(true),
+    [AUTH_FLOW_METHODS.IDENTITY_CHECK]: () => mockIdentityCheckResponse(),
     [AUTH_FLOW_METHODS.IDENTITY_WEBSOCKET]: () =>
       successResponse({ Url: "wss://mock.rongtrip.cn/ws" }),
   };
 }
+
+export { setMockIdentityCheckForceLogout } from "../fixtures/identity-check.js";
 
 export { MOCK_IDENTITY, MOCK_LOGIN_RESULT } from "../fixtures/auth.js";

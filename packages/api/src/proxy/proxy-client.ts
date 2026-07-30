@@ -37,6 +37,8 @@ export interface ProxyClientConfig {
 
 export interface ProxyClient {
   send<TRes = unknown>(options: ProxySendOptions): Promise<TRes>;
+  /** Returns raw envelope without assertSuccess or global error handlers (e.g. Identity-Check). */
+  sendResponse<TRes = unknown>(options: ProxySendOptions): Promise<IResponse<TRes>>;
   loadApiConfig(): Promise<ApiConfigSetting>;
   getApiConfig(): ApiConfigSetting | null;
 }
@@ -127,7 +129,10 @@ export function createProxyClient(config: ProxyClientConfig): ProxyClient {
     return result as IResponse<TRes>;
   }
 
-  async function sendReal<TRes>(options: ProxySendOptions): Promise<IResponse<TRes>> {
+  async function sendReal<TRes>(
+    options: ProxySendOptions,
+    opts?: { skipGlobalErrorHandling?: boolean },
+  ): Promise<IResponse<TRes>> {
     const cfg = await ensureApiConfig(options.method);
     const token = getToken();
     const resolvedUrl = resolveUrl({
@@ -194,7 +199,7 @@ export function createProxyClient(config: ProxyClientConfig): ProxyClient {
       }
 
       const payload = (await response.json()) as IResponse<TRes>;
-      if (!payload.Status) {
+      if (!opts?.skipGlobalErrorHandling && !payload.Status) {
         handleErrorCode(payload.Code, payload.Message);
       }
       return payload;
@@ -205,16 +210,24 @@ export function createProxyClient(config: ProxyClientConfig): ProxyClient {
     }
   }
 
+  async function dispatch<TRes>(
+    options: ProxySendOptions,
+    opts?: { skipGlobalErrorHandling?: boolean },
+  ): Promise<IResponse<TRes>> {
+    const data = typeof options.data === "string" ? JSON.parse(options.data) : options.data;
+    return mode === "mock"
+      ? await sendMock<TRes>(options.method, data)
+      : await sendReal<TRes>(options, opts);
+  }
+
   return {
     async send<TRes = unknown>(options: ProxySendOptions): Promise<TRes> {
-      const data = typeof options.data === "string" ? JSON.parse(options.data) : options.data;
-
-      const response =
-        mode === "mock"
-          ? await sendMock<TRes>(options.method, data)
-          : await sendReal<TRes>(options);
-
+      const response = await dispatch<TRes>(options);
       return assertSuccess(response);
+    },
+
+    async sendResponse<TRes = unknown>(options: ProxySendOptions): Promise<IResponse<TRes>> {
+      return dispatch<TRes>(options, { skipGlobalErrorHandling: true });
     },
 
     async loadApiConfig(): Promise<ApiConfigSetting> {

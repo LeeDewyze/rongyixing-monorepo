@@ -15,6 +15,7 @@ import {
   getUserAgreementUrl,
 } from "@/lib/contact-us";
 import { getApiMode } from "@/lib/env";
+import { clearPreventAutoLogin, PREVENT_AUTO_LOGIN_KEY } from "@/lib/force-logout";
 import {
   clearRememberedCredentials,
   loadRememberedCredentials,
@@ -151,6 +152,15 @@ export function PasswordLoginPage() {
   function showToast(message: string, tone: "success" | "error" = "error") {
     setToast({ message, tone });
   }
+
+  useEffect(() => {
+    const preventAutoLogin = searchParams.get("preventAutoLogin");
+    if (preventAutoLogin === "1" || preventAutoLogin === "true") {
+      sessionStorage.setItem(PREVENT_AUTO_LOGIN_KEY, "1");
+    } else if (preventAutoLogin === "0" || preventAutoLogin === "false") {
+      clearPreventAutoLogin();
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (countdown <= 0) return;

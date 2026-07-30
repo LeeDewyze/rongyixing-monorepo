@@ -1,5 +1,6 @@
 import type {
   DeviceLoginParams,
+  IdentityCheckResult,
   IdentityDto,
   LoginResultDto,
   MobileLoginParams,
@@ -63,7 +64,7 @@ export function createAuthProxyApi(proxy: ProxyClient): AuthProxyApi {
 
 export interface IdentityApi {
   get(ticket?: string): Promise<IdentityDto>;
-  check(ticket?: string): Promise<boolean>;
+  check(loginType?: string): Promise<IdentityCheckResult>;
   getWebSocketUrl(): Promise<WebSocketUrlDto>;
 }
 
@@ -75,11 +76,16 @@ export function createIdentityApi(proxy: ProxyClient): IdentityApi {
         data: ticket ? { Ticket: ticket } : {},
       });
     },
-    check() {
-      return proxy.send<boolean>({
+    async check(loginType = H5_LOGIN_TYPE) {
+      const response = await proxy.sendResponse<unknown>({
         method: AUTH_FLOW_METHODS.IDENTITY_CHECK,
-        data: { LoginType: H5_LOGIN_TYPE },
+        data: { LoginType: loginType },
       });
+      const message = response.Message?.trim();
+      return {
+        forceLogout: response.Status === true,
+        message: message || undefined,
+      };
     },
     getWebSocketUrl() {
       return proxy.send<WebSocketUrlDto>({
