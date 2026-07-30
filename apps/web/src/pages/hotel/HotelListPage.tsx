@@ -16,7 +16,7 @@ import { HotelStayDatePickerSheet } from "@/components/hotel/HotelStayDatePicker
 import { CityPicker } from "@/components/search";
 import { usePageHeader } from "@/components/layout";
 import { useHotelConditions, useInfiniteHotelList, useHotelCities } from "@/hooks/useHotelList";
-import { usePassengerSelection } from "@/hooks/usePassenger";
+import { useBusinessSelfBookPassenger } from "@/hooks/useBusinessSelfBookPassenger";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { getApi } from "@/lib/api";
 import { formatApiError } from "@/lib/formatApiError";
@@ -200,17 +200,19 @@ export function HotelListPage() {
   const lng = searchParams.get("lng") ?? "";
   const hotelType = parseHotelType(searchParams.get("hotelType")) ?? "Normal";
   const travelFormId = searchParams.get("travelFormId") ?? searchParams.get("travelformid") ?? "";
-  const { selected: selectedPassengers } = usePassengerSelection(ProductType.Hotel);
-  const passengerIds = useMemo(
-    () => resolveHotelListPassengerIds(selectedPassengers),
-    [selectedPassengers],
-  );
   const staffCityCode = useMemo(() => readStaffCityCode(), []);
   const travelMode = useMemo(
     () => resolveTravelModeFromProductChannel(searchParams.get("channel"), loadHomeTravelMode()),
     [searchParams],
   );
   const productChannel = resolveProductChannel(travelMode);
+  const isBusinessMode = productChannel === "tmc";
+  const passengerContext = useBusinessSelfBookPassenger(ProductType.Hotel, isBusinessMode);
+  const selectedPassengers = passengerContext.passengers;
+  const passengerIds = useMemo(
+    () => resolveHotelListPassengerIds(selectedPassengers),
+    [selectedPassengers],
+  );
   const { data: tmc } = useQuery({
     queryKey: ["tmc", "getTmc", "hotel-list"],
     queryFn: () => getApi().tmc.getTmc(),

@@ -135,7 +135,7 @@ export function resolvePlanBookingPolicyColor(
   passengers: PassengerBookInfo[],
 ): HotelPolicyColor | undefined {
   const uniqueId = getPlanUniqueId(plan);
-  if (!uniqueId) return undefined;
+  if (!uniqueId) return isPlanFull(plan) ? "danger_full" : "success";
   if (!passengers.length) return undefined;
 
   let strictest: HotelPolicyColor | undefined;

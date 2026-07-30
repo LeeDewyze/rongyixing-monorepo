@@ -76,11 +76,12 @@ export function resolveHotelInitClientId(info: PassengerBookInfo): string {
   const accountId =
     ("AccountId" in info.passenger ? info.passenger.AccountId : undefined) ??
     info.credential.AccountId;
-  return String(accountId ?? info.credential.Id ?? info.id);
+  return String(accountId ?? info.credential.Id ?? info.id ?? "");
 }
 
 function resolveHotelPassengerFormMobile(form?: HotelPassengerBookForm): string {
-  const checked = form?.mobileOptions.filter((item) => item.checked).map((item) => item.value) ?? [];
+  const checked =
+    form?.mobileOptions.filter((item) => item.checked).map((item) => item.value) ?? [];
   let mobile = checked.join(",");
   if (form?.otherMobile.trim()) {
     mobile = mobile ? `${mobile},${form.otherMobile.trim()}` : form.otherMobile.trim();
@@ -135,9 +136,7 @@ function parseHotelRoomPlanVariables(value?: string): Record<string, unknown> | 
 
 function syncHotelRoomPlanVariables(roomPlan: HotelBookRoomPlanDto): HotelBookRoomPlanDto {
   const variablesObj =
-    roomPlan.VariablesObj ??
-    parseHotelRoomPlanVariables(roomPlan.Variables) ??
-    undefined;
+    roomPlan.VariablesObj ?? parseHotelRoomPlanVariables(roomPlan.Variables) ?? undefined;
   if (!variablesObj) return roomPlan;
   return {
     ...roomPlan,
@@ -345,7 +344,8 @@ export function buildHotelInitBookDto(input: {
     const clientId = resolveHotelInitClientId(info);
     const accountId = clientId;
     const passengerTravelFormId = includeTravelForm
-      ? travelFormId ?? ("travelFormId" in info.passenger ? info.passenger.travelFormId : undefined)
+      ? (travelFormId ??
+        ("travelFormId" in info.passenger ? info.passenger.travelFormId : undefined))
       : undefined;
 
     const passengerDto: HotelBookPassengerDto = {
@@ -778,14 +778,14 @@ export function createHotelPassengerBookForm(
     otherEmail: "",
     organization: {
       code: "",
-    name:
-      (typeof (passenger.credential as { OrgName?: string }).OrgName === "string"
-        ? (passenger.credential as { OrgName?: string }).OrgName
-        : undefined) ??
-      (typeof (passenger.passenger as { OrgName?: string }).OrgName === "string"
-        ? (passenger.passenger as { OrgName?: string }).OrgName
-        : "") ??
-      "",
+      name:
+        (typeof (passenger.credential as { OrgName?: string }).OrgName === "string"
+          ? (passenger.credential as { OrgName?: string }).OrgName
+          : undefined) ??
+        (typeof (passenger.passenger as { OrgName?: string }).OrgName === "string"
+          ? (passenger.passenger as { OrgName?: string }).OrgName
+          : "") ??
+        "",
     },
     otherOrganizationName: "",
     costCenter: { code: "", name: "" },

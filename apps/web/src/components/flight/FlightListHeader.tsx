@@ -5,6 +5,7 @@ interface FlightListHeaderProps {
   toName: string;
   passengerHref: string;
   passengerCount: number;
+  selfBookOnly?: boolean;
   modifyOpen: boolean;
   onBack: () => void;
   onModifyOpen: () => void;
@@ -49,6 +50,7 @@ export function FlightListHeader({
   toName,
   passengerHref,
   passengerCount,
+  selfBookOnly = false,
   modifyOpen,
   onBack,
   onModifyOpen,
@@ -95,18 +97,24 @@ export function FlightListHeader({
           </button>
         )}
 
-        <Link
-          to={passengerHref}
-          className="relative flex h-11 w-10 shrink-0 items-center justify-center text-white active:opacity-70"
-          aria-label="选择出行人"
-        >
-          <PassengerAddIcon />
-          {passengerCount > 0 ? (
-            <span className="absolute right-0.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ff4d4f] px-1 text-[10px] font-medium text-white">
-              {passengerCount}
-            </span>
-          ) : null}
-        </Link>
+        {selfBookOnly ? (
+          <div className="flex h-11 min-w-[72px] shrink-0 items-center justify-center text-[12px] font-medium text-white">
+            差旅标准
+          </div>
+        ) : (
+          <Link
+            to={passengerHref}
+            className="relative flex h-11 w-10 shrink-0 items-center justify-center text-white active:opacity-70"
+            aria-label="选择出行人"
+          >
+            <PassengerAddIcon />
+            {passengerCount > 0 ? (
+              <span className="absolute right-0.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ff4d4f] px-1 text-[10px] font-medium text-white">
+                {passengerCount}
+              </span>
+            ) : null}
+          </Link>
+        )}
       </div>
     </div>
   );

@@ -22,6 +22,7 @@ export function sanitizePassengerSelection(items: PassengerBookInfo[]): Passenge
 // Current passenger selection is product-scoped and shared by list/book/select pages.
 // Business flow snapshots live in *_book_selection / *_exchange_session instead.
 const STORAGE_PREFIX = "ryx_passenger_selection_";
+const SELF_BOOK_AUTO_STORAGE_PREFIX = "ryx_passenger_selection_self_book_auto_";
 export const PASSENGER_SELECTION_EVENT = "ryx-passenger-selection-change";
 const PASSENGER_SELECTION_PRODUCT_TYPES: ProductType[] = [
   PT.Flight,
@@ -42,6 +43,52 @@ function notifySelectionChange(forType: ProductType): void {
 
 export function passengerSelectionKey(forType: ProductType): string {
   return `${STORAGE_PREFIX}${forType}`;
+}
+
+function selfBookAutoSelectionKey(forType: ProductType): string {
+  return `${SELF_BOOK_AUTO_STORAGE_PREFIX}${forType}`;
+}
+
+function passengerIdentity(item: PassengerBookInfo): { id: string; credentialId: string } {
+  return {
+    id: String(item.id ?? ""),
+    credentialId: String(item.credential?.Id ?? ""),
+  };
+}
+
+export function markAutoSelfBookSelection(forType: ProductType, item: PassengerBookInfo): void {
+  localStorage.setItem(
+    selfBookAutoSelectionKey(forType),
+    JSON.stringify({ ...passengerIdentity(item), savedAt: Date.now() }),
+  );
+}
+
+export function clearAutoSelfBookSelectionIfMatches(
+  forType: ProductType,
+  items = loadPassengerSelection(forType),
+): boolean {
+  const markerKey = selfBookAutoSelectionKey(forType);
+  const raw = localStorage.getItem(markerKey);
+  if (!raw) return false;
+
+  localStorage.removeItem(markerKey);
+
+  try {
+    const marker = JSON.parse(raw) as { id?: string; credentialId?: string };
+    const current = items.length === 1 ? passengerIdentity(items[0]) : null;
+    const matches =
+      current &&
+      current.id === String(marker.id ?? "") &&
+      current.credentialId === String(marker.credentialId ?? "");
+    if (matches) {
+      clearPassengerSelection(forType);
+      return true;
+    }
+  } catch {
+    /* ignore stale marker */
+  }
+
+  return false;
 }
 
 export function loadPassengerSelection(forType: ProductType): PassengerBookInfo[] {

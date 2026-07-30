@@ -2,6 +2,8 @@ import { useMutation } from "@tanstack/react-query";
 
 import { getApi } from "@/lib/api";
 import { getApiMode } from "@/lib/env";
+import { preloadBusinessBookingPermission } from "@/lib/booking-permission-preload";
+import { queryClient } from "@/lib/query";
 import { getDeviceId, getDeviceName } from "@/lib/request-context";
 import { saveLoginResult, setWebSocketUrl } from "@/lib/session";
 
@@ -31,6 +33,7 @@ export function usePasswordLogin() {
 
       saveLoginResult(result);
       await loadWebSocketUrlAfterLogin(mode, result.Ticket);
+      await preloadBusinessBookingPermission(queryClient, { reset: true });
 
       return result;
     },
@@ -49,6 +52,7 @@ export function useMobileLogin() {
 
       saveLoginResult(result);
       await loadWebSocketUrlAfterLogin(mode, result.Ticket);
+      await preloadBusinessBookingPermission(queryClient, { reset: true });
 
       return result;
     },

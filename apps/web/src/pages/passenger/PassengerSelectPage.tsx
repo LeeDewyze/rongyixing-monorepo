@@ -20,9 +20,9 @@ import { WEB_PAGE_ROOT } from "@/lib/web-page-layout";
 import {
   useAllowExternalPassengers,
   useExternalPassengerList,
-  usePassengerSelection,
   useStaffList,
 } from "@/hooks/usePassenger";
+import { useBusinessSelfBookPassenger } from "@/hooks/useBusinessSelfBookPassenger";
 import {
   useRemoveExternalPassenger,
   useRemoveStaffCredential,
@@ -31,6 +31,11 @@ import { credentialFormFromCredential } from "@/lib/credential-form";
 import { formatApiError } from "@/lib/formatApiError";
 import { showAppConfirmDialog } from "@/lib/app-confirm-dialog";
 import { navigateReturn } from "@/lib/navigation";
+import {
+  isBusinessTravelMode,
+  loadHomeTravelMode,
+  resolveTravelModeFromProductChannel,
+} from "@/lib/flight-travel-mode";
 import {
   buildCredentialPagePath,
   buildPassengerSelectReturnPath,
@@ -43,6 +48,19 @@ import {
   toggleSelection,
 } from "@/lib/passenger-select-logic";
 
+function resolveReturnToTravelMode(returnTo: string) {
+  const base = typeof window === "undefined" ? "http://localhost" : window.location.origin;
+  try {
+    const url = new URL(returnTo, base);
+    return resolveTravelModeFromProductChannel(
+      url.searchParams.get("channel"),
+      loadHomeTravelMode(),
+    );
+  } catch {
+    return loadHomeTravelMode();
+  }
+}
+
 export function PassengerSelectPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -50,7 +68,11 @@ export function PassengerSelectPage() {
   const returnTo = searchParams.get("returnTo") ?? "/home";
   const selectReturnTo = buildPassengerSelectReturnPath(forType, returnTo);
 
-  const { selected, setSelected } = usePassengerSelection(forType);
+  const returnToTravelMode = useMemo(() => resolveReturnToTravelMode(returnTo), [returnTo]);
+  const isBusinessMode = isBusinessTravelMode(returnToTravelMode);
+  const passengerContext = useBusinessSelfBookPassenger(forType, isBusinessMode);
+  const selected = passengerContext.passengers;
+  const setSelected = passengerContext.setSelected;
   const { data: allowExternal } = useAllowExternalPassengers();
   const removeExternal = useRemoveExternalPassenger();
   const removeStaffCredential = useRemoveStaffCredential();
@@ -73,6 +95,11 @@ export function PassengerSelectPage() {
     }, 300);
     return () => window.clearTimeout(timer);
   }, [keyword]);
+
+  useEffect(() => {
+    if (!passengerContext.isSelfBookOnly || passengerContext.isLoading) return;
+    navigate(returnTo, { replace: true });
+  }, [navigate, passengerContext.isLoading, passengerContext.isSelfBookOnly, returnTo]);
 
   const staffQuery = useStaffList(debouncedKeyword, tab === "employee");
   const externalQuery = useExternalPassengerList(debouncedKeyword, tab === "external");

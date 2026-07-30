@@ -39,7 +39,7 @@ import { PassengerSelectAlertDialog } from "@/components/passenger";
 import { useBookOrgCostVisibility } from "@/hooks/useBookOrgCostVisibility";
 import { useHotelBookPassengerForms } from "@/hooks/useHotelBookPassengerForms";
 import { useHotelBookSelection, useHotelInitBook, useHotelSubmitBook } from "@/hooks/useHotelBook";
-import { usePassengerSelection } from "@/hooks/usePassenger";
+import { useBusinessSelfBookPassenger } from "@/hooks/useBusinessSelfBookPassenger";
 import {
   buildHotelInitBookDto,
   buildHotelOrderBookDto,
@@ -103,7 +103,6 @@ export function HotelBookPage() {
   const { hotelId = "" } = useParams();
   const [searchParams] = useSearchParams();
   const { selection } = useHotelBookSelection();
-  const { selected: passengers, setSelected } = usePassengerSelection(ProductType.Hotel);
   const submitBook = useHotelSubmitBook();
   const { showOrganizations, showCostCenter, organizations } = useBookOrgCostVisibility();
 
@@ -148,6 +147,9 @@ export function HotelBookPage() {
   );
   const isBusinessMode = isBusinessTravelMode(travelMode);
   const productChannel = resolveProductChannel(travelMode);
+  const passengerContext = useBusinessSelfBookPassenger(ProductType.Hotel, isBusinessMode);
+  const passengers = passengerContext.passengers;
+  const setSelected = passengerContext.setSelected;
   const bookReturnTo = `/hotel/${encodeURIComponent(hotelId)}/book?${searchParams.toString()}`;
 
   usePageHeader({ visible: false });
@@ -168,13 +170,14 @@ export function HotelBookPage() {
 
   useEffect(() => {
     if (leavingAfterSubmitRef.current) return;
+    if (isBusinessMode && passengerContext.isLoading) return;
     if (!selection || (isBusinessMode && passengers.length === 0)) {
       setRedirecting(true);
       const detailUrl = selection ? buildHotelBookDetailUrl(selection) : null;
       const target = detailUrl ?? (hotelId ? `/hotel/${encodeURIComponent(hotelId)}` : "/home");
       navigate(target, { replace: true });
     }
-  }, [hotelId, isBusinessMode, navigate, passengers.length, selection]);
+  }, [hotelId, isBusinessMode, navigate, passengerContext.isLoading, passengers.length, selection]);
 
   const arrivalOptions = useMemo(
     () => (selection ? resolveHotelArrivalTimeOptions(selection, selection.checkIn) : []),

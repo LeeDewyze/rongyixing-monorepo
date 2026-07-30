@@ -8,11 +8,11 @@ import { HotelDetailHero } from "@/components/hotel/HotelDetailHero";
 import { HotelDetailHotelInfoSection } from "@/components/hotel/HotelDetailHotelInfoSection";
 import { HotelDetailInfoCard } from "@/components/hotel/HotelDetailInfoCard";
 import { HotelDetailRoomCard } from "@/components/hotel/HotelDetailRoomCard";
+import { HotelDetailToolbar } from "@/components/hotel/HotelDetailToolbar";
 import { useExpandedRoomState } from "@/components/hotel/useExpandedRoomState";
 import { HotelDetailSectionTabs } from "@/components/hotel/HotelDetailSectionTabs";
 import { HotelDetailStickyHeader } from "@/components/hotel/HotelDetailStickyHeader";
 import { HotelDetailTrafficSection } from "@/components/hotel/HotelDetailTrafficSection";
-import { HotelPassengerRequiredDialog } from "@/components/hotel/HotelPassengerRequiredDialog";
 import { HotelPolicyAlertDialog } from "@/components/hotel/HotelPolicyAlertDialog";
 import { HotelPolicyFilterSheet } from "@/components/hotel/HotelPolicyFilterSheet";
 import { HotelStayDatePickerSheet } from "@/components/hotel/HotelStayDatePickerSheet";
@@ -20,7 +20,7 @@ import { usePageHeader } from "@/components/layout";
 import { useHotelDetailSections } from "@/hooks/useHotelDetailSections";
 import { useHotelDetail, useHotelPolicy } from "@/hooks/useHotelList";
 import { useIdentity } from "@/hooks/useIdentity";
-import { usePassengerSelection } from "@/hooks/usePassenger";
+import { useBusinessSelfBookPassenger } from "@/hooks/useBusinessSelfBookPassenger";
 import {
   buildHotelPolicyParams,
   buildPolicyColorMap,
@@ -32,7 +32,7 @@ import {
 } from "@/lib/hotel-book-policy";
 import { saveHotelGalleryImages } from "@/lib/hotel-gallery-session";
 import { saveHotelBookSelection } from "@/lib/hotel-book-session";
-import { loadHomeTravelMode } from "@/lib/flight-travel-mode";
+import { isBusinessTravelMode, loadHomeTravelMode } from "@/lib/flight-travel-mode";
 import { formatApiError } from "@/lib/formatApiError";
 import { navigateBack } from "@/lib/navigation";
 import { WEB_PAGE_BODY, WEB_PAGE_ROOT } from "@/lib/web-page-layout";
@@ -71,14 +71,14 @@ export function HotelDetailPage() {
     () => (query.channel === "tourist" ? "personal" : loadHomeTravelMode()),
     [query.channel],
   );
-
-  const { selected: selectedPassengers } = usePassengerSelection(ProductType.Hotel);
+  const isBusinessMode = isBusinessTravelMode(travelMode);
+  const passengerContext = useBusinessSelfBookPassenger(ProductType.Hotel, isBusinessMode);
+  const selectedPassengers = passengerContext.passengers;
   const { data: identity } = useIdentity();
   const isAgent = hasAgentIdentity(identity);
 
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [policyFilterOpen, setPolicyFilterOpen] = useState(false);
-  const [passengerRequiredOpen, setPassengerRequiredOpen] = useState(false);
   const [policyAlertMessage, setPolicyAlertMessage] = useState<string | null>(null);
   const [policyFilterEnabled, setPolicyFilterEnabled] = useState(true);
   const [filterPassengerId, setFilterPassengerId] = useState<string | null>(null);
@@ -93,26 +93,28 @@ export function HotelDetailPage() {
   const detailReady = isSuccess && Boolean(data) && !isFetching;
 
   const policyParams = useMemo(() => {
-    if (!detailReady || selectedPassengers.length === 0) return null;
+    if (!isBusinessMode || !detailReady || selectedPassengers.length === 0) return null;
     return buildHotelPolicyParams({
       detail: data!,
       passengers: selectedPassengers,
       cityCode: query.cityCode,
     });
-  }, [data, detailReady, query.cityCode, selectedPassengers]);
+  }, [data, detailReady, isBusinessMode, query.cityCode, selectedPassengers]);
 
   const {
     data: policyResults,
     isLoading: isPolicyLoading,
     isFetching: isPolicyFetching,
     refetch: refetchPolicy,
-  } = useHotelPolicy(policyParams, detailReady && selectedPassengers.length > 0);
+  } = useHotelPolicy(policyParams, isBusinessMode && detailReady && selectedPassengers.length > 0);
   const isPolicyChecking =
-    selectedPassengers.length > 0 && (!detailReady || isPolicyLoading || isPolicyFetching);
+    isBusinessMode &&
+    selectedPassengers.length > 0 &&
+    (!detailReady || isPolicyLoading || isPolicyFetching);
 
   const policyColors = useMemo(
     () =>
-      !detailReady || selectedPassengers.length === 0 || isPolicyChecking
+      !isBusinessMode || !detailReady || selectedPassengers.length === 0 || isPolicyChecking
         ? {}
         : buildPolicyColorMap({
             results: policyResults,
@@ -124,6 +126,7 @@ export function HotelDetailPage() {
       data,
       detailReady,
       filterPassengerId,
+      isBusinessMode,
       isPolicyChecking,
       policyFilterEnabled,
       policyResults,
@@ -197,14 +200,18 @@ export function HotelDetailPage() {
   }
 
   function requirePassengersBeforeAction(): boolean {
+    if (!isBusinessMode) return true;
     if (selectedPassengers.length > 0) return true;
-    setPassengerRequiredOpen(true);
-    return false;
-  }
-
-  function handlePassengerRequiredConfirm() {
-    setPassengerRequiredOpen(false);
+    if (passengerContext.isLoading) {
+      setPolicyAlertMessage("正在获取预订权限，请稍后再试");
+      return false;
+    }
+    if (passengerContext.isSelfBookOnly) {
+      setPolicyAlertMessage("未获取到本人旅客信息，请刷新后重试");
+      return false;
+    }
     navigate(passengerHref);
+    return false;
   }
 
   /** Legacy filterPassengerPolicy always calls getPolicy() after filter sheet confirm. */
@@ -215,13 +222,12 @@ export function HotelDetailPage() {
       setPolicyFilterEnabled(true);
       setFilterPassengerId(passengerId);
     }
-    if (detailReady && selectedPassengers.length > 0) {
+    if (isBusinessMode && detailReady && selectedPassengers.length > 0) {
       await refetchPolicy();
     }
   }
 
   function handleToggleRoom(roomId: string) {
-    if (!requirePassengersBeforeAction()) return;
     toggleRoom(roomId);
   }
 
@@ -231,9 +237,12 @@ export function HotelDetailPage() {
 
   function handleBook(plan: HotelRoomPlan) {
     if (!requirePassengersBeforeAction() || !data) return;
-    const policyChecked = detailReady && selectedPassengers.length > 0 && !isPolicyChecking;
+    const policyChecked =
+      isBusinessMode && detailReady && selectedPassengers.length > 0 && !isPolicyChecking;
     const displayColor = resolvePlanPolicyColor(plan, policyColors);
-    const bookColor = resolvePlanBookingPolicyColor(plan, policyResults, selectedPassengers);
+    const bookColor = isBusinessMode
+      ? resolvePlanBookingPolicyColor(plan, policyResults, selectedPassengers)
+      : undefined;
     const alertMessage = resolveHotelPlanBookAlertMessage({
       plan,
       displayColor,
@@ -243,11 +252,12 @@ export function HotelDetailPage() {
       isAgent,
       policyChecked,
     });
-    if (alertMessage) {
+    if (isBusinessMode && alertMessage) {
       setPolicyAlertMessage(alertMessage);
       return;
     }
-    if (!isHotelPlanBookable(bookColor, isAgent, policyChecked)) {
+    if (isBusinessMode && !isHotelPlanBookable(bookColor, isAgent, policyChecked)) {
+      setPolicyAlertMessage("当前房价暂不可预订，请刷新后重试");
       return;
     }
 
@@ -346,6 +356,16 @@ export function HotelDetailPage() {
             checkOut={query.checkOut}
             onOpenPicker={() => setDatePickerOpen(true)}
           />
+
+          {isBusinessMode ? (
+            <HotelDetailToolbar
+              passengerCount={selectedPassengers.length}
+              passengerHref={passengerHref}
+              canFilterPolicy={selectedPassengers.length > 0}
+              selfBookOnly={passengerContext.isSelfBookOnly}
+              onOpenPolicyFilter={() => setPolicyFilterOpen(true)}
+            />
+          ) : null}
         </div>
 
         {stickyVisible ? (
@@ -358,7 +378,8 @@ export function HotelDetailPage() {
               hotelName={data.HotelName}
               passengerCount={selectedPassengers.length}
               passengerHref={passengerHref}
-              canFilterPolicy={selectedPassengers.length > 0}
+              canFilterPolicy={isBusinessMode && selectedPassengers.length > 0}
+              selfBookOnly={passengerContext.isSelfBookOnly}
               onBack={handleBack}
               onOpenPolicyFilter={() => setPolicyFilterOpen(true)}
             />
@@ -428,18 +449,12 @@ export function HotelDetailPage() {
       />
 
       <HotelPolicyFilterSheet
-        open={policyFilterOpen}
+        open={isBusinessMode && policyFilterOpen}
         passengers={selectedPassengers}
         showAllSelected={!policyFilterEnabled}
         selectedPassengerId={filterPassengerId}
         onClose={() => setPolicyFilterOpen(false)}
         onConfirm={handlePolicyFilterConfirm}
-      />
-
-      <HotelPassengerRequiredDialog
-        open={passengerRequiredOpen}
-        onClose={() => setPassengerRequiredOpen(false)}
-        onConfirm={handlePassengerRequiredConfirm}
       />
 
       <HotelPolicyAlertDialog

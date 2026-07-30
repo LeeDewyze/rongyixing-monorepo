@@ -521,6 +521,26 @@ describe("resolveHotelPlanBookAlertMessage", () => {
 });
 
 describe("resolvePlanBookingPolicyColor", () => {
+  it("keeps book validation aligned with green fallback when RoomPlanUniqueId is absent", () => {
+    const color = resolvePlanBookingPolicyColor(
+      {
+        PlanId: "P1",
+        PlanName: "无早",
+        Price: 500,
+      },
+      [],
+      [
+        {
+          id: "p1",
+          passenger: { Id: "acc-1", AccountId: "acc-1", Name: "张三" },
+          credential: { Id: "c1", Name: "张三", Type: 1, Number: "1234" },
+        },
+      ],
+    );
+    expect(color).toBe("success");
+    expect(isHotelPlanBookable(color, false, true)).toBe(true);
+  });
+
   it("uses strictest passenger policy when validating book", () => {
     const color = resolvePlanBookingPolicyColor(
       {

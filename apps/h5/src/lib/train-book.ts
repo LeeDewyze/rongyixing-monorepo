@@ -63,14 +63,14 @@ export interface TrainPassengerBookForm {
 
 /** Legacy Initialize ClientId — passenger selection id (api.md), not AccountId. */
 export function resolveTrainInitClientId(info: PassengerBookInfo): string {
-  return String(info.id);
+  return String(info.id ?? "");
 }
 
 export function resolveTrainAccountId(info: PassengerBookInfo): string {
   const accountId =
     ("AccountId" in info.passenger ? info.passenger.AccountId : undefined) ??
     info.credential.AccountId;
-  return String(accountId ?? info.credential.Id ?? info.id);
+  return String(accountId ?? info.credential.Id ?? info.id ?? "");
 }
 
 export function resolvePassengerServiceFee(

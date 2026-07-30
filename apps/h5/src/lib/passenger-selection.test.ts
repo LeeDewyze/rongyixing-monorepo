@@ -3,7 +3,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ProductType, type PassengerBookInfo } from "@ryx/shared-types";
 
 import {
+  clearAutoSelfBookSelectionIfMatches,
   loadPassengerSelection,
+  markAutoSelfBookSelection,
   passengerSelectionKey,
   removeCredentialFromPassengerSelections,
   savePassengerSelection,
@@ -133,5 +135,26 @@ describe("passenger-selection lifecycle", () => {
     expect(loadPassengerSelection(ProductType.Train)[0]?.credential.HideNumber).toBe(
       "330101********1234",
     );
+  });
+
+  it("clears auto self-book passenger selection when the marker matches", () => {
+    savePassengerSelection(ProductType.Hotel, [selectedPassenger]);
+    markAutoSelfBookSelection(ProductType.Hotel, selectedPassenger);
+
+    expect(clearAutoSelfBookSelectionIfMatches(ProductType.Hotel)).toBe(true);
+    expect(loadPassengerSelection(ProductType.Hotel)).toEqual([]);
+    expect(localStorage.getItem(passengerSelectionKey(ProductType.Hotel))).toBeNull();
+  });
+
+  it("keeps manual passenger selection when the auto self-book marker is stale", () => {
+    savePassengerSelection(ProductType.Hotel, [selectedPassenger]);
+    markAutoSelfBookSelection(ProductType.Hotel, {
+      ...selectedPassenger,
+      id: "old-cred",
+      credential: { ...selectedPassenger.credential, Id: "old-cred" },
+    });
+
+    expect(clearAutoSelfBookSelectionIfMatches(ProductType.Hotel)).toBe(false);
+    expect(loadPassengerSelection(ProductType.Hotel)).toEqual([selectedPassenger]);
   });
 });

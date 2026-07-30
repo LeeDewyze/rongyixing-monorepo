@@ -26,7 +26,7 @@ import { TrainTypeFilterBar } from "@/components/train/TrainTypeFilterBar";
 import { useTrainList } from "@/hooks/useTrainSearchForm";
 import { useLockMainColumnScroll } from "@/hooks/useLockMainColumnScroll";
 import { useTrainPolicy } from "@/hooks/useTrainBook";
-import { usePassengerSelection } from "@/hooks/usePassenger";
+import { useBusinessSelfBookPassenger } from "@/hooks/useBusinessSelfBookPassenger";
 import { useIdentity } from "@/hooks/useIdentity";
 import { TRAIN_CALENDAR_CONFIG } from "@/lib/calendar-picker";
 import { parseLocalDate, todayDateString, trainMaxSelectableDate } from "@/lib/date-search";
@@ -79,7 +79,6 @@ export function TrainListPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [modifyOpen, setModifyOpen] = useState(false);
-  const { selected: selectedPassengers } = usePassengerSelection(ProductType.Train);
   const { data: identity } = useIdentity();
   const isAgent = hasAgentIdentity(identity);
   const listReturnTo = `/train/list?${searchParams.toString()}`;
@@ -105,12 +104,16 @@ export function TrainListPage() {
     syncTrainExchangeSessionForListUrl(searchParams),
   );
   const isExchangeMode = isTrainExchangeListActive(searchParams, exchangeSession);
+  const passengerContext = useBusinessSelfBookPassenger(
+    ProductType.Train,
+    isBusinessMode && !isExchangeMode,
+  );
   const bookingPassengers = useMemo(() => {
     if (isExchangeMode && exchangeSession?.passengers?.length) {
       return exchangeSession.passengers;
     }
-    return selectedPassengers;
-  }, [exchangeSession, isExchangeMode, selectedPassengers]);
+    return passengerContext.passengers;
+  }, [exchangeSession, isExchangeMode, passengerContext.passengers]);
 
   useEffect(() => {
     const syncExchangeSession = () => {
@@ -289,6 +292,9 @@ export function TrainListPage() {
 
   const handleBookAttempt = useCallback(
     (train: TrainItem, seat: TrainSeat) => {
+      if (isBusinessMode && !isExchangeMode && passengerContext.isLoading) {
+        return;
+      }
       if (isBusinessMode && !isExchangeMode && !bookingPassengers.length) {
         setPassengerRequiredOpen(true);
         return;
@@ -333,6 +339,7 @@ export function TrainListPage() {
       listReturnTo,
       listParams,
       productChannel,
+      passengerContext.isLoading,
       travelMode,
     ],
   );
@@ -420,6 +427,7 @@ export function TrainListPage() {
           passengerHref={buildPassengerSelectPath(ProductType.Train, listReturnTo)}
           passengerCount={bookingPassengers.length}
           showPassengerEntry={isBusinessMode && !isExchangeMode}
+          selfBookOnly={passengerContext.isSelfBookOnly && !isExchangeMode}
           modifyOpen={modifyOpen}
           onBack={handleHeaderBack}
           onModifyOpen={handleModifyOpen}

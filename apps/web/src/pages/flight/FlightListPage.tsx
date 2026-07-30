@@ -16,7 +16,7 @@ import { usePageHeader } from "@/components/layout";
 import { useFlightListPageEffects } from "@/hooks/useFlightListPageEffects";
 import { useFlightList } from "@/hooks/useFlight";
 import { useFlightSearchForm } from "@/hooks/useFlightSearchForm";
-import { usePassengerSelection } from "@/hooks/usePassenger";
+import { useBusinessSelfBookPassenger } from "@/hooks/useBusinessSelfBookPassenger";
 import {
   buildHomeExchangeParams,
   buildFlightListSearchParams,
@@ -75,7 +75,6 @@ export function FlightListPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const form = useFlightSearchForm();
-  const { selected: selectedPassengers } = usePassengerSelection(ProductType.Flight);
   const { data: identity } = useIdentity();
   const isAgent = hasAgentIdentity(identity);
   const listReturnTo = `/flight/list?${searchParams.toString()}`;
@@ -85,6 +84,9 @@ export function FlightListPage() {
     [searchParams],
   );
   const productChannel = resolveProductChannel(travelMode);
+  const isBusinessMode = productChannel === "tmc";
+  const passengerContext = useBusinessSelfBookPassenger(ProductType.Flight, isBusinessMode);
+  const selectedPassengers = passengerContext.passengers;
 
   const listParams: FlightSearchParams = {
     Date: searchParams.get("date") ?? "",
@@ -398,6 +400,7 @@ export function FlightListPage() {
   async function openCabins(flightId: string) {
     const segment = displayed.find((s) => s.Id === flightId);
     if (!segment) return;
+    if (isBusinessMode && passengerContext.isLoading) return;
     if (selectedPassengers.length === 0) {
       setPassengerAlertOpen(true);
       return;
@@ -442,6 +445,7 @@ export function FlightListPage() {
           toName={toName}
           passengerHref={buildPassengerSelectPath(ProductType.Flight, listReturnTo)}
           passengerCount={selectedPassengers.length}
+          selfBookOnly={passengerContext.isSelfBookOnly}
           modifyOpen={modifyOpen}
           onBack={handleHeaderBack}
           onModifyOpen={handleModifyOpen}

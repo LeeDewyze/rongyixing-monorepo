@@ -8,11 +8,11 @@ import { HotelDetailHero } from "@/components/hotel/HotelDetailHero";
 import { HotelDetailHotelInfoSection } from "@/components/hotel/HotelDetailHotelInfoSection";
 import { HotelDetailInfoCard } from "@/components/hotel/HotelDetailInfoCard";
 import { HotelDetailRoomCard } from "@/components/hotel/HotelDetailRoomCard";
+import { HotelDetailToolbar } from "@/components/hotel/HotelDetailToolbar";
 import { useExpandedRoomState } from "@/components/hotel/useExpandedRoomState";
 import { HotelDetailSectionTabs } from "@/components/hotel/HotelDetailSectionTabs";
 import { HotelDetailStickyHeader } from "@/components/hotel/HotelDetailStickyHeader";
 import { HotelDetailTrafficSection } from "@/components/hotel/HotelDetailTrafficSection";
-import { HotelPassengerRequiredDialog } from "@/components/hotel/HotelPassengerRequiredDialog";
 import { HotelPolicyAlertDialog } from "@/components/hotel/HotelPolicyAlertDialog";
 import { HotelPolicyFilterSheet } from "@/components/hotel/HotelPolicyFilterSheet";
 import { HotelStayDatePickerSheet } from "@/components/hotel/HotelStayDatePickerSheet";
@@ -20,7 +20,7 @@ import { usePageHeader } from "@/components/layout";
 import { useHotelDetailSections } from "@/hooks/useHotelDetailSections";
 import { useHotelDetail, useHotelPolicy } from "@/hooks/useHotelList";
 import { useIdentity } from "@/hooks/useIdentity";
-import { usePassengerSelection } from "@/hooks/usePassenger";
+import { useBusinessSelfBookPassenger } from "@/hooks/useBusinessSelfBookPassenger";
 import {
   buildHotelPolicyParams,
   buildPolicyColorMap,
@@ -71,14 +71,13 @@ export function HotelDetailPage() {
     [query.channel],
   );
   const isBusinessMode = isBusinessTravelMode(travelMode);
-
-  const { selected: selectedPassengers } = usePassengerSelection(ProductType.Hotel);
+  const passengerContext = useBusinessSelfBookPassenger(ProductType.Hotel, isBusinessMode);
+  const selectedPassengers = passengerContext.passengers;
   const { data: identity } = useIdentity();
   const isAgent = hasAgentIdentity(identity);
 
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [policyFilterOpen, setPolicyFilterOpen] = useState(false);
-  const [passengerRequiredOpen, setPassengerRequiredOpen] = useState(false);
   const [policyAlertMessage, setPolicyAlertMessage] = useState<string | null>(null);
   const [policyFilterEnabled, setPolicyFilterEnabled] = useState(true);
   const [filterPassengerId, setFilterPassengerId] = useState<string | null>(null);
@@ -202,13 +201,16 @@ export function HotelDetailPage() {
   function requirePassengersBeforeAction(): boolean {
     if (!isBusinessMode) return true;
     if (selectedPassengers.length > 0) return true;
-    setPassengerRequiredOpen(true);
-    return false;
-  }
-
-  function handlePassengerRequiredConfirm() {
-    setPassengerRequiredOpen(false);
+    if (passengerContext.isLoading) {
+      setPolicyAlertMessage("正在获取预订权限，请稍后再试");
+      return false;
+    }
+    if (passengerContext.isSelfBookOnly) {
+      setPolicyAlertMessage("未获取到本人旅客信息，请刷新后重试");
+      return false;
+    }
     navigate(passengerHref);
+    return false;
   }
 
   /** Legacy filterPassengerPolicy always calls getPolicy() after filter sheet confirm. */
@@ -225,7 +227,6 @@ export function HotelDetailPage() {
   }
 
   function handleToggleRoom(roomId: string) {
-    if (!requirePassengersBeforeAction()) return;
     toggleRoom(roomId);
   }
 
@@ -255,6 +256,7 @@ export function HotelDetailPage() {
       return;
     }
     if (isBusinessMode && !isHotelPlanBookable(bookColor, isAgent, policyChecked)) {
+      setPolicyAlertMessage("当前房价暂不可预订，请刷新后重试");
       return;
     }
 
@@ -354,6 +356,16 @@ export function HotelDetailPage() {
         onOpenPicker={() => setDatePickerOpen(true)}
       />
 
+      {isBusinessMode ? (
+        <HotelDetailToolbar
+          passengerCount={selectedPassengers.length}
+          passengerHref={passengerHref}
+          canFilterPolicy={selectedPassengers.length > 0}
+          selfBookOnly={passengerContext.isSelfBookOnly}
+          onOpenPolicyFilter={() => setPolicyFilterOpen(true)}
+        />
+      ) : null}
+
       {stickyVisible ? (
         <div
           ref={stickyRef}
@@ -365,6 +377,7 @@ export function HotelDetailPage() {
             passengerCount={selectedPassengers.length}
             passengerHref={passengerHref}
             canFilterPolicy={isBusinessMode && selectedPassengers.length > 0}
+            selfBookOnly={passengerContext.isSelfBookOnly}
             onBack={handleBack}
             onOpenPolicyFilter={() => setPolicyFilterOpen(true)}
           />
@@ -413,7 +426,12 @@ export function HotelDetailPage() {
         />
       </section>
 
-      <section ref={trafficRef} data-section-id="traffic" style={sectionScrollStyle} className="pb-4">
+      <section
+        ref={trafficRef}
+        data-section-id="traffic"
+        style={sectionScrollStyle}
+        className="pb-4"
+      >
         <HotelDetailTrafficSection address={data.Address} mapUrl={mapUrl} />
       </section>
 
@@ -432,12 +450,6 @@ export function HotelDetailPage() {
         selectedPassengerId={filterPassengerId}
         onClose={() => setPolicyFilterOpen(false)}
         onConfirm={handlePolicyFilterConfirm}
-      />
-
-      <HotelPassengerRequiredDialog
-        open={passengerRequiredOpen}
-        onClose={() => setPassengerRequiredOpen(false)}
-        onConfirm={handlePassengerRequiredConfirm}
       />
 
       <HotelPolicyAlertDialog

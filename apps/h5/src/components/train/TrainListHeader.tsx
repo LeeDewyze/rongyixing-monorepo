@@ -6,6 +6,7 @@ interface TrainListHeaderProps {
   passengerHref: string;
   passengerCount: number;
   showPassengerEntry?: boolean;
+  selfBookOnly?: boolean;
   modifyOpen: boolean;
   onBack: () => void;
   onModifyOpen: () => void;
@@ -51,6 +52,7 @@ export function TrainListHeader({
   passengerHref,
   passengerCount,
   showPassengerEntry = true,
+  selfBookOnly = false,
   modifyOpen,
   onBack,
   onModifyOpen,
@@ -97,7 +99,11 @@ export function TrainListHeader({
           </button>
         )}
 
-        {showPassengerEntry ? (
+        {selfBookOnly ? (
+          <div className="flex h-11 min-w-[72px] shrink-0 items-center justify-center text-[12px] font-medium text-white">
+            差旅标准
+          </div>
+        ) : showPassengerEntry ? (
           <Link
             to={passengerHref}
             className="relative flex h-11 w-10 shrink-0 items-center justify-center text-white active:opacity-70"

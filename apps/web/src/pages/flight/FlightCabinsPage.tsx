@@ -22,7 +22,7 @@ import { usePageHeader } from "@/components/layout";
 import { useFlightDetail, useFlightPolicy } from "@/hooks/useFlight";
 import { useFlightPriceTimeout } from "@/hooks/useFlightPriceTimeout";
 import { useMemberProfile } from "@/hooks/useMemberProfile";
-import { usePassengerSelection } from "@/hooks/usePassenger";
+import { useBusinessSelfBookPassenger } from "@/hooks/useBusinessSelfBookPassenger";
 import {
   buildFlightDetailParams,
   filterFaresForFlight,
@@ -61,7 +61,11 @@ import {
 import { buildFlightPolicySessionKey, loadFlightPolicySession } from "@/lib/flight-policy-session";
 import { isSelfBookType, resolveDefaultPolicyFilterPassengerId } from "@/lib/flight-self-book";
 import { hasAgentIdentity } from "@/lib/flight-book-save-order";
-import { isBusinessTravelMode, loadHomeTravelMode } from "@/lib/flight-travel-mode";
+import {
+  isBusinessTravelMode,
+  loadHomeTravelMode,
+  resolveTravelModeFromProductChannel,
+} from "@/lib/flight-travel-mode";
 import { navigateBack } from "@/lib/navigation";
 import { WEB_PAGE_BODY, WEB_PAGE_ROOT, WEB_PAGE_STICKY_HEADER } from "@/lib/web-page-layout";
 import { useIdentity } from "@/hooks/useIdentity";
@@ -76,11 +80,10 @@ export function FlightCabinsPage() {
   const [searchParams] = useSearchParams();
   const query = useMemo(() => parseFlightCabinsQuery(searchParams), [searchParams]);
   const travelMode = useMemo(
-    () => (query.channel === "tourist" ? "personal" : loadHomeTravelMode()),
+    () => resolveTravelModeFromProductChannel(query.channel, loadHomeTravelMode()),
     [query.channel],
   );
   const isBusinessMode = isBusinessTravelMode(travelMode);
-  const { selected: selectedPassengers } = usePassengerSelection(ProductType.Flight);
   const { data: identity } = useIdentity();
   const { data: memberProfile } = useMemberProfile();
   const isAgent = hasAgentIdentity(identity);
@@ -91,6 +94,13 @@ export function FlightCabinsPage() {
   const [exchangeSession, setExchangeSession] = useState(() => loadFlightExchangeSession());
   const exchangeTicketId = exchangeSession?.ticketId ?? query.ticketId;
   const isExchangeBook = query.exchange === "1" && Boolean(exchangeTicketId);
+  const passengerContext = useBusinessSelfBookPassenger(
+    ProductType.Flight,
+    isBusinessMode && !isExchangeBook,
+  );
+  const selectedPassengers = isExchangeBook
+    ? passengerContext.selected
+    : passengerContext.passengers;
 
   useEffect(() => {
     function syncExchangeSession() {
@@ -430,6 +440,9 @@ export function FlightCabinsPage() {
     }
     if (!isFlightFareBookable(fare)) {
       showPolicyAlert("该舱位已售罄");
+      return;
+    }
+    if (isBusinessMode && passengerContext.isLoading) {
       return;
     }
     if (selectedPassengers.length === 0) {

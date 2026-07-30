@@ -32,7 +32,7 @@ import { TrainBookPassengerCard } from "@/components/train/TrainBookPassengerCar
 import { TrainBookSeatPicker } from "@/components/train/TrainBookSeatPicker";
 import { TrainBookSummary } from "@/components/train/TrainBookSummary";
 import { useBookOrgCostVisibility } from "@/hooks/useBookOrgCostVisibility";
-import { usePassengerSelection } from "@/hooks/usePassenger";
+import { useBusinessSelfBookPassenger } from "@/hooks/useBusinessSelfBookPassenger";
 import { useTrainBookPassengerForms } from "@/hooks/useTrainBookPassengerForms";
 import {
   useTrainBookSelection,
@@ -109,7 +109,6 @@ export function TrainBookPage() {
   const navigate = useNavigate();
   const contentRef = useRef<HTMLDivElement>(null);
   const { selection } = useTrainBookSelection();
-  const { selected, setSelected } = usePassengerSelection(ProductType.Train);
   const travelMode = selection?.travelMode ?? loadHomeTravelMode();
   const isBusinessMode = isBusinessTravelMode(travelMode);
   const productChannel = resolveProductChannel(travelMode);
@@ -120,6 +119,12 @@ export function TrainBookPage() {
   const submitExchangeBook = useTrainSubmitExchangeBook();
   const [exchangeSession, setExchangeSession] = useState(() => loadTrainExchangeSession());
   const isExchangeBook = Boolean(exchangeSession?.ticketId || selection?.isExchange);
+  const passengerContext = useBusinessSelfBookPassenger(
+    ProductType.Train,
+    isBusinessMode && !isExchangeBook,
+  );
+  const selected = isExchangeBook ? passengerContext.selected : passengerContext.passengers;
+  const setSelected = passengerContext.setSelected;
   const exchangeTicketId = exchangeSession?.ticketId;
   const sessionOriginalTicketPrice = exchangeSession?.exchangeInfo?.OriginalTicketPrice;
   const [exchangeInfoState, setExchangeInfoState] = useState<TrainExchangeInfo | null>(
@@ -606,13 +611,17 @@ export function TrainBookPage() {
 
             {bookPassengers.length === 0 && !isExchangeBook ? (
               <div className="flex items-center justify-between py-3">
-                <p className="text-[13px] text-[#999999]">请选择乘车人</p>
-                <Link
-                  to={buildPassengerSelectPath(ProductType.Train, bookReturnTo)}
-                  className="rounded-full bg-brand-primary px-3 py-1.5 text-[13px] font-medium text-white active:opacity-80"
-                >
-                  添加旅客
-                </Link>
+                <p className="text-[13px] text-[#999999]">
+                  {isBusinessMode ? "正在加载本人乘车信息" : "请选择乘车人"}
+                </p>
+                {!isBusinessMode ? (
+                  <Link
+                    to={buildPassengerSelectPath(ProductType.Train, bookReturnTo)}
+                    className="rounded-full bg-brand-primary px-3 py-1.5 text-[13px] font-medium text-white active:opacity-80"
+                  >
+                    添加旅客
+                  </Link>
+                ) : null}
               </div>
             ) : (
               <>

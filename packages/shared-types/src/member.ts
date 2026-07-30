@@ -51,6 +51,6 @@ export interface MemberProfile {
   CostCenterCode?: string;
   CostCenterName?: string;
   BookTypeName?: string;
-  /** Legacy `StaffBookType` — 1 = self book. */
-  BookType?: number;
+  /** Legacy `StaffBookType` — 1 / Self = self book. */
+  BookType?: number | string;
 }

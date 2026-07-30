@@ -101,7 +101,7 @@ import {
   type FlightBookSelection,
 } from "@/lib/flight-book-session";
 import { navigateBack } from "@/lib/navigation";
-import { usePassengerSelection } from "@/hooks/usePassenger";
+import { useBusinessSelfBookPassenger } from "@/hooks/useBusinessSelfBookPassenger";
 import { replacePassengerCredential } from "@/lib/passenger-select-logic";
 import {
   accountIdFromNotifyTarget,
@@ -150,7 +150,6 @@ export function FlightBookPage() {
   const headerRef = useRef<HTMLDivElement>(null);
   const [headerHeight, setHeaderHeight] = useState(FALLBACK_BOOK_HEADER_HEIGHT);
   const { selection } = useFlightBookSelection();
-  const { selected, setSelected } = usePassengerSelection(ProductType.Flight);
   const submitBook = useFlightSubmitBook();
   const validateBook = useFlightValidateBook();
 
@@ -193,6 +192,12 @@ export function FlightBookPage() {
   const isBusinessMode = isBusinessTravelMode(travelMode);
   const productChannel = resolveProductChannel(travelMode);
   const isExchangeBook = Boolean(selection?.isExchange && selection.exchangeTicketId);
+  const passengerContext = useBusinessSelfBookPassenger(
+    ProductType.Flight,
+    isBusinessMode && !isExchangeBook,
+  );
+  const selected = isExchangeBook ? passengerContext.selected : passengerContext.passengers;
+  const setSelected = passengerContext.setSelected;
 
   const initParams = useMemo(() => {
     if (isExchangeBook) return null;

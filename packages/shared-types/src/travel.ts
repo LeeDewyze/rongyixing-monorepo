@@ -60,6 +60,7 @@ export interface TravelFormListResponse {
 export interface StaffDto {
   Id: string;
   AccountId?: string;
+  Account?: { Id?: string };
   Name: string;
   Nickname?: string;
   Mobile?: string;
@@ -68,6 +69,7 @@ export interface StaffDto {
   OrganizationCode?: string;
   CostCenterCode?: string;
   CostCenterName?: string;
-  BookType?: number;
+  /** Legacy `StaffBookType` — 1 / Self = self book. */
+  BookType?: number | string;
   BookTypeName?: string;
 }

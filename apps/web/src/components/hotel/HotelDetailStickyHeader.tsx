@@ -7,6 +7,7 @@ interface HotelDetailStickyHeaderProps {
   passengerCount: number;
   passengerHref: string;
   canFilterPolicy: boolean;
+  selfBookOnly?: boolean;
   onBack: () => void;
   onOpenPolicyFilter: () => void;
 }
@@ -35,6 +36,7 @@ export function HotelDetailStickyHeader({
   passengerCount,
   passengerHref,
   canFilterPolicy,
+  selfBookOnly = false,
   onBack,
   onOpenPolicyFilter,
 }: HotelDetailStickyHeaderProps) {
@@ -58,30 +60,48 @@ export function HotelDetailStickyHeader({
         </h1>
 
         <div className="flex shrink-0 items-center rounded-full border border-white/80 bg-white/60 py-0.5 pl-0.5 pr-1 shadow-[0_1px_6px_rgba(39,104,250,0.1)] backdrop-blur-[3px]">
-          <button
-            type="button"
-            disabled={!canFilterPolicy}
-            onClick={onOpenPolicyFilter}
-            className="whitespace-nowrap rounded-full px-2 py-1.5 text-[12px] font-medium leading-none active:bg-white/70 disabled:opacity-50"
-            style={{ color: canFilterPolicy ? HOTEL_CHROME.action : HOTEL_CHROME.actionDisabled }}
-          >
-            过滤差标
-          </button>
+          {selfBookOnly ? (
+            <button
+              type="button"
+              disabled={!canFilterPolicy}
+              onClick={onOpenPolicyFilter}
+              className="whitespace-nowrap rounded-full px-2.5 py-1.5 text-[12px] font-medium leading-none active:bg-white/70 disabled:opacity-50"
+              style={{
+                color: canFilterPolicy ? HOTEL_CHROME.action : HOTEL_CHROME.actionDisabled,
+              }}
+            >
+              差旅标准
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                disabled={!canFilterPolicy}
+                onClick={onOpenPolicyFilter}
+                className="whitespace-nowrap rounded-full px-2 py-1.5 text-[12px] font-medium leading-none active:bg-white/70 disabled:opacity-50"
+                style={{
+                  color: canFilterPolicy ? HOTEL_CHROME.action : HOTEL_CHROME.actionDisabled,
+                }}
+              >
+                过滤差标
+              </button>
 
-          <HeaderActionDivider />
+              <HeaderActionDivider />
 
-          <Link
-            to={passengerHref}
-            className="relative inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-1.5 pr-3 text-[12px] font-medium leading-none active:bg-white/70"
-            style={{ color: HOTEL_CHROME.action }}
-          >
-            添加旅客
-            {passengerCount > 0 ? (
-              <span className="absolute -right-0.5 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#E72932] px-0.5 text-[10px] font-semibold leading-none text-white ring-2 ring-white/80">
-                {passengerCount > 9 ? "9+" : passengerCount}
-              </span>
-            ) : null}
-          </Link>
+              <Link
+                to={passengerHref}
+                className="relative inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-1.5 pr-3 text-[12px] font-medium leading-none active:bg-white/70"
+                style={{ color: HOTEL_CHROME.action }}
+              >
+                添加旅客
+                {passengerCount > 0 ? (
+                  <span className="absolute -right-0.5 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#E72932] px-0.5 text-[10px] font-semibold leading-none text-white ring-2 ring-white/80">
+                    {passengerCount > 9 ? "9+" : passengerCount}
+                  </span>
+                ) : null}
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </div>

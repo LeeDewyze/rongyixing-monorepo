@@ -10,8 +10,6 @@ import {
   formatTrainDuration,
   getTrainArrivalDayTip,
   hasAvailableTrainSeats,
-  minSeatCount,
-  shouldShowScarceTrainBadge,
 } from "@/utils/train-list";
 
 import { TrainScheduleTable } from "./TrainScheduleTable";
@@ -34,9 +32,6 @@ const TRAIN_DAY_TIP_CLASS =
 
 const TRAIN_PRICE_CLASS =
   "text-[24px] font-medium leading-[100%] tracking-[0] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
-
-const TRAIN_SCARCE_BADGE_CLASS =
-  "flex h-4 min-w-[36px] shrink-0 items-center justify-center whitespace-nowrap rounded border border-[#FF383C] bg-[#FF383C1A] px-1 text-[10px] font-normal leading-[100%] tracking-[0] text-[#FF383C] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
 
 interface TrainListItemCardProps {
   train: TrainItem;
@@ -238,9 +233,6 @@ export function TrainListItemCard({
           </div>
 
           <div className="flex shrink-0 items-center justify-end gap-1 pl-1">
-            {shouldShowScarceTrainBadge(train) ? (
-              <span className={TRAIN_SCARCE_BADGE_CLASS}>剩{minSeatCount(train)}张</span>
-            ) : null}
             <p className={`${TRAIN_PRICE_CLASS} ${priceColor}`}>¥{train.LowestPrice ?? 0}</p>
           </div>
         </div>

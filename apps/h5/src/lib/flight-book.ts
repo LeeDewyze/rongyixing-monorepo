@@ -98,7 +98,10 @@ function applyFlightExchangeFields(dto: FlightOrderBookDto, selection: FlightBoo
   dto.IsExchange = true;
 }
 
-function applyFlightExchangeTicketId(dto: FlightOrderBookDto, selection: FlightBookSelection): void {
+function applyFlightExchangeTicketId(
+  dto: FlightOrderBookDto,
+  selection: FlightBookSelection,
+): void {
   if (!selection.exchangeTicketId) return;
   dto.TicketId = selection.exchangeTicketId;
 }
@@ -115,7 +118,7 @@ function resolveCredentialAccount(info: PassengerBookInfo): { Id?: string } | un
 
 /** Legacy initialize uses passenger AccountId; final Book uses the same account identity. */
 export function resolveFlightInitClientId(info: PassengerBookInfo): string {
-  return String(resolvePassengerAccountId(info) ?? info.credential.Id ?? info.id);
+  return String(resolvePassengerAccountId(info) ?? info.credential.Id ?? info.id ?? "");
 }
 
 function resolveInitTravelFormId(value?: string): string | undefined {
@@ -463,8 +466,7 @@ export function buildFlightExchangeBookDto(input: {
   ).toLowerCase();
   const detailSegments =
     selection.detailSnapshot?.FlightSegments?.filter(
-      (segment) =>
-        (segment.FlightNumber ?? segment.Number ?? "").toLowerCase() === flightNo,
+      (segment) => (segment.FlightNumber ?? segment.Number ?? "").toLowerCase() === flightNo,
     ) ?? [];
   const flightSegments = (detailSegments.length ? detailSegments : [selection.segment]).map(
     normalizeFlightSegment,
