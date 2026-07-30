@@ -1,0 +1,284 @@
+.travel-policy-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.travel-policy-dialog__backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  border: 0;
+  background: color-mix(in srgb, var(--brand-title) 32%, transparent);
+  opacity: 0;
+  transition: opacity 180ms ease-out;
+}
+
+.travel-policy-dialog__panel {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  display: flex;
+  width: min(calc(100vw - 32px), 390px);
+  max-height: min(70vh, 560px);
+  transform: translate(-50%, -46%);
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--brand-primary) 12%, transparent);
+  border-radius: 14px;
+  background: var(--brand-form-header-end);
+  box-shadow: 0 20px 50px color-mix(in srgb, var(--brand-title) 22%, transparent);
+  opacity: 0;
+  transition:
+    transform 240ms ease-out,
+    opacity 180ms ease-out;
+}
+
+.travel-policy-dialog[data-visible="true"] {
+  pointer-events: auto;
+}
+
+.travel-policy-dialog[data-visible="true"] .travel-policy-dialog__backdrop {
+  opacity: 1;
+}
+
+.travel-policy-dialog[data-visible="true"] .travel-policy-dialog__panel {
+  transform: translate(-50%, -50%);
+  opacity: 1;
+}
+
+.travel-policy-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px 11px;
+  background: linear-gradient(135deg, var(--brand-form-header-start), var(--brand-form-header-end));
+}
+
+.travel-policy-dialog__title-wrap {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+
+.travel-policy-dialog__title-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  color: var(--brand-primary);
+}
+
+.travel-policy-dialog__icon {
+  width: 20px;
+  height: 20px;
+}
+
+.travel-policy-dialog__header h2 {
+  margin: 0;
+  color: var(--brand-title);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.travel-policy-dialog__header p {
+  margin: 3px 0 0;
+  color: color-mix(in srgb, var(--brand-title) 62%, transparent);
+  font-size: 12px;
+}
+
+.travel-policy-dialog__close {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  color: color-mix(in srgb, var(--brand-title) 68%, transparent);
+  cursor: pointer;
+  font-size: 25px;
+  line-height: 1;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    transform 150ms ease;
+}
+
+.travel-policy-dialog__close:hover {
+  background: color-mix(in srgb, var(--brand-primary) 10%, transparent);
+  color: var(--brand-title);
+}
+
+.travel-policy-dialog__close:active {
+  transform: scale(0.94);
+}
+
+.travel-policy-dialog__close:focus-visible,
+.travel-policy-dialog__confirm:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.travel-policy-dialog__body {
+  min-height: 96px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 10px 14px 12px;
+}
+
+.travel-policy-dialog__section + .travel-policy-dialog__section {
+  margin-top: 12px;
+}
+
+.travel-policy-dialog__section h3 {
+  margin: 0 0 6px;
+  color: var(--brand-primary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.travel-policy-dialog__section ul {
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--brand-title) 8%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--brand-title) 3%, transparent);
+  list-style: none;
+  padding: 0;
+}
+
+.travel-policy-dialog__item {
+  position: relative;
+  padding: 8px 10px;
+  color: var(--brand-title);
+  font-size: 12px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.travel-policy-dialog__item + .travel-policy-dialog__item {
+  border-top: 1px solid color-mix(in srgb, var(--brand-title) 7%, transparent);
+}
+
+.travel-policy-dialog__item::before {
+  content: "";
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  margin-right: 7px;
+  vertical-align: 0.12em;
+  border-radius: 999px;
+  background: var(--brand-primary);
+}
+
+.travel-policy-dialog__empty,
+.travel-policy-dialog__skeleton {
+  display: flex;
+  min-height: 120px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  color: color-mix(in srgb, var(--brand-title) 55%, transparent);
+  text-align: center;
+}
+
+.travel-policy-dialog__empty strong {
+  color: var(--brand-title);
+  font-size: 15px;
+}
+
+.travel-policy-dialog__empty span {
+  font-size: 12px;
+}
+
+.travel-policy-dialog__skeleton span {
+  display: block;
+  width: 86%;
+  height: 14px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--brand-primary) 14%, transparent);
+  animation: travel-policy-dialog-pulse 1.2s ease-in-out infinite;
+}
+
+.travel-policy-dialog__skeleton span:nth-child(2) {
+  width: 70%;
+  animation-delay: 100ms;
+}
+
+.travel-policy-dialog__skeleton span:nth-child(3) {
+  width: 78%;
+  animation-delay: 200ms;
+}
+
+.travel-policy-dialog__footer {
+  padding: 10px 14px calc(12px + env(safe-area-inset-bottom));
+  border-top: 1px solid color-mix(in srgb, var(--brand-title) 8%, transparent);
+  background: var(--brand-form-header-end);
+}
+
+.travel-policy-dialog__confirm {
+  width: 100%;
+  min-height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: linear-gradient(90deg, var(--brand-btn-start), var(--brand-btn-end));
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition:
+    filter 150ms ease,
+    transform 150ms ease;
+}
+
+.travel-policy-dialog__confirm:hover {
+  filter: brightness(1.04);
+}
+
+.travel-policy-dialog__confirm:active {
+  transform: scale(0.985);
+}
+
+@keyframes travel-policy-dialog-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+@media (max-width: 640px) {
+  .travel-policy-dialog__panel {
+    top: auto;
+    left: 50%;
+    bottom: 0;
+    width: min(100vw, 430px);
+    max-height: min(68vh, 560px);
+    border-radius: 14px 14px 0 0;
+    transform: translate(-50%, 24px);
+  }
+
+  .travel-policy-dialog[data-visible="true"] .travel-policy-dialog__panel {
+    transform: translate(-50%, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .travel-policy-dialog__backdrop,
+  .travel-policy-dialog__panel,
+  .travel-policy-dialog__close,
+  .travel-policy-dialog__confirm {
+    transition: none;
+  }
+
+  .travel-policy-dialog__skeleton span {
+    animation: none;
+  }
+}

@@ -10,6 +10,7 @@ interface HotelDetailStickyHeaderProps {
   selfBookOnly?: boolean;
   onBack: () => void;
   onOpenPolicyFilter: () => void;
+  onOpenPolicyDetail?: () => void;
 }
 
 function BackIcon() {
@@ -39,6 +40,7 @@ export function HotelDetailStickyHeader({
   selfBookOnly = false,
   onBack,
   onOpenPolicyFilter,
+  onOpenPolicyDetail,
 }: HotelDetailStickyHeaderProps) {
   return (
     <div className={`pt-[env(safe-area-inset-top)] ${HOTEL_DETAIL_FONT}`}>
@@ -63,11 +65,11 @@ export function HotelDetailStickyHeader({
           {selfBookOnly ? (
             <button
               type="button"
-              disabled={!canFilterPolicy}
-              onClick={onOpenPolicyFilter}
+              disabled={!onOpenPolicyDetail}
+              onClick={onOpenPolicyDetail}
               className="whitespace-nowrap rounded-full px-2.5 py-1.5 text-[12px] font-medium leading-none active:bg-white/70 disabled:opacity-50"
               style={{
-                color: canFilterPolicy ? HOTEL_CHROME.action : HOTEL_CHROME.actionDisabled,
+                color: onOpenPolicyDetail ? HOTEL_CHROME.action : HOTEL_CHROME.actionDisabled,
               }}
             >
               差旅标准

@@ -72,4 +72,6 @@ export interface StaffDto {
   /** Legacy `StaffBookType` — 1 / Self = self book. */
   BookType?: number | string;
   BookTypeName?: string;
+  /** Legacy staff travel policy used by flight/train/hotel business booking. */
+  Policy?: Record<string, unknown> | null;
 }

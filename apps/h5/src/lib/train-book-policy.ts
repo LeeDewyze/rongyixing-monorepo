@@ -126,17 +126,21 @@ export function applyTrainPolicyColors(
   policyResults: TrainPolicyPassengerResult[] | undefined,
   passengers: PassengerBookInfo[],
   filterPassengerId?: string | null,
+  filterEnabled = true,
 ): TrainItem[] {
-  const entry = findPassengerPolicyEntry(policyResults, passengers, filterPassengerId);
+  const entry = filterEnabled
+    ? findPassengerPolicyEntry(policyResults, passengers, filterPassengerId)
+    : undefined;
 
   return trains.map((train) => ({
     ...train,
     Seats: (train.Seats ?? []).map((seat) => {
       const policy = findSeatPolicy(entry?.TrainPolicies, train, seat);
-      const policyColor: TrainPolicyColor = policy ? resolvePolicyItemColor(policy) : "secondary";
+      const policyColor: TrainPolicyColor =
+        filterEnabled && policy ? resolvePolicyItemColor(policy) : "secondary";
       return {
         ...seat,
-        policy,
+        policy: filterEnabled ? policy : undefined,
         policyColor,
       };
     }),

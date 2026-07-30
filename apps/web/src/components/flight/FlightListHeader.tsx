@@ -10,6 +10,7 @@ interface FlightListHeaderProps {
   onBack: () => void;
   onModifyOpen: () => void;
   onModifyClose: () => void;
+  onOpenPolicy?: () => void;
 }
 
 function PassengerAddIcon() {
@@ -55,6 +56,7 @@ export function FlightListHeader({
   onBack,
   onModifyOpen,
   onModifyClose,
+  onOpenPolicy,
 }: FlightListHeaderProps) {
   return (
     <div className="shrink-0 bg-gradient-to-b from-brand-header-start to-brand-header-end pt-[env(safe-area-inset-top)]">
@@ -98,9 +100,14 @@ export function FlightListHeader({
         )}
 
         {selfBookOnly ? (
-          <div className="flex h-11 min-w-[72px] shrink-0 items-center justify-center text-[12px] font-medium text-white">
+          <button
+            type="button"
+            className="flex h-11 min-w-[72px] shrink-0 items-center justify-center rounded-md px-1 text-[12px] font-medium text-white hover:bg-white/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white disabled:pointer-events-none disabled:opacity-50"
+            disabled={!onOpenPolicy}
+            onClick={onOpenPolicy}
+          >
             差旅标准
-          </div>
+          </button>
         ) : (
           <Link
             to={passengerHref}

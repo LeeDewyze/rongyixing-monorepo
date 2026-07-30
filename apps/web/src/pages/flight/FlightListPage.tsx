@@ -5,6 +5,10 @@ import type { FlightFilterCondition, FlightSearchParams, FlightSortTab } from "@
 
 import { CalendarPickerSheet } from "@/components/calendar/CalendarPickerSheet";
 import { PassengerSelectAlertDialog } from "@/components/passenger";
+import {
+  resolveTravelPolicyRecord,
+  TravelPolicyDialog,
+} from "@/components/policy/TravelPolicyDialog";
 import { FlightFilterSheet } from "@/components/flight/FlightFilterSheet";
 import { FlightListDateStrip } from "@/components/flight/FlightListDateStrip";
 import { FlightListHeader } from "@/components/flight/FlightListHeader";
@@ -87,6 +91,16 @@ export function FlightListPage() {
   const isBusinessMode = productChannel === "tmc";
   const passengerContext = useBusinessSelfBookPassenger(ProductType.Flight, isBusinessMode);
   const selectedPassengers = passengerContext.passengers;
+  const selfTravelPolicy = useMemo(
+    () =>
+      resolveTravelPolicyRecord(passengerContext.selfPassenger?.passenger) ??
+      resolveTravelPolicyRecord(passengerContext.policyStaff) ??
+      resolveTravelPolicyRecord(passengerContext.staff),
+    [passengerContext.policyStaff, passengerContext.selfPassenger, passengerContext.staff],
+  );
+  const selfTravelPolicyPassengerName =
+    passengerContext.selfPassenger?.credential.Name ??
+    passengerContext.selfPassenger?.passenger.Name;
 
   const listParams: FlightSearchParams = {
     Date: searchParams.get("date") ?? "",
@@ -151,6 +165,7 @@ export function FlightListPage() {
   const headerRef = useRef<HTMLDivElement>(null);
   const [headerHeight, setHeaderHeight] = useState(FALLBACK_HEADER_HEIGHT);
   const [passengerAlertOpen, setPassengerAlertOpen] = useState(false);
+  const [travelPolicyOpen, setTravelPolicyOpen] = useState(false);
   const [openingCabinsId, setOpeningCabinsId] = useState<string | null>(null);
   const [exchangeSession, setExchangeSession] = useState(() =>
     syncFlightExchangeSessionForListUrl(searchParams),
@@ -450,6 +465,7 @@ export function FlightListPage() {
           onBack={handleHeaderBack}
           onModifyOpen={handleModifyOpen}
           onModifyClose={handleModifyClose}
+          onOpenPolicy={() => setTravelPolicyOpen(true)}
         />
       </div>
 
@@ -594,6 +610,14 @@ export function FlightListPage() {
         message={FLIGHT_LIST_PASSENGER_REQUIRED_MESSAGE}
         onClose={handlePassengerAlertDismiss}
         onConfirm={handlePassengerAlertConfirm}
+      />
+
+      <TravelPolicyDialog
+        open={travelPolicyOpen}
+        passengerName={selfTravelPolicyPassengerName}
+        policy={selfTravelPolicy}
+        loading={passengerContext.isLoading}
+        onClose={() => setTravelPolicyOpen(false)}
       />
 
       <FlightPolicyLoadingOverlay open={openingCabinsId != null} />

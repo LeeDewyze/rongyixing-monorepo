@@ -11,6 +11,9 @@ interface TrainListHeaderProps {
   onBack: () => void;
   onModifyOpen: () => void;
   onModifyClose: () => void;
+  onOpenPolicy?: () => void;
+  showPolicyFilter?: boolean;
+  onOpenPolicyFilter?: () => void;
 }
 
 function PassengerAddIcon() {
@@ -57,6 +60,9 @@ export function TrainListHeader({
   onBack,
   onModifyOpen,
   onModifyClose,
+  onOpenPolicy,
+  showPolicyFilter = false,
+  onOpenPolicyFilter,
 }: TrainListHeaderProps) {
   return (
     <div className="shrink-0 bg-gradient-to-b from-brand-header-start to-brand-header-end pt-[env(safe-area-inset-top)]">
@@ -100,24 +106,40 @@ export function TrainListHeader({
         )}
 
         {selfBookOnly ? (
-          <div className="flex h-11 min-w-[72px] shrink-0 items-center justify-center text-[12px] font-medium text-white">
-            差旅标准
-          </div>
-        ) : showPassengerEntry ? (
-          <Link
-            to={passengerHref}
-            className="relative flex h-11 w-10 shrink-0 items-center justify-center text-white active:opacity-70"
-            aria-label="选择出行人"
+          <button
+            type="button"
+            className="flex h-11 min-w-[72px] shrink-0 items-center justify-center rounded-md px-1 text-[12px] font-medium text-white hover:bg-white/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white disabled:pointer-events-none disabled:opacity-50"
+            disabled={!onOpenPolicy}
+            onClick={onOpenPolicy}
           >
-            <PassengerAddIcon />
-            {passengerCount > 0 ? (
-              <span className="absolute right-0.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ff4d4f] px-1 text-[10px] font-medium text-white">
-                {passengerCount}
-              </span>
-            ) : null}
-          </Link>
+            差旅标准
+          </button>
         ) : (
-          <div className="h-11 w-10 shrink-0" aria-hidden />
+          <div className="flex shrink-0 items-center">
+            {showPolicyFilter ? (
+              <button
+                type="button"
+                className="flex h-9 items-center justify-center rounded-md px-2 text-[12px] font-medium text-white hover:bg-white/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                onClick={onOpenPolicyFilter}
+              >
+                过滤差标
+              </button>
+            ) : null}
+            {showPassengerEntry ? (
+              <Link
+                to={passengerHref}
+                className="relative flex h-11 w-10 items-center justify-center text-white active:opacity-70"
+                aria-label="选择出行人"
+              >
+                <PassengerAddIcon />
+                {passengerCount > 0 ? (
+                  <span className="absolute right-0.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ff4d4f] px-1 text-[10px] font-medium text-white">
+                    {passengerCount}
+                  </span>
+                ) : null}
+              </Link>
+            ) : null}
+          </div>
         )}
       </div>
     </div>

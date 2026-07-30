@@ -226,6 +226,12 @@ describe("applyTrainPolicyColors", () => {
     expect(colored[0]?.Seats?.[0]?.policyColor).toBe("secondary");
   });
 
+  it("clears policy presentation when the user chooses not to filter", () => {
+    const colored = applyTrainPolicyColors([train], policyResults, passengers as never, "p1", false);
+    expect(colored[0]?.Seats?.[0]?.policyColor).toBe("secondary");
+    expect(colored[0]?.Seats?.[0]?.policy).toBeUndefined();
+  });
+
   it("maps warning when Rules exist and booking is allowed", () => {
     const policies = [
       {

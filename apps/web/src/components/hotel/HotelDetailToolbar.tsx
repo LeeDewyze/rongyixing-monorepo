@@ -6,6 +6,7 @@ interface HotelDetailToolbarProps {
   canFilterPolicy: boolean;
   selfBookOnly?: boolean;
   onOpenPolicyFilter: () => void;
+  onOpenPolicyDetail?: () => void;
 }
 
 export function HotelDetailToolbar({
@@ -14,11 +15,19 @@ export function HotelDetailToolbar({
   canFilterPolicy,
   selfBookOnly = false,
   onOpenPolicyFilter,
+  onOpenPolicyDetail,
 }: HotelDetailToolbarProps) {
   return (
     <div className="mx-3 mt-3 flex items-center justify-between rounded-lg bg-white px-4 py-3 shadow-[0_1px_6px_rgba(0,0,0,0.04)]">
       {selfBookOnly ? (
-        <span className="text-[14px] font-medium text-brand-primary">差旅标准</span>
+        <button
+          type="button"
+          className="text-[14px] font-medium text-brand-primary active:opacity-70 disabled:opacity-50"
+          disabled={!onOpenPolicyDetail}
+          onClick={onOpenPolicyDetail}
+        >
+          差旅标准
+        </button>
       ) : (
         <Link
           to={passengerHref}

@@ -40,6 +40,7 @@ function staffDtoToPassenger(
     Mobile: staff.Mobile,
     OrgName: staff.OrganizationName ?? staff.Department,
     Credentials: [],
+    Policy: staff.Policy,
   };
 }
 
@@ -66,6 +67,14 @@ function isSameSinglePassenger(selected: PassengerBookInfo[], selfPassenger: Pas
   );
 }
 
+function matchesCurrentStaff(staff: StaffPassenger, accountId: string): boolean {
+  return String(staff.AccountId ?? staff.Id) === accountId;
+}
+
+function hasTravelPolicy(policy: StaffDto["Policy"] | undefined): boolean {
+  return Boolean(policy && Object.keys(policy).length > 0);
+}
+
 /**
  * Legacy StaffBookType.Self only applies to business/TMC booking.
  * When enabled, it mirrors legacy initSelfBookTypeBookInfos by making the current staff
@@ -89,6 +98,19 @@ export function useBusinessSelfBookPassenger(forType: ProductType, enabled: bool
     [identityQuery.data, staff],
   );
   const accountId = present(staffPassenger?.AccountId) ?? present(staffPassenger?.Id);
+  const policyStaffQuery = useQuery({
+    queryKey: ["booking-permission", "self-policy-staff", accountId],
+    queryFn: async () => {
+      const result = await getApi().passenger.getStaffList({
+        Name: staffPassenger?.Name,
+        PageIndex: 0,
+        PageSize: 20,
+      });
+      return result.Staffs.find((item) => matchesCurrentStaff(item, accountId!)) ?? null;
+    },
+    enabled: isSelfBookOnly && Boolean(accountId) && !hasTravelPolicy(staff?.Policy),
+    staleTime: 5 * 60 * 1000,
+  });
 
   const credentialsQuery = useQuery({
     queryKey: bookingPermissionSelfCredentialsQueryKey(accountId),
@@ -99,11 +121,16 @@ export function useBusinessSelfBookPassenger(forType: ProductType, enabled: bool
 
   const selfPassenger = useMemo(() => {
     if (!isSelfBookOnly || !staffPassenger || !accountId) return null;
+    const policyStaff = policyStaffQuery.data;
     return createBookInfo(
-      { ...staffPassenger, Credentials: credentialsQuery.data ?? [] },
+      {
+        ...staffPassenger,
+        Credentials: credentialsQuery.data ?? [],
+        Policy: policyStaff?.Policy ?? staffPassenger.Policy,
+      },
       pickSelfCredential(credentialsQuery.data, staffPassenger),
     );
-  }, [accountId, credentialsQuery.data, isSelfBookOnly, staffPassenger]);
+  }, [accountId, credentialsQuery.data, isSelfBookOnly, policyStaffQuery.data, staffPassenger]);
 
   useEffect(() => {
     if (!isSelfBookOnly || !selfPassenger) return;
@@ -125,8 +152,9 @@ export function useBusinessSelfBookPassenger(forType: ProductType, enabled: bool
     isLoading:
       staffQuery.isLoading ||
       (isSelfBookOnly && !accountId && identityQuery.isLoading) ||
-      (isSelfBookOnly && credentialsQuery.isLoading),
+      (isSelfBookOnly && (credentialsQuery.isLoading || policyStaffQuery.isLoading)),
     staff,
     selfPassenger,
+    policyStaff: policyStaffQuery.data,
   };
 }

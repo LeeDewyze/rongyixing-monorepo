@@ -17,17 +17,17 @@
 
 ## Tokens
 
-| Role | CSS Variable | Value | Tailwind / Usage |
-| --- | --- | --- | --- |
-| Brand primary | `--brand-primary` | `#2768FA` | `text-brand-primary`, `border-brand-primary`, focus rings |
-| Title text | `--brand-title` | `#010101` | `text-brand-title` on light surfaces |
-| Button gradient start | `--brand-btn-start` | `#33A1F9` | `from-brand-btn-start` |
-| Button gradient end | `--brand-btn-end` | `#2768FA` | `to-brand-btn-end` |
-| Header gradient start | `--brand-header-start` | `#5099fe` | `from-brand-header-start` |
-| Header gradient end | `--brand-header-end` | `#6aabff` | `to-brand-header-end` |
-| Form header start | `--brand-form-header-start` | `#7AB1FF` | use through `--brand-form-header-gradient` |
-| Form header end | `--brand-form-header-end` | `#F5F6F9` | page base after the first 200px |
-| Page background | `--brand-form-header-end` | `#F5F6F9` | default H5 content background |
+| Role                  | CSS Variable                | Value     | Tailwind / Usage                                          |
+| --------------------- | --------------------------- | --------- | --------------------------------------------------------- |
+| Brand primary         | `--brand-primary`           | `#2768FA` | `text-brand-primary`, `border-brand-primary`, focus rings |
+| Title text            | `--brand-title`             | `#010101` | `text-brand-title` on light surfaces                      |
+| Button gradient start | `--brand-btn-start`         | `#33A1F9` | `from-brand-btn-start`                                    |
+| Button gradient end   | `--brand-btn-end`           | `#2768FA` | `to-brand-btn-end`                                        |
+| Header gradient start | `--brand-header-start`      | `#5099fe` | `from-brand-header-start`                                 |
+| Header gradient end   | `--brand-header-end`        | `#6aabff` | `to-brand-header-end`                                     |
+| Form header start     | `--brand-form-header-start` | `#7AB1FF` | use through `--brand-form-header-gradient`                |
+| Form header end       | `--brand-form-header-end`   | `#F5F6F9` | page base after the first 200px                           |
+| Page background       | `--brand-form-header-end`   | `#F5F6F9` | default H5 content background                             |
 
 ## Core Patterns
 
@@ -36,10 +36,11 @@
 Use for the dominant page action such as submit, pay, save, confirm.
 
 ```tsx
-className="bg-gradient-to-r from-brand-btn-start to-brand-btn-end text-white"
+className = "bg-gradient-to-r from-brand-btn-start to-brand-btn-end text-white";
 ```
 
 Rules:
+
 - Keep text white and medium weight.
 - Prefer rounded full or rounded-lg according to the surrounding page pattern.
 - Include active and disabled states.
@@ -49,10 +50,11 @@ Rules:
 Use for compact top bars where the header itself is the surface.
 
 ```tsx
-className="bg-gradient-to-b from-brand-header-start to-brand-header-end"
+className = "bg-gradient-to-b from-brand-header-start to-brand-header-end";
 ```
 
 Rules:
+
 - Use this for navigation bars and list headers.
 - Do not use this as a tall form-page hero; the two blue values are close and can read as flat.
 - Use white text on dark header surfaces, or `text-brand-title` when the surface is lightened.
@@ -66,6 +68,7 @@ style={{ background: "var(--brand-form-header-gradient)" }}
 ```
 
 Rules:
+
 - Apply this to the page root, not only to the header block.
 - Let the first card overlap the gradient with a small negative top margin when the page needs depth.
 - Use `text-brand-title` on the header when the gradient fades toward `#F5F6F9`.
@@ -86,9 +89,7 @@ When a page needs the same layered feel as credentials management:
 Avoid this pattern for tall form pages:
 
 ```tsx
-<div className="bg-gradient-to-b from-brand-header-start to-brand-header-end">
-  ...
-</div>
+<div className="bg-gradient-to-b from-brand-header-start to-brand-header-end">...</div>
 ```
 
 `--brand-header-start` and `--brand-header-end` are close blues, so a tall block using only those two tokens can read as a flat solid blue. If the first white card starts exactly after that block, the page creates a hard horizontal cut instead of a natural fade. In that case, switch to the form-page gradient on the root and overlap the first card into the gradient area.
@@ -96,21 +97,23 @@ Avoid this pattern for tall form pages:
 ### RYX Title
 
 ```tsx
-className="text-brand-title"
+className = "text-brand-title";
 ```
 
 Rules:
+
 - Use on light or fading backgrounds.
 - Avoid hardcoded `#111827` for new H5 work unless matching a legacy surface exactly.
 
 ### RYX Links, Tags, And Selection
 
 ```tsx
-className="text-brand-primary"
-className="border-brand-primary"
+className = "text-brand-primary";
+className = "border-brand-primary";
 ```
 
 Rules:
+
 - Use brand primary for selected pills, inline links, add/remove affordances, and focus states.
 - Selected pills should pair brand border/text with a pale blue fill.
 
@@ -122,6 +125,15 @@ Rules:
 - Form/list pages should reserve bottom safe-area padding when a fixed footer action exists.
 - Mobile spacing defaults: horizontal page padding 16px, vertical card gap 12px.
 - Header-safe content must include `pt-[env(safe-area-inset-top)]` when rendered outside `AppHeader`.
+
+## Travel Policy Dialog
+
+- `TravelPolicyDialog` shares one policy detail data model across flight, train, and hotel.
+- H5 uses a compact mobile-first sheet so policy details do not feel like a Web modal inside the phone flow.
+- Web/Pad keeps the wider centered modal by overriding the shared H5 stylesheet in the Web component CSS.
+- The dialog content now prioritizes legacy `Policy.*Description` text lists; structured fields are only a fallback when descriptions are missing.
+- Hotel self-book-only mode opens policy details from “差旅标准”; multi-passenger business mode keeps “过滤差标” as the room price filter entry.
+- Train list adds an explicit business multi-passenger “过滤差标” entry that only changes list presentation, while final booking still checks all passengers.
 
 ## H5 Order List Tabs
 
@@ -158,6 +170,7 @@ Rules:
 Use `FlightListPage` as the reference implementation for dense travel result lists, including the hotel list migration.
 
 Reference files:
+
 - `apps/h5/src/pages/flight/FlightListPage.tsx`
 - `apps/h5/src/components/flight/FlightListHeader.tsx`
 - `apps/h5/src/components/flight/FlightListDateStrip.tsx`
@@ -237,12 +250,12 @@ Reference files:
 
 ## When To Choose Which Gradient
 
-| Scenario | Use |
-| --- | --- |
-| Compact sticky app bar | `from-brand-header-start to-brand-header-end` |
-| Full-page form header fading into content | `var(--brand-form-header-gradient)` |
-| Main CTA button | `from-brand-btn-start to-brand-btn-end` |
-| In-card decorative blue surface | Prefer low-opacity brand-blue gradient, verify contrast |
+| Scenario                                  | Use                                                     |
+| ----------------------------------------- | ------------------------------------------------------- |
+| Compact sticky app bar                    | `from-brand-header-start to-brand-header-end`           |
+| Full-page form header fading into content | `var(--brand-form-header-gradient)`                     |
+| Main CTA button                           | `from-brand-btn-start to-brand-btn-end`                 |
+| In-card decorative blue surface           | Prefer low-opacity brand-blue gradient, verify contrast |
 
 ## Decisions
 
@@ -280,6 +293,7 @@ Reference files:
 - 2026-06-30 - HotelList brand filter parity: changed brand filtering from a flat option list to legacy grouped sections for popular, economy, comfort, high-end, and luxury brands; each section supports local clear while the request continues to submit one `Brands` array.
 - 2026-06-30 - HotelList filter entry grouping: scoped the bottom toolbar entries into basic filters (`sort/star/category/price`), location-only filters, and amenity filters (`brand/theme/service/facility`); single-section sheets hide the outer rail so location categories occupy the first visible column.
 - 2026-06-30 - HotelList location dirty marker: location category buttons now show a small brand dot when any child geo under that category is selected, matching the filter rail dirty-state pattern inside the custom location panel.
+- 2026-07-31 - TravelPolicyDialog: added a shared H5/Web policy-detail dialog for self-book-only employees. It reads legacy employee `Policy` data and presents flight, train, and hotel standards without conflating the existing “过滤差标” interaction.
 
 ## H5 Dialog And Sheet Inventory
 
@@ -296,34 +310,34 @@ Before creating any new dialog, sheet, toast, or modal-like surface, first check
 
 ### Existing Reusable Surfaces
 
-| Component | File | Use For | Notes |
-| --- | --- | --- | --- |
-| `ConfirmDialog` | `apps/h5/src/components/ConfirmDialog.tsx` | Delete, cancel, submit confirmation, two-action blocking decisions | Shared alert dialog; compact icon/title header; used by credential, passenger, bank-card, order, and train booking flows. |
-| `PassengerSelectAlertDialog` | `apps/h5/src/components/passenger/PassengerSelectAlertDialog.tsx` | Blocking friendly prompt with one confirm action | Used by passenger selection and booking submit errors; suitable for server business failures such as train duplicate-trip messages. |
-| `PageToast` | `apps/h5/src/components/layout/PageToast.tsx` | Non-blocking page feedback | Prefer for transient list/detail actions where the user can continue without a modal. |
-| `FlightListTimeoutDialog` | `apps/h5/src/components/flight/FlightListTimeoutDialog.tsx` | Flight list timeout acknowledgement | Product-specific timeout surface; reuse only for the same timeout pattern. |
-| `FlightPolicyAlertDialog` | `apps/h5/src/components/flight/FlightPolicyAlertDialog.tsx` | Flight policy, sold-out, or cabin booking blocking prompt | Thin flight-domain wrapper over the shared policy alert presentation; use instead of browser `alert` in flight cabin policy flows. |
-| `HotelPolicyAlertDialog` | `apps/h5/src/components/hotel/HotelPolicyAlertDialog.tsx` | Hotel/train policy or rule alert text | Use when policy copy needs formatted alert content, not for generic errors. |
-| `HotelBookWarmReminderDialog` | `apps/h5/src/components/hotel/HotelBookWarmReminderDialog.tsx` | Hotel booking warm reminder | Product-specific reminder with richer header/content. |
-| `HotelPassengerRequiredDialog` | `apps/h5/src/components/hotel/HotelPassengerRequiredDialog.tsx` | Hotel guest required prompt | Product-specific missing-passenger acknowledgement. |
-| `HotelOrderCancelDialog` / `HotelOrderSmsSheet` | `apps/h5/src/components/order/hotel/HotelOrderSmsSheet.tsx` | Hotel cancel confirmation and SMS verification | Use for hotel order cancellation, especially SMS-required cancellation. |
-| `FlightOrderCancelDialog` | `apps/h5/src/components/order/flight/FlightOrderCancelDialog.tsx` | Flight order cancel confirmation | Product-specific order action dialog. |
-| `FlightOrderRefundDialog` | `apps/h5/src/components/order/flight/FlightOrderRefundDialog.tsx` | Flight refund reason/form | Product-specific order action form dialog. |
-| `TrainOrderCancelDialog` | `apps/h5/src/components/order/train/TrainOrderCancelDialog.tsx` | Train order/ticket cancel confirmation | Product-specific order action dialog. |
-| `TrainOrderIssueDialog` | `apps/h5/src/components/order/train/TrainOrderIssueDialog.tsx` | Train issue confirmation | Product-specific order action dialog. |
-| `TrainOrderRefundDialog` | `apps/h5/src/components/order/train/TrainOrderRefundDialog.tsx` | Train refund confirmation/form | Product-specific order action dialog. |
+| Component                                       | File                                                              | Use For                                                            | Notes                                                                                                                               |
+| ----------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `ConfirmDialog`                                 | `apps/h5/src/components/ConfirmDialog.tsx`                        | Delete, cancel, submit confirmation, two-action blocking decisions | Shared alert dialog; compact icon/title header; used by credential, passenger, bank-card, order, and train booking flows.           |
+| `PassengerSelectAlertDialog`                    | `apps/h5/src/components/passenger/PassengerSelectAlertDialog.tsx` | Blocking friendly prompt with one confirm action                   | Used by passenger selection and booking submit errors; suitable for server business failures such as train duplicate-trip messages. |
+| `PageToast`                                     | `apps/h5/src/components/layout/PageToast.tsx`                     | Non-blocking page feedback                                         | Prefer for transient list/detail actions where the user can continue without a modal.                                               |
+| `FlightListTimeoutDialog`                       | `apps/h5/src/components/flight/FlightListTimeoutDialog.tsx`       | Flight list timeout acknowledgement                                | Product-specific timeout surface; reuse only for the same timeout pattern.                                                          |
+| `FlightPolicyAlertDialog`                       | `apps/h5/src/components/flight/FlightPolicyAlertDialog.tsx`       | Flight policy, sold-out, or cabin booking blocking prompt          | Thin flight-domain wrapper over the shared policy alert presentation; use instead of browser `alert` in flight cabin policy flows.  |
+| `HotelPolicyAlertDialog`                        | `apps/h5/src/components/hotel/HotelPolicyAlertDialog.tsx`         | Hotel/train policy or rule alert text                              | Use when policy copy needs formatted alert content, not for generic errors.                                                         |
+| `HotelBookWarmReminderDialog`                   | `apps/h5/src/components/hotel/HotelBookWarmReminderDialog.tsx`    | Hotel booking warm reminder                                        | Product-specific reminder with richer header/content.                                                                               |
+| `HotelPassengerRequiredDialog`                  | `apps/h5/src/components/hotel/HotelPassengerRequiredDialog.tsx`   | Hotel guest required prompt                                        | Product-specific missing-passenger acknowledgement.                                                                                 |
+| `HotelOrderCancelDialog` / `HotelOrderSmsSheet` | `apps/h5/src/components/order/hotel/HotelOrderSmsSheet.tsx`       | Hotel cancel confirmation and SMS verification                     | Use for hotel order cancellation, especially SMS-required cancellation.                                                             |
+| `FlightOrderCancelDialog`                       | `apps/h5/src/components/order/flight/FlightOrderCancelDialog.tsx` | Flight order cancel confirmation                                   | Product-specific order action dialog.                                                                                               |
+| `FlightOrderRefundDialog`                       | `apps/h5/src/components/order/flight/FlightOrderRefundDialog.tsx` | Flight refund reason/form                                          | Product-specific order action form dialog.                                                                                          |
+| `TrainOrderCancelDialog`                        | `apps/h5/src/components/order/train/TrainOrderCancelDialog.tsx`   | Train order/ticket cancel confirmation                             | Product-specific order action dialog.                                                                                               |
+| `TrainOrderIssueDialog`                         | `apps/h5/src/components/order/train/TrainOrderIssueDialog.tsx`    | Train issue confirmation                                           | Product-specific order action dialog.                                                                                               |
+| `TrainOrderRefundDialog`                        | `apps/h5/src/components/order/train/TrainOrderRefundDialog.tsx`   | Train refund confirmation/form                                     | Product-specific order action dialog.                                                                                               |
 
 ### Existing Bottom Sheet Families
 
-| Family | Components | Use For |
-| --- | --- | --- |
-| Travel list filters | `FlightFilterSheet`, `FlightPolicyFilterSheet`, `PolicyFilterSheet`, `TrainFilterSheet`, `HotelListFilterSheet`, `HotelPolicyFilterSheet` | Complex filter, category rail, dirty state, reset and confirm footer. |
-| Search/date modification | `CalendarPickerSheet`, `FlightModifySearchSheet`, `TrainModifySearchSheet`, `HotelStayDatePickerSheet` | Date and route/stay edits within list pages. |
-| Booking selectors | `FlightBookPickerSheet`, `FlightBookApproverSheet`, `FlightBookOrganizationSheet`, `FlightBookCostCenterSheet`, `FlightOutNumberPickerSheet`, `FlightBookNotifyLanguageSheet`, `FlightBookCredentialSheet`, `FlightBookAddContactSheet` | Booking-page pickers and form-bound selection. |
-| Passenger and credential | `CredentialTypeSheet`, `CredentialNameRulesDialog`, `SelectedPassengersSheet`, credential form gender/date sheets | Passenger credential selection, rule explanation, selected passenger preview. |
-| Bills and rules | `FlightBookBillSheet`, `TrainBookBillSheet`, `HotelBookBillSheet`, `FlightFareRulesSheet`, `FareRulesBottomSheet`, `FlightInsuranceDetailSheet`, order bill/explain sheets | Price breakdowns, fare rules, insurance/rule detail content. |
-| Hotel booking | `HotelBookArrivalTimeSheet`, `HotelBookNoticeSheet`, `HotelBookGuaranteeAgreementSheet` | Hotel arrival, notice, guarantee agreement content. |
-| Profile/settings/contact | `ProfileAvatarCropSheet`, `ChangeEmailSheet`, `LegalDocumentSheet` | Account/profile editing and legal document display. |
+| Family                   | Components                                                                                                                                                                                                                              | Use For                                                                       |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Travel list filters      | `FlightFilterSheet`, `FlightPolicyFilterSheet`, `PolicyFilterSheet`, `TrainFilterSheet`, `HotelListFilterSheet`, `HotelPolicyFilterSheet`                                                                                               | Complex filter, category rail, dirty state, reset and confirm footer.         |
+| Search/date modification | `CalendarPickerSheet`, `FlightModifySearchSheet`, `TrainModifySearchSheet`, `HotelStayDatePickerSheet`                                                                                                                                  | Date and route/stay edits within list pages.                                  |
+| Booking selectors        | `FlightBookPickerSheet`, `FlightBookApproverSheet`, `FlightBookOrganizationSheet`, `FlightBookCostCenterSheet`, `FlightOutNumberPickerSheet`, `FlightBookNotifyLanguageSheet`, `FlightBookCredentialSheet`, `FlightBookAddContactSheet` | Booking-page pickers and form-bound selection.                                |
+| Passenger and credential | `CredentialTypeSheet`, `CredentialNameRulesDialog`, `SelectedPassengersSheet`, credential form gender/date sheets                                                                                                                       | Passenger credential selection, rule explanation, selected passenger preview. |
+| Bills and rules          | `FlightBookBillSheet`, `TrainBookBillSheet`, `HotelBookBillSheet`, `FlightFareRulesSheet`, `FareRulesBottomSheet`, `FlightInsuranceDetailSheet`, order bill/explain sheets                                                              | Price breakdowns, fare rules, insurance/rule detail content.                  |
+| Hotel booking            | `HotelBookArrivalTimeSheet`, `HotelBookNoticeSheet`, `HotelBookGuaranteeAgreementSheet`                                                                                                                                                 | Hotel arrival, notice, guarantee agreement content.                           |
+| Profile/settings/contact | `ProfileAvatarCropSheet`, `ChangeEmailSheet`, `LegalDocumentSheet`                                                                                                                                                                      | Account/profile editing and legal document display.                           |
 
 ## Components
 
@@ -349,6 +363,7 @@ Before creating any new dialog, sheet, toast, or modal-like surface, first check
 - `apps/h5/src/components/flight/FlightFilterSheet.tsx` - reference complex list filter sheet with category rail, dirty state, reset, and confirm footer.
 - `apps/h5/src/components/flight/FlightSegmentCard.tsx` - reference dense result card with right-anchored price, compact metadata, value badges, and tap feedback.
 - `apps/h5/src/components/flight/FlightPolicyAlertDialog.tsx` - flight-domain wrapper for policy blocking prompts, reusing the shared warm-reminder policy dialog presentation.
+- `apps/h5/src/components/policy/TravelPolicyDialog.tsx` - self-book employee travel-policy detail dialog with flight, train, hotel sections plus loading and empty states.
 - `apps/h5/src/pages/hotel/HotelListPage.tsx` - hotel result list using the travel list shell with fixed header, sticky query strip, internal scrolling, and bottom toolbar.
 - `apps/h5/src/components/hotel/HotelListHeader.tsx` - compact hotel list query header with back, summary, and profile actions.
 - `apps/h5/src/components/hotel/HotelListToolbar.tsx` - fixed hotel list bottom toolbar for recommended, price/star, location, and filter entry points.

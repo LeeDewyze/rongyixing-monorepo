@@ -17,6 +17,10 @@ import { HotelPolicyAlertDialog } from "@/components/hotel/HotelPolicyAlertDialo
 import { HotelPolicyFilterSheet } from "@/components/hotel/HotelPolicyFilterSheet";
 import { HotelStayDatePickerSheet } from "@/components/hotel/HotelStayDatePickerSheet";
 import { usePageHeader } from "@/components/layout";
+import {
+  resolveTravelPolicyRecord,
+  TravelPolicyDialog,
+} from "@/components/policy/TravelPolicyDialog";
 import { useHotelDetailSections } from "@/hooks/useHotelDetailSections";
 import { useHotelDetail, useHotelPolicy } from "@/hooks/useHotelList";
 import { useIdentity } from "@/hooks/useIdentity";
@@ -73,11 +77,22 @@ export function HotelDetailPage() {
   const isBusinessMode = isBusinessTravelMode(travelMode);
   const passengerContext = useBusinessSelfBookPassenger(ProductType.Hotel, isBusinessMode);
   const selectedPassengers = passengerContext.passengers;
+  const selfTravelPolicy = useMemo(
+    () =>
+      resolveTravelPolicyRecord(passengerContext.selfPassenger?.passenger) ??
+      resolveTravelPolicyRecord(passengerContext.policyStaff) ??
+      resolveTravelPolicyRecord(passengerContext.staff),
+    [passengerContext.policyStaff, passengerContext.selfPassenger, passengerContext.staff],
+  );
+  const selfTravelPolicyPassengerName =
+    passengerContext.selfPassenger?.credential.Name ??
+    passengerContext.selfPassenger?.passenger.Name;
   const { data: identity } = useIdentity();
   const isAgent = hasAgentIdentity(identity);
 
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [policyFilterOpen, setPolicyFilterOpen] = useState(false);
+  const [travelPolicyOpen, setTravelPolicyOpen] = useState(false);
   const [policyAlertMessage, setPolicyAlertMessage] = useState<string | null>(null);
   const [policyFilterEnabled, setPolicyFilterEnabled] = useState(true);
   const [filterPassengerId, setFilterPassengerId] = useState<string | null>(null);
@@ -363,6 +378,7 @@ export function HotelDetailPage() {
           canFilterPolicy={selectedPassengers.length > 0}
           selfBookOnly={passengerContext.isSelfBookOnly}
           onOpenPolicyFilter={() => setPolicyFilterOpen(true)}
+          onOpenPolicyDetail={() => setTravelPolicyOpen(true)}
         />
       ) : null}
 
@@ -380,6 +396,7 @@ export function HotelDetailPage() {
             selfBookOnly={passengerContext.isSelfBookOnly}
             onBack={handleBack}
             onOpenPolicyFilter={() => setPolicyFilterOpen(true)}
+            onOpenPolicyDetail={() => setTravelPolicyOpen(true)}
           />
           <HotelDetailSectionTabs active={activeSection} onChange={scrollToSection} />
         </div>
@@ -456,6 +473,14 @@ export function HotelDetailPage() {
         open={policyAlertMessage != null}
         message={policyAlertMessage ?? ""}
         onClose={() => setPolicyAlertMessage(null)}
+      />
+
+      <TravelPolicyDialog
+        open={travelPolicyOpen}
+        passengerName={selfTravelPolicyPassengerName}
+        policy={selfTravelPolicy}
+        loading={passengerContext.isLoading}
+        onClose={() => setTravelPolicyOpen(false)}
       />
     </div>
   );

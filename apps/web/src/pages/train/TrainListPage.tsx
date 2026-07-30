@@ -15,6 +15,11 @@ import { FlightPolicyLoadingOverlay } from "@/components/flight/FlightPolicyLoad
 import { HotelPolicyAlertDialog } from "@/components/hotel/HotelPolicyAlertDialog";
 import { HotelPassengerRequiredDialog } from "@/components/hotel/HotelPassengerRequiredDialog";
 import { usePageHeader } from "@/components/layout";
+import {
+  resolveTravelPolicyRecord,
+  TravelPolicyDialog,
+} from "@/components/policy/TravelPolicyDialog";
+import { PolicyFilterSheet } from "@/components/policy/PolicyFilterSheet";
 import { TrainFilterSheet } from "@/components/train/TrainFilterSheet";
 import { TrainListEmptyState } from "@/components/train/TrainListEmptyState";
 import { TrainListDateStrip } from "@/components/train/TrainListDateStrip";
@@ -43,6 +48,7 @@ import {
   applyTrainPolicyColors,
   buildTrainPolicyExceedAlertMessage,
   buildTrainPolicyParams,
+  findSeatPolicyForPassenger,
   isTrainSeatBookable,
 } from "@/lib/train-book-policy";
 import { saveTrainBookSelection } from "@/lib/train-book-session";
@@ -108,6 +114,16 @@ export function TrainListPage() {
     ProductType.Train,
     isBusinessMode && !isExchangeMode,
   );
+  const selfTravelPolicy = useMemo(
+    () =>
+      resolveTravelPolicyRecord(passengerContext.selfPassenger?.passenger) ??
+      resolveTravelPolicyRecord(passengerContext.policyStaff) ??
+      resolveTravelPolicyRecord(passengerContext.staff),
+    [passengerContext.policyStaff, passengerContext.selfPassenger, passengerContext.staff],
+  );
+  const selfTravelPolicyPassengerName =
+    passengerContext.selfPassenger?.credential.Name ??
+    passengerContext.selfPassenger?.passenger.Name;
   const bookingPassengers = useMemo(() => {
     if (isExchangeMode && exchangeSession?.passengers?.length) {
       return exchangeSession.passengers;
@@ -160,6 +176,10 @@ export function TrainListPage() {
   const [priceSortMode, setPriceSortMode] = useState<TrainPriceSortMode>("off");
   const [expandedTrainId, setExpandedTrainId] = useState<string | null>(null);
   const [policyAlertMessage, setPolicyAlertMessage] = useState<string | null>(null);
+  const [travelPolicyOpen, setTravelPolicyOpen] = useState(false);
+  const [policyFilterOpen, setPolicyFilterOpen] = useState(false);
+  const [policyFilterEnabled, setPolicyFilterEnabled] = useState(true);
+  const [filterPassengerId, setFilterPassengerId] = useState<string | null>(null);
   const [passengerRequiredOpen, setPassengerRequiredOpen] = useState(false);
   const headerRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -195,6 +215,16 @@ export function TrainListPage() {
     (isPolicyLoading || isPolicyFetching);
 
   const policyChecked = !isPolicyFetching && !isPolicyError && Boolean(policyResults);
+  const showPolicyFilter =
+    isBusinessMode &&
+    !isExchangeMode &&
+    !passengerContext.isSelfBookOnly &&
+    bookingPassengers.length > 1;
+
+  const filterPassengerName = useMemo(() => {
+    if (!filterPassengerId) return "";
+    return bookingPassengers.find((item) => item.id === filterPassengerId)?.passenger.Name ?? "";
+  }, [bookingPassengers, filterPassengerId]);
 
   useEffect(() => {
     if (!rawTrains.length) return;
@@ -202,6 +232,20 @@ export function TrainListPage() {
     setFilterDraft((prev) => mergeTrainFilterChecks(prev, next));
     setFilterApplied((prev) => mergeTrainFilterChecks(prev, next));
   }, [rawTrains]);
+
+  useEffect(() => {
+    if (!bookingPassengers.length) {
+      setFilterPassengerId(null);
+      return;
+    }
+    setFilterPassengerId((prev) => {
+      if (prev && bookingPassengers.some((item) => item.id === prev)) return prev;
+      return bookingPassengers[0]?.id ?? null;
+    });
+    if (passengerContext.isSelfBookOnly || bookingPassengers.length === 1) {
+      setPolicyFilterEnabled(true);
+    }
+  }, [bookingPassengers, passengerContext.isSelfBookOnly]);
 
   const resetExpanded = useCallback(() => {
     setExpandedTrainId(null);
@@ -263,8 +307,22 @@ export function TrainListPage() {
     const trains = resolveTrainListOrder(getFilteredTrains(), listOrderState);
     const marked = markLowestPrice(trains);
     if (!isBusinessMode || !policyResults) return marked;
-    return applyTrainPolicyColors(marked, policyResults, bookingPassengers);
-  }, [getFilteredTrains, isBusinessMode, listOrderState, policyResults, bookingPassengers]);
+    return applyTrainPolicyColors(
+      marked,
+      policyResults,
+      bookingPassengers,
+      filterPassengerId,
+      policyFilterEnabled,
+    );
+  }, [
+    getFilteredTrains,
+    isBusinessMode,
+    listOrderState,
+    policyResults,
+    bookingPassengers,
+    filterPassengerId,
+    policyFilterEnabled,
+  ]);
 
   const filtered = isTrainFilterActive(filterApplied);
   const showListLoading = isAuthenticated && (isLoading || isFetching) && displayed.length === 0;
@@ -301,18 +359,35 @@ export function TrainListPage() {
       }
 
       if (isBusinessMode && bookingPassengers.length > 0) {
-        const bookable = isTrainSeatBookable(seat.policyColor, isAgent, policyChecked);
-        if (!bookable) {
-          setPolicyAlertMessage(
-            buildTrainPolicyExceedAlertMessage(train, seat, bookingPassengers, isAgent),
+        for (const passenger of bookingPassengers) {
+          const passengerPolicy = findSeatPolicyForPassenger(
+            policyResults,
+            bookingPassengers,
+            train,
+            seat,
+            passenger.id,
           );
-          return;
-        }
+          const passengerSeat = { ...seat, policy: passengerPolicy };
+          const passengerColor: TrainSeat["policyColor"] = passengerPolicy
+            ? passengerPolicy.IsAllowBook === false
+              ? "danger"
+              : passengerPolicy.Rules?.length
+                ? "warning"
+                : "success"
+            : seat.policyColor;
+          const bookable = isTrainSeatBookable(passengerColor, isAgent, policyChecked);
+          if (!bookable) {
+            setPolicyAlertMessage(
+              buildTrainPolicyExceedAlertMessage(train, passengerSeat, [passenger], isAgent),
+            );
+            return;
+          }
 
-        if (seat.policyColor === "danger" && isAgent) {
-          setPolicyAlertMessage(
-            buildTrainPolicyExceedAlertMessage(train, seat, bookingPassengers, true),
-          );
+          if (passengerColor === "danger" && isAgent) {
+            setPolicyAlertMessage(
+              buildTrainPolicyExceedAlertMessage(train, passengerSeat, [passenger], true),
+            );
+          }
         }
       }
 
@@ -341,8 +416,18 @@ export function TrainListPage() {
       productChannel,
       passengerContext.isLoading,
       travelMode,
+      policyResults,
     ],
   );
+
+  function handlePolicyFilterConfirm(passengerId: string | null) {
+    if (passengerId === null) {
+      setPolicyFilterEnabled(false);
+      return;
+    }
+    setPolicyFilterEnabled(true);
+    setFilterPassengerId(passengerId);
+  }
 
   function handlePassengerRequiredConfirm() {
     setPassengerRequiredOpen(false);
@@ -432,6 +517,9 @@ export function TrainListPage() {
           onBack={handleHeaderBack}
           onModifyOpen={handleModifyOpen}
           onModifyClose={handleModifyClose}
+          onOpenPolicy={() => setTravelPolicyOpen(true)}
+          showPolicyFilter={showPolicyFilter}
+          onOpenPolicyFilter={() => setPolicyFilterOpen(true)}
         />
       </div>
 
@@ -444,9 +532,26 @@ export function TrainListPage() {
       <div
         ref={scrollContainerRef}
         className={`${WEB_PAGE_BODY} [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
-          filterOpen || modifyOpen ? "overflow-hidden" : ""
+          filterOpen || modifyOpen || policyFilterOpen ? "overflow-hidden" : ""
         }`}
       >
+        {showPolicyFilter && policyFilterEnabled && filterPassengerName ? (
+          <button
+            type="button"
+            className="mx-3 mt-2 flex w-[calc(100%-1.5rem)] items-center gap-2 rounded-xl border border-[#D6E4FF] bg-[linear-gradient(90deg,#F5F8FF_0%,#FFFFFF_100%)] px-3 py-2.5 text-left shadow-[0_1px_4px_rgba(39,104,250,0.06)] active:opacity-90 pc:mx-6 pc:w-[calc(100%-3rem)]"
+            onClick={() => setPolicyFilterOpen(true)}
+          >
+            <span className="flex size-4 shrink-0 items-center justify-center rounded-full bg-[#2768FA] text-[10px] font-semibold text-white">
+              标
+            </span>
+            <span className="min-w-0 flex-1 text-[12px] leading-snug text-[#2768FA]">
+              已按照【{filterPassengerName}】的差旅标准过滤坐席
+            </span>
+            <span className="shrink-0 text-[12px] text-[#2768FA]/70" aria-hidden>
+              ›
+            </span>
+          </button>
+        ) : null}
         <div className="sticky top-0 z-20 shrink-0">
           <TrainListDateStrip
             selectedDate={listParams.Date}
@@ -579,6 +684,24 @@ export function TrainListPage() {
         open={Boolean(policyAlertMessage)}
         message={policyAlertMessage ?? ""}
         onClose={() => setPolicyAlertMessage(null)}
+      />
+
+      <TravelPolicyDialog
+        open={travelPolicyOpen}
+        passengerName={selfTravelPolicyPassengerName}
+        policy={selfTravelPolicy}
+        loading={passengerContext.isLoading}
+        onClose={() => setTravelPolicyOpen(false)}
+      />
+
+      <PolicyFilterSheet
+        open={showPolicyFilter && policyFilterOpen}
+        passengers={bookingPassengers}
+        showAllSelected={!policyFilterEnabled}
+        selectedPassengerId={filterPassengerId}
+        description="选择查看全部坐席，或按旅客差旅标准筛选"
+        onClose={() => setPolicyFilterOpen(false)}
+        onConfirm={handlePolicyFilterConfirm}
       />
 
       <FlightPolicyLoadingOverlay open={isPolicyChecking} />

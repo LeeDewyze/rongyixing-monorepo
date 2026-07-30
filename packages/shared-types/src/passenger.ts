@@ -65,6 +65,8 @@ export interface StaffPassenger {
   Number?: string;
   HideNumber?: string;
   Credentials?: PassengerCredential[];
+  /** Legacy staff travel policy used by flight/train/hotel business booking. */
+  Policy?: Record<string, unknown> | null;
 }
 
 export interface StaffListParams {
