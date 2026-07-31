@@ -30,7 +30,7 @@ import { formatApiError } from "@/lib/formatApiError";
 import { buildHomeProductSearch, parseHomeProduct } from "@/lib/home-params";
 import { CITY_HISTORY_KEYS, displayHotelCity, hotelCityPickerAdapter } from "@/lib/hotel-search";
 import { resolveHotelCityByLocation } from "@/lib/geolocation";
-import { loadHomeTravelMode, saveHomeTravelMode } from "@/lib/flight-travel-mode";
+import { saveHomeTravelMode } from "@/lib/flight-travel-mode";
 import { clearPassengerSelection } from "@/lib/passenger-selection";
 import { trainStationPickerAdapter } from "@/lib/train-search";
 
@@ -45,7 +45,7 @@ function HomeSearchPanelError({ error }: { error: unknown }) {
 export function HomeTabPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [travelMode, setTravelMode] = useState<HomeTravelMode>(() => loadHomeTravelMode());
+  const [travelMode, setTravelMode] = useState<HomeTravelMode>("business");
   const [activeProduct, setActiveProduct] = useState<HomeProductId>(() =>
     parseHomeProduct(searchParams),
   );
@@ -66,6 +66,10 @@ export function HomeTabPage() {
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
+
+  useEffect(() => {
+    saveHomeTravelMode("business");
+  }, []);
 
   useEffect(() => {
     setActiveProduct(parseHomeProduct(searchParams));
