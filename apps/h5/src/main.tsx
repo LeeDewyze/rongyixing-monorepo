@@ -13,8 +13,10 @@ import { bootstrapApi } from "@/lib/api";
 import { preloadBusinessBookingPermission } from "@/lib/booking-permission-preload";
 import { bootstrapExternalTicket } from "@/lib/external-ticket";
 import { queryClient } from "@/lib/query";
+import { setupVConsoleFromUrl } from "@/lib/vconsole";
 
 async function main() {
+  await setupVConsoleFromUrl();
   await bootstrapApi();
   await bootstrapExternalTicket("/home");
   await preloadBusinessBookingPermission(queryClient);
