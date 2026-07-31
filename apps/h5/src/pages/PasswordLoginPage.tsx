@@ -313,10 +313,11 @@ export function PasswordLoginPage() {
           }}
         >
           <h1
-            className="m-0"
+            className="m-0 whitespace-nowrap"
             style={{
               marginTop: designHeightPercent(title.top),
-              width: designWidthPercent(title.width),
+              width: "max-content",
+              maxWidth: "100%",
               minHeight: designHeightPercent(title.height),
               fontSize: designCqw(title.fontSize),
               fontWeight: title.fontWeight,
