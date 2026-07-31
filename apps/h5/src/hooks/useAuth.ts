@@ -27,6 +27,10 @@ function startSessionGuardAfterLogin(mode: string): void {
   startSessionGuard();
 }
 
+function loadWebSocketUrlInBackground(mode: string, ticket?: string): void {
+  void loadWebSocketUrlAfterLogin(mode, ticket);
+}
+
 export function usePasswordLogin() {
   return useMutation({
     mutationFn: async (params: { Name: string; Password: string }) => {
@@ -44,11 +48,10 @@ export function usePasswordLogin() {
         DeviceName: getDeviceName(),
       });
 
-      // Save ticket before /Home/Proxy so GetWebSocketUrl can read it.
       saveLoginResult(result);
-      await loadWebSocketUrlAfterLogin(mode, result.Ticket);
       await preloadBusinessBookingPermission(queryClient, { reset: true });
       startSessionGuardAfterLogin(mode);
+      loadWebSocketUrlInBackground(mode, result.Ticket);
 
       return result;
     },
@@ -66,9 +69,9 @@ export function useMobileLogin() {
       });
 
       saveLoginResult(result);
-      await loadWebSocketUrlAfterLogin(mode, result.Ticket);
       await preloadBusinessBookingPermission(queryClient, { reset: true });
       startSessionGuardAfterLogin(mode);
+      loadWebSocketUrlInBackground(mode, result.Ticket);
 
       return result;
     },
@@ -90,9 +93,9 @@ export function useDeviceLogin() {
       const mode = getApiMode();
       const result = await getApi().authProxy.deviceLogin({ Device: deviceId });
       saveLoginResult(result);
-      await loadWebSocketUrlAfterLogin(mode, result.Ticket);
       await preloadBusinessBookingPermission(queryClient, { reset: true });
       startSessionGuardAfterLogin(mode);
+      loadWebSocketUrlInBackground(mode, result.Ticket);
       return result;
     },
   });
