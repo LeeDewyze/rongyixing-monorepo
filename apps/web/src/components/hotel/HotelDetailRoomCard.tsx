@@ -16,6 +16,7 @@ interface HotelDetailRoomCardProps {
   onOpenRoomDetail: () => void;
   onOpenRoomGallery?: () => void;
   onBook: (plan: HotelRoomPlan) => void;
+  onShowCancelRule?: (message: string) => void;
 }
 
 function ExpandToggleButton({ expanded }: { expanded: boolean }) {
@@ -105,6 +106,7 @@ export function HotelDetailRoomCard({
   onOpenRoomDetail,
   onOpenRoomGallery,
   onBook,
+  onShowCancelRule,
 }: HotelDetailRoomCardProps) {
   const lowestPrice = getRoomLowestPrice(room);
   const fullyBooked = isRoomFullyBooked(room, policyColors);
@@ -235,6 +237,7 @@ export function HotelDetailRoomCard({
                 loading={policyLoading}
                 isLast={index === planCount - 1}
                 onBook={() => onBook(plan)}
+                onShowCancelRule={onShowCancelRule}
               />
             );
           })}

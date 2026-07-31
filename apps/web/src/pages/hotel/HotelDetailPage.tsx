@@ -95,6 +95,7 @@ export function HotelDetailPage() {
   const [policyFilterOpen, setPolicyFilterOpen] = useState(false);
   const [travelPolicyOpen, setTravelPolicyOpen] = useState(false);
   const [policyAlertMessage, setPolicyAlertMessage] = useState<string | null>(null);
+  const [cancelRuleMessage, setCancelRuleMessage] = useState<string | null>(null);
   const [policyFilterEnabled, setPolicyFilterEnabled] = useState(true);
   const [filterPassengerId, setFilterPassengerId] = useState<string | null>(null);
   const { expandedRoomId, toggleRoom } = useExpandedRoomState();
@@ -206,6 +207,10 @@ export function HotelDetailPage() {
     if (!urls.length) return;
     saveHotelGalleryImages(urls);
     navigate(buildHotelShowImagesUrl(hotelId, room.RoomName, 0));
+  }
+
+  function handleShowCancelRule(message: string) {
+    setCancelRuleMessage(message);
   }
 
   function handleDateConfirm(checkIn: string, checkOut: string) {
@@ -432,6 +437,7 @@ export function HotelDetailPage() {
                 onOpenRoomDetail={() => handleOpenRoomDetail(room.RoomId)}
                 onOpenRoomGallery={() => handleOpenRoomGallery(room)}
                 onBook={handleBook}
+                onShowCancelRule={handleShowCancelRule}
               />
             ))
           )}
@@ -478,6 +484,12 @@ export function HotelDetailPage() {
         open={policyAlertMessage != null}
         message={policyAlertMessage ?? ""}
         onClose={() => setPolicyAlertMessage(null)}
+      />
+
+      <HotelPolicyAlertDialog
+        open={cancelRuleMessage != null}
+        message={cancelRuleMessage ?? ""}
+        onClose={() => setCancelRuleMessage(null)}
       />
 
       <TravelPolicyDialog

@@ -12,6 +12,7 @@ interface HotelDetailPlanRowProps {
   policyColor?: HotelPolicyColor;
   isAgent?: boolean;
   onBook: () => void;
+  onShowCancelRule?: (message: string) => void;
   isLast?: boolean;
   loading?: boolean;
   policyChecked?: boolean;
@@ -42,17 +43,33 @@ function cancelChipClass(cancelLabel: string): string {
   return "bg-[#F5F3FF] text-[#8B7FD4] ring-1 ring-[#EDE9FE]";
 }
 
+function resolveCancelRuleMessage(plan: HotelRoomPlan): string {
+  const descriptions = plan.RoomPlanRules?.map((item) => item.Description?.trim()).filter(Boolean) ?? [];
+  if (descriptions.length) {
+    return descriptions.join("，");
+  }
+
+  const rateRule = plan.VariablesObj?.RoomRateRule;
+  if (typeof rateRule === "string" && rateRule.trim()) {
+    return rateRule.trim();
+  }
+
+  return plan.CancelPolicy?.trim() ?? "";
+}
+
 export function HotelDetailPlanRow({
   plan,
   policyColor,
   isAgent = false,
   onBook,
+  onShowCancelRule,
   isLast = false,
   loading = false,
   policyChecked = false,
 }: HotelDetailPlanRowProps) {
   const breakfast = formatBreakfastLabel(plan.Breakfast);
   const cancelLabel = formatCancelPolicyLabel(plan.CancelPolicy);
+  const cancelRuleMessage = resolveCancelRuleMessage(plan);
   const payLabel = getHotelPlanPayTypeLabel(plan);
   const awaitingPolicy = !policyChecked;
   const displayColor = policyColor ?? (policyChecked ? "success" : undefined);
@@ -78,11 +95,21 @@ export function HotelDetailPlanRow({
             <span className="inline-flex h-[20px] items-center rounded-full bg-[#EEF4FF] px-2 text-[10px] font-medium leading-none text-brand-primary ring-1 ring-[#D6E4FF]">
               专票
             </span>
-            <span
-              className={`inline-flex h-[20px] items-center rounded-full px-2 text-[10px] font-medium leading-none ${cancelChipClass(cancelLabel)}`}
-            >
-              {cancelLabel}
-            </span>
+            {cancelRuleMessage ? (
+              <button
+                type="button"
+                className={`inline-flex h-[20px] cursor-pointer appearance-none items-center rounded-full border-0 px-2 text-left text-[10px] font-medium leading-none transition-opacity active:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/30 ${cancelChipClass(cancelLabel)}`}
+                onClick={() => onShowCancelRule?.(cancelRuleMessage)}
+              >
+                {cancelLabel}
+              </button>
+            ) : (
+              <span
+                className={`inline-flex h-[20px] items-center rounded-full px-2 text-[10px] font-medium leading-none ${cancelChipClass(cancelLabel)}`}
+              >
+                {cancelLabel}
+              </span>
+            )}
             {breakfast ? (
               <span className="inline-flex h-[20px] items-center rounded-full bg-[#F5F6F9] px-2 text-[10px] leading-none text-[#666666] ring-1 ring-[#ECEEF2]">
                 {breakfast}
