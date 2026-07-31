@@ -4,6 +4,7 @@ import trainRouteArrow from "@/assets/train/route-arrow.png";
 import { formatFlightTime } from "@/utils/flight-list";
 import {
   formatArrivalDayOffsetLabel,
+  formatFlightAgreementAirlineLabel,
   formatFlightListAirlineFlightLabel,
   formatFlightListAirportLine,
   formatFlightListPlaneSubtitle,
@@ -35,6 +36,8 @@ function resolveFlightPriceColor(variant: FlightCardVariant): string {
 }
 
 const FLIGHT_SCARCE_BADGE_CLASS = `flex h-5 min-w-[40px] shrink-0 items-center justify-center whitespace-nowrap rounded border border-[#FF383C] bg-[#FF383C1A] px-1.5 text-[10px] font-normal leading-none tracking-[0] text-[#FF383C] ${FONT}`;
+
+const FLIGHT_AGREEMENT_AIRLINE_CLASS = `inline-flex h-5 items-center justify-center whitespace-nowrap rounded border border-[#34C759] bg-[#34C7591A] px-2 text-[11px] font-normal leading-none tracking-[0] text-[#34C759] ${FONT}`;
 
 const FLIGHT_CARD_GRID_CLASS =
   "grid w-full grid-cols-[14rem_minmax(0,1fr)_auto] items-center gap-x-5 pc:grid-cols-[17rem_minmax(0,1fr)_auto] pc:gap-x-6";
@@ -158,6 +161,7 @@ export function FlightSegmentCard({
   const priceColor = resolveFlightPriceColor(variant);
   const airlineFlightLabel = formatFlightListAirlineFlightLabel(segment);
   const planeSubtitle = formatFlightListPlaneSubtitle(segment);
+  const agreementAirlineLabel = formatFlightAgreementAirlineLabel(segment);
   const arrivalDayOffset = formatArrivalDayOffsetLabel(segment.TakeoffTime, segment.ArrivalTime);
 
   const cardSurfaceClass = isDirectLowest
@@ -233,7 +237,12 @@ export function FlightSegmentCard({
             {shouldShowScarceBadge(segment) ? (
               <span className={FLIGHT_SCARCE_BADGE_CLASS}>剩{segment.RemainSeats}张</span>
             ) : null}
-            <p className={`${FLIGHT_PRICE_CLASS} ${priceColor}`}>¥{segment.LowestFare ?? "-"}</p>
+            <div className="flex min-w-[5.5rem] flex-col items-end gap-1">
+              <p className={`${FLIGHT_PRICE_CLASS} ${priceColor}`}>¥{segment.LowestFare ?? "-"}</p>
+              {agreementAirlineLabel ? (
+                <span className={FLIGHT_AGREEMENT_AIRLINE_CLASS}>{agreementAirlineLabel}</span>
+              ) : null}
+            </div>
             <BookActionChip loading={loading} />
           </div>
         </div>

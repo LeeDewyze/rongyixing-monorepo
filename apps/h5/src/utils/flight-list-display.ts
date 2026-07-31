@@ -45,6 +45,12 @@ export function shouldShowScarceBadge(segment: FlightSegment): boolean {
   return n != null && n > 0 && n <= 5;
 }
 
+export function formatFlightAgreementAirlineLabel(
+  segment: Pick<FlightSegment, "IsAgreement">,
+): string | undefined {
+  return segment.IsAgreement ? "协议航司" : undefined;
+}
+
 /** Cabins header title, e.g. `1月05日 周四出发`. */
 export function formatCabinsDepartTitle(takeoffTime: string | undefined): string {
   const date = takeoffTime?.slice(0, 10) ?? "";

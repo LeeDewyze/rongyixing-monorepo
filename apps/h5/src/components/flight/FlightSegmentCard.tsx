@@ -4,6 +4,7 @@ import trainRouteArrow from "@/assets/train/route-arrow.png";
 import { formatFlightTime } from "@/utils/flight-list";
 import {
   formatArrivalDateBadge,
+  formatFlightAgreementAirlineLabel,
   formatFlightListMetaLine,
   formatFlightRouteMiddleDisplay,
   shortAirportName,
@@ -26,6 +27,8 @@ const FLIGHT_PRICE_CLASS = `whitespace-nowrap text-[24px] font-[500] not-italic 
 const FLIGHT_PRICE_COLOR_LOWEST = "text-[#34C759]";
 
 const FLIGHT_PRICE_COLOR_DEFAULT = "text-[#FF383C]";
+
+const FLIGHT_AGREEMENT_AIRLINE_CLASS = `inline-flex h-4 items-center justify-center whitespace-nowrap rounded border border-[#34C759] bg-[#34C7591A] px-1.5 text-[10px] font-normal leading-[100%] tracking-[0] text-[#34C759] ${FONT}`;
 
 function resolveFlightPriceColor(variant: FlightCardVariant): string {
   return variant === "direct-lowest" ? FLIGHT_PRICE_COLOR_LOWEST : FLIGHT_PRICE_COLOR_DEFAULT;
@@ -126,6 +129,7 @@ export function FlightSegmentCard({
   const isTransferLowest = variant === "transfer-lowest";
   const priceColor = resolveFlightPriceColor(variant);
   const metaLine = formatFlightListMetaLine(segment);
+  const agreementAirlineLabel = formatFlightAgreementAirlineLabel(segment);
   const arrivalDayTip = formatArrivalDateBadge(segment.TakeoffTime, segment.ArrivalTime);
   const routeMiddle = formatFlightRouteMiddleDisplay(segment);
   const showRouteMiddleSpacer = !routeMiddle.durationLabel && !routeMiddle.routeLabel;
@@ -190,11 +194,16 @@ export function FlightSegmentCard({
             </div>
           </div>
 
-          <div className="flex shrink-0 items-center justify-end gap-1 pl-1">
-            {shouldShowScarceBadge(segment) ? (
-              <span className={FLIGHT_SCARCE_BADGE_CLASS}>剩{segment.RemainSeats}张</span>
+          <div className="flex shrink-0 flex-col items-end gap-1 pl-1">
+            <div className="flex items-center justify-end gap-1">
+              {shouldShowScarceBadge(segment) ? (
+                <span className={FLIGHT_SCARCE_BADGE_CLASS}>剩{segment.RemainSeats}张</span>
+              ) : null}
+              <p className={`${FLIGHT_PRICE_CLASS} ${priceColor}`}>¥{segment.LowestFare ?? "-"}</p>
+            </div>
+            {agreementAirlineLabel ? (
+              <span className={FLIGHT_AGREEMENT_AIRLINE_CLASS}>{agreementAirlineLabel}</span>
             ) : null}
-            <p className={`${FLIGHT_PRICE_CLASS} ${priceColor}`}>¥{segment.LowestFare ?? "-"}</p>
           </div>
         </div>
 

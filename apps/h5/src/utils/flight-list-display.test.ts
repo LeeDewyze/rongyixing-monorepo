@@ -4,6 +4,7 @@ import type { FlightRouteMiddleInput } from "./flight-list-display";
 import {
   formatArrivalDateBadge,
   formatCabinsDepartTitle,
+  formatFlightAgreementAirlineLabel,
   formatFlightListMetaLine,
   formatFlightListPlaneLabel,
   formatFlightLocationLabel,
@@ -121,6 +122,12 @@ describe("flight-list-display cabins helpers", () => {
         Meal: "点心",
       }),
     ).toBe("南方航空 | CZ8899 | 机型 327 | 点心");
+  });
+
+  it("shows agreement airline label when segment is agreement", () => {
+    expect(formatFlightAgreementAirlineLabel({ IsAgreement: true })).toBe("协议航司");
+    expect(formatFlightAgreementAirlineLabel({ IsAgreement: false })).toBeUndefined();
+    expect(formatFlightAgreementAirlineLabel({})).toBeUndefined();
   });
 
   it("formats order detail trip meta footer like legacy ryx", () => {
