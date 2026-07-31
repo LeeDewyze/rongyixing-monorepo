@@ -133,7 +133,7 @@ export function PassengerCredentialPage() {
   const isRemoving = removeExternal.isPending || removeStaff.isPending;
   const isCredentialOnlyMode = mode === "self" || mode === "staff";
   const shouldConfirmDiscard =
-    mode !== "self" && addNew && hasCredentialFormChanges(values, initialValues);
+    mode !== "self" && hasCredentialFormChanges(values, initialValues);
   const fixedName =
     mode === "self" && !addNew
       ? normalizeCredentialName(memberProfile?.RealName ?? memberProfile?.Name ?? "")

@@ -419,7 +419,7 @@ function formatFlightListPlaneMeta(
 
 /**
  * Legacy list card meta line: 联合航空 | KN5955 | 机型 73E | 无餐食 |
- * Uses full airline name, flight number, plane code, and meal when available.
+ * Uses full airline name, flight number, plane code, and always shows meal status.
  */
 export function formatFlightListMetaLine(
   segment: Pick<
@@ -438,8 +438,8 @@ export function formatFlightListMetaLine(
   const planeMeta = formatFlightListPlaneMeta(segment.PlaneType, segment.PlaneTypeDescribe);
   if (planeMeta) parts.push(planeMeta);
 
-  const meal = formatFlightMealLabel(segment.Meal);
-  if (meal) parts.push(meal);
+  const meal = formatFlightMealLabel(segment.Meal) ?? "无餐食";
+  parts.push(meal);
 
   if (!parts.length) return "";
   return parts.join(" | ");

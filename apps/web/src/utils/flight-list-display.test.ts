@@ -115,7 +115,7 @@ describe("flight-list-display cabins helpers", () => {
         Number: "KN5955",
         PlaneType: "73E",
       }),
-    ).toBe("联合航空 | KN5955 | 机型 73E");
+    ).toBe("联合航空 | KN5955 | 机型 73E | 无餐食");
     expect(
       formatFlightListMetaLine({
         AirlineName: "南方航空",
