@@ -20,6 +20,9 @@ const MENU_DESCRIPTIONS: Record<string, string> = {
   notifications: "服务、活动与个性化推送",
 };
 
+const ICP_RECORD_NUMBER = "京ICP备2025134938号-3A";
+const ICP_RECORD_URL = "https://beian.miit.gov.cn/";
+
 export function SettingsPage() {
   const navigate = useNavigate();
   usePageHeader({ visible: false });
@@ -33,6 +36,10 @@ export function SettingsPage() {
     if (item.kind === "navigate" && item.route) {
       navigate(item.route);
     }
+  }
+
+  function handleOpenIcpRecord() {
+    window.open(ICP_RECORD_URL, "_blank", "noopener,noreferrer");
   }
 
   return (
@@ -55,6 +62,19 @@ export function SettingsPage() {
                 />
               );
             })}
+          </SettingsMenuCard>
+        </div>
+
+        <div>
+          <SettingsSectionLabel>备案信息</SettingsSectionLabel>
+          <SettingsMenuCard>
+            <SettingsMenuRow
+              label="备案号"
+              value={ICP_RECORD_NUMBER}
+              valueTone="hint"
+              onClick={handleOpenIcpRecord}
+              borderless
+            />
           </SettingsMenuCard>
         </div>
 
