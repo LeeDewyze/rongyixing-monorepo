@@ -39,50 +39,6 @@ function DialogCloseButton({ onClose }: { onClose: () => void }) {
   );
 }
 
-function DestructiveIcon() {
-  return (
-    <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#FFF1F0] text-[#FF4D4F]">
-      <svg
-        viewBox="0 0 24 24"
-        className="size-[18px]"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden
-      >
-        <path d="M3 6h18" />
-        <path d="M8 6V4.5A1.5 1.5 0 0 1 9.5 3h5A1.5 1.5 0 0 1 16 4.5V6" />
-        <path d="M6 6l.8 13.2A1.5 1.5 0 0 0 8.3 20.7h7.4a1.5 1.5 0 0 0 1.5-1.5L18 6" />
-        <path d="M10 10v6" />
-        <path d="M14 10v6" />
-      </svg>
-    </div>
-  );
-}
-
-function DefaultIcon() {
-  return (
-    <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-[#EEF5FF] text-brand-primary">
-      <svg
-        viewBox="0 0 24 24"
-        className="size-[18px]"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        aria-hidden
-      >
-        <path d="M12 9v4" />
-        <path d="M12 17h.01" />
-        <circle cx="12" cy="12" r="9" />
-      </svg>
-    </div>
-  );
-}
-
 function formatMessage(message: string): ReactNode {
   const parts = message.split(/(「[^」]+」)/g);
   if (parts.length === 1) return message;
@@ -98,7 +54,7 @@ function formatMessage(message: string): ReactNode {
   );
 }
 
-/** Centered confirmation modal — used before destructive actions. */
+/** Centered confirmation modal — used before confirmation actions. */
 export function ConfirmDialog({
   open,
   title,
@@ -139,8 +95,7 @@ export function ConfirmDialog({
             </div>
           ) : null}
 
-          <div className="flex min-h-8 items-center justify-center gap-2 px-8">
-            {resolvedVariant === "destructive" ? <DestructiveIcon /> : <DefaultIcon />}
+          <div className="flex min-h-8 items-center justify-center px-8">
             <h2 id={titleId} className="text-[17px] font-semibold leading-tight text-[#333333]">
               {title}
             </h2>
