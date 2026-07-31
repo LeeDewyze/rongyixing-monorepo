@@ -42,7 +42,7 @@ function DeletionCheckbox({ checked }: { checked: boolean }) {
     <span
       className={`flex size-5 shrink-0 items-center justify-center rounded-[6px] border transition-all duration-200 ${
         checked
-          ? "border-[#FF4D4F] bg-[#FF4D4F] text-white shadow-[0_2px_8px_rgba(255,77,79,0.24)]"
+          ? "border-brand-primary bg-brand-primary text-white shadow-[0_2px_8px_rgba(39,104,250,0.24)]"
           : "border-[#D0D5DD] bg-white"
       }`}
       aria-hidden
@@ -125,7 +125,7 @@ export function AccountDeletionPage() {
             type="button"
             className={`mx-4 mt-5 flex w-[calc(100%-2rem)] items-start gap-3 rounded-xl border px-4 py-3.5 text-left transition-all duration-200 active:scale-[0.995] ${
               agreed
-                ? "border-[#FFCCC7] bg-[#FFF9F8] shadow-[0_2px_12px_rgba(255,77,79,0.08)]"
+                ? "border-[#D6E4FF] bg-[#F5F9FF] shadow-[0_2px_12px_rgba(39,104,250,0.08)]"
                 : "border-[#EEF0F4] bg-white shadow-[0_2px_8px_rgba(15,23,42,0.03)]"
             }`}
             onClick={() => setAgreed((value) => !value)}
@@ -140,7 +140,7 @@ export function AccountDeletionPage() {
         <div className="fixed inset-x-0 bottom-0 z-10 border-t border-[#EEF0F4] bg-white/95 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_24px_rgba(15,23,42,0.06)] backdrop-blur-md">
           <button
             type="button"
-            className="flex h-12 w-full items-center justify-center rounded-full bg-[#FF4D4F] text-[16px] font-medium text-white shadow-[0_8px_20px_rgba(255,77,79,0.28)] transition-opacity duration-200 active:opacity-90 disabled:cursor-not-allowed disabled:opacity-45"
+            className="flex h-12 w-full items-center justify-center rounded-full bg-brand-primary text-[16px] font-medium text-white shadow-[0_8px_20px_rgba(39,104,250,0.28)] transition-opacity duration-200 active:opacity-90 disabled:cursor-not-allowed disabled:opacity-45"
             disabled={deleteAccount.isPending}
             onClick={handleConfirmClick}
           >
@@ -155,7 +155,7 @@ export function AccountDeletionPage() {
         message={ACCOUNT_DELETION_DIALOG_MESSAGE}
         confirmLabel={ACCOUNT_DELETION_DIALOG_CONFIRM}
         cancelLabel={ACCOUNT_DELETION_DIALOG_CANCEL}
-        variant="destructive"
+        variant="default"
         loading={deleteAccount.isPending}
         onConfirm={() => void handleConfirmDeletion()}
         onCancel={() => setConfirmOpen(false)}

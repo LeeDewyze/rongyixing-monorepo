@@ -49,6 +49,13 @@ export function AccountSecurityPage() {
               icon={<SettingsMenuIcon variant="history" />}
               value="登录设备管理"
               onClick={() => navigate("/settings/devices")}
+            />
+            <SettingsMenuRow
+              label="注销账号"
+              icon={<SettingsMenuIcon variant="accountDelete" />}
+              value="注销后无法恢复，请谨慎操作"
+              valueTone="hint"
+              onClick={() => navigate("/settings/account-deletion")}
               borderless
             />
           </SettingsMenuCard>

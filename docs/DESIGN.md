@@ -135,6 +135,12 @@ Rules:
 - Hotel self-book-only mode opens policy details from “差旅标准”; multi-passenger business mode keeps “过滤差标” as the room price filter entry.
 - Train list adds an explicit business multi-passenger “过滤差标” entry that only changes list presentation, while final booking still checks all passengers.
 
+## Account Deletion
+
+- Account security shows a `注销账号` row in the Security section with the hint `注销后无法恢复，请谨慎操作` and the warning-style account deletion icon.
+- The account deletion page keeps red warning semantics for the risk icon and warning copy, while checkbox confirmation and primary actions use RYX brand blue.
+- Final confirmation still uses `ConfirmDialog` and the account deletion API flow; the entry and page copy follow the legacy ordinary account-deletion screenshots rather than the RYX bottom-sheet variant.
+
 ## H5 Order List Tabs
 
 ### v1 Recorded
