@@ -216,6 +216,25 @@ export interface FlightTransferItinerary {
   layovers: FlightTransferLayover[];
 }
 
+export function formatFlightTransferLayoverSummary(layovers: FlightTransferLayover[]): {
+  waitDurationLabel?: string;
+  routeMiddleLabel?: string;
+} {
+  if (!layovers.length) return {};
+
+  const cityLabels = layovers
+    .map((layover) => layover.cityLabel.trim())
+    .filter((value): value is string => Boolean(value));
+  const waitDurationLabels = layovers
+    .map((layover) => layover.waitDurationLabel?.trim())
+    .filter((value): value is string => Boolean(value));
+
+  return {
+    routeMiddleLabel: cityLabels.length ? `中转 · ${cityLabels.join(" / ")}` : "中转",
+    waitDurationLabel: waitDurationLabels.length ? waitDurationLabels.join(" / ") : undefined,
+  };
+}
+
 function formatLayoverDuration(
   arrivalTime: string | undefined,
   nextTakeoffTime: string | undefined,

@@ -11,6 +11,7 @@ import {
   formatFareSalesPrice,
   isEconomyFare,
   isFlightFareBookable,
+  formatFlightTransferLayoverSummary,
   normalizeFlightDetailData,
   prepareFlightFareForDisplay,
   prepareFlightFareRulesForSheet,
@@ -108,6 +109,16 @@ describe("buildFlightTransferItinerary", () => {
     expect(itinerary?.layovers[0]?.cityLabel).toBe("西安");
     expect(itinerary?.layovers[0]?.airportLabel).toBe("西安·咸阳T5");
     expect(itinerary?.layovers[0]?.waitDurationLabel).toBe("10h35m");
+  });
+
+  it("summarizes every layover when there are multiple transfer legs", () => {
+    const summary = formatFlightTransferLayoverSummary([
+      { cityLabel: "西安", airportLabel: "西安·咸阳T5", waitDurationLabel: "10h35m" },
+      { cityLabel: "乌鲁木齐", airportLabel: "乌鲁木齐·地窝堡T2", waitDurationLabel: "2h25m" },
+    ]);
+
+    expect(summary.routeMiddleLabel).toBe("中转 · 西安 / 乌鲁木齐");
+    expect(summary.waitDurationLabel).toBe("10h35m / 2h25m");
   });
 
   it("returns null for direct flights", () => {

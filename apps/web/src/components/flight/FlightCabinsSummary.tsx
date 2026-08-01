@@ -7,6 +7,7 @@ import { FLIGHT_CABINS_FONT } from "@/components/flight/flight-cabins-chrome";
 import summaryRouteArrow from "@/assets/flight/summary-route-arrow.png";
 import {
   buildFlightTransferItinerary,
+  formatFlightTransferLayoverSummary,
   type FlightTransferItinerary,
   type FlightTransferLegView,
   type FlightTransferLayover,
@@ -121,12 +122,12 @@ function RouteSummaryRow({
             {flightNo}
           </p>
         ) : routeMiddleLabel ? (
-          <p className="mt-1 flex items-center justify-center gap-1 leading-none">
-            <span className="truncate text-[11px] font-medium text-[#2768FA]">
+          <p className="mt-1 flex min-w-0 flex-col items-center justify-center gap-0.5 text-center leading-tight">
+            <span className="max-w-full break-words text-[11px] font-medium text-[#2768FA]">
               {routeMiddleLabel}
             </span>
             {routeMiddleSubLabel ? (
-              <span className="shrink-0 text-[11px] font-normal text-[#999999]">
+              <span className="max-w-full break-words text-[11px] font-normal text-[#999999]">
                 {routeMiddleSubLabel}
               </span>
             ) : null}
@@ -196,19 +197,6 @@ function TransferLegBlock({ leg }: { leg: FlightTransferLegView }) {
   );
 }
 
-function formatCollapsedTransferMiddle(layovers: FlightTransferLayover[]): {
-  waitDurationLabel?: string;
-  routeMiddleLabel?: string;
-} {
-  const primaryLayover = layovers[0];
-  if (!primaryLayover) return {};
-
-  return {
-    waitDurationLabel: primaryLayover.waitDurationLabel,
-    routeMiddleLabel: `中转 · ${primaryLayover.cityLabel}`,
-  };
-}
-
 function TransferRouteCard({
   itinerary,
   expanded,
@@ -220,7 +208,7 @@ function TransferRouteCard({
 }) {
   const firstLeg = itinerary.legs[0]!;
   const lastLeg = itinerary.legs[itinerary.legs.length - 1]!;
-  const collapsedTransferMiddle = formatCollapsedTransferMiddle(itinerary.layovers);
+  const collapsedTransferMiddle = formatFlightTransferLayoverSummary(itinerary.layovers);
 
   return (
     <div className="mt-3 rounded-[8px] bg-white px-3 py-3">
@@ -253,7 +241,7 @@ function TransferRouteCard({
 }
 
 export function FlightCabinsSummary({ segment, detailSegments }: FlightCabinsSummaryProps) {
-  const [transferExpanded, setTransferExpanded] = useState(false);
+  const [transferExpanded, setTransferExpanded] = useState(true);
   const transferItinerary = buildFlightTransferItinerary(detailSegments);
   const arrivalDateBadge = formatArrivalDateBadge(segment.TakeoffTime, segment.ArrivalTime);
   const fromLabel = formatFlightLocationLabel(
