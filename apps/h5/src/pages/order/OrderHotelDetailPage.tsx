@@ -16,13 +16,14 @@ import { HotelOrderHotelInfoCard } from "@/components/order/hotel/HotelOrderHote
 import { HotelOrderInfoCard } from "@/components/order/hotel/HotelOrderInfoCard";
 import { HotelOrderRoomTabs } from "@/components/order/hotel/HotelOrderRoomTabs";
 import { HotelOrderTravelerCard } from "@/components/order/hotel/HotelOrderTravelerCard";
+import { OrderInspurRepushSheet } from "@/components/order/OrderInspurRepushSheet";
 import { usePageHeader } from "@/components/layout";
 import {
   useCancelHotelOrder,
   useHotelOrderDetail,
   useHotelOrderSms,
-  useInspurRepush,
 } from "@/hooks/useHotelOrderDetail";
+import { useInspurRepush } from "@/hooks/useOrderInspurRepush";
 import { resolveAppChannel } from "@/lib/app-channel";
 import { formatApiError } from "@/lib/formatApiError";
 import {
@@ -75,12 +76,13 @@ export function OrderHotelDetailPage() {
   );
   const cancelMutation = useCancelHotelOrder();
   const sms = useHotelOrderSms(channel);
-  const { data: showInspurRepush } = useInspurRepush(orderId, Boolean(detail));
+  const { data: showInspurRepush } = useInspurRepush(orderId, channel, Boolean(detail));
 
   const [selectedRoomIndex, setSelectedRoomIndex] = useState(0);
   const [billOpen, setBillOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [smsOpen, setSmsOpen] = useState(false);
+  const [repushOpen, setRepushOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [suppressFooterActions, setSuppressFooterActions] = useState(false);
 
@@ -97,8 +99,12 @@ export function OrderHotelDetailPage() {
       setSmsOpen(false);
       return;
     }
+    if (repushOpen) {
+      setRepushOpen(false);
+      return;
+    }
     leaveDetail();
-  }, [billOpen, leaveDetail, smsOpen]);
+  }, [billOpen, leaveDetail, repushOpen, smsOpen]);
 
   usePageHeader({ visible: false });
 
@@ -295,7 +301,7 @@ export function OrderHotelDetailPage() {
               <button
                 type="button"
                 className="w-full rounded-xl bg-white py-3 text-[14px] font-medium text-brand-primary shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
-                onClick={() => showToast("重推浪潮功能即将上线")}
+                onClick={() => setRepushOpen(true)}
               >
                 重推浪潮
               </button>
@@ -339,6 +345,13 @@ export function OrderHotelDetailPage() {
               onClose={() => setSmsOpen(false)}
             />
           )}
+          <OrderInspurRepushSheet
+            open={repushOpen}
+            orderId={detail.OrderId}
+            channel={channel}
+            onClose={() => setRepushOpen(false)}
+            onSubmitted={showToast}
+          />
         </>
       ) : null}
 

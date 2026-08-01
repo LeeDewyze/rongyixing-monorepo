@@ -180,6 +180,93 @@ describe("createOrderApi list and detail channel routing", () => {
     });
     expect(result.TicketId).toBe("TICKET-1");
   });
+
+  it("normalizes Inspur repush passengers from legacy order passengers", async () => {
+    const send = vi.fn().mockResolvedValue({
+      OrderPassengers: [
+        { Id: "P-1", Name: "张三", Mobile: "13800000000" },
+        { Id: "P-2", Passenger: { Name: "李四", Mobile: "13900000000" } },
+      ],
+    });
+    const api = createOrderApi({ send } as never);
+
+    const result = await api.getInspurRepushPassengers({ OrderId: "ORD-1" });
+
+    expect(send).toHaveBeenCalledWith({
+      method: ORDER_FLOW_METHODS.GET_ORDER_PASSENGERS,
+      data: { Id: "ORD-1" },
+    });
+    expect(result).toEqual([
+      { Id: "P-1", Name: "张三", Mobile: "13800000000" },
+      { Id: "P-2", Name: "李四", Mobile: "13900000000" },
+    ]);
+  });
+
+  it("searches Inspur repush linkmans with encoded name and normalizes Account fields", async () => {
+    const send = vi
+      .fn()
+      .mockResolvedValue([{ Name: "王五", Account: { Id: "A-1", Mobile: "13700000000" } }]);
+    const api = createOrderApi({ send } as never);
+
+    const result = await api.searchInspurRepushLinkmans({ name: "王 五" });
+
+    expect(send).toHaveBeenCalledWith({
+      method: `${ORDER_FLOW_METHODS.GET_LINKMANS}%E7%8E%8B%20%E4%BA%94`,
+      data: {},
+    });
+    expect(result).toEqual([
+      { LinkmanId: "A-1", LinkmanName: "王五", LinkmanMobile: "13700000000" },
+    ]);
+  });
+
+  it("submits Inspur repush items and keeps backend message", async () => {
+    const sendResponse = vi.fn().mockResolvedValue({
+      Status: true,
+      Code: "Success",
+      Message: "重推成功",
+      Data: null,
+    });
+    const api = createOrderApi({ sendResponse } as never);
+    const items = [
+      {
+        OrderId: "ORD-1",
+        PassengerId: "P-1",
+        LinkmanId: "A-1",
+        LinkmanName: "王五",
+        LinkmanMobile: "13700000000",
+      },
+    ];
+
+    const result = await api.submitInspurRepush({ Items: items });
+
+    expect(sendResponse).toHaveBeenCalledWith({
+      method: ORDER_FLOW_METHODS.REPUSH,
+      data: items,
+    });
+    expect(result).toEqual({ Success: true, Message: "重推成功" });
+  });
+
+  it("does not call TMC Inspur endpoints for tourist channel", async () => {
+    const send = vi.fn();
+    const sendResponse = vi.fn();
+    const api = createOrderApi({ send, sendResponse } as never);
+
+    await expect(api.checkInspurRepush({ channel: "tourist", OrderId: "ORD-1" })).resolves.toBe(
+      false,
+    );
+    await expect(
+      api.getInspurRepushPassengers({ channel: "tourist", OrderId: "ORD-1" }),
+    ).resolves.toEqual([]);
+    await expect(
+      api.searchInspurRepushLinkmans({ channel: "tourist", name: "张三" }),
+    ).resolves.toEqual([]);
+    await expect(api.submitInspurRepush({ channel: "tourist", Items: [] })).resolves.toMatchObject({
+      Success: false,
+    });
+
+    expect(send).not.toHaveBeenCalled();
+    expect(sendResponse).not.toHaveBeenCalled();
+  });
 });
 
 describe("normalizeOrderListResponse", () => {

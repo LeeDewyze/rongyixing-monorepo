@@ -57,12 +57,3 @@ export function useHotelOrderSms(channel?: ProductChannel) {
   });
   return { send, confirm };
 }
-
-export function useInspurRepush(orderId: string, enabled = true) {
-  return useQuery({
-    queryKey: ["order", "inspurRepush", orderId],
-    queryFn: () => getApi().order.checkInspurRepush({ OrderId: orderId }),
-    enabled: Boolean(orderId) && enabled,
-    staleTime: 60_000,
-  });
-}

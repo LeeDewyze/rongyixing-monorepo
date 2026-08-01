@@ -117,7 +117,7 @@ export function usePassengerSelection(forType: ProductType) {
   return { selected, setSelected };
 }
 
-export function useAllowExternalPassengers() {
+export function useAllowExternalPassengers(enabled = true) {
   return useQuery({
     queryKey: ["passenger", "allowExternal"],
     queryFn: async () => {
@@ -128,6 +128,7 @@ export function useAllowExternalPassengers() {
         return true;
       }
     },
+    enabled,
     staleTime: 5 * 60 * 1000,
   });
 }

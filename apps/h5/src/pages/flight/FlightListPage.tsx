@@ -459,6 +459,7 @@ export function FlightListPage() {
           toName={toName}
           passengerHref={buildPassengerSelectPath(ProductType.Flight, listReturnTo)}
           passengerCount={selectedPassengers.length}
+          showPassengerEntry={isBusinessMode}
           selfBookOnly={passengerContext.isSelfBookOnly}
           modifyOpen={modifyOpen}
           onBack={handleHeaderBack}

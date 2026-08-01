@@ -14,12 +14,19 @@ import type {
   OrderDetailResponse,
   OrderListParams,
   OrderListResponse,
+  OrderRepushLinkman,
+  OrderRepushLinkmanSearchParams,
+  OrderRepushParams,
+  OrderRepushPassenger,
+  OrderRepushSubmitParams,
+  OrderRepushSubmitResponse,
   TrainAbolishTicketParams,
   TrainCancelParams,
   TrainIssueParams,
   TrainRefundParams,
 } from "@ryx/shared-types";
 
+import { ApiError } from "../errors.js";
 import { ORDER_FLOW_METHODS, TOURIST_ORDER_FLOW_METHODS } from "../methods/order-flow.js";
 import { TOURIST_TRAIN_FLOW_METHODS } from "../methods/train-flow.js";
 import type { ProxyClient } from "../proxy/proxy-client.js";
@@ -63,6 +70,11 @@ export interface OrderApi {
   sendHotelOrderSmsCode(params: HotelOrderSmsParams): Promise<boolean>;
   confirmHotelOrderSmsCode(params: HotelOrderSmsConfirmParams): Promise<boolean>;
   checkInspurRepush(params: OrderDetailParams): Promise<boolean>;
+  getInspurRepushPassengers(params: OrderRepushParams): Promise<OrderRepushPassenger[]>;
+  searchInspurRepushLinkmans(
+    params?: OrderRepushLinkmanSearchParams,
+  ): Promise<OrderRepushLinkman[]>;
+  submitInspurRepush(params: OrderRepushSubmitParams): Promise<OrderRepushSubmitResponse>;
   getExchangeFlightTrip(params: FlightExchangeInfoParams): Promise<FlightExchangeInfo>;
   cancelTrain(params: TrainCancelParams): Promise<boolean>;
   abolishTrainTicket(params: TrainAbolishTicketParams): Promise<boolean>;
@@ -97,6 +109,57 @@ function firstRecord(...values: unknown[]): LegacyRecord | null {
     if (first) return first;
   }
   return null;
+}
+
+function payloadArray(raw: unknown, ...keys: string[]): LegacyRecord[] {
+  if (Array.isArray(raw)) {
+    return raw.filter((item): item is LegacyRecord => Boolean(asRecord(item)));
+  }
+  const payload = extractPayload(raw);
+  for (const key of keys) {
+    const items = asArray<LegacyRecord>(payload[key]);
+    if (items.length > 0) {
+      return items;
+    }
+  }
+  return [];
+}
+
+function normalizeRepushPassengers(raw: unknown): OrderRepushPassenger[] {
+  return payloadArray(raw, "OrderPassengers", "Passengers").flatMap((item) => {
+    const passenger = asRecord(item.Passenger);
+    const id = readString(item.Id ?? item.PassengerId ?? passenger?.Id);
+    const name = readString(item.Name ?? passenger?.Name);
+    if (!id || !name) {
+      return [];
+    }
+    return [
+      {
+        Id: id,
+        Name: name,
+        Mobile: readString(item.Mobile ?? passenger?.Mobile) || undefined,
+      },
+    ];
+  });
+}
+
+function normalizeRepushLinkmans(raw: unknown): OrderRepushLinkman[] {
+  return payloadArray(raw, "Linkmans", "Items", "List").flatMap((item) => {
+    const account = asRecord(item.Account);
+    const linkmanId = readString(item.LinkmanId ?? item.AccountId ?? account?.Id);
+    const linkmanName = readString(item.LinkmanName ?? item.Name ?? account?.Name);
+    if (!linkmanId || !linkmanName) {
+      return [];
+    }
+    return [
+      {
+        LinkmanId: linkmanId,
+        LinkmanName: linkmanName,
+        LinkmanMobile:
+          readString(item.LinkmanMobile ?? item.Mobile ?? account?.Mobile) || undefined,
+      },
+    ];
+  });
 }
 
 function normalizeFlightExchangeInfo(
@@ -264,10 +327,50 @@ export function createOrderApi(proxy: ProxyClient): OrderApi {
       });
     },
     checkInspurRepush(params) {
+      if (isTouristChannel(params)) {
+        return Promise.resolve(false);
+      }
       return proxy.send<boolean>({
         method: ORDER_FLOW_METHODS.CHECK_INSPUR_REPUSH,
         data: { Id: params.OrderId, OrderId: params.OrderId },
       });
+    },
+    async getInspurRepushPassengers(params) {
+      if (isTouristChannel(params)) {
+        return [];
+      }
+      const raw = await proxy.send<unknown>({
+        method: ORDER_FLOW_METHODS.GET_ORDER_PASSENGERS,
+        data: { Id: params.OrderId },
+      });
+      return normalizeRepushPassengers(raw);
+    },
+    async searchInspurRepushLinkmans(params = {}) {
+      if (isTouristChannel(params)) {
+        return [];
+      }
+      const name = params.name?.trim() ?? "";
+      const raw = await proxy.send<unknown>({
+        method: `${ORDER_FLOW_METHODS.GET_LINKMANS}${encodeURIComponent(name)}`,
+        data: {},
+      });
+      return normalizeRepushLinkmans(raw);
+    },
+    async submitInspurRepush(params) {
+      if (isTouristChannel(params)) {
+        return { Success: false, Message: "因私订单不支持重推浪潮" };
+      }
+      const response = await proxy.sendResponse<unknown>({
+        method: ORDER_FLOW_METHODS.REPUSH,
+        data: params.Items,
+      });
+      if (!response.Status) {
+        throw new ApiError(response.Message?.trim() || "重推浪潮失败", 200, response.Code);
+      }
+      return {
+        Success: response.Status,
+        Message: response.Message,
+      };
     },
     async getExchangeFlightTrip(params) {
       const raw = await proxy.send<unknown>({

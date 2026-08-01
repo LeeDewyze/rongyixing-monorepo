@@ -445,7 +445,7 @@ export function FlightCabinsPage() {
     if (isBusinessMode && passengerContext.isLoading) {
       return;
     }
-    if (selectedPassengers.length === 0) {
+    if (isBusinessMode && selectedPassengers.length === 0) {
       navigate(buildPassengerSelectPath(ProductType.Flight, cabinsReturnTo));
       return;
     }

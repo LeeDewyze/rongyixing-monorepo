@@ -13,6 +13,7 @@ import { FlightOrderPassengerTabs } from "@/components/order/flight/FlightOrderP
 import { FlightOrderRefundDialog } from "@/components/order/flight/FlightOrderRefundDialog";
 import { FlightOrderSegmentCard } from "@/components/order/flight/FlightOrderSegmentCard";
 import { FlightOrderTravelerCard } from "@/components/order/flight/FlightOrderTravelerCard";
+import { OrderInspurRepushSheet } from "@/components/order/OrderInspurRepushSheet";
 import { WebOrderToast } from "@/components/order/WebOrderDetailShell";
 import { usePageHeader } from "@/components/layout";
 import {
@@ -23,7 +24,7 @@ import {
   useNonVoluntaryRefundFlightOrder,
   useRefundFlightOrder,
 } from "@/hooks/useFlightOrderDetail";
-import { useInspurRepush } from "@/hooks/useHotelOrderDetail";
+import { useInspurRepush } from "@/hooks/useOrderInspurRepush";
 import { resolveAppChannel } from "@/lib/app-channel";
 import { formatApiError } from "@/lib/formatApiError";
 import { startFlightExchangeFlow } from "@/lib/flight-order-actions";
@@ -86,7 +87,7 @@ export function WebOrderFlightDetailPage() {
   const cancelMutation = useCancelFlightOrder();
   const refundMutation = useRefundFlightOrder();
   const nonVoluntaryRefundMutation = useNonVoluntaryRefundFlightOrder();
-  const { data: showInspurRepush } = useInspurRepush(orderId, Boolean(detail));
+  const { data: showInspurRepush } = useInspurRepush(orderId, channel, Boolean(detail));
   const payHoldSecondsRemaining = useFlightPayHoldCountdown(detail?.PayHoldMinutes);
 
   const [selectedTicketIndex, setSelectedTicketIndex] = useState(0);
@@ -95,6 +96,7 @@ export function WebOrderFlightDetailPage() {
   const [refundOpen, setRefundOpen] = useState(false);
   const [refundKind, setRefundKind] = useState<FlightRefundKind>("voluntary");
   const [explainOpen, setExplainOpen] = useState(false);
+  const [repushOpen, setRepushOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [suppressFooterActions, setSuppressFooterActions] = useState(false);
   const [exchangePending, setExchangePending] = useState(false);
@@ -112,6 +114,10 @@ export function WebOrderFlightDetailPage() {
       setExplainOpen(false);
       return;
     }
+    if (repushOpen) {
+      setRepushOpen(false);
+      return;
+    }
     const fromBookFlow =
       (location.state as OrderDetailLocationState | null)?.bookedOrderId === orderId ||
       consumeFlightBookExitToHome();
@@ -120,7 +126,7 @@ export function WebOrderFlightDetailPage() {
       return;
     }
     leaveDetail();
-  }, [billOpen, explainOpen, leaveDetail, location.state, navigate, orderId]);
+  }, [billOpen, explainOpen, leaveDetail, location.state, navigate, orderId, repushOpen]);
 
   usePageHeader({ visible: false });
 
@@ -399,7 +405,7 @@ export function WebOrderFlightDetailPage() {
               <button
                 type="button"
                 className="w-full rounded-xl bg-white py-3 text-[14px] font-medium text-[#2768FA] shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
-                onClick={() => showToast("重推浪潮功能即将上线")}
+                onClick={() => setRepushOpen(true)}
               >
                 重推浪潮
               </button>
@@ -459,6 +465,13 @@ export function WebOrderFlightDetailPage() {
             open={explainOpen}
             explain={selectedTicket?.Explain}
             onClose={() => setExplainOpen(false)}
+          />
+          <OrderInspurRepushSheet
+            open={repushOpen}
+            orderId={detail.OrderId}
+            channel={channel}
+            onClose={() => setRepushOpen(false)}
+            onSubmitted={showToast}
           />
         </>
       ) : null}

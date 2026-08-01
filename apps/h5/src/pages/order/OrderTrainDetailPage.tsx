@@ -20,6 +20,7 @@ import { TrainOrderJourneyCard } from "@/components/order/train/TrainOrderJourne
 import { TrainOrderPassengerTabs } from "@/components/order/train/TrainOrderPassengerTabs";
 import { TrainOrderRefundDialog } from "@/components/order/train/TrainOrderRefundDialog";
 import { TrainOrderTravelerCard } from "@/components/order/train/TrainOrderTravelerCard";
+import { OrderInspurRepushSheet } from "@/components/order/OrderInspurRepushSheet";
 import { TrainScheduleSheet } from "@/components/train/TrainScheduleSheet";
 import {
   useCancelTrainOrder,
@@ -29,6 +30,7 @@ import {
   useTrainOrderDetail,
   useTrainPayHoldCountdown,
 } from "@/hooks/useTrainOrderDetail";
+import { useInspurRepush } from "@/hooks/useOrderInspurRepush";
 import { useTrainSchedule } from "@/hooks/useTrainSchedule";
 import { resolveAppChannel } from "@/lib/app-channel";
 import { formatApiError } from "@/lib/formatApiError";
@@ -89,6 +91,7 @@ export function OrderTrainDetailPage() {
   const issueMutation = useIssueTrainOrder();
   const refundMutation = useRefundTrainOrder();
   const payHoldSecondsRemaining = useTrainPayHoldCountdown(detail?.PayHoldMinutes);
+  const { data: showInspurRepush } = useInspurRepush(orderId, channel, Boolean(detail));
 
   const [selectedTicketIndex, setSelectedTicketIndex] = useState(0);
   const [billOpen, setBillOpen] = useState(false);
@@ -97,6 +100,7 @@ export function OrderTrainDetailPage() {
   const [refundOpen, setRefundOpen] = useState(false);
   const [refundPassenger, setRefundPassenger] = useState<TrainPassengerInfo | undefined>();
   const [explainOpen, setExplainOpen] = useState(false);
+  const [repushOpen, setRepushOpen] = useState(false);
   const [scheduleParams, setScheduleParams] = useState<TrainScheduleParams | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [suppressFooterActions, setSuppressFooterActions] = useState(false);
@@ -115,8 +119,12 @@ export function OrderTrainDetailPage() {
       setExplainOpen(false);
       return;
     }
+    if (repushOpen) {
+      setRepushOpen(false);
+      return;
+    }
     leaveDetail();
-  }, [billOpen, explainOpen, leaveDetail]);
+  }, [billOpen, explainOpen, leaveDetail, repushOpen]);
 
   usePageHeader({ visible: false });
 
@@ -354,6 +362,16 @@ export function OrderTrainDetailPage() {
             <FlightOrderContactCard contact={detail.Contact} />
 
             <HotelOrderApprovalSection histories={detail.Histories ?? []} />
+
+            {showInspurRepush ? (
+              <button
+                type="button"
+                className="w-full rounded-xl bg-white py-3 text-[14px] font-medium text-brand-primary shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
+                onClick={() => setRepushOpen(true)}
+              >
+                重推浪潮
+              </button>
+            ) : null}
           </div>
         )}
       </div>
@@ -417,6 +435,13 @@ export function OrderTrainDetailPage() {
             fromStation={selectedTicket?.Trips[0]?.FromStationName}
             toStation={selectedTicket?.Trips[0]?.ToStationName}
             onClose={() => setScheduleParams(null)}
+          />
+          <OrderInspurRepushSheet
+            open={repushOpen}
+            orderId={detail.OrderId}
+            channel={channel}
+            onClose={() => setRepushOpen(false)}
+            onSubmitted={showToast}
           />
         </>
       ) : null}

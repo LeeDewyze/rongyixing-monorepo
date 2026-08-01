@@ -416,7 +416,7 @@ export function FlightListPage() {
     const segment = displayed.find((s) => s.Id === flightId);
     if (!segment) return;
     if (isBusinessMode && passengerContext.isLoading) return;
-    if (selectedPassengers.length === 0) {
+    if (isBusinessMode && selectedPassengers.length === 0) {
       setPassengerAlertOpen(true);
       return;
     }
@@ -460,6 +460,7 @@ export function FlightListPage() {
           toName={toName}
           passengerHref={buildPassengerSelectPath(ProductType.Flight, listReturnTo)}
           passengerCount={selectedPassengers.length}
+          showPassengerEntry={isBusinessMode}
           selfBookOnly={passengerContext.isSelfBookOnly}
           modifyOpen={modifyOpen}
           onBack={handleHeaderBack}

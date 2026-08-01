@@ -131,3 +131,40 @@ export interface PayProcessResponse {
   Success?: boolean;
   Message?: string;
 }
+
+export interface OrderRepushParams {
+  channel?: "tmc" | "tourist";
+  OrderId: string;
+}
+
+export interface OrderRepushPassenger {
+  Id: string;
+  Name: string;
+  Mobile?: string;
+}
+
+export interface OrderRepushLinkmanSearchParams {
+  channel?: "tmc" | "tourist";
+  name?: string;
+}
+
+export interface OrderRepushLinkman {
+  LinkmanId: string;
+  LinkmanName: string;
+  LinkmanMobile?: string;
+}
+
+export interface OrderRepushSubmitItem extends OrderRepushLinkman {
+  OrderId: string;
+  PassengerId: string;
+}
+
+export interface OrderRepushSubmitParams {
+  channel?: "tmc" | "tourist";
+  Items: OrderRepushSubmitItem[];
+}
+
+export interface OrderRepushSubmitResponse {
+  Success: boolean;
+  Message?: string;
+}

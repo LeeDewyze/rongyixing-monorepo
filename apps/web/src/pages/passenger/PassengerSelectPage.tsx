@@ -70,14 +70,17 @@ export function PassengerSelectPage() {
 
   const returnToTravelMode = useMemo(() => resolveReturnToTravelMode(returnTo), [returnTo]);
   const isBusinessMode = isBusinessTravelMode(returnToTravelMode);
+  const isTouristMode = !isBusinessMode;
   const passengerContext = useBusinessSelfBookPassenger(forType, isBusinessMode);
   const selected = passengerContext.passengers;
   const setSelected = passengerContext.setSelected;
-  const { data: allowExternal } = useAllowExternalPassengers();
+  const { data: allowExternal } = useAllowExternalPassengers(isBusinessMode);
   const removeExternal = useRemoveExternalPassenger();
   const removeStaffCredential = useRemoveStaffCredential();
 
-  const [tab, setTab] = useState<PassengerTabKey>("employee");
+  const [tab, setTab] = useState<PassengerTabKey>(
+    isTouristMode ? "external" : "employee",
+  );
   const [keyword, setKeyword] = useState("");
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [selectedSheetOpen, setSelectedSheetOpen] = useState(false);
@@ -101,8 +104,17 @@ export function PassengerSelectPage() {
     navigate(returnTo, { replace: true });
   }, [navigate, passengerContext.isLoading, passengerContext.isSelfBookOnly, returnTo]);
 
-  const staffQuery = useStaffList(debouncedKeyword, tab === "employee");
-  const externalQuery = useExternalPassengerList(debouncedKeyword, tab === "external");
+  useEffect(() => {
+    setTab(isTouristMode ? "external" : "employee");
+  }, [isTouristMode]);
+
+  const activeTab: PassengerTabKey = isTouristMode ? "external" : tab;
+  const canManageExternalPassengers = isTouristMode || Boolean(allowExternal);
+  const staffQuery = useStaffList(debouncedKeyword, isBusinessMode && activeTab === "employee");
+  const externalQuery = useExternalPassengerList(
+    debouncedKeyword,
+    canManageExternalPassengers && activeTab === "external",
+  );
 
   const staffList = useMemo(
     () => staffQuery.data?.pages.flatMap((p) => p.Staffs ?? []) ?? [],
@@ -266,12 +278,13 @@ export function PassengerSelectPage() {
     }
   }
 
-  const isLoading = tab === "employee" ? staffQuery.isLoading : externalQuery.isLoading;
-  const listError = tab === "employee" ? staffQuery.error : externalQuery.error;
-  const hasMore = tab === "employee" ? staffQuery.hasNextPage : externalQuery.hasNextPage;
-  const fetchMore = tab === "employee" ? staffQuery.fetchNextPage : externalQuery.fetchNextPage;
+  const isLoading = activeTab === "employee" ? staffQuery.isLoading : externalQuery.isLoading;
+  const listError = activeTab === "employee" ? staffQuery.error : externalQuery.error;
+  const hasMore = activeTab === "employee" ? staffQuery.hasNextPage : externalQuery.hasNextPage;
+  const fetchMore =
+    activeTab === "employee" ? staffQuery.fetchNextPage : externalQuery.fetchNextPage;
   const isFetchingMore =
-    tab === "employee" ? staffQuery.isFetchingNextPage : externalQuery.isFetchingNextPage;
+    activeTab === "employee" ? staffQuery.isFetchingNextPage : externalQuery.isFetchingNextPage;
 
   return (
     <div className={WEB_PAGE_ROOT}>
@@ -284,7 +297,11 @@ export function PassengerSelectPage() {
         onSearchClick={() => inputRef.current?.focus()}
         inputRef={inputRef}
         tone="form"
-        tabs={allowExternal ? <PassengerSegmentTabs active={tab} onChange={setTab} /> : null}
+        tabs={
+          isBusinessMode && allowExternal ? (
+            <PassengerSegmentTabs active={activeTab} onChange={setTab} />
+          ) : null
+        }
         footer={
           <PassengerPickerFooter
             selectedCount={selected.length}
@@ -295,7 +312,7 @@ export function PassengerSelectPage() {
         }
       >
         <div className="pb-4 pt-1">
-          {tab === "external" && allowExternal ? (
+          {activeTab === "external" && canManageExternalPassengers ? (
             <PassengerAddExternalButton onClick={openExternalAdd} />
           ) : null}
 
@@ -305,7 +322,7 @@ export function PassengerSelectPage() {
             <p className="mx-4 py-4 text-sm text-[#ff4d4f]">{formatApiError(listError)}</p>
           ) : null}
 
-          {tab === "employee" ? (
+          {activeTab === "employee" ? (
             <>
               {staffList.map((staff) => (
                 <EmployeePassengerCard

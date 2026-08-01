@@ -5,6 +5,7 @@ interface FlightListHeaderProps {
   toName: string;
   passengerHref: string;
   passengerCount: number;
+  showPassengerEntry?: boolean;
   selfBookOnly?: boolean;
   modifyOpen: boolean;
   onBack: () => void;
@@ -51,6 +52,7 @@ export function FlightListHeader({
   toName,
   passengerHref,
   passengerCount,
+  showPassengerEntry = true,
   selfBookOnly = false,
   modifyOpen,
   onBack,
@@ -108,7 +110,7 @@ export function FlightListHeader({
           >
             差旅标准
           </button>
-        ) : (
+        ) : showPassengerEntry ? (
           <Link
             to={passengerHref}
             className="relative flex h-11 w-10 shrink-0 items-center justify-center text-white active:opacity-70"
@@ -121,7 +123,7 @@ export function FlightListHeader({
               </span>
             ) : null}
           </Link>
-        )}
+        ) : null}
       </div>
     </div>
   );

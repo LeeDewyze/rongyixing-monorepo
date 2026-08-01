@@ -302,6 +302,7 @@ Reference files:
 - 2026-07-31 - TravelPolicyDialog: added a shared H5/Web policy-detail dialog for self-book-only employees. It reads legacy employee `Policy` data and presents flight, train, and hotel standards without conflating the existing “过滤差标” interaction.
 - 2026-08-01 - Hotel order list status context: kept the order-level status badge, added legacy hotel payment type beside the amount, and added room-level status beside the passenger for both H5 and Web cards.
 - 2026-08-01 - Flight/train order list status context: moved ticket-level status beside passenger names, added “含保险” amount metadata, and surfaced train `CommandPrompt` warnings in both H5 and Web order cards.
+- 2026-08-01 - Order Inspur repush sheet: added a shared H5/Web TMC order-detail bottom sheet for “重推浪潮”, using compact passenger cards, optional per-passenger linkman selection, loading/empty/error states, and a fixed gradient submit action.
 
 ## H5 Dialog And Sheet Inventory
 
@@ -372,6 +373,7 @@ Before creating any new dialog, sheet, toast, or modal-like surface, first check
 - `apps/h5/src/components/flight/FlightSegmentCard.tsx` - reference dense result card with right-anchored price, compact metadata, value badges, and tap feedback.
 - `apps/h5/src/components/flight/FlightPolicyAlertDialog.tsx` - flight-domain wrapper for policy blocking prompts, reusing the shared warm-reminder policy dialog presentation.
 - `apps/h5/src/components/policy/TravelPolicyDialog.tsx` - self-book employee travel-policy detail dialog with flight, train, hotel sections plus loading and empty states.
+- `apps/h5/src/components/order/OrderInspurRepushSheet.tsx` - TMC order-detail Inspur repush sheet with passenger selection, linkman search, skeleton loading, empty state, and submit feedback.
 - `apps/h5/src/pages/hotel/HotelListPage.tsx` - hotel result list using the travel list shell with fixed header, sticky query strip, internal scrolling, and bottom toolbar.
 - `apps/h5/src/components/hotel/HotelListHeader.tsx` - compact hotel list query header with back, summary, and profile actions.
 - `apps/h5/src/components/hotel/HotelListToolbar.tsx` - fixed hotel list bottom toolbar for recommended, price/star, location, and filter entry points.
