@@ -300,6 +300,8 @@ Reference files:
 - 2026-06-30 - HotelList filter entry grouping: scoped the bottom toolbar entries into basic filters (`sort/star/category/price`), location-only filters, and amenity filters (`brand/theme/service/facility`); single-section sheets hide the outer rail so location categories occupy the first visible column.
 - 2026-06-30 - HotelList location dirty marker: location category buttons now show a small brand dot when any child geo under that category is selected, matching the filter rail dirty-state pattern inside the custom location panel.
 - 2026-07-31 - TravelPolicyDialog: added a shared H5/Web policy-detail dialog for self-book-only employees. It reads legacy employee `Policy` data and presents flight, train, and hotel standards without conflating the existing “过滤差标” interaction.
+- 2026-08-01 - Hotel order list status context: kept the order-level status badge, added legacy hotel payment type beside the amount, and added room-level status beside the passenger for both H5 and Web cards.
+- 2026-08-01 - Flight/train order list status context: moved ticket-level status beside passenger names, added “含保险” amount metadata, and surfaced train `CommandPrompt` warnings in both H5 and Web order cards.
 
 ## H5 Dialog And Sheet Inventory
 

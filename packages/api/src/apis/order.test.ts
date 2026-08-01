@@ -192,6 +192,7 @@ describe("normalizeOrderListResponse", () => {
             Status: "Completed",
             StatusName: "交易完成",
             TotalAmount: 860,
+            OrderInsurances: [{ Id: "INS-1" }],
             OrderFlightTickets: [
               {
                 Id: "TICKET-1",
@@ -240,6 +241,7 @@ describe("normalizeOrderListResponse", () => {
       TicketId: "TICKET-1",
       TicketStatusName: "已出票",
       PassengerNames: "姜茗豪、申晓杰",
+      HasInsurance: true,
       Actions: [],
       Tickets: [
         {
@@ -329,6 +331,8 @@ describe("normalizeOrderListResponse", () => {
             OrderHotels: [
               {
                 HotelName: "北京朝阳望京科技园亚朵酒店",
+                PaymentType: 2,
+                StatusName: "预订成功",
                 BeginDate: "2026-06-21",
                 EndDate: "2026-06-22T00:00:00",
                 countDay: 1,
@@ -355,7 +359,78 @@ describe("normalizeOrderListResponse", () => {
       Nights: 1,
       PassengerNames: "SUN/XUE",
       TotalAmount: 633,
+      PaymentType: 2,
+      HotelStatusName: "预订成功",
     });
+  });
+
+  it("maps TMC hotel actions from order-level legacy variables", () => {
+    const response = normalizeOrderListResponse(
+      {
+        Orders: [
+          {
+            Id: "HOTEL-TMC-1",
+            Status: "等待支付",
+            StatusName: "等待支付",
+            Variables: JSON.stringify({ isPay: true, isShowCancelButton: true }),
+            OrderHotels: [{ Id: "ROOM-1", HotelName: "北京饭店", Variables: "{}" }],
+          },
+        ],
+      },
+      OrderListTabId.Hotel,
+      "tmc",
+    );
+
+    expect(response.Orders[0]?.Actions).toEqual([
+      { kind: "cancel", label: "取消" },
+      { kind: "pay", label: "支付" },
+    ]);
+  });
+
+  it("maps tourist hotel cancel action from room-level button variables", () => {
+    const response = normalizeOrderListResponse(
+      {
+        Orders: [
+          {
+            Id: "HOTEL-TOURIST-1",
+            Status: "等待支付",
+            StatusName: "等待支付",
+            Variables: JSON.stringify({ isPay: false, isShowCancelButton: false }),
+            OrderHotels: [
+              {
+                Id: "ROOM-1",
+                HotelName: "北京饭店",
+                Variables: JSON.stringify({ isBtn: 1, btnValue: "取消订单" }),
+              },
+            ],
+          },
+        ],
+      },
+      OrderListTabId.Hotel,
+      "tourist",
+    );
+
+    expect(response.Orders[0]?.Actions).toEqual([{ kind: "cancel", label: "取消" }]);
+  });
+
+  it("hides tourist hotel pay action while room status is cancelling", () => {
+    const response = normalizeOrderListResponse(
+      {
+        Orders: [
+          {
+            Id: "HOTEL-TOURIST-2",
+            Status: "等待支付",
+            StatusName: "等待支付",
+            Variables: JSON.stringify({ isPay: true }),
+            OrderHotels: [{ Id: "ROOM-1", HotelName: "北京饭店", StatusName: "取消中" }],
+          },
+        ],
+      },
+      OrderListTabId.Hotel,
+      "tourist",
+    );
+
+    expect(response.Orders[0]?.Actions).toEqual([]);
   });
 
   it("maps legacy train travel trip price from Price field", () => {
@@ -431,6 +506,7 @@ describe("normalizeOrderListResponse", () => {
             Id: "20760000000235",
             StatusName: "交易完成",
             TotalAmount: 124.5,
+            Variables: JSON.stringify({ insuranceAmount: 20 }),
             OrderTrainTickets: [
               {
                 Id: "20760000000100",
@@ -441,6 +517,7 @@ describe("normalizeOrderListResponse", () => {
                   isShow: true,
                   isShowExchangeButton: true,
                   isShowRefundButton: true,
+                  CommandPrompt: "请联系供应商确认出票",
                 }),
                 OrderTrainTrips: [
                   {
@@ -484,7 +561,9 @@ describe("normalizeOrderListResponse", () => {
       RouteTitle: "1999 北京—上海",
       TicketStatusName: "已出票",
       TicketId: "20760000000100",
+      CommandPrompt: "请联系供应商确认出票",
     });
+    expect(response.Orders[0]).toMatchObject({ HasInsurance: true });
     expect(response.Orders[0]?.Tickets?.[0]?.Actions).toEqual(
       expect.arrayContaining([
         { kind: "refund", label: "退票" },

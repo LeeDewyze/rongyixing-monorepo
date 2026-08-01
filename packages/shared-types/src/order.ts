@@ -35,6 +35,7 @@ export interface OrderTrainListTicket {
   DepartTime: string;
   PassengerNames: string;
   TicketStatusName?: string;
+  CommandPrompt?: string;
   Actions?: OrderAction[];
 }
 
@@ -56,6 +57,7 @@ export interface OrderListItemBase {
   Status: string;
   StatusName: string;
   TotalAmount?: number;
+  HasInsurance?: boolean;
   Actions?: OrderAction[];
   CreateTime?: string;
 }
@@ -86,6 +88,10 @@ export interface OrderHotelListItem extends OrderListItemBase {
   tabId: OrderListTabId.Hotel;
   /** First room id — used for hotel cancellation from list. */
   OrderHotelId?: string;
+  /** Legacy OrderHotels[0].PaymentType: 1 prepaid, 2 pay at hotel. */
+  PaymentType?: string | number;
+  /** Legacy OrderHotels[0].StatusName, displayed beside the hotel passenger. */
+  HotelStatusName?: string;
   HotelName: string;
   CheckInDate: string;
   CheckOutDate: string;

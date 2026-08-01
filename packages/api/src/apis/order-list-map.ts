@@ -8,6 +8,7 @@ import {
   type OrderListResponse,
   type OrderListScope,
   type OrderTrainListTicket,
+  type ProductChannel,
 } from "@ryx/shared-types";
 
 export type OrderListType = "Flight" | "Train" | "Hotel" | "Car" | "RentalCar";
@@ -113,6 +114,15 @@ function readNumber(value: unknown): number | undefined {
   return undefined;
 }
 
+function readStringOrNumber(value: unknown): string | number | undefined {
+  const number = readNumber(value);
+  if (number != null) {
+    return number;
+  }
+  const text = readString(value);
+  return text || undefined;
+}
+
 function parseVariablesObj(order: LegacyRecord): LegacyRecord | undefined {
   if (asRecord(order.VariablesObj)) {
     return order.VariablesObj as LegacyRecord;
@@ -156,6 +166,57 @@ function buildActions(variables?: LegacyRecord): OrderAction[] {
   return actions;
 }
 
+function isWaitHandleOrder(order: LegacyRecord): boolean {
+  const status = readString(order.Status);
+  const statusName = readString(order.StatusName);
+  return ["审批处理", "等待处理", "等待审批"].includes(status) || statusName === "等待处理";
+}
+
+function isTruthyFlag(value: unknown): boolean {
+  const text = readString(value).toLowerCase();
+  return value === true || value === 1 || text === "1" || text === "true";
+}
+
+function hasLegacyOrderInsurance(order: LegacyRecord, variables?: LegacyRecord): boolean {
+  if (asArray<LegacyRecord>(order.OrderInsurances).length > 0) {
+    return true;
+  }
+  const insuranceAmount = readNumber(variables?.insuranceAmount ?? variables?.InsuranceAmount);
+  return insuranceAmount != null && insuranceAmount > 0;
+}
+
+function buildHotelActions(
+  order: LegacyRecord,
+  hotel: LegacyRecord,
+  channel?: ProductChannel,
+): OrderAction[] {
+  const orderVariables = parseVariablesObj(order);
+  const hotelVariables = parseVariablesObj(hotel);
+  const actions: OrderAction[] = [];
+
+  if (channel === "tourist") {
+    if (isTruthyFlag(hotelVariables?.isBtn) && hotelVariables?.btnValue === "取消订单") {
+      actions.push({ kind: "cancel", label: "取消" });
+    }
+    if (
+      !isWaitHandleOrder(order) &&
+      readString(hotel.StatusName) !== "取消中" &&
+      isTruthyFlag(orderVariables?.isPay)
+    ) {
+      actions.push({ kind: "pay", label: "支付" });
+    }
+    return actions;
+  }
+
+  if (isTruthyFlag(orderVariables?.isShowCancelButton)) {
+    actions.push({ kind: "cancel", label: "取消" });
+  }
+  if (!isWaitHandleOrder(order) && isTruthyFlag(orderVariables?.isPay)) {
+    actions.push({ kind: "pay", label: "支付" });
+  }
+  return actions;
+}
+
 function buildFlightTrainActions(
   variables: LegacyRecord | undefined,
   tag: "flight" | "train",
@@ -184,14 +245,16 @@ function isNormalizedOrder(item: unknown): item is OrderListItem {
   return record != null && typeof record.tabId === "number" && typeof record.OrderId === "string";
 }
 
-function mapLegacyHotelOrder(order: LegacyRecord): OrderHotelListItem | null {
+function mapLegacyHotelOrder(
+  order: LegacyRecord,
+  channel?: ProductChannel,
+): OrderHotelListItem | null {
   const hotels = asArray<LegacyRecord>(order.OrderHotels);
   const hotel = hotels[0];
   if (!hotel) {
     return null;
   }
 
-  const variables = parseVariablesObj(order);
   const passengerNames =
     joinNames(hotels.map((item) => readString(asRecord(item.Passenger)?.Name))) ||
     joinNames(asArray<LegacyRecord>(order.OrderPassengers).map((item) => readString(item.Name)));
@@ -204,13 +267,15 @@ function mapLegacyHotelOrder(order: LegacyRecord): OrderHotelListItem | null {
     StatusName: readString(order.StatusName ?? order.Status),
     TotalAmount: readNumber(order.TotalAmount),
     OrderHotelId: readString(hotel.Id) || undefined,
+    PaymentType: readStringOrNumber(hotel.PaymentType),
+    HotelStatusName: readString(hotel.StatusName) || undefined,
     HotelName: readString(hotel.HotelName ?? hotel.Name),
     CheckInDate: formatDateOnly(hotel.BeginDate ?? hotel.CheckInDate),
     CheckOutDate: formatDateOnly(hotel.EndDate ?? hotel.CheckOutDate),
     Nights: readNumber(hotel.countDay ?? hotel.Nights) ?? 1,
     RoomType: readString(hotel.RoomName ?? hotel.RoomType),
     PassengerNames: passengerNames,
-    Actions: buildActions(variables),
+    Actions: buildHotelActions(order, hotel, channel),
   };
 }
 
@@ -284,6 +349,7 @@ function mapLegacyFlightOrder(order: LegacyRecord): OrderListItem | null {
     Status: readString(order.Status),
     StatusName: readString(order.StatusName ?? order.Status),
     TotalAmount: readNumber(order.TotalAmount),
+    HasInsurance: hasLegacyOrderInsurance(order, variables),
     RouteTitle:
       firstListTicket?.RouteTitle ??
       `${readString(trip.FlightNumber)} ${readString(trip.FromCityName)}—${readString(trip.ToCityName)}`.trim(),
@@ -417,6 +483,7 @@ function mapLegacyTrainTicketForList(ticket: LegacyRecord): OrderTrainListTicket
   }
 
   const ticketVariables = parseVariablesObj(ticket);
+  const commandPrompt = readString(ticketVariables?.CommandPrompt);
   const passengerNames =
     joinNames(
       trips.map((item) => {
@@ -434,6 +501,7 @@ function mapLegacyTrainTicketForList(ticket: LegacyRecord): OrderTrainListTicket
     PassengerNames: passengerNames,
     TicketStatusName:
       readString(ticket.AppStatusName ?? ticket.StatusName ?? ticket.Status) || undefined,
+    CommandPrompt: commandPrompt || undefined,
     Actions: buildFlightTrainActions(ticketVariables, "train"),
   };
 }
@@ -478,6 +546,7 @@ function mapLegacyTrainOrder(order: LegacyRecord): OrderListItem | null {
     Status: readString(order.Status),
     StatusName: readString(order.StatusName ?? order.Status),
     TotalAmount: readNumber(order.TotalAmount),
+    HasInsurance: hasLegacyOrderInsurance(order, variables),
     RouteTitle:
       firstListTicket?.RouteTitle ??
       `${readString(trip.TrainCode)} ${readString(trip.FromStationName)}—${readString(trip.ToStationName)}`.trim(),
@@ -497,14 +566,18 @@ function mapLegacyTrainOrder(order: LegacyRecord): OrderListItem | null {
   };
 }
 
-function mapLegacyOrder(order: LegacyRecord, tabId: OrderListTabId): OrderListItem | null {
+function mapLegacyOrder(
+  order: LegacyRecord,
+  tabId: OrderListTabId,
+  channel?: ProductChannel,
+): OrderListItem | null {
   if (isNormalizedOrder(order)) {
     return order;
   }
 
   switch (tabId) {
     case OrderListTabId.Hotel:
-      return mapLegacyHotelOrder(order);
+      return mapLegacyHotelOrder(order, channel);
     case OrderListTabId.Flight:
       return mapLegacyFlightOrder(order);
     case OrderListTabId.Train:
@@ -717,11 +790,12 @@ function extractPayload(data: unknown): LegacyRecord {
 export function normalizeOrderListResponse(
   data: unknown,
   tabId: OrderListTabId,
+  channel?: ProductChannel,
 ): OrderListResponse {
   const payload = extractPayload(data);
   const rawOrders = asArray<unknown>(payload.Orders);
   const orders = rawOrders
-    .map((item) => mapLegacyOrder(asRecord(item) ?? {}, tabId))
+    .map((item) => mapLegacyOrder(asRecord(item) ?? {}, tabId, channel))
     .filter((item): item is OrderListItem => item != null);
 
   const total = readNumber(payload.DataCount) ?? readNumber(payload.TotalCount) ?? orders.length;

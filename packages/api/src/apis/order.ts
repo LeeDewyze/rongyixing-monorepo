@@ -181,7 +181,7 @@ export function createOrderApi(proxy: ProxyClient): OrderApi {
         method: orderMethods(params).LIST,
         data: request,
       });
-      return normalizeOrderListResponse(data, tabId);
+      return normalizeOrderListResponse(data, tabId, params.channel);
     },
     async getDetail(params) {
       const orderId = params.OrderId;

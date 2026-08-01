@@ -11,6 +11,7 @@ import type {
 import { OrderListTabId } from "@ryx/shared-types";
 
 import { ORDER_CARD_BODY_GRADIENT, ORDER_FONT } from "@/config/order-assets";
+import { formatHotelPaymentType } from "@/lib/hotel-order-detail";
 import { getOrderActions, shouldGrayPrice, shouldShowTicketStatus } from "@/lib/order-status";
 
 import { OrderActionBar } from "./OrderActionBar";
@@ -24,11 +25,20 @@ interface OrderListCardProps {
   onCardClick?: (item: OrderListItem) => void;
 }
 
-function DetailRow({ label, value }: { label: string; value: string }) {
+function DetailRow({ label, value }: { label: string; value: ReactNode }) {
   return (
     <p className={`text-[14px] font-normal leading-none text-[#666666] ${ORDER_FONT}`}>
       {label}：{value}
     </p>
+  );
+}
+
+function passengerValue(names: string, statusName?: string, showStatus = true) {
+  return (
+    <>
+      {names}
+      {showStatus && statusName ? `（${statusName}）` : null}
+    </>
   );
 }
 
@@ -49,13 +59,19 @@ function TrainTicketBlock({
         >
           {ticket.RouteTitle}
         </p>
-        {showStatus && ticket.TicketStatusName ? (
-          <OrderStatusBadge label={ticket.TicketStatusName} variant="ticket" />
-        ) : null}
       </div>
       <div className="mt-2 space-y-1">
         <DetailRow label="发车时间" value={ticket.DepartTime} />
-        <DetailRow label="旅客姓名" value={ticket.PassengerNames} />
+        <DetailRow
+          label="旅客姓名"
+          value={passengerValue(ticket.PassengerNames, ticket.TicketStatusName, showStatus)}
+        />
+        {ticket.CommandPrompt ? (
+          <DetailRow
+            label="异常通知"
+            value={<span className="text-[#FF4D4F]">{ticket.CommandPrompt}</span>}
+          />
+        ) : null}
       </div>
       {(ticket.Actions?.length ?? 0) > 0 ? (
         <div className="mt-3 flex items-center justify-end">
@@ -96,13 +112,13 @@ function FlightTicketBlock({
         >
           {ticket.RouteTitle}
         </p>
-        {showStatus && ticket.TicketStatusName ? (
-          <OrderStatusBadge label={ticket.TicketStatusName} variant="ticket" />
-        ) : null}
       </div>
       <div className="mt-2 space-y-1">
         <DetailRow label="起飞时间" value={ticket.DepartTime} />
-        <DetailRow label="旅客姓名" value={ticket.PassengerNames} />
+        <DetailRow
+          label="旅客姓名"
+          value={passengerValue(ticket.PassengerNames, ticket.TicketStatusName, showStatus)}
+        />
       </div>
       {(ticket.Actions?.length ?? 0) > 0 ||
       ticket.IsCustomApplyRefunding ||
@@ -210,7 +226,15 @@ function renderBody(
               value={`${item.CheckInDate}至${item.CheckOutDate} ${item.Nights}晚`}
             />
             <DetailRow label="入住房型" value={item.RoomType} />
-            <DetailRow label="旅客姓名" value={item.PassengerNames} />
+            <DetailRow
+              label="旅客姓名"
+              value={
+                <>
+                  {item.PassengerNames}
+                  {item.HotelStatusName ? `（${item.HotelStatusName}）` : null}
+                </>
+              }
+            />
           </div>
         </>
       );
@@ -290,15 +314,24 @@ export function OrderListCard({
           className={`mt-3 flex items-center gap-3 ${showPrice ? "justify-between" : "justify-end"}`}
         >
           {showPrice ? (
-            <p
-              className={`leading-none ${ORDER_FONT} ${
-                grayPrice
-                  ? "text-[24px] font-medium text-[#8E8E93]"
-                  : "text-[24px] font-medium text-[#FF383C]"
-              }`}
-            >
-              ¥{item.TotalAmount ?? "-"}
-            </p>
+            <div className="flex min-w-0 items-baseline gap-1">
+              <p
+                className={`leading-none ${ORDER_FONT} ${
+                  grayPrice
+                    ? "text-[24px] font-medium text-[#8E8E93]"
+                    : "text-[24px] font-medium text-[#FF383C]"
+                }`}
+              >
+                ¥{item.TotalAmount ?? "-"}
+              </p>
+              {item.tabId === OrderListTabId.Hotel && item.PaymentType != null ? (
+                <span className={`text-[14px] text-[#666666] ${ORDER_FONT}`}>
+                  （{formatHotelPaymentType(item.PaymentType)}）
+                </span>
+              ) : item.tabId !== OrderListTabId.Hotel && item.HasInsurance ? (
+                <span className={`text-[14px] text-[#666666] ${ORDER_FONT}`}>（含保险）</span>
+              ) : null}
+            </div>
           ) : null}
           <OrderActionBar actions={actions} onAction={(action) => onAction?.(action, item)} />
         </footer>
