@@ -15,6 +15,12 @@ interface PassengerCredentialFormProps {
   fixedName?: string;
 }
 
+type PassportNameMode = "cn" | "en";
+
+function resolvePassportNameMode(values: CredentialFormValues): PassportNameMode {
+  return values.Surname !== undefined || values.Givenname !== undefined ? "en" : "cn";
+}
+
 function FormRow({
   label,
   children,
@@ -442,12 +448,23 @@ export function PassengerCredentialForm({
   const [genderSheetOpen, setGenderSheetOpen] = useState(false);
   const [dateSheet, setDateSheet] = useState<"birthday" | "expiration" | null>(null);
   const [nameRulesOpen, setNameRulesOpen] = useState(false);
+  const [passportNameMode, setPassportNameMode] = useState<PassportNameMode>(() =>
+    resolvePassportNameMode(values),
+  );
   const showExtra = !isIdCardType(values.Type);
   const requireMobile = mode === "external";
   const isPassport = values.Type === CredentialType.Passport;
-  const showPassportEnglish = isPassport && values.Surname !== undefined;
+  const showPassportEnglish = isPassport && passportNameMode === "en";
   const isFixedNameMode = Boolean(fixedName);
   const currentYear = new Date().getFullYear();
+
+  useEffect(() => {
+    if (!isPassport) return;
+    setPassportNameMode((current) => {
+      if (current === "en") return current;
+      return resolvePassportNameMode(values) === "en" ? "en" : current;
+    });
+  }, [isPassport, values.Givenname, values.Surname]);
 
   function patch(partial: Partial<CredentialFormValues>) {
     onChange({ ...values, ...partial });
@@ -477,9 +494,25 @@ export function PassengerCredentialForm({
     if (prevType === CredentialType.Passport && type !== CredentialType.Passport) {
       delete next.Surname;
       delete next.Givenname;
+      setPassportNameMode("cn");
     }
     onChange(next);
     setTypeSheetOpen(false);
+  }
+
+  function handlePassportNameModeChange(nextMode: PassportNameMode) {
+    setPassportNameMode(nextMode);
+    if (nextMode !== "en") return;
+
+    const surname = values.Surname ?? "";
+    const givenname = values.Givenname ?? "";
+    const combined = `${surname} ${givenname}`.trim();
+    onChange({
+      ...values,
+      Surname: surname,
+      Givenname: givenname,
+      ...(combined ? { Name: combined } : {}),
+    });
   }
 
   function handleSurnameChange(surname: string) {
@@ -514,7 +547,7 @@ export function PassengerCredentialForm({
                     className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                       !showPassportEnglish ? "bg-white text-[#5099fe] shadow-sm" : "text-[#999999]"
                     }`}
-                    onClick={() => patch({ Surname: undefined, Givenname: undefined })}
+                    onClick={() => handlePassportNameModeChange("cn")}
                   >
                     中文
                   </button>
@@ -523,9 +556,7 @@ export function PassengerCredentialForm({
                     className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                       showPassportEnglish ? "bg-white text-[#5099fe] shadow-sm" : "text-[#999999]"
                     }`}
-                    onClick={() =>
-                      patch({ Surname: values.Surname ?? "", Givenname: values.Givenname ?? "" })
-                    }
+                    onClick={() => handlePassportNameModeChange("en")}
                   >
                     英文
                   </button>

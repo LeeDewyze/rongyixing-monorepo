@@ -19,7 +19,7 @@ async function main() {
   await setupVConsoleFromUrl();
   await bootstrapApi();
   await bootstrapExternalTicket("/home");
-  await preloadBusinessBookingPermission(queryClient);
+  await preloadBusinessBookingPermission(queryClient, { silentUnauthorized: true });
 
   createRoot(document.getElementById("root")!).render(
     <StrictMode>

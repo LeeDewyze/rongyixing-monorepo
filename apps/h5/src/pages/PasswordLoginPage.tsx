@@ -16,11 +16,14 @@ import {
 } from "@/lib/contact-us";
 import { getApiMode } from "@/lib/env";
 import { clearPreventAutoLogin, PREVENT_AUTO_LOGIN_KEY } from "@/lib/force-logout";
+import { queryClient } from "@/lib/query";
 import {
   clearRememberedCredentials,
   loadRememberedCredentials,
   saveRememberedCredentials,
 } from "@/lib/remember-credentials";
+import { clearSession } from "@/lib/session";
+import { stopSessionGuard } from "@/lib/session-guard";
 
 const { overlay, agreement } = PASSWORD_LOGIN_SHARED;
 
@@ -152,6 +155,12 @@ export function PasswordLoginPage() {
   function showToast(message: string, tone: "success" | "error" = "error") {
     setToast({ message, tone });
   }
+
+  useEffect(() => {
+    stopSessionGuard();
+    clearSession();
+    queryClient.clear();
+  }, []);
 
   useEffect(() => {
     const preventAutoLogin = searchParams.get("preventAutoLogin");

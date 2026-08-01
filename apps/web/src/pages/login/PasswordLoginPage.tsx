@@ -10,11 +10,14 @@ import {
   getUserAgreementUrl,
 } from "@/lib/contact-us";
 import { clearPreventAutoLogin, PREVENT_AUTO_LOGIN_KEY } from "@/lib/force-logout";
+import { queryClient } from "@/lib/query";
 import {
   clearRememberedCredentials,
   loadRememberedCredentials,
   saveRememberedCredentials,
 } from "@/lib/remember-credentials";
+import { clearSession } from "@/lib/session";
+import { stopSessionGuard } from "@/lib/session-guard";
 
 type LoginMode = "password" | "sms";
 type LegalDoc = "agreement" | "privacy" | null;
@@ -304,6 +307,12 @@ export function PasswordLoginPage() {
 
   useEffect(() => {
     document.title = "融易行 - 登录";
+  }, []);
+
+  useEffect(() => {
+    stopSessionGuard();
+    clearSession();
+    queryClient.clear();
   }, []);
 
   useEffect(() => {
