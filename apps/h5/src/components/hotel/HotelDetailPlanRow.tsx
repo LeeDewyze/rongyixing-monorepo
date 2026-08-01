@@ -104,27 +104,25 @@ export function HotelDetailPlanRow({
               校验中
             </div>
           ) : (
-            <button
-              type="button"
-              aria-disabled={button.disabled}
-              onClick={onBook}
-              className={`flex w-[62px] shrink-0 flex-col overflow-hidden rounded-md border ${button.shellClass} active:opacity-90 ${
-                button.disabled ? "cursor-not-allowed" : ""
-              }`}
-            >
-              <span
-                className={`flex h-[30px] items-center justify-center px-0.5 text-center ${button.topLabelClass} ${button.topClass}`}
+            <div className="flex w-[62px] shrink-0 flex-col items-center">
+              <button
+                type="button"
+                aria-disabled={button.disabled}
+                onClick={onBook}
+                className={`flex h-[30px] w-[62px] items-center justify-center rounded-md border px-0.5 text-center ${button.shellClass} ${button.topLabelClass} ${button.topClass} active:opacity-90 ${
+                  button.disabled ? "cursor-not-allowed" : ""
+                }`}
               >
                 {button.topLabel}
-              </span>
+              </button>
               {button.bottomLabel ? (
                 <span
-                  className={`flex h-[22px] items-center justify-center border-t text-[10px] font-medium ${button.bottomClass} ${button.shellClass}`}
+                  className={`mt-0.5 min-h-[16px] text-center text-[10px] font-medium leading-4 ${button.bottomClass}`}
                 >
                   {button.bottomLabel}
                 </span>
               ) : null}
-            </button>
+            </div>
           )}
         </div>
       </div>
