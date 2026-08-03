@@ -18,7 +18,7 @@ interface OrderInspurRepushSheetProps {
 }
 
 function contactLabel(contact?: OrderRepushLinkman) {
-  if (!contact?.LinkmanName) return "不指定预订人";
+  if (!contact?.LinkmanName) return "请选择指定预订人";
   return contact.LinkmanMobile
     ? `${contact.LinkmanName} ${contact.LinkmanMobile}`
     : contact.LinkmanName;
@@ -32,7 +32,6 @@ export function OrderInspurRepushSheet({
   onClose,
   onSubmitted,
 }: OrderInspurRepushSheetProps) {
-  const [keyword, setKeyword] = useState("");
   const [selectedPassengerIds, setSelectedPassengerIds] = useState<Set<string>>(() => new Set());
   const [contactsByPassengerId, setContactsByPassengerId] = useState<
     Record<string, OrderRepushLinkman | undefined>
@@ -43,13 +42,12 @@ export function OrderInspurRepushSheet({
     orderId ? { OrderId: orderId, channel } : null,
     open,
   );
-  const linkmansQuery = useInspurRepushLinkmans({ name: keyword, channel }, open);
+  const linkmansQuery = useInspurRepushLinkmans({ channel }, open);
   const submitMutation = useSubmitInspurRepush();
   const resetSubmitMutation = submitMutation.reset;
 
   useEffect(() => {
     if (!open) {
-      setKeyword("");
       setSelectedPassengerIds(new Set());
       setContactsByPassengerId({});
       setFormError(null);
@@ -135,7 +133,9 @@ export function OrderInspurRepushSheet({
         <div className="flex items-center justify-between border-b border-[#F0F2F5] px-4 py-3">
           <div>
             <h3 className="text-[16px] font-semibold text-brand-title">重推浪潮</h3>
-            <p className="mt-0.5 text-[12px] text-[#888888]">先勾选旅客，可选择推送指定人</p>
+            <p className="mt-0.5 text-[12px] text-[#FF4D4F]">
+              先勾选旅客，可选择推送指定人，再点击重推
+            </p>
           </div>
           <button
             type="button"
@@ -148,23 +148,15 @@ export function OrderInspurRepushSheet({
           </button>
         </div>
 
-        <div className="border-b border-[#F0F2F5] px-4 py-3">
-          <input
-            type="search"
-            value={keyword}
-            onChange={(event) => setKeyword(event.target.value)}
-            placeholder="搜索推送预订人"
-            className="h-10 w-full rounded-lg bg-[#F6F8FC] px-3 text-[14px] text-brand-title outline-none transition-shadow placeholder:text-[#999999] focus-visible:ring-2 focus-visible:ring-brand-primary/30 disabled:opacity-60"
-            disabled={pending}
-          />
-          {linkmansQuery.isFetching ? (
-            <p className="mt-2 text-[12px] text-[#999999]">正在搜索预订人...</p>
-          ) : linkmanError ? (
-            <p className="mt-2 text-[12px] text-[#FF4D4F]">{linkmanError}</p>
-          ) : null}
-        </div>
-
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+          {linkmansQuery.isFetching ? (
+            <p className="mb-3 text-[12px] text-[#999999]">正在加载预订人...</p>
+          ) : linkmanError ? (
+            <p className="mb-3 rounded-lg bg-[#FFF1F0] px-3 py-2 text-[12px] text-[#FF4D4F]">
+              {linkmanError}
+            </p>
+          ) : null}
+
           {loading ? (
             <div className="space-y-3" aria-label="正在加载旅客">
               {[0, 1, 2].map((item) => (
@@ -200,11 +192,11 @@ export function OrderInspurRepushSheet({
                         disabled={pending}
                         className="mt-0.5 size-5 accent-brand-primary disabled:opacity-40"
                       />
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[15px] font-medium text-brand-title">
+                      <span className="flex min-w-0 flex-1 items-center gap-2">
+                        <span className="min-w-0 truncate text-[15px] font-medium text-brand-title">
                           {passenger.Name}
                         </span>
-                        <span className="mt-1 block truncate text-[12px] text-[#888888]">
+                        <span className="shrink-0 truncate text-[12px] text-[#888888]">
                           {passenger.Mobile || "暂无手机号"}
                         </span>
                       </span>
