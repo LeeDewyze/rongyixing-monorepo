@@ -64,6 +64,15 @@ describe("applyLegacyInitDetailResult", () => {
       { name: "Rate", value: "20%" },
     ]);
   });
+
+  it("hoists Count from FlightFareBasics when fare.Count is empty", () => {
+    const fare = applyLegacyInitDetailResult({
+      Count: "",
+      FlightFareBasics: [{ CabinCode: "Y", CabinType: 1, Count: 4 }],
+    });
+
+    expect(fare.Count).toBe(4);
+  });
 });
 
 describe("normalizeFlightDetailResponse", () => {

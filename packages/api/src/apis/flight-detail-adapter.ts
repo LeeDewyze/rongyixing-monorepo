@@ -137,6 +137,34 @@ function enrichFlightFareBasics(
   }));
 }
 
+/** Home-Detail may leave fare.Count empty while basics carry inventory. */
+export function resolveFareCount(
+  fare: FlightFare,
+  flightFareBasics: FlightFareBasic[] | undefined,
+): string | number | undefined {
+  const top = fare.Count;
+  if (top != null && top !== "") {
+    return top;
+  }
+  if (!flightFareBasics?.length) return undefined;
+
+  const counts = flightFareBasics
+    .map((basic) => basic.Count)
+    .filter((count): count is string | number => count != null && count !== "");
+
+  if (!counts.length) return undefined;
+
+  const numeric = counts
+    .map((count) => Number(count))
+    .filter((count) => Number.isFinite(count) && count > 0);
+
+  if (numeric.length === counts.length) {
+    return Math.min(...numeric);
+  }
+
+  return counts[0];
+}
+
 export function resolveCheckedBaggage(fare: FlightFare): string | undefined {
   for (const rule of fare.FlightFareRules ?? []) {
     if (rule.Name !== "托运行李额" && rule.Name !== "免费行李额") continue;
@@ -174,9 +202,7 @@ export function applyLegacyInitDetailResult(fare: FlightFare): FlightFare {
   }
 
   const flightFareBasics = enrichFlightFareBasics(fare.FlightFareBasics, fare);
-  const resolvedCount =
-    fare.Count ??
-    flightFareBasics?.find((basic) => basic.Count != null && basic.Count !== "")?.Count;
+  const resolvedCount = resolveFareCount(fare, flightFareBasics);
 
   return {
     ...fare,

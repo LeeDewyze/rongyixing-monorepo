@@ -8,6 +8,7 @@ import {
   filterFaresForFlight,
   formatCabinDiscount,
   formatCabinInfoLine,
+  formatFareRemainLabel,
   formatFareSalesPrice,
   isEconomyFare,
   isFlightFareBookable,
@@ -303,6 +304,22 @@ describe("fare baggage and remain count", () => {
     const fare = prepareFlightFareForDisplay({ Count: 5 });
     expect(shouldShowFareRemainCount(fare)).toBe(true);
     expect(fareRemainCount(fare)).toBe(5);
+    expect(formatFareRemainLabel(fare)).toBe("余票5张");
+  });
+
+  it("shows numeric remain count when inventory is at least 10", () => {
+    const fare = prepareFlightFareForDisplay({ Count: 10 });
+    expect(shouldShowFareRemainCount(fare)).toBe(false);
+    expect(formatFareRemainLabel(fare)).toBe("余票10张");
+  });
+
+  it("reads remain count from FlightFareBasics when fare.Count is empty", () => {
+    const fare = prepareFlightFareForDisplay({
+      Count: "",
+      FlightFareBasics: [{ CabinCode: "Y", CabinType: 1, Count: 4 }],
+    });
+    expect(fare.Count).toBe(4);
+    expect(formatFareRemainLabel(fare)).toBe("余票4张");
   });
 
   it("formats sales price without decimals", () => {

@@ -432,7 +432,18 @@ export function formatCabinLabel(fare: FlightFare): string {
 export function shouldShowFareRemainCount(fare: FlightFare): boolean {
   const count = prepareFlightFareForDisplay(fare).Count;
   if (count == null || count === "" || count === 0) return false;
-  return Number(count) < 10;
+  const numeric = Number(count);
+  if (!Number.isFinite(numeric) || numeric <= 0) return false;
+  return numeric < 10;
+}
+
+/** Cabin card remain label — always show the numeric inventory when available. */
+export function formatFareRemainLabel(fare: FlightFare): string | undefined {
+  const count = prepareFlightFareForDisplay(fare).Count;
+  if (count == null || count === "") return undefined;
+  const numeric = Number(count);
+  if (!Number.isFinite(numeric) || numeric <= 0) return undefined;
+  return `余票${numeric}张`;
 }
 
 /** Legacy list row: `cabin.Cabin?.Variables?.Baggage` (after initDetailResult). */

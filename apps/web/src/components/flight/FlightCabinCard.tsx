@@ -3,12 +3,11 @@ import type { FlightFare } from "@ryx/shared-types";
 import { FLIGHT_CABINS_FONT } from "@/components/flight/flight-cabins-chrome";
 import type { FlightCabinPolicyColor } from "@/lib/flight-cabin-policy";
 import {
-  fareRemainCount,
   formatCabinInfoLine,
+  formatFareRemainLabel,
   formatFareSalesPrice,
   isFlightFareBookable,
   prepareFlightFareForDisplay,
-  shouldShowFareRemainCount,
 } from "@/lib/flight-detail";
 
 interface FlightCabinCardProps {
@@ -75,8 +74,7 @@ export function FlightCabinCard({
   onShowRules,
 }: FlightCabinCardProps) {
   const cabin = prepareFlightFareForDisplay(fare);
-  const remain = fareRemainCount(cabin);
-  const showRemain = shouldShowFareRemainCount(cabin);
+  const remainLabel = formatFareRemainLabel(cabin);
   const isSoldOut = soldOut ?? !isFlightFareBookable(cabin);
 
   return (
@@ -124,9 +122,9 @@ export function FlightCabinCard({
       ) : null}
 
       <div className="mt-3 flex items-center gap-3 border-t border-[#EEF1F6] pt-2.5">
-        {showRemain && remain != null ? (
+        {remainLabel ? (
           <span className="inline-flex h-5 items-center rounded-full bg-[#F5F6F9] px-2 text-[10px] text-[#666666] ring-1 ring-[#ECEEF2]">
-            余票{remain}张
+            {remainLabel}
           </span>
         ) : null}
         <button
