@@ -306,17 +306,21 @@ export function FlightListPage() {
     setFilterApplied((prev) => mergeFilterChecks(prev, next));
   }, [rawSegments]);
 
+  const isExchangeList = isFlightExchangeListActive(searchParams, exchangeSession);
+
   const displayed = useMemo(() => {
-    let segments = initLowestPriceSegments(applyFlightFilters(rawSegments, filterApplied));
+    let segments = initLowestPriceSegments(applyFlightFilters(rawSegments, filterApplied), {
+      isExchange: isExchangeList,
+    });
     if (activeTab === "price") {
-      segments = sortByPrice(segments, priceLowToHigh);
+      segments = sortByPrice(segments, priceLowToHigh, isExchangeList);
     } else if (activeTab === "time") {
       segments = sortByTime(segments, timeEarlyToLate);
     } else {
       segments = getDefaultSortedFlights(segments);
     }
     return segments;
-  }, [rawSegments, filterApplied, activeTab, priceLowToHigh, timeEarlyToLate]);
+  }, [rawSegments, filterApplied, activeTab, priceLowToHigh, timeEarlyToLate, isExchangeList]);
 
   const filtered = isFilterActive(filterApplied);
   const { directFlights, transferFlights } = useMemo(
@@ -531,6 +535,7 @@ export function FlightListPage() {
                 key={resolveFlightSegmentId(seg)}
                 segment={seg}
                 variant={resolveFlightCardVariant(seg, "direct")}
+                isExchange={isExchangeList}
                 loading={openingCabinsId === seg.Id}
                 onClick={() => void openCabins(resolveFlightSegmentId(seg))}
               />
@@ -548,6 +553,7 @@ export function FlightListPage() {
                   key={resolveFlightSegmentId(seg)}
                   segment={seg}
                   variant={resolveFlightCardVariant(seg, "transfer")}
+                  isExchange={isExchangeList}
                   loading={openingCabinsId === seg.Id}
                   onClick={() => void openCabins(resolveFlightSegmentId(seg))}
                 />

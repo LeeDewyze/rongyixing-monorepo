@@ -6,6 +6,7 @@ import {
   formatCabinsDepartTitle,
   formatFlightAgreementAirlineLabel,
   formatFlightListMetaLine,
+  formatFlightListPriceLabel,
   formatFlightListPlaneLabel,
   formatFlightLocationLabel,
   formatFlightMealLabel,
@@ -16,8 +17,26 @@ import {
   resolveFlightCardVariant,
   formatOrderTripAirlineFlightLabel,
   resolveTripAirlineShortName,
+  resolveFlightListPriceAmount,
   shortAirlineName,
 } from "./flight-list-display";
+
+describe("flight-list price display", () => {
+  it("hides negative exchange placeholder fares", () => {
+    expect(formatFlightListPriceLabel({ LowestFare: -1 })).toBeNull();
+    expect(formatFlightListPriceLabel({ LowestFare: "-1" }, true)).toBeNull();
+  });
+
+  it("shows normal list fare when non-negative", () => {
+    expect(formatFlightListPriceLabel({ LowestFare: 680 })).toBe("680");
+    expect(formatFlightListPriceLabel({ LowestFare: "680" })).toBe("680");
+  });
+
+  it("adds tax for exchange list fares", () => {
+    expect(resolveFlightListPriceAmount({ LowestFare: 120, Tax: "50" }, true)).toBe(170);
+    expect(formatFlightListPriceLabel({ LowestFare: 120, Tax: "50" }, true)).toBe("170");
+  });
+});
 
 describe("flight-list-display cabins helpers", () => {
   it("formats depart title", () => {

@@ -6,6 +6,8 @@ import type {
   FlightSegment,
 } from "@ryx/shared-types";
 
+import { resolveFlightListComparablePrice } from "@/utils/flight-list-display";
+
 export function parseFlightTimestamp(value: string | undefined): number {
   if (!value) return 0;
   const normalized = value.includes("T") ? value : value.replace(" ", "T");
@@ -68,12 +70,21 @@ export function normalizeFlightSegments(result: FlightListResult | undefined): F
   return (result.Result?.FlightSegments ?? []).map(enrichSegment);
 }
 
-export function initLowestPriceSegments(segments: FlightSegment[]): FlightSegment[] {
+export function initLowestPriceSegments(
+  segments: FlightSegment[],
+  options?: { isExchange?: boolean },
+): FlightSegment[] {
   if (!segments.length) return [];
-  const lowest = Math.min(...segments.map((s) => Number(s.LowestFare ?? Infinity)));
-  return segments.map((seg) => ({
+  const isExchange = options?.isExchange ?? false;
+  const prices = segments.map((s) => resolveFlightListComparablePrice(s, isExchange));
+  const finitePrices = prices.filter((p) => Number.isFinite(p) && p < Number.POSITIVE_INFINITY);
+  if (!finitePrices.length) {
+    return segments.map((seg) => ({ ...seg, isLowestPrice: false }));
+  }
+  const lowest = Math.min(...finitePrices);
+  return segments.map((seg, index) => ({
     ...seg,
-    isLowestPrice: Number(seg.LowestFare) === lowest,
+    isLowestPrice: prices[index] === lowest,
   }));
 }
 
@@ -98,9 +109,15 @@ export function getDefaultSortedFlights(segments: FlightSegment[]): FlightSegmen
   return [...directLowest, ...directOthers, ...stopLowest, ...stopOthers, ...transfers];
 }
 
-export function sortByPrice(segments: FlightSegment[], lowToHigh: boolean): FlightSegment[] {
+export function sortByPrice(
+  segments: FlightSegment[],
+  lowToHigh: boolean,
+  isExchange = false,
+): FlightSegment[] {
   return [...segments].sort((a, b) => {
-    const diff = +(a.LowestFare ?? 0) - +(b.LowestFare ?? 0);
+    const diff =
+      resolveFlightListComparablePrice(a, isExchange) -
+      resolveFlightListComparablePrice(b, isExchange);
     return lowToHigh ? diff : -diff;
   });
 }

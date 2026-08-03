@@ -40,6 +40,35 @@ export function lowestFareInList(segments: FlightSegment[]): string | null {
   return Number.isFinite(min) ? String(min) : null;
 }
 
+/** Comparable list price; negative LowestFare (exchange placeholder) sorts last. */
+export function resolveFlightListComparablePrice(
+  segment: Pick<FlightSegment, "LowestFare" | "Tax">,
+  isExchange = false,
+): number {
+  const amount = resolveFlightListPriceAmount(segment, isExchange);
+  return amount == null ? Number.POSITIVE_INFINITY : amount;
+}
+
+/** Legacy list card: hide price when LowestFare < 0; exchange adds Tax. */
+export function resolveFlightListPriceAmount(
+  segment: Pick<FlightSegment, "LowestFare" | "Tax">,
+  isExchange = false,
+): number | null {
+  const fare = Number(segment.LowestFare);
+  if (!Number.isFinite(fare) || fare < 0) return null;
+  if (!isExchange) return fare;
+  const tax = Number(segment.Tax ?? 0);
+  return fare + (Number.isFinite(tax) ? tax : 0);
+}
+
+export function formatFlightListPriceLabel(
+  segment: Pick<FlightSegment, "LowestFare" | "Tax">,
+  isExchange = false,
+): string | null {
+  const amount = resolveFlightListPriceAmount(segment, isExchange);
+  return amount == null ? null : String(amount);
+}
+
 export function shouldShowScarceBadge(segment: FlightSegment): boolean {
   const n = segment.RemainSeats;
   return n != null && n > 0 && n <= 5;

@@ -8,6 +8,7 @@ import {
   formatFlightListAirlineFlightLabel,
   formatFlightListAirportLine,
   formatFlightListPlaneSubtitle,
+  formatFlightListPriceLabel,
   formatFlightRouteMiddleDisplay,
   shouldShowScarceBadge,
   type FlightCardVariant,
@@ -79,6 +80,7 @@ interface FlightSegmentCardProps {
   segment: FlightSegment;
   variant?: FlightCardVariant;
   loading?: boolean;
+  isExchange?: boolean;
   onClick?: () => void;
 }
 
@@ -154,11 +156,13 @@ export function FlightSegmentCard({
   segment,
   variant = "direct",
   loading = false,
+  isExchange = false,
   onClick,
 }: FlightSegmentCardProps) {
   const isDirectLowest = variant === "direct-lowest";
   const isTransferLowest = variant === "transfer-lowest";
   const priceColor = resolveFlightPriceColor(variant);
+  const priceLabel = formatFlightListPriceLabel(segment, isExchange);
   const airlineFlightLabel = formatFlightListAirlineFlightLabel(segment);
   const planeSubtitle = formatFlightListPlaneSubtitle(segment);
   const agreementAirlineLabel = formatFlightAgreementAirlineLabel(segment);
@@ -238,7 +242,9 @@ export function FlightSegmentCard({
               <span className={FLIGHT_SCARCE_BADGE_CLASS}>剩{segment.RemainSeats}张</span>
             ) : null}
             <div className="flex min-w-[5.5rem] flex-col items-end gap-1">
-              <p className={`${FLIGHT_PRICE_CLASS} ${priceColor}`}>¥{segment.LowestFare ?? "-"}</p>
+              {priceLabel ? (
+                <p className={`${FLIGHT_PRICE_CLASS} ${priceColor}`}>¥{priceLabel}</p>
+              ) : null}
               {agreementAirlineLabel ? (
                 <span className={FLIGHT_AGREEMENT_AIRLINE_CLASS}>{agreementAirlineLabel}</span>
               ) : null}
