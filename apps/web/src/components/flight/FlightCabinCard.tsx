@@ -4,6 +4,7 @@ import { FLIGHT_CABINS_FONT } from "@/components/flight/flight-cabins-chrome";
 import type { FlightCabinPolicyColor } from "@/lib/flight-cabin-policy";
 import {
   formatCabinInfoLine,
+  formatExchangeFareDisplayPrice,
   formatFareRemainLabel,
   formatFareSalesPrice,
   isFlightFareBookable,
@@ -16,6 +17,7 @@ interface FlightCabinCardProps {
   policyHint?: string;
   policyBlocked?: boolean;
   soldOut?: boolean;
+  isExchange?: boolean;
   onBook: (fare: FlightFare) => void;
   onShowRules?: (fare: FlightFare) => void;
 }
@@ -70,12 +72,16 @@ export function FlightCabinCard({
   policyHint,
   policyBlocked = false,
   soldOut,
+  isExchange = false,
   onBook,
   onShowRules,
 }: FlightCabinCardProps) {
   const cabin = prepareFlightFareForDisplay(fare);
   const remainLabel = formatFareRemainLabel(cabin);
   const isSoldOut = soldOut ?? !isFlightFareBookable(cabin);
+  const priceLabel = isExchange
+    ? formatExchangeFareDisplayPrice(cabin)
+    : formatFareSalesPrice(cabin.SalesPrice);
 
   return (
     <div
@@ -85,8 +91,11 @@ export function FlightCabinCard({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
             <div className="flex items-baseline gap-0.5 text-[24px] font-medium leading-none tracking-normal text-[#FF383C]">
+              {isExchange ? (
+                <span className="mr-1 text-[12px] font-medium text-[#666666]">改签费</span>
+              ) : null}
               <span>¥</span>
-              <span>{formatFareSalesPrice(cabin.SalesPrice)}</span>
+              <span>{priceLabel}</span>
             </div>
             {cabin.IsAgreement ? (
               <span className="rounded-full bg-[#EEF4FF] px-2 py-0.5 text-[10px] font-medium text-[#2768FA] ring-1 ring-[#D6E4FF]">

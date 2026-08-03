@@ -3,6 +3,7 @@ import type {
   FlightFare,
   FlightFareBasic,
   FlightFareRule,
+  FlightSegment,
 } from "@ryx/shared-types";
 
 function parseVariablesObject(value: unknown): Record<string, unknown> | undefined {
@@ -246,4 +247,108 @@ export function selectCabinsForSegment(
     (fare.FlightNumber ?? "").toUpperCase().includes(upper),
   );
   return matched.length ? matched : prepared;
+}
+
+type SegmentWithTotal = FlightSegment & { totalSegments?: FlightSegment[] | null };
+
+function normalizeSegmentFlightNumber(segment: FlightSegment): string {
+  return String(segment.FlightNumber ?? segment.Number ?? "")
+    .trim()
+    .toUpperCase();
+}
+
+/** Legacy exchange cabins: match selected list row flight number exactly. */
+export function matchesExchangeFlightSegment(
+  segment: FlightSegment,
+  flightNumber: string,
+): boolean {
+  const target = flightNumber.trim().toUpperCase();
+  if (!target) return true;
+  return normalizeSegmentFlightNumber(segment) === target;
+}
+
+/**
+ * Legacy `getExchangeDetail` / `onExchangeBook`:
+ * keep only segments for the newly selected flight, not the original ticket leg.
+ */
+export function resolveExchangeDetailSegments(
+  segments: FlightSegment[] | undefined,
+  flightNumber: string,
+): FlightSegment[] | undefined {
+  if (!segments?.length) return segments;
+
+  const nested = segments.find(
+    (segment) =>
+      Array.isArray((segment as SegmentWithTotal).totalSegments) &&
+      (segment as SegmentWithTotal).totalSegments!.length > 0,
+  ) as SegmentWithTotal | undefined;
+
+  const source = nested?.totalSegments?.length ? nested.totalSegments : segments;
+  const matched = source.filter((segment) => matchesExchangeFlightSegment(segment, flightNumber));
+
+  if (matched.length) {
+    return matched.map((segment) => ({
+      ...segment,
+      IsTransfer: matched.length > 1 ? segment.IsTransfer : false,
+    }));
+  }
+  if (source.length === 1) return source;
+  return [];
+}
+
+function filterFareBasicsForSegments(
+  fare: FlightFare,
+  segments: FlightSegment[],
+): FlightFareBasic[] | undefined {
+  const basics = fare.FlightFareBasics;
+  if (!basics?.length || !segments.length) return basics;
+
+  const segmentIds = new Set(segments.map((segment) => segment.Id).filter(Boolean));
+  if (!segmentIds.size) return basics;
+
+  const matched = basics.filter(
+    (basic) =>
+      !basic.FlightSegmentIds?.length || basic.FlightSegmentIds.some((id) => segmentIds.has(id)),
+  );
+  return matched.length ? matched : basics;
+}
+
+function prepareExchangeFare(fare: FlightFare, segments: FlightSegment[]): FlightFare {
+  const cabin = applyLegacyInitDetailResult(fare);
+  const basics = filterFareBasicsForSegments(cabin, segments);
+  return basics ? { ...cabin, FlightFareBasics: basics } : cabin;
+}
+
+/** Normalize Home-ExchangeDetail payload for a single target flight. */
+export function normalizeExchangeFlightDetail(
+  result: FlightDetailResult | undefined,
+  flightNumber: string,
+): FlightDetailResult | undefined {
+  if (!result) return result;
+
+  const segments = resolveExchangeDetailSegments(result.FlightSegments, flightNumber);
+  const segmentScoped = segments?.length ? { ...result, FlightSegments: segments } : result;
+  const upper = flightNumber.trim().toUpperCase();
+
+  const prepared = (segmentScoped.FlightFares ?? []).map(applyLegacyInitDetailResult);
+  const exactMatched = upper
+    ? prepared.filter((fare) => {
+        const fareNumber = (fare.FlightNumber ?? "").trim().toUpperCase();
+        return fareNumber === upper || fareNumber.split("+").includes(upper);
+      })
+    : prepared;
+  const matched =
+    exactMatched.length > 0
+      ? exactMatched
+      : selectCabinsForSegment(segmentScoped, flightNumber).map(applyLegacyInitDetailResult);
+
+  const fares = segments?.length
+    ? matched.map((fare) => prepareExchangeFare(fare, segments))
+    : matched;
+
+  return {
+    ...segmentScoped,
+    FlightSegments: segments ?? segmentScoped.FlightSegments,
+    FlightFares: fares,
+  };
 }

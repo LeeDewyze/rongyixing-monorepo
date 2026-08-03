@@ -1,6 +1,7 @@
 import {
   applyLegacyInitDetailResult,
   normalizeFlightDetailResponse,
+  normalizeExchangeFlightDetail,
   resolveCheckedBaggage,
   selectCabinsForSegment,
 } from "@ryx/api";
@@ -324,9 +325,14 @@ export function buildFlightTransferItinerary(
 
 export function normalizeFlightDetailData(
   result: FlightDetailResult | undefined,
+  options?: { isExchange?: boolean; flightNumber?: string },
 ): FlightDetailResult {
   if (!result) return {};
-  return normalizeFlightDetailResponse(result);
+  const normalized = normalizeFlightDetailResponse(result);
+  if (options?.isExchange && options.flightNumber) {
+    return normalizeExchangeFlightDetail(normalized, options.flightNumber) ?? normalized;
+  }
+  return normalized;
 }
 
 export function prepareFlightFareForDisplay(fare: FlightFare): FlightFare {
@@ -390,6 +396,29 @@ export function formatFareSalesPrice(price: string | number | undefined): string
   const value = Number(price);
   if (!Number.isFinite(value)) return price != null && price !== "" ? String(price) : "-";
   return String(Math.round(value));
+}
+
+/** Legacy exchange cabins: SalesPrice + Tax, or summed exchange fee taxes. */
+export function formatExchangeFareDisplayPrice(fare: FlightFare): string {
+  const cabin = prepareFlightFareForDisplay(fare);
+  const sales = Number(cabin.SalesPrice ?? 0);
+  const tax = Number(cabin.Tax ?? 0);
+  if (Number.isFinite(sales + tax) && (sales > 0 || tax > 0)) {
+    return formatFareSalesPrice(sales + tax);
+  }
+
+  const feeTotal = (cabin.FlightFareBasics ?? [])
+    .flatMap((basic) => basic.FlightTaxs ?? [])
+    .reduce((sum, item) => {
+      const value = Number(item.Tax ?? 0);
+      return Number.isFinite(value) ? sum + value : sum;
+    }, 0);
+
+  if (feeTotal > 0) {
+    return formatFareSalesPrice(feeTotal);
+  }
+
+  return formatFareSalesPrice(cabin.SalesPrice);
 }
 
 function formatBasicName(basic: FlightFareBasic): string {
@@ -509,5 +538,6 @@ export function prepareFlightFareRulesForSheet(fare: FlightFare): FlightFareRule
 export {
   applyLegacyInitDetailResult,
   normalizeFlightDetailResponse,
+  normalizeExchangeFlightDetail,
   resolveCheckedBaggage,
 } from "@ryx/api";

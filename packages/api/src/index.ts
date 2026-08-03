@@ -64,6 +64,9 @@ export {
   formatCabinTypeName,
   normalizeFlightDetailResponse,
   normalizeFlightDetailResult,
+  normalizeExchangeFlightDetail,
+  resolveExchangeDetailSegments,
+  matchesExchangeFlightSegment,
   resolveCheckedBaggage,
   selectCabinsForSegment,
 } from "./apis/flight-detail-adapter.js";

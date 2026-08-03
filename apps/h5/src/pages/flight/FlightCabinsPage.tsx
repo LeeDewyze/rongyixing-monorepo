@@ -157,7 +157,14 @@ export function FlightCabinsPage() {
     dataUpdatedAt,
   } = useFlightDetail(detailParams);
 
-  const detail = useMemo(() => normalizeFlightDetailData(rawDetail), [rawDetail]);
+  const detail = useMemo(
+    () =>
+      normalizeFlightDetailData(rawDetail, {
+        isExchange: isExchangeBook,
+        flightNumber: query.flightNumber,
+      }),
+    [rawDetail, isExchangeBook, query.flightNumber],
+  );
   const detailReady = isSuccess && Boolean(detail?.FlightFares?.length) && !isFetching;
 
   const segment = useMemo(
@@ -597,6 +604,7 @@ export function FlightCabinsPage() {
                       policyFilterEnabled ? isFlightCabinPolicyBlocked(row, isAgent) : false
                     }
                     soldOut={isFlightCabinSoldOut(row)}
+                    isExchange={isExchangeBook}
                     onBook={() => handleBook(row)}
                     onShowRules={handleShowRules}
                   />

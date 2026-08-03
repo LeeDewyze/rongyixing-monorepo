@@ -4,6 +4,7 @@ import {
   adaptFlightDetailResponse,
   applyLegacyInitDetailResult,
   formatCabinTypeName,
+  normalizeExchangeFlightDetail,
   normalizeFlightDetailResponse,
   selectCabinsForSegment,
 } from "./flight-detail-adapter.js";
@@ -145,5 +146,53 @@ describe("selectCabinsForSegment", () => {
     const cabins = selectCabinsForSegment(result, "KN5977");
     expect(cabins).toHaveLength(1);
     expect(cabins[0]?.SalesPrice).toBe(330);
+  });
+});
+
+describe("normalizeExchangeFlightDetail", () => {
+  it("keeps only the selected exchange target segment and cabin basics", () => {
+    const result = normalizeExchangeFlightDetail(
+      {
+        FlightSegments: [
+          {
+            Id: "seg-old",
+            Number: "CA8540",
+            FlightNumber: "CA8540",
+            FromCityName: "北京",
+            ToCityName: "上海",
+            totalSegments: [
+              {
+                Id: "seg-old",
+                Number: "CA8540",
+                FlightNumber: "CA8540",
+                TakeoffTime: "2026-08-03T07:40:00",
+              },
+              {
+                Id: "seg-new",
+                Number: "CA1883",
+                FlightNumber: "CA1883",
+                TakeoffTime: "2026-08-03T21:00:00",
+              },
+            ],
+          },
+        ],
+        FlightFares: [
+          {
+            SalesPrice: 204,
+            FlightNumber: "CA1883",
+            FlightFareBasics: [
+              { CabinCode: "Y", CabinTypeAttach: "经济舱", FlightSegmentIds: ["seg-old"] },
+              { CabinCode: "B", CabinTypeAttach: "经济舱", FlightSegmentIds: ["seg-new"] },
+            ],
+          },
+        ],
+      },
+      "CA1883",
+    );
+
+    expect(result?.FlightSegments).toHaveLength(1);
+    expect(result?.FlightSegments?.[0]?.FlightNumber).toBe("CA1883");
+    expect(result?.FlightFares?.[0]?.FlightFareBasics).toHaveLength(1);
+    expect(result?.FlightFares?.[0]?.FlightFareBasics?.[0]?.CabinCode).toBe("B");
   });
 });
