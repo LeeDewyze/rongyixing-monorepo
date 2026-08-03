@@ -1,0 +1,667 @@
+import { describe, expect, it } from "vitest";
+import { TrainSeatType } from "@ryx/shared-types";
+
+import {
+  canSelectTrainSeat,
+  buildTrainInitBookDto,
+  buildTrainBookEntity,
+  buildTrainOrderBookDto,
+  createTrainPassengerBookForm,
+  resolveTrainBookBillBreakdown,
+  resolveTrainExchangeBookBillBreakdown,
+  resolveTrainExchangeBookDisplayAmount,
+  resolveTrainPassengerMobileFallback,
+  resolveTrainBookOrderId,
+  validateTrainBookForms,
+} from "./train-book";
+import type { TrainBookSelection } from "./train-book-session";
+
+describe("canSelectTrainSeat", () => {
+  it("allows G/D seat classes only", () => {
+    expect(canSelectTrainSeat(TrainSeatType.SecondClassSeat)).toBe(true);
+    expect(canSelectTrainSeat(TrainSeatType.FirstClassSeat)).toBe(true);
+    expect(canSelectTrainSeat(TrainSeatType.BusinessSeat)).toBe(true);
+    expect(canSelectTrainSeat(TrainSeatType.SpecialSeat)).toBe(true);
+    expect(canSelectTrainSeat(TrainSeatType.HardSeat)).toBe(false);
+    expect(canSelectTrainSeat(TrainSeatType.SoftBerth)).toBe(false);
+  });
+});
+
+describe("buildTrainInitBookDto", () => {
+  const selection: TrainBookSelection = {
+    searchParams: {
+      Date: "2025-06-26",
+      FromStation: "BJP",
+      ToStation: "SHH",
+    },
+    train: {
+      Id: "g1",
+      TrainNo: "G1",
+      TrainCode: "G1",
+      StartTime: "2025-06-26 09:00",
+      ArrivalTime: "2025-06-26 13:28",
+      FromStation: "北京",
+      ToStation: "上海",
+      Seats: [{ SeatType: TrainSeatType.SecondClassSeat, SeatTypeName: "二等座", Price: 553 }],
+    },
+    seat: { SeatType: TrainSeatType.SecondClassSeat, SeatTypeName: "二等座", Price: 553 },
+    selectedAt: Date.now(),
+    passengers: [],
+  };
+
+  const passengers = [
+    {
+      id: "p1",
+      passenger: { Id: "p1", AccountId: "acc-1", Name: "Test" },
+      credential: { Id: "c1", Name: "Test", AccountId: "acc-1", Mobile: "13800000000" },
+    },
+  ] as const;
+
+  it("includes BookSeatType and empty BookSeatLocation on Initialize", () => {
+    const dto = buildTrainInitBookDto({ selection, passengers: passengers as never });
+    const train = dto.Passengers[0]?.Train;
+    expect(dto.Passengers[0]?.ClientId).toBe("p1");
+    expect(dto).not.toHaveProperty("Channel");
+    expect(train?.BookSeatType).toBe(TrainSeatType.SecondClassSeat);
+    expect(train?.BookSeatLocation).toBe("");
+    expect(train?.Seats?.[0]?.SeatTypeName).toBe("二等座");
+    expect(train?.OriginalSearchResultSeats?.[0]?.SeatTypeName).toBe("二等座");
+  });
+
+  it("omits travel form fields in personal mode", () => {
+    const dto = buildTrainInitBookDto({
+      selection,
+      passengers: passengers as never,
+      travelFormId: "tf-001",
+      travelMode: "personal",
+    });
+    expect(dto.TravelFormId).toBeUndefined();
+    expect(dto.Passengers[0]?.travelFormId).toBeUndefined();
+  });
+
+  it("can initialize personal train booking with train-only passenger before traveler selection", () => {
+    const dto = buildTrainInitBookDto({
+      selection,
+      passengers: [],
+      travelMode: "personal",
+      includeTrainOnlyPassenger: true,
+    });
+
+    expect(dto.Passengers).toHaveLength(1);
+    expect(dto.Passengers[0]?.ClientId).toBe("g1");
+    expect(dto.Passengers[0]?.Train?.BookSeatType).toBe(TrainSeatType.SecondClassSeat);
+    expect(dto.Passengers[0]?.Credentials).toBeUndefined();
+    expect(dto.Passengers[0]?.travelFormId).toBeUndefined();
+  });
+});
+
+describe("buildTrainBookEntity", () => {
+  it("keeps raw snapshot seat fields in OriginalSearchResultSeats", () => {
+    const selection = {
+      searchParams: {
+        Date: "2025-06-26",
+        FromStation: "BJP",
+        ToStation: "SHH",
+      },
+      train: {
+        Id: "g1",
+        TrainNo: "G1",
+        TrainCode: "G1",
+        StartTime: "2025-06-26 09:00",
+        ArrivalTime: "2025-06-26 13:28",
+        FromStation: "北京",
+        ToStation: "上海",
+        Seats: [
+          {
+            SeatType: TrainSeatType.HardBerthUp,
+            SeatTypeName: "硬卧上",
+            Price: 300,
+            Count: 10,
+          },
+        ],
+        searchSnapshot: {
+          TrainNo: "G1",
+          Seats: [
+            {
+              SeatType: TrainSeatType.HardBerthUp,
+              SeatTypeName: "硬卧上",
+              Price: 300,
+              SalesPrice: 300,
+              SettlePrice: 300,
+              TicketPrice: 300,
+              IsSupportChooseSeats: true,
+              isCanHB: "0",
+              BedInfos: [
+                {
+                  BedType: "1",
+                  BedTicketPrice: 244.5,
+                  BedTypeName: "下铺",
+                },
+              ],
+            },
+          ],
+        },
+      },
+      seat: {
+        SeatType: TrainSeatType.HardBerthUp,
+        SeatTypeName: "硬卧上",
+        Price: 300,
+        Count: 10,
+      },
+      selectedAt: Date.now(),
+      passengers: [],
+    } as TrainBookSelection;
+
+    const entity = buildTrainBookEntity(selection);
+
+    expect(entity.OriginalSearchResultSeats?.[0]).toMatchObject({
+      SeatType: TrainSeatType.HardBerthUp,
+      SeatTypeName: "硬卧",
+      SettlePrice: 300,
+      IsSupportChooseSeats: true,
+      isCanHB: "0",
+      BedInfos: [
+        {
+          BedType: "1",
+          BedTicketPrice: 244.5,
+          BedTypeName: "下铺",
+        },
+      ],
+    });
+  });
+});
+
+describe("buildTrainOrderBookDto seat preferences", () => {
+  const selection: TrainBookSelection = {
+    searchParams: {
+      Date: "2025-06-26",
+      FromStation: "BJP",
+      ToStation: "SHH",
+    },
+    train: {
+      Id: "g1",
+      TrainNo: "G1",
+      TrainCode: "G1",
+      StartTime: "2025-06-26 09:00",
+      ArrivalTime: "2025-06-26 13:28",
+      FromStation: "北京",
+      ToStation: "上海",
+      Seats: [{ SeatType: TrainSeatType.SecondClassSeat, SeatTypeName: "二等座", Price: 553 }],
+    },
+    seat: { SeatType: TrainSeatType.SecondClassSeat, SeatTypeName: "二等座", Price: 553 },
+    selectedAt: Date.now(),
+    passengers: [],
+  };
+
+  const passengers = [
+    {
+      id: "p1",
+      passenger: { Id: "p1", AccountId: "acc-1", Name: "Passenger One" },
+      credential: { Id: "c1", Name: "Passenger One", AccountId: "acc-1", Mobile: "13800000001" },
+    },
+    {
+      id: "p2",
+      passenger: { Id: "p2", AccountId: "acc-2", Name: "Passenger Two" },
+      credential: { Id: "c2", Name: "Passenger Two", AccountId: "acc-2", Mobile: "13800000002" },
+    },
+  ] as const;
+
+  it("maps each selected seat preference to the matching passenger", () => {
+    const dto = buildTrainOrderBookDto({
+      selection,
+      passengers: passengers as never,
+      bookSeatLocations: ["1A", "2C"],
+    });
+
+    expect(dto.Passengers[0]?.Train?.BookSeatLocation).toBe("1A");
+    expect(dto.Passengers[1]?.Train?.BookSeatLocation).toBe("2C");
+  });
+
+  it("sets legacy TicketId for exchange book payload", () => {
+    const dto = buildTrainOrderBookDto({
+      selection,
+      passengers: passengers as never,
+      exchangeTicketId: "207600000001",
+      isExchangeBook: true,
+    });
+
+    expect(dto.TicketId).toBe("207600000001");
+    expect(dto.ExchangeTicketId).toBeUndefined();
+    expect(dto.IsExchange).toBeUndefined();
+  });
+
+  it("uses legacy default seat preference fallback for personal train book", () => {
+    const dto = buildTrainOrderBookDto({
+      selection,
+      passengers: passengers as never,
+      channel: "tourist",
+      travelMode: "personal",
+    });
+
+    expect(dto.Passengers[0]?.Train?.BookSeatLocation).toBe("2F");
+    expect(dto.Passengers[1]?.Train?.BookSeatLocation).toBe("2D");
+  });
+
+  it("applies order-level notify language to every passenger", () => {
+    const dto = buildTrainOrderBookDto({
+      selection,
+      passengers: passengers as never,
+      globalNotifyLanguage: "en",
+    });
+
+    expect(dto.Passengers[0]?.MessageLang).toBe("en");
+    expect(dto.Passengers[1]?.MessageLang).toBe("en");
+  });
+
+  it("omits travel form fields in personal mode", () => {
+    const dto = buildTrainOrderBookDto({
+      selection,
+      passengers: passengers as never,
+      travelFormId: "tf-001",
+      travelMode: "personal",
+    });
+
+    expect(dto.TravelFormId).toBeUndefined();
+    expect(dto.Passengers[0]?.travelFormId).toBeUndefined();
+    expect(dto.Passengers[0]?.TravelType).toBe(2);
+  });
+
+  it("adds manual order linkman for personal train booking", () => {
+    const dto = buildTrainOrderBookDto({
+      selection,
+      passengers: passengers as never,
+      travelMode: "personal",
+      orderLinkman: {
+        Name: " 张三 ",
+        Mobile: " 13800000000 ",
+        Email: " zhangsan@example.com ",
+      },
+    });
+
+    expect(dto.Passengers[0]?.Mobile).toBe("13800000001");
+    expect(dto.Passengers[0]?.Credentials).not.toHaveProperty("Mobile");
+    expect(dto.Linkmans).toEqual([
+      {
+        Name: "张三",
+        Mobile: "13800000000",
+        Email: "zhangsan@example.com",
+      },
+    ]);
+  });
+});
+
+describe("resolveTrainBookBillBreakdown", () => {
+  const selection: TrainBookSelection = {
+    searchParams: {
+      Date: "2025-06-26",
+      FromStation: "BJP",
+      ToStation: "SHH",
+    },
+    train: {
+      Id: "g1",
+      TrainNo: "G1",
+      TrainCode: "G1",
+      StartTime: "2025-06-26 09:00",
+      ArrivalTime: "2025-06-26 13:28",
+      FromStation: "北京",
+      ToStation: "上海",
+      Seats: [{ SeatType: TrainSeatType.SecondClassSeat, SeatTypeName: "二等座", Price: 553 }],
+    },
+    seat: { SeatType: TrainSeatType.SecondClassSeat, SeatTypeName: "二等座", Price: 553 },
+    selectedAt: Date.now(),
+    passengers: [],
+  };
+
+  const passengers = [
+    {
+      id: "p1",
+      passenger: { Id: "p1", AccountId: "acc-1", Name: "Passenger One" },
+      credential: { Id: "c1", Name: "Passenger One", AccountId: "acc-1", Mobile: "13800000001" },
+    },
+    {
+      id: "p2",
+      passenger: { Id: "p2", AccountId: "acc-2", Name: "Passenger Two" },
+      credential: { Id: "c2", Name: "Passenger Two", AccountId: "acc-2", Mobile: "13800000002" },
+    },
+  ] as const;
+
+  it("sums ticket price and service fee per passenger", () => {
+    const breakdown = resolveTrainBookBillBreakdown({
+      selection,
+      passengers: passengers as never,
+      serviceFees: { "acc-1": 10, "acc-2": 20 },
+    });
+
+    expect(breakdown.passengers).toHaveLength(2);
+    expect(breakdown.passengers[0]?.subtotal).toBe(563);
+    expect(breakdown.passengers[1]?.subtotal).toBe(573);
+    expect(breakdown.total).toBe(1136);
+    expect(breakdown.passengers[0]?.trainRouteLabel).toBe("G1北京--上海");
+  });
+});
+
+describe("resolveTrainExchangeBookBillBreakdown", () => {
+  const selection: TrainBookSelection = {
+    searchParams: {
+      Date: "2025-06-26",
+      FromStation: "BJP",
+      ToStation: "SHH",
+    },
+    train: {
+      Id: "g1",
+      TrainNo: "G1",
+      TrainCode: "G1",
+      StartTime: "2025-06-26 09:00",
+      ArrivalTime: "2025-06-26 13:28",
+      FromStation: "北京",
+      ToStation: "上海",
+      Seats: [{ SeatType: TrainSeatType.SecondClassSeat, SeatTypeName: "二等座", Price: 415.5 }],
+    },
+    seat: { SeatType: TrainSeatType.SecondClassSeat, SeatTypeName: "二等座", Price: 415.5 },
+    selectedAt: Date.now(),
+    passengers: [],
+  };
+
+  const passengers = [
+    {
+      id: "p1",
+      passenger: { Id: "p1", AccountId: "acc-1", Name: "Passenger One" },
+      credential: { Id: "c1", Name: "Passenger One", AccountId: "acc-1", Mobile: "13800000001" },
+    },
+  ] as const;
+
+  it("subtracts original ticket price from new fare plus fees", () => {
+    const breakdown = resolveTrainExchangeBookBillBreakdown({
+      selection,
+      passengers: passengers as never,
+      serviceFees: { default: 5 },
+      originalTicketPrice: 233,
+    });
+
+    expect(breakdown.total).toBe(187.5);
+    expect(breakdown.originalTicketCredit).toBe(233);
+    expect(
+      resolveTrainExchangeBookDisplayAmount({
+        selection,
+        passengers: passengers as never,
+        serviceFees: { default: 5 },
+        originalTicketPrice: 233,
+      }),
+    ).toBe(187.5);
+  });
+
+  it("uses TrainExchangeOnlineFee instead of per-passenger service fees", () => {
+    const breakdown = resolveTrainExchangeBookBillBreakdown({
+      selection,
+      passengers: passengers as never,
+      serviceFees: { default: 5 },
+      originalTicketPrice: 233,
+      exchangeOnlineFee: 10,
+    });
+
+    expect(breakdown.total).toBe(192.5);
+  });
+});
+
+describe("resolveTrainPassengerMobileFallback", () => {
+  const passenger = {
+    id: "p1",
+    passenger: { Id: "p1", AccountId: "acc-1", Name: "申晓杰" },
+    credential: { Id: "c1", Name: "申晓杰", AccountId: "acc-1" },
+  } as const;
+
+  it("prefers init staff account mobile", () => {
+    expect(
+      resolveTrainPassengerMobileFallback(passenger as never, {
+        Staffs: [{ Id: "acc-1", Name: "申晓杰", Account: { Id: "acc-1", Mobile: "13800000001" } }],
+      }),
+    ).toBe("13800000001");
+  });
+
+  it("falls back to original ticket passenger mobile in exchange", () => {
+    expect(resolveTrainPassengerMobileFallback(passenger as never, undefined, "19528280621")).toBe(
+      "19528280621",
+    );
+  });
+});
+
+describe("validateTrainBookForms", () => {
+  const passengers = [
+    {
+      id: "p1",
+      passenger: { Id: "p1", AccountId: "acc-1", Name: "Passenger One", Mobile: "13800000001" },
+      credential: { Id: "c1", Name: "Passenger One", AccountId: "acc-1", Mobile: "13800000001" },
+    },
+  ] as const;
+
+  it("passes when mobile is available and no policy violation", () => {
+    const forms = {
+      p1: createTrainPassengerBookForm(passengers[0] as never),
+    };
+    expect(
+      validateTrainBookForms({
+        passengers: passengers as never,
+        forms,
+        outNumberFieldsByPassenger: { p1: [] },
+        authorizedContacts: [],
+        requireIllegalReason: false,
+      }),
+    ).toBeNull();
+  });
+
+  it("uses exchange passenger mobile fallback when form contact is empty", () => {
+    const exchangePassenger = {
+      id: "p1",
+      passenger: { Id: "p1", AccountId: "acc-1", Name: "申晓杰" },
+      credential: { Id: "c1", Name: "申晓杰", AccountId: "acc-1" },
+    } as const;
+    const forms = {
+      p1: {
+        ...createTrainPassengerBookForm(exchangePassenger as never),
+        mobileOptions: [],
+        otherMobile: "",
+      },
+    };
+    expect(
+      validateTrainBookForms({
+        passengers: [exchangePassenger] as never,
+        forms,
+        outNumberFieldsByPassenger: { p1: [] },
+        authorizedContacts: [],
+        isExchangeBook: true,
+        exchangePassengerMobile: "19528280621",
+        requireIllegalReason: false,
+      }),
+    ).toBeNull();
+  });
+
+  it("does not require illegal reason when only init provides reason options", () => {
+    const forms = {
+      p1: createTrainPassengerBookForm(passengers[0] as never),
+    };
+    expect(
+      validateTrainBookForms({
+        passengers: passengers as never,
+        forms,
+        outNumberFieldsByPassenger: { p1: [] },
+        authorizedContacts: [],
+        init: { Staffs: [{ Id: "acc-1", Name: "Passenger One", Approvers: [] }] },
+        requireIllegalReason: false,
+      }),
+    ).toBeNull();
+  });
+
+  it("does not require approver when staff has fixed approver chain", () => {
+    const forms = {
+      p1: createTrainPassengerBookForm(passengers[0] as never),
+    };
+    expect(
+      validateTrainBookForms({
+        passengers: passengers as never,
+        forms,
+        outNumberFieldsByPassenger: { p1: [] },
+        authorizedContacts: [],
+        init: {
+          Tmc: { TrainApprovalType: 3 },
+          Staffs: [
+            {
+              Id: "acc-1",
+              Name: "Passenger One",
+              Approvers: [{ Name: "审批人A", AccountId: "acc-approver" }],
+            },
+          ],
+        },
+        isBusinessMode: true,
+        requireIllegalReason: false,
+      }),
+    ).toBeNull();
+  });
+
+  it("requires approver for free approval mode in business travel", () => {
+    const forms = {
+      p1: createTrainPassengerBookForm(passengers[0] as never),
+    };
+    expect(
+      validateTrainBookForms({
+        passengers: passengers as never,
+        forms,
+        outNumberFieldsByPassenger: { p1: [] },
+        authorizedContacts: [],
+        init: {
+          Tmc: { TrainApprovalType: 2 },
+          Staffs: [
+            {
+              Id: "acc-1",
+              Name: "Passenger One",
+              Approvers: [{ Name: "审批人A", AccountId: "acc-approver" }],
+            },
+          ],
+        },
+        isBusinessMode: true,
+        requireIllegalReason: false,
+      }),
+    ).toBe("请选择Passenger One审批人");
+  });
+
+  it("skips approver validation in personal travel mode", () => {
+    const forms = {
+      p1: createTrainPassengerBookForm(passengers[0] as never),
+    };
+    expect(
+      validateTrainBookForms({
+        passengers: passengers as never,
+        forms,
+        outNumberFieldsByPassenger: { p1: [] },
+        authorizedContacts: [],
+        init: {
+          Tmc: { TrainApprovalType: 2 },
+          Staffs: [
+            {
+              Id: "acc-1",
+              Name: "Passenger One",
+              Approvers: [{ Name: "审批人A", AccountId: "acc-approver" }],
+            },
+          ],
+        },
+        isBusinessMode: false,
+        requireOrderLinkman: true,
+        orderLinkman: { Name: "张三", Mobile: "13800000000", Email: "" },
+        requireIllegalReason: false,
+      }),
+    ).toBeNull();
+  });
+
+  it("requires manual order linkman when personal train booking submits", () => {
+    const forms = {
+      p1: createTrainPassengerBookForm(passengers[0] as never),
+    };
+    expect(
+      validateTrainBookForms({
+        passengers: passengers as never,
+        forms,
+        outNumberFieldsByPassenger: { p1: [] },
+        authorizedContacts: [],
+        orderLinkman: { Name: "", Mobile: "", Email: "" },
+        requireOrderLinkman: true,
+        requireIllegalReason: false,
+      }),
+    ).toBe("请填写联系人姓名");
+    expect(
+      validateTrainBookForms({
+        passengers: passengers as never,
+        forms,
+        outNumberFieldsByPassenger: { p1: [] },
+        authorizedContacts: [],
+        orderLinkman: { Name: "张三", Mobile: "12345", Email: "" },
+        requireOrderLinkman: true,
+        requireIllegalReason: false,
+      }),
+    ).toBe("请输入正确的联系人手机号");
+    expect(
+      validateTrainBookForms({
+        passengers: passengers as never,
+        forms,
+        outNumberFieldsByPassenger: { p1: [] },
+        authorizedContacts: [],
+        orderLinkman: { Name: "张三", Mobile: "13800000000", Email: "" },
+        requireOrderLinkman: true,
+        requireIllegalReason: false,
+      }),
+    ).toBeNull();
+  });
+
+  it("rejects duplicate passenger contact mobiles", () => {
+    const passengerTwo = {
+      id: "p2",
+      passenger: { Id: "p2", AccountId: "acc-2", Name: "Passenger Two", Mobile: "13800000002" },
+      credential: { Id: "c2", Name: "Passenger Two", AccountId: "acc-2", Mobile: "13800000002" },
+    };
+    const forms = {
+      p1: createTrainPassengerBookForm(passengers[0] as never),
+      p2: {
+        ...createTrainPassengerBookForm(passengerTwo as never),
+        mobileOptions: [{ value: "13800000001", checked: true }],
+      },
+    };
+
+    expect(
+      validateTrainBookForms({
+        passengers: [passengers[0], passengerTwo] as never,
+        forms,
+        outNumberFieldsByPassenger: { p1: [], p2: [] },
+        authorizedContacts: [],
+        requireIllegalReason: false,
+      }),
+    ).toBe("Passenger One与Passenger Two联系电话不能重复");
+  });
+
+  it("rejects order linkman mobile duplicated with passenger contact", () => {
+    const forms = {
+      p1: createTrainPassengerBookForm(passengers[0] as never),
+    };
+
+    expect(
+      validateTrainBookForms({
+        passengers: [passengers[0]] as never,
+        forms,
+        outNumberFieldsByPassenger: { p1: [] },
+        authorizedContacts: [],
+        orderLinkman: { Name: "张三", Mobile: "13800000001", Email: "" },
+        requireOrderLinkman: true,
+        requireIllegalReason: false,
+      }),
+    ).toBe("联系人手机号不能与乘车人联系电话重复");
+  });
+});
+
+describe("resolveTrainBookOrderId", () => {
+  it("prefers TradeNo over OrderId", () => {
+    expect(resolveTrainBookOrderId({ TradeNo: "20760000000204", OrderId: "ORD-1" })).toBe(
+      "20760000000204",
+    );
+  });
+
+  it("falls back to OrderId when TradeNo is missing", () => {
+    expect(resolveTrainBookOrderId({ OrderId: "ORD-1" })).toBe("ORD-1");
+  });
+});

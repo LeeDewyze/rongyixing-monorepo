@@ -1,0 +1,278 @@
+{
+  "capturedAt": "2026-06-24T23:29:54.938Z",
+  "applyAccount": {
+    "user": "T18610773065",
+    "name": "姜茗豪"
+  },
+  "approveAccount": {
+    "user": "T289G003",
+    "name": "孙雪",
+    "usedForApprovalSubmit": true
+  },
+  "apply": {
+    "formConfig": {
+      "workflowId": "318",
+      "layoutTag": "LayoutTravel",
+      "getUrl": "http://workflow.rtesp.com/Form/Get?ticket=***REDACTED***&CheckFlowType=&FlowTag=Travel",
+      "addUrl": "http://workflow.rtesp.com/Form/Add?SaveNotifyUrl=&ticket=***REDACTED***&CheckFlowType=&FlowTag=Travel",
+      "modifyUrl": "http://workflow.rtesp.com/Form/Modify?SaveNotifyUrl=&ticket=***REDACTED***&CheckFlowType=&FlowTag=Travel",
+      "removeUrl": "http://workflow.rtesp.com/Form/Remove?SaveNotifyUrl=&ticket=***REDACTED***&CheckFlowType=&FlowTag=Travel)",
+      "formLayoutDetailUrl": "/Form/FormLayoutDetail"
+    },
+    "addRule": [
+      {
+        "Name": "Workflow.Id",
+        "Message": "工作流必须",
+        "Rules": [
+          {
+            "Pattern": "^[0-9]{1,}$",
+            "Options": "",
+            "Message": "",
+            "IsRange": false
+          }
+        ]
+      },
+      {
+        "Name": "Name",
+        "Message": "名称不能为空且长度不能超过20",
+        "Rules": [
+          {
+            "Pattern": "^([\\s\\S]{1,20})$",
+            "Options": "",
+            "Message": "",
+            "IsRange": false
+          }
+        ]
+      },
+      {
+        "Name": "Tag",
+        "Message": "标签不能超过100个字符",
+        "Rules": [
+          {
+            "Pattern": "^([\\s\\S]{0,100})$",
+            "Options": "",
+            "Message": "",
+            "IsRange": false
+          }
+        ]
+      },
+      {
+        "Name": "IndexUrl",
+        "Message": "地址长度不能超过500字符",
+        "Rules": [
+          {
+            "Pattern": "^([\\s\\S]{0,1000})$",
+            "Options": "",
+            "Message": "",
+            "IsRange": false
+          }
+        ]
+      },
+      {
+        "Name": "HandleUrl",
+        "Message": "审批处理地址长度不能超过500字符",
+        "Rules": [
+          {
+            "Pattern": "^([\\s\\S]{0,500})$",
+            "Options": "",
+            "Message": "",
+            "IsRange": false
+          }
+        ]
+      },
+      {
+        "Name": "ExpiredUrl",
+        "Message": "过期提醒地址长度不能超过500字符",
+        "Rules": [
+          {
+            "Pattern": "^([\\s\\S]{0,500})$",
+            "Options": "",
+            "Message": "",
+            "IsRange": false
+          }
+        ]
+      },
+      {
+        "Name": "RemindUrl",
+        "Message": "审批提醒地址长度不能超过500字符",
+        "Rules": [
+          {
+            "Pattern": "^([\\s\\S]{0,500})$",
+            "Options": "",
+            "Message": "",
+            "IsRange": false
+          }
+        ]
+      },
+      {
+        "Name": "MessageUrl",
+        "Message": "审批处理地址长度不能超过500字符",
+        "Rules": [
+          {
+            "Pattern": "^([\\s\\S]{0,500})$",
+            "Options": "",
+            "Message": "",
+            "IsRange": false
+          }
+        ]
+      },
+      {
+        "Name": "DetailUrl",
+        "Message": "审批单详情地址长度不能超过500字符",
+        "Rules": [
+          {
+            "Pattern": "^([\\s\\S]{0,500})$",
+            "Options": "",
+            "Message": "",
+            "IsRange": false
+          }
+        ]
+      },
+      {
+        "Name": "ResultUrl",
+        "Message": "审批单结果通知地址长度不能超过500字符",
+        "Rules": [
+          {
+            "Pattern": "^([\\s\\S]{0,500})$",
+            "Options": "",
+            "Message": "",
+            "IsRange": false
+          }
+        ]
+      },
+      {
+        "Name": "Sequence",
+        "Message": "排序必须是从1开始的整形",
+        "Rules": [
+          {
+            "Pattern": "(^([\\s\\S]+)$)",
+            "Options": "",
+            "Message": "",
+            "IsRange": false
+          }
+        ]
+      },
+      {
+        "Name": "Remark",
+        "Message": "备注长度不能超过100",
+        "Rules": [
+          {
+            "Pattern": "^([\\s\\S]{0,100})$",
+            "Options": "",
+            "Message": "",
+            "IsRange": false
+          }
+        ]
+      },
+      {
+        "Name": "Roles",
+        "Message": "角色分配过多",
+        "Rules": [
+          {
+            "Pattern": "^([\\s\\S]{0,2000})$",
+            "Options": "",
+            "Message": "",
+            "IsRange": false
+          }
+        ]
+      }
+    ],
+    "hiddenFields": [
+      {
+        "name": "LastId",
+        "value": ""
+      },
+      {
+        "name": "LastDateTime",
+        "value": ""
+      },
+      {
+        "name": "ListCount",
+        "value": ""
+      },
+      {
+        "name": "Tag",
+        "value": "Travel"
+      },
+      {
+        "name": "Name",
+        "value": "&#x51FA;&#x5DEE;&#x7533;&#x8BF7;"
+      },
+      {
+        "name": "formvalues",
+        "value": "8"
+      }
+    ],
+    "fieldNames": [],
+    "layoutHtmlLength": 0,
+    "layoutHtmlPreview": "",
+    "addProbes": {
+      "emptyPost": {
+        "status": 200,
+        "contentType": "application/json; charset=utf-8",
+        "text": "{\"Status\":false,\"Message\":\"任务表单名称不能为空且长度不能超过100\",\"Data\":{\"Id\":0}}",
+        "json": {
+          "Status": false,
+          "Message": "任务表单名称不能为空且长度不能超过100",
+          "Data": {
+            "Id": 0
+          }
+        },
+        "length": 65
+      },
+      "minimalPost": {
+        "status": 200,
+        "contentType": "application/json; charset=utf-8",
+        "text": "{\"Status\":false,\"Message\":\"出差类型必填\",\"Data\":{\"Id\":0}}",
+        "json": {
+          "Status": false,
+          "Message": "出差类型必填",
+          "Data": {
+            "Id": 0
+          }
+        },
+        "length": 51
+      },
+      "jsonPost": {
+        "status": 200,
+        "text": "{\"Status\":false,\"Message\":\"任务表单名称不能为空且长度不能超过100\",\"Data\":{\"Id\":0}}"
+      }
+    }
+  },
+  "approval": {
+    "account": "T289G003",
+    "note": "T18610773065 has 0 pending; approval probed on T289G003 task",
+    "taskSample": {
+      "id": "44880000000013",
+      "name": "申晓杰向您发起了【出差申请】审批流程",
+      "number": "***REDACTED***",
+      "handleUrl": "http://workflow.rtesp.com/FormTask/Handle?flowtag=Travel"
+    },
+    "urls": {},
+    "formTaskPaths": [
+      "/FormTask/Approval",
+      "/FormTask/GetStaffs"
+    ],
+    "apiWorkflowPaths": [],
+    "approvalProbes": {
+      "emptyPost": {
+        "status": 200,
+        "contentType": "text/plain; charset=utf-8",
+        "text": "您没有权限查看或者任务已经过期",
+        "json": null,
+        "length": 15
+      },
+      "approvePost": {
+        "status": 200,
+        "contentType": "text/plain; charset=utf-8",
+        "text": "您没有权限查看或者任务已经过期",
+        "json": null,
+        "length": 15
+      }
+    },
+    "getStaffs": {
+      "status": 200,
+      "body": "[{\"Value\":96200000000002,\"Text\":\"申晓杰\"},{\"Value\":41810000000001,\"Text\":\"赵士浩\"},{\"Value\":44880000000001,\"Text\":\"孙雪\"},{\"Value\":35580000000002,\"Text\":\"张格\"},{\"Value\":79260000000001,\"Text\":\"赵士浩\"},{\"Value\":16890000000002,\"Text\":\"杨佳静\"},{\"Value\":3680000000003,\"Text\":\"范梦杭\"},{\"Value\":46120000000001,\"Text\":\"鲁思雨\"},{\"Value\":69290000000003,\"Text\":\"王莹莹\"},{\"Value\":56250000000003,\"Text\":\"MAHONGXU\"}]"
+    }
+  }
+}

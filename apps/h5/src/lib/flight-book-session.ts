@@ -1,0 +1,86 @@
+import type {
+  FlightDetailResult,
+  FlightFare,
+  FlightListResult,
+  FlightSegment,
+} from "@ryx/shared-types";
+import type { FlightBookPolicy } from "@ryx/shared-types";
+
+import type { FlightCabinsQuery } from "@/lib/flight-detail";
+import type { HomeTravelMode } from "@/config/home-assets";
+
+// Session snapshot for the current flight booking flow; passenger selection remains
+// product-scoped in ryx_passenger_selection_1.
+const STORAGE_KEY = "ryx_flight_book_selection";
+const BOOK_EXIT_HOME_KEY = "ryx_flight_book_exit_home";
+export const FLIGHT_BOOK_SELECTION_EVENT = "ryx-flight-book-selection-change";
+
+export interface FlightBookSelection {
+  flightId: string;
+  cabinsQuery: FlightCabinsQuery;
+  segment: FlightSegment;
+  fare: FlightFare;
+  detailSnapshot?: FlightDetailResult;
+  listSnapshot?: FlightListResult;
+  /** Primary policy (first passenger) — banner / backward compat. */
+  flightPolicy?: FlightBookPolicy;
+  /** Per-passenger Home-Policy result — Legacy `bookInfo.flightPolicy` per passenger. */
+  flightPoliciesByPassengerId?: Record<string, FlightBookPolicy>;
+  /** When cabin prices were last fetched — used for 10-minute timeout. */
+  priceSnapshotAt: number;
+  selectedAt: number;
+  travelMode?: HomeTravelMode;
+  isExchange?: boolean;
+  exchangeTicketId?: string;
+  exchangeOrderId?: string;
+  exchangePassengerMobile?: string;
+  exchangeTravelPayType?: number;
+  exchangeOriginalTicketPrice?: number;
+}
+
+function notifyChange(): void {
+  window.dispatchEvent(new CustomEvent(FLIGHT_BOOK_SELECTION_EVENT));
+}
+
+export function loadFlightBookSelection(): FlightBookSelection | null {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as FlightBookSelection;
+    if (!parsed?.segment || !parsed?.fare || !parsed?.cabinsQuery) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+export function saveFlightBookSelection(selection: FlightBookSelection): void {
+  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(selection));
+  notifyChange();
+}
+
+export function clearFlightBookSelection(): void {
+  sessionStorage.removeItem(STORAGE_KEY);
+  notifyChange();
+}
+
+/** After submit, order detail back should exit to flight home instead of book history. */
+export function markFlightBookExitToHome(): void {
+  sessionStorage.setItem(BOOK_EXIT_HOME_KEY, "1");
+}
+
+export function consumeFlightBookExitToHome(): boolean {
+  if (sessionStorage.getItem(BOOK_EXIT_HOME_KEY) !== "1") return false;
+  sessionStorage.removeItem(BOOK_EXIT_HOME_KEY);
+  return true;
+}
+
+export function buildCabinsHref(selection: FlightBookSelection): string {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(selection.cabinsQuery)) {
+    if (value !== "" && value != null) {
+      params.set(key, String(value));
+    }
+  }
+  return `/flight/${encodeURIComponent(selection.flightId)}/cabins?${params.toString()}`;
+}

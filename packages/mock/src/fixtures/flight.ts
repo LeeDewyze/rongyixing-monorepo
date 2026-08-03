@@ -1,0 +1,341 @@
+import type {
+  FlightDetailResult,
+  FlightListResult,
+  FlightSegment,
+  Trafficline,
+} from "@ryx/shared-types";
+
+export const MOCK_AIRPORTS: Trafficline[] = [
+  {
+    Id: "9278",
+    Tag: "AirportCity",
+    Code: "BJS",
+    Name: "北京",
+    Nickname: "北京",
+    Pinyin: "Beijing",
+    Initial: "bj",
+    AirportCityCode: "BJS",
+    CityCode: "1101",
+    CityName: "北京",
+    EnglishName: "Beijing",
+    CountryCode: "CN",
+    IsHot: true,
+  },
+  {
+    Id: "9280",
+    Tag: "AirportCity",
+    Code: "SHA",
+    Name: "上海",
+    Nickname: "上海",
+    Pinyin: "Shanghai",
+    Initial: "sh",
+    AirportCityCode: "SHA",
+    CityCode: "3101",
+    CityName: "上海",
+    EnglishName: "Shanghai",
+    CountryCode: "CN",
+    IsHot: true,
+  },
+  {
+    Id: "9281",
+    Tag: "Airport",
+    Code: "PEK",
+    Name: "首都国际机场",
+    Nickname: "首都",
+    Pinyin: "Capital Airport",
+    Initial: "sd",
+    AirportCityCode: "BJS",
+    CityCode: "1101",
+    CityName: "北京",
+    EnglishName: "Capital Intl",
+    CountryCode: "CN",
+    IsHot: true,
+  },
+  {
+    Id: "9282",
+    Tag: "Airport",
+    Code: "PVG",
+    Name: "浦东国际机场",
+    Nickname: "浦东",
+    Pinyin: "Pudong Airport",
+    Initial: "pd",
+    AirportCityCode: "SHA",
+    CityCode: "3101",
+    CityName: "上海",
+    EnglishName: "Pudong Intl",
+    CountryCode: "CN",
+    IsHot: true,
+  },
+  {
+    Id: "9283",
+    Tag: "AirportCity",
+    Code: "CAN",
+    Name: "广州",
+    Nickname: "广州",
+    Pinyin: "Guangzhou",
+    Initial: "gz",
+    AirportCityCode: "CAN",
+    CityCode: "4401",
+    CityName: "广州",
+    EnglishName: "Guangzhou",
+    CountryCode: "CN",
+    IsHot: true,
+  },
+  {
+    Id: "9284",
+    Tag: "AirportCity",
+    Code: "SZX",
+    Name: "深圳",
+    Nickname: "深圳",
+    Pinyin: "Shenzhen",
+    Initial: "sz",
+    AirportCityCode: "SZX",
+    CityCode: "4403",
+    CityName: "深圳",
+    EnglishName: "Shenzhen",
+    CountryCode: "CN",
+    IsHot: true,
+  },
+];
+
+function buildSegments(params: {
+  FromCode?: string;
+  ToCode?: string;
+  Date?: string;
+}): FlightSegment[] {
+  const date = params.Date ?? new Date().toISOString().slice(0, 10);
+  const from = params.FromCode ?? "BJS";
+  const to = params.ToCode ?? "SHA";
+
+  return [
+    {
+      Id: "F001",
+      Number: "CA1501",
+      FlightNumber: "CA1501",
+      Airline: "CA",
+      AirlineName: "中国国航",
+      FromAirport: from,
+      FromAirportName: "首都T3",
+      FromCityName: "北京",
+      FromTerminal: "T3",
+      ToAirport: to,
+      ToAirportName: "虹桥T2",
+      ToCityName: "上海",
+      ToTerminal: "T2",
+      TakeoffTime: `${date} 08:30:00`,
+      ArrivalTime: `${date} 10:45:00`,
+      FlyTime: "135",
+      FlyTimeName: "2h15m",
+      LowestFare: "980",
+      Tax: "70",
+      IsStop: false,
+      IsAgreement: true,
+      PlaneType: "320",
+      PlaneTypeDescribe: "空客A320(中)",
+      Meal: "M",
+    },
+    {
+      Id: "F002",
+      Number: "MU5101",
+      FlightNumber: "MU5101",
+      Airline: "MU",
+      AirlineName: "东方航空",
+      FromAirport: from,
+      FromAirportName: "首都T2",
+      FromCityName: "北京",
+      FromTerminal: "T2",
+      ToAirport: to,
+      ToAirportName: "浦东T1",
+      ToCityName: "上海",
+      ToTerminal: "T1",
+      TakeoffTime: `${date} 14:00:00`,
+      ArrivalTime: `${date} 16:20:00`,
+      FlyTime: "140",
+      FlyTimeName: "2h20m",
+      LowestFare: "860",
+      Tax: "70",
+      IsStop: false,
+      RemainSeats: 2,
+      PlaneType: "738",
+      PlaneTypeDescribe: "波音737(中)",
+      Meal: "N",
+    },
+    {
+      Id: "F003",
+      Number: "CZ3101",
+      FlightNumber: "CZ3101",
+      Airline: "CZ",
+      AirlineName: "南方航空",
+      FromAirport: from,
+      FromAirportName: "大兴",
+      FromCityName: "北京",
+      FromTerminal: "",
+      ToAirport: to,
+      ToAirportName: "虹桥T2",
+      ToCityName: "上海",
+      ToTerminal: "T2",
+      TakeoffTime: `${date} 19:30:00`,
+      ArrivalTime: `${date} 21:50:00`,
+      FlyTime: "140",
+      FlyTimeName: "2h20m",
+      LowestFare: "720",
+      Tax: "70",
+      IsStop: true,
+      PlaneType: "空客A321",
+      PlaneTypeDescribe: "空客A321(中)",
+    },
+    {
+      Id: "F005",
+      Number: "MF8101",
+      FlightNumber: "MF8101",
+      Airline: "MF",
+      AirlineName: "厦门航空",
+      FromAirport: from,
+      FromAirportName: "首都T2",
+      FromCityName: "北京",
+      ToAirport: to,
+      ToAirportName: "虹桥T2",
+      ToCityName: "上海",
+      TakeoffTime: `${date} 09:00:00`,
+      ArrivalTime: `${date} 14:30:00`,
+      FlyTimeName: "5h30m",
+      LowestFare: "650",
+      IsTransfer: true,
+      Transfer: { CityName: "福州" },
+      PlaneTypeDescribe: "空客320(中)",
+      RemainSeats: 2,
+    },
+  ];
+}
+
+export function createMockFlightList(params: {
+  FromCode?: string;
+  ToCode?: string;
+  Date?: string;
+}): FlightListResult {
+  const segments = buildSegments(params);
+  return {
+    Result: { FlightSegments: segments },
+    FlightViews: segments.map((seg) => ({
+      Price: seg.LowestFare != null ? String(seg.LowestFare) : undefined,
+      Data: seg.Data ?? `mock-${seg.Id}`,
+      BookType: 2,
+      Segment: {
+        ...seg,
+        DetailKey: seg.Data ?? `mock-${seg.Id}`,
+        Data: seg.Data ?? `mock-${seg.Id}`,
+        BookType: 2,
+      },
+    })),
+  };
+}
+
+function mockCabinsForSegment(seg: FlightSegment) {
+  const base = Number(seg.LowestFare ?? 720);
+  const flightNumber = seg.Number || seg.FlightNumber || "";
+  const makeFare = (
+    code: string,
+    salesPrice: string,
+    cabinType: number,
+    cabinTypeName: string,
+    discount: number,
+    count: string,
+  ) => ({
+    Id: `fare-${seg.Id}-${code}`,
+    FlightNumber: flightNumber,
+    Code: code,
+    SalesPrice: salesPrice,
+    Tax: seg.Tax ?? "70",
+    IsAgreement: code === "Y",
+    IsAllowOrder: true,
+    Count: count,
+    FlightFareBasics: [
+      {
+        CabinCode: code,
+        CabinType: cabinType,
+        CabinTypeName: cabinTypeName,
+        Discount: discount,
+      },
+    ],
+    VariablesObj: { Baggage: cabinType === 2 ? "托运行李30KG" : "托运行李20KG" },
+  });
+
+  return [
+    makeFare("Y", String(base), 1, "经济舱", 0.45, "9"),
+    makeFare("T", "360", 1, "经济舱", 0.22, "5"),
+    makeFare("M", String(base + 120), 1, "经济舱", 0.65, "5"),
+    makeFare("C", String(base + 800), 2, "公务舱", 0.85, "2"),
+  ];
+}
+
+export function createMockFlightDetail(params: {
+  FlightNumber?: string;
+  FromCode?: string;
+  ToCode?: string;
+  Date?: string;
+}): FlightDetailResult {
+  const list = createMockFlightList({
+    FromCode: params.FromCode,
+    ToCode: params.ToCode,
+    Date: params.Date,
+  });
+  const segments = list.Result?.FlightSegments ?? [];
+  const flightNumber = (params.FlightNumber ?? "").toUpperCase();
+  const segment =
+    segments.find((s) => (s.Number ?? "").toUpperCase() === flightNumber) ?? segments[0];
+  if (!segment) {
+    return { FlightSegments: [], FlightFares: [] };
+  }
+
+  if (segment.IsTransfer) {
+    const date = params.Date ?? segment.TakeoffTime?.slice(0, 10) ?? "2026-06-23";
+    const leg1: FlightSegment = {
+      ...segment,
+      Number: "MU2118",
+      FlightNumber: "MU2118",
+      AirlineName: "东方航空",
+      Airline: "MU",
+      FromCityName: segment.FromCityName ?? "北京",
+      FromAirportName: "大兴国际机场",
+      FromTerminal: "",
+      ToCityName: "西安",
+      ToAirportName: "咸阳国际机场",
+      ToTerminal: "T5",
+      TakeoffTime: `${date} 19:00:00`,
+      ArrivalTime: `${date} 21:00:00`,
+      FlyTimeName: "2h0m",
+      PlaneTypeDescribe: "空客A320(中)",
+      Meal: "有餐食",
+    };
+    const nextDay = new Date(`${date}T00:00:00`);
+    nextDay.setDate(nextDay.getDate() + 1);
+    const nextDate = nextDay.toISOString().slice(0, 10);
+    const leg2: FlightSegment = {
+      ...segment,
+      Number: "MU2227",
+      FlightNumber: "MU2227",
+      AirlineName: "东方航空",
+      Airline: "MU",
+      FromCityName: "西安",
+      FromAirportName: "咸阳国际机场",
+      FromTerminal: "T5",
+      ToCityName: segment.ToCityName ?? "上海",
+      ToAirportName: segment.ToAirportName ?? "虹桥T2",
+      ToTerminal: segment.ToTerminal ?? "T2",
+      TakeoffTime: `${nextDate} 07:35:00`,
+      ArrivalTime: `${nextDate} 11:40:00`,
+      FlyTimeName: "4h5m",
+      PlaneTypeDescribe: "空客A320(中)",
+      Meal: "有餐食",
+    };
+    return {
+      FlightSegments: [leg1, leg2],
+      FlightFares: mockCabinsForSegment(segment),
+    };
+  }
+
+  return {
+    FlightSegments: [{ ...segment }],
+    FlightFares: mockCabinsForSegment(segment),
+  };
+}

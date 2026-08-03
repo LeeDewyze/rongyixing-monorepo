@@ -1,0 +1,133 @@
+@import "tailwindcss";
+
+@source "../../../apps/web/index.html";
+@source "../../../apps/web/src/**/*.{ts,tsx}";
+@source "../../../apps/h5/index.html";
+@source "../../../apps/h5/src/**/*.{ts,tsx}";
+@source "../components/**/*.{ts,tsx}";
+
+@custom-variant pad (@media (min-width: 768px));
+@custom-variant pc (@media (min-width: 1440px));
+
+@theme inline {
+  --breakpoint-pad: 48rem;
+  --breakpoint-pc: 90rem;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* ===== RYX Brand Color Tokens ===== */
+  --color-brand-title: #010101;
+  --color-brand-primary: #2768FA;
+  --color-brand-btn-start: #33A1F9;
+  --color-brand-btn-end: #2768FA;
+  --color-brand-form-start: #7AB1FF;
+  --color-brand-form-end: #F5F6F9;
+  --color-brand-header-start: #5099fe;
+  --color-brand-header-end: #6aabff;
+  --color-brand-accent: #5099fe;
+}
+
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+
+  /* ===== RYX Brand Tokens ===== */
+
+  /* 主品牌蓝 — 文字/边框/对焦环等交互态 */
+  --brand-primary: #2768FA;
+
+  /* 标题文字 — 用于浅色背景上的标题 */
+  --brand-title: #010101;
+
+  /* 主按钮渐变 — 左浅右深 */
+  --brand-btn-start: #33A1F9;
+  --brand-btn-end: #2768FA;
+  --brand-btn-gradient: linear-gradient(90deg, var(--brand-btn-start), var(--brand-btn-end));
+
+  /* 页面 header 渐变 — 用于顶部导航栏 */
+  --brand-header-start: #5099fe;
+  --brand-header-end: #6aabff;
+
+  /* 品牌强调色 — 用于次级交互元素（如标签、选中态背景） */
+  --brand-accent: #5099fe;
+
+  /* 表单页头部渐变 — 顶部 ~200px 从 brand-blue 渐变到页面底色 */
+  --brand-form-header-start: #7AB1FF;
+  --brand-form-header-end: #F5F6F9;
+  --brand-form-header-gradient: linear-gradient(180deg, var(--brand-form-header-start) 0px, var(--brand-form-header-end) 200px);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html, body {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none;
+  }
+}

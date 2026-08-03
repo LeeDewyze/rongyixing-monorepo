@@ -1,0 +1,102 @@
+import { ApiError } from "@ryx/api";
+import { useQuery } from "@tanstack/react-query";
+import type {
+  FlightDetailParams,
+  FlightPolicyParams,
+  FlightPolicyPassengerResult,
+  FlightSearchParams,
+} from "@ryx/shared-types";
+
+import { FLIGHT_LIST_STALE_MS } from "@/lib/flight-list-refresh";
+import { normalizeFlightDetailResponse } from "@ryx/api";
+import { getApi } from "@/lib/api";
+import { getApiMode } from "@/lib/env";
+import { getTicket } from "@/lib/session";
+
+function canQueryFlightList(params?: { TicketId?: string }): boolean {
+  return getApiMode() === "mock" || Boolean(getTicket()) || Boolean(params?.TicketId);
+}
+
+export function useFlightAirports(options?: { enabled?: boolean }) {
+  const enabled = options?.enabled ?? true;
+  return useQuery({
+    queryKey: ["flight", "airports"],
+    queryFn: () => getApi().flight.getAirports(),
+    staleTime: 1000 * 60 * 30,
+    enabled,
+  });
+}
+
+export function useFlightList(params: FlightSearchParams | null) {
+  return useQuery({
+    queryKey: ["flight", "list", params],
+    queryFn: async () => {
+      const api = getApi();
+      if (getApiMode() !== "mock" && !api.proxy.getApiConfig()?.Token) {
+        await api.proxy.loadApiConfig();
+      }
+      return api.flight.searchFlights(params!);
+    },
+    enabled: Boolean(
+      params?.Date && params?.FromCode && params?.ToCode && canQueryFlightList(params),
+    ),
+    staleTime: FLIGHT_LIST_STALE_MS,
+    refetchOnWindowFocus: false,
+    retry: (failureCount, error) => {
+      if (failureCount >= 2) return false;
+      if (error instanceof ApiError && error.message.includes("没有获取列表")) {
+        return true;
+      }
+      return failureCount < 1;
+    },
+  });
+}
+
+export function useFlightDetail(params: FlightDetailParams | null) {
+  return useQuery({
+    queryKey: ["flight", "detail", params],
+    queryFn: async () => {
+      const api = getApi();
+      if (getApiMode() !== "mock" && !api.proxy.getApiConfig()?.Token) {
+        await api.proxy.loadApiConfig();
+      }
+      return normalizeFlightDetailResponse(await api.flight.getFlightDetail(params!));
+    },
+    enabled: Boolean(
+      params?.Date &&
+        params?.FromCode &&
+        params?.ToCode &&
+        params?.FlightNumber &&
+        canQueryFlightList(params),
+    ),
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: false,
+    retry: (failureCount) => failureCount < 1,
+  });
+}
+
+export function useFlightPolicy(
+  params: FlightPolicyParams | null,
+  options?: {
+    enabled?: boolean;
+    initialData?: FlightPolicyPassengerResult[];
+  },
+) {
+  const enabled = options?.enabled ?? true;
+  return useQuery({
+    queryKey: ["flight", "policy", params],
+    queryFn: async () => {
+      const api = getApi();
+      if (getApiMode() !== "mock" && !api.proxy.getApiConfig()?.Token) {
+        await api.proxy.loadApiConfig();
+      }
+      return api.flight.getFlightPolicy(params!);
+    },
+    enabled: enabled && Boolean(params?.Passengers && params.FlightDetail),
+    initialData: options?.initialData,
+    staleTime: FLIGHT_LIST_STALE_MS,
+    refetchOnWindowFocus: false,
+    retry: (failureCount) => failureCount < 1,
+  });
+}

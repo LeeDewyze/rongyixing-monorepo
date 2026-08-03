@@ -1,0 +1,36 @@
+{
+  "applyForm": {
+    "url": "http://workflow.rtesp.com/Form/Flow?flowtag=Travel&ticket=f1d53cb4d73143ea861646b4a76a7d26",
+    "status": 200,
+    "contentType": "text/html; charset=utf-8",
+    "length": 56831,
+    "preview": "<!DOCTYPE html>\n<html>\n<head>\n    <meta charset=\"utf-8\" />\n    <meta name=\"format-detection\" content=\"telephone=no\">\n    <meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no\" />\n    <link rel=\"shortcut icon\" href=\"http://shared.rtesp.com/img/favicon.ico\" type=\"image/x-icon\" />\n    <script type=\"text/javascript\" src=\"/js/plugin/jquery.min.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/winner/winner.classbase.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/winner/dataloader/winner.dataloader.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/plugin/jquery.lazyload.min.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/plugin/layer/layer.js\"></script>\n    <link href=\"/js/plugin/layui/css/layui.css\" rel=\"stylesheet\" />\n\n    <script type=\"text/javascript\" src=\"/js/plugin/layui/layui.js\"></script>\n    <title>&#x6D41;&#x7A0B;&#x5904;&#x7406;</title>\n\n    \n    <script type=\"text/javascript\" src=\"/js/winner/validator/winner.validator.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/winner/table/winner.table.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/winner/checkbox/winner.checkbox.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/winner/weber/winner.weber.js?v=5.2\"></script>\n    <link href=\"/js/plugin/ztree/ztreestyle/ztreestyle.css\" rel=\"stylesheet\" />\n\n    <script type=\"text/javascript\" src=\"/js/winner/combobox/winner.combobox.js?v=2\"></script>\n    <script type=\"text/javascript\" src=\"/js/plugin/exif.min.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/winner/imagecutor/winner.imagecutor.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/plugin/ztree/jquery.ztree.core-3.5.min.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/plugin/ztree/jquery.ztree.excheck-3.5.min.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/plugin/ztree/jquery.ztree.exedit-3.5.min.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/plugin/wdatepic",
+    "apiHints": [
+      "/Form/Add",
+      "/Form/FormLayoutDetail",
+      "/Form/Get",
+      "/Form/List",
+      "/Form/Modify",
+      "/Form/Remove",
+      "api-workflow.rtesp.com/CityCtrl/DefaultData?label=北京&value=1101&ticket=f1d53cb4d73143ea861646b4a76a7d26&formId=",
+      "api-workflow.rtesp.com/CityCtrl/GetDatas?ticket=f1d53cb4d73143ea861646b4a76a7d26&formId=",
+      "api-workflow.rtesp.com/OrganizationCtrl/DefaultData?ticket=f1d53cb4d73143ea861646b4a76a7d26&formId=",
+      "api-workflow.rtesp.com/PositionCtrl/DefaultData?ticket=f1d53cb4d73143ea861646b4a76a7d26&formId=",
+      "api-workflow.rtesp.com/StaffCtrl/DefaultApplicant?ticket=f1d53cb4d73143ea861646b4a76a7d26&formId=",
+      "api-workflow.rtesp.com/StaffCtrl/DefaultData?HasNumber=true&ticket=f1d53cb4d73143ea861646b4a76a7d26&formId=",
+      "api-workflow.rtesp.com/StaffCtrl/GetDatas?HasNumber=true&OnlyLoadCompany=true&ticket=f1d53cb4d73143ea861646b4a76a7d26&formId=",
+      "api-workflow.rtesp.com/StaffCtrl/GetDefaultPolicy?ticket=f1d53cb4d73143ea861646b4a76a7d26&formId="
+    ]
+  },
+  "taskIndex": {
+    "url": "http://workflow.rtesp.com/Task/Index?ticket=f1d53cb4d73143ea861646b4a76a7d26",
+    "status": 200,
+    "contentType": "text/html; charset=utf-8",
+    "length": 39169,
+    "preview": "<!DOCTYPE html>\n<html>\n<head>\n    <meta charset=\"utf-8\" />\n    <meta name=\"format-detection\" content=\"telephone=no\">\n    <meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no\" />\n    <link rel=\"shortcut icon\" href=\"http://shared.rtesp.com/img/favicon.ico\" type=\"image/x-icon\" />\n    <script type=\"text/javascript\" src=\"/js/plugin/jquery.min.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/winner/winner.classbase.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/winner/dataloader/winner.dataloader.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/plugin/jquery.lazyload.min.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/plugin/layer/layer.js\"></script>\n    <link href=\"/js/plugin/layui/css/layui.css\" rel=\"stylesheet\" />\n\n    <script type=\"text/javascript\" src=\"/js/plugin/layui/layui.js\"></script>\n    <title>&#x6D41;&#x7A0B;&#x5904;&#x7406;</title>\n\n    \n    <script type=\"text/javascript\" src=\"/js/winner/validator/winner.validator.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/winner/table/winner.table.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/winner/checkbox/winner.checkbox.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/winner/weber/winner.weber.js?v=5.2\"></script>\n    <link href=\"/js/plugin/ztree/ztreestyle/ztreestyle.css\" rel=\"stylesheet\" />\n\n    <script type=\"text/javascript\" src=\"/js/winner/combobox/winner.combobox.js?v=2\"></script>\n    <script type=\"text/javascript\" src=\"/js/plugin/exif.min.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/winner/imagecutor/winner.imagecutor.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/plugin/ztree/jquery.ztree.core-3.5.min.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/plugin/ztree/jquery.ztree.excheck-3.5.min.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/plugin/ztree/jquery.ztree.exedit-3.5.min.js\"></script>\n    <script type=\"text/javascript\" src=\"/js/plugin/wdatepic",
+    "apiHints": [
+      "/Task/get",
+      "/Task/list"
+    ]
+  }
+}

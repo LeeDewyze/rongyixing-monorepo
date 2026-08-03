@@ -1,0 +1,7 @@
+web-dist/
+android/.gradle/
+android/app/build/
+android/build/
+android/captures/
+android/local.properties
+

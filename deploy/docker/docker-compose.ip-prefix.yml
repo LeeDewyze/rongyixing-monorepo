@@ -1,0 +1,34 @@
+services:
+  ryx-h5:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.h5
+      args:
+        NPM_CONFIG_REGISTRY: ${NPM_CONFIG_REGISTRY:-https://registry.npmmirror.com}
+        VITE_APP_ID: ${VITE_APP_ID:-com.ronglvonline.app}
+        VITE_API_MODE: ${VITE_API_MODE:-proxy}
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
+        VITE_API_DOMAIN: ${VITE_API_DOMAIN:-rtesp.com}
+        VITE_BASE_PATH: ${RYX_H5_BASE_PATH:-/h5/}
+    image: ryx-h5:ip-prefix
+    container_name: ryx-h5
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${RYX_H5_PORT:-18080}:80"
+
+  ryx-web:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.web
+      args:
+        NPM_CONFIG_REGISTRY: ${NPM_CONFIG_REGISTRY:-https://registry.npmmirror.com}
+        VITE_APP_ID: ${VITE_APP_ID:-com.ronglvonline.app}
+        VITE_API_MODE: ${VITE_API_MODE:-proxy}
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
+        VITE_API_DOMAIN: ${VITE_API_DOMAIN:-rtesp.com}
+        VITE_BASE_PATH: ${RYX_WEB_BASE_PATH:-/web/}
+    image: ryx-web:ip-prefix
+    container_name: ryx-web
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${RYX_WEB_PORT:-18081}:80"

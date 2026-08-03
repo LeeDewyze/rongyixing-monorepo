@@ -1,0 +1,138 @@
+import type { HotelOrderBillLine, HotelOrderHistory, HotelOrderTraveler } from "./hotel.js";
+import type { TrainOrderTicket } from "./train-order.js";
+
+export interface FlightOrderTrip {
+  FromCode?: string;
+  ToCode?: string;
+  FromAirport?: string;
+  ToAirport?: string;
+  FromCityName?: string;
+  ToCityName?: string;
+  FromAirportName?: string;
+  ToAirportName?: string;
+  FromTerminal?: string;
+  ToTerminal?: string;
+  TakeoffTime?: string;
+  ArrivalTime?: string;
+  FlightNumber?: string;
+  CodeShareNumber?: string;
+  PlaneType?: string;
+  PlaneTypeDescribe?: string;
+  CabinType?: string;
+  FlyTime?: string;
+  IsStop?: boolean;
+  IsTransfer?: boolean;
+  StopCities?: string;
+  Airline?: string;
+  AirlineName?: string;
+  AirlineSrc?: string;
+  CodeShareAirlineName?: string;
+  BookType?: string | number;
+}
+
+export interface FlightOrderTicket {
+  Id: string;
+  Key: string;
+  Status?: string;
+  StatusName?: string;
+  AppStatusName?: string;
+  FullTicketNo?: string;
+  Explain?: string;
+  IsOriginal?: boolean;
+  Trips: FlightOrderTrip[];
+  Traveler?: HotelOrderTraveler;
+  PassengerTypeName?: string;
+  Actions?: {
+    showCancel?: boolean;
+    showRefund?: boolean;
+    showExchange?: boolean;
+  };
+}
+
+export interface FlightExchangeInfoParams {
+  channel?: "tmc" | "tourist";
+  TicketId: string;
+  OrderId?: string;
+  ExchangeDate?: string;
+}
+
+export interface FlightExchangeInfo {
+  TicketId?: string;
+  OrderId?: string;
+  Date?: string;
+  FromCode?: string;
+  ToCode?: string;
+  FromName?: string;
+  ToName?: string;
+  FromAirport?: string;
+  ToAirport?: string;
+  FromAsAirport?: boolean;
+  ToAsAirport?: boolean;
+  FlightNumber?: string;
+  BookType?: string | number;
+  TravelPayType?: number;
+  OriginalTicketPrice?: number;
+  PassengerMobile?: string;
+}
+
+export interface FlightCancelParams {
+  channel?: "tmc" | "tourist";
+  OrderId: string;
+  TicketId: string;
+  Channel: string;
+  Tag?: "flight";
+}
+
+export interface FlightAbolishTicketParams {
+  channel?: "tmc" | "tourist";
+  OrderId: string;
+  TicketId: string;
+  Tag: "flight";
+}
+
+export interface FlightTicketRefundInfoParams {
+  channel?: "tmc" | "tourist";
+  orderFlightTicket: string;
+}
+
+export interface FlightTicketRefundInfo {
+  CanAutoRefund?: boolean;
+  IsOffline?: boolean;
+  RefundFee?: string | number;
+  Message?: string;
+}
+
+export interface FlightRefundParams {
+  channel?: "tmc" | "tourist";
+  orderId: string;
+  ticketId: string;
+  IsVoluntary: boolean;
+  FileName?: string;
+  FileValue?: string;
+}
+
+export interface FlightNonVoluntaryRefundParams {
+  channel?: "tmc" | "tourist";
+  OrderFlightTicketId: string;
+  OrderId: string;
+  IsVoluntary: false;
+}
+
+export interface OrderContact {
+  Name?: string;
+  Mobile?: string;
+  Email?: string;
+}
+
+export type OrderDetailTicket = FlightOrderTicket | TrainOrderTicket;
+
+export interface FlightOrderDetailFields {
+  Tickets?: OrderDetailTicket[];
+  BillItems?: HotelOrderBillLine[];
+  Histories?: HotelOrderHistory[];
+  PayHoldMinutes?: number;
+  /** Numeric legacy `OrderTravelPayType` from VariablesObj. */
+  TravelPayTypeCode?: number;
+  /** Book contact from `OrderLinkmans` / order contact fields. */
+  Contact?: OrderContact;
+}

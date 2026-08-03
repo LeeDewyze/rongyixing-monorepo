@@ -1,0 +1,21 @@
+{
+  "name": "@ryx/android-pad",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:web": "VITE_BASE_PATH=./ VITE_API_MODE=direct VITE_FORCE_API_MODE=direct VITE_API_BASE_URL=http://app.rtesp.com pnpm --filter @ryx/web build",
+    "copy:web": "node scripts/copy-web-dist.mjs && node scripts/compat-android-css.mjs",
+    "init:android": "pnpm run copy:web && capacitor add android",
+    "sync": "pnpm run build:web && pnpm run copy:web && capacitor sync android",
+    "open": "capacitor open android",
+    "apk:debug": "pnpm run sync && cd android && ./gradlew assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.4.1",
+    "@capacitor/core": "^8.4.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.4.1"
+  }
+}

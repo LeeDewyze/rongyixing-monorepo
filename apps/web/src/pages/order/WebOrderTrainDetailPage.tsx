@@ -1,0 +1,408 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { TrainPassengerInfo, TrainScheduleParams } from "@ryx/shared-types";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+
+import { HotelOrderApprovalSection } from "@/components/order/hotel/HotelOrderApprovalSection";
+import { HotelOrderDetailHeader } from "@/components/order/hotel/HotelOrderDetailHeader";
+import { FlightOrderContactCard } from "@/components/order/flight/FlightOrderContactCard";
+import { TrainOrderBillSheet } from "@/components/order/train/TrainOrderBillSheet";
+import { TrainOrderCancelDialog } from "@/components/order/train/TrainOrderCancelDialog";
+import { TrainOrderDetailFooter } from "@/components/order/train/TrainOrderDetailFooter";
+import { TrainOrderExplainSheet } from "@/components/order/train/TrainOrderExplainSheet";
+import { TrainOrderHoldBanner } from "@/components/order/train/TrainOrderHoldBanner";
+import { TrainOrderInfoCard } from "@/components/order/train/TrainOrderInfoCard";
+import { TrainOrderIssueDialog } from "@/components/order/train/TrainOrderIssueDialog";
+import { TrainOrderJourneyCard } from "@/components/order/train/TrainOrderJourneyCard";
+import { TrainOrderPassengerTabs } from "@/components/order/train/TrainOrderPassengerTabs";
+import { TrainOrderRefundDialog } from "@/components/order/train/TrainOrderRefundDialog";
+import { TrainOrderTravelerCard } from "@/components/order/train/TrainOrderTravelerCard";
+import { OrderInspurRepushSheet } from "@/components/order/OrderInspurRepushSheet";
+import { WebOrderToast } from "@/components/order/WebOrderDetailShell";
+import { TrainScheduleSheet } from "@/components/train/TrainScheduleSheet";
+import { usePageHeader } from "@/components/layout";
+import {
+  useCancelTrainOrder,
+  useAbolishTrainTicket,
+  useIssueTrainOrder,
+  useRefundTrainOrder,
+  useTrainOrderDetail,
+  useTrainPayHoldCountdown,
+} from "@/hooks/useTrainOrderDetail";
+import { useInspurRepush } from "@/hooks/useOrderInspurRepush";
+import { useTrainSchedule } from "@/hooks/useTrainSchedule";
+import { resolveAppChannel } from "@/lib/app-channel";
+import { formatApiError } from "@/lib/formatApiError";
+import { getApi } from "@/lib/api";
+import { startTrainExchangeFlow } from "@/lib/train-order-actions";
+import {
+  filterBillLinesForTicket,
+  getSelectedTicket,
+  mergeTrainFooterActions,
+  shouldShowTrainFooter,
+  shouldShowTrainOrderHoldBanner,
+  suppressTrainFooterActions,
+} from "@/lib/train-order-detail";
+import { buildTrainScheduleParamsFromTrip } from "@/lib/train-schedule";
+import { parseOrderListScope } from "@/lib/order-list-params";
+import { buildOrderPayPath } from "@/lib/order-page-utils";
+import { ORDER_DETAIL_PAGE_BACKGROUND } from "@/lib/order-detail-chrome";
+import { getOrderListPath } from "@/lib/order-routes";
+import { WEB_PAGE_BODY, WEB_PAGE_ROOT } from "@/lib/web-page-layout";
+
+interface OrderDetailLocationState {
+  action?: "cancel" | "refund";
+}
+
+export function WebOrderTrainDetailPage() {
+  const { orderId = "" } = useParams();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const channel =
+    searchParams.get("channel") === "tourist"
+      ? "tourist"
+      : searchParams.get("channel") === "tmc"
+        ? "tmc"
+        : undefined;
+  const listScope = parseOrderListScope(searchParams.get("scope"));
+  const location = useLocation();
+  const openCancelOnMountRef = useRef(
+    (location.state as OrderDetailLocationState | null)?.action === "cancel",
+  );
+  const openRefundOnMountRef = useRef(
+    (location.state as OrderDetailLocationState | null)?.action === "refund",
+  );
+
+  const {
+    data: detail,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useTrainOrderDetail(orderId, channel);
+  const cancelMutation = useCancelTrainOrder();
+  const abolishMutation = useAbolishTrainTicket();
+  const issueMutation = useIssueTrainOrder();
+  const refundMutation = useRefundTrainOrder();
+  const payHoldSecondsRemaining = useTrainPayHoldCountdown(detail?.PayHoldMinutes);
+  const { data: showInspurRepush } = useInspurRepush(orderId, channel, Boolean(detail));
+
+  const [selectedTicketIndex, setSelectedTicketIndex] = useState(0);
+  const [billOpen, setBillOpen] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [issueOpen, setIssueOpen] = useState(false);
+  const [refundOpen, setRefundOpen] = useState(false);
+  const [refundPassenger, setRefundPassenger] = useState<TrainPassengerInfo | undefined>();
+  const [explainOpen, setExplainOpen] = useState(false);
+  const [repushOpen, setRepushOpen] = useState(false);
+  const [scheduleParams, setScheduleParams] = useState<TrainScheduleParams | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const [suppressFooterActions, setSuppressFooterActions] = useState(false);
+  const scheduleQuery = useTrainSchedule(scheduleParams);
+
+  const leaveDetail = useCallback(() => {
+    navigate(getOrderListPath("train", { channel, scope: listScope }), { replace: true });
+  }, [channel, listScope, navigate]);
+
+  const handleBack = useCallback(() => {
+    if (billOpen) {
+      setBillOpen(false);
+      return;
+    }
+    if (explainOpen) {
+      setExplainOpen(false);
+      return;
+    }
+    if (repushOpen) {
+      setRepushOpen(false);
+      return;
+    }
+    leaveDetail();
+  }, [billOpen, explainOpen, leaveDetail, repushOpen]);
+
+  usePageHeader({ visible: false });
+
+  useEffect(() => {
+    setSelectedTicketIndex(0);
+    setSuppressFooterActions(false);
+  }, [orderId]);
+
+  useEffect(() => {
+    if (!openCancelOnMountRef.current || !detail?.Actions?.showCancel) {
+      return;
+    }
+    openCancelOnMountRef.current = false;
+    setCancelOpen(true);
+  }, [detail?.Actions?.showCancel]);
+
+  const selectedTicket = useMemo(
+    () => (detail ? getSelectedTicket(detail, selectedTicketIndex) : undefined),
+    [detail, selectedTicketIndex],
+  );
+
+  const footerActions = useMemo(() => {
+    const merged = mergeTrainFooterActions(detail?.Actions, selectedTicket);
+    return suppressFooterActions ? suppressTrainFooterActions(merged) : merged;
+  }, [detail?.Actions, selectedTicket, suppressFooterActions]);
+
+  const showHoldBanner = useMemo(
+    () => detail != null && shouldShowTrainOrderHoldBanner(payHoldSecondsRemaining, footerActions),
+    [detail, footerActions, payHoldSecondsRemaining],
+  );
+
+  const billLines = useMemo(() => {
+    if (!detail || !selectedTicket) return [];
+    return filterBillLinesForTicket(
+      detail.BillItems,
+      selectedTicket.Key,
+      detail.ShowServiceFee ?? true,
+    );
+  }, [detail, selectedTicket]);
+
+  const showToast = useCallback((message: string) => {
+    setToast(message);
+    window.setTimeout(() => setToast(null), 2500);
+  }, []);
+
+  const handlePay = useCallback(() => {
+    navigate(buildOrderPayPath("train", orderId, channel, listScope));
+  }, [channel, listScope, navigate, orderId]);
+
+  const runCancel = useCallback(async () => {
+    if (!detail) return;
+    try {
+      if (selectedTicket?.Actions?.showCancel && !detail.Actions?.showCancel) {
+        await abolishMutation.mutateAsync({
+          channel,
+          OrderId: detail.OrderId,
+          TicketId: selectedTicket.Id,
+          Tag: "train",
+          Channel: resolveAppChannel(),
+        });
+      } else {
+        await cancelMutation.mutateAsync({
+          channel,
+          OrderId: detail.OrderId,
+          Channel: resolveAppChannel(),
+        });
+      }
+      setCancelOpen(false);
+      setSuppressFooterActions(true);
+      showToast("订单已取消");
+      await refetch();
+    } catch (err) {
+      showToast(formatApiError(err));
+    }
+  }, [abolishMutation, cancelMutation, channel, detail, refetch, selectedTicket, showToast]);
+
+  const runIssue = useCallback(async () => {
+    if (!detail) return;
+    try {
+      await issueMutation.mutateAsync({ OrderId: detail.OrderId, channel });
+      setIssueOpen(false);
+      showToast("出票请求已提交");
+      await refetch();
+    } catch (err) {
+      showToast(formatApiError(err));
+    }
+  }, [channel, detail, issueMutation, refetch, showToast]);
+
+  const openRefundDialog = useCallback(async () => {
+    if (!selectedTicket) return;
+    try {
+      const passenger = await getApi().train.getTrainPassenger({
+        channel,
+        TicketId: selectedTicket.Id,
+      });
+      setRefundPassenger(passenger);
+      setRefundOpen(true);
+    } catch (err) {
+      showToast(formatApiError(err));
+    }
+  }, [channel, selectedTicket, showToast]);
+
+  useEffect(() => {
+    if (!openRefundOnMountRef.current || !selectedTicket?.Actions?.showRefund) {
+      return;
+    }
+    openRefundOnMountRef.current = false;
+    void openRefundDialog();
+  }, [openRefundDialog, selectedTicket?.Actions?.showRefund]);
+
+  const runRefund = useCallback(async () => {
+    if (!detail || !selectedTicket) return;
+    try {
+      await refundMutation.mutateAsync({
+        channel,
+        OrderId: detail.OrderId,
+        TicketId: selectedTicket.Id,
+        Channel: resolveAppChannel(),
+      });
+      setRefundOpen(false);
+      showToast("退票请求已提交");
+      await refetch();
+    } catch (err) {
+      showToast(formatApiError(err));
+    }
+  }, [channel, detail, refundMutation, refetch, selectedTicket, showToast]);
+
+  const runExchange = useCallback(async () => {
+    if (!selectedTicket) return;
+    try {
+      await startTrainExchangeFlow({
+        channel,
+        ticketId: selectedTicket.Id,
+        orderId: detail?.OrderId,
+        navigate,
+      });
+    } catch (err) {
+      showToast(formatApiError(err));
+    }
+  }, [channel, detail?.OrderId, navigate, selectedTicket, showToast]);
+
+  const showFooter = detail ? shouldShowTrainFooter(footerActions, payHoldSecondsRemaining) : false;
+  const pending =
+    cancelMutation.isPending ||
+    abolishMutation.isPending ||
+    issueMutation.isPending ||
+    refundMutation.isPending;
+
+  return (
+    <div className={WEB_PAGE_ROOT} style={ORDER_DETAIL_PAGE_BACKGROUND}>
+      <HotelOrderDetailHeader onBack={handleBack} variant="form" embedded />
+
+      <div className={WEB_PAGE_BODY}>
+        {showHoldBanner && payHoldSecondsRemaining != null ? (
+          <TrainOrderHoldBanner
+            payHoldSecondsRemaining={payHoldSecondsRemaining}
+            actions={footerActions}
+          />
+        ) : null}
+
+        {isLoading ? (
+          <p className="px-4 pt-3 text-center text-sm text-[#999999]">加载中…</p>
+        ) : isError || !detail ? (
+          <p className="px-4 pt-3 text-center text-sm text-[#FF4D4F]">
+            {formatApiError(error ?? new Error("订单不存在"))}
+          </p>
+        ) : (
+          <div className="mx-auto max-w-[960px] space-y-3 px-4 pb-6 pt-3">
+            <TrainOrderInfoCard
+              detail={detail}
+              transactionId={selectedTicket?.Id}
+              outNumbers={selectedTicket?.Traveler?.OutNumbers}
+              onShowBill={() => setBillOpen(true)}
+            />
+
+            <TrainOrderPassengerTabs
+              tickets={detail.Tickets}
+              selectedIndex={selectedTicketIndex}
+              onSelect={setSelectedTicketIndex}
+            />
+
+            {selectedTicket ? (
+              <>
+                <TrainOrderJourneyCard
+                  ticket={selectedTicket}
+                  onShowExplain={() => setExplainOpen(true)}
+                  onShowSchedule={() => {
+                    const params = buildTrainScheduleParamsFromTrip(selectedTicket.Trips[0]);
+                    if (params) setScheduleParams(params);
+                  }}
+                />
+                <TrainOrderTravelerCard ticket={selectedTicket} />
+              </>
+            ) : null}
+
+            <FlightOrderContactCard contact={detail.Contact} />
+
+            <HotelOrderApprovalSection histories={detail.Histories ?? []} />
+
+            {showInspurRepush ? (
+              <button
+                type="button"
+                className="w-full rounded-xl bg-white py-3 text-[14px] font-medium text-brand-primary shadow-[0_2px_8px_rgba(0,0,0,0.04)]"
+                onClick={() => setRepushOpen(true)}
+              >
+                重推浪潮
+              </button>
+            ) : null}
+          </div>
+        )}
+      </div>
+
+      {detail && showFooter ? (
+        <TrainOrderDetailFooter
+          actions={footerActions}
+          payHoldSecondsRemaining={payHoldSecondsRemaining}
+          pending={pending}
+          onCancel={() => setCancelOpen(true)}
+          onPay={handlePay}
+          onIssue={() => setIssueOpen(true)}
+          onRefund={() => void openRefundDialog()}
+          onExchange={() => void runExchange()}
+        />
+      ) : null}
+
+      {detail ? (
+        <>
+          <TrainOrderBillSheet
+            open={billOpen}
+            ticket={selectedTicket}
+            lines={billLines}
+            onClose={() => setBillOpen(false)}
+          />
+
+          <TrainOrderCancelDialog
+            open={cancelOpen}
+            pending={cancelMutation.isPending}
+            onConfirm={() => void runCancel()}
+            onClose={() => setCancelOpen(false)}
+          />
+
+          <TrainOrderIssueDialog
+            open={issueOpen}
+            pending={issueMutation.isPending}
+            onConfirm={() => void runIssue()}
+            onClose={() => setIssueOpen(false)}
+          />
+
+          <TrainOrderRefundDialog
+            open={refundOpen}
+            pending={refundMutation.isPending}
+            orderId={detail.OrderId}
+            passenger={refundPassenger}
+            arrivalTime={selectedTicket?.Trips[0]?.ArrivalTime}
+            onConfirm={() => void runRefund()}
+            onClose={() => setRefundOpen(false)}
+          />
+
+          <TrainOrderExplainSheet
+            open={explainOpen}
+            explain={selectedTicket?.Explain ?? selectedTicket?.Trips[0]?.Explain}
+            onClose={() => setExplainOpen(false)}
+          />
+
+          <TrainScheduleSheet
+            open={Boolean(scheduleParams)}
+            title={scheduleParams ? `${scheduleParams.TrainCode} 经停站` : "经停站"}
+            loading={scheduleQuery.isLoading}
+            error={scheduleQuery.isError ? formatApiError(scheduleQuery.error) : null}
+            stops={scheduleQuery.data?.Stops}
+            fromStation={selectedTicket?.Trips[0]?.FromStationName}
+            toStation={selectedTicket?.Trips[0]?.ToStationName}
+            onClose={() => setScheduleParams(null)}
+          />
+          <OrderInspurRepushSheet
+            open={repushOpen}
+            orderId={detail.OrderId}
+            channel={channel}
+            onClose={() => setRepushOpen(false)}
+            onSubmitted={showToast}
+          />
+        </>
+      ) : null}
+
+      <WebOrderToast message={toast} />
+    </div>
+  );
+}

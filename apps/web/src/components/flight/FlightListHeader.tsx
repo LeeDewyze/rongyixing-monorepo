@@ -1,0 +1,130 @@
+import { Link } from "react-router-dom";
+
+interface FlightListHeaderProps {
+  fromName: string;
+  toName: string;
+  passengerHref: string;
+  passengerCount: number;
+  showPassengerEntry?: boolean;
+  selfBookOnly?: boolean;
+  modifyOpen: boolean;
+  onBack: () => void;
+  onModifyOpen: () => void;
+  onModifyClose: () => void;
+  onOpenPolicy?: () => void;
+}
+
+function PassengerAddIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-6" aria-hidden>
+      <circle cx="10" cy="8" r="3.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <path
+        d="M4 19c0-3 2.5-5 6-5s6 2 6 5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M17 8v5M19.5 10.5H14.5"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function ModifyTitleCaret({ up }: { up: boolean }) {
+  return (
+    <svg viewBox="0 0 12 12" className="size-3 shrink-0 opacity-80" aria-hidden>
+      {up ? (
+        <path d="M3 7.5 6 4.5 9 7.5" fill="none" stroke="currentColor" strokeWidth="1.2" />
+      ) : (
+        <path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" strokeWidth="1.2" />
+      )}
+    </svg>
+  );
+}
+
+export function FlightListHeader({
+  fromName,
+  toName,
+  passengerHref,
+  passengerCount,
+  showPassengerEntry = true,
+  selfBookOnly = false,
+  modifyOpen,
+  onBack,
+  onModifyOpen,
+  onModifyClose,
+  onOpenPolicy,
+}: FlightListHeaderProps) {
+  return (
+    <div className="shrink-0 bg-gradient-to-b from-brand-header-start to-brand-header-end pt-[env(safe-area-inset-top)]">
+      <div className="flex items-center px-1 pb-2 pt-1">
+        <button
+          type="button"
+          className="flex h-11 w-10 shrink-0 items-center justify-center text-[26px] font-light leading-none text-white active:opacity-70"
+          aria-label="返回"
+          onClick={onBack}
+        >
+          ‹
+        </button>
+
+        {modifyOpen ? (
+          <button
+            type="button"
+            className="flex min-w-0 flex-1 items-center justify-center gap-1 text-[17px] font-medium text-white active:opacity-80"
+            onClick={onModifyClose}
+          >
+            <span>修改城市</span>
+            <ModifyTitleCaret up />
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="flex min-w-0 flex-1 items-center justify-center gap-1.5 text-[17px] font-medium text-white active:opacity-80"
+            onClick={onModifyOpen}
+          >
+            <span className="truncate">{fromName}</span>
+            <img
+              src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='8' viewBox='0 0 20 8'%3E%3Cpath d='M0 4h14M14 4l-4-3.5M14 4l-4 3.5' fill='none' stroke='white' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"
+              alt=""
+              className="shrink-0 opacity-90"
+              aria-hidden
+            />
+            <span className="inline-flex max-w-[40%] items-center gap-0.5 truncate">
+              <span className="truncate">{toName}</span>
+              <ModifyTitleCaret up={false} />
+            </span>
+          </button>
+        )}
+
+        {selfBookOnly ? (
+          <button
+            type="button"
+            className="flex h-11 min-w-[72px] shrink-0 items-center justify-center rounded-md px-1 text-[12px] font-medium text-white hover:bg-white/10 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white disabled:pointer-events-none disabled:opacity-50"
+            disabled={!onOpenPolicy}
+            onClick={onOpenPolicy}
+          >
+            差旅标准
+          </button>
+        ) : showPassengerEntry ? (
+          <Link
+            to={passengerHref}
+            className="relative flex h-11 w-10 shrink-0 items-center justify-center text-white active:opacity-70"
+            aria-label="选择出行人"
+          >
+            <PassengerAddIcon />
+            {passengerCount > 0 ? (
+              <span className="absolute right-0.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ff4d4f] px-1 text-[10px] font-medium text-white">
+                {passengerCount}
+              </span>
+            ) : null}
+          </Link>
+        ) : null}
+      </div>
+    </div>
+  );
+}

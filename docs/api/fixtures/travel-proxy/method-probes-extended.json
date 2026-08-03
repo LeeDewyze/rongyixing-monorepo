@@ -1,0 +1,48 @@
+{
+  "WorkflowApiUrl-Task-List": {
+    "ok": true,
+    "count": 0,
+    "sample": []
+  },
+  "WorkflowApiUrl-History-List": {
+    "ok": true,
+    "count": 0,
+    "sample": []
+  },
+  "WorkflowApiUrl-Notify-List": {
+    "ok": true,
+    "count": 0,
+    "sample": []
+  },
+  "TmcApiHomeUrl-Home-GetAccountWaitingTasks": {
+    "ok": true,
+    "sample": {
+      "DataCount": 0
+    }
+  },
+  "TmcApiOrderUrl-Task-List": {
+    "ok": true,
+    "count": 0,
+    "sample": []
+  },
+  "BpmApiHomeUrl-Home-GetBpm": {
+    "ok": false,
+    "error": "ApiError: 系统错误:Object reference not set to an instance of an object."
+  },
+  "BpmApiHomeUrl-Home-Tag": {
+    "ok": false,
+    "error": "ApiError: 参数错误"
+  },
+  "BpmApiOrderUrl-Order-List": {
+    "ok": false,
+    "error": "ApiError: 系统错误:Object reference not set to an instance of an object."
+  },
+  "FeatureRonglvUrl-jyx-GetTravelForms": {
+    "ok": false,
+    "error": "ApiError: 系统错误:Object reference not set to an instance of an object."
+  },
+  "FeatureRonglvUrl-jyx-SaveTravelForms": {
+    "ok": false,
+    "error": "ApiError: 系统错误:Object reference not set to an instance of an object."
+  }
+}

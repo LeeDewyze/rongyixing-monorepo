@@ -1,0 +1,2847 @@
+[
+  {
+    "label": "form.get",
+    "method": "GET",
+    "url": "http://workflow.rtesp.com/Form/Get?ticket=***REDACTED***&CheckFlowType=&FlowTag=Travel",
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 62,
+    "isJson": false,
+    "bodyPreview": "null",
+    "bodyLength": 4,
+    "json": null
+  },
+  {
+    "label": "form.list",
+    "method": "GET",
+    "url": "http://workflow.rtesp.com/Form/List?ticket=***REDACTED***&CheckFlowType=&FlowTag=Travel",
+    "status": 200,
+    "contentType": "text/html; charset=utf-8",
+    "durationMs": 137,
+    "isJson": false,
+    "bodyPreview": "\n\n            <div class=\"mytask-task\" form-data='{\"RouteId\":null,\"Workflow\":null,\"Number\":null,\"OutNumber\":\"\",\"Account\":null,\"Name\":\"出差申请\",\"Tag\":\"Travel\",\"Status\":4,\"Tasks\":null,\"FormDetails\":[{\"Number\":\"\",\"Content\":\"Travel20260610152027003\",\"DataEntity\":null,\"Form\":null,\"ControlType\":1,\"Name\":\"差旅单号\",\"Slave\":\"\",\"SlaveRow\":0,\"Key\":null,\"Tag\":null,\"Sequence\":0,\"IsShowList\":false,\"Variables\":\"\",\"Errors\":null,\"HandleResult\":null,\"Id\":23540000000031,\"InsertTime\":\"0001-01-01 00:00:00\",\"UpdateTime\":\"0001-01-01 00:00:00\",\"Version\":0,\"SaveType\":0,\"Language\":null,\"SaveSequence\":0,\"Properties\":null,\"WhereExp\":null,\"Parameters\":null},{\"Number\":\"\",\"Content\":\"国内机票\",\"DataEntity\":null,\"Form\":null,\"ControlType\":3,\"Name\":\"出差类型\",\"Slave\":\"\",\"SlaveRow\":0,\"Key\":null,\"Tag\":null,\"Sequence\":0,\"IsShowList\":false,\"Variables\":\"\",\"Errors\":null,\"HandleResult\":null,\"Id\":23540000000035,\"InsertTime\":\"0001-01-01 00:00:00\",\"UpdateTime\":\"0001-01-01 00:00:00\",\"Version\":0,\"SaveType\":0,\"Language\":null,\"SaveSequence\":0,\"Properties\":null,\"WhereExp\":null,\"Parameters\":null},{\"Number\":\"1780000000003\",\"Content\":\"3386376-张海肖\",\"DataEntity\":null,\"Form\":null,\"ControlType\":4,\"Name\":\"出差人\",\"Slave\":\"人员信息\",\"SlaveRow\":0,\"Key\":null,\"Ta",
+    "bodyLength": 46721,
+    "json": null
+  },
+  {
+    "label": "form.layoutDetail.post",
+    "method": "POST",
+    "url": "http://workflow.rtesp.com/Form/FormLayoutDetail",
+    "status": 200,
+    "contentType": "text/plain; charset=utf-8",
+    "durationMs": 65,
+    "isJson": false,
+    "bodyPreview": "",
+    "bodyLength": 0,
+    "json": null
+  },
+  {
+    "label": "task.list.waiting.post",
+    "method": "POST",
+    "url": "http://workflow.rtesp.com/Task/list",
+    "status": 200,
+    "contentType": "text/html; charset=utf-8",
+    "durationMs": 108,
+    "isJson": false,
+    "bodyPreview": "\n                <div class=\"mytask-task\">\n                    <div class=\"mytask-content-title\">\n                        <div class=\"mytask-id\" st style=\"line-height: 18px;\">\n                            <span style=\"white-space: normal;line-height: 9px;\">流程：&#x5F20;&#x6D77;&#x8096;&#x5411;&#x60A8;&#x53D1;&#x8D77;&#x4E86;&#x3010;&#x51FA;&#x5DEE;&#x7533;&#x8BF7;&#x3011;&#x5BA1;&#x6279;&#x6D41;&#x7A0B;</span>\n                        </div>\n                        <div>\n                            过期时间：\n                        </div>\n                        <div>\n                            提醒时间：\n                        </div>\n                        <div>\n                            发起时间：2025-01-06 10:22\n                        </div>\n                        <div>\n                                <a title=\"查看详情\" href=\"http://workflow.rtesp.com/FormTask/Detail?flowtag=Travel&amp;taskId=44880000000020&amp;sign=e5574bb6c8c75bc44784df087d4c5d72&amp;ticket=***REDACTED***\" target=\"_blank\">\n                                    <img src=\"/img/task_detial.png\" style=\"width: 15px; height: 15px \" />详情\n                                </a>\n                        </div>\n          ",
+    "bodyLength": 33635,
+    "json": null
+  },
+  {
+    "label": "staff.defaultApplicant",
+    "method": "GET",
+    "url": "http://api-workflow.rtesp.com/StaffCtrl/DefaultApplicant?ticket=***REDACTED***&formId=",
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 51,
+    "isJson": true,
+    "bodyPreview": "{\"label\":\"孙雪\",\"value\":\"44880000000001\"}",
+    "bodyLength": 39,
+    "json": {
+      "label": "孙雪",
+      "value": "44880000000001"
+    }
+  },
+  {
+    "label": "staff.defaultData",
+    "method": "GET",
+    "url": "http://api-workflow.rtesp.com/StaffCtrl/DefaultData?HasNumber=true&ticket=***REDACTED***&formId=",
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 56,
+    "isJson": true,
+    "bodyPreview": "{\"label\":\"003-孙雪\",\"value\":\"44880000000001\"}",
+    "bodyLength": 43,
+    "json": {
+      "label": "003-孙雪",
+      "value": "44880000000001"
+    }
+  },
+  {
+    "label": "staff.getDatas",
+    "method": "GET",
+    "url": "http://api-workflow.rtesp.com/StaffCtrl/GetDatas?HasNumber=true&OnlyLoadCompany=true&ticket=***REDACTED***&formId=",
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 53,
+    "isJson": true,
+    "bodyPreview": "[{\"label\":\"3386376-张海肖\",\"value\":\"1780000000003\"},{\"label\":\"007-范梦杭\",\"value\":\"3680000000003\"},{\"label\":\"T55555555-22\",\"value\":\"4010000000013\"},{\"label\":\"-姓名222\",\"value\":\"7090000000007\"},{\"label\":\"3888181-han9\",\"value\":\"9750000000007\"},{\"label\":\"6173618-han2\",\"value\":\"14560000000009\"},{\"label\":\"1686811422-芝芝\",\"value\":\"14900000000012\"},{\"label\":\"999-申999\",\"value\":\"16390000000006\"},{\"label\":\"006-杨佳静\",\"value\":\"16890000000002\"},{\"label\":\"10014-申晓杰·\",\"value\":\"19960000000008\"}]",
+    "bodyLength": 474,
+    "json": [
+      {
+        "label": "3386376-张海肖",
+        "value": "1780000000003"
+      },
+      {
+        "label": "007-范梦杭",
+        "value": "3680000000003"
+      },
+      {
+        "label": "T55555555-22",
+        "value": "4010000000013"
+      },
+      {
+        "label": "-姓名222",
+        "value": "7090000000007"
+      },
+      {
+        "label": "3888181-han9",
+        "value": "9750000000007"
+      },
+      {
+        "label": "6173618-han2",
+        "value": "14560000000009"
+      },
+      {
+        "label": "1686811422-芝芝",
+        "value": "14900000000012"
+      },
+      {
+        "label": "999-申999",
+        "value": "16390000000006"
+      },
+      {
+        "label": "006-杨佳静",
+        "value": "16890000000002"
+      },
+      {
+        "label": "10014-申晓杰·",
+        "value": "19960000000008"
+      }
+    ],
+    "arrayLength": 10
+  },
+  {
+    "label": "staff.getDefaultPolicy",
+    "method": "GET",
+    "url": "http://api-workflow.rtesp.com/StaffCtrl/GetDefaultPolicy?ticket=***REDACTED***&formId=",
+    "status": 404,
+    "contentType": null,
+    "durationMs": 30,
+    "isJson": false,
+    "bodyPreview": "",
+    "bodyLength": 0,
+    "json": null
+  },
+  {
+    "label": "city.defaultData",
+    "method": "GET",
+    "url": "http://api-workflow.rtesp.com/CityCtrl/DefaultData?label=北京&value=1101&ticket=***REDACTED***&formId=",
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 75,
+    "isJson": true,
+    "bodyPreview": "{\"label\":\"北京\",\"value\":\"1101\"}",
+    "bodyLength": 29,
+    "json": {
+      "label": "北京",
+      "value": "1101"
+    }
+  },
+  {
+    "label": "city.getDatas",
+    "method": "GET",
+    "url": "http://api-workflow.rtesp.com/CityCtrl/GetDatas?ticket=***REDACTED***&formId=",
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 53,
+    "isJson": true,
+    "bodyPreview": "[{\"label\":\"北京\",\"value\":\"1101\",\"searchValue\":null,\"isHot\":true,\"pinyin\":\"beijing\"},{\"label\":\"天津\",\"value\":\"1201\",\"searchValue\":null,\"isHot\":true,\"pinyin\":\"tianji\"},{\"label\":\"石家庄\",\"value\":\"1301\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"shijiazhuang\"},{\"label\":\"唐山\",\"value\":\"1302\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"tangsha\"},{\"label\":\"秦皇岛\",\"value\":\"1303\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"qinhuangdao\"},{\"label\":\"邯郸\",\"value\":\"1304\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"handa\"},{\"label\":\"邢台\",\"value\":\"1305\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"xingtai\"},{\"label\":\"保定\",\"value\":\"1306\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"baoding\"},{\"label\":\"张家口\",\"value\":\"1307\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"zhangjiakou\"},{\"label\":\"承德\",\"value\":\"1308\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"chengde\"},{\"label\":\"沧州\",\"value\":\"1309\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"cangzhou\"},{\"label\":\"廊坊\",\"value\":\"1310\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"langfang\"},{\"label\":\"衡水\",\"value\":\"1311\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"hengshui\"},{\"label\":\"太原\",\"value\":\"1401\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"taiyua\"},{\"label\":\"大同\",\"value\":\"1402\",\"searchVa",
+    "bodyLength": 31152,
+    "json": [
+      {
+        "label": "北京",
+        "value": "1101",
+        "searchValue": null,
+        "isHot": true,
+        "pinyin": "beijing"
+      },
+      {
+        "label": "天津",
+        "value": "1201",
+        "searchValue": null,
+        "isHot": true,
+        "pinyin": "tianji"
+      },
+      {
+        "label": "石家庄",
+        "value": "1301",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "shijiazhuang"
+      },
+      {
+        "label": "唐山",
+        "value": "1302",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "tangsha"
+      },
+      {
+        "label": "秦皇岛",
+        "value": "1303",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "qinhuangdao"
+      },
+      {
+        "label": "邯郸",
+        "value": "1304",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "handa"
+      },
+      {
+        "label": "邢台",
+        "value": "1305",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "xingtai"
+      },
+      {
+        "label": "保定",
+        "value": "1306",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "baoding"
+      },
+      {
+        "label": "张家口",
+        "value": "1307",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "zhangjiakou"
+      },
+      {
+        "label": "承德",
+        "value": "1308",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "chengde"
+      },
+      {
+        "label": "沧州",
+        "value": "1309",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "cangzhou"
+      },
+      {
+        "label": "廊坊",
+        "value": "1310",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "langfang"
+      },
+      {
+        "label": "衡水",
+        "value": "1311",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "hengshui"
+      },
+      {
+        "label": "太原",
+        "value": "1401",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "taiyua"
+      },
+      {
+        "label": "大同",
+        "value": "1402",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "datong"
+      },
+      {
+        "label": "阳泉",
+        "value": "1403",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "yangqua"
+      },
+      {
+        "label": "长治",
+        "value": "1404",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "changzhi"
+      },
+      {
+        "label": "晋城",
+        "value": "1405",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "jincheng"
+      },
+      {
+        "label": "朔州",
+        "value": "1406",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "shuozhou"
+      },
+      {
+        "label": "晋中",
+        "value": "1407",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "jinzhong"
+      },
+      {
+        "label": "运城",
+        "value": "1408",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "yuncheng"
+      },
+      {
+        "label": "忻州",
+        "value": "1409",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "xinzhou"
+      },
+      {
+        "label": "临汾",
+        "value": "1410",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "linfe"
+      },
+      {
+        "label": "吕梁",
+        "value": "1411",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "lvliang"
+      },
+      {
+        "label": "呼和浩特",
+        "value": "1501",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "huhehaote"
+      },
+      {
+        "label": "包头",
+        "value": "1502",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "baotou"
+      },
+      {
+        "label": "乌海",
+        "value": "1503",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "wuhai"
+      },
+      {
+        "label": "赤峰",
+        "value": "1504",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "chifeng"
+      },
+      {
+        "label": "通辽",
+        "value": "1505",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "tongliao"
+      },
+      {
+        "label": "鄂尔多斯",
+        "value": "1506",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "eerduosi"
+      },
+      {
+        "label": "呼伦贝尔",
+        "value": "1507",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "hulunbeier"
+      },
+      {
+        "label": "巴彦淖尔",
+        "value": "1508",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "bayannaoer"
+      },
+      {
+        "label": "乌兰察布",
+        "value": "1509",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "wulanchabu"
+      },
+      {
+        "label": "兴安盟",
+        "value": "1522",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "xinganmeng"
+      },
+      {
+        "label": "锡林郭勒盟",
+        "value": "1525",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "xilinguolemeng"
+      },
+      {
+        "label": "阿拉善盟",
+        "value": "1529",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "alashanmeng"
+      },
+      {
+        "label": "沈阳",
+        "value": "2101",
+        "searchValue": null,
+        "isHot": true,
+        "pinyin": "shenyang"
+      },
+      {
+        "label": "大连",
+        "value": "2102",
+        "searchValue": null,
+        "isHot": true,
+        "pinyin": "dalia"
+      },
+      {
+        "label": "鞍山",
+        "value": "2103",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "ansha"
+      },
+      {
+        "label": "抚顺",
+        "value": "2104",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "fushu"
+      },
+      {
+        "label": "本溪",
+        "value": "2105",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "benxi"
+      },
+      {
+        "label": "丹东",
+        "value": "2106",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "dandong"
+      },
+      {
+        "label": "锦州",
+        "value": "2107",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "jinzhou"
+      },
+      {
+        "label": "营口",
+        "value": "2108",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "yingkou"
+      },
+      {
+        "label": "阜新",
+        "value": "2109",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "fuxi"
+      },
+      {
+        "label": "辽阳",
+        "value": "2110",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "liaoyang"
+      },
+      {
+        "label": "盘锦",
+        "value": "2111",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "panji"
+      },
+      {
+        "label": "铁岭",
+        "value": "2112",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "tieling"
+      },
+      {
+        "label": "朝阳",
+        "value": "2113",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "chaoyang"
+      },
+      {
+        "label": "葫芦岛",
+        "value": "2114",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "huludao"
+      },
+      {
+        "label": "长春",
+        "value": "2201",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "changchu"
+      },
+      {
+        "label": "吉林",
+        "value": "2202",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "jili"
+      },
+      {
+        "label": "四平",
+        "value": "2203",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "siping"
+      },
+      {
+        "label": "辽源",
+        "value": "2204",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "liaoyua"
+      },
+      {
+        "label": "通化",
+        "value": "2205",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "tonghua"
+      },
+      {
+        "label": "白山",
+        "value": "2206",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "baisha"
+      },
+      {
+        "label": "松原",
+        "value": "2207",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "songyua"
+      },
+      {
+        "label": "白城",
+        "value": "2208",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "baicheng"
+      },
+      {
+        "label": "延边朝鲜族自治州",
+        "value": "2224",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "yanbianchaoxianzuzizhizhou"
+      },
+      {
+        "label": "哈尔滨",
+        "value": "2301",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "haerbi"
+      },
+      {
+        "label": "齐齐哈尔",
+        "value": "2302",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "Qiqihaer"
+      },
+      {
+        "label": "鸡西",
+        "value": "2303",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "jixi"
+      },
+      {
+        "label": "鹤岗",
+        "value": "2304",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "hegang"
+      },
+      {
+        "label": "双鸭山",
+        "value": "2305",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "shuangyasha"
+      },
+      {
+        "label": "大庆",
+        "value": "2306",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "daqing"
+      },
+      {
+        "label": "伊春",
+        "value": "2307",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "yichu"
+      },
+      {
+        "label": "佳木斯",
+        "value": "2308",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "jiamusi"
+      },
+      {
+        "label": "七台河",
+        "value": "2309",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "qitaihe"
+      },
+      {
+        "label": "牡丹江",
+        "value": "2310",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "mudanjiang"
+      },
+      {
+        "label": "黑河",
+        "value": "2311",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "heihe"
+      },
+      {
+        "label": "绥化",
+        "value": "2312",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "suihua"
+      },
+      {
+        "label": "大兴安岭地区",
+        "value": "2327",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "daxinganlingdiqu"
+      },
+      {
+        "label": "上海",
+        "value": "3101",
+        "searchValue": null,
+        "isHot": true,
+        "pinyin": "shanghai"
+      },
+      {
+        "label": "南京",
+        "value": "3201",
+        "searchValue": null,
+        "isHot": true,
+        "pinyin": "najing"
+      },
+      {
+        "label": "无锡",
+        "value": "3202",
+        "searchValue": null,
+        "isHot": true,
+        "pinyin": "Wuxi"
+      },
+      {
+        "label": "徐州",
+        "value": "3203",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "xuzhou"
+      },
+      {
+        "label": "常州",
+        "value": "3204",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "changzhou"
+      },
+      {
+        "label": "苏州",
+        "value": "3205",
+        "searchValue": null,
+        "isHot": true,
+        "pinyin": "suzhou"
+      },
+      {
+        "label": "南通",
+        "value": "3206",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "natong"
+      },
+      {
+        "label": "连云港",
+        "value": "3207",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "lianyungang"
+      },
+      {
+        "label": "淮安",
+        "value": "3208",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "huaia"
+      },
+      {
+        "label": "盐城",
+        "value": "3209",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "yancheng"
+      },
+      {
+        "label": "扬州",
+        "value": "3210",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "yangzhou"
+      },
+      {
+        "label": "镇江",
+        "value": "3211",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "zhenjiang"
+      },
+      {
+        "label": "泰州",
+        "value": "3212",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "taizhou"
+      },
+      {
+        "label": "宿迁",
+        "value": "3213",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "suqia"
+      },
+      {
+        "label": "杭州",
+        "value": "3301",
+        "searchValue": null,
+        "isHot": true,
+        "pinyin": "hangzhou"
+      },
+      {
+        "label": "宁波",
+        "value": "3302",
+        "searchValue": null,
+        "isHot": true,
+        "pinyin": "ningbo"
+      },
+      {
+        "label": "温州",
+        "value": "3303",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "wenzhou"
+      },
+      {
+        "label": "嘉兴",
+        "value": "3304",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "jiaxing"
+      },
+      {
+        "label": "湖州",
+        "value": "3305",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "huzhou"
+      },
+      {
+        "label": "绍兴",
+        "value": "3306",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "shaoxing"
+      },
+      {
+        "label": "金华",
+        "value": "3307",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "jinhua"
+      },
+      {
+        "label": "衢州",
+        "value": "3308",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "quzhou"
+      },
+      {
+        "label": "舟山",
+        "value": "3309",
+        "searchValue": null,
+        "isHot": true,
+        "pinyin": "zhousha"
+      },
+      {
+        "label": "台州",
+        "value": "3310",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "taizhou"
+      },
+      {
+        "label": "丽水",
+        "value": "3311",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "lishui"
+      },
+      {
+        "label": "合肥",
+        "value": "3401",
+        "searchValue": null,
+        "isHot": true,
+        "pinyin": "hefei"
+      },
+      {
+        "label": "芜湖",
+        "value": "3402",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "wuhu"
+      },
+      {
+        "label": "蚌埠",
+        "value": "3403",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "bangbu"
+      },
+      {
+        "label": "淮南",
+        "value": "3404",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "huaina"
+      },
+      {
+        "label": "马鞍山",
+        "value": "3405",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "maansha"
+      },
+      {
+        "label": "淮北",
+        "value": "3406",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "huaibei"
+      },
+      {
+        "label": "铜陵",
+        "value": "3407",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "tongling"
+      },
+      {
+        "label": "安庆",
+        "value": "3408",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "anqing"
+      },
+      {
+        "label": "黄山",
+        "value": "3410",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "huangsha"
+      },
+      {
+        "label": "滁州",
+        "value": "3411",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "chuzhou"
+      },
+      {
+        "label": "阜阳",
+        "value": "3412",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "fuyang"
+      },
+      {
+        "label": "宿州",
+        "value": "3413",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "suzhou"
+      },
+      {
+        "label": "巢湖",
+        "value": "3414",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "chaohu"
+      },
+      {
+        "label": "六安",
+        "value": "3415",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "liua"
+      },
+      {
+        "label": "亳州",
+        "value": "3416",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "bozhou"
+      },
+      {
+        "label": "池州",
+        "value": "3417",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "chizhou"
+      },
+      {
+        "label": "宣城",
+        "value": "3418",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "xuancheng"
+      },
+      {
+        "label": "福州",
+        "value": "3501",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "fuzhou"
+      },
+      {
+        "label": "厦门",
+        "value": "3502",
+        "searchValue": null,
+        "isHot": true,
+        "pinyin": "xiame"
+      },
+      {
+        "label": "莆田",
+        "value": "3503",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "putia"
+      },
+      {
+        "label": "三明",
+        "value": "3504",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "sanming"
+      },
+      {
+        "label": "泉州",
+        "value": "3505",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "quanzhou"
+      },
+      {
+        "label": "漳州",
+        "value": "3506",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "zhangzhou"
+      },
+      {
+        "label": "南平",
+        "value": "3507",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "naping"
+      },
+      {
+        "label": "龙岩",
+        "value": "3508",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "longya"
+      },
+      {
+        "label": "宁德",
+        "value": "3509",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "ningde"
+      },
+      {
+        "label": "南昌",
+        "value": "3601",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "nachang"
+      },
+      {
+        "label": "景德镇",
+        "value": "3602",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "jingdezhe"
+      },
+      {
+        "label": "萍乡",
+        "value": "3603",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "pingxiang"
+      },
+      {
+        "label": "九江",
+        "value": "3604",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "jiujiang"
+      },
+      {
+        "label": "新余",
+        "value": "3605",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "xinyu"
+      },
+      {
+        "label": "鹰潭",
+        "value": "3606",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "yingta"
+      },
+      {
+        "label": "赣州",
+        "value": "3607",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "ganzhou"
+      },
+      {
+        "label": "吉安",
+        "value": "3608",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "jia"
+      },
+      {
+        "label": "宜春",
+        "value": "3609",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "yichu"
+      },
+      {
+        "label": "抚州",
+        "value": "3610",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "fuzhou"
+      },
+      {
+        "label": "上饶",
+        "value": "3611",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "shangrao"
+      },
+      {
+        "label": "济南",
+        "value": "3701",
+        "searchValue": null,
+        "isHot": true,
+        "pinyin": "jina"
+      },
+      {
+        "label": "青岛",
+        "value": "3702",
+        "searchValue": null,
+        "isHot": true,
+        "pinyin": "qingdao"
+      },
+      {
+        "label": "淄博",
+        "value": "3703",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "zibo"
+      },
+      {
+        "label": "枣庄",
+        "value": "3704",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "zaozhuang"
+      },
+      {
+        "label": "东营",
+        "value": "3705",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "dongying"
+      },
+      {
+        "label": "烟台",
+        "value": "3706",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "yantai"
+      },
+      {
+        "label": "潍坊",
+        "value": "3707",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "weifang"
+      },
+      {
+        "label": "济宁",
+        "value": "3708",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "jining"
+      },
+      {
+        "label": "泰安",
+        "value": "3709",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "taia"
+      },
+      {
+        "label": "威海",
+        "value": "3710",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "weihai"
+      },
+      {
+        "label": "日照",
+        "value": "3711",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "rizhao"
+      },
+      {
+        "label": "莱芜",
+        "value": "3712",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "laiwu"
+      },
+      {
+        "label": "临沂",
+        "value": "3713",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "linyi"
+      },
+      {
+        "label": "德州",
+        "value": "3714",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "dezhou"
+      },
+      {
+        "label": "聊城",
+        "value": "3715",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "liaocheng"
+      },
+      {
+        "label": "滨州",
+        "value": "3716",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "binzhou"
+      },
+      {
+        "label": "菏泽",
+        "value": "3717",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "heze"
+      },
+      {
+        "label": "郑州",
+        "value": "4101",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "zhengzhou"
+      },
+      {
+        "label": "开封",
+        "value": "4102",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "kaifeng"
+      },
+      {
+        "label": "洛阳",
+        "value": "4103",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "luoyang"
+      },
+      {
+        "label": "平顶山",
+        "value": "4104",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "pingdingsha"
+      },
+      {
+        "label": "安阳",
+        "value": "4105",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "anyang"
+      },
+      {
+        "label": "鹤壁",
+        "value": "4106",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "hebi"
+      },
+      {
+        "label": "新乡",
+        "value": "4107",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "xinxiang"
+      },
+      {
+        "label": "焦作",
+        "value": "4108",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "jiaozuo"
+      },
+      {
+        "label": "濮阳",
+        "value": "4109",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "puyang"
+      },
+      {
+        "label": "许昌",
+        "value": "4110",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "xuchang"
+      },
+      {
+        "label": "漯河",
+        "value": "4111",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "luohe"
+      },
+      {
+        "label": "三门峡",
+        "value": "4112",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "sanmenxia"
+      },
+      {
+        "label": "南阳",
+        "value": "4113",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "nayang"
+      },
+      {
+        "label": "商丘",
+        "value": "4114",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "shangqiu"
+      },
+      {
+        "label": "信阳",
+        "value": "4115",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "xinyang"
+      },
+      {
+        "label": "周口",
+        "value": "4116",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "zhoukou"
+      },
+      {
+        "label": "驻马店",
+        "value": "4117",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "zhumadia"
+      },
+      {
+        "label": "武汉",
+        "value": "4201",
+        "searchValue": null,
+        "isHot": true,
+        "pinyin": "wuha"
+      },
+      {
+        "label": "黄石",
+        "value": "4202",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "huangda"
+      },
+      {
+        "label": "十堰",
+        "value": "4203",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "shiya"
+      },
+      {
+        "label": "宜昌",
+        "value": "4205",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "yichang"
+      },
+      {
+        "label": "襄樊",
+        "value": "4206",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "xiangfa"
+      },
+      {
+        "label": "鄂州",
+        "value": "4207",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "ezhou"
+      },
+      {
+        "label": "荆门",
+        "value": "4208",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "jingme"
+      },
+      {
+        "label": "孝感",
+        "value": "4209",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "xiaoga"
+      },
+      {
+        "label": "荆州",
+        "value": "4210",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "jingzhou"
+      },
+      {
+        "label": "黄冈",
+        "value": "4211",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "huanggang"
+      },
+      {
+        "label": "咸宁",
+        "value": "4212",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "xianning"
+      },
+      {
+        "label": "随州",
+        "value": "4213",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "suizhou"
+      },
+      {
+        "label": "恩施土家族苗族自治州",
+        "value": "4228",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "enshituguzumiaozuzizhizhou"
+      },
+      {
+        "label": "长沙",
+        "value": "4301",
+        "searchValue": null,
+        "isHot": true,
+        "pinyin": "changsha"
+      },
+      {
+        "label": "株洲",
+        "value": "4302",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "zhuzhou"
+      },
+      {
+        "label": "湘潭",
+        "value": "4303",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "xiangta"
+      },
+      {
+        "label": "衡阳",
+        "value": "4304",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "hengyang"
+      },
+      {
+        "label": "邵阳",
+        "value": "4305",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "shaoyang"
+      },
+      {
+        "label": "岳阳",
+        "value": "4306",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "yueyang"
+      },
+      {
+        "label": "常德",
+        "value": "4307",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "changde"
+      },
+      {
+        "label": "张家界",
+        "value": "4308",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "zhanggujie"
+      },
+      {
+        "label": "益阳",
+        "value": "4309",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "yiyang"
+      },
+      {
+        "label": "郴州",
+        "value": "4310",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "chenzhou"
+      },
+      {
+        "label": "永州",
+        "value": "4311",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "yongzhou"
+      },
+      {
+        "label": "怀化",
+        "value": "4312",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "huaihua"
+      },
+      {
+        "label": "娄底",
+        "value": "4313",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "loude"
+      },
+      {
+        "label": "湘西土家族苗族自治州",
+        "value": "4331",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "xiangxituguzumiaozuzizhizhou"
+      },
+      {
+        "label": "广州",
+        "value": "4401",
+        "searchValue": null,
+        "isHot": true,
+        "pinyin": "guangzhou"
+      },
+      {
+        "label": "韶关",
+        "value": "4402",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "shaogua"
+      },
+      {
+        "label": "深圳",
+        "value": "4403",
+        "searchValue": null,
+        "isHot": true,
+        "pinyin": "shenzhe"
+      },
+      {
+        "label": "珠海",
+        "value": "4404",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "zhuhai"
+      },
+      {
+        "label": "汕头",
+        "value": "4405",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "shantou"
+      },
+      {
+        "label": "佛山",
+        "value": "4406",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "fosha"
+      },
+      {
+        "label": "江门",
+        "value": "4407",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "jiangme"
+      },
+      {
+        "label": "湛江",
+        "value": "4408",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "zhanjiang"
+      },
+      {
+        "label": "茂名",
+        "value": "4409",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "maoming"
+      },
+      {
+        "label": "肇庆",
+        "value": "4412",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "zhaoqing"
+      },
+      {
+        "label": "惠州",
+        "value": "4413",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "huizhou"
+      },
+      {
+        "label": "梅州",
+        "value": "4414",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "meizhou"
+      },
+      {
+        "label": "汕尾",
+        "value": "4415",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "shanwei"
+      },
+      {
+        "label": "河源",
+        "value": "4416",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "heyua"
+      },
+      {
+        "label": "阳江",
+        "value": "4417",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "yangjiang"
+      },
+      {
+        "label": "清远",
+        "value": "4418",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "qingyua"
+      },
+      {
+        "label": "东莞",
+        "value": "4419",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "donggua"
+      },
+      {
+        "label": "中山",
+        "value": "4420",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "zhongsha"
+      },
+      {
+        "label": "潮州",
+        "value": "4451",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "chaozhou"
+      },
+      {
+        "label": "揭阳",
+        "value": "4452",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "jieyang"
+      },
+      {
+        "label": "云浮",
+        "value": "4453",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "yunfu"
+      },
+      {
+        "label": "南宁",
+        "value": "4501",
+        "searchValue": null,
+        "isHot": true,
+        "pinyin": "naning"
+      },
+      {
+        "label": "柳州",
+        "value": "4502",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "liuzhou"
+      },
+      {
+        "label": "桂林",
+        "value": "4503",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "guili"
+      },
+      {
+        "label": "梧州",
+        "value": "4504",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "wuzhou"
+      },
+      {
+        "label": "北海",
+        "value": "4505",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "beihai"
+      },
+      {
+        "label": "防城港",
+        "value": "4506",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "fangchenggang"
+      },
+      {
+        "label": "钦州",
+        "value": "4507",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "qinzhou"
+      },
+      {
+        "label": "贵港",
+        "value": "4508",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "guigang"
+      },
+      {
+        "label": "玉林",
+        "value": "4509",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "yuli"
+      },
+      {
+        "label": "百色",
+        "value": "4510",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "baise"
+      },
+      {
+        "label": "贺州",
+        "value": "4511",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "hezhou"
+      },
+      {
+        "label": "河池",
+        "value": "4512",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "hechi"
+      },
+      {
+        "label": "来宾",
+        "value": "4513",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "laibi"
+      },
+      {
+        "label": "崇左",
+        "value": "4514",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "chongzuo"
+      },
+      {
+        "label": "海口",
+        "value": "4601",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "haikou"
+      },
+      {
+        "label": "三亚",
+        "value": "4602",
+        "searchValue": null,
+        "isHot": true,
+        "pinyin": "sanya"
+      },
+      {
+        "label": "陵水县",
+        "value": "469034",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "lingsuixia"
+      },
+      {
+        "label": "重庆",
+        "value": "5001",
+        "searchValue": null,
+        "isHot": true,
+        "pinyin": "chongqing"
+      },
+      {
+        "label": "成都",
+        "value": "5101",
+        "searchValue": null,
+        "isHot": true,
+        "pinyin": "chengdou"
+      },
+      {
+        "label": "自贡",
+        "value": "5103",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "zing"
+      },
+      {
+        "label": "攀枝花",
+        "value": "5104",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "panzhihua"
+      },
+      {
+        "label": "泸州",
+        "value": "5105",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "luzhou"
+      },
+      {
+        "label": "德阳",
+        "value": "5106",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "deyang"
+      },
+      {
+        "label": "绵阳",
+        "value": "5107",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "mianyang"
+      },
+      {
+        "label": "广元",
+        "value": "5108",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "guangyua"
+      },
+      {
+        "label": "遂宁",
+        "value": "5109",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "suining"
+      },
+      {
+        "label": "内江",
+        "value": "5110",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "neijiang"
+      },
+      {
+        "label": "乐山",
+        "value": "5111",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "lesha"
+      },
+      {
+        "label": "南充",
+        "value": "5113",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "nachong"
+      },
+      {
+        "label": "眉山",
+        "value": "5114",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "meisha"
+      },
+      {
+        "label": "宜宾",
+        "value": "5115",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "yibi"
+      },
+      {
+        "label": "广安",
+        "value": "5116",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "guanga"
+      },
+      {
+        "label": "达州",
+        "value": "5117",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "dazhou"
+      },
+      {
+        "label": "雅安",
+        "value": "5118",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "yaa"
+      },
+      {
+        "label": "巴中",
+        "value": "5119",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "bazhong"
+      },
+      {
+        "label": "资阳",
+        "value": "5120",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "ziyang"
+      },
+      {
+        "label": "阿坝藏族羌族自治州",
+        "value": "5132",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "abacangzuqiangzuzizhizhou"
+      },
+      {
+        "label": "甘孜藏族自治州",
+        "value": "5133",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "Ganzicangzuzizhizhou"
+      },
+      {
+        "label": "凉山彝族自治州",
+        "value": "5134",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "liangshanyizuzizhizhou"
+      },
+      {
+        "label": "贵阳",
+        "value": "5201",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "guiyang"
+      },
+      {
+        "label": "六盘水",
+        "value": "5202",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "liupanshui"
+      },
+      {
+        "label": "遵义",
+        "value": "5203",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "zunyi"
+      },
+      {
+        "label": "安顺",
+        "value": "5204",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "anshu"
+      },
+      {
+        "label": "铜仁地区",
+        "value": "5222",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "tongrendiqu"
+      },
+      {
+        "label": "黔西南布依族苗族自治州",
+        "value": "5223",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "qianxinabuyizumiaozuzizhizhou"
+      },
+      {
+        "label": "毕节地区",
+        "value": "5224",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "bijiediqu"
+      },
+      {
+        "label": "黔东南苗族侗族自治州",
+        "value": "5226",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "qiandongnamiaozudongzuzizhizhou"
+      },
+      {
+        "label": "黔南布依族苗族自治州",
+        "value": "5227",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "qiannabuyizumiaozuzizhizhou"
+      },
+      {
+        "label": "昆明",
+        "value": "5301",
+        "searchValue": null,
+        "isHot": true,
+        "pinyin": "kunming"
+      },
+      {
+        "label": "曲靖",
+        "value": "5303",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "qujing"
+      },
+      {
+        "label": "玉溪",
+        "value": "5304",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "yuxi"
+      },
+      {
+        "label": "保山",
+        "value": "5305",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "baosha"
+      },
+      {
+        "label": "昭通",
+        "value": "5306",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "zhaotong"
+      },
+      {
+        "label": "丽江",
+        "value": "5307",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "lijiang"
+      },
+      {
+        "label": "思茅",
+        "value": "530802",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "saimao"
+      },
+      {
+        "label": "临沧",
+        "value": "5309",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "lincang"
+      },
+      {
+        "label": "楚雄彝族自治州",
+        "value": "5323",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "chuxiongyizuzizhizhou"
+      },
+      {
+        "label": "红河哈尼族彝族自治州",
+        "value": "5325",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "nghehanizuyizuzizhizhou"
+      },
+      {
+        "label": "文山壮族苗族自治州",
+        "value": "5326",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "wenshanzhuangzumiaozuzizhizhou"
+      },
+      {
+        "label": "西双版纳傣族自治州",
+        "value": "5328",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "xishuangbannadaizuzizhizhou"
+      },
+      {
+        "label": "大理白族自治州",
+        "value": "5329",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "dalibaizuzizhizhou"
+      },
+      {
+        "label": "德宏傣族景颇族自治州",
+        "value": "5331",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "dehongdaizujingpozuzizhizhou"
+      },
+      {
+        "label": "怒江傈僳族自治州",
+        "value": "5333",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "nujianglisuzuzizhizhou"
+      },
+      {
+        "label": "迪庆藏族自治州",
+        "value": "5334",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "diqingcangzuzizhizhou"
+      },
+      {
+        "label": "拉萨",
+        "value": "5401",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "lasa"
+      },
+      {
+        "label": "昌都地区",
+        "value": "5421",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "changdoudiqu"
+      },
+      {
+        "label": "山南地区",
+        "value": "5422",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "shannadiqu"
+      },
+      {
+        "label": "日喀则地区",
+        "value": "5423",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "rikazediqu"
+      },
+      {
+        "label": "那曲地区",
+        "value": "5424",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "naqudiqu"
+      },
+      {
+        "label": "阿里地区",
+        "value": "5425",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "alidiqu"
+      },
+      {
+        "label": "林芝地区",
+        "value": "5426",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "linzhidiqu"
+      },
+      {
+        "label": "西安",
+        "value": "6101",
+        "searchValue": null,
+        "isHot": true,
+        "pinyin": "xia"
+      },
+      {
+        "label": "铜川",
+        "value": "6102",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "tongchua"
+      },
+      {
+        "label": "宝鸡",
+        "value": "6103",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "baoji"
+      },
+      {
+        "label": "咸阳",
+        "value": "6104",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "xianyang"
+      },
+      {
+        "label": "渭南",
+        "value": "6105",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "weina"
+      },
+      {
+        "label": "延安",
+        "value": "6106",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "yana"
+      },
+      {
+        "label": "汉中",
+        "value": "6107",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "hanzhong"
+      },
+      {
+        "label": "榆林",
+        "value": "6108",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "yuli"
+      },
+      {
+        "label": "安康",
+        "value": "6109",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "ankang"
+      },
+      {
+        "label": "商洛",
+        "value": "6110",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "shangluo"
+      },
+      {
+        "label": "兰州",
+        "value": "6201",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "lanzhou"
+      },
+      {
+        "label": "嘉峪关",
+        "value": "6202",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "jiayugua"
+      },
+      {
+        "label": "金昌",
+        "value": "6203",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "jinchang"
+      },
+      {
+        "label": "白银",
+        "value": "6204",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "baiyi"
+      },
+      {
+        "label": "天水",
+        "value": "6205",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "tianshui"
+      },
+      {
+        "label": "武威",
+        "value": "6206",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "wuwei"
+      },
+      {
+        "label": "张掖",
+        "value": "6207",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "zhangye"
+      },
+      {
+        "label": "平凉",
+        "value": "6208",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "pingliang"
+      },
+      {
+        "label": "酒泉",
+        "value": "6209",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "jiuqua"
+      },
+      {
+        "label": "庆阳",
+        "value": "6210",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "qingyang"
+      },
+      {
+        "label": "定西",
+        "value": "6211",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "dingxi"
+      },
+      {
+        "label": "陇南",
+        "value": "6212",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "longna"
+      },
+      {
+        "label": "临夏回族自治州",
+        "value": "6229",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "linxiahuizuzizhizhou"
+      },
+      {
+        "label": "甘南藏族自治州",
+        "value": "6230",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "gannacangzuzizhizhou"
+      },
+      {
+        "label": "西宁",
+        "value": "6301",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "xining"
+      },
+      {
+        "label": "海东地区",
+        "value": "6321",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "haidongdiqu"
+      },
+      {
+        "label": "海北藏族自治州",
+        "value": "6322",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "haibeicangzuzizhizhou"
+      },
+      {
+        "label": "黄南藏族自治州",
+        "value": "6323",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "huangnacangzuzizhizhou"
+      },
+      {
+        "label": "海南藏族自治州",
+        "value": "6325",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "hainacangzuzizhizhou"
+      },
+      {
+        "label": "果洛藏族自治州",
+        "value": "6326",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "guoluocangzuzizhizhou"
+      },
+      {
+        "label": "玉树藏族自治州",
+        "value": "6327",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "yushucangzuzizhizhou"
+      },
+      {
+        "label": "海西蒙古族藏族自治州",
+        "value": "6328",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "haiximengguzucangzuzizhizhou"
+      },
+      {
+        "label": "银川",
+        "value": "6401",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "yinchua"
+      },
+      {
+        "label": "石嘴山",
+        "value": "6402",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "danzuisha"
+      },
+      {
+        "label": "吴忠",
+        "value": "6403",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "wuzhong"
+      },
+      {
+        "label": "固原",
+        "value": "6404",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "guyua"
+      },
+      {
+        "label": "中卫",
+        "value": "6405",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "zhongwei"
+      },
+      {
+        "label": "乌鲁木齐",
+        "value": "6501",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "wulumuji"
+      },
+      {
+        "label": "克拉玛依",
+        "value": "6502",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "kelamayi"
+      },
+      {
+        "label": "吐鲁番地区",
+        "value": "6521",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "tulufandiqu"
+      },
+      {
+        "label": "哈密地区",
+        "value": "6522",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "hamidiqu"
+      },
+      {
+        "label": "昌吉回族自治州",
+        "value": "6523",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "changjihuizuzizhizhou"
+      },
+      {
+        "label": "博尔塔拉蒙古自治州",
+        "value": "6527",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "boerdalamengguzizhizhou"
+      },
+      {
+        "label": "巴音郭楞蒙古自治州",
+        "value": "6528",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "bayinguolengmengguzizhizhou"
+      },
+      {
+        "label": "阿克苏地区",
+        "value": "6529",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "akesudiqu"
+      },
+      {
+        "label": "克孜勒苏柯尔克孜自治州",
+        "value": "6530",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "kezilesukeerkezizizhizhou"
+      },
+      {
+        "label": "喀什地区",
+        "value": "6531",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "kashendiqu"
+      },
+      {
+        "label": "和田地区",
+        "value": "6532",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "hetiandiqu"
+      },
+      {
+        "label": "伊犁哈萨克自治州",
+        "value": "6540",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "yilihasakezizhizhou"
+      },
+      {
+        "label": "塔城地区",
+        "value": "6542",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "dachengdiqu"
+      },
+      {
+        "label": "阿勒泰地区",
+        "value": "6543",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "aletaidiqu"
+      },
+      {
+        "label": "阿拉尔",
+        "value": "6590",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "alaer"
+      },
+      {
+        "label": "白沙黎族自治县",
+        "value": "4600",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "baishalizuzizhixia"
+      },
+      {
+        "label": "保亭黎族苗族自治县",
+        "value": "469035",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "baotinglizumiaozuzizhixia"
+      },
+      {
+        "label": "北屯",
+        "value": "6554",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "beitu"
+      },
+      {
+        "label": "昌江黎族自治县",
+        "value": "469031",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "changjianglizuzizhixia"
+      },
+      {
+        "label": "澄迈县",
+        "value": "6556",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "chengmaixia"
+      },
+      {
+        "label": "儋州",
+        "value": "4690",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "danxia"
+      },
+      {
+        "label": "定安县",
+        "value": "469025",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "dinganxia"
+      },
+      {
+        "label": "东方",
+        "value": "4690",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "dongfang"
+      },
+      {
+        "label": "济源",
+        "value": "4190",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "jiyua"
+      },
+      {
+        "label": "乐东黎族自治县",
+        "value": "4690",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "ledonglizuzizhixia"
+      },
+      {
+        "label": "临高县",
+        "value": "469028",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "lingaoxia"
+      },
+      {
+        "label": "南沙群岛",
+        "value": "4690",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "nanshaqundao"
+      },
+      {
+        "label": "潜江",
+        "value": "4290",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "qianjiang"
+      },
+      {
+        "label": "琼海",
+        "value": "469002",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "qionghai"
+      },
+      {
+        "label": "琼中黎族苗族自治县",
+        "value": "469036",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "qiongzhonglizumiaozuzizhixia"
+      },
+      {
+        "label": "三沙市",
+        "value": "4603",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "sanshashi"
+      },
+      {
+        "label": "神农架林区",
+        "value": "429021",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "shennongjialinqu"
+      },
+      {
+        "label": "石河子",
+        "value": "6590",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "shihezi"
+      },
+      {
+        "label": "天门",
+        "value": "6570",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "tianme"
+      },
+      {
+        "label": "图木舒克",
+        "value": "6571",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "tumushuke"
+      },
+      {
+        "label": "屯昌县",
+        "value": "469026",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "tunchangxia"
+      },
+      {
+        "label": "万宁",
+        "value": "469006",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "wanning"
+      },
+      {
+        "label": "文昌",
+        "value": "469005",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "wenchang"
+      },
+      {
+        "label": "五家渠",
+        "value": "6575",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "wujiaqu"
+      },
+      {
+        "label": "西沙群岛",
+        "value": "469031",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "xishaqundao"
+      },
+      {
+        "label": "仙桃",
+        "value": "429004",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "xiantao"
+      },
+      {
+        "label": "中沙群岛的岛礁及其海域",
+        "value": "460039",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "zhongshaqundaodedaojiaojiqihaiyu"
+      },
+      {
+        "label": "五指山",
+        "value": "469001",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "wuzhisha"
+      },
+      {
+        "label": "普洱",
+        "value": "5308",
+        "searchValue": null,
+        "isHot": false,
+        "pinyin": "puer"
+      }
+    ],
+    "arrayLength": 368
+  },
+  {
+    "label": "org.defaultData",
+    "method": "GET",
+    "url": "http://api-workflow.rtesp.com/OrganizationCtrl/DefaultData?ticket=***REDACTED***&formId=",
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 58,
+    "isJson": true,
+    "bodyPreview": "{\"label\":\"技术部\",\"value\":\"A001\"}",
+    "bodyLength": 30,
+    "json": {
+      "label": "技术部",
+      "value": "A001"
+    }
+  },
+  {
+    "label": "position.defaultData",
+    "method": "GET",
+    "url": "http://api-workflow.rtesp.com/PositionCtrl/DefaultData?ticket=***REDACTED***&formId=",
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 51,
+    "isJson": true,
+    "bodyPreview": "{\"label\":null,\"value\":null}",
+    "bodyLength": 27,
+    "json": {
+      "label": null,
+      "value": null
+    }
+  },
+  {
+    "label": "task.list.api",
+    "method": "GET",
+    "url": "http://api-workflow.rtesp.com/Task/List?ticket=***REDACTED***&formId=",
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 46,
+    "isJson": true,
+    "bodyPreview": "{\"Data\":null,\"Status\":false,\"Code\":\"ParemeterError\",\"Message\":\"参数错误\",\"Timestamp\":\"1782371957\",\"Sign\":null,\"Language\":null,\"Token\":null,\"TraceId\":null}",
+    "bodyLength": 150,
+    "json": {
+      "Data": null,
+      "Status": false,
+      "Code": "ParemeterError",
+      "Message": "参数错误",
+      "Timestamp": "1782371957",
+      "Sign": null,
+      "Language": null,
+      "Token": null,
+      "TraceId": null
+    }
+  },
+  {
+    "label": "form.get.api",
+    "method": "GET",
+    "url": "http://api-workflow.rtesp.com/Form/Get?FlowTag=Travel&ticket=***REDACTED***&formId=",
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 46,
+    "isJson": true,
+    "bodyPreview": "{\"Data\":null,\"Status\":false,\"Code\":\"ParemeterError\",\"Message\":\"参数错误\",\"Timestamp\":\"1782371957\",\"Sign\":null,\"Language\":null,\"Token\":null,\"TraceId\":null}",
+    "bodyLength": 150,
+    "json": {
+      "Data": null,
+      "Status": false,
+      "Code": "ParemeterError",
+      "Message": "参数错误",
+      "Timestamp": "1782371957",
+      "Sign": null,
+      "Language": null,
+      "Token": null,
+      "TraceId": null
+    }
+  },
+  {
+    "label": "bfs.uploadImage.options",
+    "method": "OPTIONS",
+    "url": "http://api-bfs.rtesp.com/Image/Upload?ticket=***REDACTED***&formId=",
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "durationMs": 92,
+    "isJson": true,
+    "bodyPreview": "{\"Data\":null,\"Status\":false,\"Code\":\"ParamterError\",\"Message\":\"请选择上传的图片\",\"Timestamp\":\"1782371957\",\"Sign\":null,\"Language\":null,\"Token\":null,\"TraceId\":null}",
+    "bodyLength": 153,
+    "json": {
+      "Data": null,
+      "Status": false,
+      "Code": "ParamterError",
+      "Message": "请选择上传的图片",
+      "Timestamp": "1782371957",
+      "Sign": null,
+      "Language": null,
+      "Token": null,
+      "TraceId": null
+    }
+  }
+]

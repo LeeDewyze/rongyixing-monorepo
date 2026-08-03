@@ -1,0 +1,19 @@
+{
+  "capturedAt": "2026-06-24T23:19:17.162Z",
+  "user": "T289G003",
+  "loginName": "孙雪",
+  "altUser": "Test15011350510",
+  "altLoginName": "卜秀峰",
+  "endpointCount": 25,
+  "discoveredPathCount": 9,
+  "counts": {
+    "orderTasksPending": 3,
+    "orderTasksDone": 15,
+    "workflowTasks": 3,
+    "workflowHistory": 16,
+    "workflowNotifies": 0,
+    "waitingCount": {
+      "DataCount": 3
+    }
+  }
+}

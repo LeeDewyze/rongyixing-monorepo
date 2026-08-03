@@ -1,0 +1,14 @@
+import { TMC_METHODS } from "./tmc.js";
+import { MEMBER_METHODS } from "./member.js";
+
+/** Curated passenger / staff selection Methods. */
+export const PASSENGER_FLOW_METHODS = {
+  STAFF_LIST: TMC_METHODS.STAFF_LIST,
+  PASSENGER_LIST: MEMBER_METHODS.PASSENGER_LIST,
+  PASSENGER_ADD: MEMBER_METHODS.PASSENGER_ADD,
+  PASSENGER_MODIFY: MEMBER_METHODS.PASSENGER_MODIFY,
+  PASSENGER_REMOVE: MEMBER_METHODS.PASSENGER_REMOVE,
+} as const;
+
+export type PassengerFlowMethod =
+  (typeof PASSENGER_FLOW_METHODS)[keyof typeof PASSENGER_FLOW_METHODS];

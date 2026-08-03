@@ -1,0 +1,38 @@
+---
+description: Code splitting, lazy routes, and image loading
+globs: apps/**/*
+alwaysApply: false
+---
+
+# Performance Conventions
+
+## Route-level code splitting
+
+```tsx
+// apps/*/src/app/routes.tsx
+const HomePage = lazy(() => import("@/pages/HomePage"));
+
+{
+  path: "/",
+  element: (
+    <Suspense fallback={<PageSkeleton />}>
+      <HomePage />
+    </Suspense>
+  ),
+}
+```
+
+- Put `Suspense` boundary at layout or route level
+- Provide lightweight skeleton fallback (not blank screen)
+
+## Images
+
+- Use native `<img>` with `loading="lazy"` for below-fold content
+- Always set `width`/`height` or aspect ratio to prevent CLS
+- Prefer responsive `srcSet` for hero images when added
+- Future shared `Image` component → `packages/ui` if needed across apps
+
+## Bundles
+
+- Import workspace packages by subpath (`@ryx/ui/components/ui/button`)
+- Avoid barrel imports that pull unused components

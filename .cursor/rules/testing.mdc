@@ -1,0 +1,52 @@
+---
+description: Test file placement, naming, mocking, and coverage expectations
+globs: **/*.{test,spec}.{ts,tsx},**/vitest.config.ts,vitest.workspace.ts
+alwaysApply: false
+---
+
+# Testing Conventions
+
+## File placement
+
+- **Colocated** next to source: `src/client.test.ts` beside `src/client.ts`
+- No `__tests__/` folders unless a directory has many unrelated tests
+- Apps: add `vitest.config.ts`; packages: same pattern
+
+## Naming
+
+- Unit tests: `*.test.ts` / `*.test.tsx`
+- Describe blocks match module or export name
+
+## Mocking
+
+```typescript
+// @ryx/api — inject fetchImpl
+const client = createApiClient({
+  baseUrl: "https://api.test",
+  fetchImpl: vi.fn(() => Response.json({ success: true, data: {} })),
+});
+
+// @ryx/ui — render with @testing-library/react; no network
+// Apps — mock getApi() at module boundary when testing pages
+vi.mock("@/lib/api", () => ({ getApi: () => ({ auth: { login: vi.fn() } }) }));
+```
+
+## TDD workflow
+
+1. Write a failing test for the behavior
+2. Implement minimum code to pass
+3. Refactor; keep tests green
+
+## Coverage
+
+- Target **≥ 80%** line coverage for `packages/api`, `packages/shared-types`, `packages/ui`
+- Apps: smoke tests for critical paths; increase as features land
+
+## Commands
+
+```bash
+pnpm test              # all workspaces
+pnpm --filter @ryx/api test
+```
+
+No real HTTP in package tests. No committing secrets in fixtures.

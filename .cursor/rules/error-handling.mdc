@@ -1,0 +1,54 @@
+---
+description: Loading, error, and empty UI states for async pages and API calls
+globs: apps/**/*.tsx,packages/api/**/*
+alwaysApply: false
+---
+
+# Error & Async UI States
+
+## Three states required
+
+Every user-facing async view must handle:
+
+1. **Loading** — skeleton or spinner; avoid layout shift
+2. **Error** — message + retry action; log details in dev only
+3. **Empty** — explain why no data; suggest next action
+
+## API errors
+
+- `packages/api` throws `ApiError` with `status` and optional `code`
+- Apps catch in hooks or page-level handlers; never swallow silently
+
+```tsx
+try {
+  await getApi().auth.login(credentials);
+} catch (e) {
+  if (e instanceof ApiError && e.status === 401) {
+    setError("Invalid credentials");
+  } else {
+    setError("Something went wrong. Please try again.");
+  }
+}
+```
+
+## Reusable wrapper pattern
+
+```tsx
+type AsyncContentProps<T> = {
+  isLoading: boolean;
+  error: Error | null;
+  isEmpty: boolean;
+  children: (data: T) => React.ReactNode;
+  data: T | undefined;
+};
+
+// Render: loading → error → empty → children(data)
+```
+
+Place shared `AsyncContent` in `apps/*/src/components/` (per-app) until a third reuse justifies `packages/ui`.
+
+## Don'ts
+
+- Don't fetch in render body — use `useEffect`, event handlers, or data hooks
+- Don't show raw `error.message` from API to end users
+- Don't leave buttons enabled during in-flight requests

@@ -1,0 +1,51 @@
+{
+  "name": "rongyixing-monorepo",
+  "private": true,
+  "packageManager": "pnpm@9.15.9",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "prepare": "git config core.hooksPath .githooks 2>/dev/null || true",
+    "build:workspace": "pnpm --filter @ryx/shared-types build && pnpm --filter @ryx/api build && pnpm --filter @ryx/mock build",
+    "dev:h5": "pnpm build:workspace && pnpm --filter @ryx/h5 dev",
+    "dev:h5:mock": "pnpm build:workspace && VITE_API_MODE=mock pnpm --filter @ryx/h5 dev",
+    "dev:h5:test": "pnpm build:workspace && VITE_BASE_PATH=/h5/ VITE_DEV_PORT=5173 pnpm --filter @ryx/h5 dev --mode test",
+    "dev:h5:prod": "pnpm build:workspace && VITE_BASE_PATH=/h5/ VITE_DEV_PORT=5175 pnpm --filter @ryx/h5 dev --mode prod",
+    "dev:web": "pnpm --filter @ryx/web dev",
+    "dev:web:test": "VITE_BASE_PATH=/web/ VITE_DEV_PORT=5174 pnpm --filter @ryx/web dev --mode test",
+    "dev:web:prod": "VITE_BASE_PATH=/web/ VITE_DEV_PORT=5176 pnpm --filter @ryx/web dev --mode prod",
+    "native:android:init": "pnpm build:workspace && pnpm --filter @ryx/web build && pnpm --filter @ryx/android-pad run init:android",
+    "native:android:sync": "pnpm build:workspace && pnpm --filter @ryx/android-pad run sync",
+    "native:android:open": "pnpm --filter @ryx/android-pad run open",
+    "native:android:apk": "pnpm build:workspace && pnpm --filter @ryx/android-pad run apk:debug",
+    "native:windows:dev": "pnpm --filter @ryx/windows run dev",
+    "native:windows:pack": "pnpm build:workspace && pnpm --filter @ryx/web build && pnpm --filter @ryx/windows run pack",
+    "native:windows:dist": "pnpm build:workspace && pnpm --filter @ryx/web build && pnpm --filter @ryx/windows run dist",
+    "build": "pnpm -r build",
+    "extract-methods": "pnpm --filter @ryx/api extract-methods",
+    "diff-jyx-methods": "node packages/api/scripts/diff-jyx-methods.mjs",
+    "analyze-ryx-scope": "node packages/api/scripts/analyze-ryx-scope.mjs",
+    "analyze-ryx-pages": "node packages/api/scripts/analyze-ryx-pages.mjs",
+    "check:mock-coverage": "pnpm --filter @ryx/mock build && node packages/api/scripts/check-mock-coverage.mjs",
+    "verify:mock": "pnpm --filter @ryx/shared-types build && pnpm --filter @ryx/api build && pnpm --filter @ryx/mock build && node packages/api/scripts/verify-mock.mjs",
+    "test": "vitest run",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "audit": "pnpm audit"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.28.0",
+    "eslint": "^9.28.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "globals": "^16.2.0",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.33.1",
+    "vitest": "^3.2.3"
+  }
+}

@@ -1,0 +1,15 @@
+import { BPM_METHODS } from "./bpm.js";
+import { ORDER_METHODS } from "./order.js";
+import { TMC_METHODS } from "./tmc.js";
+
+/** Curated Wave 7 travel / approval Methods. */
+export const APPROVAL_FLOW_METHODS = {
+  ORDER_TASK_LIST: ORDER_METHODS.TASK_LIST,
+  WORKFLOW_TASK_LIST: BPM_METHODS.TASK_LIST,
+  WORKFLOW_HISTORY_LIST: BPM_METHODS.HISTORY_LIST,
+  WORKFLOW_NOTIFY_LIST: BPM_METHODS.NOTIFY_LIST,
+  WAITING_TASK_COUNT: TMC_METHODS.HOME_GETACCOUNTWAITINGTASKS,
+} as const;
+
+export type ApprovalFlowMethod =
+  (typeof APPROVAL_FLOW_METHODS)[keyof typeof APPROVAL_FLOW_METHODS];

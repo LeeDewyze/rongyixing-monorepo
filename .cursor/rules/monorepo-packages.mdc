@@ -1,0 +1,31 @@
+---
+description: Package boundaries and dependency rules for @ryx workspace
+globs: packages/**/*
+alwaysApply: false
+---
+
+# Package Boundaries
+
+## Dependency direction
+
+```
+apps/h5, apps/web  →  @ryx/api, @ryx/ui, @ryx/shared-types
+@ryx/api           →  @ryx/shared-types
+@ryx/ui            →  (peer: react, react-dom)
+```
+
+- Apps must not import from each other
+- `packages/api` must not import React or app code
+- `packages/ui` must not import `@ryx/api`
+
+## Adding dependencies
+
+- Shared runtime dep → add to the package that uses it
+- Workspace link → `"@ryx/foo": "workspace:*"`
+- Before adding/updating deps → `pnpm audit`
+
+## shadcn/ui
+
+- Install components into `packages/ui`, not apps
+- Keep `components.json` aliases consistent across ui + apps
+- After `shadcn add`, verify `globals.css` `@source` still covers all apps

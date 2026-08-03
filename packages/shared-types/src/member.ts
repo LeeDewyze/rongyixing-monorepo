@@ -1,0 +1,56 @@
+export interface MemberPassenger {
+  Id: string;
+  Name: string;
+  Mobile?: string;
+  CredentialNo?: string;
+  CredentialType?: string | number;
+  CredentialTypeName?: string;
+  /** Legacy Passenger-List fields */
+  CredentialsType?: number | string;
+  CredentialsTypeName?: string;
+  Number?: string;
+  HideNumber?: string;
+  HideCredentialsNumber?: string;
+  PassengerType?: number;
+  PassengerTypeName?: string;
+  IsSelf?: boolean;
+  travelFormId?: string;
+  travelNumber?: string;
+  Policy?: Record<string, unknown>;
+  /** Legacy passenger gender (M/F). */
+  Gender?: string;
+  Birthday?: string;
+  ExpirationDate?: string;
+  Surname?: string;
+  Givenname?: string;
+}
+
+export interface PassengerListParams {
+  Name?: string;
+  Mobile?: string;
+  PageIndex?: number;
+  PageSize?: number;
+}
+
+export interface PassengerListResponse {
+  Passengers: MemberPassenger[];
+  TotalCount?: number;
+}
+
+export interface MemberProfile {
+  Id: string;
+  Name: string;
+  /** Legacy Member-Get real-name field used by credential management. */
+  RealName?: string;
+  HeadUrl?: string;
+  Mobile?: string;
+  Email?: string;
+  /** Legacy Member-Get organization code. */
+  OrganizationCode?: string;
+  OrganizationName?: string;
+  CostCenterCode?: string;
+  CostCenterName?: string;
+  BookTypeName?: string;
+  /** Legacy `StaffBookType` — 1 / Self = self book. */
+  BookType?: number | string;
+}

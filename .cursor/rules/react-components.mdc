@@ -1,0 +1,53 @@
+---
+description: React component structure, routing, and UI patterns
+globs: apps/**/*.tsx,packages/ui/**/*.tsx
+alwaysApply: false
+---
+
+# React Component Conventions
+
+## Directory layout (apps)
+
+```
+src/
+  app/           # routes.tsx, layouts/
+  pages/         # route page components
+  components/    # app-local components (incl. AsyncState helpers)
+  config/        # site.ts, theme.ts
+  lib/           # env.ts, api.ts (getApi bootstrap)
+  content/       # static JSON/MDX
+```
+
+## Components
+
+- Functional components; named exports for pages/layouts
+- Shared primitives → `@ryx/ui`; app shells → `WebShell`, `H5Shell`
+- Data fetching via `getApi()` from `@/lib/api` — no raw `fetch` in pages
+- Every async page must handle loading, error, and empty states (see `error-handling.mdc`)
+
+## Routing (react-router v7)
+
+- Routes in `src/app/routes.tsx` via `createBrowserRouter`
+- Lazy-load heavy pages with `React.lazy` + `Suspense` (see `performance.mdc`)
+
+## Styling
+
+- Tailwind utilities + `cn()` from `@ryx/ui/lib/utils`
+- Design tokens in `packages/ui/src/styles/globals.css` (see `styling.mdc`)
+
+## Page pattern
+
+```tsx
+import { getApi } from "@/lib/api";
+import { AsyncContent } from "@/components/AsyncContent";
+
+export function HomePage() {
+  const { data, isLoading, error } = useProfile(); // hook wraps getApi()
+
+  return (
+    <AsyncContent isLoading={isLoading} error={error} isEmpty={!data}>
+      {(profile) => <ProfileCard profile={profile} />}
+    </AsyncContent>
+  );
+}
+```

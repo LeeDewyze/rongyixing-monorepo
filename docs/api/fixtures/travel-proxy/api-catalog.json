@@ -1,0 +1,816 @@
+{
+  "version": "2026-06-24",
+  "accounts": [
+    {
+      "user": "T289G003",
+      "name": "孙雪",
+      "tag": "primary"
+    },
+    {
+      "user": "Test15011350510",
+      "name": "卜秀峰",
+      "tag": "secondary"
+    }
+  ],
+  "layers": {
+    "proxy": "app.rtesp.com/Home/Proxy — signed form POST with Method name",
+    "workflowSite": "workflow.rtesp.com — presentation + form/task actions",
+    "workflowApi": "api-workflow.rtesp.com — ctrl/data JSON endpoints",
+    "bfsApi": "api-bfs.rtesp.com — attachment/image upload"
+  },
+  "h5EntryMapping": [
+    {
+      "homeButton": "出差申请",
+      "h5Route": "/travel/apply",
+      "primaryEndpoints": [
+        "workflow.form.flow",
+        "workflow.form.get",
+        "workflow.form.add",
+        "workflow.form.layoutDetail"
+      ]
+    },
+    {
+      "homeButton": "我的审批",
+      "h5Route": "/travel/workflow",
+      "primaryEndpoints": [
+        "workflow.task.index",
+        "workflow.task.list",
+        "proxy.workflow.taskList"
+      ]
+    },
+    {
+      "homeButton": "待我审批",
+      "h5Route": "/travel/approval?tab=pending",
+      "primaryEndpoints": [
+        "proxy.order.taskList.pending",
+        "proxy.waitingTaskCount",
+        "workflow.task.detail"
+      ]
+    },
+    {
+      "homeButton": "已审任务",
+      "h5Route": "/travel/approval?tab=done",
+      "primaryEndpoints": [
+        "proxy.order.taskList.done",
+        "workflow.task.detail"
+      ]
+    }
+  ],
+  "endpoints": [
+    {
+      "id": "proxy.login",
+      "layer": "proxy",
+      "h5Route": "/login/password",
+      "method": "TmcApiLoginUrl-Home-Login",
+      "urlTemplate": "{ClientAppUrl}/Home/Proxy",
+      "transport": "Proxy Method",
+      "request": {
+        "Name": "string",
+        "Password": "string",
+        "Device": "string"
+      },
+      "responseSample": {
+        "Ticket": "uuid",
+        "Name": "string"
+      },
+      "status": "ok"
+    },
+    {
+      "id": "proxy.workbenchLoad",
+      "layer": "proxy",
+      "h5Route": "/travel/*",
+      "method": "TmcApiHomeUrl-Workbench-Load",
+      "urlTemplate": "{ClientAppUrl}/Home/Proxy",
+      "transport": "Proxy Method",
+      "request": {},
+      "responseSample": {
+        "因公出行": [
+          {
+            "Id": 890000000004,
+            "Url": {
+              "url": "http://flight-tmc.rtesp.com/home/index?ticket=***REDACTED***",
+              "path": "tmc-flight-search",
+              "wechatMiniAppId": " ",
+              "wechatMiniPath": " ",
+              "jyxAppPath": "/app/book_main_flight",
+              "isOpenInAppBrowser": false,
+              "isBlank": false,
+              "tag": "TmcFlight"
+            },
+            "Name": "机票",
+            "ImageUrl": "http://image79.rtesp.com/files/images/2021/12/10/16/30/21/f5873c9f6bd14659ae8dbface5c5c3fd_img22.png"
+          },
+          {
+            "Id": 890000000005,
+            "Url": {
+              "url": "http://train-tmc.rtesp.com/home/index?ticket=***REDACTED***",
+              "path": "tmc-train-search",
+              "wechatMiniAppId": " ",
+              "wechatMiniPath": " ",
+              "jyxAppPath": "/app/book_main_train",
+              "isOpenInAppBrowser": false,
+              "isBlank": false,
+              "tag": "TmcTrain"
+            },
+            "Name": "火车票",
+            "ImageUrl": "http://image59.rtesp.com/files/images/2021/12/10/16/31/50/f63904aaaec9480cbff637cf4145c9f1_img80.png"
+          },
+          {
+            "Id": 890000000006,
+            "Url": {
+              "url": "http://hotel-tmc.rtesp.com/home/index?ticket=***REDACTED***",
+              "path": "tmc-hotel-search",
+              "wechatMiniAppId": " ",
+              "wechatMiniPath": " ",
+              "jyxAppPath": "/app/book_main_hotel",
+              "isOpenInAppBrowser": false,
+              "isBlank": false,
+              "tag": "TmcHotel"
+            },
+            "Name": "酒店",
+            "ImageUrl": "http://image24.rtesp.com/files/images/2021/12/10/16/31/15/de1216c0c90e4b49ac422c9f98b84d58_img42.png"
+          }
+        ],
+        "因私出行": [
+          {
+            "Id": 890000000001,
+            "Url": {
+              "url": "http://tmc.rtesp.com/Home/JumpApp?url=PresentationClientAppUrl%2FHome%2FIndex%3Fpath%3Dpublic-flight-search&ticket=***REDACTED***",
+              "path": "public-flight-search",
+              "wechatMiniAppId": " ",
+              "wechatMiniPath": " ",
+              "jyxAppPath": "/app/book_main_vip",
+              "isOpenInAppBrowser": false,
+              "isBlank": true,
+              "tag": "TouristMobile"
+            },
+            "Name": "国内机票-因私",
+            "ImageUrl": "http://image48.rtesp.com/files/images/2022/04/07/10/00/40/24489a6ab8ca475799509b133823caf3_img9.png"
+          },
+          {
+            "Id": 890000000003,
+            "Url": {
+              "url": "http://tmc.rtesp.com/Home/JumpApp?url=PresentationClientAppUrl%2FHome%2FIndex%3Fpath%3Dpublic-train-search&ticket=***REDACTED***",
+              "path": "public-train-search",
+              "wechatMiniAppId": " ",
+              "wechatMiniPath": " ",
+              "jyxAppPath": "/app/book_main_vip",
+              "isOpenInAppBrowser": false,
+              "isBlank": true,
+              "tag": "TouristMobile"
+            },
+            "Name": "火车票-因私",
+            "ImageUrl": "http://image61.rtesp.com/files/images/2022/04/07/10/01/04/41046a883726453f9eb79484ef8f26e5_img23.png"
+          },
+          {
+            "Id": 890000000008,
+            "Url": {
+              "url": "http://tmc.rtesp.com/Home/JumpApp?url=PresentationClientAppUrl%2FHome%2FIndex%3Fpath%3Dtab-public-home&ticket=***REDACTED***",
+              "path": "public-hotel-search",
+              "wechatMiniAppId": " ",
+              "wechatMiniPath": " ",
+              "jyxAppPath": "/app/book_main_vip",
+              "isOpenInAppBrowser": false,
+              "isBlank": true,
+              "tag": "TouristMobile"
+            },
+            "Name": "酒店",
+            "ImageUrl": "http://image73.rtesp.com/files/images/2022/04/07/10/00/52/656883ebb7b04c95a99caac38a1b9eea_img41.png"
+          },
+          {
+            "Id": 890000000011,
+            "Url": {
+              "url": "#?ticket=***REDACTED***",
+              "path": "tab-public-home",
+              "wechatMiniAppId": " ",
+              "wechatMiniPath": " ",
+              "jyxAppPath": "/app/book_main_vip",
+              "isOpenInAppBrowser": false,
+              "isBlank": true,
+              "tag": "TouristMobile"
+            },
+            "Name": "因私合集",
+            "ImageUrl": null
+          }
+        ],
+        "出差申请": [
+          {
+            "Id": 890000000009,
+            "Url": {
+              "url": "http://workflow.rtesp.com/Task/Index?ticket=***REDACTED***",
+              "path": "path://tmc-approval-task",
+              "wechatMiniAppId": " ",
+              "wechatMiniPath": " ",
+              "jyxAppPath": "",
+              "isOpenInAppBrowser": false,
+              "isBlank": true,
+              "tag": "TmcFlow"
+            },
+            "Name": "我的审批",
+            "ImageUrl": "http://image78.rtesp.com/files/images/2022/04/07/10/02/30/b9d2f5262a964fc692e9f9ee2027c89a_img18.png"
+          },
+          {
+            "Id": 890000000010,
+            "Url": {
+              "url": "http://workflow.rtesp.com/Form/Flow?flowtag=Travel&ticket=***REDACTED***",
+              "path": "",
+              "wechatMiniAppId": " ",
+              "wechatMiniPath": " ",
+              "jyxAppPath": "",
+              "isOpenInAppBrowser": false,
+              "isBlank": true,
+              "tag": "TmcFlow"
+            },
+            "Name": "出差申请",
+            "ImageUrl": "http://image88.rtesp.com/files/images/2022/04/06/15/00/32/c4fafe3a1fb747b883bdb29498f948b0_img4.png"
+          }
+        ]
+      },
+      "status": "ok",
+      "notes": "Resolves 出差申请 / 我的审批 external URLs"
+    },
+    {
+      "id": "proxy.getTravelUrl",
+      "layer": "proxy",
+      "h5Route": "hotel/flight book",
+      "method": "TmcApiBookUrl-Home-GetTravelUrl",
+      "urlTemplate": "{ClientAppUrl}/Home/Proxy",
+      "transport": "Proxy Method",
+      "request": {
+        "staffNumber": null,
+        "travelType": "Flight|Hotel|Train"
+      },
+      "responseSample": {},
+      "status": "ok",
+      "notes": "Select travel form when booking"
+    },
+    {
+      "id": "proxy.order.taskList.pending",
+      "layer": "proxy",
+      "h5Route": "/travel/approval?tab=pending",
+      "method": "TmcApiOrderUrl-Task-List",
+      "urlTemplate": "{ClientAppUrl}/Home/Proxy",
+      "transport": "Proxy Method",
+      "request": {
+        "Type": 1,
+        "PageIndex": 0,
+        "PageSize": 20,
+        "Name": ""
+      },
+      "responseSample": [
+        {
+          "Id": 44880000000013,
+          "Name": "申晓杰向您发起了【出差申请】审批流程",
+          "Number": "ced7a3f33cf3400cae1f6d2186e2942b",
+          "Status": 2,
+          "StatusName": "处理中",
+          "Tag": "Travel",
+          "IsOverdue": false,
+          "OrderId": null,
+          "HandleUrl": "http://workflow.rtesp.com/FormTask/Handle?flowtag=Travel",
+          "ConsumerId": "23510000000033",
+          "Applicant": null,
+          "Travelers": null,
+          "ApplicationTime": null,
+          "TravelTime": null,
+          "Trip": null,
+          "OrderTypeName": null,
+          "DayCount": null,
+          "CheckInCity": null,
+          "StatusPicName": ""
+        },
+        {
+          "Id": 44880000000005,
+          "Name": "申晓杰向您发起了【出差申请】审批流程",
+          "Number": "bb8c1e16071647ecaa5f0964dbe7b175",
+          "Status": 2,
+          "StatusName": "处理中",
+          "Tag": "Travel",
+          "IsOverdue": false,
+          "OrderId": null,
+          "HandleUrl": "http://workflow.rtesp.com/FormTask/Handle?flowtag=Travel",
+          "ConsumerId": "23510000000024",
+          "Applicant": null,
+          "Travelers": null,
+          "ApplicationTime": null,
+          "TravelTime": null,
+          "Trip": null,
+          "OrderTypeName": null,
+          "DayCount": null,
+          "CheckInCity": null,
+          "StatusPicName": ""
+        },
+        {
+          "Id": 44880000000004,
+          "Name": "申晓杰向您发起了【出差申请】审批流程",
+          "Number": "1c1bb924a09844ea97c609e6814e452a",
+          "Status": 2,
+          "StatusName": "处理中",
+          "Tag": "Travel",
+          "IsOverdue": false,
+          "OrderId": null,
+          "HandleUrl": "http://workflow.rtesp.com/FormTask/Handle?flowtag=Travel",
+          "ConsumerId": "23510000000023",
+          "Applicant": null,
+          "Travelers": null,
+          "ApplicationTime": null,
+          "TravelTime": null,
+          "Trip": null,
+          "OrderTypeName": null,
+          "DayCount": null,
+          "CheckInCity": null,
+          "StatusPicName": ""
+        }
+      ],
+      "status": "ok",
+      "notes": "TMC order approval tasks; click opens HandleUrl + taskid + ticket"
+    },
+    {
+      "id": "proxy.order.taskList.done",
+      "layer": "proxy",
+      "h5Route": "/travel/approval?tab=done",
+      "method": "TmcApiOrderUrl-Task-List",
+      "transport": "Proxy Method",
+      "request": {
+        "Type": 2,
+        "PageIndex": 0,
+        "PageSize": 20,
+        "Name": ""
+      },
+      "responseSample": [
+        {
+          "Id": 44880000000014,
+          "Name": "申晓杰向您发起了【出差申请】审批流程",
+          "Number": "a3fbaab5538543c2859a79f2ea128a05",
+          "Status": 3,
+          "StatusName": "已通过",
+          "Tag": "Travel",
+          "IsOverdue": false,
+          "OrderId": null,
+          "HandleUrl": "http://workflow.rtesp.com/FormTask/Handle?flowtag=Travel",
+          "ConsumerId": "23510000000034",
+          "Applicant": null,
+          "Travelers": null,
+          "ApplicationTime": null,
+          "TravelTime": null,
+          "Trip": null,
+          "OrderTypeName": null,
+          "DayCount": null,
+          "CheckInCity": null,
+          "StatusPicName": "Pass"
+        },
+        {
+          "Id": 44880000000020,
+          "Name": "张海肖向您发起了【出差申请】审批流程",
+          "Number": "8df3fb9e2bee4d3c9d92d4b7d7ff6f60",
+          "Status": 3,
+          "StatusName": "已通过",
+          "Tag": "Travel",
+          "IsOverdue": false,
+          "OrderId": null,
+          "HandleUrl": "http://workflow.rtesp.com/FormTask/Handle?flowtag=Travel",
+          "ConsumerId": "23530000000028",
+          "Applicant": null,
+          "Travelers": null,
+          "ApplicationTime": null,
+          "TravelTime": null,
+          "Trip": null,
+          "OrderTypeName": null,
+          "DayCount": null,
+          "CheckInCity": null,
+          "StatusPicName": "Pass"
+        },
+        {
+          "Id": 44880000000019,
+          "Name": "张海肖向您发起了【出差申请】审批流程",
+          "Number": "fce9e70cc4104e8b92db0c6628bac3e0",
+          "Status": 3,
+          "StatusName": "已通过",
+          "Tag": "Travel",
+          "IsOverdue": false,
+          "OrderId": null,
+          "HandleUrl": "http://workflow.rtesp.com/FormTask/Handle?flowtag=Travel",
+          "ConsumerId": "23530000000027",
+          "Applicant": null,
+          "Travelers": null,
+          "ApplicationTime": null,
+          "TravelTime": null,
+          "Trip": null,
+          "OrderTypeName": null,
+          "DayCount": null,
+          "CheckInCity": null,
+          "StatusPicName": "Pass"
+        }
+      ],
+      "status": "ok"
+    },
+    {
+      "id": "proxy.workflow.taskList",
+      "layer": "proxy",
+      "h5Route": "/travel/workflow (native alt)",
+      "method": "WorkflowApiUrl-Task-List",
+      "transport": "Proxy Method",
+      "request": {
+        "PageIndex": 0,
+        "PageSize": 20,
+        "Name": ""
+      },
+      "responseSample": [
+        {
+          "Id": 44880000000013,
+          "Number": "ced7a3f33cf3400cae1f6d2186e2942b",
+          "Name": "申晓杰向您发起了【出差申请】审批流程",
+          "Tag": "Travel",
+          "Type": 2,
+          "ExpiredTime": "1970-01-01T00:00:00",
+          "Channel": "",
+          "Url": "http://workflow.rtesp.com/FormTask/Detail?flowtag=Travel&taskId=44880000000013&sign=67e7beb37787eb92266d10c45c84601f",
+          "Remark": "",
+          "Status": 2
+        },
+        {
+          "Id": 44880000000005,
+          "Number": "bb8c1e16071647ecaa5f0964dbe7b175",
+          "Name": "申晓杰向您发起了【出差申请】审批流程",
+          "Tag": "Travel",
+          "Type": 2,
+          "ExpiredTime": "1970-01-01T00:00:00",
+          "Channel": "",
+          "Url": "http://workflow.rtesp.com/FormTask/Detail?flowtag=Travel&taskId=44880000000005&sign=306c42cf95fabf3dadb8026f0d29ca76",
+          "Remark": "",
+          "Status": 2
+        },
+        {
+          "Id": 44880000000004,
+          "Number": "1c1bb924a09844ea97c609e6814e452a",
+          "Name": "申晓杰向您发起了【出差申请】审批流程",
+          "Tag": "Travel",
+          "Type": 2,
+          "ExpiredTime": "1970-01-01T00:00:00",
+          "Channel": "",
+          "Url": "http://workflow.rtesp.com/FormTask/Detail?flowtag=Travel&taskId=44880000000004&sign=a923314f1624b451d11db7e0dce81abc",
+          "Remark": "",
+          "Status": 2
+        }
+      ],
+      "status": "ok"
+    },
+    {
+      "id": "proxy.workflow.historyList",
+      "layer": "proxy",
+      "method": "WorkflowApiUrl-History-List",
+      "transport": "Proxy Method",
+      "request": {
+        "PageIndex": 0,
+        "PageSize": 20,
+        "Name": ""
+      },
+      "responseSample": [
+        {
+          "Id": 44880000000020,
+          "Number": "8df3fb9e2bee4d3c9d92d4b7d7ff6f60",
+          "Name": "张海肖向您发起了【出差申请】审批流程",
+          "Tag": "Travel",
+          "Type": 2,
+          "ExpiredTime": "1970-01-01T00:00:00",
+          "Channel": "手机端",
+          "Url": "http://workflow.rtesp.com/FormTask/Detail?flowtag=Travel&taskId=44880000000020&sign=e5574bb6c8c75bc44784df087d4c5d72",
+          "Remark": "",
+          "Status": 3
+        },
+        {
+          "Id": 44880000000019,
+          "Number": "fce9e70cc4104e8b92db0c6628bac3e0",
+          "Name": "张海肖向您发起了【出差申请】审批流程",
+          "Tag": "Travel",
+          "Type": 2,
+          "ExpiredTime": "1970-01-01T00:00:00",
+          "Channel": "手机端",
+          "Url": "http://workflow.rtesp.com/FormTask/Detail?flowtag=Travel&taskId=44880000000019&sign=15d342d5d7b3e1e287f706dda2b5733c",
+          "Remark": "",
+          "Status": 3
+        },
+        {
+          "Id": 44880000000018,
+          "Number": "4dcaf99941a84dfb9c509a8f66833247",
+          "Name": "孙雪向您发起了【出差申请】审批流程",
+          "Tag": "Travel",
+          "Type": 2,
+          "ExpiredTime": "1970-01-01T00:00:00",
+          "Channel": "手机端",
+          "Url": "http://workflow.rtesp.com/FormTask/Detail?flowtag=Travel&taskId=44880000000018&sign=3c133098b7e3e52e8c118674ddf60349",
+          "Remark": "",
+          "Status": 3
+        }
+      ],
+      "status": "ok"
+    },
+    {
+      "id": "proxy.workflow.notifyList",
+      "layer": "proxy",
+      "method": "WorkflowApiUrl-Notify-List",
+      "transport": "Proxy Method",
+      "request": {
+        "PageIndex": 0,
+        "PageSize": 20,
+        "Name": ""
+      },
+      "responseSample": [],
+      "status": "ok"
+    },
+    {
+      "id": "proxy.waitingTaskCount",
+      "layer": "proxy",
+      "h5Route": "/travel/approval",
+      "method": "TmcApiHomeUrl-Home-GetAccountWaitingTasks",
+      "transport": "Proxy Method",
+      "request": {},
+      "responseSample": {
+        "DataCount": 3
+      },
+      "status": "ok"
+    },
+    {
+      "id": "workflow.form.flow",
+      "layer": "workflowSite",
+      "h5Route": "/travel/apply",
+      "method": "GET",
+      "urlTemplate": "{WorkflowWebsiteUrl}/Form/Flow?flowtag=Travel&ticket={ticket}",
+      "transport": "Direct HTTP (HTML)",
+      "responseSample": {
+        "workflowId": "318",
+        "layoutTag": "LayoutTravel"
+      },
+      "status": "ok",
+      "notes": "Embeds winner.weber dynamic form; exposes GetUrl/AddUrl in HTML"
+    },
+    {
+      "id": "workflow.form.get",
+      "layer": "workflowSite",
+      "method": "GET",
+      "urlTemplate": "http://workflow.rtesp.com/Form/Get?ticket=***REDACTED***&CheckFlowType=&FlowTag=Travel",
+      "transport": "Direct HTTP (JSON)",
+      "responseSample": "null",
+      "status": "ok",
+      "notes": "Returns null for new travel application"
+    },
+    {
+      "id": "workflow.form.add",
+      "layer": "workflowSite",
+      "method": "POST",
+      "urlTemplate": "http://workflow.rtesp.com/Form/Add?SaveNotifyUrl=&ticket=***REDACTED***&CheckFlowType=&FlowTag=Travel",
+      "transport": "Direct HTTP (form submit)",
+      "request": "FormDetails[] + FormTimes[] — see submit-api-contract.json",
+      "responseSample": { "Status": true, "Message": null, "Data": { "Id": 23540000000005 } },
+      "status": "ok",
+      "notes": "flowform.js encoding; flat TravelType= fails validation. Account T18610773065 verified 2026-06-25."
+    },
+    {
+      "id": "workflow.form.layoutDetail",
+      "layer": "workflowSite",
+      "method": "POST",
+      "urlTemplate": "{WorkflowWebsiteUrl}/Form/FormLayoutDetail",
+      "transport": "Direct HTTP (HTML fragment)",
+      "request": {
+        "printerTag": "LayoutTravel",
+        "ticket": "{ticket}"
+      },
+      "responseSample": "",
+      "status": "ok"
+    },
+    {
+      "id": "workflow.task.index",
+      "layer": "workflowSite",
+      "h5Route": "/travel/workflow",
+      "method": "GET",
+      "urlTemplate": "{WorkflowWebsiteUrl}/Task/Index?ticket={ticket}",
+      "transport": "Direct HTTP (HTML)",
+      "responseSample": {
+        "getUrl": "/Task/get",
+        "listPath": "/Task/list",
+        "getPath": "/Task/get"
+      },
+      "status": "ok"
+    },
+    {
+      "id": "workflow.task.list",
+      "layer": "workflowSite",
+      "method": "POST",
+      "urlTemplate": "{WorkflowWebsiteUrl}/Task/list",
+      "transport": "Direct HTTP",
+      "request": {
+        "Tag": "TaskAccountIdWaiting|TaskAccountIdNotified",
+        "PageIndex": 0,
+        "PageSize": 20,
+        "ticket": "{ticket}"
+      },
+      "responseSample": "\n                <div class=\"mytask-task\">\n                    <div class=\"mytask-content-title\">\n                        <div class=\"mytask-id\" st style=\"line-height: 18px;\">\n                            <span style=\"white-space: normal;line-height: 9px;\">流程：&#x5F20;&#x6D77;&#x8096;&#x5411;&#x60A8;&#x53D1;&#x8D77;&#x4E86;&#x3010;&#x51FA;&#x5DEE;&#x7533;&#x8BF7;&#x3011;&#x5BA1;&#x6279;&#x6D41;&#x7A0B;</span>\n                        </div>\n                        <div>\n                            过期时间：\n                        </div>\n                        <div>\n                            提醒时间：\n                        </div>\n                        <div>\n                            发起时间：2025-01-06 10:22\n                        </div>\n                        <div>\n                                <a title=\"查看详情\" href=\"http://workflow.rtesp.com/FormTask/Detail?flowtag=Travel&amp;taskId=44880000000020&amp;sign=e5574bb6c8c75bc44784df087d4c5d72&amp;ticket=***REDACTED***\" target=\"_blank\">\n                                    <img src=\"/img/task_detial.png\" style=\"width: 15px; height: 15px \" />详情\n                                </a>\n                        </div>\n          ",
+      "status": "ok"
+    },
+    {
+      "id": "workflow.task.detail",
+      "layer": "workflowSite",
+      "h5Route": "/travel/task",
+      "method": "GET",
+      "urlTemplate": "{HandleUrl}?taskid={id}&ticket={ticket}&isApp=true&lang=cn",
+      "transport": "Direct HTTP / iframe",
+      "responseSample": {
+        "id": "44880000000013",
+        "name": "申晓杰向您发起了【出差申请】审批流程",
+        "number": "ced7a3f33cf3400cae1f6d2186e2942b",
+        "statusName": "处理中",
+        "tag": "Travel",
+        "handleUrl": "http://workflow.rtesp.com/FormTask/Handle?flowtag=Travel"
+      },
+      "status": "ok",
+      "notes": "HandleUrl from TmcApiOrderUrl-Task-List; e.g. FormTask/Handle?flowtag=Travel"
+    },
+    {
+      "id": "workflow.formTask.handle",
+      "layer": "workflowSite",
+      "h5Route": "/travel/task",
+      "method": "GET",
+      "urlTemplate": "{WorkflowWebsiteUrl}/FormTask/Handle?flowtag=Travel&taskid={id}&ticket={ticket}&isApp=true&lang=cn",
+      "transport": "Direct HTTP (HTML approval page)",
+      "responseSample": {
+        "task": {
+          "id": "44880000000013",
+          "name": "申晓杰向您发起了【出差申请】审批流程",
+          "number": "ced7a3f33cf3400cae1f6d2186e2942b",
+          "statusName": "处理中",
+          "tag": "Travel",
+          "handleUrl": "http://workflow.rtesp.com/FormTask/Handle?flowtag=Travel"
+        },
+        "pageHints": "<!DOCTYPE html>\n<html>\n<head>\n    <meta charset=\"utf-8\" />\n    <meta name=\"format-detection\" content=\"telephone=no\">\n    <meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0,maximum-sca",
+        "discovered": [
+          "FormTask/Approval",
+          "FormTask/GetStaffs"
+        ]
+      },
+      "status": "ok"
+    },
+    {
+      "id": "workflow.formTask.approval",
+      "layer": "workflowSite",
+      "h5Route": "/travel/task",
+      "method": "POST",
+      "urlTemplate": "{WorkflowWebsiteUrl}/FormTask/Approval?ticket={ticket}",
+      "transport": "Direct HTTP (form/multipart)",
+      "request": {
+        "taskId": "from window.TaskId on Handle page",
+        "isPass": "true|false",
+        "remark": "string max 50",
+        "sign": "from window.sign",
+        "channel": "optional",
+        "level": "optional",
+        "notifiers": "JSON [{Id,Name}] or empty"
+      },
+      "responseSample": { "Status": true, "Message": null },
+      "status": "ok",
+      "notes": "task.js task.handle; Travel approval has empty datas[] (no FormDetails). T289G003 verified 2026-06-25."
+    },
+    {
+      "id": "workflow.formTask.getStaffs",
+      "layer": "workflowSite",
+      "method": "POST",
+      "urlTemplate": "{WorkflowWebsiteUrl}/FormTask/GetStaffs?taskid={taskId}&ticket={ticket}",
+      "transport": "Direct HTTP",
+      "request": { "name": "search keyword" },
+      "responseSample": [{ "Value": 44880000000001, "Text": "孙雪" }],
+      "status": "ok"
+    },
+    {
+      "id": "workflow.formTask.detail",
+      "layer": "workflowSite",
+      "method": "GET",
+      "urlTemplate": "{WorkflowWebsiteUrl}/FormTask/Detail?flowtag=Travel&taskId={id}&sign={sign}&ticket={ticket}",
+      "transport": "Direct HTTP (HTML read-only)",
+      "responseSample": {
+        "id": "44880000000013",
+        "url": "http://workflow.rtesp.com/FormTask/Detail?flowtag=Travel&taskId=44880000000013&sign=67e7beb37787eb92266d10c45c84601f",
+        "name": "申晓杰向您发起了【出差申请】审批流程"
+      },
+      "status": "ok",
+      "notes": "From WorkflowApiUrl-Task-List item Url (includes sign)"
+    },
+    {
+      "id": "workflow.ctrl.staffDefaultApplicant",
+      "layer": "workflowApi",
+      "method": "GET",
+      "urlTemplate": "{WorkflowApiUrl}/StaffCtrl/DefaultApplicant?ticket={ticket}&formId=",
+      "responseSample": {
+        "label": "孙雪",
+        "value": "44880000000001"
+      },
+      "status": "ok"
+    },
+    {
+      "id": "workflow.ctrl.staffDefaultData",
+      "layer": "workflowApi",
+      "method": "GET",
+      "urlTemplate": "{WorkflowApiUrl}/StaffCtrl/DefaultData?HasNumber=true&ticket={ticket}&formId=",
+      "responseSample": {
+        "label": "003-孙雪",
+        "value": "44880000000001"
+      },
+      "status": "ok"
+    },
+    {
+      "id": "workflow.ctrl.staffGetDatas",
+      "layer": "workflowApi",
+      "method": "GET",
+      "urlTemplate": "{WorkflowApiUrl}/StaffCtrl/GetDatas?HasNumber=true&OnlyLoadCompany=true&ticket={ticket}&formId=",
+      "responseSample": "[{\"label\":\"3386376-张海肖\",\"value\":\"1780000000003\"},{\"label\":\"007-范梦杭\",\"value\":\"3680000000003\"},{\"label\":\"T55555555-22\",\"value\":\"4010000000013\"},{\"label\":\"-姓名222\",\"value\":\"7090000000007\"},{\"label\":\"3888181-han9\",\"value\":\"9750000000007\"},{\"label\":\"6173618-han2\",\"value\":\"14560000000009\"},{\"label\":\"1686811422-芝芝\",\"value\":\"14900000000012\"},{\"label\":\"999-申999\",\"value\":\"16390000000006\"},{\"label\":\"006-杨佳静\",\"value\":\"16890000000002\"},{\"label\":\"10014-申晓杰·\",\"value\":\"19960000000008\"}]",
+      "status": "ok"
+    },
+    {
+      "id": "workflow.ctrl.cityGetDatas",
+      "layer": "workflowApi",
+      "method": "GET",
+      "urlTemplate": "{WorkflowApiUrl}/CityCtrl/GetDatas?ticket={ticket}&formId=",
+      "responseSample": {
+        "count": 368,
+        "firstItems": [
+          {
+            "label": "北京",
+            "value": "1101",
+            "searchValue": null,
+            "isHot": true,
+            "pinyin": "beijing"
+          },
+          {
+            "label": "天津",
+            "value": "1201",
+            "searchValue": null,
+            "isHot": true,
+            "pinyin": "tianji"
+          },
+          {
+            "label": "石家庄",
+            "value": "1301",
+            "searchValue": null,
+            "isHot": false,
+            "pinyin": "shijiazhuang"
+          }
+        ]
+      },
+      "status": "ok"
+    },
+    {
+      "id": "workflow.ctrl.orgDefaultData",
+      "layer": "workflowApi",
+      "method": "GET",
+      "urlTemplate": "{WorkflowApiUrl}/OrganizationCtrl/DefaultData?ticket={ticket}&formId=",
+      "responseSample": {
+        "label": "技术部",
+        "value": "A001"
+      },
+      "status": "ok"
+    },
+    {
+      "id": "workflow.ctrl.positionDefaultData",
+      "layer": "workflowApi",
+      "method": "GET",
+      "urlTemplate": "{WorkflowApiUrl}/PositionCtrl/DefaultData?ticket={ticket}&formId=",
+      "responseSample": {
+        "label": null,
+        "value": null
+      },
+      "status": "ok"
+    },
+    {
+      "id": "bfs.imageUpload",
+      "layer": "bfsApi",
+      "method": "POST",
+      "urlTemplate": "{BfsApiUrl}/Image/Upload?ticket={ticket}&formId=",
+      "transport": "Direct HTTP (multipart)",
+      "status": "discovered",
+      "notes": "Referenced by travel form for attachments"
+    }
+  ],
+  "discoveredPaths": [
+    "/CityCtrl/DefaultData",
+    "/CityCtrl/GetDatas",
+    "/Form/FormLayoutDetail",
+    "/OrganizationCtrl/DefaultData",
+    "/PositionCtrl/DefaultData",
+    "/StaffCtrl/DefaultApplicant",
+    "/StaffCtrl/DefaultData",
+    "/StaffCtrl/GetDatas",
+    "/StaffCtrl/GetDefaultPolicy"
+  ],
+  "excludedOnRyx": [
+    {
+      "method": "FeatureRonglvUrl-jyx-GetTravelForms",
+      "reason": "jyx-only; null ref on ryx account"
+    },
+    {
+      "method": "FeatureRonglvUrl-jyx-SaveTravelForms",
+      "reason": "jyx-only"
+    },
+    {
+      "method": "BpmApiExpenseUrl-Home-List",
+      "reason": "HTTP 502 on staging"
+    }
+  ]
+}

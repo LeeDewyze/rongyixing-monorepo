@@ -1,0 +1,146 @@
+[
+  {
+    "group": "因公出行",
+    "name": "机票",
+    "url": {
+      "url": "http://flight-tmc.rtesp.com/home/index?ticket=9e4ccfe1afc14e3c9bba09d992da9b49",
+      "path": "tmc-flight-search",
+      "wechatMiniAppId": " ",
+      "wechatMiniPath": " ",
+      "jyxAppPath": "/app/book_main_flight",
+      "isOpenInAppBrowser": false,
+      "isBlank": false,
+      "tag": "TmcFlight"
+    },
+    "imageUrl": "http://image79.rtesp.com/files/images/2021/12/10/16/30/21/f5873c9f6bd14659ae8dbface5c5c3fd_img22.png",
+    "tag": "TmcFlight"
+  },
+  {
+    "group": "因公出行",
+    "name": "火车票",
+    "url": {
+      "url": "http://train-tmc.rtesp.com/home/index?ticket=9e4ccfe1afc14e3c9bba09d992da9b49",
+      "path": "tmc-train-search",
+      "wechatMiniAppId": " ",
+      "wechatMiniPath": " ",
+      "jyxAppPath": "/app/book_main_train",
+      "isOpenInAppBrowser": false,
+      "isBlank": false,
+      "tag": "TmcTrain"
+    },
+    "imageUrl": "http://image59.rtesp.com/files/images/2021/12/10/16/31/50/f63904aaaec9480cbff637cf4145c9f1_img80.png",
+    "tag": "TmcTrain"
+  },
+  {
+    "group": "因公出行",
+    "name": "酒店",
+    "url": {
+      "url": "http://hotel-tmc.rtesp.com/home/index?ticket=9e4ccfe1afc14e3c9bba09d992da9b49",
+      "path": "tmc-hotel-search",
+      "wechatMiniAppId": " ",
+      "wechatMiniPath": " ",
+      "jyxAppPath": "/app/book_main_hotel",
+      "isOpenInAppBrowser": false,
+      "isBlank": false,
+      "tag": "TmcHotel"
+    },
+    "imageUrl": "http://image24.rtesp.com/files/images/2021/12/10/16/31/15/de1216c0c90e4b49ac422c9f98b84d58_img42.png",
+    "tag": "TmcHotel"
+  },
+  {
+    "group": "因私出行",
+    "name": "国内机票-因私",
+    "url": {
+      "url": "http://tmc.rtesp.com/Home/JumpApp?url=PresentationClientAppUrl%2FHome%2FIndex%3Fpath%3Dpublic-flight-search&ticket=9e4ccfe1afc14e3c9bba09d992da9b49",
+      "path": "public-flight-search",
+      "wechatMiniAppId": " ",
+      "wechatMiniPath": " ",
+      "jyxAppPath": "/app/book_main_vip",
+      "isOpenInAppBrowser": false,
+      "isBlank": true,
+      "tag": "TouristMobile"
+    },
+    "imageUrl": "http://image48.rtesp.com/files/images/2022/04/07/10/00/40/24489a6ab8ca475799509b133823caf3_img9.png",
+    "tag": "TouristMobile"
+  },
+  {
+    "group": "因私出行",
+    "name": "火车票-因私",
+    "url": {
+      "url": "http://tmc.rtesp.com/Home/JumpApp?url=PresentationClientAppUrl%2FHome%2FIndex%3Fpath%3Dpublic-train-search&ticket=9e4ccfe1afc14e3c9bba09d992da9b49",
+      "path": "public-train-search",
+      "wechatMiniAppId": " ",
+      "wechatMiniPath": " ",
+      "jyxAppPath": "/app/book_main_vip",
+      "isOpenInAppBrowser": false,
+      "isBlank": true,
+      "tag": "TouristMobile"
+    },
+    "imageUrl": "http://image61.rtesp.com/files/images/2022/04/07/10/01/04/41046a883726453f9eb79484ef8f26e5_img23.png",
+    "tag": "TouristMobile"
+  },
+  {
+    "group": "因私出行",
+    "name": "酒店",
+    "url": {
+      "url": "http://tmc.rtesp.com/Home/JumpApp?url=PresentationClientAppUrl%2FHome%2FIndex%3Fpath%3Dtab-public-home&ticket=9e4ccfe1afc14e3c9bba09d992da9b49",
+      "path": "public-hotel-search",
+      "wechatMiniAppId": " ",
+      "wechatMiniPath": " ",
+      "jyxAppPath": "/app/book_main_vip",
+      "isOpenInAppBrowser": false,
+      "isBlank": true,
+      "tag": "TouristMobile"
+    },
+    "imageUrl": "http://image73.rtesp.com/files/images/2022/04/07/10/00/52/656883ebb7b04c95a99caac38a1b9eea_img41.png",
+    "tag": "TouristMobile"
+  },
+  {
+    "group": "因私出行",
+    "name": "因私合集",
+    "url": {
+      "url": "#?ticket=9e4ccfe1afc14e3c9bba09d992da9b49",
+      "path": "tab-public-home",
+      "wechatMiniAppId": " ",
+      "wechatMiniPath": " ",
+      "jyxAppPath": "/app/book_main_vip",
+      "isOpenInAppBrowser": false,
+      "isBlank": true,
+      "tag": "TouristMobile"
+    },
+    "imageUrl": null,
+    "tag": "TouristMobile"
+  },
+  {
+    "group": "出差申请",
+    "name": "我的审批",
+    "url": {
+      "url": "http://workflow.rtesp.com/Task/Index?ticket=9e4ccfe1afc14e3c9bba09d992da9b49",
+      "path": "path://tmc-approval-task",
+      "wechatMiniAppId": " ",
+      "wechatMiniPath": " ",
+      "jyxAppPath": "",
+      "isOpenInAppBrowser": false,
+      "isBlank": true,
+      "tag": "TmcFlow"
+    },
+    "imageUrl": "http://image78.rtesp.com/files/images/2022/04/07/10/02/30/b9d2f5262a964fc692e9f9ee2027c89a_img18.png",
+    "tag": "TmcFlow"
+  },
+  {
+    "group": "出差申请",
+    "name": "出差申请",
+    "url": {
+      "url": "http://workflow.rtesp.com/Form/Flow?flowtag=Travel&ticket=9e4ccfe1afc14e3c9bba09d992da9b49",
+      "path": "",
+      "wechatMiniAppId": " ",
+      "wechatMiniPath": " ",
+      "jyxAppPath": "",
+      "isOpenInAppBrowser": false,
+      "isBlank": true,
+      "tag": "TmcFlow"
+    },
+    "imageUrl": "http://image88.rtesp.com/files/images/2022/04/06/15/00/32/c4fafe3a1fb747b883bdb29498f948b0_img4.png",
+    "tag": "TmcFlow"
+  }
+]

@@ -1,0 +1,48 @@
+---
+description: Tailwind v4, design tokens, and shadcn/ui styling conventions
+globs: **/*.{tsx,css},packages/ui/**/*
+alwaysApply: false
+---
+
+# Styling Conventions (Tailwind v4)
+
+## Source of truth
+
+- Global styles: `packages/ui/src/styles/globals.css`
+- Apps import: `import "@ryx/ui/globals.css"` in `main.tsx`
+- Scan paths: `@source` in globals.css (include `apps/*/index.html` + `src/**`)
+
+## Prefer utilities over @apply
+
+- **Default**: utility classes in JSX via `cn()`
+- **@apply**: only for repeated multi-class combos in `globals.css` `@layer components` (≥3 uses)
+- **Never** `@apply` in app files; keep extraction in ui package
+
+## Design tokens
+
+Add tokens in `globals.css`:
+
+```css
+@theme inline {
+  --color-brand: var(--brand);
+}
+:root {
+  --brand: oklch(...);
+}
+```
+
+Use semantic tokens (`bg-primary`, `text-muted-foreground`) — not raw hex in components.
+
+## Tailwind v4 structure
+
+- `@import "tailwindcss"` — entry
+- `@theme inline` — design tokens
+- `@layer base` — element defaults
+- `@custom-variant` — `pad:`, `pc:`, `pointer-coarse:`, `hover-hover:`
+
+Do not add `tailwind.config.ts` unless a tool requires it; shadcn v4 uses empty config in `components.json`.
+
+## shadcn components
+
+- Add to `packages/ui` via `pnpm dlx shadcn@latest add <name>` in ui package
+- Compose with `cn()` for variants; extend via `className` prop

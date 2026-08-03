@@ -1,0 +1,150 @@
+import { useState } from "react";
+import type { HotelCity } from "@ryx/shared-types";
+
+import { HotelStayDatePickerSheet } from "@/components/hotel/HotelStayDatePickerSheet";
+import { formatHotelDateShort, nightsBetween, relativeDayLabel } from "@/lib/date-search";
+import { displayHotelCity } from "@/lib/hotel-search";
+import { HOME_ASSETS } from "@/config/home-assets";
+
+interface HomeHotelSearchPanelProps {
+  city: HotelCity;
+  cityLabel?: string;
+  keyword: string;
+  checkIn: string;
+  checkOut: string;
+  validationError?: string;
+  onCitySelect: () => void;
+  onKeywordChange: (value: string) => void;
+  onSearch: () => void;
+  onCheckInChange: (date: string) => void;
+  onCheckOutChange: (date: string) => void;
+  onMyLocationClick: () => void;
+  myLocationLoading?: boolean;
+}
+
+function ChevronDownIcon() {
+  return (
+    <svg viewBox="0 0 12 12" className="size-4 shrink-0 text-[#666666]" aria-hidden>
+      <path d="M2 4l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
+function MyLocationIcon() {
+  return (
+    <img
+      src={HOME_ASSETS.products.hotel.myLocation}
+      alt=""
+      className="size-4 shrink-0 object-contain"
+      aria-hidden
+    />
+  );
+}
+
+export function HomeHotelSearchPanel({
+  city,
+  cityLabel,
+  keyword,
+  checkIn,
+  checkOut,
+  validationError,
+  onCitySelect,
+  onKeywordChange,
+  onSearch,
+  onCheckInChange,
+  onCheckOutChange,
+  onMyLocationClick,
+  myLocationLoading = false,
+}: HomeHotelSearchPanelProps) {
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const nights = nightsBetween(checkIn, checkOut);
+  const destinationLabel = cityLabel ?? displayHotelCity(city);
+
+  function handleDateConfirm(nextCheckIn: string, nextCheckOut: string) {
+    onCheckInChange(nextCheckIn);
+    onCheckOutChange(nextCheckOut);
+  }
+
+  return (
+    <>
+      <div className="mx-3 rounded-lg bg-white px-3 pb-4 pt-3">
+        <div className="flex h-12 items-center gap-2 rounded-lg bg-[#F5F6F9] px-3">
+          <button
+            type="button"
+            className="flex min-w-0 max-w-[42%] items-center gap-0.5 text-[17px] font-medium text-brand-title"
+            title={destinationLabel}
+            onClick={onCitySelect}
+          >
+            <span className="truncate">{destinationLabel}</span>
+            <ChevronDownIcon />
+          </button>
+          <input
+            type="search"
+            value={keyword}
+            placeholder="位置/品牌/酒店"
+            onChange={(e) => onKeywordChange(e.target.value)}
+            className="min-w-0 flex-1 border-0 bg-transparent text-[17px] font-medium text-brand-title outline-none placeholder:font-normal placeholder:text-[#999999]"
+          />
+          <button
+            type="button"
+            className="flex shrink-0 flex-col items-center gap-0.5 disabled:opacity-60"
+            aria-label="我的位置"
+            onClick={onMyLocationClick}
+            disabled={myLocationLoading}
+          >
+            <MyLocationIcon />
+            <span className="text-right text-[11px] font-normal leading-none tracking-normal text-[#666666] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]">
+              {myLocationLoading ? "定位中" : "我的位置"}
+            </span>
+          </button>
+        </div>
+
+        <button
+          type="button"
+          className="mt-2 flex h-12 w-full items-center rounded-lg bg-[#F5F6F9] px-3 text-left active:opacity-90"
+          onClick={() => setDatePickerOpen(true)}
+        >
+          <span className="flex items-baseline gap-1">
+            <span className="text-[17px] font-medium text-brand-title">
+              {formatHotelDateShort(checkIn)}
+            </span>
+            <span className="text-[14px] text-[#666666]">{relativeDayLabel(checkIn)}</span>
+          </span>
+          <span className="mx-2 shrink-0 text-[14px] text-[#666666]">——</span>
+          <span className="flex items-baseline gap-1">
+            <span className="text-[17px] font-medium text-brand-title">
+              {formatHotelDateShort(checkOut)}
+            </span>
+            <span className="text-[14px] text-[#666666]">{relativeDayLabel(checkOut)}</span>
+          </span>
+          <span className="ml-auto shrink-0 text-[11px] text-[#666666]">共{nights}晚</span>
+        </button>
+
+        {validationError ? (
+          <p className="pt-2 text-center text-sm text-destructive">{validationError}</p>
+        ) : null}
+
+        <button
+          type="button"
+          className="mt-4 flex h-10 w-full items-center justify-center rounded-[24px] text-[17px] font-medium text-white active:opacity-90"
+          style={{
+            background:
+              "linear-gradient(270deg, var(--brand-btn-end) 0%, var(--brand-btn-start) 100%)",
+            boxShadow: "0px 2px 16px 0px rgba(175, 175, 175, 0.2)",
+          }}
+          onClick={onSearch}
+        >
+          酒店查询
+        </button>
+      </div>
+
+      <HotelStayDatePickerSheet
+        open={datePickerOpen}
+        checkIn={checkIn}
+        checkOut={checkOut}
+        onClose={() => setDatePickerOpen(false)}
+        onConfirm={handleDateConfirm}
+      />
+    </>
+  );
+}

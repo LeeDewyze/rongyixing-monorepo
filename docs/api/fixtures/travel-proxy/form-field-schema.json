@@ -1,0 +1,209 @@
+{
+  "fields": [
+    {
+      "tag": "TravelNumber",
+      "label": "差旅单号",
+      "controlType": "Input",
+      "slave": "",
+      "slaveRow": 0,
+      "defaultUrl": "http://expense-bpm.rtesp.com/TravelNumberCtrl/DefaultData?tag=Travel&ticket=***REDACTED***&formId="
+    },
+    {
+      "tag": null,
+      "label": "申请人",
+      "controlType": "Combo",
+      "slave": "",
+      "slaveRow": 0,
+      "defaultUrl": "http://api-workflow.rtesp.com/StaffCtrl/DefaultApplicant?ticket=***REDACTED***&formId="
+    },
+    {
+      "tag": null,
+      "label": "所属部门",
+      "controlType": "Combo",
+      "slave": "",
+      "slaveRow": 0,
+      "defaultUrl": "http://api-workflow.rtesp.com/OrganizationCtrl/DefaultData?ticket=***REDACTED***&formId="
+    },
+    {
+      "tag": null,
+      "label": "所属职位",
+      "controlType": "Combo",
+      "slave": "",
+      "slaveRow": 0,
+      "defaultUrl": "http://api-workflow.rtesp.com/PositionCtrl/DefaultData?ticket=***REDACTED***&formId="
+    },
+    {
+      "tag": "TravelType",
+      "label": "出差类型",
+      "controlType": "Check",
+      "slave": "",
+      "slaveRow": 0,
+      "dataUrl": "http://expense-bpm.rtesp.com/TravelTask/GetTravelType?ticket=***REDACTED***&formId="
+    },
+    {
+      "tag": null,
+      "label": "出差事由",
+      "controlType": "Textarea",
+      "slave": "",
+      "slaveRow": 0
+    },
+    {
+      "tag": "AccountId",
+      "label": "出差人",
+      "controlType": "Combo",
+      "slave": "TravelAccount",
+      "slaveRow": 0,
+      "defaultUrl": "http://api-workflow.rtesp.com/StaffCtrl/DefaultData?HasNumber=true&ticket=***REDACTED***&formId=",
+      "dataUrl": "http://api-workflow.rtesp.com/StaffCtrl/GetDatas?HasNumber=true&OnlyLoadCompany=true&ticket=***REDACTED***&formId="
+    },
+    {
+      "tag": "PolicyId",
+      "label": "PolicyId",
+      "controlType": "Hidden",
+      "slave": "TravelAccount",
+      "slaveRow": 0,
+      "defaultUrl": "http://api-workflow.rtesp.com/StaffCtrl/GetDefaultPolicy?ticket=***REDACTED***&formId="
+    },
+    {
+      "tag": "TravelAccount",
+      "label": "人员信息",
+      "controlType": "Slave",
+      "slave": "",
+      "slaveRow": 0
+    },
+    {
+      "tag": "StartDate",
+      "label": "开始日期",
+      "controlType": "Date",
+      "slave": "TravelDetail",
+      "slaveRow": 0
+    },
+    {
+      "tag": "EndDate",
+      "label": "结束日期",
+      "controlType": "Date",
+      "slave": "TravelDetail",
+      "slaveRow": 0
+    },
+    {
+      "tag": "FromCityName",
+      "label": "出发城市",
+      "controlType": "Abc",
+      "slave": "TravelDetail",
+      "slaveRow": 0,
+      "defaultUrl": "http://api-workflow.rtesp.com/CityCtrl/DefaultData?label=北京&value=1101&ticket=***REDACTED***&formId=",
+      "dataUrl": "http://api-workflow.rtesp.com/CityCtrl/GetDatas?ticket=***REDACTED***&formId="
+    },
+    {
+      "tag": "ToCityName",
+      "label": "目的城市",
+      "controlType": "Abc",
+      "slave": "TravelDetail",
+      "slaveRow": 0,
+      "defaultUrl": "http://api-workflow.rtesp.com/CityCtrl/DefaultData?label=北京&value=1101&ticket=***REDACTED***&formId=",
+      "dataUrl": "http://api-workflow.rtesp.com/CityCtrl/GetDatas?ticket=***REDACTED***&formId="
+    },
+    {
+      "tag": "TravelDetail",
+      "label": "行程信息",
+      "controlType": "Slave",
+      "slave": "",
+      "slaveRow": 0
+    }
+  ],
+  "travelTypes": [
+    {
+      "label": "国内机票",
+      "value": "国内机票"
+    },
+    {
+      "label": "国内酒店",
+      "value": "国内酒店"
+    },
+    {
+      "label": "火车票",
+      "value": "火车票"
+    },
+    {
+      "label": "网约车",
+      "value": "网约车"
+    },
+    {
+      "label": "租车",
+      "value": "租车"
+    }
+  ],
+  "formAddContract": {
+    "url": "http://workflow.rtesp.com/Form/Add?SaveNotifyUrl=&ticket=***REDACTED***&CheckFlowType=&FlowTag=Travel",
+    "topLevelFields": [
+      "Workflow.Id",
+      "Tag",
+      "Name",
+      "formvalues",
+      "LastId",
+      "LastDateTime",
+      "ListCount"
+    ],
+    "formDetailsShape": {
+      "FormDetails[n].Id": "string",
+      "FormDetails[n].Slave": "TravelAccount|TravelDetail|empty",
+      "FormDetails[n].SlaveRow": "0-based row in slave table",
+      "FormDetails[n].Name": "field label",
+      "FormDetails[n].Tag": "field tag (may be empty for 申请人/部门/职位/事由)",
+      "FormDetails[n].Content": "display value; Check = comma-separated labels e.g. 国内机票",
+      "FormDetails[n].Sequence": "0..n",
+      "FormDetails[n].Number": "Combo/Abc hidden id"
+    },
+    "formTimesShape": {
+      "FormTimes[n].Tag": "StartDate|EndDate",
+      "FormTimes[n].Time": "YYYY-MM-DD"
+    },
+    "requestSampleKeys": [
+      "Workflow.Id",
+      "Tag",
+      "Name",
+      "formvalues",
+      "LastId",
+      "LastDateTime",
+      "ListCount",
+      "FormDetails[0].Id",
+      "FormDetails[0].Slave",
+      "FormDetails[0].SlaveRow",
+      "FormDetails[0].Name",
+      "FormDetails[0].Tag",
+      "FormDetails[0].Content",
+      "FormDetails[0].Sequence",
+      "FormDetails[0].Number",
+      "FormDetails[1].Id",
+      "FormDetails[1].Slave",
+      "FormDetails[1].SlaveRow",
+      "FormDetails[1].Name",
+      "FormDetails[1].Tag",
+      "FormDetails[1].Content",
+      "FormDetails[1].Sequence",
+      "FormDetails[1].Number",
+      "FormDetails[2].Id",
+      "FormDetails[2].Slave",
+      "FormDetails[2].SlaveRow",
+      "FormDetails[2].Name",
+      "FormDetails[2].Tag",
+      "FormDetails[2].Content",
+      "FormDetails[2].Sequence"
+    ],
+    "submitResult": null
+  },
+  "approvalContract": {
+    "url": "{WorkflowWebsiteUrl}/FormTask/Approval?ticket={ticket}",
+    "requestFields": {
+      "taskId": "required — from window.TaskId",
+      "isPass": "true=通过, false=拒绝",
+      "remark": "textarea task=remark, max 50",
+      "sign": "from window.sign (often empty on Handle page)",
+      "channel": "optional",
+      "level": "optional radio",
+      "notifiers": "JSON string [{Id,Name}] or empty",
+      "FormDetails[]": "only if flowForm has editable fields on approval (Travel handle: datas=[])"
+    },
+    "approveResult": null
+  }
+}

@@ -1,0 +1,599 @@
+import { describe, expect, it } from "vitest";
+import type { ProxySendOptions } from "@ryx/shared-types";
+
+import {
+  TRAIN_FLOW_METHODS,
+  TOURIST_TRAIN_BOOK_METHODS,
+  TOURIST_TRAIN_FLOW_METHODS,
+} from "../methods/train-flow.js";
+import { createProxyClient } from "../proxy/proxy-client.js";
+import { successResponse } from "../proxy/response-adapter.js";
+import {
+  createTrainApi,
+  normalizeTrainSearchResponse,
+  normalizeTrainExchangeInfo,
+  normalizeTrainPassengerInfo,
+  normalizeTrainPassengerBookSnapshot,
+  normalizeTrainBookResponse,
+  normalizeTrainInitBookResponse,
+  normalizeTrainScheduleResponse,
+} from "./train.js";
+
+describe("normalizeTrainSearchResponse", () => {
+  it("normalizes legacy TrainEntity[] payload", () => {
+    const result = normalizeTrainSearchResponse([
+      {
+        TrainCode: "G1",
+        TrainNo: "2400000G1008",
+        FromStationName: "北京南",
+        ToStationName: "上海虹桥",
+        FromStationCode: "VNP",
+        ToStationCode: "AOH",
+        StartTime: "2026-06-22 09:00:00",
+        ArrivalTime: "2026-06-22 13:28:00",
+        TravelTimeName: "4h28m",
+        Seats: [
+          { SeatTypeName: "二等座", SalesPrice: "553", Count: 99 },
+          { SeatTypeName: "一等座", SalesPrice: "933", Count: 20 },
+        ],
+      },
+    ]);
+
+    expect(result.Trains).toHaveLength(1);
+    expect(result.Trains[0]).toMatchObject({
+      TrainCode: "G1",
+      FromStation: "北京南",
+      ToStation: "上海虹桥",
+      Duration: "4小时28分",
+      DurationMinutes: 268,
+      LowestPrice: 553,
+      Seats: [
+        { SeatTypeName: "二等座", Price: 553, Count: 99 },
+        { SeatTypeName: "一等座", Price: 933, Count: 20 },
+      ],
+    });
+  });
+
+  it("maps legacy TravelTime minutes for duration sorting", () => {
+    const result = normalizeTrainSearchResponse([
+      {
+        TrainCode: "K101",
+        FromStationName: "北京",
+        ToStationName: "上海",
+        StartTime: "2026-06-22 22:30:00",
+        ArrivalTime: "2026-06-23 14:15:00",
+        TravelTime: 945,
+        Seats: [{ SeatTypeName: "硬座", SalesPrice: "189", Count: 10 }],
+      },
+    ]);
+
+    expect(result.Trains[0]).toMatchObject({
+      TravelTime: 945,
+      DurationMinutes: 945,
+    });
+  });
+
+  it("parses TravelTimeName with 时/分 labels", () => {
+    const result = normalizeTrainSearchResponse([
+      {
+        TrainCode: "D77",
+        FromStationName: "北京",
+        ToStationName: "上海",
+        StartTime: "2026-06-22 08:00:00",
+        ArrivalTime: "2026-06-22 19:20:00",
+        TravelTimeName: "11时20分",
+        Seats: [{ SeatTypeName: "二等座", SalesPrice: "100", Count: 10 }],
+      },
+    ]);
+
+    expect(result.Trains[0]?.DurationMinutes).toBe(680);
+  });
+
+  it("uses min seat SalesPrice and ignores train LowestPrice (legacy sleeper)", () => {
+    const result = normalizeTrainSearchResponse([
+      {
+        TrainCode: "D1043",
+        FromStationName: "北京南",
+        ToStationName: "上海虹桥",
+        StartTime: "2026-06-22 20:47:00",
+        ArrivalTime: "2026-06-23 02:16:00",
+        LowestPrice: 573,
+        Seats: [
+          { SeatTypeName: "一等卧", SalesPrice: "0", TicketPrice: "800", Count: 5 },
+          { SeatTypeName: "二等卧", SalesPrice: "0", TicketPrice: "573", Count: 10 },
+        ],
+      },
+    ]);
+
+    expect(result.Trains[0]?.LowestPrice).toBe(0);
+    expect(result.Trains[0]?.Seats?.[0]?.Price).toBe(0);
+  });
+
+  it("maps sleeper berth prices from BedInfos", () => {
+    const result = normalizeTrainSearchResponse([
+      {
+        TrainCode: "K101",
+        FromStationName: "北京南",
+        ToStationName: "上海",
+        StartTime: "2026-06-22 22:30:00",
+        ArrivalTime: "2026-06-23 14:15:00",
+        Seats: [
+          {
+            SeatTypeName: "硬卧",
+            SalesPrice: "227.5",
+            Count: 12,
+            BedInfos: [
+              { BedTypeName: "上铺", BedTicketPrice: "210.5" },
+              { BedTypeName: "中铺", BedTicketPrice: "218.5" },
+              { BedTypeName: "下铺", BedTicketPrice: "227.5" },
+            ],
+          },
+          {
+            SeatTypeName: "软卧",
+            SalesPrice: "364.5",
+            Count: 2,
+            BedInfos: [
+              { BedTypeName: "上铺", BedTicketPrice: "340.5" },
+              { BedTypeName: "下铺", BedTicketPrice: "364.5" },
+            ],
+          },
+        ],
+      },
+    ]);
+
+    expect(result.Trains[0]?.Seats?.[0]?.BedInfos).toEqual([
+      { BedTypeName: "上铺", Price: 210.5 },
+      { BedTypeName: "中铺", Price: 218.5 },
+      { BedTypeName: "下铺", Price: 227.5 },
+    ]);
+    expect(result.Trains[0]?.Seats?.[1]?.BedInfos).toEqual([
+      { BedTypeName: "上铺", Price: 340.5 },
+      { BedTypeName: "下铺", Price: 364.5 },
+    ]);
+  });
+
+  it("assigns unique ids for same train code at different departure times", () => {
+    const result = normalizeTrainSearchResponse([
+      {
+        TrainCode: "D1006",
+        FromStationCode: "BXP",
+        StartTime: "2026-06-22 05:50:00",
+        ArrivalTime: "2026-06-22 12:00:00",
+        TravelTimeName: "6时10分",
+        Seats: [{ SeatTypeName: "二等座", SalesPrice: "75.5", Count: 10 }],
+      },
+      {
+        TrainCode: "D1006",
+        FromStationCode: "VNP",
+        StartTime: "2026-06-22 06:00:00",
+        ArrivalTime: "2026-06-22 12:00:00",
+        TravelTimeName: "6时",
+        Seats: [{ SeatTypeName: "二等座", SalesPrice: "50.5", Count: 10 }],
+      },
+    ]);
+
+    expect(result.Trains).toHaveLength(2);
+    expect(result.Trains[0]?.Id).not.toBe(result.Trains[1]?.Id);
+    expect(result.Trains[0]?.Id).toContain("D1006");
+    expect(result.Trains[1]?.Id).toContain("06:00:00");
+  });
+
+  it("ignores duplicate API ids when building route-based ids", () => {
+    const result = normalizeTrainSearchResponse([
+      {
+        Id: "same-server-id",
+        TrainCode: "G6705",
+        FromStationCode: "VNP",
+        ToStationCode: "SHH",
+        StartTime: "2026-06-22 09:00:00",
+        ArrivalTime: "2026-06-22 12:00:00",
+        TravelTimeName: "3时",
+        Seats: [{ SeatTypeName: "二等座", SalesPrice: "0", Count: 10 }],
+      },
+      {
+        Id: "same-server-id",
+        TrainCode: "G6707",
+        FromStationCode: "BXP",
+        ToStationCode: "SHH",
+        StartTime: "2026-06-22 09:00:00",
+        ArrivalTime: "2026-06-22 12:00:00",
+        TravelTimeName: "3时",
+        Seats: [{ SeatTypeName: "二等座", SalesPrice: "0", Count: 10 }],
+      },
+    ]);
+
+    expect(result.Trains[0]?.Id).not.toBe(result.Trains[1]?.Id);
+    expect(result.Trains[0]?.Id).toContain("G6705");
+    expect(result.Trains[1]?.Id).toContain("G6707");
+  });
+
+  it("keeps mock { Trains } payload", () => {
+    const result = normalizeTrainSearchResponse({
+      Trains: [
+        {
+          Id: "T1",
+          TrainCode: "G3",
+          StartTime: "2026-06-22 14:00",
+          ArrivalTime: "2026-06-22 18:28",
+          FromStation: "北京",
+          ToStation: "上海",
+          Duration: "4小时28分",
+          LowestPrice: 553,
+          Seats: [{ SeatTypeName: "二等座", Price: 553, Count: 50 }],
+        },
+      ],
+    });
+
+    expect(result.Trains).toHaveLength(1);
+    expect(result.Trains[0]?.TrainCode).toBe("G3");
+  });
+});
+
+describe("normalizeTrainExchangeInfo", () => {
+  it("maps exchange search context", () => {
+    expect(
+      normalizeTrainExchangeInfo({
+        TicketId: "207600000001",
+        OrderId: "ORD-TRN-002",
+        Date: "2026-06-28",
+        FromStation: "VNP",
+        ToStation: "AOH",
+        FromStationName: "北京南",
+        ToStationName: "上海虹桥",
+      }),
+    ).toMatchObject({
+      TicketId: "207600000001",
+      FromStationName: "北京南",
+      ToStationName: "上海虹桥",
+    });
+  });
+
+  it("maps original ticket price and travel pay type from OrderTrainTicket", () => {
+    expect(
+      normalizeTrainExchangeInfo({
+        OrderTrainTicket: {
+          TicketPrice: 233,
+          Passenger: { Mobile: "19528280621" },
+          Order: {
+            Id: "ORD-TRN-002",
+            Variables: JSON.stringify({ TravelPayType: 1 }),
+          },
+        },
+        InsurnanceAmount: 10,
+      }),
+    ).toMatchObject({
+      OrderId: "ORD-TRN-002",
+      OriginalTicketPrice: 233,
+      TravelPayType: 1,
+      InsuranceAmount: 10,
+      PassengerMobile: "19528280621",
+    });
+  });
+
+  it("falls back to trip Price when TicketPrice is absent", () => {
+    expect(
+      normalizeTrainExchangeInfo({
+        OrderTrainTicket: {
+          OrderTrainTrips: [{ Price: 415.5 }],
+        },
+      }),
+    ).toMatchObject({
+      OriginalTicketPrice: 415.5,
+    });
+  });
+});
+
+describe("normalizeTrainBookResponse", () => {
+  it("maps numeric TradeNo to OrderId when OrderId is absent", () => {
+    expect(
+      normalizeTrainBookResponse({
+        TradeNo: 20760000000204,
+        Tickets: [{ TicketId: "20760000000258", Status: 1, Price: 164.5 }],
+        TotalAmount: 164.5,
+        HasTasks: false,
+      }),
+    ).toMatchObject({
+      OrderId: "20760000000204",
+      TradeNo: "20760000000204",
+      HasTasks: false,
+      Tickets: [{ TicketId: "20760000000258", Status: 1, Price: 164.5 }],
+      TotalAmount: 164.5,
+    });
+  });
+
+  it("prefers explicit OrderId over TradeNo", () => {
+    expect(
+      normalizeTrainBookResponse({
+        OrderId: "ORD-1",
+        TradeNo: 99,
+      }),
+    ).toMatchObject({
+      OrderId: "ORD-1",
+      TradeNo: "99",
+    });
+  });
+});
+
+describe("normalizeTrainInitBookResponse", () => {
+  it("keeps Linkman from tourist train initialize response", () => {
+    expect(
+      normalizeTrainInitBookResponse({
+        ServiceFee: 0,
+        Linkman: {
+          Name: "姜茗豪",
+          Email: "",
+          Mobile: "18610773065",
+        },
+        PayTypes: {
+          Alipay: "支付宝",
+        },
+      }),
+    ).toMatchObject({
+      ServiceFee: 0,
+      Linkman: {
+        Name: "姜茗豪",
+        Email: "",
+        Mobile: "18610773065",
+      },
+      PayTypes: {
+        Alipay: "支付宝",
+      },
+    });
+  });
+});
+
+describe("normalizeTrainPassengerInfo", () => {
+  it("maps refund passenger snapshot", () => {
+    expect(
+      normalizeTrainPassengerInfo({
+        Passenger: { Name: "郭某某", Mobile: "13800000000" },
+        Trip: {
+          TrainCode: "D79",
+          FromStationName: "北京南",
+          ToStationName: "上海虹桥",
+          StartTime: "2026-07-04T22:15:00",
+          ArrivalTime: "2026-07-05T11:39:00",
+        },
+      }),
+    ).toMatchObject({
+      Name: "郭某某",
+      TrainCode: "D79",
+      FromStationName: "北京南",
+      ArrivalTime: "2026-07-05T11:39:00",
+    });
+  });
+});
+
+describe("normalizeTrainPassengerBookSnapshot", () => {
+  it("maps order passenger into exchange book snapshot", () => {
+    expect(
+      normalizeTrainPassengerBookSnapshot({
+        Passenger: {
+          Id: "p1",
+          AccountId: "acc-1",
+          Name: "申晓杰",
+          Mobile: "13800000001",
+          CredentialsId: "cred-1",
+          CredentialsNumber: "110101199001011234",
+          HideCredentialsNumber: "110***********1234",
+          CredentialsTypeName: "身份证",
+        },
+      }),
+    ).toMatchObject({
+      clientId: "cred-1",
+      passenger: {
+        Id: "p1",
+        AccountId: "acc-1",
+        Name: "申晓杰",
+      },
+      credential: {
+        Id: "cred-1",
+        Name: "申晓杰",
+        HideCredentialsNumber: "110***********1234",
+      },
+    });
+  });
+});
+
+describe("normalizeTrainScheduleResponse", () => {
+  it("normalizes legacy stop array", () => {
+    const result = normalizeTrainScheduleResponse([
+      {
+        StationName: "北京南",
+        ArriveTime: "09:00",
+        DepartTime: "09:00",
+        StopoverTime: "—",
+      },
+      {
+        StationName: "上海虹桥",
+        ArriveTime: "13:28",
+        DepartTime: "13:28",
+      },
+    ]);
+
+    expect(result.Stops).toHaveLength(2);
+    expect(result.Stops[0]?.StationName).toBe("北京南");
+  });
+
+  it("unwraps legacy TrainEntity[].Schedules payload", () => {
+    const result = normalizeTrainScheduleResponse([
+      {
+        TrainCode: "D1061",
+        Schedules: [
+          { StationName: "北京南", ArriveTime: "00:10", StartTime: "00:10", StayTime: "—" },
+          { StationName: "上海虹桥", ArriveTime: "11:30", StartTime: "11:30", StayTime: "—" },
+        ],
+      },
+    ]);
+
+    expect(result.Stops).toHaveLength(2);
+    expect(result.Stops[0]).toMatchObject({
+      StationName: "北京南",
+      ArriveTime: "00:10",
+      DepartTime: "00:10",
+    });
+    expect(result.Stops[1]?.StationName).toBe("上海虹桥");
+  });
+
+  it("normalizes mock Stops envelope", () => {
+    const result = normalizeTrainScheduleResponse({
+      Stops: [{ StationName: "北京南", DepartTime: "09:00", ArriveTime: "09:00" }],
+    });
+
+    expect(result.Stops).toHaveLength(1);
+    expect(result.Stops[0]?.StationName).toBe("北京南");
+  });
+});
+
+describe("createTrainApi (mock mode)", () => {
+  it("searchTrains sends legacy-aligned request payload", async () => {
+    let capturedData: unknown;
+    const proxy = createProxyClient({
+      baseUrl: "https://example.com",
+      mode: "mock",
+      mockHandler: async (method, data) => {
+        if (method === TRAIN_FLOW_METHODS.HOME_SEARCH) {
+          capturedData = data;
+          return successResponse([]);
+        }
+        return successResponse(null);
+      },
+    });
+    const train = createTrainApi(proxy);
+
+    await train.searchTrains({
+      Date: "2026-06-22",
+      FromStation: "BJP",
+      ToStation: "SHH",
+    });
+
+    expect(capturedData).toMatchObject({
+      Date: "2026-06-22",
+      FromStation: "BJP",
+      ToStation: "SHH",
+      TrainCode: "",
+    });
+  });
+
+  it("searchTrains normalizes array response", async () => {
+    const proxy = createProxyClient({
+      baseUrl: "https://example.com",
+      mode: "mock",
+      mockHandler: async (method) => {
+        if (method === TRAIN_FLOW_METHODS.HOME_SEARCH) {
+          return successResponse([
+            {
+              TrainCode: "G1",
+              FromStationName: "北京南",
+              ToStationName: "上海虹桥",
+              StartTime: "2026-06-22 09:00:00",
+              ArrivalTime: "2026-06-22 13:28:00",
+              TravelTimeName: "4h28m",
+              Seats: [{ SeatTypeName: "二等座", SalesPrice: "553", Count: 10 }],
+            },
+          ]);
+        }
+        return successResponse(null);
+      },
+    });
+    const train = createTrainApi(proxy);
+
+    const result = await train.searchTrains({
+      Date: "2026-06-22",
+      FromStation: "BJP",
+      ToStation: "SHH",
+    });
+
+    expect(result.Trains).toHaveLength(1);
+    expect(result.Trains[0]?.LowestPrice).toBe(553);
+  });
+
+  it("uses tourist methods when channel is tourist", async () => {
+    const captured: Array<{ method: string; data: unknown }> = [];
+    const proxy = createProxyClient({
+      baseUrl: "https://example.com",
+      mode: "mock",
+      mockHandler: async (method, data) => {
+        captured.push({ method, data });
+        return successResponse({ Trains: [], Stops: [], OrderId: "1" });
+      },
+    });
+    const train = createTrainApi(proxy);
+
+    await train.searchTrains({
+      channel: "tourist",
+      Date: "2026-06-22",
+      FromStation: "BJP",
+      ToStation: "SHH",
+    });
+    await train.getSchedule({
+      channel: "tourist",
+      Date: "2026-06-22",
+      TrainCode: "G1",
+    });
+    await train.getExchangeInfo({
+      channel: "tourist",
+      TicketId: "ticket-1",
+    });
+    await train.getTrainPassenger({
+      channel: "tourist",
+      TicketId: "ticket-1",
+    });
+    await train.initializeBook({
+      channel: "tourist",
+      Passengers: [],
+    });
+    await train.initializeBook({
+      channel: "tourist",
+      TicketId: "ticket-1",
+      Passengers: [],
+    });
+    await train.submitBook({
+      channel: "tourist",
+      Passengers: [],
+    });
+    await train.submitExchangeBook({
+      channel: "tourist",
+      Passengers: [],
+    });
+
+    expect(captured.map((item) => item.method)).toEqual([
+      TOURIST_TRAIN_FLOW_METHODS.HOME_SEARCH,
+      TOURIST_TRAIN_FLOW_METHODS.SCHEDULE,
+      TOURIST_TRAIN_FLOW_METHODS.GET_EXCHANGE_INFO,
+      TOURIST_TRAIN_FLOW_METHODS.GET_TRAIN_PASSENGER,
+      TOURIST_TRAIN_BOOK_METHODS.INIT,
+      TOURIST_TRAIN_BOOK_METHODS.EXCHANGE_INIT,
+      TOURIST_TRAIN_BOOK_METHODS.BOOK,
+      TOURIST_TRAIN_BOOK_METHODS.EXCHANGE_BOOK,
+    ]);
+    expect(captured[0]?.data).not.toHaveProperty("channel");
+    expect(captured[3]?.data).not.toHaveProperty("channel");
+    expect(captured[4]?.data).not.toHaveProperty("channel");
+    expect(captured[5]?.data).not.toHaveProperty("channel");
+    expect(captured[6]?.data).not.toHaveProperty("channel");
+    expect(captured[5]?.data).not.toHaveProperty("channel");
+  });
+
+  it("sends legacy Timeout=60 on train initialize and book requests", async () => {
+    const sent: ProxySendOptions[] = [];
+    const train = createTrainApi({
+      async send(options) {
+        sent.push(options);
+        return { OrderId: "1", Passengers: [] };
+      },
+      async loadApiConfig() {
+        return null;
+      },
+      getApiConfig() {
+        return null;
+      },
+    });
+
+    await train.initializeBook({ channel: "tourist", Passengers: [] });
+    await train.submitBook({ channel: "tourist", Passengers: [] });
+    await train.submitExchangeBook({ channel: "tourist", Passengers: [] });
+
+    expect(sent.map((item) => item.requestTimeout)).toEqual([60, 60, 60]);
+  });
+});

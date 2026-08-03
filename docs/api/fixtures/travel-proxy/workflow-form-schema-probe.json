@@ -1,0 +1,77 @@
+{
+  "workflowId": "318",
+  "layoutTag": "LayoutTravel",
+  "formGetUrl": "http://workflow.rtesp.com/Form/Get?ticket=***&CheckFlowType=&FlowTag=Travel",
+  "formAddUrl": "http://workflow.rtesp.com/Form/Add?SaveNotifyUrl=&ticket=***&CheckFlowType=&FlowTag=Travel",
+  "staffDefaultApplicant": {
+    "label": "卜秀峰",
+    "value": "75190000000008"
+  },
+  "staffDefaultData": {
+    "label": "6836325-卜秀峰",
+    "value": "75190000000008"
+  },
+  "cityCount": 368,
+  "addRuleSample": [
+    {
+      "Name": "Workflow.Id",
+      "Message": "工作流必须",
+      "Rules": [
+        {
+          "Pattern": "^[0-9]{1,}$",
+          "Options": "",
+          "Message": "",
+          "IsRange": false
+        }
+      ]
+    },
+    {
+      "Name": "Name",
+      "Message": "名称不能为空且长度不能超过20",
+      "Rules": [
+        {
+          "Pattern": "^([\\s\\S]{1,20})$",
+          "Options": "",
+          "Message": "",
+          "IsRange": false
+        }
+      ]
+    },
+    {
+      "Name": "Tag",
+      "Message": "标签不能超过100个字符",
+      "Rules": [
+        {
+          "Pattern": "^([\\s\\S]{0,100})$",
+          "Options": "",
+          "Message": "",
+          "IsRange": false
+        }
+      ]
+    },
+    {
+      "Name": "IndexUrl",
+      "Message": "地址长度不能超过500字符",
+      "Rules": [
+        {
+          "Pattern": "^([\\s\\S]{0,1000})$",
+          "Options": "",
+          "Message": "",
+          "IsRange": false
+        }
+      ]
+    },
+    {
+      "Name": "HandleUrl",
+      "Message": "审批处理地址长度不能超过500字符",
+      "Rules": [
+        {
+          "Pattern": "^([\\s\\S]{0,500})$",
+          "Options": "",
+          "Message": "",
+          "IsRange": false
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "http://workflow.rtesp.com/Form/Get?ticket=bb93f5480f8a410fb749b9ec1a1a73fa&CheckFlowType=&FlowTag=Travel": {
+    "status": 200,
+    "body": "null"
+  },
+  "http://workflow.rtesp.com/Form/FormLayoutDetail?ticket=bb93f5480f8a410fb749b9ec1a1a73fa&CheckFlowType=&FlowTag=Travel": {
+    "status": 200,
+    "body": ""
+  },
+  "http://api-workflow.rtesp.com/StaffCtrl/DefaultData?HasNumber=true&ticket=bb93f5480f8a410fb749b9ec1a1a73fa&CheckFlowType=&&formId=": {
+    "status": 200,
+    "body": "{\"label\":\"6836325-卜秀峰\",\"value\":\"75190000000008\"}"
+  },
+  "http://api-workflow.rtesp.com/StaffCtrl/GetDefaultPolicy?ticket=bb93f5480f8a410fb749b9ec1a1a73fa&ticket=bb93f5480f8a410fb749b9ec1a1a73fa&formId=": {
+    "status": 404,
+    "body": ""
+  },
+  "http://api-workflow.rtesp.com/CityCtrl/GetDatas?ticket=bb93f5480f8a410fb749b9ec1a1a73fa&formId=": {
+    "status": 200,
+    "body": "[{\"label\":\"北京\",\"value\":\"1101\",\"searchValue\":null,\"isHot\":true,\"pinyin\":\"beijing\"},{\"label\":\"天津\",\"value\":\"1201\",\"searchValue\":null,\"isHot\":true,\"pinyin\":\"tianji\"},{\"label\":\"石家庄\",\"value\":\"1301\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"shijiazhuang\"},{\"label\":\"唐山\",\"value\":\"1302\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"tangsha\"},{\"label\":\"秦皇岛\",\"value\":\"1303\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"qinhuangdao\"},{\"label\":\"邯郸\",\"value\":\"1304\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"handa\"},{\"label\":\"邢台\",\"value\":\"1305\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"xingtai\"},{\"label\":\"保定\",\"value\":\"1306\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"baoding\"},{\"label\":\"张家口\",\"value\":\"1307\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"zhangjiakou\"},{\"label\":\"承德\",\"value\":\"1308\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"chengde\"},{\"label\":\"沧州\",\"value\":\"1309\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"cangzhou\"},{\"label\":\"廊坊\",\"value\":\"1310\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"langfang\"},{\"label\":\"衡水\",\"value\":\"1311\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"hengshui\"},{\"label\":\"太原\",\"value\":\"1401\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"taiyua\"},{\"label\":\"大同\",\"value\":\"1402\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"datong\"},{\"label\":\"阳泉\",\"value\":\"1403\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"yangqua\"},{\"label\":\"长治\",\"value\":\"1404\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"changzhi\"},{\"label\":\"晋城\",\"value\":\"1405\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"jincheng\"},{\"label\":\"朔州\",\"value\":\"1406\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"shuozhou\"},{\"label\":\"晋中\",\"value\":\"1407\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"jinzhong\"},{\"label\":\"运城\",\"value\":\"1408\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"yuncheng\"},{\"label\":\"忻州\",\"value\":\"1409\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"xinzhou\"},{\"label\":\"临汾\",\"value\":\"1410\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"linfe\"},{\"label\":\"吕梁\",\"value\":\"1411\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"lvliang\"},{\"label\":\"呼和浩特\",\"value\":\"1501\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"huhehaote\"},{\"label\":\"包头\",\"value\":\"1502\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"baotou\"},{\"label\":\"乌海\",\"value\":\"1503\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"wuhai\"},{\"label\":\"赤峰\",\"value\":\"1504\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"chifeng\"},{\"label\":\"通辽\",\"value\":\"1505\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"tongliao\"},{\"label\":\"鄂尔多斯\",\"value\":\"1506\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"eerduosi\"},{\"label\":\"呼伦贝尔\",\"value\":\"1507\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"hulunbeier\"},{\"label\":\"巴彦淖尔\",\"value\":\"1508\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"bayannaoer\"},{\"label\":\"乌兰察布\",\"value\":\"1509\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"wulanchabu\"},{\"label\":\"兴安盟\",\"value\":\"1522\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"xinganmeng\"},{\"label\":\"锡林郭勒盟\",\"value\":\"1525\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"xilinguolemeng\"},{\"label\":\"阿拉善盟\",\"value\":\"1529\",\"searchValue\":null,\"isHot\":false,\"pinyin\":\"alasha"
+  }
+}

@@ -1,0 +1,96 @@
+import { Link } from "react-router-dom";
+import type { MemberProfile } from "@ryx/shared-types";
+
+import { PROFILE_ASSETS } from "@/config/profile-assets";
+
+import { ProfileAvatar } from "./ProfileAvatar";
+
+/** Figma 23:2495 — sky-blue header fade into page background. */
+const PROFILE_PAGE_GRADIENT =
+  "linear-gradient(180deg, #8EC8FF 0%, #B8DBFF 38%, #E1EEFC 72%, #F5F6F9 100%)";
+
+function BuildingIcon() {
+  return (
+    <img
+      src={PROFILE_ASSETS.orgBuilding}
+      alt=""
+      className="size-5 shrink-0 object-contain"
+      aria-hidden
+    />
+  );
+}
+
+function PersonalCenterButton() {
+  return (
+    <Link
+      to="/profile/center"
+      className="flex h-6 w-[88px] shrink-0 items-center justify-center gap-1 rounded border-none bg-[#2768FA66] text-[14px] font-normal leading-none tracking-normal text-white [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]"
+      aria-label="个人中心"
+    >
+      个人中心
+      <img
+        src={PROFILE_ASSETS.personalCenterChevron}
+        alt=""
+        className="size-4 shrink-0 object-contain"
+        aria-hidden
+      />
+    </Link>
+  );
+}
+
+interface ProfileHeaderProps {
+  profile: MemberProfile;
+  displayName: string;
+  /** TMC enterprise code from `GetTmc`, not member `OrganizationCode`. */
+  orgCode?: string;
+  balance?: number;
+  messageCount?: number;
+}
+
+export function ProfileHeader({
+  profile,
+  displayName,
+  orgCode,
+  balance,
+  messageCount,
+}: ProfileHeaderProps) {
+  return (
+    <header
+      className="rounded-t-2xl px-3 pb-14 pt-6 pad:pt-8"
+      style={{ background: PROFILE_PAGE_GRADIENT }}
+    >
+      <div className="flex items-center gap-3">
+        <ProfileAvatar src={profile.HeadUrl} />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <p className="min-w-0 flex-1 truncate text-[18px] font-semibold leading-[25px] text-brand-title">
+              {displayName}
+            </p>
+            <PersonalCenterButton />
+          </div>
+          <p className="mt-2 flex items-center gap-1 text-[14px] font-normal leading-none tracking-normal text-brand-primary [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]">
+            <BuildingIcon />
+            <span>组织编码：{orgCode?.trim() || "—"}</span>
+          </p>
+          {(balance != null && balance > 0) || (messageCount != null && messageCount > 0) ? (
+            <div className="mt-2 flex items-center gap-3">
+              {balance != null && balance > 0 ? (
+                <span className="text-xs text-[#666666]">
+                  积分：<span className="font-medium text-[#5099fe]">{balance}</span>
+                </span>
+              ) : null}
+              {messageCount != null && messageCount > 0 ? (
+                <span className="text-xs text-[#666666]">
+                  消息：
+                  <span className="inline-flex min-w-[18px] items-center justify-center rounded-full bg-[#ff4d4f] px-1.5 py-0.5 text-[11px] font-medium text-white">
+                    {messageCount}
+                  </span>
+                </span>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </header>
+  );
+}

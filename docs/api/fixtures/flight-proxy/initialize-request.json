@@ -1,0 +1,250 @@
+{
+  "Passengers": [
+    {
+      "ClientId": 76190000000007,
+      "FlightSegments": [
+        {
+          "Id": "sKN5955",
+          "Number": "KN5955",
+          "Airline": "KN",
+          "AirlineSrc": "http://shared.rtesp.com/img/airlines/kn.png",
+          "AirlineName": "联合航空",
+          "PlaneType": "73E",
+          "PlaneTypeDescribe": "",
+          "PlaneCategory": null,
+          "Meal": null,
+          "Link": null,
+          "IsChooseSeat": false,
+          "CodeShareNumber": "",
+          "Carrier": "KN",
+          "CarrierName": "联合航空",
+          "FromAirport": "PKX",
+          "ToAirport": "SHA",
+          "FromAirportName": "大兴国际机场",
+          "FromCityCode": "1101",
+          "FromCityName": "北京",
+          "ToAirportName": "虹桥国际机场",
+          "ToCityCode": "3101",
+          "ToCityName": "上海",
+          "FromCountryCode": null,
+          "FromCountryName": null,
+          "ToCountryCode": null,
+          "ToCountryName": null,
+          "TakeoffTime": "2026-06-23T16:30:00",
+          "ArrivalTime": "2026-06-23T18:40:00",
+          "FromTerminal": "",
+          "ToTerminal": "T2",
+          "IsStop": false,
+          "StopCityCount": 0,
+          "StopCities": null,
+          "Distance": 1178,
+          "CabinCode": null,
+          "CabinCount": null,
+          "AircraftChange": false,
+          "ET": false,
+          "FlyTime": 130,
+          "FlyTimeName": "2h10m",
+          "Variables": null,
+          "FlightNumber": "KN5955",
+          "totalSegments": null,
+          "transferSegments": null,
+          "flightListResult": null,
+          "detailResult": null
+        }
+      ],
+      "FlightCabin": {
+        "Id": "f17ebc15f61940ae930e156124a9b538",
+        "FlightRouteIds": [
+          "c0tONTk1NQ=="
+        ],
+        "FlightFareBasics": [
+          {
+            "FareBasic": "I",
+            "FlightSegmentIds": [
+              "sKN5955"
+            ],
+            "FareType": 1,
+            "CabinType": 1,
+            "CabinTypeAttach": "经济舱",
+            "CabinCode": "I",
+            "Count": 4,
+            "OriginalFare": 410,
+            "StandardFare": 1630,
+            "Reward": 0,
+            "Percent": 0,
+            "FlightTaxs": [
+              {
+                "Name": "机场建设费",
+                "Tag": "IataTax",
+                "Tax": 50
+              },
+              {
+                "Name": "燃油费",
+                "Tag": "YQYRTax",
+                "Tax": 170
+              }
+            ],
+            "Discount": 0.25,
+            "AgreementCode": "",
+            "IsAgreement": false,
+            "CabinTypeName": "经济舱"
+          }
+        ],
+        "BookType": 2,
+        "BookCode": "I",
+        "SupplierType": "Ibe",
+        "Type": 0,
+        "OfficeCode": "BJS184",
+        "TicketPrice": 410,
+        "SettlePrice": 410,
+        "SalesPrice": 410,
+        "TaxDiff": 0,
+        "Tax": 220,
+        "SettleTax": 220,
+        "Discount": 0.25,
+        "Count": 4,
+        "IsAgreement": false,
+        "Variables": null,
+        "Explain": "退票费\n2026年06月16日 16:30前 ￥41/人\n2026年06月20日 16:30前 ￥82/人\n2026年06月23日 12:30前 ￥287/人\n2026年06月23日 12:30后 ￥369/人\n改期费\n2026年06月16日 16:30前 ￥21/人\n2026年06月20日 16:30前 ￥62/人\n2026年06月23日 12:30前 ￥82/人\n2026年06月23日 12:30后 ￥123/人\n托运行李额\n1件,每件23KG,体积不超过40*60*100cm\n手提行李额\n0KG\n附加信息\n经济舱;\n签转条件\n不得签转\n",
+        "Key": "%2b03Y6ZgQ65H%2b3fORwhYQhA4eOzcDRrCcUs1LvOBC%2bDOFhPlVicq0zpIdJoPIYxShij3CEvwC5oHOnyP1dHvSbxTqudxNcSGyq5QI4lAh%2fLTn0JmbZ1CgbIEdbC%2feBJ7l",
+        "DiscountAmount": 1220,
+        "TotalOriginalFare": 410,
+        "TotalStandardFare": 1630,
+        "FlightBaggages": null,
+        "FlightFareRules": [
+          {
+            "Name": "退票费",
+            "Tag": "北京-上海",
+            "Description": null,
+            "Variables": {
+              "2026年06月16日 16:30前": "￥41/人",
+              "2026年06月20日 16:30前": "￥82/人",
+              "2026年06月23日 12:30前": "￥287/人",
+              "2026年06月23日 12:30后": "￥369/人"
+            },
+            "VariablesObj": {
+              "2026年06月16日 16:30前": "￥41/人",
+              "2026年06月20日 16:30前": "￥82/人",
+              "2026年06月23日 12:30前": "￥287/人",
+              "2026年06月23日 12:30后": "￥369/人",
+              "Details": [
+                {
+                  "name": "2026年06月16日 16:30前",
+                  "value": "￥41/人"
+                },
+                {
+                  "name": "2026年06月20日 16:30前",
+                  "value": "￥82/人"
+                },
+                {
+                  "name": "2026年06月23日 12:30前",
+                  "value": "￥287/人"
+                },
+                {
+                  "name": "2026年06月23日 12:30后",
+                  "value": "￥369/人"
+                }
+              ]
+            }
+          },
+          {
+            "Name": "改期费",
+            "Tag": "北京-上海",
+            "Description": null,
+            "Variables": {
+              "2026年06月16日 16:30前": "￥21/人",
+              "2026年06月20日 16:30前": "￥62/人",
+              "2026年06月23日 12:30前": "￥82/人",
+              "2026年06月23日 12:30后": "￥123/人"
+            },
+            "VariablesObj": {
+              "2026年06月16日 16:30前": "￥21/人",
+              "2026年06月20日 16:30前": "￥62/人",
+              "2026年06月23日 12:30前": "￥82/人",
+              "2026年06月23日 12:30后": "￥123/人",
+              "Details": [
+                {
+                  "name": "2026年06月16日 16:30前",
+                  "value": "￥21/人"
+                },
+                {
+                  "name": "2026年06月20日 16:30前",
+                  "value": "￥62/人"
+                },
+                {
+                  "name": "2026年06月23日 12:30前",
+                  "value": "￥82/人"
+                },
+                {
+                  "name": "2026年06月23日 12:30后",
+                  "value": "￥123/人"
+                }
+              ]
+            }
+          },
+          {
+            "Name": "托运行李额",
+            "Tag": "北京-上海",
+            "Description": "1件,每件23KG,体积不超过40*60*100cm",
+            "Variables": null
+          },
+          {
+            "Name": "手提行李额",
+            "Tag": "北京-上海",
+            "Description": "0KG",
+            "Variables": null
+          },
+          {
+            "Name": "附加信息",
+            "Tag": "北京-上海",
+            "Description": "经济舱;",
+            "Variables": null
+          },
+          {
+            "Name": "签转条件",
+            "Tag": "北京-上海",
+            "Description": "不得签转",
+            "Variables": null
+          }
+        ],
+        "InsuranceProducts": null,
+        "Forms": null,
+        "IsAllowOrder": false,
+        "Rules": null,
+        "AgentId": 0,
+        "FlightPolicy": null,
+        "FlightNumber": "KN5955",
+        "VariablesObj": {
+          "FlightNumber": "KN5955",
+          "FareBasis": "I",
+          "AccountCode": null,
+          "BizCode": "f17ebc15f61940ae930e156124a9b538",
+          "SouceType": "Normal",
+          "CurrentHighestCabinPrice": 410,
+          "Tags": "不得签转,变更退票收费",
+          "Baggage": "1件,每件23KG,体积不超过40*60*100cm",
+          "Explain": "退票费\n2026年06月16日 16:30前 ￥41/人\n2026年06月20日 16:30前 ￥82/人\n2026年06月23日 12:30前 ￥287/人\n2026年06月23日 12:30后 ￥369/人\n改期费\n2026年06月16日 16:30前 ￥21/人\n2026年06月20日 16:30前 ￥62/人\n2026年06月23日 12:30前 ￥82/人\n2026年06月23日 12:30后 ￥123/人\n托运行李额\n1件,每件23KG,体积不超过40*60*100cm\n手提行李额\n0KG\n附加信息\n经济舱;\n签转条件\n不得签转\n"
+        }
+      },
+      "Credentials": {
+        "Id": 76190000000001,
+        "Name": "申/晓杰",
+        "Mobile": "19528280621",
+        "Number": "S123456745",
+        "Type": 2,
+        "CredentialsType": 2,
+        "Account": {
+          "Id": 76190000000007
+        }
+      },
+      "Mobile": "19528280621"
+    }
+  ],
+  "Linkmans": [
+    {
+      "Name": "申/晓杰",
+      "Mobile": "19528280621",
+      "MessageLang": "cn"
+    }
+  ]
+}

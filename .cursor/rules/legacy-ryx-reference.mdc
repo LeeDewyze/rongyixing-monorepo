@@ -1,0 +1,34 @@
+---
+description: Legacy ryx (beeantmobile) is reference-only — do not copy its stack, patterns, or UI
+alwaysApply: true
+---
+
+# Legacy ryx Reference (Not a Template)
+
+`docs/ryx/` and `beeantmobile-main/projects/ryx` document the **old 融易行 app** for migration and domain understanding only.
+
+## Do not adopt from legacy
+
+- **Tech stack** — Angular 12, Ionic, Capacitor, Nx beeant layout, `CoreHelper`, global singletons
+- **Architecture** — Feature modules tied to `projects/core`, Beeant service patterns, copy-paste page structure
+- **Coding style** — Legacy naming, large god services (`TmcService`), jQuery-era assets, inline styles from design cqw
+- **UI / UX** — Layout, visuals, interaction patterns; legacy UI quality is below our target
+
+Implement in **this monorepo** using: React + Vite, `apps/h5` / `apps/web`, `@ryx/ui`, `@ryx/api`, `@ryx/shared-types`, and rules under `.cursor/rules/`.
+
+## What legacy is good for
+
+| Use                                                        | Do not use                |
+| ---------------------------------------------------------- | ------------------------- |
+| Business flows (login, flight/hotel/train booking, orders) | Implementation approach   |
+| API Method names and request/response shapes               | Client architecture       |
+| Route / page inventory for migration matrix                | Component or styling code |
+| Edge cases and product behavior notes                      | Code quality as a model   |
+
+## When migrating a feature
+
+1. Read legacy behavior and `docs/api/H5-RYX-MIGRATION.md` for **what** to build.
+2. Design against **current** monorepo patterns (hooks, shared API, shadcn/ui, design tokens).
+3. Never port legacy files verbatim; rewrite with tests and typecheck passing.
+
+If legacy and monorepo conventions conflict, **always follow monorepo conventions**.

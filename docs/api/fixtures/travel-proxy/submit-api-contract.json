@@ -1,0 +1,391 @@
+{
+  "version": "2026-06-25",
+  "capturedAt": "2026-06-25T00:05:08.552Z",
+  "accounts": {
+    "apply": {
+      "user": "T18610773065",
+      "name": "姜茗豪"
+    },
+    "approve": {
+      "user": "T289G003",
+      "name": "孙雪"
+    }
+  },
+  "formAdd": {
+    "account": {
+      "user": "T18610773065",
+      "name": "姜茗豪"
+    },
+    "formFlowUrl": "http://workflow.rtesp.com/Form/Flow?flowtag=Travel&ticket={ticket}",
+    "addUrlTemplate": "http://workflow.rtesp.com/Form/Add?SaveNotifyUrl=&ticket=***REDACTED***&CheckFlowType=&FlowTag=Travel",
+    "getUrlTemplate": "http://workflow.rtesp.com/Form/Get?ticket=***REDACTED***&CheckFlowType=&FlowTag=Travel",
+    "contentType": "application/x-www-form-urlencoded",
+    "encoding": "flowform.js FillFormDatas → FormDetails[] + FormTimes[]",
+    "topLevelFields": [
+      "Workflow.Id",
+      "Tag",
+      "Name",
+      "formvalues",
+      "LastId",
+      "LastDateTime",
+      "ListCount"
+    ],
+    "formDetailsShape": {
+      "FormDetails[n].Id": "string",
+      "FormDetails[n].Slave": "TravelAccount|TravelDetail|empty",
+      "FormDetails[n].SlaveRow": "0-based row in slave table",
+      "FormDetails[n].Name": "field label",
+      "FormDetails[n].Tag": "field tag (may be empty for 申请人/部门/职位/事由)",
+      "FormDetails[n].Content": "display value; Check = comma-separated labels e.g. 国内机票",
+      "FormDetails[n].Sequence": "0..n",
+      "FormDetails[n].Number": "Combo/Abc hidden id"
+    },
+    "formTimesShape": {
+      "FormTimes[n].Tag": "StartDate|EndDate",
+      "FormTimes[n].Time": "YYYY-MM-DD"
+    },
+    "fields": [
+      {
+        "tag": "TravelNumber",
+        "label": "差旅单号",
+        "controlType": "Input",
+        "slave": "",
+        "slaveRow": 0,
+        "defaultUrl": "http://expense-bpm.rtesp.com/TravelNumberCtrl/DefaultData?tag=Travel&ticket=***REDACTED***&formId="
+      },
+      {
+        "tag": null,
+        "label": "申请人",
+        "controlType": "Combo",
+        "slave": "",
+        "slaveRow": 0,
+        "defaultUrl": "http://api-workflow.rtesp.com/StaffCtrl/DefaultApplicant?ticket=***REDACTED***&formId="
+      },
+      {
+        "tag": null,
+        "label": "所属部门",
+        "controlType": "Combo",
+        "slave": "",
+        "slaveRow": 0,
+        "defaultUrl": "http://api-workflow.rtesp.com/OrganizationCtrl/DefaultData?ticket=***REDACTED***&formId="
+      },
+      {
+        "tag": null,
+        "label": "所属职位",
+        "controlType": "Combo",
+        "slave": "",
+        "slaveRow": 0,
+        "defaultUrl": "http://api-workflow.rtesp.com/PositionCtrl/DefaultData?ticket=***REDACTED***&formId="
+      },
+      {
+        "tag": "TravelType",
+        "label": "出差类型",
+        "controlType": "Check",
+        "slave": "",
+        "slaveRow": 0,
+        "dataUrl": "http://expense-bpm.rtesp.com/TravelTask/GetTravelType?ticket=***REDACTED***&formId="
+      },
+      {
+        "tag": null,
+        "label": "出差事由",
+        "controlType": "Textarea",
+        "slave": "",
+        "slaveRow": 0
+      },
+      {
+        "tag": "AccountId",
+        "label": "出差人",
+        "controlType": "Combo",
+        "slave": "TravelAccount",
+        "slaveRow": 0,
+        "defaultUrl": "http://api-workflow.rtesp.com/StaffCtrl/DefaultData?HasNumber=true&ticket=***REDACTED***&formId=",
+        "dataUrl": "http://api-workflow.rtesp.com/StaffCtrl/GetDatas?HasNumber=true&OnlyLoadCompany=true&ticket=***REDACTED***&formId="
+      },
+      {
+        "tag": "PolicyId",
+        "label": "PolicyId",
+        "controlType": "Hidden",
+        "slave": "TravelAccount",
+        "slaveRow": 0,
+        "defaultUrl": "http://api-workflow.rtesp.com/StaffCtrl/GetDefaultPolicy?ticket=***REDACTED***&formId="
+      },
+      {
+        "tag": "TravelAccount",
+        "label": "人员信息",
+        "controlType": "Slave",
+        "slave": "",
+        "slaveRow": 0
+      },
+      {
+        "tag": "StartDate",
+        "label": "开始日期",
+        "controlType": "Date",
+        "slave": "TravelDetail",
+        "slaveRow": 0
+      },
+      {
+        "tag": "EndDate",
+        "label": "结束日期",
+        "controlType": "Date",
+        "slave": "TravelDetail",
+        "slaveRow": 0
+      },
+      {
+        "tag": "FromCityName",
+        "label": "出发城市",
+        "controlType": "Abc",
+        "slave": "TravelDetail",
+        "slaveRow": 0,
+        "defaultUrl": "http://api-workflow.rtesp.com/CityCtrl/DefaultData?label=北京&value=1101&ticket=***REDACTED***&formId=",
+        "dataUrl": "http://api-workflow.rtesp.com/CityCtrl/GetDatas?ticket=***REDACTED***&formId="
+      },
+      {
+        "tag": "ToCityName",
+        "label": "目的城市",
+        "controlType": "Abc",
+        "slave": "TravelDetail",
+        "slaveRow": 0,
+        "defaultUrl": "http://api-workflow.rtesp.com/CityCtrl/DefaultData?label=北京&value=1101&ticket=***REDACTED***&formId=",
+        "dataUrl": "http://api-workflow.rtesp.com/CityCtrl/GetDatas?ticket=***REDACTED***&formId="
+      },
+      {
+        "tag": "TravelDetail",
+        "label": "行程信息",
+        "controlType": "Slave",
+        "slave": "",
+        "slaveRow": 0
+      }
+    ],
+    "fieldCount": 14,
+    "travelTypes": [
+      {
+        "label": "国内机票",
+        "value": "国内机票"
+      },
+      {
+        "label": "国内酒店",
+        "value": "国内酒店"
+      },
+      {
+        "label": "火车票",
+        "value": "火车票"
+      },
+      {
+        "label": "网约车",
+        "value": "网约车"
+      },
+      {
+        "label": "租车",
+        "value": "租车"
+      }
+    ],
+    "requestSample": {
+      "Workflow.Id": "318",
+      "Tag": "Travel",
+      "Name": "出差申请",
+      "formvalues": "8",
+      "LastId": "",
+      "LastDateTime": "",
+      "ListCount": "",
+      "FormDetails[0].Id": "",
+      "FormDetails[0].Slave": "",
+      "FormDetails[0].SlaveRow": "0",
+      "FormDetails[0].Name": "差旅单号",
+      "FormDetails[0].Tag": "TravelNumber",
+      "FormDetails[0].Content": "Travel202606250805071611558",
+      "FormDetails[0].Sequence": "0",
+      "FormDetails[0].Number": "",
+      "FormDetails[1].Id": "",
+      "FormDetails[1].Slave": "",
+      "FormDetails[1].SlaveRow": "0",
+      "FormDetails[1].Name": "申请人",
+      "FormDetails[1].Tag": "",
+      "FormDetails[1].Content": "姜茗豪",
+      "FormDetails[1].Sequence": "1",
+      "FormDetails[1].Number": "40390000000011",
+      "FormDetails[2].Id": "",
+      "FormDetails[2].Slave": "",
+      "FormDetails[2].SlaveRow": "0",
+      "FormDetails[2].Name": "所属部门",
+      "FormDetails[2].Tag": "",
+      "FormDetails[2].Content": "技术部",
+      "FormDetails[2].Sequence": "2",
+      "FormDetails[2].Number": "A001",
+      "FormDetails[3].Id": "",
+      "FormDetails[3].Slave": "",
+      "FormDetails[3].SlaveRow": "0",
+      "FormDetails[3].Name": "所属职位",
+      "FormDetails[3].Tag": "",
+      "FormDetails[3].Content": "",
+      "FormDetails[3].Sequence": "3",
+      "FormDetails[3].Number": "",
+      "FormDetails[4].Id": "",
+      "FormDetails[4].Slave": "",
+      "FormDetails[4].SlaveRow": "0",
+      "FormDetails[4].Name": "出差类型",
+      "FormDetails[4].Tag": "TravelType",
+      "FormDetails[4].Content": "国内机票",
+      "FormDetails[4].Sequence": "4",
+      "FormDetails[4].Number": "",
+      "FormDetails[5].Id": "",
+      "FormDetails[5].Slave": "",
+      "FormDetails[5].SlaveRow": "0",
+      "FormDetails[5].Name": "出差事由",
+      "FormDetails[5].Tag": "",
+      "FormDetails[5].Content": "出差事由-抓包测试",
+      "FormDetails[5].Sequence": "5",
+      "FormDetails[5].Number": "",
+      "FormDetails[6].Id": "",
+      "FormDetails[6].Slave": "TravelAccount",
+      "FormDetails[6].SlaveRow": "0",
+      "FormDetails[6].Name": "出差人",
+      "FormDetails[6].Tag": "AccountId",
+      "FormDetails[6].Content": "1611558-姜茗豪",
+      "FormDetails[6].Sequence": "6",
+      "FormDetails[6].Number": "40390000000011",
+      "FormDetails[7].Id": "",
+      "FormDetails[7].Slave": "TravelAccount",
+      "FormDetails[7].SlaveRow": "0",
+      "FormDetails[7].Name": "PolicyId",
+      "FormDetails[7].Tag": "PolicyId",
+      "FormDetails[7].Content": "",
+      "FormDetails[7].Sequence": "7",
+      "FormDetails[7].Number": "",
+      "FormTimes[0].Id": "",
+      "FormTimes[0].Slave": "TravelDetail",
+      "FormTimes[0].SlaveRow": "0",
+      "FormTimes[0].Name": "开始日期",
+      "FormTimes[0].Tag": "StartDate",
+      "FormTimes[0].Time": "2026-06-25",
+      "FormTimes[0].Sequence": "8",
+      "FormTimes[0].Number": "",
+      "FormTimes[1].Id": "",
+      "FormTimes[1].Slave": "TravelDetail",
+      "FormTimes[1].SlaveRow": "0",
+      "FormTimes[1].Name": "结束日期",
+      "FormTimes[1].Tag": "EndDate",
+      "FormTimes[1].Time": "2026-06-30",
+      "FormTimes[1].Sequence": "9",
+      "FormTimes[1].Number": "",
+      "FormDetails[8].Id": "",
+      "FormDetails[8].Slave": "TravelDetail",
+      "FormDetails[8].SlaveRow": "0",
+      "FormDetails[8].Name": "出发城市",
+      "FormDetails[8].Tag": "FromCityName",
+      "FormDetails[8].Content": "北京",
+      "FormDetails[8].Sequence": "10",
+      "FormDetails[8].Number": "1101",
+      "FormDetails[9].Id": "",
+      "FormDetails[9].Slave": "TravelDetail",
+      "FormDetails[9].SlaveRow": "0",
+      "FormDetails[9].Name": "目的城市",
+      "FormDetails[9].Tag": "ToCityName",
+      "FormDetails[9].Content": "上海",
+      "FormDetails[9].Sequence": "11",
+      "FormDetails[9].Number": "3101"
+    },
+    "submitResult": {
+      "Status": true,
+      "Message": null,
+      "Data": {
+        "Id": 23540000000005
+      }
+    },
+    "successResponse": {
+      "Status": true,
+      "Message": null,
+      "Data": {
+        "Id": "number — new form id"
+      }
+    },
+    "validationErrors": [
+      {
+        "trigger": "empty POST",
+        "Message": "任务表单名称不能为空且长度不能超过100"
+      },
+      {
+        "trigger": "flat TravelType=国内机票",
+        "Message": "出差类型必填"
+      }
+    ],
+    "notes": [
+      "Do NOT POST flat field names (TravelType=…); server expects FormDetails/FormTimes arrays.",
+      "Check control Content is comma-separated checkbox labels, not numeric ids.",
+      "Date fields use FormTimes, not FormDetails."
+    ],
+    "liveVerifiedAt": "2026-06-25T07:51:00Z",
+    "dryRunVerifiedAt": "2026-06-25T08:06:00+08:00"
+  },
+  "approval": {
+    "account": {
+      "user": "T289G003",
+      "name": "孙雪"
+    },
+    "taskSample": {
+      "id": "44880000000005",
+      "name": "申晓杰向您发起了【出差申请】审批流程",
+      "number": "bb8c1e16071647ecaa5f0964dbe7b175",
+      "tag": "Travel",
+      "handleUrl": "http://workflow.rtesp.com/FormTask/Handle?flowtag=Travel"
+    },
+    "handleUrlTemplate": "{WorkflowWebsiteUrl}/FormTask/Handle?flowtag=Travel&taskid={taskId}&ticket={ticket}&isApp=true&lang=cn",
+    "detailUrlTemplate": "{WorkflowWebsiteUrl}/FormTask/Detail?flowtag=Travel&taskId={taskId}&sign={sign}&ticket={ticket}",
+    "approvalUrlTemplate": "{WorkflowWebsiteUrl}/FormTask/Approval?ticket={ticket}",
+    "contentType": "multipart/form-data (browser) or application/x-www-form-urlencoded",
+    "requestFields": {
+      "taskId": "required — from window.TaskId",
+      "isPass": "true=通过, false=拒绝",
+      "remark": "textarea task=remark, max 50",
+      "sign": "from window.sign (often empty on Handle page)",
+      "channel": "optional",
+      "level": "optional radio",
+      "notifiers": "JSON string [{Id,Name}] or empty",
+      "FormDetails[]": "only if flowForm has editable fields on approval (Travel handle: datas=[])"
+    },
+    "requestSample": {
+      "taskId": "44880000000005",
+      "channel": "",
+      "remark": "审批备注",
+      "isPass": "true|false",
+      "sign": "",
+      "level": "",
+      "notifiers": ""
+    },
+    "getStaffs": {
+      "get": {
+        "url": "{WorkflowWebsiteUrl}/FormTask/GetStaffs?taskid={taskId}&ticket={ticket}",
+        "sample": "[{\"Value\":96200000000002,\"Text\":\"申晓杰\"},{\"Value\":41810000000001,\"Text\":\"赵士浩\"},{\"Value\":44880000000001,\"Text\":\"孙雪\"},{\"Value\":35580000000002,\"Text\":\"张格\"},{\"Value\":79260000000001,\"Text\":\"赵士浩\"},{\"Value\":16890000000002,\"Text\":\"杨佳静\"},{\"Value\":3680000000003,\"Text\":\"范梦杭\"},{\"Value\":46120000000001,\"Text\":\"鲁思雨\""
+      },
+      "post": {
+        "url": "same",
+        "body": "name={search}",
+        "contentType": "application/x-www-form-urlencoded",
+        "sample": "[{\"Value\":96200000000002,\"Text\":\"申晓杰\"},{\"Value\":41810000000001,\"Text\":\"赵士浩\"},{\"Value\":44880000000001,\"Text\":\"孙雪\"},{\"Value\":35580000000002,\"Text\":\"张格\"},{\"Value\":79260000000001,\"Text\":\"赵士浩\"},{\"Value\":16890000000002,\"Text\":\"杨佳静\"},{\"Value\":3680000000003,\"Text\":\"范梦杭\"},{\"Value\":46120000000001,\"Text\":\"鲁思雨\""
+      }
+    },
+    "approveResult": {
+      "Status": true,
+      "Message": null
+    },
+    "rejectResult": {
+      "Status": false,
+      "Message": "任务已经处理"
+    },
+    "successResponse": {
+      "Status": true,
+      "Message": null
+    },
+    "alreadyHandledResponse": {
+      "Status": false,
+      "Message": "任务已经处理"
+    },
+    "permissionError": "您没有权限查看或者任务已经过期",
+    "notes": [
+      "Handle URL must include flowtag=Travel&taskid=…; handleUrl from task list alone is insufficient.",
+      "Approval uses task.js task.handle → POST window.ApprovalUrl with FormData."
+    ],
+    "liveVerifiedAt": "2026-06-25T07:54:00Z",
+    "liveVerifiedTaskId": "44880000000004",
+    "dryRunVerifiedAt": "2026-06-25T08:06:00+08:00"
+  }
+}

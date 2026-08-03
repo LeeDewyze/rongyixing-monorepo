@@ -1,0 +1,62 @@
+---
+description: Responsive layout, breakpoints, and touch interaction for H5 and Web
+globs: apps/**/*.tsx,apps/**/config/*.ts,packages/ui/**/*.tsx,packages/ui/src/styles/globals.css
+alwaysApply: false
+---
+
+# Responsive & Touch Layout
+
+## Three surfaces
+
+| Surface | App | Width strategy |
+|---------|-----|----------------|
+| Mobile H5 | `apps/h5` | Mobile-first, full width, safe-area insets |
+| Pad | `apps/web` | `pad:` variant (≥768px) |
+| PC | `apps/web` | `pc:` variant (≥1440px) |
+
+MatePad Pro landscape (~1440px CSS) must use **Pad layout**, not PC. Use `pc:` at 1440px, not Tailwind `xl` (1280px).
+
+## Breakpoints (canonical)
+
+```typescript
+// apps/web/src/config/site.ts — single source of truth for JS logic
+export const BREAKPOINTS = { pad: 768, pc: 1440 } as const;
+```
+
+Tailwind custom variants (`packages/ui/src/styles/globals.css`):
+
+- `pad:` → `@media (min-width: 768px)`
+- `pc:` → `@media (min-width: 1440px)`
+- `pointer-coarse:` → touch devices
+- `hover-hover:` → devices with real hover
+
+When changing breakpoints, update **both** `site.ts` and `globals.css` `@custom-variant`.
+
+## Layout rules
+
+**apps/web**
+
+- `<768px`: single-column fallback; soft H5 hint only — never block usage
+- `768–1439px`: Pad layout (collapsed sidebar, 2-column grids)
+- `≥1440px`: PC layout (expanded sidebar, 3-column grids)
+
+**apps/h5**
+
+- Use `H5Shell` with safe-area padding; full-width buttons by default
+
+## Touch vs hover
+
+Decouple **width** from **input capability**:
+
+```tsx
+<button className="min-h-11 min-w-11 hover-hover:hover:bg-accent active:scale-[0.98]" />
+<div className="pointer-coarse:gap-4 gap-2" />
+```
+
+Minimum touch target: **44px** (`min-h-11 min-w-11`). See `TOUCH_TARGET_MIN` in `config/theme.ts`.
+
+## Don'ts
+
+- Don't use `xl:` (1280px) for PC layout in web app
+- Don't put mobile-only flows in `apps/web` — use `apps/h5`
+- Don't rely on `:hover` alone for critical affordances on Pad

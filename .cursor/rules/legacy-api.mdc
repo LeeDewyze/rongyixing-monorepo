@@ -1,0 +1,59 @@
+---
+description: Legacy API alignment — research req.Data before implementing proxy/mock/H5 payloads
+globs: packages/api/**/*,packages/shared-types/**/*,packages/mock/**/*,apps/h5/src/hooks/**/*,apps/h5/src/lib/**/*
+alwaysApply: false
+---
+
+# Legacy API Integration
+
+H5 reimplements **beeantmobile-main** (Ionic/Angular). TypeScript DTOs are hints only — **Legacy `req.Data` is the source of truth**.
+
+## Before coding
+
+1. Locate the Method in Legacy (e.g. `ApiMemberUrl-Passenger-Add`, `TmcApiHomeUrl-Staff-List`).
+2. Trace `member.service.ts` / `tmc.service.ts` / `*-select-passenger*.base.page.ts` for the exact payload.
+3. Document required fields, defaults, and date/enum formats in a short table (or PR note).
+4. Compare with `packages/api/src/apis/<domain>.ts` — add **normalize** for response shape drift.
+
+Do **not** infer fields from `shared-types` names alone (`CredentialNo` vs `Number`, `{ Staffs }` vs array in `Data`).
+
+## Implementation pattern
+
+```
+Legacy req.Data  →  toXxxApiPayload()  →  proxy.send({ data })
+Legacy response  →  normalizeXxxResponse() in apis/*.ts  →  hooks/UI
+```
+
+- Payload builders live next to the feature (`apps/h5/src/lib/*-form.ts`) or in `packages/api` when shared.
+- **Mock handlers must accept the same payload** as real API (same field names/defaults).
+- Strip UI-only fields; never send `StaffId` on external passenger APIs.
+
+## Known Legacy shapes
+
+| Pattern | Legacy | Wrong assumption |
+|---------|--------|------------------|
+| List APIs | `Data: T[]` | `Data: { Items: T[] }` |
+| Staff-List | `StaffEntity[]` | `{ Staffs, TotalCount }` only |
+| Passenger-List | `PassengerEntity[]` | `MemberPassenger` with `CredentialNo` |
+| Passenger-Add (noEm) | `MemberCredential` spread (`Type`, `showCountry`, `isAdd`, no `PassengerType`) | extra `PassengerType` / wrong URL (`/Home/Proxy` vs `member-api/Passenger/Add`) |
+| Proxy RPC | `Domain=rtesp.com`, `Language=cn`, direct service URL when Setting loaded | missing Domain; `zh-CN`; always `/Home/Proxy` |
+| Dates | often `YYYY/MM/DD`; id-card expiry default `2100/01/01` | raw `type="date"` `YYYY-MM-DD` only |
+
+## Branching (passenger / credentials)
+
+| Scenario | Method family | Notes |
+|----------|---------------|--------|
+| 非公司员工 | `Passenger-Add/Modify/Remove` | stricter Mobile validation |
+| 员工其他证件 | `Credentials-*` + `StaffId`, `IsRyx: true` | not Passenger-* |
+| 我的证件 | `Credentials-*` (no StaffId) | Phase 4 `/me/credentials` |
+
+## Delivery checklist
+
+- [ ] Legacy Method + sample `req.Data` cited (file path or doc)
+- [ ] `normalize*Response` if `Data` shape differs from DTO
+- [ ] `to*ApiPayload()` for writes; mock uses identical shape
+- [ ] `pnpm typecheck` passes; proxy + mock smoke path noted
+
+## When reporting bugs
+
+Include: **error message**, **Method name**, **request body**, **Legacy reference function**. Prefer fixing payload adapter over patching UI only.
