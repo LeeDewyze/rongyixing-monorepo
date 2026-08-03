@@ -1,6 +1,7 @@
 import type { HomeProductId, HomeTravelMode } from "@/config/home-assets";
 import { HOME_ASSETS } from "@/config/home-assets";
 import { HomeBannerCarousel } from "@/components/home/HomeBannerCarousel";
+import { HomeProductTabsSkeleton } from "@/components/home/HomeProductsLoading";
 import type { HomeBannerSlide } from "@/lib/home-banners";
 
 export type { HomeProductId, HomeTravelMode };
@@ -11,6 +12,7 @@ interface HomeHeroSectionProps {
   visibleProducts?: HomeProductId[];
   bannerSlides?: HomeBannerSlide[];
   bannerLoading?: boolean;
+  productsLoading?: boolean;
   onBannerClick?: (slide: HomeBannerSlide) => void;
   notice?: React.ReactNode;
   onTravelModeChange: (mode: HomeTravelMode) => void;
@@ -66,6 +68,7 @@ export function HomeHeroSection({
   visibleProducts,
   bannerSlides,
   bannerLoading = false,
+  productsLoading = false,
   onBannerClick,
   notice,
   onTravelModeChange,
@@ -128,7 +131,9 @@ export function HomeHeroSection({
         </div>
 
         {/* Figma 10:213 — product entries on #F5F6F9, not white */}
-        {productEntries.length > 0 ? (
+        {productsLoading ? (
+          <HomeProductTabsSkeleton />
+        ) : productEntries.length > 0 ? (
           <div className="mt-4 mb-3 bg-[#F5F6F9] px-3">
             <div className={`grid ${productGridClass} gap-1.5`}>
               {productEntries.map((product) => {

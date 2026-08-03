@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ProductType } from "@ryx/shared-types";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { WEB_MAIN_PADDING_CLASS } from "@/components/WebShell";
 import { CityPickerDialog } from "@/components/search/CityPickerDialog";
@@ -53,8 +53,11 @@ export function WebHomePage() {
   const hotelForm = useHotelSearchForm();
   const trainForm = useTrainSearchForm();
   const flightForm = useFlightSearchForm();
+  const queryClient = useQueryClient();
   const bannerQuery = useHomeBanners();
-  const visibleProducts = useVisibleHomeProducts(travelMode);
+  const { products: visibleProducts, isLoading: productsLoading } =
+    useVisibleHomeProducts(travelMode);
+  const showProductsLoading = productsLoading && visibleProducts.length === 0;
   const travelApplyVisible = useTravelApplyVisible(travelMode);
   const { data: notices = [] } = useQuery({
     queryKey: ["home", "notices"],
@@ -228,6 +231,7 @@ export function WebHomePage() {
         visibleProducts={visibleProducts}
         bannerSlides={bannerQuery.data}
         bannerLoading={bannerQuery.isLoading}
+        productsLoading={showProductsLoading}
         onBannerClick={(slide) => {
           if (!slide.banner) return;
           void onHomeBannerJump(navigate, {
@@ -239,6 +243,11 @@ export function WebHomePage() {
         onTravelModeChange={(mode) => {
           setTravelMode(mode);
           saveHomeTravelMode(mode);
+          if (mode === "personal") {
+            void queryClient.invalidateQueries({
+              queryKey: ["home", "visible-products", "personal"],
+            });
+          }
         }}
         onProductChange={handleProductChange}
         searchPanel={renderSearchPanel()}

@@ -7,6 +7,7 @@ import { HomeBusinessPanel } from "@/components/home/HomeBusinessPanel";
 import { HomeFlightSearchPanel } from "@/components/home/HomeFlightSearchPanel";
 import { HomeNoticeStrip } from "@/components/home/HomeNoticeStrip";
 import { HomeProductTabPointer } from "@/components/home/HomeProductTabPointer";
+import { HomeSearchPanelLoading } from "@/components/home/HomeProductsLoading";
 import {
   HomeHeroSection,
   type HomeProductId,
@@ -23,7 +24,7 @@ import { onHomeBannerJump } from "@/lib/core-jump";
 import { useFlightSearchForm } from "@/hooks/useFlightSearchForm";
 import { useHotelSearchForm } from "@/hooks/useHotelSearchForm";
 import { useTrainSearchForm } from "@/hooks/useTrainSearchForm";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getApi } from "@/lib/api";
 import { getApiMode } from "@/lib/env";
 import { formatApiError } from "@/lib/formatApiError";
@@ -56,8 +57,11 @@ export function HomeTabPage() {
   const trainForm = useTrainSearchForm();
   const flightForm = useFlightSearchForm();
   const apiMode = getApiMode();
+  const queryClient = useQueryClient();
   const bannerQuery = useHomeBanners();
-  const visibleProducts = useVisibleHomeProducts(travelMode);
+  const { products: visibleProducts, isLoading: productsLoading } =
+    useVisibleHomeProducts(travelMode);
+  const showProductsLoading = productsLoading && visibleProducts.length === 0;
   const travelApplyVisible = useTravelApplyVisible(travelMode);
   const { data: notices = [] } = useQuery({
     queryKey: ["home", "notices"],
@@ -176,6 +180,7 @@ export function HomeTabPage() {
         visibleProducts={visibleProducts}
         bannerSlides={bannerQuery.data}
         bannerLoading={bannerQuery.isLoading}
+        productsLoading={showProductsLoading}
         onBannerClick={(slide) => {
           if (!slide.banner) return;
           void onHomeBannerJump(navigate, {
@@ -193,11 +198,18 @@ export function HomeTabPage() {
         onTravelModeChange={(mode) => {
           setTravelMode(mode);
           saveHomeTravelMode(mode);
+          if (mode === "personal") {
+            void queryClient.invalidateQueries({
+              queryKey: ["home", "visible-products", "personal"],
+            });
+          }
         }}
         onProductChange={handleProductChange}
       />
 
-      {activeProduct === "flight" && visibleProducts.includes("flight") ? (
+      {showProductsLoading ? <HomeSearchPanelLoading /> : null}
+
+      {!showProductsLoading && activeProduct === "flight" && visibleProducts.includes("flight") ? (
         <div className="relative">
           <HomeProductTabPointer product={activeProduct} visibleProducts={visibleProducts} />
           {flightForm.error ? <HomeSearchPanelError error={flightForm.error} /> : null}
@@ -215,7 +227,7 @@ export function HomeTabPage() {
         </div>
       ) : null}
 
-      {activeProduct === "hotel" && visibleProducts.includes("hotel") ? (
+      {!showProductsLoading && activeProduct === "hotel" && visibleProducts.includes("hotel") ? (
         <div className="relative">
           <HomeProductTabPointer product={activeProduct} visibleProducts={visibleProducts} />
           {hotelForm.error ? <HomeSearchPanelError error={hotelForm.error} /> : null}
@@ -237,7 +249,7 @@ export function HomeTabPage() {
         </div>
       ) : null}
 
-      {activeProduct === "train" && visibleProducts.includes("train") ? (
+      {!showProductsLoading && activeProduct === "train" && visibleProducts.includes("train") ? (
         <div className="relative">
           <HomeProductTabPointer product={activeProduct} visibleProducts={visibleProducts} />
           {trainForm.error ? <HomeSearchPanelError error={trainForm.error} /> : null}

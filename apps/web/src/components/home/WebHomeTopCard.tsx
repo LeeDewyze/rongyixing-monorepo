@@ -13,6 +13,7 @@ interface WebHomeTopCardProps {
   visibleProducts?: HomeProductId[];
   bannerSlides?: HomeBannerSlide[];
   bannerLoading?: boolean;
+  productsLoading?: boolean;
   onBannerClick?: (slide: HomeBannerSlide) => void;
   onTravelModeChange: (mode: HomeTravelMode) => void;
   onProductChange: (product: HomeProductId) => void;
@@ -41,6 +42,34 @@ function ProductIcon({ product, active }: { product: HomeProductId; active: bool
       className="size-12 shrink-0 object-contain"
       aria-hidden
     />
+  );
+}
+
+function ProductTabsSkeleton() {
+  return (
+    <div className="grid grid-cols-3 gap-2 rounded-2xl bg-[#F5F6F9] p-2">
+      {Array.from({ length: 3 }, (_, index) => (
+        <div
+          key={index}
+          className="flex animate-pulse items-center justify-center gap-2 rounded-2xl px-3 py-2"
+        >
+          <div className="size-12 rounded-full bg-[#E8EAEF]" />
+          <div className="h-3.5 w-14 rounded bg-[#E8EAEF]" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SearchPanelLoading() {
+  return (
+    <div className="flex flex-col items-center justify-center gap-3 py-10">
+      <div
+        className="size-6 animate-spin rounded-full border-2 border-[#E8EAEF] border-t-brand-primary"
+        aria-hidden
+      />
+      <p className="text-sm text-[#999999]">加载中…</p>
+    </div>
   );
 }
 
@@ -92,6 +121,7 @@ export function WebHomeTopCard({
   visibleProducts,
   bannerSlides,
   bannerLoading = false,
+  productsLoading = false,
   onBannerClick,
   onTravelModeChange,
   onProductChange,
@@ -127,7 +157,9 @@ export function WebHomeTopCard({
           <TravelModeTabs travelMode={travelMode} onTravelModeChange={onTravelModeChange} />
 
           <div className="px-4 pb-2 pt-3 pc:px-6">
-            {productEntries.length > 0 ? (
+            {productsLoading ? (
+              <ProductTabsSkeleton />
+            ) : productEntries.length > 0 ? (
               <div className={`grid ${productGridClass} gap-2 rounded-2xl bg-[#F5F6F9] p-2`}>
                 {productEntries.map((product) => {
                   const active = activeProduct === product.id;
@@ -158,7 +190,11 @@ export function WebHomeTopCard({
             ) : null}
           </div>
 
-          {activeProductVisible ? (
+          {productsLoading ? (
+            <div className="relative mx-4 mb-4 mt-1 rounded-2xl border border-[#F0F0F0] bg-white px-4 py-4 pc:mx-6 pc:mb-6 pc:px-6">
+              <SearchPanelLoading />
+            </div>
+          ) : activeProductVisible ? (
             <div className="relative mx-4 mb-4 mt-1 rounded-2xl border border-[#F0F0F0] bg-white px-4 py-4 pc:mx-6 pc:mb-6 pc:px-6">
               {searchPanel}
             </div>

@@ -8,7 +8,18 @@ import { getApi } from "@/lib/api";
 import { getApiMode } from "@/lib/env";
 import { getTicket } from "@/lib/session";
 
-export function useVisibleHomeProducts(travelMode: HomeTravelMode): HomeBookProduct[] {
+export interface VisibleHomeProductsResult {
+  products: HomeBookProduct[];
+  isLoading: boolean;
+}
+
+const PRODUCTS_STALE_MS = 5 * 60 * 1000;
+
+function resolveProductsStaleTime(data: HomeBookProduct[] | undefined): number {
+  return (data?.length ?? 0) > 0 ? PRODUCTS_STALE_MS : 0;
+}
+
+export function useVisibleHomeProducts(travelMode: HomeTravelMode): VisibleHomeProductsResult {
   const hasTicket = Boolean(getTicket());
   const apiMode = getApiMode();
 
@@ -23,9 +34,14 @@ export function useVisibleHomeProducts(travelMode: HomeTravelMode): HomeBookProd
       return getVisibleHomeProductsFromWorkbenches(workbenches);
     },
     enabled: travelMode === "personal" || hasTicket || apiMode === "mock",
-    staleTime: 5 * 60 * 1000,
+    staleTime: (query) => resolveProductsStaleTime(query.state.data),
     retry: false,
   });
 
-  return query.data ?? [];
+  const products = query.data ?? [];
+
+  return {
+    products,
+    isLoading: query.isPending || (query.isFetching && products.length === 0),
+  };
 }
