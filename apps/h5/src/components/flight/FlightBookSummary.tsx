@@ -2,8 +2,10 @@ import { useState } from "react";
 
 import type { FlightBookSelection } from "@/lib/flight-book-session";
 import { SummaryCollapseButton } from "@/components/book/SummaryCollapseButton";
+import { FlightTransferRouteCard } from "@/components/flight/FlightTransferRouteCard";
 import summaryRouteArrow from "@/assets/flight/summary-route-arrow.png";
 import { formatFlightBookDuration, formatFlightBookRouteSubtitle } from "@/lib/flight-book-display";
+import { buildFlightTransferItinerary } from "@/lib/flight-detail";
 import { FlightRoutePlaneIcon } from "@/components/flight/FlightRoutePlaneIcon";
 import { formatFlightTime } from "@/utils/flight-list";
 import {
@@ -22,6 +24,7 @@ interface FlightBookSummaryProps {
 export function FlightBookSummary({ selection, onShowRules }: FlightBookSummaryProps) {
   const [expanded, setExpanded] = useState(true);
   const { cabinsQuery, segment } = selection;
+  const transferItinerary = buildFlightTransferItinerary(selection.detailSnapshot?.FlightSegments);
   const subtitle = formatFlightBookRouteSubtitle(
     segment.TakeoffTime || cabinsQuery.takeoffTime,
     segment.FlyTimeName || cabinsQuery.flyTimeName,
@@ -37,6 +40,7 @@ export function FlightBookSummary({ selection, onShowRules }: FlightBookSummaryP
   const toAirport = shortAirportName(segment.ToAirportName || cabinsQuery.toAirportName);
   const airlineFlightLabel = [airlineName, flightNumber].filter(Boolean).join("");
   const airlineMetaLabel = [airlineFlightLabel, planeLabel].filter(Boolean).join(" ");
+  const detailLabel = transferItinerary ? "行程详情" : "航班详情";
 
   return (
     <div className="px-3 pb-3 pt-2">
@@ -67,12 +71,18 @@ export function FlightBookSummary({ selection, onShowRules }: FlightBookSummaryP
           </div>
           <SummaryCollapseButton
             expanded={expanded}
-            detailLabel="航班详情"
+            detailLabel={detailLabel}
             onToggle={() => setExpanded((value) => !value)}
           />
         </div>
 
-        {expanded ? (
+        {transferItinerary ? (
+          <FlightTransferRouteCard
+            itinerary={transferItinerary}
+            expanded={expanded}
+            durationLabel={durationLabel}
+          />
+        ) : expanded ? (
           <div className="mt-3 rounded-[8px] bg-[#FFFFFF] px-3 py-2">
             <div className="grid grid-cols-[minmax(0,1fr)_7.5rem_minmax(0,1fr)] items-start gap-x-2">
               <div className="min-w-0">
