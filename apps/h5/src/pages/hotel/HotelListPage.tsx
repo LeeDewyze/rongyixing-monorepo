@@ -62,6 +62,10 @@ function resolveHotelTypeFromFilter(filter: HotelListFilterState): HotelType {
   return filter.categories.includes("Tmc") ? "Tmc" : "Normal";
 }
 
+function serializeHotelListFilter(filter: HotelListFilterState): string {
+  return JSON.stringify(filter);
+}
+
 function useInfiniteScrollTrigger(
   onLoadMore: (() => void) | undefined,
   enabled: boolean,
@@ -77,9 +81,15 @@ function useInfiniteScrollTrigger(
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0]?.isIntersecting) {
-          onLoadMore();
+        if (!entries[0]?.isIntersecting) return;
+
+        const root = scrollRoot;
+        if (root && root.scrollHeight > root.clientHeight + 1) {
+          const distanceFromBottom = root.scrollHeight - root.scrollTop - root.clientHeight;
+          if (distanceFromBottom > 240) return;
         }
+
+        onLoadMore();
       },
       { root: scrollRoot ?? null, rootMargin: "160px 0px" },
     );
@@ -269,9 +279,11 @@ export function HotelListPage() {
     return () => observer.disconnect();
   }, []);
 
+  const listFilterKey = useMemo(() => serializeHotelListFilter(filterApplied), [filterApplied]);
+
   useLayoutEffect(() => {
     scrollContainerRef.current?.scrollTo({ top: 0, behavior: "auto" });
-  }, [cityCode, checkIn, checkOut, keyword, keywordType, hotelId, lat, lng]);
+  }, [cityCode, checkIn, checkOut, keyword, keywordType, hotelId, lat, lng, listFilterKey]);
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -371,7 +383,11 @@ export function HotelListPage() {
     }
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
-  const sentinelRef = useInfiniteScrollTrigger(handleLoadMore, Boolean(hasNextPage), scrollRoot);
+  const sentinelRef = useInfiniteScrollTrigger(
+    handleLoadMore,
+    Boolean(hasNextPage) && !isLoading,
+    scrollRoot,
+  );
 
   const { pullDistance, statusLabel, isActive } = usePullToRefresh({
     scrollRef: scrollContainerRef,
