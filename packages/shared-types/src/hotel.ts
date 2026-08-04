@@ -163,6 +163,7 @@ export interface HotelRoomPlan {
   /** Legacy RoomPlan.Id (may be "0"). */
   LegacyId?: string;
   SupplierType?: number | string;
+  SupplierTypeName?: string;
   TotalAmount?: number;
   Number?: number | string;
   SupplierNumber?: number | string;

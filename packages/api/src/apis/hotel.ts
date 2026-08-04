@@ -250,6 +250,7 @@ type LegacyRoomPlan = {
   Number?: number | string;
   SupplierNumber?: number | string;
   SupplierType?: number | string;
+  SupplierTypeName?: string;
   BeginDate?: string;
   EndDate?: string;
   Variables?: unknown;
@@ -882,6 +883,7 @@ function mapLegacyRoomPlan(
     CancelPolicy: getPlanCancelPolicy(plan),
     LegacyId: legacyId,
     SupplierType: plan.SupplierType,
+    SupplierTypeName: plan.SupplierTypeName,
     TotalAmount: toPrice(plan.TotalAmount ?? plan.SalesPrice),
     Number: plan.Number,
     SupplierNumber: toLegacySupplierNumber(plan.SupplierNumber),

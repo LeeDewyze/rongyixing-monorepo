@@ -57,6 +57,29 @@ function resolveCancelRuleMessage(plan: HotelRoomPlan): string {
   return plan.CancelPolicy?.trim() ?? "";
 }
 
+function formatSupplierSource(plan: HotelRoomPlan): string | null {
+  const name = plan.SupplierTypeName?.trim();
+  if (name) return name;
+
+  const type = plan.SupplierType == null ? "" : String(plan.SupplierType).trim();
+  if (!type) return null;
+
+  const supplierTypeLabels: Record<string, string> = {
+    "1": "平台",
+    "2": "艺龙",
+    "3": "代理",
+    "4": "集团",
+    "5": "公司",
+    "6": "畅联",
+    "7": "Amadeus",
+    "9": "道旅",
+    dttrip: "道旅",
+    dida: "道旅",
+    elong: "艺龙",
+  };
+  return supplierTypeLabels[type.toLowerCase()] ?? (/^\d+$/.test(type) ? null : type);
+}
+
 export function HotelDetailPlanRow({
   plan,
   policyColor,
@@ -71,6 +94,7 @@ export function HotelDetailPlanRow({
   const cancelLabel = formatCancelPolicyLabel(plan.CancelPolicy);
   const cancelRuleMessage = resolveCancelRuleMessage(plan);
   const payLabel = getHotelPlanPayTypeLabel(plan);
+  const supplierTypeName = formatSupplierSource(plan);
   const awaitingPolicy = !policyChecked;
   const displayColor = policyColor ?? (policyChecked ? "success" : undefined);
   const displayBookable = isHotelPlanBookable(displayColor, isAgent, policyChecked);
@@ -115,15 +139,22 @@ export function HotelDetailPlanRow({
                 {breakfast}
               </span>
             ) : null}
+            {supplierTypeName ? (
+              <span className="inline-flex h-[20px] items-center rounded-full bg-[#F5F6F9] px-2 text-[10px] leading-none text-[#8A94A6] ring-1 ring-[#ECEEF2]">
+                {supplierTypeName}
+              </span>
+            ) : null}
           </div>
         </div>
 
         <div className="flex shrink-0 flex-col items-end justify-between gap-2">
-          <div className={`flex items-baseline ${button.priceClass}`}>
-            <span className="text-[11px] font-medium">¥</span>
-            <span className="text-[22px] font-semibold leading-none tracking-tight">
-              {Math.round(plan.Price)}
-            </span>
+          <div className="flex items-baseline">
+            <div className={`flex items-baseline ${button.priceClass}`}>
+              <span className="text-[11px] font-medium">¥</span>
+              <span className="text-[22px] font-semibold leading-none tracking-tight">
+                {Math.round(plan.Price)}
+              </span>
+            </div>
           </div>
 
           {loading || awaitingPolicy ? (

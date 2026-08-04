@@ -679,6 +679,7 @@ describe("normalizeHotelDetailResponse", () => {
                   TotalAmount: 540,
                   SupplierNumber: "RM1008773489DPRS24754919_8FE52E35AC3FE08F0B1B1ABB1E7DE831",
                   SupplierType: "Dttrip",
+                  SupplierTypeName: "道旅",
                   BeginDate: "2026-06-26T00:00:00",
                   EndDate: "2026-06-27T00:00:00",
                   Variables: JSON.stringify({
@@ -702,6 +703,7 @@ describe("normalizeHotelDetailResponse", () => {
     );
     expect(result.Rooms?.[0]?.Plans[0]?.BeginDate).toBe("2026-06-26T00:00:00");
     expect(result.Rooms?.[0]?.Plans[0]?.SupplierType).toBe("Dttrip");
+    expect(result.Rooms?.[0]?.Plans[0]?.SupplierTypeName).toBe("道旅");
   });
 
   it("maps legacy hotel info fields for detail section", () => {
