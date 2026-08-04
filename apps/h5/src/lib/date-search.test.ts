@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   addDays,
   buildDateRange,
+  buildFlightListDateStripRange,
   buildListDateStripRange,
   buildTrainListDateStripRange,
   parseLocalDate,
@@ -54,6 +55,23 @@ describe("date-search", () => {
     const range = buildTrainListDateStripRange(today);
     expect(range).toHaveLength(7);
     expect(range[0]).toBe(today);
+  });
+
+  it("buildFlightListDateStripRange matches legacy days-calendar when today is selected", () => {
+    const today = todayDateString();
+    const range = buildFlightListDateStripRange(today);
+    expect(range).toHaveLength(7);
+    expect(range[0]).toBe(today);
+    expect(range.at(-1)).toBe(addDays(today, 6));
+  });
+
+  it("buildFlightListDateStripRange expands when a later date is selected", () => {
+    const today = todayDateString();
+    const selected = addDays(today, 10);
+    const range = buildFlightListDateStripRange(selected);
+    expect(range[0]).toBe(addDays(selected, -7));
+    expect(range).toContain(selected);
+    expect(range.length).toBeGreaterThan(7);
   });
 
   it("buildTrainListDateStripRange does not exceed train booking window", () => {

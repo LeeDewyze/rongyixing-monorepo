@@ -86,10 +86,9 @@ export function buildListDateStripRange(
   return dates;
 }
 
-/** Legacy days-calendar_ryx: include today when a near-future date is selected. */
-export function buildTrainListDateStripRange(selectedDate: string): string[] {
+/** Legacy days-calendar_ryx window: 7 days when today is selected, expands when further out. */
+function buildLegacyDaysCalendarRange(selectedDate: string, maxDate?: string): string[] {
   const today = todayDateString();
-  const maxDate = trainMaxSelectableDate(today);
   const anchor = parseLocalDate(selectedDate) ? selectedDate : today;
 
   const todayMs = parseLocalDate(today)?.getTime() ?? 0;
@@ -100,10 +99,21 @@ export function buildTrainListDateStripRange(selectedDate: string): string[] {
   const dates: string[] = [];
   for (let offset = -idx; offset < 7 + idx; offset += 1) {
     const date = addDays(anchor, offset);
-    if (date < today || date > maxDate) continue;
+    if (date < today) continue;
+    if (maxDate && date > maxDate) continue;
     dates.push(date);
   }
   return dates;
+}
+
+/** Legacy days-calendar_ryx for train list (capped by booking window). */
+export function buildTrainListDateStripRange(selectedDate: string): string[] {
+  return buildLegacyDaysCalendarRange(selectedDate, trainMaxSelectableDate(todayDateString()));
+}
+
+/** Legacy days-calendar_ryx for flight list (no upper cap in strip). */
+export function buildFlightListDateStripRange(selectedDate: string): string[] {
+  return buildLegacyDaysCalendarRange(selectedDate);
 }
 
 export function nightsBetween(checkIn: string, checkOut: string): number {

@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 
 import calendarIcon from "@/assets/train/calendar-icon.png";
 import {
-  buildListDateStripRange,
+  buildFlightListDateStripRange,
   parseLocalDate,
   relativeDayLabel,
   todayDateString,
@@ -12,8 +12,6 @@ interface FlightListDateStripProps {
   selectedDate: string;
   onSelect: (date: string) => void;
   onOpenCalendar: () => void;
-  daysBefore?: number;
-  daysAfter?: number;
 }
 
 const DATE_MMDD_CLASS =
@@ -30,12 +28,10 @@ export function FlightListDateStrip({
   selectedDate,
   onSelect,
   onOpenCalendar,
-  daysBefore = 7,
-  daysAfter = 13,
 }: FlightListDateStripProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const anchorDate = parseLocalDate(selectedDate) ? selectedDate : todayDateString();
-  const dates = buildListDateStripRange(anchorDate, daysBefore, daysAfter);
+  const dates = buildFlightListDateStripRange(anchorDate);
 
   useEffect(() => {
     const el = scrollRef.current?.querySelector(`[data-date="${selectedDate}"]`);
@@ -46,7 +42,7 @@ export function FlightListDateStrip({
     <div className="flex items-stretch bg-gradient-to-b from-[#6aabff] to-[#e4edfd] pb-3 pl-3 pr-0 pt-1">
       <div
         ref={scrollRef}
-        className="flex min-w-0 flex-1 gap-2 overflow-x-auto pr-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex min-w-0 flex-1 justify-between overflow-x-auto pr-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {dates.map((date) => {
           const active = date === selectedDate;
