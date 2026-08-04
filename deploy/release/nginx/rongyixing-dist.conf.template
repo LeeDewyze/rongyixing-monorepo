@@ -1,6 +1,6 @@
 server {
   listen __RYX_LISTEN__;
-  server_name __RYX_SERVER_NAME__;
+  server_name __RYX_SERVER_NAME__ h5.songguoren.site web.songguoren.site;
 
   index index.html;
   client_max_body_size 20m;
@@ -10,8 +10,13 @@ server {
   gzip_min_length 1024;
   gzip_types text/plain text/css application/json application/javascript text/xml application/xml image/svg+xml;
 
+  set $ryx_default_entry h5;
+  if ($host = web.songguoren.site) {
+    set $ryx_default_entry web;
+  }
+
   location = / {
-    return 302 /h5/$is_args$args;
+    return 302 /$ryx_default_entry/$is_args$args;
   }
 
   location = /h5 {

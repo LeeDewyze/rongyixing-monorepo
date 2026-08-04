@@ -80,23 +80,33 @@ function useInfiniteScrollTrigger(
     const target = sentinelRef.current;
     if (!target) return;
 
+    const isNearBottom = () => {
+      const root = scrollRoot;
+      if (!root || root.scrollHeight <= root.clientHeight + 1) return true;
+      const distanceFromBottom = root.scrollHeight - root.scrollTop - root.clientHeight;
+      return distanceFromBottom <= 240;
+    };
+
+    const triggerIfNearBottom = () => {
+      if (isNearBottom()) onLoadMore();
+    };
+
     const observer = new IntersectionObserver(
       (entries) => {
         if (!entries[0]?.isIntersecting) return;
-
-        const root = scrollRoot;
-        if (root && root.scrollHeight > root.clientHeight + 1) {
-          const distanceFromBottom = root.scrollHeight - root.scrollTop - root.clientHeight;
-          if (distanceFromBottom > 240) return;
-        }
-
-        onLoadMore();
+        triggerIfNearBottom();
       },
       { root: scrollRoot ?? null, rootMargin: "160px 0px" },
     );
 
     observer.observe(target);
-    return () => observer.disconnect();
+    scrollRoot?.addEventListener("scroll", triggerIfNearBottom, { passive: true });
+    triggerIfNearBottom();
+
+    return () => {
+      observer.disconnect();
+      scrollRoot?.removeEventListener("scroll", triggerIfNearBottom);
+    };
   }, [enabled, onLoadMore, scrollRoot]);
 
   return sentinelRef;

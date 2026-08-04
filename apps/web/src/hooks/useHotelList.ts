@@ -24,15 +24,11 @@ export function useHotelList(params: HotelListParams = {}, enabled = true) {
 
 function getNextHotelPageIndex(
   hotels: unknown[] | undefined,
-  totalCount: number | undefined,
   pageParam: number,
 ): number | undefined {
   const pageHotels = hotels ?? [];
-  if (totalCount != null) {
-    const loaded = (pageParam + 1) * HOTEL_LIST_PAGE_SIZE;
-    return loaded < totalCount ? pageParam + 1 : undefined;
-  }
-  return pageHotels.length >= HOTEL_LIST_PAGE_SIZE ? pageParam + 1 : undefined;
+  if (pageHotels.length < HOTEL_LIST_PAGE_SIZE) return undefined;
+  return pageParam + 1;
 }
 
 export function useInfiniteHotelList(params: HotelListParams = {}, enabled = true) {
@@ -54,7 +50,7 @@ export function useInfiniteHotelList(params: HotelListParams = {}, enabled = tru
       }),
     initialPageParam: 0,
     getNextPageParam: (lastPage, _pages, pageParam) =>
-      getNextHotelPageIndex(lastPage?.Hotels, lastPage?.TotalCount, pageParam),
+      getNextHotelPageIndex(lastPage?.Hotels, pageParam),
     enabled: enabled && hasRequired,
   });
 
