@@ -109,7 +109,7 @@ export const router = createBrowserRouter(
           path: "/hotel",
           element: <RootLayout />,
           children: [
-            { index: true, element: <Navigate to="/home?product=hotel" replace /> },
+            { index: true, element: <Navigate to="/home?product=flight" replace /> },
             { path: "list", element: <HotelListPage /> },
             { path: "keyword", element: <HotelKeywordSearchPage /> },
             { path: ":hotelId/images", element: <HotelShowImagesPage /> },

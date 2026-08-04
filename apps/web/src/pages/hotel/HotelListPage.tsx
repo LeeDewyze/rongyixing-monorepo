@@ -34,7 +34,12 @@ import {
   type HotelListFilterState,
 } from "@/lib/hotel-list-filters";
 import { navigateBack } from "@/lib/navigation";
-import { CITY_HISTORY_KEYS, hotelCityFromQuery, hotelCityPickerAdapter } from "@/lib/hotel-search";
+import {
+  CITY_HISTORY_KEYS,
+  hotelCityFromQuery,
+  hotelCityPickerAdapter,
+  persistHotelSearch,
+} from "@/lib/hotel-search";
 import {
   loadHomeTravelMode,
   resolveProductChannel,
@@ -262,6 +267,11 @@ export function HotelListPage() {
     next.set("cityName", resolvedCity.Name);
     navigate({ pathname: "/hotel/list", search: next.toString() }, { replace: true });
   }, [listReady, resolvedCity, cityCode, searchParams, navigate]);
+
+  useEffect(() => {
+    if (!listReady || !resolvedCity) return;
+    persistHotelSearch(resolvedCity, checkIn, checkOut);
+  }, [listReady, resolvedCity, checkIn, checkOut]);
 
   useEffect(() => {
     const categories = resolveHotelTypeFilterCategories(hotelType);

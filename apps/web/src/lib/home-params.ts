@@ -5,7 +5,7 @@ export function parseHomeProduct(searchParams: URLSearchParams): HomeProductId {
   if (product === "flight" || product === "train" || product === "hotel") {
     return product;
   }
-  return "hotel";
+  return "flight";
 }
 
 export function buildHomeProductSearch(product: HomeProductId): URLSearchParams {
