@@ -198,6 +198,16 @@ function AddRowButton({ label, onClick }: { label: string; onClick: () => void }
   );
 }
 
+function segmentCityLabel(city: TravelApplyCity): string {
+  return city.label || "请选择";
+}
+
+function segmentCityClass(city: TravelApplyCity): string {
+  return city.label
+    ? "mt-0.5 text-[18px] font-semibold text-brand-title"
+    : "mt-0.5 text-[18px] font-semibold text-[#C4C9D4]";
+}
+
 function SegmentRouteCard({
   segment,
   onPickFrom,
@@ -227,9 +237,7 @@ function SegmentRouteCard({
       >
         <div>
           <p className="text-[11px] uppercase tracking-wide text-[#9CA3AF]">出发</p>
-          <p className="mt-0.5 text-[18px] font-semibold text-brand-title">
-            {segment.fromCity.label}
-          </p>
+          <p className={segmentCityClass(segment.fromCity)}>{segmentCityLabel(segment.fromCity)}</p>
         </div>
         <ChevronRightIcon />
       </button>
@@ -243,9 +251,7 @@ function SegmentRouteCard({
       >
         <div>
           <p className="text-[11px] uppercase tracking-wide text-[#9CA3AF]">目的</p>
-          <p className="mt-0.5 text-[18px] font-semibold text-brand-title">
-            {segment.toCity.label}
-          </p>
+          <p className={segmentCityClass(segment.toCity)}>{segmentCityLabel(segment.toCity)}</p>
         </div>
         <ChevronRightIcon />
       </button>

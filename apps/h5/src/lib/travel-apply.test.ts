@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   buildTravelApplyBody,
+  defaultTravelApplySegment,
   emptyTravelApplyTraveler,
   fetchTravelApplyMeta,
   staffPickerOptions,
@@ -200,6 +201,20 @@ describe("travel apply form submit", () => {
     expect(options[0]?.searchText).toContain("007");
     expect(options[0]?.searchText).toContain("范梦杭");
     expect(options[1]?.searchText).toContain("姜茗豪");
+  });
+
+  it("defaultTravelApplySegment leaves cities unselected", () => {
+    const segment = defaultTravelApplySegment(meta.cities);
+    expect(segment.fromCity).toEqual({ label: "", value: "" });
+    expect(segment.toCity).toEqual({ label: "", value: "" });
+    expect(
+      validateTravelApply({
+        travelTypes: ["国内机票"],
+        reason: "测试",
+        travelers: [{ account: meta.defaultAccount }],
+        segments: [segment],
+      }),
+    ).toBe("请选择行程出发城市");
   });
 });
 

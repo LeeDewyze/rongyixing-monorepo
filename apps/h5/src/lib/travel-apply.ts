@@ -256,12 +256,16 @@ export function findTravelApplyCity(
   return cities.find((city) => city.label === name) ?? fallback ?? cities[0];
 }
 
-export function defaultTravelApplySegment(cities: TravelApplyCity[]): TravelApplySegment {
+export function emptyTravelApplyCity(): TravelApplyCity {
+  return { label: "", value: "" };
+}
+
+export function defaultTravelApplySegment(_cities: TravelApplyCity[]): TravelApplySegment {
   const dates = defaultTravelApplyDates();
   return {
     ...dates,
-    fromCity: findTravelApplyCity(cities, "北京"),
-    toCity: findTravelApplyCity(cities, "上海", cities[1]),
+    fromCity: emptyTravelApplyCity(),
+    toCity: emptyTravelApplyCity(),
   };
 }
 
