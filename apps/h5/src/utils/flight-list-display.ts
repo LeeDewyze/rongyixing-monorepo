@@ -164,6 +164,13 @@ export function formatFlightMealLabel(meal: string | undefined | null): string |
   return labels[code];
 }
 
+/** List cards — hide "无餐食"; only show when a concrete meal is available. */
+export function formatFlightListMealLabel(meal: string | undefined | null): string | undefined {
+  const label = formatFlightMealLabel(meal);
+  if (!label || label === "无餐食") return undefined;
+  return label;
+}
+
 export function formatFlightMetaDuration(flyTimeName: string | undefined): string | undefined {
   if (!flyTimeName) return undefined;
   return flyTimeName.startsWith("飞") ? flyTimeName : `飞${flyTimeName}`;
@@ -408,8 +415,8 @@ function formatFlightListPlaneMeta(
 }
 
 /**
- * Legacy list card meta line: 联合航空 | KN5955 | 机型 73E | 无餐食 |
- * Uses full airline name, flight number, plane code, and always shows meal status.
+ * Legacy list card meta line: 联合航空 | KN5955 | 机型 73E | 点心
+ * Uses full airline name, flight number, plane code, and meal when available.
  */
 export function formatFlightListMetaLine(
   segment: Pick<
@@ -428,8 +435,8 @@ export function formatFlightListMetaLine(
   const planeMeta = formatFlightListPlaneMeta(segment.PlaneType, segment.PlaneTypeDescribe);
   if (planeMeta) parts.push(planeMeta);
 
-  const meal = formatFlightMealLabel(segment.Meal) ?? "无餐食";
-  parts.push(meal);
+  const meal = formatFlightListMealLabel(segment.Meal);
+  if (meal) parts.push(meal);
 
   if (!parts.length) return "";
   return parts.join(" | ");

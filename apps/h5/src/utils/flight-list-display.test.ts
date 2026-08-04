@@ -6,6 +6,7 @@ import {
   formatCabinsDepartTitle,
   formatFlightAgreementAirlineLabel,
   formatFlightListMetaLine,
+  formatFlightListMealLabel,
   formatFlightListPriceLabel,
   formatFlightListPlaneLabel,
   formatFlightLocationLabel,
@@ -55,6 +56,8 @@ describe("flight-list-display cabins helpers", () => {
     expect(formatFlightMealLabel("R")).toBe("茶点或小吃");
     expect(formatFlightMealLabel("早餐")).toBe("早餐");
     expect(formatFlightMealLabel("点心")).toBe("点心");
+    expect(formatFlightListMealLabel("N")).toBeUndefined();
+    expect(formatFlightListMealLabel("点心")).toBe("点心");
     expect(formatFlightMetaDuration("2h25m")).toBe("飞2h25m");
     expect(formatFlightLegDateTip("2026-07-24 07:35:00", "2026-07-23")).toBe("07-24");
     expect(formatFlightLegDateTip("2026-07-23 19:00:00", "2026-07-23")).toBeUndefined();
@@ -125,14 +128,14 @@ describe("flight-list-display cabins helpers", () => {
         PlaneTypeDescribe: "波音737-200(大)",
         Meal: "N",
       }),
-    ).toBe("联合航空 | KN5955 | 机型 73E | 无餐食");
+    ).toBe("联合航空 | KN5955 | 机型 73E");
     expect(
       formatFlightListMetaLine({
         AirlineName: "联合航空",
         Number: "KN5955",
         PlaneType: "73E",
       }),
-    ).toBe("联合航空 | KN5955 | 机型 73E | 无餐食");
+    ).toBe("联合航空 | KN5955 | 机型 73E");
     expect(
       formatFlightListMetaLine({
         AirlineName: "南方航空",
