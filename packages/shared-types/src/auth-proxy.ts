@@ -28,6 +28,11 @@ export interface MobileLoginParams {
   LoginType?: string;
 }
 
+export interface RybLoginParams {
+  ticket: string;
+  LoginType?: string;
+}
+
 export interface LoginResultDto {
   Ticket: string;
   Id: string;

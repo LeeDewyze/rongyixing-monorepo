@@ -5,8 +5,6 @@ import { startSessionGuard } from "@/lib/session-guard";
 import {
   clearSession,
   saveLoginResult,
-  setTicket,
-  setTicketName,
   setWebSocketUrl,
 } from "@/lib/session";
 
@@ -47,29 +45,32 @@ function replaceToLogin(returnTo: string): void {
   replaceLocation(path);
 }
 
-/** Accept SSO-style `?ticket=...` as one more source of the normal local session. */
+/** Exchange SSO-style `?ticket=...` for the normal RongYiXing local session. */
 export async function bootstrapExternalTicket(fallbackPath = "/"): Promise<void> {
   const url = new URL(window.location.href);
   const ticket = url.searchParams.get(TICKET_PARAM)?.trim();
   if (!ticket) return;
 
   const targetPath = resolveTicketTargetPath(url, fallbackPath);
-  const ticketName = url.searchParams.get(TICKET_NAME_PARAM)?.trim();
 
-  setTicket(ticket);
-  if (ticketName) {
-    setTicketName(ticketName);
-  }
+  clearSession();
   replaceLocation(targetPath);
 
   try {
     const api = getApi();
-    const identity = await api.identity.get(ticket);
+    const loginResult = await api.authProxy.rybLogin({ ticket });
+    if (!loginResult.Ticket) {
+      throw new Error("RYBLogin returned empty ticket");
+    }
+
+    saveLoginResult(loginResult);
+
+    const identity = await api.identity.get(loginResult.Ticket);
     saveLoginResult({
-      Ticket: identity.Ticket || ticket,
-      Id: identity.Id,
-      Name: identity.Name,
-      Token: identity.Token,
+      Ticket: identity.Ticket || loginResult.Ticket,
+      Id: identity.Id || loginResult.Id,
+      Name: identity.Name || loginResult.Name,
+      Token: identity.Token || loginResult.Token,
     });
 
     if (getApiMode() !== "mock") {
