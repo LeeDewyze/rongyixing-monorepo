@@ -126,10 +126,10 @@ apps/web/.env.prod
 Common commands:
 
 ```bash
-pnpm dev:h5:test   # http://localhost:5173/h5/
-pnpm dev:web:test  # http://localhost:5174/web/
-pnpm dev:h5:prod   # http://localhost:5175/h5/
-pnpm dev:web:prod  # http://localhost:5176/web/
+pnpm dev:h5:test   # http://localhost:5173/
+pnpm dev:web:test  # http://localhost:5174/
+pnpm dev:h5:prod   # http://localhost:5175/
+pnpm dev:web:prod  # http://localhost:5176/
 ```
 
 Test env values:

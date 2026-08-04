@@ -156,8 +156,8 @@ cp apps/web/.env.example apps/web/.env
 ```bash
 pnpm dev:h5          # http://localhost:5173
 pnpm dev:h5:mock     # same, with VITE_API_MODE=mock
-pnpm dev:h5:test     # http://localhost:5173/h5/  -> rtesp test
-pnpm dev:h5:prod     # http://localhost:5175/h5/  -> rongtrip prod
+pnpm dev:h5:test     # http://localhost:5173/  -> rtesp test
+pnpm dev:h5:prod     # http://localhost:5175/  -> rongtrip prod
 ```
 
 H5 builds workspace packages (`shared-types`, `api`, `mock`) before starting Vite.
@@ -166,8 +166,8 @@ H5 builds workspace packages (`shared-types`, `api`, `mock`) before starting Vit
 
 ```bash
 pnpm dev:web         # http://localhost:5174
-pnpm dev:web:test    # http://localhost:5174/web/ -> rtesp test
-pnpm dev:web:prod    # http://localhost:5176/web/ -> rongtrip prod
+pnpm dev:web:test    # http://localhost:5174/ -> rtesp test
+pnpm dev:web:prod    # http://localhost:5176/ -> rongtrip prod
 ```
 
 Open [http://localhost:5174](http://localhost:5174) in the browser. Use DevTools device mode or a wide window to exercise layout:
@@ -195,14 +195,13 @@ The release package has test/prod dist directories, and local Vite now mirrors t
 
 | Command | URL | Env file | Gateway | Legacy service suffix |
 | --- | --- | --- | --- | --- |
-| `pnpm dev:h5:test` | `http://localhost:5173/h5/` | `apps/h5/.env.test` | `http://app.rtesp.com` | `rtesp.com` |
-| `pnpm dev:web:test` | `http://localhost:5174/web/` | `apps/web/.env.test` | `http://app.rtesp.com` | `rtesp.com` |
-| `pnpm dev:h5:prod` | `http://localhost:5175/h5/` | `apps/h5/.env.prod` | `https://app.rongtrip.cn` | `rongtrip.cn` |
-| `pnpm dev:web:prod` | `http://localhost:5176/web/` | `apps/web/.env.prod` | `https://app.rongtrip.cn` | `rongtrip.cn` |
+| `pnpm dev:h5:test` | `http://localhost:5173/` | `apps/h5/.env.test` | `http://app.rtesp.com` | `rtesp.com` |
+| `pnpm dev:web:test` | `http://localhost:5174/` | `apps/web/.env.test` | `http://app.rtesp.com` | `rtesp.com` |
+| `pnpm dev:h5:prod` | `http://localhost:5175/` | `apps/h5/.env.prod` | `https://app.rongtrip.cn` | `rongtrip.cn` |
+| `pnpm dev:web:prod` | `http://localhost:5176/` | `apps/web/.env.prod` | `https://app.rongtrip.cn` | `rongtrip.cn` |
 
-`VITE_BASE_PATH` is set by these scripts so local Vite routes use `/h5/` and `/web/`.
-Release and Docker delivery builds set it to `/`, because each application is served from its own
-IP port or fixed domain root.
+`VITE_BASE_PATH` is set to `/` by these scripts so local Vite mirrors release and Docker delivery:
+each application is served from its own IP port or fixed domain root.
 
 ### Single-IP Test Deployment
 
@@ -298,11 +297,11 @@ const login = await getApi().authProxy.login({ Name: "demo", Password: "123456" 
 | -------------------------- | ------------------------------------------------ |
 | `pnpm dev:h5`              | Start H5 dev server (:5173)                      |
 | `pnpm dev:h5:mock`         | H5 dev with `VITE_API_MODE=mock`                 |
-| `pnpm dev:h5:test`         | H5 dev against test env (:5173, `/h5/`)          |
-| `pnpm dev:h5:prod`         | H5 dev against prod env (:5175, `/h5/`)          |
+| `pnpm dev:h5:test`         | H5 dev against test env (:5173, `/`)             |
+| `pnpm dev:h5:prod`         | H5 dev against prod env (:5175, `/`)             |
 | `pnpm dev:web`             | Start Web dev server (:5174)                     |
-| `pnpm dev:web:test`        | Web dev against test env (:5174, `/web/`)        |
-| `pnpm dev:web:prod`        | Web dev against prod env (:5176, `/web/`)        |
+| `pnpm dev:web:test`        | Web dev against test env (:5174, `/`)            |
+| `pnpm dev:web:prod`        | Web dev against prod env (:5176, `/`)            |
 | `pnpm build:workspace`     | Build shared-types, api, mock (for mock mode)    |
 | `pnpm analyze-ryx-scope`   | ryx 迁移范围分析 → METHODS-RYX-SCOPE.md          |
 | `pnpm analyze-ryx-pages`   | 页面→接口矩阵 → PAGE-API-MATRIX.md               |

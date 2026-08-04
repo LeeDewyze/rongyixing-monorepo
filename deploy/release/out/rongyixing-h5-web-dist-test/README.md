@@ -63,10 +63,10 @@ CREATE_ARCHIVE=1 deploy/release/build-dist-package.sh
 本地 Vite 调试也按 test/prod 拆分，便于在构建交付包前先验证接口环境：
 
 ```bash
-pnpm dev:h5:test   # http://localhost:5173/h5/  -> rtesp.com
-pnpm dev:web:test  # http://localhost:5174/web/ -> rtesp.com
-pnpm dev:h5:prod   # http://localhost:5175/h5/  -> rongtrip.cn
-pnpm dev:web:prod  # http://localhost:5176/web/ -> rongtrip.cn
+pnpm dev:h5:test   # http://localhost:5173/ -> rtesp.com
+pnpm dev:web:test  # http://localhost:5174/ -> rtesp.com
+pnpm dev:h5:prod   # http://localhost:5175/ -> rongtrip.cn
+pnpm dev:web:prod  # http://localhost:5176/ -> rongtrip.cn
 ```
 
 对应 env 文件：
