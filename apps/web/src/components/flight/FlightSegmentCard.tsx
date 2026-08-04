@@ -72,7 +72,7 @@ function DirectLowestBadge() {
     <span
       className={`absolute left-0 top-0 z-[2] flex h-5 min-w-[56px] items-center justify-center rounded-tl-lg bg-[#34C759] px-2 text-[11px] font-normal leading-none tracking-[0] text-white ${FONT}`}
     >
-      价格最低
+      直飞低价
     </span>
   );
 }
