@@ -29,7 +29,10 @@ import {
 } from "@/lib/flight-search";
 import { buildCabinsPath, getFlightListEmptyMessage } from "@/lib/flight-list-refresh";
 import { saveFlightListSnapshot } from "@/lib/flight-list-session";
-import { prefetchFlightCabinsPolicy } from "@/lib/flight-cabins-preflight";
+import {
+  prefetchFlightCabinsPolicy,
+  resolveFlightCabinsPassengers,
+} from "@/lib/flight-cabins-preflight";
 import { FLIGHT_NO_POLICY_SEATS_MESSAGE } from "@/lib/flight-cabin-policy";
 import { hasAgentIdentity } from "@/lib/flight-book-save-order";
 import { useIdentity } from "@/hooks/useIdentity";
@@ -416,7 +419,7 @@ export function FlightListPage() {
   }
 
   async function openCabins(flightId: string) {
-    const segment = displayed.find((s) => s.Id === flightId);
+    const segment = displayed.find((s) => resolveFlightSegmentId(s) === flightId);
     if (!segment) return;
     if (isBusinessMode && passengerContext.isLoading) return;
     if (isBusinessMode && selectedPassengers.length === 0) {
@@ -429,9 +432,13 @@ export function FlightListPage() {
     try {
       const { policyResults } = await prefetchFlightCabinsPolicy({
         segment,
-        listParams,
+        listParams: apiListParams ?? listParams,
         searchParams,
-        passengers: selectedPassengers,
+        passengers: resolveFlightCabinsPassengers({
+          isExchangeBook: isExchangeList,
+          exchangeSession,
+          passengers: selectedPassengers,
+        }),
         fetchPolicy: isBusinessMode,
       });
       if (isBusinessMode && !policyResults.length && !isAgent) {
@@ -536,7 +543,7 @@ export function FlightListPage() {
                 segment={seg}
                 variant={resolveFlightCardVariant(seg, "direct")}
                 isExchange={isExchangeList}
-                loading={openingCabinsId === seg.Id}
+                loading={openingCabinsId === resolveFlightSegmentId(seg)}
                 onClick={() => void openCabins(resolveFlightSegmentId(seg))}
               />
             ))}
@@ -554,7 +561,7 @@ export function FlightListPage() {
                   segment={seg}
                   variant={resolveFlightCardVariant(seg, "transfer")}
                   isExchange={isExchangeList}
-                  loading={openingCabinsId === seg.Id}
+                  loading={openingCabinsId === resolveFlightSegmentId(seg)}
                   onClick={() => void openCabins(resolveFlightSegmentId(seg))}
                 />
               ))}

@@ -28,7 +28,6 @@ import {
   filterFaresForFlight,
   isEconomyFare,
   isFlightFareBookable,
-  normalizeFlightDetailData,
   parseFlightCabinsQuery,
   partitionCabinsByTab,
   resolveDetailSegment,
@@ -72,6 +71,10 @@ import {
   FLIGHT_EXCHANGE_SESSION_EVENT,
   loadFlightExchangeSession,
 } from "@/lib/flight-exchange-session";
+import {
+  resolveFlightCabinsDetailSnapshot,
+  resolveFlightCabinsPassengers,
+} from "@/lib/flight-cabins-preflight";
 
 const FALLBACK_HEADER_HEIGHT = 56;
 
@@ -99,9 +102,15 @@ export function FlightCabinsPage() {
     ProductType.Flight,
     isBusinessMode && !isExchangeBook,
   );
-  const selectedPassengers = isExchangeBook
-    ? passengerContext.selected
-    : passengerContext.passengers;
+  const selectedPassengers = useMemo(
+    () =>
+      resolveFlightCabinsPassengers({
+        isExchangeBook,
+        exchangeSession,
+        passengers: passengerContext.passengers,
+      }),
+    [exchangeSession, isExchangeBook, passengerContext.passengers],
+  );
 
   useEffect(() => {
     function syncExchangeSession() {
@@ -151,7 +160,6 @@ export function FlightCabinsPage() {
     data: rawDetail,
     isLoading,
     isFetching,
-    isSuccess,
     error,
     refetch,
     dataUpdatedAt,
@@ -159,13 +167,16 @@ export function FlightCabinsPage() {
 
   const detail = useMemo(
     () =>
-      normalizeFlightDetailData(rawDetail, {
-        isExchange: isExchangeBook,
-        flightNumber: query.flightNumber,
+      resolveFlightCabinsDetailSnapshot({
+        query,
+        rawDetail,
+        cachedDetail: cachedPolicySession?.detailSnapshot,
+        isExchangeBook,
+        listParams,
       }),
-    [rawDetail, isExchangeBook, query.flightNumber],
+    [cachedPolicySession?.detailSnapshot, isExchangeBook, listParams, query, rawDetail],
   );
-  const detailReady = isSuccess && Boolean(detail?.FlightFares?.length) && !isFetching;
+  const detailReady = Boolean(detail?.FlightFares?.length);
 
   const segment = useMemo(
     () => resolveDetailSegment(query, detail?.FlightSegments?.[0]),
@@ -502,7 +513,7 @@ export function FlightCabinsPage() {
   }
 
   const showCabinSkeleton =
-    isAuthenticated && (isLoading || isFetching || isPolicyChecking) && !error;
+    isAuthenticated && !detailReady && (isLoading || isFetching || isPolicyChecking) && !error;
 
   return (
     <div
@@ -563,7 +574,7 @@ export function FlightCabinsPage() {
 
         {showCabinSkeleton ? <FlightCabinsSkeleton /> : null}
 
-        {isAuthenticated && error && !isFetching && !detail?.FlightFares?.length ? (
+        {isAuthenticated && error && !detailReady && !isFetching ? (
           <div className="px-3 py-6 text-center">
             <p className="text-sm text-destructive">{formatApiError(error, "flight")}</p>
             <button
@@ -576,7 +587,7 @@ export function FlightCabinsPage() {
           </div>
         ) : null}
 
-        {isAuthenticated && !showCabinSkeleton && !error ? (
+        {isAuthenticated && !showCabinSkeleton && detailReady ? (
           <section className="mx-3 mt-2 pb-3">
             {isFetching ? (
               <p className="pb-1 text-right text-[12px] text-[#999999]">更新中…</p>

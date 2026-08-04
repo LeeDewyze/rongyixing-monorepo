@@ -66,6 +66,7 @@ export {
   normalizeFlightDetailResult,
   normalizeExchangeFlightDetail,
   resolveExchangeDetailSegments,
+  resolveExchangeDetailFromListSnapshot,
   matchesExchangeFlightSegment,
   resolveCheckedBaggage,
   selectCabinsForSegment,

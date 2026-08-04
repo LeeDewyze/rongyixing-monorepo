@@ -1,5 +1,7 @@
 import type { FlightSegment, PassengerBookInfo } from "@ryx/shared-types";
 
+import { resolveFlightSegmentId } from "@/utils/flight-list";
+
 /** Minimal cabins query shape for list refresh href (list pages are out of scope). */
 type FlightCabinsQuery = {
   date?: string;
@@ -58,7 +60,12 @@ export function buildCabinsPath(segment: FlightSegment, searchParams: URLSearchP
   const flightNumber = segment.Number || segment.FlightNumber || "";
   if (flightNumber) params.set("flightNumber", flightNumber);
   if (segment.FromAirport) params.set("fromAirport", segment.FromAirport);
+  else if (searchParams.get("fromAirport"))
+    params.set("fromAirport", searchParams.get("fromAirport")!);
+  else if (searchParams.get("fromCode")) params.set("fromAirport", searchParams.get("fromCode")!);
   if (segment.ToAirport) params.set("toAirport", segment.ToAirport);
+  else if (searchParams.get("toAirport")) params.set("toAirport", searchParams.get("toAirport")!);
+  else if (searchParams.get("toCode")) params.set("toAirport", searchParams.get("toCode")!);
   if (segment.TakeoffTime) params.set("takeoffTime", segment.TakeoffTime);
   if (segment.ArrivalTime) params.set("arrivalTime", segment.ArrivalTime);
   if (segment.AirlineName) params.set("airlineName", segment.AirlineName);
@@ -75,7 +82,7 @@ export function buildCabinsPath(segment: FlightSegment, searchParams: URLSearchP
   if (segment.BookType != null && segment.BookType !== "") {
     params.set("bookType", String(segment.BookType));
   }
-  const routeId = segment.Id || flightNumber || detailKey || "unknown";
+  const routeId = resolveFlightSegmentId(segment);
   return `/flight/${encodeURIComponent(routeId)}/cabins?${params.toString()}`;
 }
 

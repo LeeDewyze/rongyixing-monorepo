@@ -67,7 +67,14 @@ export function normalizeFlightSegments(result: FlightListResult | undefined): F
     }).filter((s): s is FlightSegment => Boolean(s));
   }
 
-  return (result.Result?.FlightSegments ?? []).map(enrichSegment);
+  return (result.Result?.FlightSegments ?? []).map((seg) =>
+    enrichSegment({
+      ...seg,
+      Id: resolveFlightSegmentId(seg),
+      Number: seg.Number || seg.FlightNumber || "",
+      DetailKey: seg.DetailKey ?? seg.Data,
+    }),
+  );
 }
 
 export function initLowestPriceSegments(

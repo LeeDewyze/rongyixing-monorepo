@@ -319,6 +319,35 @@ function prepareExchangeFare(fare: FlightFare, segments: FlightSegment[]): Fligh
   return basics ? { ...cabin, FlightFareBasics: basics } : cabin;
 }
 
+/**
+ * Legacy `getExchangeDetail` when `LowestFare >= 0`: build cabins from Home-Exchange
+ * list payload (`Result.FlightFares`) without another ExchangeDetail round-trip.
+ */
+export function resolveExchangeDetailFromListSnapshot(
+  listResult: { Result?: { FlightSegments?: FlightSegment[]; FlightFares?: FlightFare[] } },
+  segment: FlightSegment,
+): FlightDetailResult | null {
+  const fares = listResult.Result?.FlightFares;
+  if (!fares?.length) return null;
+
+  const flightNumber = String(segment.Number || segment.FlightNumber || "").trim();
+  if (!flightNumber) return null;
+
+  const matchedFares = selectCabinsForSegment({ FlightFares: fares }, flightNumber);
+  if (!matchedFares.length) return null;
+
+  const segments =
+    listResult.Result?.FlightSegments?.filter((item) =>
+      matchesExchangeFlightSegment(item, flightNumber),
+    ) ?? [];
+  const detail: FlightDetailResult = {
+    FlightFares: matchedFares,
+    FlightSegments: segments.length ? segments : [segment],
+  };
+
+  return normalizeExchangeFlightDetail(detail, flightNumber) ?? detail;
+}
+
 /** Normalize Home-ExchangeDetail payload for a single target flight. */
 export function normalizeExchangeFlightDetail(
   result: FlightDetailResult | undefined,

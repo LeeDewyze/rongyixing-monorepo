@@ -74,4 +74,19 @@ describe("normalizeFlightSegments", () => {
       }),
     ).toBe("dk-kn");
   });
+
+  it("normalizeFlightSegments assigns Id for Result.FlightSegments payloads", () => {
+    const segments = normalizeFlightSegments({
+      Result: {
+        FlightSegments: [
+          {
+            Number: "MU5101",
+            TakeoffTime: "2026-06-20 08:00",
+            DetailKey: "exchange-dk",
+          },
+        ],
+      },
+    });
+    expect(segments[0]?.Id).toBe("exchange-dk");
+  });
 });

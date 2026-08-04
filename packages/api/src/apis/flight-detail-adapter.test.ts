@@ -6,6 +6,7 @@ import {
   formatCabinTypeName,
   normalizeExchangeFlightDetail,
   normalizeFlightDetailResponse,
+  resolveExchangeDetailFromListSnapshot,
   selectCabinsForSegment,
 } from "./flight-detail-adapter.js";
 
@@ -194,5 +195,27 @@ describe("normalizeExchangeFlightDetail", () => {
     expect(result?.FlightSegments?.[0]?.FlightNumber).toBe("CA1883");
     expect(result?.FlightFares?.[0]?.FlightFareBasics).toHaveLength(1);
     expect(result?.FlightFares?.[0]?.FlightFareBasics?.[0]?.CabinCode).toBe("B");
+  });
+
+  it("builds exchange detail from Home-Exchange list snapshot fares", () => {
+    const result = resolveExchangeDetailFromListSnapshot(
+      {
+        Result: {
+          FlightSegments: [
+            { Id: "seg-1", Number: "MU5100", FlightNumber: "MU5100" },
+            { Id: "seg-2", Number: "CA1501", FlightNumber: "CA1501" },
+          ],
+          FlightFares: [
+            { SalesPrice: "680", FlightNumber: "MU5100" },
+            { SalesPrice: "720", FlightNumber: "CA1501" },
+          ],
+        },
+      },
+      { Number: "CA1501", FlightNumber: "CA1501", LowestFare: "720" },
+    );
+
+    expect(result?.FlightFares).toHaveLength(1);
+    expect(result?.FlightFares?.[0]?.FlightNumber).toBe("CA1501");
+    expect(result?.FlightSegments?.[0]?.FlightNumber).toBe("CA1501");
   });
 });

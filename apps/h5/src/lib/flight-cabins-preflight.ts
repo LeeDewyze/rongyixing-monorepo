@@ -5,16 +5,20 @@ import type {
   FlightSegment,
   PassengerBookInfo,
 } from "@ryx/shared-types";
+import { resolveExchangeDetailFromListSnapshot } from "@ryx/api";
 
 import { getApi } from "@/lib/api";
 import { buildFlightPolicyParams } from "@/lib/flight-book-policy";
 import {
   buildFlightDetailParams,
   normalizeFlightDetailData,
+  segmentFromCabinsQuery,
   type FlightCabinsQuery,
 } from "@/lib/flight-detail";
+import type { FlightExchangeSession } from "@/lib/flight-exchange-session";
 import { loadFlightListSnapshot } from "@/lib/flight-list-session";
 import { buildFlightPolicySessionKey, saveFlightPolicySession } from "@/lib/flight-policy-session";
+import { resolveFlightSegmentId } from "@/utils/flight-list";
 
 export function buildCabinsQueryFromSegment(
   segment: FlightSegment,
@@ -50,7 +54,66 @@ export function buildCabinsQueryFromSegment(
     planeTypeDescribe: segment.PlaneTypeDescribe ?? "",
     meal: segment.Meal ?? "",
     airlineSrc: segment.AirlineSrc ?? "",
+    ticketId: searchParams.get("ticketId") ?? "",
+    exchange: searchParams.get("exchange") ?? undefined,
   };
+}
+
+export function resolveFlightExchangePrefetchOptions(
+  searchParams: URLSearchParams,
+): { ticketId: string; isExchange: true } | undefined {
+  const ticketId = searchParams.get("ticketId")?.trim() ?? "";
+  if (searchParams.get("exchange") !== "1" || !ticketId) return undefined;
+  return { ticketId, isExchange: true };
+}
+
+export function resolveFlightCabinsPassengers(input: {
+  isExchangeBook: boolean;
+  exchangeSession: FlightExchangeSession | null;
+  passengers: PassengerBookInfo[];
+}): PassengerBookInfo[] {
+  if (input.isExchangeBook && input.exchangeSession?.passengers?.length) {
+    return input.exchangeSession.passengers;
+  }
+  return input.passengers;
+}
+
+/** Prefer API detail, then list prefetch cache, then exchange list snapshot. */
+export function resolveFlightCabinsDetailSnapshot(input: {
+  query: FlightCabinsQuery;
+  rawDetail?: FlightDetailResult;
+  cachedDetail?: FlightDetailResult;
+  isExchangeBook: boolean;
+  listParams: FlightSearchParams;
+}): FlightDetailResult {
+  const flightNumber = input.query.flightNumber;
+  const normalizeOpts = {
+    isExchange: input.isExchangeBook,
+    flightNumber,
+  };
+
+  const fromApi = input.rawDetail
+    ? normalizeFlightDetailData(input.rawDetail, normalizeOpts)
+    : undefined;
+  if (fromApi?.FlightFares?.length) return fromApi;
+
+  const fromCache = input.cachedDetail
+    ? normalizeFlightDetailData(input.cachedDetail, normalizeOpts)
+    : undefined;
+  if (fromCache?.FlightFares?.length) return fromCache;
+
+  if (input.isExchangeBook) {
+    const listSnapshot = loadFlightListSnapshot(input.listParams);
+    const segment = segmentFromCabinsQuery(input.query);
+    const fromList = listSnapshot
+      ? resolveExchangeDetailFromListSnapshot(listSnapshot, segment)
+      : null;
+    if (fromList?.FlightFares?.length) {
+      return normalizeFlightDetailData(fromList, normalizeOpts) ?? fromList;
+    }
+  }
+
+  return fromApi ?? fromCache ?? {};
 }
 
 export interface PrefetchFlightCabinsPolicyResult {
@@ -68,19 +131,34 @@ export async function prefetchFlightCabinsPolicy(input: {
 }): Promise<PrefetchFlightCabinsPolicyResult> {
   const { segment, listParams, searchParams, passengers, fetchPolicy = true } = input;
   const query = buildCabinsQueryFromSegment(segment, searchParams);
-  const detailParams = buildFlightDetailParams(query, passengers.length);
-  if (!detailParams) {
-    throw new Error("Incomplete flight detail parameters");
+  const exchangeOptions = resolveFlightExchangePrefetchOptions(searchParams);
+  const flightNumber = query.flightNumber;
+  const listSnapshot = loadFlightListSnapshot(listParams);
+
+  let detail: FlightDetailResult | undefined;
+  const lowestFare = Number(segment.LowestFare);
+  if (exchangeOptions && Number.isFinite(lowestFare) && lowestFare >= 0 && listSnapshot) {
+    detail = resolveExchangeDetailFromListSnapshot(listSnapshot, segment) ?? undefined;
   }
 
-  const api = getApi();
-  const rawDetail = await api.flight.getFlightDetail(detailParams);
-  const detail = normalizeFlightDetailData(rawDetail);
+  if (!detail?.FlightFares?.length) {
+    const detailParams = buildFlightDetailParams(query, passengers.length, exchangeOptions);
+    if (!detailParams) {
+      throw new Error("Incomplete flight detail parameters");
+    }
+
+    const api = getApi();
+    const rawDetail = await api.flight.getFlightDetail(detailParams);
+    detail = normalizeFlightDetailData(rawDetail, {
+      isExchange: Boolean(exchangeOptions),
+      flightNumber,
+    });
+  }
+
   if (!detail?.FlightFares?.length) {
     throw new Error("No cabins available for this flight");
   }
 
-  const listSnapshot = loadFlightListSnapshot(listParams);
   const policyParams = buildFlightPolicyParams({
     listSnapshot: listSnapshot ?? undefined,
     detailSnapshot: detail,
@@ -89,13 +167,12 @@ export async function prefetchFlightCabinsPolicy(input: {
 
   let policyResults: FlightPolicyPassengerResult[] = [];
   if (fetchPolicy && policyParams) {
-    policyResults = await api.flight.getFlightPolicy(policyParams);
+    policyResults = await getApi().flight.getFlightPolicy(policyParams);
   }
 
-  const flightNumber = segment.Number || segment.FlightNumber || "";
   saveFlightPolicySession(
     buildFlightPolicySessionKey({
-      segmentId: segment.Id ?? flightNumber,
+      segmentId: resolveFlightSegmentId(segment),
       flightNumber,
       listParams,
       passengers,

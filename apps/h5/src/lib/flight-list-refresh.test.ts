@@ -72,6 +72,18 @@ describe("flight-list-refresh", () => {
     );
   });
 
+  it("buildCabinsPath uses resolveFlightSegmentId when Id is missing", () => {
+    const path = buildCabinsPath(
+      {
+        Number: "CA1234",
+        TakeoffTime: "2026-06-20 08:00",
+        DetailKey: "dk-only",
+      },
+      new URLSearchParams(),
+    );
+    expect(path).toContain("/flight/dk-only/cabins?");
+  });
+
   it("buildCabinsPath forwards BookType for Home-Detail", () => {
     const path = buildCabinsPath(
       {
