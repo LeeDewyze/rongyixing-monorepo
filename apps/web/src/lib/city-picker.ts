@@ -38,6 +38,23 @@ function firstLetterFromPinyin(pinyin?: string): string {
   return ch >= "A" && ch <= "Z" ? ch : "#";
 }
 
+/** Legacy tmc-flight-city initData — Sequence asc, then hot cities first. */
+export function sortPickerItemsLikeLegacy<T>(
+  items: T[],
+  options: {
+    getSequence: (item: T) => number | undefined;
+    getIsHot: (item: T) => boolean;
+  },
+): T[] {
+  const sorted = [...items].sort(
+    (a, b) => (options.getSequence(a) ?? 0) - (options.getSequence(b) ?? 0),
+  );
+  return [
+    ...sorted.filter((item) => options.getIsHot(item)),
+    ...sorted.filter((item) => !options.getIsHot(item)),
+  ];
+}
+
 export function normalizePickerItems<T>(
   items: T[],
   adapter: CityPickerAdapter<T>,
@@ -46,16 +63,10 @@ export function normalizePickerItems<T>(
   const normalized = list.map((item) => {
     const pinyin = adapter.getPinyin?.(item);
     const cityName = adapter.getCityName?.(item);
-    const firstLetter =
-      adapter.getFirstLetter?.(item) ?? firstLetterFromPinyin(pinyin);
+    const firstLetter = adapter.getFirstLetter?.(item) ?? firstLetterFromPinyin(pinyin);
     const searchValues =
       adapter.getSearchValues?.(item) ??
-      [
-        adapter.getCode(item),
-        adapter.getName(item),
-        pinyin,
-        cityName,
-      ].filter(Boolean);
+      [adapter.getCode(item), adapter.getName(item), pinyin, cityName].filter(Boolean);
 
     return {
       item,
@@ -72,20 +83,19 @@ export function normalizePickerItems<T>(
     } satisfies NormalizedPickerItem<T>;
   });
 
-  return normalized
-    .filter((it) => !it.isDeprecated)
-    .sort((a, b) => {
-      const seqA = adapter.getSequence?.(a.item);
-      const seqB = adapter.getSequence?.(b.item);
-      if (seqA != null && seqB != null && seqA !== seqB) return seqA - seqB;
-      if (a.isHot !== b.isHot) return a.isHot ? -1 : 1;
-      return a.name.localeCompare(b.name, "zh-CN");
-    });
+  return sortPickerItemsLikeLegacy(
+    normalized.filter((it) => !it.isDeprecated),
+    {
+      getSequence: (row) => adapter.getSequence?.(row.item),
+      getIsHot: (row) => row.isHot,
+    },
+  );
 }
 
-export function groupByFirstLetter<T>(
-  items: NormalizedPickerItem<T>[],
-): { letters: string[]; groups: Record<string, NormalizedPickerItem<T>[]> } {
+export function groupByFirstLetter<T>(items: NormalizedPickerItem<T>[]): {
+  letters: string[];
+  groups: Record<string, NormalizedPickerItem<T>[]>;
+} {
   const groups: Record<string, NormalizedPickerItem<T>[]> = {};
   for (const item of items) {
     const letter = item.firstLetter;
@@ -142,7 +152,12 @@ export function loadCityHistory<T>(storageKey: string): T[] {
   }
 }
 
-export function saveCityHistory<T>(storageKey: string, item: T, getId: (v: T) => string, max = 20): T[] {
+export function saveCityHistory<T>(
+  storageKey: string,
+  item: T,
+  getId: (v: T) => string,
+  max = 20,
+): T[] {
   const prev = loadCityHistory<T>(storageKey);
   const next = [item, ...prev.filter((it) => getId(it) !== getId(item))].slice(0, max);
   localStorage.setItem(storageKey, JSON.stringify(next));

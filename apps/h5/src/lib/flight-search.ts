@@ -46,17 +46,15 @@ export function displayCityName(city: Trafficline) {
   return (city.Nickname ?? city.Name).replace("国际", "").replace("机场", "");
 }
 
-/** Browse / hot chip label — legacy getItem with isShowAirports=false. */
+/** Browse / hot chip label — legacy CityPage getItem (isShowAirports=false). */
 export function displayTrafficlineBrowseName(city: Trafficline) {
-  const raw = city.IsHot
-    ? (city.CityName ?? city.Nickname ?? city.Name)
-    : (city.Nickname ?? city.Name);
-  return raw.replace("国际", "").replace("机场", "");
+  const raw = city.IsHot ? city.CityName : city.Nickname;
+  return raw ?? city.Name ?? "";
 }
 
-/** Search result primary line — legacy tmc-flight-select-city list item. */
+/** Search result primary line — legacy getSearchPageListItem. */
 export function displayTrafficlineSearchName(city: Trafficline) {
-  return city.Nickname ?? city.Name;
+  return city.Name ?? city.Nickname ?? "";
 }
 
 export function loadStoredCity(key: string, fallback: Trafficline): Trafficline {
