@@ -2,7 +2,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   buildTravelApplyBody,
+  emptyTravelApplyTraveler,
   fetchTravelApplyMeta,
+  staffPickerOptions,
   validateTravelApply,
   type TravelApplyMeta,
 } from "./travel-apply";
@@ -168,6 +170,36 @@ describe("travel apply form submit", () => {
         ],
       }),
     ).toBe("出差人不能重复");
+  });
+
+  it("emptyTravelApplyTraveler requires selection before submit", () => {
+    expect(emptyTravelApplyTraveler().account.value).toBe("");
+    expect(
+      validateTravelApply({
+        travelTypes: ["国内机票"],
+        reason: "测试",
+        travelers: [{ account: meta.defaultAccount }, emptyTravelApplyTraveler()],
+        segments: [
+          {
+            startDate: "2026-06-25",
+            endDate: "2026-06-30",
+            fromCity: { label: "北京", value: "1101" },
+            toCity: { label: "上海", value: "3101" },
+          },
+        ],
+      }),
+    ).toBe("请选择出差人");
+  });
+
+  it("indexes staff picker search by number and name", () => {
+    const options = staffPickerOptions([
+      { label: "007-范梦杭", value: "3680000000003" },
+      { label: "1611558-姜茗豪", value: "40390000000011" },
+    ]);
+
+    expect(options[0]?.searchText).toContain("007");
+    expect(options[0]?.searchText).toContain("范梦杭");
+    expect(options[1]?.searchText).toContain("姜茗豪");
   });
 });
 

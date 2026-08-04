@@ -14,6 +14,8 @@ interface ResourcePickerProps {
   options: PickerOption[];
   title: string;
   placeholder?: string;
+  /** When true, show the full option list instead of hot items / first 30. */
+  showAllOptions?: boolean;
   onClose: () => void;
   onSelect: (option: PickerOption) => void;
 }
@@ -24,6 +26,7 @@ export function ResourcePicker({
   options,
   title,
   placeholder = "搜索",
+  showAllOptions = false,
   onClose,
   onSelect,
 }: ResourcePickerProps) {
@@ -32,11 +35,12 @@ export function ResourcePicker({
   const filtered = useMemo(() => {
     const q = keyword.trim().toLowerCase();
     if (!q) {
+      if (showAllOptions) return options;
       const hot = options.filter((o) => o.hot);
       return hot.length > 0 ? hot : options.slice(0, 30);
     }
     return options.filter((o) => o.searchText.toLowerCase().includes(q));
-  }, [options, keyword]);
+  }, [options, keyword, showAllOptions]);
 
   if (!open) return null;
 

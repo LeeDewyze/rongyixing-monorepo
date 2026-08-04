@@ -269,6 +269,10 @@ export function defaultTravelApplyTraveler(defaultAccount: TravelApplyOption): T
   return { account: defaultAccount };
 }
 
+export function emptyTravelApplyTraveler(): TravelApplyTraveler {
+  return { account: { label: "", value: "" } };
+}
+
 export async function fetchTravelApplyMeta(ticket: string): Promise<TravelApplyMeta> {
   const html = await fetchText(`${getWorkflowSite()}/Form/Flow?flowtag=Travel&ticket=${ticket}`);
   const controls = parseFlowControls(html);
@@ -340,11 +344,16 @@ export function travelCityPickerAdapter() {
 }
 
 export function staffPickerOptions(staff: TravelApplyOption[]) {
-  return staff.map((item) => ({
-    id: item.value,
-    label: item.label,
-    searchText: item.label,
-  }));
+  return staff.map((item) => {
+    const dashIndex = item.label.indexOf("-");
+    const number = dashIndex > 0 ? item.label.slice(0, dashIndex) : "";
+    const name = dashIndex > 0 ? item.label.slice(dashIndex + 1) : item.label;
+    return {
+      id: item.value,
+      label: item.label,
+      searchText: [item.value, item.label, number, name].filter(Boolean).join(" "),
+    };
+  });
 }
 
 async function resolveTravelersWithPolicy(

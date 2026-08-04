@@ -15,6 +15,7 @@ import { getTicket } from "@/lib/session";
 import {
   defaultTravelApplySegment,
   defaultTravelApplyTraveler,
+  emptyTravelApplyTraveler,
   fetchTravelFormData,
   parseFormDataToValues,
   staffPickerOptions,
@@ -254,6 +255,7 @@ export function TravelApplyPage() {
   const goHome = useHomeBack();
   usePageHeader({ visible: false });
   const headerRef = useRef<HTMLDivElement>(null);
+  const pendingTravelerAddRef = useRef<number | null>(null);
   const [headerHeight, setHeaderHeight] = useState(TRAVEL_APPLY_HEADER_FALLBACK_HEIGHT);
   const [searchParams] = useSearchParams();
   const editId = searchParams.get("editId") || null;
@@ -290,7 +292,15 @@ export function TravelApplyPage() {
 
   const isEditing = Boolean(editId);
   const meta = metaQuery.data;
-  const staffOptions = useMemo(() => (meta ? staffPickerOptions(meta.staffOptions) : []), [meta]);
+  const staffOptions = useMemo(() => {
+    if (!meta) return [];
+    const selectedIds = new Set(
+      travelers
+        .map((traveler, index) => (index === staffPickerIndex ? null : traveler.account.value))
+        .filter(Boolean),
+    );
+    return staffPickerOptions(meta.staffOptions).filter((option) => !selectedIds.has(option.id));
+  }, [meta, travelers, staffPickerIndex]);
   const totalTripDays = segments.reduce(
     (sum, segment) => sum + tripDaysBetween(segment.startDate, segment.endDate),
     0,
@@ -359,8 +369,25 @@ export function TravelApplyPage() {
   }
 
   function addTraveler() {
-    if (!meta) return;
-    setTravelers((prev) => [...prev, defaultTravelApplyTraveler(meta.defaultAccount)]);
+    const newIndex = travelers.length;
+    pendingTravelerAddRef.current = newIndex;
+    setTravelers((prev) => [...prev, emptyTravelApplyTraveler()]);
+    setStaffPickerIndex(newIndex);
+  }
+
+  function closeStaffPicker() {
+    const index = staffPickerIndex;
+    if (index != null && pendingTravelerAddRef.current === index) {
+      setTravelers((prev) => {
+        const traveler = prev[index];
+        if (traveler && !traveler.account.value) {
+          return prev.filter((_, i) => i !== index);
+        }
+        return prev;
+      });
+      pendingTravelerAddRef.current = null;
+    }
+    setStaffPickerIndex(null);
   }
 
   function removeTraveler(index: number) {
@@ -697,9 +724,11 @@ export function TravelApplyPage() {
         options={staffOptions}
         title="选择出差人"
         placeholder="搜索姓名或工号"
-        onClose={() => setStaffPickerIndex(null)}
+        showAllOptions
+        onClose={closeStaffPicker}
         onSelect={(option) => {
           if (staffPickerIndex == null) return;
+          pendingTravelerAddRef.current = null;
           const account = meta.staffOptions.find((item) => item.value === option.id) ?? {
             label: option.label,
             value: option.id,
