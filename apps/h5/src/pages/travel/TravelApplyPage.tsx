@@ -558,19 +558,7 @@ export function TravelApplyPage() {
             </label>
           </SectionCard>
 
-          <SectionCard
-            title="出差人"
-            subtitle={`共 ${travelers.length} 人`}
-            action={
-              <button
-                type="button"
-                className="shrink-0 rounded-full px-3 py-1 text-xs font-medium text-brand-primary active:bg-[#EEF4FF]"
-                onClick={addTraveler}
-              >
-                添加
-              </button>
-            }
-          >
+          <SectionCard title="出差人" subtitle={`共 ${travelers.length} 人`}>
             <div className="divide-y divide-[#F3F4F6]">
               {travelers.map((traveler, index) => (
                 <div key={`traveler-${index}`} className="flex items-center gap-2 py-3.5">
