@@ -5,6 +5,7 @@ import type {
   LoginResultDto,
   MobileLoginParams,
   PasswordLoginParams,
+  RybLoginParams,
   WebSocketUrlDto,
 } from "@ryx/shared-types";
 
@@ -17,6 +18,7 @@ export interface AuthProxyApi {
   deviceLogin(params: DeviceLoginParams): Promise<LoginResultDto>;
   login(params: PasswordLoginParams): Promise<LoginResultDto>;
   mobileLogin(params: MobileLoginParams): Promise<LoginResultDto>;
+  rybLogin(params: RybLoginParams): Promise<LoginResultDto>;
   logout(): Promise<boolean>;
 }
 
@@ -51,6 +53,20 @@ export function createAuthProxyApi(proxy: ProxyClient): AuthProxyApi {
       return proxy.send<LoginResultDto>({
         method: AUTH_FLOW_METHODS.MOBILE_LOGIN,
         data: params,
+      });
+    },
+    rybLogin(params) {
+      return proxy.send<LoginResultDto>({
+        method: AUTH_FLOW_METHODS.RYB_LOGIN,
+        data: {
+          ticket: params.ticket,
+          LoginType: params.LoginType ?? "ryb",
+        },
+        requestFields: {
+          Ticket: params.ticket,
+          TicketName: "",
+          authType: 1,
+        },
       });
     },
     logout() {

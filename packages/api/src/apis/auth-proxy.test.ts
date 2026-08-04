@@ -24,6 +24,48 @@ describe("createAuthProxyApi (mock mode)", () => {
   });
 });
 
+describe("createAuthProxyApi RYBLogin", () => {
+  it("posts external ticket to ApiLoginUrl Home/RYBLogin with legacy top-level fields", async () => {
+    let capturedUrl = "";
+    let capturedBody = "";
+    const proxy = createProxyClient({
+      baseUrl: "",
+      mode: "proxy",
+      apiConfig: {
+        Token: "setting-token",
+        Urls: { ApiLoginUrl: "https://login-api.rongtrip.cn" },
+        LoginUrl: "https://ronglv-feature.rongtrip.cn/Jyx/LoginByRyx",
+      },
+      getTicket: () => "old-session-ticket",
+      getDomain: () => "rongtrip.cn",
+      fetchImpl: async (url, init) => {
+        capturedUrl = String(url);
+        capturedBody = String(init?.body ?? "");
+        return new Response(
+          JSON.stringify(successResponse({ Ticket: "real-ticket", Id: "1", Name: "User" })),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        );
+      },
+    });
+    const auth = createAuthProxyApi(proxy);
+
+    const result = await auth.rybLogin({ ticket: "external-ticket" });
+    const fields = new URLSearchParams(capturedBody);
+
+    expect(result.Ticket).toBe("real-ticket");
+    expect(capturedUrl).toBe("/__ryx/ApiLoginUrl/Home/RYBLogin");
+    expect(fields.get("Method")).toBe(AUTH_FLOW_METHODS.RYB_LOGIN);
+    expect(fields.get("Ticket")).toBe("external-ticket");
+    expect(fields.get("TicketName")).toBe("");
+    expect(fields.get("authType")).toBe("1");
+    expect(fields.get("Token")).toBe("setting-token");
+    expect(fields.get("Data")).toBe(
+      JSON.stringify({ ticket: "external-ticket", LoginType: "ryb" }),
+    );
+    expect(fields.get("Sign")).toBeTruthy();
+  });
+});
+
 describe("createIdentityApi (mock mode)", () => {
   it("checks identity with legacy H5 login type when session is valid", async () => {
     let capturedData: unknown;
