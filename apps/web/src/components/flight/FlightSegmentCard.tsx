@@ -7,6 +7,7 @@ import {
   formatFlightAgreementAirlineLabel,
   formatFlightListAirlineFlightLabel,
   formatFlightListAirportLine,
+  formatFlightMealLabel,
   formatFlightListPlaneSubtitle,
   formatFlightListPriceLabel,
   formatFlightRouteMiddleDisplay,
@@ -165,6 +166,7 @@ export function FlightSegmentCard({
   const priceLabel = formatFlightListPriceLabel(segment, isExchange);
   const airlineFlightLabel = formatFlightListAirlineFlightLabel(segment);
   const planeSubtitle = formatFlightListPlaneSubtitle(segment);
+  const mealLabel = formatFlightMealLabel(segment.Meal) ?? "无餐食";
   const agreementAirlineLabel = formatFlightAgreementAirlineLabel(segment);
   const arrivalDayOffset = formatArrivalDayOffsetLabel(segment.TakeoffTime, segment.ArrivalTime);
 
@@ -202,7 +204,11 @@ export function FlightSegmentCard({
               {airlineFlightLabel ? (
                 <p className={FLIGHT_AIRLINE_CLASS}>{airlineFlightLabel}</p>
               ) : null}
-              {planeSubtitle ? <p className={FLIGHT_PLANE_CLASS}>{planeSubtitle}</p> : null}
+              {planeSubtitle ? (
+                <p className={`truncate ${FLIGHT_PLANE_CLASS}`}>
+                  {[planeSubtitle, mealLabel].join(" | ")}
+                </p>
+              ) : null}
             </div>
           </div>
 
