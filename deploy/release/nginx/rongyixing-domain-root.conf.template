@@ -1,6 +1,6 @@
 server {
-  listen __RYX_H5_LISTEN__;
-  server_name __RYX_SERVER_NAME__;
+  listen __RYX_DOMAIN_LISTEN__;
+  server_name h5.songguoren.site;
 
   index index.html;
   client_max_body_size 20m;
@@ -25,8 +25,8 @@ server {
 }
 
 server {
-  listen __RYX_WEB_LISTEN__;
-  server_name __RYX_SERVER_NAME__;
+  listen __RYX_DOMAIN_LISTEN__;
+  server_name web.songguoren.site;
 
   index index.html;
   client_max_body_size 20m;

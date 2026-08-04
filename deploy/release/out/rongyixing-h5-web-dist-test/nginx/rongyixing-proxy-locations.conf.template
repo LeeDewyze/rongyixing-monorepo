@@ -1,0 +1,215 @@
+location ^~ /Home/ {
+  proxy_http_version 1.1;
+  proxy_set_header Host $proxy_host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_pass http://app.rtesp.com;
+}
+
+location ^~ /Jyx/ {
+  proxy_http_version 1.1;
+  proxy_set_header Host $proxy_host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_pass http://ronglv-feature.rtesp.com;
+}
+
+location ^~ /Identity/ {
+  proxy_http_version 1.1;
+  proxy_set_header Host $proxy_host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_pass http://api.rtesp.com;
+}
+
+location ^~ /__ryx/TmcApiHomeUrl/ {
+  proxy_http_version 1.1;
+  proxy_set_header Host $proxy_host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_pass http://api-tmc.rtesp.com/;
+}
+
+location ^~ /__ryx/MmsApiHomeUrl/ {
+  proxy_http_version 1.1;
+  proxy_set_header Host $proxy_host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_pass http://api-mms.rtesp.com/;
+}
+
+location ^~ /__ryx/TmcApiHotelUrl/ {
+  proxy_http_version 1.1;
+  proxy_set_header Host $proxy_host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_pass http://hotel-api-tmc.rtesp.com/;
+}
+
+location ^~ /__ryx/TmcApiFlightUrl/ {
+  proxy_http_version 1.1;
+  proxy_set_header Host $proxy_host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_pass http://flight-api-tmc.rtesp.com/;
+}
+
+location ^~ /__ryx/TmcApiTrainUrl/ {
+  proxy_http_version 1.1;
+  proxy_set_header Host $proxy_host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_pass http://train-api-tmc.rtesp.com/;
+}
+
+location ^~ /__ryx/TmcApiBookUrl/ {
+  proxy_http_version 1.1;
+  proxy_set_header Host $proxy_host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_pass http://book-api-tmc.rtesp.com/;
+}
+
+location ^~ /__ryx/TmcApiOrderUrl/ {
+  proxy_http_version 1.1;
+  proxy_set_header Host $proxy_host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_pass http://order-api-tmc.rtesp.com/;
+}
+
+location ^~ /__ryx/WorkflowApiUrl/ {
+  proxy_http_version 1.1;
+  proxy_set_header Host $proxy_host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_pass http://api-workflow.rtesp.com/;
+}
+
+location ^~ /__ryx/ApiMemberUrl/ {
+  proxy_http_version 1.1;
+  proxy_set_header Host $proxy_host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_pass http://member-api.rtesp.com/;
+}
+
+location ^~ /__ryx/ApiAccountUrl/ {
+  proxy_http_version 1.1;
+  proxy_set_header Host $proxy_host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_pass http://account-api.rtesp.com/;
+}
+
+location ^~ /__ryx/HrApiUrl/ {
+  proxy_http_version 1.1;
+  proxy_set_header Host $proxy_host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_pass http://api-hr.rtesp.com/;
+}
+
+location ^~ /__ryx/ApiPasswordUrl/ {
+  proxy_http_version 1.1;
+  proxy_set_header Host $proxy_host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_pass http://pass-api.rtesp.com/;
+}
+
+location ^~ /__ryx/ApiLoginUrl/ {
+  proxy_http_version 1.1;
+  proxy_set_header Host $proxy_host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_pass http://login-api.rtesp.com/;
+}
+
+location ^~ /__ryx/ApiHomeUrl/ {
+  proxy_http_version 1.1;
+  proxy_set_header Host $proxy_host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_pass http://api.rtesp.com/;
+}
+
+location ^~ /__ryx/FeatureRonglvUrl/ {
+  proxy_http_version 1.1;
+  proxy_set_header Host $proxy_host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_pass http://ronglv-feature.rtesp.com/;
+}
+
+location ^~ /__ryx/BpmApiExpenseUrl/ {
+  proxy_http_version 1.1;
+  proxy_set_header Host $proxy_host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_pass http://expense-api-bpm.rtesp.com/;
+}
+
+location ^~ /__ryx/TmcTouristFlightUrl/ {
+  proxy_http_version 1.1;
+  proxy_set_header Host $proxy_host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_pass http://flight-tourist-tmc.rtesp.com/;
+}
+
+location ^~ /__ryx/TmcTouristTrainUrl/ {
+  proxy_http_version 1.1;
+  proxy_set_header Host $proxy_host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_pass http://train-tourist-tmc.rtesp.com/;
+}
+
+location ^~ /__ryx/TmcTouristHotelUrl/ {
+  proxy_http_version 1.1;
+  proxy_set_header Host $proxy_host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_pass http://hotel-tourist-tmc.rtesp.com/;
+}
+
+location ^~ /__ryx/TmcTouristBookUrl/ {
+  proxy_http_version 1.1;
+  proxy_set_header Host $proxy_host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_pass http://book-tourist-tmc.rtesp.com/;
+}
+
+location ^~ /__ryx/TmcTouristOrderUrl/ {
+  proxy_http_version 1.1;
+  proxy_set_header Host $proxy_host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_pass http://order-tourist-tmc.rtesp.com/;
+}

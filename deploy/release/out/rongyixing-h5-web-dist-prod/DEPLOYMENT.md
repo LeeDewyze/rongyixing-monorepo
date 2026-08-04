@@ -20,7 +20,9 @@ rongyixing-h5-web-dist-prod/
 ├── web/
 │   └── dist/
 └── nginx/
-    └── rongyixing-dist.conf.template
+    ├── rongyixing-dist.conf.template
+    ├── rongyixing-proxy-locations.conf.template
+    └── rongyixing-domain-root.conf.template  # 仅 prod
 ```
 
 不要只上传 `h5/dist` 或 `web/dist`。登录、酒店、机票、火车票和订单接口
@@ -35,18 +37,21 @@ rongyixing-h5-web-dist-prod/
 | Nginx 配置 | `/etc/nginx/conf.d/rongyixing-test.conf` | `/etc/nginx/conf.d/rongyixing-prod.conf` |
 | Nginx 端口 | `80` | `18088` |
 | 后端域名 | `rtesp.com` | `rongtrip.cn` |
-| H5 地址 | `http://<server>/h5/` | `http://<server>:18088/h5/` |
-| Web 地址 | `http://<server>/web/` | `http://<server>:18088/web/` |
+| H5 IP 地址 | `http://<server>:80/` | `http://<server>:18088/` |
+| Web IP 地址 | `http://<server>:81/` | `http://<server>:18089/` |
 
-内置 Nginx 模板同时支持以下固定域名入口：
+每个环境都会独立构建 H5 与 Web 两份根路径产物，因此同一个包内不再通过
+`/h5/`、`/web/` 区分应用。IP 通过不同端口对应各自的静态目录。
+
+Prod 交付包额外支持以下固定域名入口，域名与对应的 IP 端口复用同一份 dist：
 
 ```text
-http://h5.songguoren.site/   -> /h5/
-http://web.songguoren.site/  -> /web/
+http://h5.songguoren.site/   -> h5/dist
+http://web.songguoren.site/  -> web/dist
 ```
 
-跳转会保留 `ticket` 等 query 参数，例如
-`http://web.songguoren.site/?ticket=xxx` 会进入 `/web/?ticket=xxx`。
+域名访问不会跳转到 `/h5/` 或 `/web/`，例如
+`http://web.songguoren.site/?ticket=xxx` 会保持在域名根路径。
 
 如果交付方在 `VERSION.txt` 中提供了不同参数，以 `VERSION.txt` 和交付方说明为准。
 
@@ -124,11 +129,11 @@ sudo ./install-dist.sh
 1. 将 H5 文件复制到环境对应的静态目录。
 2. 将 Web 文件复制到环境对应的静态目录。
 3. 根据 `VERSION.txt` 识别 test 或 prod。
-4. 生成对应的 Nginx 配置。
-5. 安装 Nginx 配置文件。
+4. 生成 H5/Web 端口入口和共享 API 代理配置。
+5. Prod 额外生成 H5/Web 域名入口配置。
 6. 执行 `nginx -t`。
 7. Reload Nginx。
-8. 检查 `/h5/` 和 `/web/`。
+8. 检查 H5 和 Web 根路径。
 
 部署人员不需要手动修改 Nginx 配置模板。
 
@@ -139,9 +144,11 @@ sudo ./install-dist.sh
 ```bash
 sudo env \
   SERVER_NAME=app.example.com \
-  LISTEN=8080 \
+  H5_LISTEN=8080 \
+  WEB_LISTEN=8081 \
   SERVER_NGINX_TARGET=/etc/nginx/conf.d/rongyixing-prod.conf \
-  HEALTH_BASE_URL=http://127.0.0.1:8080 \
+  H5_HEALTH_BASE_URL=http://127.0.0.1:8080 \
+  WEB_HEALTH_BASE_URL=http://127.0.0.1:8081 \
   ./install-dist.sh
 ```
 
@@ -151,10 +158,14 @@ sudo env \
 | --- | --- |
 | `INSTALL_DIR` | 静态文件安装目录 |
 | `SERVER_NAME` | Nginx `server_name` |
-| `LISTEN` | Nginx 监听端口 |
+| `H5_LISTEN` | H5 IP 入口端口 |
+| `WEB_LISTEN` | Web IP 入口端口 |
+| `DOMAIN_LISTEN` | Prod 固定域名入口端口，默认 `80` |
+| `DOMAIN_NGINX_TARGET` | Prod 域名 Nginx 配置路径 |
 | `SERVER_NGINX_TARGET` | Nginx 配置文件路径 |
 | `BACKEND_DOMAIN_SUFFIX` | 后端域名后缀 |
-| `HEALTH_BASE_URL` | 健康检查地址 |
+| `H5_HEALTH_BASE_URL` | H5 健康检查地址 |
+| `WEB_HEALTH_BASE_URL` | Web 健康检查地址 |
 | `INSTALL_NGINX=0` | 只复制静态文件，不安装或 reload Nginx |
 | `RUN_HEALTH_CHECK=0` | 跳过安装脚本内的健康检查 |
 
@@ -165,26 +176,27 @@ sudo env \
 Test：
 
 ```bash
-curl -I http://127.0.0.1/h5/
-curl -I http://127.0.0.1/web/
+curl -I http://127.0.0.1:80/
+curl -I http://127.0.0.1:81/
 ```
 
 Prod：
 
 ```bash
-curl -I http://127.0.0.1:18088/h5/
-curl -I http://127.0.0.1:18088/web/
+curl -I http://127.0.0.1:18088/
+curl -I http://127.0.0.1:18089/
 ```
 
 正常情况下两个地址都返回 HTTP `200`。
 
-检查根路径跳转：
+Prod 域名根路径检查：
 
 ```bash
-curl -I http://127.0.0.1:18088/
+curl -I -H "Host: h5.songguoren.site" http://127.0.0.1/
+curl -I -H "Host: web.songguoren.site" http://127.0.0.1/
 ```
 
-正常情况下返回 HTTP `302`，并跳转到 `/h5/`。
+正常情况下均返回 HTTP `200`。
 
 浏览器验收：
 
@@ -251,8 +263,7 @@ web/dist/index.html
 确认 Nginx 配置中的 SPA fallback 存在：
 
 ```nginx
-try_files $uri $uri/ /h5/index.html;
-try_files $uri $uri/ /web/index.html;
+try_files $uri $uri/ /index.html;
 ```
 
 ### 登录或业务接口 404 / CORS
@@ -285,8 +296,9 @@ sudo systemctl reload nginx
 - [ ] `VERSION.txt` 中的环境和版本正确。
 - [ ] `install-dist.sh` 执行成功。
 - [ ] `nginx -t` 通过。
-- [ ] `/h5/` 返回 HTTP 200。
-- [ ] `/web/` 返回 HTTP 200。
+- [ ] H5 IP 端口根路径返回 HTTP 200。
+- [ ] Web IP 端口根路径返回 HTTP 200。
+- [ ] Prod 的两个固定域名根路径返回 HTTP 200。
 - [ ] 登录成功。
 - [ ] 酒店、机票、火车票至少各查询一次。
 - [ ] 酒店列表滚动加载下一页成功。

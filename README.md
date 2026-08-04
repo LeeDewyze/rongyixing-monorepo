@@ -200,23 +200,25 @@ The release package has test/prod dist directories, and local Vite now mirrors t
 | `pnpm dev:h5:prod` | `http://localhost:5175/h5/` | `apps/h5/.env.prod` | `https://app.rongtrip.cn` | `rongtrip.cn` |
 | `pnpm dev:web:prod` | `http://localhost:5176/web/` | `apps/web/.env.prod` | `https://app.rongtrip.cn` | `rongtrip.cn` |
 
-`VITE_BASE_PATH` is set by these scripts so local routes use `/h5/` and `/web/`, matching Nginx and release deployment.
+`VITE_BASE_PATH` is set by these scripts so local Vite routes use `/h5/` and `/web/`.
+Release and Docker delivery builds set it to `/`, because each application is served from its own
+IP port or fixed domain root.
 
 ### Single-IP Test Deployment
 
 When a test environment has only one IP and no domain names, deploy H5 and Web as two
-services behind one server Nginx entry:
+root-path services behind different server Nginx ports:
 
 ```text
-http://<server-ip>/h5/   -> @ryx/h5
-http://<server-ip>/web/  -> @ryx/web
+http://<server-ip>:80/  -> @ryx/h5
+http://<server-ip>:81/  -> @ryx/web
 ```
 
-The apps support sub-path deployment through `VITE_BASE_PATH`:
+The apps are built with a root `VITE_BASE_PATH`:
 
 ```bash
-VITE_BASE_PATH=/h5/ pnpm --filter @ryx/h5 build
-VITE_BASE_PATH=/web/ pnpm --filter @ryx/web build
+VITE_BASE_PATH=/ pnpm --filter @ryx/h5 build
+VITE_BASE_PATH=/ pnpm --filter @ryx/web build
 ```
 
 For Docker-based test deployment, use:
@@ -226,7 +228,7 @@ deploy/scripts/deploy-ip-prefix.sh
 ```
 
 This builds `ryx-h5` on `127.0.0.1:18080`, `ryx-web` on `127.0.0.1:18081`, and installs
-`deploy/nginx/ip-prefix.conf` so the public IP can route `/h5/` and `/web/` to the two services.
+`deploy/nginx/ip-prefix.conf` so the public IP can route H5 and Web through ports `80` and `81`.
 
 ### Dist-Only Delivery
 

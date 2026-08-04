@@ -9,7 +9,7 @@ services:
         VITE_API_MODE: ${VITE_API_MODE:-proxy}
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
         VITE_API_DOMAIN: ${VITE_API_DOMAIN:-rtesp.com}
-        VITE_BASE_PATH: ${RYX_H5_BASE_PATH:-/h5/}
+        VITE_BASE_PATH: ${RYX_H5_BASE_PATH:-/}
     image: ryx-h5:ip-prefix
     container_name: ryx-h5
     restart: unless-stopped
@@ -26,7 +26,7 @@ services:
         VITE_API_MODE: ${VITE_API_MODE:-proxy}
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
         VITE_API_DOMAIN: ${VITE_API_DOMAIN:-rtesp.com}
-        VITE_BASE_PATH: ${RYX_WEB_BASE_PATH:-/web/}
+        VITE_BASE_PATH: ${RYX_WEB_BASE_PATH:-/}
     image: ryx-web:ip-prefix
     container_name: ryx-web
     restart: unless-stopped

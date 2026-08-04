@@ -2,11 +2,13 @@
 
 这个目录用于生成只包含构建产物的交付包。生成后的交付包包含：
 
-- `h5/dist`：H5 静态资源
-- `web/dist`：Pad/PC Web 静态资源
+- `h5/dist`：H5 根路径静态资源
+- `web/dist`：Pad/PC Web 根路径静态资源
 - `install-dist.sh`：服务器安装脚本
 - `install-static-dist.sh`：只替换静态资源的安装脚本
-- `nginx/rongyixing-dist.conf.template`：Nginx 配置模板
+- `nginx/rongyixing-dist.conf.template`：H5/Web IP 端口 Nginx 配置模板
+- `nginx/rongyixing-proxy-locations.conf.template`：共享 API 代理规则
+- `nginx/rongyixing-domain-root.conf.template`：Prod 固定域名配置模板
 - `DEPLOYMENT.md`：面向部署人员的完整 Nginx 静态部署步骤
 
 交付包不包含 `apps/`、`packages/` 等源码目录。
@@ -41,7 +43,7 @@ DEPLOY_ENV=prod deploy/release/build-dist-package.sh
 如需调整前缀，可以在构建时指定：
 
 ```bash
-VITE_H5_BASE_PATH=/h5/ VITE_WEB_BASE_PATH=/web/ deploy/release/build-dist-package.sh
+VITE_H5_BASE_PATH=/ VITE_WEB_BASE_PATH=/ deploy/release/build-dist-package.sh
 ```
 
 默认只生成可直接提交或上传的目录，不生成压缩包：
@@ -102,7 +104,8 @@ cd deploy/release/out/rongyixing-h5-web-dist-test
 ```text
 安装目录：/opt/rongyixing-test
 Nginx 文件：/etc/nginx/conf.d/rongyixing-test.conf
-端口：80
+H5 端口：80
+Web 端口：81
 后端域名：rtesp.com
 ```
 
@@ -111,7 +114,8 @@ Nginx 文件：/etc/nginx/conf.d/rongyixing-test.conf
 ```text
 安装目录：/opt/rongyixing-prod
 Nginx 文件：/etc/nginx/conf.d/rongyixing-prod.conf
-端口：18088
+H5 端口：18088
+Web 端口：18089
 后端域名：rongtrip.cn
 ```
 
@@ -131,7 +135,8 @@ cd deploy/release/out/rongyixing-h5-web-dist-prod
 DEPLOY_ENV=test \
 INSTALL_DIR=/opt/rongyixing-test \
 SERVER_NGINX_TARGET=/etc/nginx/conf.d/rongyixing-test.conf \
-LISTEN=80 \
+H5_LISTEN=80 \
+WEB_LISTEN=81 \
 ./install-dist.sh
 ```
 
@@ -145,16 +150,15 @@ INSTALL_DIR=/opt/rongyixing-prod ./install-static-dist.sh
 访问地址：
 
 ```text
-http://<server-ip>/      -> 默认跳转到 /h5/，并保留 ticket 等查询参数
-http://<server-ip>/h5/
-http://<server-ip>/web/
+http://<server-ip>:<h5-port>/
+http://<server-ip>:<web-port>/
 ```
 
 单点登录带 ticket：
 
 ```text
-http://<server-ip>/h5/?ticket=xxxx
-http://<server-ip>/web/?ticket=xxxx
+http://<server-ip>:<h5-port>/?ticket=xxxx
+http://<server-ip>:<web-port>/?ticket=xxxx
 ```
 
 ## 常用变量
@@ -162,7 +166,8 @@ http://<server-ip>/web/?ticket=xxxx
 ```bash
 INSTALL_DIR=/data/rongyixing \
 SERVER_NAME=192.168.1.10 \
-LISTEN=80 \
+H5_LISTEN=80 \
+WEB_LISTEN=81 \
 ./install-dist.sh
 ```
 
@@ -188,7 +193,8 @@ HEALTH_BASE_URL=http://192.168.1.10 ./install-dist.sh
 
 模板会同时处理三类路由：
 
-- `/h5/`、`/web/`：静态资源和 SPA history fallback
+- H5/Web 两个独立端口：静态资源和 SPA history fallback
+- Prod 固定域名：直接对应 H5/Web 根路径静态产物
 - `/Home/`、`/Jyx/`、`/Identity/`：legacy 网关/身份/融旅功能入口
 - `/__ryx/<UrlKey>/`：TMC、登录、会员、HR、流程、因私订单等接口的同源反向代理
 

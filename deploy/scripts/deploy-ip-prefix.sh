@@ -19,8 +19,8 @@ Usage:
 Environment:
   RYX_H5_PORT=18080              Local host port bound by H5 container.
   RYX_WEB_PORT=18081             Local host port bound by Web container.
-  RYX_H5_BASE_PATH=/h5/          H5 browser base path.
-  RYX_WEB_BASE_PATH=/web/        Web browser base path.
+  RYX_H5_BASE_PATH=/             H5 browser base path.
+  RYX_WEB_BASE_PATH=/            Web browser base path.
   INSTALL_SERVER_NGINX=1         Install/reload server Nginx entry config by default.
   INSTALL_SERVER_NGINX=0         Only build/start Docker services; skip server Nginx.
   SERVER_NGINX_TARGET=...        Target path for server Nginx config.

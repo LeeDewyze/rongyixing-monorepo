@@ -7,6 +7,9 @@ OUT_ROOT="${OUT_ROOT:-${SCRIPT_DIR}/out}"
 INSTALL_SCRIPT_TEMPLATE="${INSTALL_SCRIPT_TEMPLATE:-${SCRIPT_DIR}/templates/install-dist.sh}"
 STATIC_INSTALL_SCRIPT_TEMPLATE="${STATIC_INSTALL_SCRIPT_TEMPLATE:-${SCRIPT_DIR}/templates/install-static-dist.sh}"
 DEPLOYMENT_GUIDE="${DEPLOYMENT_GUIDE:-${ROOT_DIR}/docs/nginx-static-deployment-step-by-step.md}"
+NGINX_TEMPLATE="${NGINX_TEMPLATE:-${SCRIPT_DIR}/nginx/rongyixing-dist.conf.template}"
+NGINX_PROXY_TEMPLATE="${NGINX_PROXY_TEMPLATE:-${SCRIPT_DIR}/nginx/rongyixing-proxy-locations.conf.template}"
+NGINX_DOMAIN_TEMPLATE="${NGINX_DOMAIN_TEMPLATE:-${SCRIPT_DIR}/nginx/rongyixing-domain-root.conf.template}"
 DEPLOY_ENV="${DEPLOY_ENV:-all}"
 PACKAGE_NAME="${PACKAGE_NAME:-}"
 PACKAGE_NAME_PREFIX="${PACKAGE_NAME_PREFIX:-rongyixing-h5-web-dist}"
@@ -29,8 +32,8 @@ Environment:
                                             Prefix used for all/test/prod package names.
   PACKAGE_NAME=                            Single-env package name override.
   TIMESTAMP=YYYYmmddHHMMSS                 Optional fixed package timestamp.
-  VITE_H5_BASE_PATH=/h5/                   H5 public base path.
-  VITE_WEB_BASE_PATH=/web/                 Web public base path.
+  VITE_H5_BASE_PATH=/                      H5 public base path.
+  VITE_WEB_BASE_PATH=/                     Web public base path.
   VITE_API_BASE_URL=                       Single-env app portal base URL override.
   VITE_API_DOMAIN=                         Single-env legacy domain fallback override.
   VITE_API_MODE=proxy                     API mode embedded into the bundle.
@@ -47,8 +50,8 @@ fi
 
 cd "${ROOT_DIR}"
 
-H5_BASE_PATH="${VITE_H5_BASE_PATH:-/h5/}"
-WEB_BASE_PATH="${VITE_WEB_BASE_PATH:-/web/}"
+H5_BASE_PATH="${VITE_H5_BASE_PATH:-/}"
+WEB_BASE_PATH="${VITE_WEB_BASE_PATH:-/}"
 VITE_API_MODE="${VITE_API_MODE:-proxy}"
 
 case "${DEPLOY_ENV}" in
@@ -76,11 +79,15 @@ resolve_env_defaults() {
       ENV_API_BASE_URL="http://app.rtesp.com"
       ENV_API_DOMAIN="rtesp.com"
       ENV_ACCESS_BASE_URL="http://<server-ip>"
+      ENV_H5_PORT="80"
+      ENV_WEB_PORT="81"
       ;;
     prod)
       ENV_API_BASE_URL="https://app.rongtrip.cn"
       ENV_API_DOMAIN="rongtrip.cn"
-      ENV_ACCESS_BASE_URL="http://<server-ip>:18088"
+      ENV_ACCESS_BASE_URL="http://<server-ip>"
+      ENV_H5_PORT="18088"
+      ENV_WEB_PORT="18089"
       ;;
     *)
       log "unsupported build env: ${env_name}"
@@ -105,6 +112,8 @@ write_package_files() {
   local api_base_url="$4"
   local api_domain="$5"
   local access_base_url="$6"
+  local h5_port="$7"
+  local web_port="$8"
   local build_time git_commit git_branch build_readme
 
   build_time="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -112,13 +121,15 @@ write_package_files() {
   git_branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
   build_readme="${package_dir}/README-${TIMESTAMP}.md"
 
-  cp -a "${ROOT_DIR}/apps/h5/dist" "${package_dir}/h5/dist"
-  cp -a "${ROOT_DIR}/apps/web/dist" "${package_dir}/web/dist"
   cp "${INSTALL_SCRIPT_TEMPLATE}" "${package_dir}/install-dist.sh"
   cp "${STATIC_INSTALL_SCRIPT_TEMPLATE}" "${package_dir}/install-static-dist.sh"
   cp "${DEPLOYMENT_GUIDE}" "${package_dir}/DEPLOYMENT.md"
   cp "${SCRIPT_DIR}/README.md" "${package_dir}/README.md"
-  cp "${SCRIPT_DIR}/nginx/rongyixing-dist.conf.template" "${package_dir}/nginx/rongyixing-dist.conf.template"
+  cp "${NGINX_TEMPLATE}" "${package_dir}/nginx/rongyixing-dist.conf.template"
+  cp "${NGINX_PROXY_TEMPLATE}" "${package_dir}/nginx/rongyixing-proxy-locations.conf.template"
+  if [[ "${env_name}" == "prod" ]]; then
+    cp "${NGINX_DOMAIN_TEMPLATE}" "${package_dir}/nginx/rongyixing-domain-root.conf.template"
+  fi
   chmod +x "${package_dir}/install-dist.sh"
   chmod +x "${package_dir}/install-static-dist.sh"
 
@@ -154,43 +165,71 @@ cd deploy/release/out/${package_name}
 Access after install:
 
 \`\`\`text
-${access_base_url}/h5/
-${access_base_url}/web/
-${access_base_url}/?ticket=xxxx
+H5:  ${access_base_url}:${h5_port}/
+Web: ${access_base_url}:${web_port}/
+H5:  ${access_base_url}:${h5_port}/?ticket=xxxx
+Web: ${access_base_url}:${web_port}/?ticket=xxxx
 \`\`\`
 EOF
+
+  if [[ "${env_name}" == "prod" ]]; then
+    cat >>"${build_readme}" <<'EOF'
+
+Prod domain root access:
+
+```text
+http://h5.songguoren.site/
+http://web.songguoren.site/
+```
+EOF
+  fi
+}
+
+build_app_dist() {
+  local env_name="$1"
+  local app_name="$2"
+  local app_label="$3"
+  local base_path="$4"
+  local output_dir="$5"
+  local api_base_url="$6"
+  local api_domain="$7"
+
+  log "build ${env_name} ${app_label} with VITE_BASE_PATH=${base_path}, VITE_API_BASE_URL=${api_base_url}"
+  VITE_BASE_PATH="${base_path}" \
+  VITE_API_BASE_URL="${api_base_url}" \
+  VITE_API_DOMAIN="${api_domain}" \
+  VITE_API_MODE="${VITE_API_MODE}" \
+  pnpm --filter "@ryx/${app_name}" build
+
+  mkdir -p "$(dirname "${output_dir}")"
+  cp -a "${ROOT_DIR}/apps/${app_name}/dist" "${output_dir}"
 }
 
 build_env_package() {
   local env_name="$1"
-  local package_name package_dir archive_path api_base_url api_domain access_base_url
+  local package_name package_dir archive_path api_base_url api_domain access_base_url h5_port web_port
 
   resolve_env_defaults "${env_name}"
   api_base_url="${VITE_API_BASE_URL:-${ENV_API_BASE_URL}}"
   api_domain="${VITE_API_DOMAIN:-${ENV_API_DOMAIN}}"
   access_base_url="${ENV_ACCESS_BASE_URL}"
+  h5_port="${ENV_H5_PORT}"
+  web_port="${ENV_WEB_PORT}"
   package_name="$(package_name_for_env "${env_name}")"
   package_dir="${OUT_ROOT}/${package_name}"
   archive_path="${OUT_ROOT}/${package_name}-${TIMESTAMP}.tar.gz"
 
-  log "build ${env_name} H5 with VITE_BASE_PATH=${H5_BASE_PATH}, VITE_API_BASE_URL=${api_base_url}"
-  VITE_BASE_PATH="${H5_BASE_PATH}" \
-  VITE_API_BASE_URL="${api_base_url}" \
-  VITE_API_DOMAIN="${api_domain}" \
-  VITE_API_MODE="${VITE_API_MODE}" \
-  pnpm --filter @ryx/h5 build
-
-  log "build ${env_name} Web with VITE_BASE_PATH=${WEB_BASE_PATH}, VITE_API_BASE_URL=${api_base_url}"
-  VITE_BASE_PATH="${WEB_BASE_PATH}" \
-  VITE_API_BASE_URL="${api_base_url}" \
-  VITE_API_DOMAIN="${api_domain}" \
-  VITE_API_MODE="${VITE_API_MODE}" \
-  pnpm --filter @ryx/web build
-
   log "prepare package directory ${package_dir}"
   rm -rf "${package_dir}" "${archive_path}"
-  mkdir -p "${package_dir}/h5" "${package_dir}/web" "${package_dir}/nginx"
-  write_package_files "${env_name}" "${package_name}" "${package_dir}" "${api_base_url}" "${api_domain}" "${access_base_url}"
+  mkdir -p "${package_dir}/nginx"
+
+  build_app_dist "${env_name}" "h5" "H5" "${H5_BASE_PATH}" \
+    "${package_dir}/h5/dist" "${api_base_url}" "${api_domain}"
+  build_app_dist "${env_name}" "web" "Web" "${WEB_BASE_PATH}" \
+    "${package_dir}/web/dist" "${api_base_url}" "${api_domain}"
+
+  write_package_files "${env_name}" "${package_name}" "${package_dir}" "${api_base_url}" "${api_domain}" \
+    "${access_base_url}" "${h5_port}" "${web_port}"
 
   if [[ "${CREATE_ARCHIVE}" == "1" ]]; then
     log "create archive ${archive_path}"
