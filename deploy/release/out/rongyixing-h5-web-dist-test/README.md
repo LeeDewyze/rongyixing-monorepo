@@ -7,6 +7,7 @@
 - `install-dist.sh`：服务器安装脚本
 - `install-static-dist.sh`：只替换静态资源的安装脚本
 - `nginx/rongyixing-dist.conf.template`：Nginx 配置模板
+- `DEPLOYMENT.md`：面向部署人员的完整 Nginx 静态部署步骤
 
 交付包不包含 `apps/`、`packages/` 等源码目录。
 源码侧安装脚本模板位于 `templates/install-dist.sh` 和 `templates/install-static-dist.sh`，不要在 `deploy/release`
