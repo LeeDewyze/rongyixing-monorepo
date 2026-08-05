@@ -1105,14 +1105,18 @@ function buildHotelListRequest(params: HotelListParams): Record<string, unknown>
     CityCode: params.CityCode,
     BeginDate: params.CheckInDate,
     EndDate: params.CheckOutDate,
-    PageIndex: params.PageIndex ?? 0,
     PageSize: params.PageSize ?? 20,
     IsLoadDetail: true,
-    hotelType: params.HotelType ?? "Normal",
+    hotelType: params.HotelType ?? "",
+    travelformid: params.TravelFormId ?? "",
   };
+  if (params.PageIndex) {
+    data.PageIndex = params.PageIndex;
+  }
   if (!isTouristChannel(params)) {
     data.Stars = null;
     data.Passengers = params.Passengers ?? "";
+    data.staffCityCode = params.StaffCityCode ?? null;
   }
   const cityName = params.CityName?.trim();
   if (cityName) {
@@ -1132,7 +1136,6 @@ function buildHotelListRequest(params: HotelListParams): Record<string, unknown>
     Themes: "Themes",
     Services: "Services",
     Facilities: "Facilities",
-    StaffCityCode: "staffCityCode",
     Lat: "Lat",
     Lng: "Lng",
   };
@@ -1149,9 +1152,6 @@ function buildHotelListRequest(params: HotelListParams): Record<string, unknown>
   );
   if (starCategories.length > 0) {
     data.Categories = starCategories;
-  }
-  if (params.TravelFormId != null) {
-    data.travelformid = params.TravelFormId;
   }
   return data;
 }

@@ -32,6 +32,73 @@ describe("createHotelApi (mock mode)", () => {
     expect(result.Hotels[0]?.HotelId).toBe("H1");
   });
 
+  it("getList aligns initial tmc list request with legacy defaults", async () => {
+    let capturedData: Record<string, unknown> | undefined;
+    const proxyWithCapture = createProxyClient({
+      baseUrl: "https://example.com",
+      mode: "mock",
+      mockHandler: async (method, data) => {
+        if (method === HOTEL_FLOW_METHODS.LIST) {
+          capturedData = data as Record<string, unknown>;
+          return successResponse({ Hotels: [], TotalCount: 0 });
+        }
+        return successResponse(null);
+      },
+    });
+    const api = createHotelApi(proxyWithCapture);
+    await api.getList({
+      channel: "tmc",
+      CityCode: "1101",
+      CityName: "北京",
+      CheckInDate: "2026-08-05",
+      CheckOutDate: "2026-08-06",
+    });
+
+    expect(capturedData).toMatchObject({
+      CityCode: "1101",
+      CityName: "北京",
+      BeginDate: "2026-08-05",
+      EndDate: "2026-08-06",
+      PageSize: 20,
+      IsLoadDetail: true,
+      travelformid: "",
+      hotelType: "",
+      Stars: null,
+      Passengers: "",
+      staffCityCode: null,
+    });
+    expect(capturedData).not.toHaveProperty("PageIndex");
+  });
+
+  it("getList sends PageIndex after the initial tmc list page", async () => {
+    let capturedData: Record<string, unknown> | undefined;
+    const proxyWithCapture = createProxyClient({
+      baseUrl: "https://example.com",
+      mode: "mock",
+      mockHandler: async (method, data) => {
+        if (method === HOTEL_FLOW_METHODS.LIST) {
+          capturedData = data as Record<string, unknown>;
+          return successResponse({ Hotels: [], TotalCount: 0 });
+        }
+        return successResponse(null);
+      },
+    });
+    const api = createHotelApi(proxyWithCapture);
+    await api.getList({
+      channel: "tmc",
+      CityCode: "1101",
+      CheckInDate: "2026-08-05",
+      CheckOutDate: "2026-08-06",
+      PageIndex: 1,
+    });
+
+    expect(capturedData).toMatchObject({
+      PageIndex: 1,
+      PageSize: 20,
+      hotelType: "",
+    });
+  });
+
   it("getList includes CityName in request data", async () => {
     let capturedData: unknown;
     const proxyWithCapture = createProxyClient({

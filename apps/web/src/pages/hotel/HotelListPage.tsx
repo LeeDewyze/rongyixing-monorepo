@@ -54,18 +54,19 @@ const SORT_FILTER_SECTIONS: HotelListFilterSection[] = ["sort"];
 const PRICE_STAR_FILTER_SECTIONS: HotelListFilterSection[] = ["star", "category", "price"];
 const LOCATION_FILTER_SECTIONS: HotelListFilterSection[] = ["location"];
 const AMENITY_FILTER_SECTIONS: HotelListFilterSection[] = ["brand", "theme", "service", "facility"];
+type HotelTypeFilter = HotelType | "";
 
-function parseHotelType(value: string | null): HotelType | undefined {
+function parseHotelType(value: string | null): HotelTypeFilter | undefined {
   if (value === "Normal" || value === "Tmc" || value === "Agent") return value;
   return undefined;
 }
 
-function resolveHotelTypeFilterCategories(hotelType: HotelType): string[] {
+function resolveHotelTypeFilterCategories(hotelType: HotelTypeFilter): string[] {
   return hotelType === "Tmc" ? ["Tmc"] : [];
 }
 
-function resolveHotelTypeFromFilter(filter: HotelListFilterState): HotelType {
-  return filter.categories.includes("Tmc") ? "Tmc" : "Normal";
+function resolveHotelTypeFromFilter(filter: HotelListFilterState): HotelTypeFilter {
+  return filter.categories.includes("Tmc") ? "Tmc" : "";
 }
 
 function serializeHotelListFilter(filter: HotelListFilterState): string {
@@ -223,7 +224,7 @@ export function HotelListPage() {
   const hotelId = searchParams.get("hotelId") ?? "";
   const lat = searchParams.get("lat") ?? "";
   const lng = searchParams.get("lng") ?? "";
-  const hotelType = parseHotelType(searchParams.get("hotelType")) ?? "Normal";
+  const hotelType = parseHotelType(searchParams.get("hotelType")) ?? "";
   const travelFormId = searchParams.get("travelFormId") ?? searchParams.get("travelformid") ?? "";
   const staffCityCode = useMemo(() => readStaffCityCode(), []);
   const travelMode = useMemo(
@@ -448,7 +449,11 @@ export function HotelListPage() {
     const nextHotelType = resolveHotelTypeFromFilter(filterDraft);
     if (nextHotelType !== hotelType) {
       const next = new URLSearchParams(searchParams);
-      next.set("hotelType", nextHotelType);
+      if (nextHotelType) {
+        next.set("hotelType", nextHotelType);
+      } else {
+        next.delete("hotelType");
+      }
       navigate({ pathname: "/hotel/list", search: next.toString() }, { replace: true });
     }
   }
@@ -500,7 +505,7 @@ export function HotelListPage() {
       cityName: resolvedCity?.Name ?? cityName,
       minPrice: String(hotel.MinPrice ?? ""),
     });
-    params.set("hotelType", hotelType);
+    if (hotelType) params.set("hotelType", hotelType);
     if (keyword) params.set("keyword", keyword);
     if (keywordType) params.set("keywordType", keywordType);
     if (hotelId) params.set("hotelId", hotelId);

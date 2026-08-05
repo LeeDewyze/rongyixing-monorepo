@@ -24,6 +24,17 @@ function contactLabel(contact?: OrderRepushLinkman) {
     : contact.LinkmanName;
 }
 
+function useDebouncedValue<T>(value: T, delayMs = 250): T {
+  const [debounced, setDebounced] = useState(value);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setDebounced(value), delayMs);
+    return () => window.clearTimeout(timer);
+  }, [delayMs, value]);
+
+  return debounced;
+}
+
 export function OrderInspurRepushSheet({
   open,
   orderId,
@@ -36,13 +47,14 @@ export function OrderInspurRepushSheet({
   const [contactsByPassengerId, setContactsByPassengerId] = useState<
     Record<string, OrderRepushLinkman | undefined>
   >({});
+  const [activePassengerId, setActivePassengerId] = useState<string | null>(null);
+  const [linkmanKeyword, setLinkmanKeyword] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
 
   const passengersQuery = useInspurRepushPassengers(
     orderId ? { OrderId: orderId, channel } : null,
     open,
   );
-  const linkmansQuery = useInspurRepushLinkmans({ channel }, open);
   const submitMutation = useSubmitInspurRepush();
   const resetSubmitMutation = submitMutation.reset;
 
@@ -55,12 +67,18 @@ export function OrderInspurRepushSheet({
     }
   }, [open, resetSubmitMutation]);
 
+  const debouncedLinkmanKeyword = useDebouncedValue(linkmanKeyword.trim());
   const passengers = passengersQuery.data ?? [];
-  const linkmans = linkmansQuery.data ?? [];
   const selectedPassengers = useMemo(
     () => passengers.filter((passenger) => selectedPassengerIds.has(passenger.Id)),
     [passengers, selectedPassengerIds],
   );
+  const shouldSearchLinkmans = Boolean(activePassengerId);
+  const linkmansQuery = useInspurRepushLinkmans(
+    open && shouldSearchLinkmans ? { channel, name: debouncedLinkmanKeyword } : null,
+    open && shouldSearchLinkmans,
+  );
+  const linkmans = linkmansQuery.data ?? [];
 
   if (!open) return null;
 
@@ -70,6 +88,15 @@ export function OrderInspurRepushSheet({
       const next = new Set(current);
       if (next.has(passengerId)) {
         next.delete(passengerId);
+        setContactsByPassengerId((current) => {
+          const nextContacts = { ...current };
+          delete nextContacts[passengerId];
+          return nextContacts;
+        });
+        if (activePassengerId === passengerId) {
+          setActivePassengerId(null);
+          setLinkmanKeyword("");
+        }
       } else {
         next.add(passengerId);
       }
@@ -77,12 +104,23 @@ export function OrderInspurRepushSheet({
     });
   }
 
-  function updatePassengerContact(passengerId: string, linkmanId: string) {
-    const contact = linkmans.find((item) => item.LinkmanId === linkmanId);
+  function openPassengerLinkmanSearch(passengerId: string) {
+    const selectedContact = contactsByPassengerId[passengerId];
+    setActivePassengerId(passengerId);
+    setLinkmanKeyword(selectedContact?.LinkmanName ?? "");
+  }
+
+  function closePassengerLinkmanSearch() {
+    setActivePassengerId(null);
+    setLinkmanKeyword("");
+  }
+
+  function selectPassengerContact(passengerId: string, contact?: OrderRepushLinkman) {
     setContactsByPassengerId((current) => ({
       ...current,
       [passengerId]: contact,
     }));
+    closePassengerLinkmanSearch();
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -149,9 +187,7 @@ export function OrderInspurRepushSheet({
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
-          {linkmansQuery.isFetching ? (
-            <p className="mb-3 text-[12px] text-[#999999]">正在加载预订人...</p>
-          ) : linkmanError ? (
+          {linkmanError ? (
             <p className="mb-3 rounded-lg bg-[#FFF1F0] px-3 py-2 text-[12px] text-[#FF4D4F]">
               {linkmanError}
             </p>
@@ -177,6 +213,7 @@ export function OrderInspurRepushSheet({
               {passengers.map((passenger) => {
                 const selected = selectedPassengerIds.has(passenger.Id);
                 const selectedContact = contactsByPassengerId[passenger.Id];
+                const isActive = activePassengerId === passenger.Id;
                 return (
                   <section
                     key={passenger.Id}
@@ -202,22 +239,74 @@ export function OrderInspurRepushSheet({
                       </span>
                     </label>
 
-                    <div className="mt-3">
-                      <select
-                        value={selectedContact?.LinkmanId ?? ""}
-                        onChange={(event) =>
-                          updatePassengerContact(passenger.Id, event.target.value)
+                    <div className="mt-3 space-y-2">
+                      <button
+                        type="button"
+                        className="flex h-10 w-full items-center justify-between rounded-lg border border-[#E8ECF2] bg-white px-3 text-left text-[13px] text-brand-title outline-none transition-colors active:bg-[#F6F8FC] focus-visible:border-brand-primary focus-visible:ring-2 focus-visible:ring-brand-primary/20 disabled:bg-[#F6F8FC] disabled:text-[#BBBBBB]"
+                        onClick={() =>
+                          selected ? openPassengerLinkmanSearch(passenger.Id) : undefined
                         }
-                        disabled={!selected || pending || linkmans.length === 0}
-                        className="h-10 w-full rounded-lg border border-[#E8ECF2] bg-white px-3 text-[13px] text-brand-title outline-none transition-colors active:bg-[#F6F8FC] focus-visible:border-brand-primary focus-visible:ring-2 focus-visible:ring-brand-primary/20 disabled:bg-[#F6F8FC] disabled:text-[#BBBBBB]"
+                        disabled={!selected || pending}
                       >
-                        <option value="">{contactLabel()}</option>
-                        {linkmans.map((contact) => (
-                          <option key={contact.LinkmanId} value={contact.LinkmanId}>
-                            {contactLabel(contact)}
-                          </option>
-                        ))}
-                      </select>
+                        <span className="min-w-0 truncate">{contactLabel(selectedContact)}</span>
+                        <span className="ml-3 shrink-0 text-[12px] text-[#999999]">搜索</span>
+                      </button>
+
+                      {isActive ? (
+                        <div className="rounded-lg border border-brand-primary bg-white p-2 shadow-[0_8px_20px_rgba(31,41,55,0.08)]">
+                          <input
+                            value={linkmanKeyword}
+                            onChange={(event) => setLinkmanKeyword(event.target.value)}
+                            placeholder="搜索姓名或手机号"
+                            autoFocus
+                            className="h-10 w-full rounded-md border border-[#E8ECF2] px-3 text-[13px] text-brand-title outline-none transition-colors focus-visible:border-brand-primary focus-visible:ring-2 focus-visible:ring-brand-primary/20"
+                          />
+                          <div className="mt-2 max-h-48 overflow-y-auto">
+                            <button
+                              type="button"
+                              className="flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-[13px] text-[#666666] transition-colors hover:bg-[#F6F8FC]"
+                              onClick={() => selectPassengerContact(passenger.Id, undefined)}
+                            >
+                              <span>不指定预订人</span>
+                            </button>
+                            {linkmans.length > 0 ? (
+                              linkmans.map((contact) => {
+                                const checked = selectedContact?.LinkmanId === contact.LinkmanId;
+                                return (
+                                  <button
+                                    key={contact.LinkmanId}
+                                    type="button"
+                                    className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-[13px] transition-colors hover:bg-[#F6F8FC] ${
+                                      checked ? "bg-[#EEF4FF] text-brand-primary" : "text-brand-title"
+                                    }`}
+                                    onClick={() => selectPassengerContact(passenger.Id, contact)}
+                                  >
+                                    <span className="min-w-0 truncate">
+                                      {contact.LinkmanName}
+                                    </span>
+                                    <span className="ml-3 shrink-0 text-[12px] text-[#888888]">
+                                      {contact.LinkmanMobile || "暂无手机号"}
+                                    </span>
+                                  </button>
+                                );
+                              })
+                            ) : (
+                              <div className="px-3 py-3 text-center text-[12px] text-[#999999]">
+                                {linkmansQuery.isFetching ? "正在搜索..." : "没有匹配的预订人"}
+                              </div>
+                            )}
+                          </div>
+                          <div className="mt-2 flex justify-end">
+                            <button
+                              type="button"
+                              className="text-[12px] text-[#999999] transition-colors hover:text-brand-primary"
+                              onClick={closePassengerLinkmanSearch}
+                            >
+                              收起
+                            </button>
+                          </div>
+                        </div>
+                      ) : null}
                     </div>
                   </section>
                 );

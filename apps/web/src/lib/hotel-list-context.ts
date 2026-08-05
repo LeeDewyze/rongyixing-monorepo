@@ -28,7 +28,7 @@ export function readStaffCityCode(): string | undefined {
 
 export function shouldShowHotelFreeStayTip(input: {
   tmc?: TmcInfo;
-  hotelType: HotelType;
+  hotelType: HotelType | "";
 }): boolean {
   const { tmc, hotelType } = input;
   if (!tmc || hotelType === "Agent") return false;
@@ -39,4 +39,3 @@ export function shouldShowHotelFreeStayTip(input: {
       tmc.IsOpenHotelFreeStay,
   );
 }
-

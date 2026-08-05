@@ -43,8 +43,9 @@ function toFetchUrl(serviceUrl: string, baseUrl: string, urlKey?: string): strin
   const base = normalizeBase(baseUrl);
   if (!base) {
     try {
-      const pathname = new URL(serviceUrl).pathname;
-      return urlKey ? `${DEV_RYX_PROXY_PREFIX}/${urlKey}${pathname}` : pathname;
+      const parsed = new URL(serviceUrl);
+      const pathWithSearch = `${parsed.pathname}${parsed.search}`;
+      return urlKey ? `${DEV_RYX_PROXY_PREFIX}/${urlKey}${pathWithSearch}` : pathWithSearch;
     } catch {
       return serviceUrl;
     }

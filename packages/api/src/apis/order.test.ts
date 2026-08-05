@@ -202,7 +202,7 @@ describe("createOrderApi list and detail channel routing", () => {
     ]);
   });
 
-  it("searches Inspur repush linkmans with encoded name and normalizes Account fields", async () => {
+  it("searches Inspur repush linkmans with raw name and normalizes Account fields", async () => {
     const send = vi
       .fn()
       .mockResolvedValue([{ Name: "王五", Account: { Id: "A-1", Mobile: "13700000000" } }]);
@@ -211,7 +211,7 @@ describe("createOrderApi list and detail channel routing", () => {
     const result = await api.searchInspurRepushLinkmans({ name: "王 五" });
 
     expect(send).toHaveBeenCalledWith({
-      method: `${ORDER_FLOW_METHODS.GET_LINKMANS}%E7%8E%8B%20%E4%BA%94`,
+      method: `${ORDER_FLOW_METHODS.GET_LINKMANS}王 五`,
       data: {},
     });
     expect(result).toEqual([

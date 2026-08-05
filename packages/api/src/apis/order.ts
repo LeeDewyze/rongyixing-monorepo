@@ -351,7 +351,7 @@ export function createOrderApi(proxy: ProxyClient): OrderApi {
       }
       const name = params.name?.trim() ?? "";
       const raw = await proxy.send<unknown>({
-        method: `${ORDER_FLOW_METHODS.GET_LINKMANS}${encodeURIComponent(name)}`,
+        method: `${ORDER_FLOW_METHODS.GET_LINKMANS}${name}`,
         data: {},
       });
       return normalizeRepushLinkmans(raw);

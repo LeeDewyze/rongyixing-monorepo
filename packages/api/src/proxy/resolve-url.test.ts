@@ -40,6 +40,19 @@ describe("resolveUrl", () => {
     ).toBe("/__ryx/ApiMemberUrl/Passenger/Add");
   });
 
+  it("keeps method query when routing through vite dev proxy", () => {
+    expect(
+      resolveUrl({
+        baseUrl: "",
+        method: "TmcApiOrderUrl-Order-GetLinkmans?name=杨",
+        apiConfig: {
+          Token: "t",
+          Urls: { TmcApiOrderUrl: "http://order-api-tmc.rtesp.com" },
+        },
+      }),
+    ).toBe("/__ryx/TmcApiOrderUrl/Order/GetLinkmans?name=%E6%9D%A8");
+  });
+
   it("routes HrApiUrl methods through vite dev proxy", () => {
     expect(
       resolveUrl({

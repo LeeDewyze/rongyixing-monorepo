@@ -33,8 +33,8 @@ export interface HotelListParams {
   StaffCityCode?: string;
   Lat?: string | number;
   Lng?: string | number;
-  /** Legacy list filter: non-negotiated / negotiated / agent special. */
-  HotelType?: HotelType;
+  /** Legacy list filter: non-negotiated / negotiated / agent special. Empty means default legacy list. */
+  HotelType?: HotelType | "";
 }
 
 export interface HotelKeywordSearchParams {
