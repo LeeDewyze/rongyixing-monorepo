@@ -151,16 +151,96 @@ cp apps/h5/.env.example apps/h5/.env
 cp apps/web/.env.example apps/web/.env
 ```
 
-## Deployment & Verification
+## Run, Release & Deployment Quick Reference
 
-If you need the full release and deployment guide for:
+Full deployment details live in [docs/deployment-readme.md](docs/deployment-readme.md), and the access matrix lives in [docs/deployment-access-map.md](docs/deployment-access-map.md). The most commonly used commands and URLs are summarized here.
 
-- local Vite validation
-- local Nginx validation
-- IP + domain verification on your own server
-- customer server deployment
+### One-Shot Release
 
-read [docs/deployment-readme.md](docs/deployment-readme.md).
+```bash
+pnpm release:all
+```
+
+This builds all release artifacts under `deploy/release/out/`:
+
+| Artifact | Usage | Static base |
+| --- | --- | --- |
+| `rongyixing-business-h5-test/` | Customer test H5 delivery | `/www/` |
+| `rongyixing-business-h5-prod/` | Customer prod H5 delivery | `/www/` |
+| `rongyixing-business-web-test/` | Customer test Web delivery | `/web/` |
+| `rongyixing-business-web-prod/` | Customer prod Web delivery | `/web/` |
+| `rongyixing-h5-web-dist-test/` | Local/self-hosted Nginx test validation | `/` |
+| `rongyixing-h5-web-dist-prod/` | Local/self-hosted Nginx prod validation | `/` |
+
+Optional switches:
+
+```bash
+CREATE_ARCHIVE=1 pnpm release:all       # also create tar.gz archives
+BUILD_INTERNAL=0 pnpm release:all       # only build customer packages
+BUILD_BUSINESS_WWW=0 pnpm release:all   # only build internal Nginx validation packages
+```
+
+### Access Matrix
+
+| Scenario | H5 Test | Web Test | H5 Prod | Web Prod |
+| --- | --- | --- | --- | --- |
+| Local Vite | `http://localhost:5173/` | `http://localhost:5174/` | `http://localhost:5175/` | `http://localhost:5176/` |
+| Local/self-hosted Nginx IP | `http://<ip>:18080/` | `http://<ip>:18081/` | `http://<ip>:18088/` | `http://<ip>:18089/` |
+| Self-hosted prod domain | - | - | `http://h5.songguoren.site/` | `http://web.songguoren.site/` |
+| Customer same-origin | `https://app.rongtrip.cn/www/index.html` | `https://app.rongtrip.cn/web/index.html` | `https://app.rongtrip.cn/www/index.html` | `https://app.rongtrip.cn/web/index.html` |
+| Backend env | `rtesp.com` | `rtesp.com` | `rongtrip.cn` | `rongtrip.cn` |
+
+Ticket direct-entry examples:
+
+```text
+http://localhost:5173/?ticket=xxxx
+http://<ip>:18088/?ticket=xxxx
+http://h5.songguoren.site/?ticket=xxxx
+https://app.rongtrip.cn/www/index.html?ticket=xxxx
+```
+
+### Local Vite Commands
+
+```bash
+pnpm dev:h5:test   # http://localhost:5173/ -> rtesp test
+pnpm dev:web:test  # http://localhost:5174/ -> rtesp test
+pnpm dev:h5:prod   # http://localhost:5175/ -> rongtrip prod
+pnpm dev:web:prod  # http://localhost:5176/ -> rongtrip prod
+```
+
+### Local or Self-Hosted Nginx Validation
+
+Use the internal validation packages:
+
+```bash
+cd deploy/release/out/rongyixing-h5-web-dist-test
+sudo ./install-dist.sh
+
+cd deploy/release/out/rongyixing-h5-web-dist-prod
+sudo ./install-dist.sh
+```
+
+Default ports:
+
+| Package | H5 | Web |
+| --- | --- | --- |
+| `rongyixing-h5-web-dist-test` | `18080` | `18081` |
+| `rongyixing-h5-web-dist-prod` | `18088` | `18089` |
+
+### Customer Server Deployment
+
+Customer delivery uses the `rongyixing-business-*` packages. Replace the corresponding static directories under:
+
+```text
+/data/beeant/www/websites/Beeant.Presentation.Client.App/wwwroot/
+```
+
+| Package content | Customer target |
+| --- | --- |
+| `rongyixing-business-h5-*/www` | `wwwroot/www` |
+| `rongyixing-business-web-*/web` | `wwwroot/web` |
+
+Customer packages are same-origin builds: they request `/Home/Setting` on the current host, then call the legacy backend URLs returned by that setting response.
 
 ### Mobile H5 (`@ryx/h5`)
 
