@@ -20,6 +20,7 @@ interface CalendarGridProps {
   config: CalendarPickerConfig;
   draft: DateRangeDraft;
   anchorDate: string;
+  minSelectableDate?: string;
   hint?: string;
   onSelectDate: (date: string) => void;
 }
@@ -79,8 +80,15 @@ function MonthGrid({
   );
 }
 
-export function CalendarGrid({ config, draft, anchorDate, hint, onSelectDate }: CalendarGridProps) {
-  const minDate = calendarMinSelectableDate(config);
+export function CalendarGrid({
+  config,
+  draft,
+  anchorDate,
+  minSelectableDate,
+  hint,
+  onSelectDate,
+}: CalendarGridProps) {
+  const minDate = minSelectableDate ?? calendarMinSelectableDate(config);
   const maxDate = calendarMaxSelectableDate(config);
   const scrollRef = useRef<HTMLDivElement>(null);
   const loadingRef = useRef(false);

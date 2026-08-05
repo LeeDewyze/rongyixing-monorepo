@@ -306,7 +306,8 @@ Reference files:
 - 2026-08-01 - Hotel order list status context: kept the order-level status badge, added legacy hotel payment type beside the amount, and added room-level status beside the passenger for both H5 and Web cards.
 - 2026-08-01 - Flight/train order list status context: moved ticket-level status beside passenger names, added “含保险” amount metadata, and surfaced train `CommandPrompt` warnings in both H5 and Web order cards.
 - 2026-08-01 - Order Inspur repush sheet: added a shared H5/Web TMC order-detail bottom sheet for “重推浪潮”, using compact passenger cards, optional per-passenger linkman selection, loading/empty/error states, and a fixed gradient submit action.
-- 2026-08-05 - ResourcePicker staff variant: employee selection uses a persistent search field, selected-row feedback, staff avatar initials, result count, skeleton loading, and a dedicated empty state. The same structure is constrained to `max-w-2xl` on larger screens while remaining full-screen on mobile.
+- 2026-08-05 - ResourcePicker staff variant: employee selection uses the travel-apply form-gradient root, transparent title/search chrome, selected-row feedback, staff avatar initials, result count, skeleton loading, and a dedicated empty state. The same structure is constrained to `max-w-2xl` on larger screens while remaining full-screen on mobile.
+- 2026-08-05 - TravelApplyPage date selection: replaced browser-native date inputs with the shared calendar picker. H5 uses `CalendarPickerSheet`; Web uses `CalendarPickerDialog`; the end-date picker receives the segment start date as its selectable minimum.
 
 ## H5 Dialog And Sheet Inventory
 
@@ -368,6 +369,7 @@ Before creating any new dialog, sheet, toast, or modal-like surface, first check
 - `apps/h5/src/pages/notice/NoticeListPage.tsx` - notice list page with custom header, refresh action, loading/error/empty states, and announcement cards.
 - `apps/h5/src/pages/notice/NoticeDetailPage.tsx` - notice detail page with custom header and legacy-style content surface.
 - `apps/h5/src/pages/travel/TravelApplyPage.tsx` - travel application form page using page-level form gradient.
+- `apps/h5/src/components/calendar/CalendarPickerSheet.tsx` / `apps/web/src/components/calendar/CalendarPickerDialog.tsx` - shared travel calendars; optional `minSelectableDate` supports dependent fields such as an itinerary end date.
 - `apps/h5/src/pages/travel/TravelApprovalPage.tsx` - travel approval list shell using page-level gradient header and segmented tabs.
 - `apps/h5/src/components/travel/ApprovalTaskList.tsx` - approval task list cards with status pills, skeleton, error, empty, and load-more states.
 - `apps/h5/src/components/order/OrderListCard.tsx` - order list card with flight ticket-level rows/actions and shared transport/hotel bodies.

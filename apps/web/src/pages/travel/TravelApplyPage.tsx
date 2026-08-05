@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
+import { CalendarPickerDialog } from "@/components/calendar/CalendarPickerDialog";
 import { CityPicker, ResourcePicker } from "@/components/search";
 import { usePageHeader } from "@/components/layout";
 import {
@@ -9,6 +10,7 @@ import {
   useTravelApplyMeta,
 } from "@/hooks/useTravelApply";
 import { useHomeBack } from "@/lib/app-back";
+import type { CalendarPickerConfig } from "@/lib/calendar-picker";
 import { formatDateLabel, parseLocalDate } from "@/lib/date-search";
 import { formatApiError } from "@/lib/formatApiError";
 import { getTicket } from "@/lib/session";
@@ -33,6 +35,7 @@ import {
 } from "@/lib/web-page-layout";
 
 type CityPickerTarget = { segmentIndex: number; field: "from" | "to" };
+type DatePickerTarget = { segmentIndex: number; field: "startDate" | "endDate" };
 
 function tripDaysBetween(startDate: string, endDate: string): number {
   const start = parseLocalDate(startDate)?.getTime() ?? 0;
@@ -100,6 +103,21 @@ function PlusIcon() {
   );
 }
 
+function CalendarIcon() {
+  return (
+    <svg viewBox="0 0 20 20" className="size-4 shrink-0 text-[#C4C9D4]" aria-hidden>
+      <path
+        d="M6 3v3M14 3v3M4 8h12M5 5h10a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function ApplyPageSkeleton() {
   return (
     <div className="min-h-full" style={{ background: "var(--brand-form-header-gradient)" }}>
@@ -160,28 +178,27 @@ function MetaChip({ label, value }: { label: string; value: string }) {
 function DateRow({
   label,
   value,
-  minDate,
-  onChange,
+  onClick,
 }: {
   label: string;
   value: string;
-  minDate?: string;
-  onChange: (date: string) => void;
+  onClick: () => void;
 }) {
   return (
-    <label className="flex items-center justify-between border-b border-[#F3F4F6] py-3.5 last:border-b-0">
+    <button
+      type="button"
+      className="flex w-full items-center justify-between border-b border-[#F3F4F6] py-3.5 text-left last:border-b-0 hover:bg-[#F8FAFF] active:bg-[#EEF4FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-primary"
+      onClick={onClick}
+    >
       <span className="text-sm text-[#6B7280]">{label}</span>
-      <div className="text-right">
-        <input
-          type="date"
-          value={value}
-          min={minDate}
-          onChange={(event) => onChange(event.target.value)}
-          className="border-0 bg-transparent p-0 text-right text-[15px] font-semibold text-brand-title outline-none [color-scheme:light]"
-        />
-        <p className="mt-0.5 text-xs text-[#9CA3AF]">{formatDateLabel(value)}</p>
+      <div className="flex items-center gap-2 text-right">
+        <div>
+          <p className="text-[15px] font-semibold text-brand-title">{value}</p>
+          <p className="mt-0.5 text-xs text-[#9CA3AF]">{formatDateLabel(value)}</p>
+        </div>
+        <CalendarIcon />
       </div>
-    </label>
+    </button>
   );
 }
 
@@ -261,6 +278,16 @@ function SegmentRouteCard({
 
 const TRAVEL_MINE_APPROVAL_PATH = "/travel/approval?tab=mine";
 const TRAVEL_APPLY_BACKGROUND = { background: "var(--brand-form-header-gradient)" } as const;
+const TRAVEL_DATE_CALENDAR_CONFIG: CalendarPickerConfig = {
+  product: "flight",
+  selection: "single",
+  title: "请选择日期",
+  startLabel: "已选",
+  endLabel: "已选",
+  sameDayLabel: "已选",
+  partialHint: "请选择日期",
+  rangeCompleteHint: () => "",
+};
 
 export function TravelApplyPage() {
   const navigate = useNavigate();
@@ -279,6 +306,7 @@ export function TravelApplyPage() {
   const [travelers, setTravelers] = useState<TravelApplyTraveler[]>([]);
   const [segments, setSegments] = useState<TravelApplySegment[]>([]);
   const [pickerTarget, setPickerTarget] = useState<CityPickerTarget | null>(null);
+  const [datePickerTarget, setDatePickerTarget] = useState<DatePickerTarget | null>(null);
   const [staffPickerIndex, setStaffPickerIndex] = useState<number | null>(null);
   const pendingTravelerAddRef = useRef<number | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -638,18 +666,12 @@ export function TravelApplyPage() {
                   <DateRow
                     label="开始日期"
                     value={segment.startDate}
-                    onChange={(startDate) =>
-                      updateSegment(index, {
-                        startDate,
-                        endDate: segment.endDate < startDate ? startDate : segment.endDate,
-                      })
-                    }
+                    onClick={() => setDatePickerTarget({ segmentIndex: index, field: "startDate" })}
                   />
                   <DateRow
                     label="结束日期"
                     value={segment.endDate}
-                    minDate={segment.startDate}
-                    onChange={(endDate) => updateSegment(index, { endDate })}
+                    onClick={() => setDatePickerTarget({ segmentIndex: index, field: "endDate" })}
                   />
                 </div>
               ))}
@@ -751,6 +773,42 @@ export function TravelApplyPage() {
               index === staffPickerIndex ? { account, policyId: undefined } : item,
             ),
           );
+        }}
+      />
+
+      <CalendarPickerDialog
+        open={datePickerTarget != null}
+        config={{
+          ...TRAVEL_DATE_CALENDAR_CONFIG,
+          title: datePickerTarget?.field === "endDate" ? "请选择结束日期" : "请选择开始日期",
+        }}
+        startDate={
+          datePickerTarget
+            ? segments[datePickerTarget.segmentIndex]?.[datePickerTarget.field] || ""
+            : ""
+        }
+        endDate={
+          datePickerTarget
+            ? segments[datePickerTarget.segmentIndex]?.[datePickerTarget.field] || ""
+            : ""
+        }
+        minSelectableDate={
+          datePickerTarget?.field === "endDate"
+            ? segments[datePickerTarget.segmentIndex]?.startDate
+            : undefined
+        }
+        onClose={() => setDatePickerTarget(null)}
+        onConfirm={(date) => {
+          if (!datePickerTarget) return;
+          if (datePickerTarget.field === "startDate") {
+            const segment = segments[datePickerTarget.segmentIndex];
+            updateSegment(datePickerTarget.segmentIndex, {
+              startDate: date,
+              endDate: segment && segment.endDate < date ? date : segment?.endDate,
+            });
+            return;
+          }
+          updateSegment(datePickerTarget.segmentIndex, { endDate: date });
         }}
       />
     </div>

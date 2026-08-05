@@ -187,12 +187,23 @@ export function ResourcePicker({
   if (!open) return null;
 
   return (
-    <div className={cn("fixed inset-0 z-[60] flex flex-col bg-muted", className)}>
-      <header className="shrink-0 border-b border-border bg-card pt-[env(safe-area-inset-top)]">
+    <div
+      className={cn("fixed inset-0 z-[60] flex flex-col bg-muted", className)}
+      style={isStaffPicker ? { background: "var(--brand-form-header-gradient)" } : undefined}
+    >
+      <header
+        className={cn(
+          "shrink-0 pt-[env(safe-area-inset-top)]",
+          isStaffPicker ? "border-transparent bg-transparent" : "border-b border-border bg-card",
+        )}
+      >
         <div className="relative mx-auto flex h-12 max-w-2xl items-center px-2 sm:px-4">
           <button
             type="button"
-            className="flex size-10 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted active:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
+            className={cn(
+              "flex size-10 items-center justify-center rounded-full text-foreground transition-colors active:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
+              isStaffPicker ? "hover:bg-white/35" : "hover:bg-muted",
+            )}
             onClick={handleClose}
             aria-label="返回"
           >
@@ -201,15 +212,32 @@ export function ResourcePicker({
           <div className="pointer-events-none absolute inset-x-14 text-center">
             <h2 className="truncate text-base font-semibold text-brand-title">{title}</h2>
             {isStaffPicker ? (
-              <p className="mt-0.5 truncate text-xs text-muted-foreground">按姓名或工号查找员工</p>
+              <p className="mt-0.5 truncate text-xs text-brand-title/55">按姓名或工号查找员工</p>
             ) : null}
           </div>
         </div>
       </header>
 
-      <div className="shrink-0 border-b border-border bg-card px-4 py-3">
-        <div className="mx-auto flex max-w-2xl items-center gap-2 rounded-xl border border-transparent bg-secondary px-3 transition-colors focus-within:border-brand-primary/30 focus-within:bg-card focus-within:ring-2 focus-within:ring-brand-primary/10">
-          <span className="shrink-0 text-muted-foreground">
+      <div
+        className={cn(
+          "shrink-0 px-4 py-3",
+          isStaffPicker ? "bg-transparent" : "border-b border-border bg-card",
+        )}
+      >
+        <div
+          className={cn(
+            "mx-auto flex max-w-2xl items-center gap-2 rounded-xl border border-transparent px-3 transition-colors focus-within:border-brand-primary/30 focus-within:ring-2 focus-within:ring-brand-primary/10",
+            isStaffPicker
+              ? "bg-white/90 shadow-[0_4px_16px_rgba(39,104,250,0.10)] ring-1 ring-white/60 focus-within:bg-white"
+              : "bg-secondary focus-within:bg-card",
+          )}
+        >
+          <span
+            className={cn(
+              "shrink-0",
+              isStaffPicker ? "text-brand-title/45" : "text-muted-foreground",
+            )}
+          >
             <SearchIcon />
           </span>
           <input
@@ -235,8 +263,21 @@ export function ResourcePicker({
       <main className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto max-w-2xl px-4 py-3 sm:py-4">
           <div className="mb-2 flex items-center justify-between px-1">
-            <h3 className="text-sm font-medium text-foreground">{listTitle}</h3>
-            <span className="text-xs text-muted-foreground" aria-live="polite">
+            <h3
+              className={cn(
+                "text-sm font-medium",
+                isStaffPicker ? "text-brand-title" : "text-foreground",
+              )}
+            >
+              {listTitle}
+            </h3>
+            <span
+              className={cn(
+                "text-xs",
+                isStaffPicker ? "text-brand-title/55" : "text-muted-foreground",
+              )}
+              aria-live="polite"
+            >
               {isSearching ? "正在查询" : `${filtered.length} 人`}
             </span>
           </div>

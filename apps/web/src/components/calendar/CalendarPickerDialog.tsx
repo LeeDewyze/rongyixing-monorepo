@@ -21,6 +21,7 @@ export interface CalendarPickerDialogProps {
   config: CalendarPickerConfig;
   startDate: string;
   endDate: string;
+  minSelectableDate?: string;
   onClose: () => void;
   onConfirm: (start: string, end: string) => void;
 }
@@ -45,6 +46,7 @@ export function CalendarPickerDialog({
   config,
   startDate,
   endDate,
+  minSelectableDate,
   onClose,
   onConfirm,
 }: CalendarPickerDialogProps) {
@@ -74,7 +76,7 @@ export function CalendarPickerDialog({
   }, []);
 
   function handleSelectDate(date: string) {
-    const minDate = calendarMinSelectableDate(config);
+    const minDate = minSelectableDate ?? calendarMinSelectableDate(config);
     const maxDate = calendarMaxSelectableDate(config);
     const base = interactionDraft.start !== null ? interactionDraft : createEmptyDateRangeDraft();
     const result = reduceCalendarSelection(config, base, date, minDate, maxDate);
@@ -117,6 +119,7 @@ export function CalendarPickerDialog({
             config={config}
             draft={displayDraft}
             anchorDate={startDate}
+            minSelectableDate={minSelectableDate}
             hint={hint}
             onSelectDate={handleSelectDate}
           />
