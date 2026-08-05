@@ -5,6 +5,7 @@ import {
   defaultTravelApplySegment,
   emptyTravelApplyTraveler,
   fetchTravelApplyMeta,
+  fetchTravelApplyStaffOptions,
   isTravelFormDeletable,
   isTravelFormEditable,
   isTravelFormRevokable,
@@ -28,6 +29,7 @@ const meta: TravelApplyMeta = {
   organization: { label: "技术部", value: "A001" },
   position: { label: "", value: "" },
   defaultAccount: { label: "1611558-姜茗豪", value: "40390000000011" },
+  staffDataUrl: "http://api-workflow.rtesp.com/StaffCtrl/GetDatas?ticket=test",
   staffOptions: [
     { label: "1611558-姜茗豪", value: "40390000000011" },
     { label: "007-范梦杭", value: "3680000000003" },
@@ -211,6 +213,21 @@ describe("travel apply form submit", () => {
     expect(options[0]?.searchText).toContain("007");
     expect(options[0]?.searchText).toContain("范梦杭");
     expect(options[1]?.searchText).toContain("姜茗豪");
+  });
+
+  it("searches workflow staff with the name query parameter", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      redirected: false,
+      url: "",
+      text: async () => JSON.stringify([{ label: "006-杨佳静", value: "16890000000002" }]),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(fetchTravelApplyStaffOptions(meta.staffDataUrl, "杨")).resolves.toEqual([
+      { label: "006-杨佳静", value: "16890000000002" },
+    ]);
+    expect(fetchMock).toHaveBeenCalledWith(`${meta.staffDataUrl}&name=%E6%9D%A8`, undefined);
   });
 
   it("defaultTravelApplySegment leaves cities unselected", () => {

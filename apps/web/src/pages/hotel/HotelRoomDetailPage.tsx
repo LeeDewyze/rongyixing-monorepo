@@ -13,6 +13,7 @@ import { useHotelDetail } from "@/hooks/useHotelList";
 import { saveHotelGalleryImages } from "@/lib/hotel-gallery-session";
 import { formatApiError } from "@/lib/formatApiError";
 import { navigateBack } from "@/lib/navigation";
+import { WEB_PAGE_BODY, WEB_PAGE_ROOT } from "@/lib/web-page-layout";
 import {
   buildHotelDetailParams,
   buildHotelDetailUrl,
@@ -127,56 +128,58 @@ export function HotelRoomDetailPage() {
   }
 
   return (
-    <div className={`flex min-h-full flex-col bg-[#F5F6F9] pb-4 ${HOTEL_DETAIL_FONT}`}>
-      <header
-        className="sticky top-0 z-20 shrink-0 pt-[env(safe-area-inset-top)]"
-        style={{ background: HOTEL_HEADER_GRADIENT }}
-      >
-        <div className="flex h-12 items-center gap-2 px-3">
-          <button
-            type="button"
-            onClick={handleBack}
-            className="flex h-12 w-8 shrink-0 items-center justify-center active:opacity-70"
-            aria-label="返回"
-          >
-            <BackIcon />
-          </button>
-          <h1
-            className="min-w-0 flex-1 truncate text-center text-[16px] font-semibold leading-tight"
-            style={{ color: HOTEL_CHROME.title }}
-          >
-            {data?.HotelName ?? "酒店详情"}
-          </h1>
-          <span className="w-8 shrink-0" aria-hidden />
+    <div className={`${WEB_PAGE_ROOT} ${HOTEL_DETAIL_FONT}`}>
+      <div className={`${WEB_PAGE_BODY} pb-4`}>
+        <header
+          className="sticky top-0 z-20 shrink-0 pt-[env(safe-area-inset-top)]"
+          style={{ background: HOTEL_HEADER_GRADIENT }}
+        >
+          <div className="flex h-12 items-center gap-2 px-3">
+            <button
+              type="button"
+              onClick={handleBack}
+              className="flex h-12 w-8 shrink-0 items-center justify-center active:opacity-70"
+              aria-label="返回"
+            >
+              <BackIcon />
+            </button>
+            <h1
+              className="min-w-0 flex-1 truncate text-center text-[16px] font-semibold leading-tight"
+              style={{ color: HOTEL_CHROME.title }}
+            >
+              {data?.HotelName ?? "酒店详情"}
+            </h1>
+            <span className="w-8 shrink-0" aria-hidden />
+          </div>
+        </header>
+
+        <HotelRoomDetailHero
+          imageUrls={galleryUrls}
+          onOpenGallery={galleryUrls.length ? handleOpenGallery : undefined}
+        />
+
+        <div className="mx-3 mt-3 space-y-3">
+          <section className="overflow-hidden rounded-xl bg-white px-4 py-3.5 shadow-[0_2px_12px_rgba(0,0,0,0.06)] ring-1 ring-[#E8ECF3]">
+            <h2 className="text-[16px] font-semibold leading-snug text-[#1A1A1A]">
+              {room.RoomName}
+              <span className="font-medium text-[#666666]">详情</span>
+            </h2>
+            {room.Tags?.length ? (
+              <div className="mt-2.5 flex flex-wrap gap-1.5">
+                {room.Tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex h-[20px] items-center rounded-full bg-[#EEF4FF] px-2 text-[10px] leading-none text-brand-primary ring-1 ring-[#D6E4FF]"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+          </section>
+
+          <HotelRoomDetailSpecGrid items={specItems} />
         </div>
-      </header>
-
-      <HotelRoomDetailHero
-        imageUrls={galleryUrls}
-        onOpenGallery={galleryUrls.length ? handleOpenGallery : undefined}
-      />
-
-      <div className="mx-3 mt-3 space-y-3">
-        <section className="overflow-hidden rounded-xl bg-white px-4 py-3.5 shadow-[0_2px_12px_rgba(0,0,0,0.06)] ring-1 ring-[#E8ECF3]">
-          <h2 className="text-[16px] font-semibold leading-snug text-[#1A1A1A]">
-            {room.RoomName}
-            <span className="font-medium text-[#666666]">详情</span>
-          </h2>
-          {room.Tags?.length ? (
-            <div className="mt-2.5 flex flex-wrap gap-1.5">
-              {room.Tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-flex h-[20px] items-center rounded-full bg-[#EEF4FF] px-2 text-[10px] leading-none text-brand-primary ring-1 ring-[#D6E4FF]"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          ) : null}
-        </section>
-
-        <HotelRoomDetailSpecGrid items={specItems} />
       </div>
     </div>
   );

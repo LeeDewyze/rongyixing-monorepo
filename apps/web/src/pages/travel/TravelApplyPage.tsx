@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { CityPicker, ResourcePicker } from "@/components/search";
@@ -16,6 +16,7 @@ import {
   defaultTravelApplySegment,
   defaultTravelApplyTraveler,
   emptyTravelApplyTraveler,
+  fetchTravelApplyStaffOptions,
   fetchTravelFormEditValues,
   staffPickerOptions,
   travelCityPickerAdapter,
@@ -295,6 +296,19 @@ export function TravelApplyPage() {
     );
     return staffPickerOptions(meta.staffOptions).filter((option) => !selectedIds.has(option.id));
   }, [meta, travelers, staffPickerIndex]);
+  const searchStaffOptions = useCallback(
+    async (keyword: string) => {
+      if (!meta?.staffDataUrl) return [];
+      const selectedIds = new Set(
+        travelers
+          .map((traveler, index) => (index === staffPickerIndex ? null : traveler.account.value))
+          .filter(Boolean),
+      );
+      const options = await fetchTravelApplyStaffOptions(meta.staffDataUrl, keyword);
+      return staffPickerOptions(options).filter((option) => !selectedIds.has(option.id));
+    },
+    [meta?.staffDataUrl, staffPickerIndex, travelers],
+  );
   const totalTripDays = segments.reduce(
     (sum, segment) => sum + tripDaysBetween(segment.startDate, segment.endDate),
     0,
@@ -719,6 +733,7 @@ export function TravelApplyPage() {
         title="选择出差人"
         placeholder="搜索姓名或工号"
         showAllOptions
+        onSearch={searchStaffOptions}
         onClose={closeStaffPicker}
         onSelect={(option) => {
           if (staffPickerIndex == null) return;

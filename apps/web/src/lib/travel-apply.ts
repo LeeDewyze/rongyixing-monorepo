@@ -46,6 +46,7 @@ export interface TravelApplyMeta {
   position: TravelApplyOption;
   /** Default traveler from StaffCtrl/DefaultData (current user). */
   defaultAccount: TravelApplyOption;
+  staffDataUrl: string;
   staffOptions: TravelApplyOption[];
   policyDefaultUrl: string;
   travelTypes: TravelApplyOption[];
@@ -228,6 +229,17 @@ function appendQueryParam(url: string, key: string, value: string): string {
   return `${url}${separator}${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
 }
 
+/** Workflow StaffCtrl/GetDatas uses `name` for server-side staff filtering. */
+export async function fetchTravelApplyStaffOptions(
+  staffDataUrl: string,
+  keyword: string,
+): Promise<TravelApplyOption[]> {
+  if (!staffDataUrl) return [];
+  const trimmed = keyword.trim();
+  const url = trimmed ? appendQueryParam(staffDataUrl, "name", trimmed) : staffDataUrl;
+  return normalizeOptions(await fetchJson<unknown>(url));
+}
+
 /** Resolve travel policy id for a staff account (workflow StaffCtrl/GetDefaultPolicy). */
 export async function fetchTravelApplyPolicy(
   policyDefaultUrl: string,
@@ -403,6 +415,7 @@ export async function fetchTravelApplyMeta(ticket: string): Promise<TravelApplyM
     organization,
     position,
     defaultAccount,
+    staffDataUrl: accountControl?.dataUrl ?? "",
     staffOptions: mergedStaff,
     policyDefaultUrl: policyControl?.defaultUrl ?? "",
     travelTypes,
@@ -767,13 +780,11 @@ function parseTravelersFromDetail(
   accounts: Record<string, string>[],
 ): TravelApplyTraveler[] {
   return accounts
-    .map((row) => {
+    .map<TravelApplyTraveler | null>((row) => {
       const account = resolveTravelApplyStaffByLabel(meta.staffOptions, row["出差人"] ?? "");
       if (!account.label && !account.value) return null;
-      return {
-        account,
-        policyId: row.PolicyId?.trim() || undefined,
-      } satisfies TravelApplyTraveler;
+      const policyId = row.PolicyId?.trim();
+      return policyId ? { account, policyId } : { account };
     })
     .filter((item): item is TravelApplyTraveler => item != null);
 }
