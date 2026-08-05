@@ -162,23 +162,55 @@ function clearStringGroup(values: string[], groupIds: string[]): string[] {
   return values.filter((value) => !groupSet.has(value));
 }
 
+const GEO_GROUP_ORDER = [
+  "Metro",
+  "CommercialCenter",
+  "Landmark",
+  "District",
+  "Interest",
+  "RailwayStation",
+  "Airport",
+  "Hospital",
+  "University",
+  "Scenic",
+  "Other",
+];
+
+function getGeoGroupKey(tag?: string): string {
+  const groupMap: Record<string, string> = {
+    Metro: "Metro",
+    District: "District",
+    Mall: "CommercialCenter",
+    CommericalCenter: "CommercialCenter",
+    CommercialCenter: "CommercialCenter",
+    Landmark: "Landmark",
+    Company: "Interest",
+    Group: "Interest",
+    RailwayStation: "RailwayStation",
+    Airport: "Airport",
+    Hospital: "Hospital",
+    University: "University",
+    Scenic: "Scenic",
+  };
+  return groupMap[tag ?? ""] ?? (tag || "Other");
+}
+
 function formatGeoGroup(tag?: string): string {
   const groupMap: Record<string, string> = {
     Metro: "地铁",
     District: "行政区",
-    Mall: "商业中心",
-    CommericalCenter: "商业中心",
     CommercialCenter: "商业中心",
     Landmark: "地标",
-    Company: "兴趣点",
-    Group: "兴趣点",
+    Interest: "兴趣点",
     RailwayStation: "火车站",
     Airport: "机场",
     Hospital: "医院",
     University: "大学",
     Scenic: "景点",
+    Other: "其他",
   };
-  return groupMap[tag ?? ""] ?? (tag || "其他");
+  const key = getGeoGroupKey(tag);
+  return groupMap[key] ?? key;
 }
 
 function parseGeoVariables(geo: HotelGeo): Record<string, unknown> {
@@ -221,6 +253,19 @@ function getGeoLineName(geo: HotelGeo): string {
     vars.Line ??
     vars.line;
   return line ? String(line) : "";
+}
+
+function uniqueGeos(geos: HotelGeo[]): HotelGeo[] {
+  const seen = new Set<string>();
+  return geos.filter((geo) => {
+    const groupKey = getGeoGroupKey(geo.Tag);
+    const name = geo.Name.trim();
+    const line = groupKey === "Metro" ? getGeoLineName(geo).trim() : "";
+    const key = name ? `${groupKey}:${line}:${name}` : `${groupKey}:${line}:id:${geo.Id}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function EmptyPanel({ message }: { message: string }) {
@@ -414,11 +459,11 @@ function LocationPanel({
   error?: boolean;
   onChange: (filter: HotelListFilterState) => void;
 }) {
-  const geos = conditions?.Geos ?? [];
+  const geos = uniqueGeos(conditions?.Geos ?? []);
   const grouped = geos.reduce<Record<string, { tag: string; label: string; items: HotelGeo[] }>>(
     (acc, geo) => {
-      const tag = geo.Tag || "Other";
-      const label = formatGeoGroup(geo.Tag);
+      const tag = getGeoGroupKey(geo.Tag);
+      const label = formatGeoGroup(tag);
       acc[tag] = {
         tag,
         label,
@@ -428,18 +473,7 @@ function LocationPanel({
     },
     {},
   );
-  const orderedGroups = [
-    "Metro",
-    "Mall",
-    "Landmark",
-    "District",
-    "Company",
-    "Group",
-    "Hospital",
-    "University",
-    "Scenic",
-    "Other",
-  ]
+  const orderedGroups = GEO_GROUP_ORDER
     .map((tag) => grouped[tag])
     .filter((group): group is { tag: string; label: string; items: HotelGeo[] } => Boolean(group));
   const orderedTags = new Set(orderedGroups.map((group) => group.tag));

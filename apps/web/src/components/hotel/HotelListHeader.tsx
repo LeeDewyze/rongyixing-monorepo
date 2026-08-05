@@ -9,6 +9,8 @@ interface HotelListHeaderProps {
   onCityClick: () => void;
   onDateClick: () => void;
   onKeywordClick: () => void;
+  selfBookOnly?: boolean;
+  onOpenPolicy?: () => void;
 }
 
 function BackIcon() {
@@ -35,6 +37,8 @@ export function HotelListHeader({
   onCityClick,
   onDateClick,
   onKeywordClick,
+  selfBookOnly = false,
+  onOpenPolicy,
 }: HotelListHeaderProps) {
   return (
     <div
@@ -57,7 +61,18 @@ export function HotelListHeader({
           酒店列表
         </h1>
 
-        <span className="h-10 w-9 shrink-0" aria-hidden />
+        {selfBookOnly ? (
+          <button
+            type="button"
+            className="flex h-10 min-w-[72px] shrink-0 items-center justify-center rounded-md px-1 text-[12px] font-medium text-brand-title active:bg-white/40 disabled:pointer-events-none disabled:opacity-50"
+            disabled={!onOpenPolicy}
+            onClick={onOpenPolicy}
+          >
+            差旅标准
+          </button>
+        ) : (
+          <span className="h-10 w-9 shrink-0" aria-hidden />
+        )}
       </div>
       <div className="px-3">
         <HotelListSearchBar

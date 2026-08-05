@@ -13,6 +13,10 @@ import { HotelListHeader } from "@/components/hotel/HotelListHeader";
 import { HotelListItem } from "@/components/hotel/HotelListItem";
 import { HotelListToolbar, type HotelListToolbarId } from "@/components/hotel/HotelListToolbar";
 import { HotelStayDatePickerSheet } from "@/components/hotel/HotelStayDatePickerSheet";
+import {
+  resolveTravelPolicyRecord,
+  TravelPolicyDialog,
+} from "@/components/policy/TravelPolicyDialog";
 import { CityPicker } from "@/components/search";
 import { usePageHeader } from "@/components/layout";
 import { useHotelConditions, useInfiniteHotelList, useHotelCities } from "@/hooks/useHotelList";
@@ -210,6 +214,7 @@ export function HotelListPage() {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [cityPickerOpen, setCityPickerOpen] = useState(false);
   const [freeStayDialogOpen, setFreeStayDialogOpen] = useState(false);
+  const [travelPolicyOpen, setTravelPolicyOpen] = useState(false);
   const headerRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const [scrollRoot, setScrollRoot] = useState<HTMLDivElement | null>(null);
@@ -235,6 +240,16 @@ export function HotelListPage() {
   const isBusinessMode = productChannel === "tmc";
   const passengerContext = useBusinessSelfBookPassenger(ProductType.Hotel, isBusinessMode);
   const selectedPassengers = passengerContext.passengers;
+  const selfTravelPolicy = useMemo(
+    () =>
+      resolveTravelPolicyRecord(passengerContext.selfPassenger?.passenger) ??
+      resolveTravelPolicyRecord(passengerContext.policyStaff) ??
+      resolveTravelPolicyRecord(passengerContext.staff),
+    [passengerContext.policyStaff, passengerContext.selfPassenger, passengerContext.staff],
+  );
+  const selfTravelPolicyPassengerName =
+    passengerContext.selfPassenger?.credential.Name ??
+    passengerContext.selfPassenger?.passenger.Name;
   const passengerIds = useMemo(
     () => resolveHotelListPassengerIds(selectedPassengers),
     [selectedPassengers],
@@ -550,6 +565,8 @@ export function HotelListPage() {
           onCityClick={() => setCityPickerOpen(true)}
           onDateClick={() => setDatePickerOpen(true)}
           onKeywordClick={goModifySearch}
+          selfBookOnly={passengerContext.isSelfBookOnly}
+          onOpenPolicy={() => setTravelPolicyOpen(true)}
         />
       </div>
 
@@ -639,6 +656,15 @@ export function HotelListPage() {
       />
 
       <HotelFreeStayDialog open={freeStayDialogOpen} onClose={() => setFreeStayDialogOpen(false)} />
+
+      <TravelPolicyDialog
+        open={travelPolicyOpen}
+        passengerName={selfTravelPolicyPassengerName}
+        policy={selfTravelPolicy}
+        loading={passengerContext.isLoading}
+        productType={ProductType.Hotel}
+        onClose={() => setTravelPolicyOpen(false)}
+      />
 
       <HotelStayDatePickerSheet
         open={datePickerOpen}
