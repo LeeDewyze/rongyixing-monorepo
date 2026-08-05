@@ -19,7 +19,7 @@ import { parseFlightTimestamp } from "@/utils/flight-list";
 import {
   formatFlightLegDateTip,
   formatFlightLocationLabel,
-  formatFlightMealLabel,
+  formatFlightCabinsMealLabel,
   formatFlightMetaDuration,
 } from "@/utils/flight-list-display";
 
@@ -273,7 +273,7 @@ export function buildFlightTransferItinerary(
   const legs: FlightTransferLegView[] = segments.map((segment) => {
     const flightNo = (segment.Number ?? segment.FlightNumber ?? "").trim();
     const planeLabel = segment.PlaneTypeDescribe || segment.PlaneType || "";
-    const mealLabel = formatFlightMealLabel(segment.Meal);
+    const mealLabel = formatFlightCabinsMealLabel(segment.Meal);
     const legTakeoffDate = segment.TakeoffTime?.slice(0, 10);
 
     return {

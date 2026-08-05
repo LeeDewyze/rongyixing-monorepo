@@ -12,8 +12,8 @@ import {
 import { buildFlightTransferItinerary } from "@/lib/flight-detail";
 import {
   formatArrivalDateBadge,
+  formatFlightCabinsMealLabel,
   formatFlightLocationLabel,
-  formatFlightMealLabel,
   formatFlightMetaDuration,
 } from "@/utils/flight-list-display";
 
@@ -59,24 +59,18 @@ export function FlightCabinsSummary({ segment, detailSegments }: FlightCabinsSum
   );
   const planeLabel = segment.PlaneTypeDescribe || segment.PlaneType || "";
   const durationLabel = formatFlightMetaDuration(segment.FlyTimeName);
-  const mealLabel = formatFlightMealLabel(segment.Meal);
+  const mealLabel = formatFlightCabinsMealLabel(segment.Meal);
   const airlineName = segment.AirlineName?.trim() ?? "";
   const flightNo = (segment.Number ?? segment.FlightNumber ?? "").trim();
   const headerTitle = transferItinerary
     ? [segment.FromCityName, segment.ToCityName].filter(Boolean).join(" — ") || "中转行程"
     : [airlineName, flightNo].filter(Boolean).join(" ");
-  const headerSubtitle = transferItinerary
-    ? undefined
-    : [planeLabel, mealLabel].filter(Boolean).join(" · ");
 
-  const metaChips = [planeLabel, durationLabel, mealLabel].filter((value): value is string =>
-    Boolean(value),
-  );
+  const metaChips = transferItinerary ? [] : [planeLabel, mealLabel].filter(Boolean);
 
   const metaChipRow =
     metaChips.length > 0 ? (
       <div className="mt-2 flex flex-wrap items-center gap-1.5">
-        {durationLabel ? <MetaChip>{durationLabel}</MetaChip> : null}
         {planeLabel ? <MetaChip>{planeLabel}</MetaChip> : null}
         {mealLabel ? <MetaChip variant="accent">{mealLabel}</MetaChip> : null}
       </div>
@@ -96,11 +90,6 @@ export function FlightCabinsSummary({ segment, detailSegments }: FlightCabinsSum
                 {headerTitle || "航班详情"}
               </p>
             </div>
-            {headerSubtitle ? (
-              <p className="mt-3 truncate text-[14px] font-normal leading-none text-white">
-                {headerSubtitle}
-              </p>
-            ) : null}
           </div>
           {transferItinerary ? (
             <SummaryCollapseButton
@@ -118,7 +107,6 @@ export function FlightCabinsSummary({ segment, detailSegments }: FlightCabinsSum
               expanded={transferExpanded}
               durationLabel={durationLabel}
             />
-            {metaChipRow}
           </>
         ) : (
           <>

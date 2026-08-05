@@ -171,6 +171,11 @@ export function formatFlightListMealLabel(meal: string | undefined | null): stri
   return label;
 }
 
+/** Cabins details always state whether meal service is available. */
+export function formatFlightCabinsMealLabel(meal: string | undefined | null): string {
+  return formatFlightMealLabel(meal) ?? "无餐食";
+}
+
 export function formatFlightMetaDuration(flyTimeName: string | undefined): string | undefined {
   if (!flyTimeName) return undefined;
   return flyTimeName.startsWith("飞") ? flyTimeName : `飞${flyTimeName}`;

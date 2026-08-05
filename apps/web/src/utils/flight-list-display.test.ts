@@ -6,6 +6,7 @@ import {
   formatArrivalDayOffsetLabel,
   formatCabinsDepartTitle,
   formatFlightAgreementAirlineLabel,
+  formatFlightCabinsMealLabel,
   formatFlightListAirlineFlightLabel,
   formatFlightListAirportLine,
   formatFlightListMetaLine,
@@ -63,6 +64,9 @@ describe("flight-list-display cabins helpers", () => {
     expect(formatFlightMealLabel("点心")).toBe("点心");
     expect(formatFlightListMealLabel("N")).toBeUndefined();
     expect(formatFlightListMealLabel("点心")).toBe("点心");
+    expect(formatFlightCabinsMealLabel("N")).toBe("无餐食");
+    expect(formatFlightCabinsMealLabel("")).toBe("无餐食");
+    expect(formatFlightCabinsMealLabel("早餐")).toBe("早餐");
     expect(formatFlightMetaDuration("2h25m")).toBe("飞2h25m");
     expect(formatFlightLegDateTip("2026-07-24 07:35:00", "2026-07-23")).toBe("07-24");
   });
