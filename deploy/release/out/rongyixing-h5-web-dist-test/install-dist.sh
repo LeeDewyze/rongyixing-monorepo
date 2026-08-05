@@ -51,8 +51,8 @@ case "${DEPLOY_ENV}" in
   test)
     DEFAULT_INSTALL_DIR="/opt/rongyixing-test"
     DEFAULT_SERVER_NGINX_TARGET="/etc/nginx/conf.d/rongyixing-test.conf"
-    DEFAULT_H5_LISTEN="80"
-    DEFAULT_WEB_LISTEN="81"
+    DEFAULT_H5_LISTEN="18080"
+    DEFAULT_WEB_LISTEN="18081"
     DEFAULT_DOMAIN_NGINX_TARGET=""
     DEFAULT_BACKEND_DOMAIN_SUFFIX="rtesp.com"
     ;;
@@ -142,15 +142,15 @@ Environment:
   INSTALL_NGINX=0                                     Only install static files.
   SERVER_NGINX_TARGET=/etc/nginx/conf.d/rongyixing-dist.conf
   SERVER_NAME=_                                       Nginx server_name, e.g. IP or domain.
-  H5_LISTEN=80                                        H5 IP entry port.
-  WEB_LISTEN=81                                       Web IP entry port.
+  H5_LISTEN=18080                                     H5 IP entry port.
+  WEB_LISTEN=18081                                     Web IP entry port.
   DOMAIN_LISTEN=80                                    Prod domain entry port.
   DOMAIN_NGINX_TARGET=/etc/nginx/conf.d/ryx-domains.conf
                                                       Prod domain Nginx config path.
   BACKEND_DOMAIN_SUFFIX=rtesp.com                     Backend domain suffix rendered into Nginx upstreams.
   RUN_HEALTH_CHECK=1                                  Check H5 and Web root paths after reload.
-  H5_HEALTH_BASE_URL=http://127.0.0.1:80              H5 health check base URL.
-  WEB_HEALTH_BASE_URL=http://127.0.0.1:81             Web health check base URL.
+  H5_HEALTH_BASE_URL=http://127.0.0.1:18080           H5 health check base URL.
+  WEB_HEALTH_BASE_URL=http://127.0.0.1:18081           Web health check base URL.
   USE_SUDO=auto                                       Use sudo when not running as root.
   USE_SUDO=0                                          Do not use sudo; useful for writable test dirs.
 EOF

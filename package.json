@@ -23,6 +23,7 @@
     "native:windows:pack": "pnpm build:workspace && pnpm --filter @ryx/web build && pnpm --filter @ryx/windows run pack",
     "native:windows:dist": "pnpm build:workspace && pnpm --filter @ryx/web build && pnpm --filter @ryx/windows run dist",
     "build": "pnpm -r build",
+    "release:all": "deploy/release/release-all.sh",
     "extract-methods": "pnpm --filter @ryx/api extract-methods",
     "diff-jyx-methods": "node packages/api/scripts/diff-jyx-methods.mjs",
     "analyze-ryx-scope": "node packages/api/scripts/analyze-ryx-scope.mjs",

@@ -53,7 +53,9 @@ export function getDeviceName(): string {
 export function getRequestDomain(): string {
   const fromUrl = readQueryParams().get("domain");
   if (fromUrl) return fromUrl;
-  return import.meta.env.VITE_API_DOMAIN ?? getAppBaseDomain();
+  const fromEnv = import.meta.env.VITE_API_DOMAIN?.trim();
+  if (fromEnv && fromEnv !== "__AUTO__") return fromEnv;
+  return getAppBaseDomain();
 }
 
 export function getRequestLanguage(): string {

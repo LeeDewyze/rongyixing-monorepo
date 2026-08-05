@@ -32,7 +32,7 @@ export function getDomain(): string {
   }
 
   const fromEnv = import.meta.env.VITE_API_DOMAIN;
-  if (typeof fromEnv === "string" && fromEnv.trim()) {
+  if (typeof fromEnv === "string" && fromEnv.trim() && fromEnv.trim() !== "__AUTO__") {
     return fromEnv.trim();
   }
 

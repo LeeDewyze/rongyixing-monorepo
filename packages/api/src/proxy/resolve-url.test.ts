@@ -40,6 +40,20 @@ describe("resolveUrl", () => {
     ).toBe("/__ryx/ApiMemberUrl/Passenger/Add");
   });
 
+  it("uses direct service URL for same-origin business dist in direct mode", () => {
+    expect(
+      resolveUrl({
+        baseUrl: "",
+        method: "ApiMemberUrl-Passenger-Add",
+        mode: "direct",
+        apiConfig: {
+          Token: "t",
+          Urls: { ApiMemberUrl: "https://member-api.rongtrip.cn" },
+        },
+      }),
+    ).toBe("https://member-api.rongtrip.cn/Passenger/Add");
+  });
+
   it("keeps method query when routing through vite dev proxy", () => {
     expect(
       resolveUrl({

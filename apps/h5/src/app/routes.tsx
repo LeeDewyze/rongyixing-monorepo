@@ -60,6 +60,10 @@ export const router = createBrowserRouter(
       element: <SplashPage />,
     },
     {
+      path: "/index.html",
+      element: <Navigate to="/" replace />,
+    },
+    {
       path: "/login",
       element: <Navigate to="/login/password" replace />,
     },

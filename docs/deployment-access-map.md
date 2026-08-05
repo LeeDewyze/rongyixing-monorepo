@@ -51,8 +51,8 @@ web/dist
 
 | 场景 | 服务器访问地址 | 静态目录 | 后端环境 |
 | --- | --- | --- | --- |
-| H5 Test | `http://<server-ip>:80/` | `h5/dist` | `rtesp.com` |
-| Web Test | `http://<server-ip>:81/` | `web/dist` | `rtesp.com` |
+| H5 Test | `http://<server-ip>:18080/` | `h5/dist` | `rtesp.com` |
+| Web Test | `http://<server-ip>:18081/` | `web/dist` | `rtesp.com` |
 | H5 Prod | `http://<server-ip>:18088/` | `h5/dist` | `rongtrip.cn` |
 | Web Prod | `http://<server-ip>:18089/` | `web/dist` | `rongtrip.cn` |
 
@@ -88,7 +88,7 @@ http://web.songguoren.site/?ticket=xxxx
 | 类型 | H5 Test | Web Test | H5 Prod | Web Prod |
 | --- | --- | --- | --- | --- |
 | 本地 Vite | `http://localhost:5173/` | `http://localhost:5174/` | `http://localhost:5175/` | `http://localhost:5176/` |
-| 服务器 IP | `http://<server-ip>:80/` | `http://<server-ip>:81/` | `http://<server-ip>:18088/` | `http://<server-ip>:18089/` |
+| 服务器 IP | `http://<server-ip>:18080/` | `http://<server-ip>:18081/` | `http://<server-ip>:18088/` | `http://<server-ip>:18089/` |
 | Prod 域名 | - | - | `http://h5.songguoren.site/` | `http://web.songguoren.site/` |
 | 后端环境 | `rtesp.com` | `rtesp.com` | `rongtrip.cn` | `rongtrip.cn` |
 

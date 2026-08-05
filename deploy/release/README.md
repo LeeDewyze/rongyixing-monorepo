@@ -20,6 +20,48 @@
 在开发机仓库根目录执行：
 
 ```bash
+pnpm release:all
+```
+
+这是推荐的一键 release 入口。默认一次性生成六类产物：
+
+```text
+deploy/release/out/rongyixing-business-h5-test/    # 业务方 H5 test
+deploy/release/out/rongyixing-business-h5-prod/    # 业务方 H5 prod
+deploy/release/out/rongyixing-business-web-test/   # 业务方 Web test
+deploy/release/out/rongyixing-business-web-prod/   # 业务方 Web prod
+deploy/release/out/rongyixing-h5-web-dist-test/    # 我们内部 test nginx 验证包
+deploy/release/out/rongyixing-h5-web-dist-prod/    # 我们内部 prod nginx 验证包
+deploy/release/out/RELEASE-<timestamp>.md          # 本次 release 清单
+```
+
+业务方同源包只需要把对应目录下的静态目录整体替换到业务方服务器的
+`wwwroot/www` 或 `wwwroot/web`；它会在运行时请求当前访问域名下的
+`/Home/Setting`，再按 legacy 配置访问后续后端服务。我们自己的 localhost、
+IP、songguoren.site 验证继续使用 `rongyixing-h5-web-dist-test/prod` 里的 nginx
+安装脚本。
+
+如果只需要业务方包：
+
+```bash
+BUILD_INTERNAL=0 pnpm release:all
+```
+
+如果只需要我们内部验证包：
+
+```bash
+BUILD_BUSINESS_WWW=0 pnpm release:all
+```
+
+如需同时生成压缩包：
+
+```bash
+CREATE_ARCHIVE=1 pnpm release:all
+```
+
+底层内部验证包也可以单独构建：
+
+```bash
 deploy/release/build-dist-package.sh
 ```
 
@@ -104,8 +146,8 @@ cd deploy/release/out/rongyixing-h5-web-dist-test
 ```text
 安装目录：/opt/rongyixing-test
 Nginx 文件：/etc/nginx/conf.d/rongyixing-test.conf
-H5 端口：80
-Web 端口：81
+H5 端口：18080
+Web 端口：18081
 后端域名：rtesp.com
 ```
 
@@ -135,8 +177,8 @@ cd deploy/release/out/rongyixing-h5-web-dist-prod
 DEPLOY_ENV=test \
 INSTALL_DIR=/opt/rongyixing-test \
 SERVER_NGINX_TARGET=/etc/nginx/conf.d/rongyixing-test.conf \
-H5_LISTEN=80 \
-WEB_LISTEN=81 \
+H5_LISTEN=18080 \
+WEB_LISTEN=18081 \
 ./install-dist.sh
 ```
 
@@ -166,8 +208,8 @@ http://<server-ip>:<web-port>/?ticket=xxxx
 ```bash
 INSTALL_DIR=/data/rongyixing \
 SERVER_NAME=192.168.1.10 \
-H5_LISTEN=80 \
-WEB_LISTEN=81 \
+H5_LISTEN=18080 \
+WEB_LISTEN=18081 \
 ./install-dist.sh
 ```
 

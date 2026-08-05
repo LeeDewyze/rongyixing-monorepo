@@ -1,5 +1,14 @@
 const DEFAULT_APP_ID = "com.ronglvonline.app";
 const DEFAULT_APP_BASE_URL = "https://app.rongtrip.cn";
+const SAME_ORIGIN_API_BASE = "__SAME_ORIGIN__";
+
+function getRuntimeOrigin(): string {
+  return typeof window !== "undefined" && window.location?.origin ? window.location.origin : "";
+}
+
+function isSameOriginApiBase(value: string): boolean {
+  return value.trim().toUpperCase() === SAME_ORIGIN_API_BASE;
+}
 
 export function getAppName(): string {
   return import.meta.env.VITE_APP_NAME ?? "RongYiXing Web";
@@ -10,15 +19,22 @@ export function getAppId(): string {
 }
 
 export function getApiBaseUrl(): string {
-  const configured = import.meta.env.VITE_API_BASE_URL ?? "";
+  const configured = import.meta.env.VITE_API_BASE_URL?.trim() ?? "";
   if (getApiMode() === "proxy") {
+    return "";
+  }
+  if (isSameOriginApiBase(configured)) {
     return "";
   }
   return configured;
 }
 
 export function getLegacyAppBaseUrl(): string {
-  return (import.meta.env.VITE_API_BASE_URL?.trim() || DEFAULT_APP_BASE_URL).replace(/\/$/, "");
+  const configured = import.meta.env.VITE_API_BASE_URL?.trim() ?? "";
+  if (isSameOriginApiBase(configured)) {
+    return (getRuntimeOrigin() || DEFAULT_APP_BASE_URL).replace(/\/$/, "");
+  }
+  return (configured || DEFAULT_APP_BASE_URL).replace(/\/$/, "");
 }
 
 function parseAppBaseUrl(): URL {

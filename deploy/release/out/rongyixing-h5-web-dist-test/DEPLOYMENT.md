@@ -38,10 +38,10 @@ rongyixing-h5-web-dist-prod/
 | 交付包名称 | `rongyixing-h5-web-dist-test` | `rongyixing-h5-web-dist-prod` |
 | 静态文件目录 | `/opt/rongyixing-test` | `/opt/rongyixing-prod` |
 | Nginx 配置 | `/etc/nginx/conf.d/rongyixing-test.conf` | `/etc/nginx/conf.d/rongyixing-prod.conf` |
-| Nginx 端口 | `80` | `18088` |
+| Nginx 端口 | `18080` | `18088` |
 | 后端域名 | `rtesp.com` | `rongtrip.cn` |
-| H5 IP 地址 | `http://<server>:80/` | `http://<server>:18088/` |
-| Web IP 地址 | `http://<server>:81/` | `http://<server>:18089/` |
+| H5 IP 地址 | `http://<server>:18080/` | `http://<server>:18088/` |
+| Web IP 地址 | `http://<server>:18081/` | `http://<server>:18089/` |
 
 每个环境都会独立构建 H5 与 Web 两份根路径产物，因此同一个包内不再通过
 `/h5/`、`/web/` 区分应用。IP 通过不同端口对应各自的静态目录。
@@ -179,8 +179,8 @@ sudo env \
 Test：
 
 ```bash
-curl -I http://127.0.0.1:80/
-curl -I http://127.0.0.1:81/
+curl -I http://127.0.0.1:18080/
+curl -I http://127.0.0.1:18081/
 ```
 
 Prod：

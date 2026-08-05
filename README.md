@@ -209,8 +209,8 @@ When a test environment has only one IP and no domain names, deploy H5 and Web a
 root-path services behind different server Nginx ports:
 
 ```text
-http://<server-ip>:80/  -> @ryx/h5
-http://<server-ip>:81/  -> @ryx/web
+http://<server-ip>:18080/  -> @ryx/h5
+http://<server-ip>:18081/  -> @ryx/web
 ```
 
 The apps are built with a root `VITE_BASE_PATH`:

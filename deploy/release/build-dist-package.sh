@@ -37,6 +37,7 @@ Environment:
   VITE_API_BASE_URL=                       Single-env app portal base URL override.
   VITE_API_DOMAIN=                         Single-env legacy domain fallback override.
   VITE_API_MODE=proxy                     API mode embedded into the bundle.
+  SKIP_WORKSPACE_BUILD=0                   Set to 1 when called by an outer release script.
   CREATE_ARCHIVE=0                         Only create the uploadable package directory.
   CREATE_ARCHIVE=1                         Also create tar.gz archive after directory package.
 EOF
@@ -79,8 +80,8 @@ resolve_env_defaults() {
       ENV_API_BASE_URL="http://app.rtesp.com"
       ENV_API_DOMAIN="rtesp.com"
       ENV_ACCESS_BASE_URL="http://<server-ip>"
-      ENV_H5_PORT="80"
-      ENV_WEB_PORT="81"
+      ENV_H5_PORT="18080"
+      ENV_WEB_PORT="18081"
       ;;
     prod)
       ENV_API_BASE_URL="https://app.rongtrip.cn"
@@ -242,8 +243,12 @@ build_env_package() {
   fi
 }
 
-log "build workspace packages"
-pnpm build:workspace
+if [[ "${SKIP_WORKSPACE_BUILD:-0}" == "1" ]]; then
+  log "skip workspace package build"
+else
+  log "build workspace packages"
+  pnpm build:workspace
+fi
 
 for env_name in "${BUILD_ENVS[@]}"; do
   build_env_package "${env_name}"

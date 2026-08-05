@@ -19,7 +19,11 @@ function cleanExternalTicketParams(url: URL): URL {
 }
 
 function buildInternalPath(url: URL): string {
-  return stripAppBasePath(`${url.pathname}${url.search}${url.hash}`);
+  const currentPath = stripAppBasePath(`${url.pathname}${url.search}${url.hash}`);
+  if (currentPath === "/index.html") return "/";
+  if (currentPath.startsWith("/index.html?")) return `/?${currentPath.slice("/index.html?".length)}`;
+  if (currentPath.startsWith("/index.html#")) return `/#${currentPath.slice("/index.html#".length)}`;
+  return currentPath;
 }
 
 function resolveTicketTargetPath(url: URL, fallbackPath: string): string {

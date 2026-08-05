@@ -39,9 +39,14 @@ function normalizeBase(baseUrl: string): string {
 export const DEV_RYX_PROXY_PREFIX = "/__ryx";
 
 /** Legacy uses absolute service URL; Vite dev uses same-origin path + proxy. */
-function toFetchUrl(serviceUrl: string, baseUrl: string, urlKey?: string): string {
+function toFetchUrl(
+  serviceUrl: string,
+  baseUrl: string,
+  urlKey?: string,
+  mode?: "proxy" | "direct",
+): string {
   const base = normalizeBase(baseUrl);
-  if (!base) {
+  if (!base && mode !== "direct") {
     try {
       const parsed = new URL(serviceUrl);
       const pathWithSearch = `${parsed.pathname}${parsed.search}`;
@@ -57,6 +62,7 @@ function resolveServiceUrl(
   method: string,
   apiConfig: ApiConfigSetting,
   baseUrl: string,
+  mode?: "proxy" | "direct",
 ): string | null {
   const parts = method.split("-");
   if (parts.length < 3) return null;
@@ -67,7 +73,7 @@ function resolveServiceUrl(
   if (!serviceBase) return null;
   const action = actionParts.join("-");
   const absolute = `${serviceBase.replace(/\/$/, "")}/${controller}/${action}`;
-  return toFetchUrl(absolute, baseUrl, urlKey);
+  return toFetchUrl(absolute, baseUrl, urlKey, mode);
 }
 
 function isProxyOnlyMethod(method: string): boolean {
@@ -96,7 +102,12 @@ export function resolveUrl(options: ResolveUrlOptions): string {
 
   // Legacy: when ApiConfig.Urls is loaded, POST directly to service URL (not /Home/Proxy).
   if (options.apiConfig?.Urls) {
-    const serviceUrl = resolveServiceUrl(options.method, options.apiConfig, options.baseUrl);
+    const serviceUrl = resolveServiceUrl(
+      options.method,
+      options.apiConfig,
+      options.baseUrl,
+      options.mode,
+    );
     if (serviceUrl) {
       return serviceUrl;
     }
