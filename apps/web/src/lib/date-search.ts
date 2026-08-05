@@ -116,6 +116,22 @@ export function buildFlightListDateStripRange(selectedDate: string): string[] {
   return buildLegacyDaysCalendarRange(selectedDate);
 }
 
+export const FLIGHT_LIST_DATE_STRIP_ITEM_WIDTH_PX = 47;
+
+/** Extend the legacy strip forward so wide layouts can show more fixed-width date cells. */
+export function padFlightListDateStripRange(selectedDate: string, minCount: number): string[] {
+  const dates = buildFlightListDateStripRange(selectedDate);
+  if (minCount <= 0 || dates.length >= minCount) return dates;
+
+  const result = [...dates];
+  let cursor = result[result.length - 1] ?? todayDateString();
+  while (result.length < minCount) {
+    cursor = addDays(cursor, 1);
+    result.push(cursor);
+  }
+  return result;
+}
+
 export function nightsBetween(checkIn: string, checkOut: string): number {
   const a = parseLocalDate(checkIn)?.getTime() ?? NaN;
   const b = parseLocalDate(checkOut)?.getTime() ?? NaN;

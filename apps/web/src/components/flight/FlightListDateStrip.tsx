@@ -1,8 +1,9 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import calendarIcon from "@/assets/train/calendar-icon.png";
 import {
-  buildFlightListDateStripRange,
+  FLIGHT_LIST_DATE_STRIP_ITEM_WIDTH_PX,
+  padFlightListDateStripRange,
   parseLocalDate,
   relativeDayLabel,
   todayDateString,
@@ -23,6 +24,14 @@ const DATE_REL_ACTIVE_CLASS =
 const DATE_REL_INACTIVE_CLASS =
   "text-[13px] font-medium leading-[100%] tracking-[0] text-[#333333] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]";
 
+const FLIGHT_LIST_DATE_STRIP_GAP_PX = 4;
+
+function countVisibleFlightListDates(containerWidth: number): number {
+  if (containerWidth <= 0) return 7;
+  const slotWidth = FLIGHT_LIST_DATE_STRIP_ITEM_WIDTH_PX + FLIGHT_LIST_DATE_STRIP_GAP_PX;
+  return Math.max(7, Math.floor((containerWidth + FLIGHT_LIST_DATE_STRIP_GAP_PX) / slotWidth));
+}
+
 /** List page date row — MM-DD + 今天/明天. */
 export function FlightListDateStrip({
   selectedDate,
@@ -30,19 +39,37 @@ export function FlightListDateStrip({
   onOpenCalendar,
 }: FlightListDateStripProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [minVisibleCount, setMinVisibleCount] = useState(21);
   const anchorDate = parseLocalDate(selectedDate) ? selectedDate : todayDateString();
-  const dates = buildFlightListDateStripRange(anchorDate);
+  const dates = useMemo(
+    () => padFlightListDateStripRange(anchorDate, minVisibleCount),
+    [anchorDate, minVisibleCount],
+  );
+
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const updateVisibleCount = () => {
+      setMinVisibleCount(countVisibleFlightListDates(el.clientWidth));
+    };
+
+    updateVisibleCount();
+    const observer = new ResizeObserver(updateVisibleCount);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     const el = scrollRef.current?.querySelector(`[data-date="${selectedDate}"]`);
     el?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
-  }, [selectedDate]);
+  }, [selectedDate, dates.length]);
 
   return (
     <div className="flex items-stretch bg-gradient-to-b from-[#6aabff] to-[#e4edfd] pb-3 pl-3 pr-0 pt-1">
       <div
         ref={scrollRef}
-        className="flex min-w-0 flex-1 justify-between gap-1 overflow-x-auto pr-2 max-md:gap-0 md:justify-start [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex min-w-0 flex-1 justify-start gap-1 overflow-x-auto pr-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {dates.map((date) => {
           const active = date === selectedDate;

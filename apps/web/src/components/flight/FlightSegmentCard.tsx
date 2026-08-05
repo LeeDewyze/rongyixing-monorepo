@@ -23,7 +23,7 @@ const FLIGHT_AIRPORT_CLASS = `truncate text-[16px] font-[400] not-italic leading
 
 const FLIGHT_AIRLINE_CLASS = `truncate text-[20px] font-[500] not-italic leading-[100%] tracking-[0] text-[#010101] ${FONT}`;
 
-const FLIGHT_PLANE_CLASS = `truncate text-[14px] font-[400] not-italic leading-[100%] tracking-[0] text-[#666666] ${FONT}`;
+const FLIGHT_PLANE_CLASS = `whitespace-nowrap text-[14px] font-[400] not-italic leading-[100%] tracking-[0] text-[#666666] ${FONT}`;
 
 const FLIGHT_DAY_OFFSET_CLASS = `ml-1 whitespace-nowrap text-[16px] font-[400] not-italic leading-[100%] tracking-[0] text-[#666666] ${FONT}`;
 
@@ -41,16 +41,16 @@ const FLIGHT_SCARCE_BADGE_CLASS = `flex h-5 min-w-[40px] shrink-0 items-center j
 
 const FLIGHT_AGREEMENT_AIRLINE_CLASS = `inline-flex h-5 items-center justify-center whitespace-nowrap rounded border border-[#34C759] bg-[#34C7591A] px-2 text-[11px] font-normal leading-none tracking-[0] text-[#34C759] ${FONT}`;
 
+/** Airline column keeps a stable width so times align, but grows for long plane/meal text. */
 const FLIGHT_CARD_GRID_CLASS =
-  "grid w-full grid-cols-[14rem_minmax(0,1fr)_auto] items-center gap-x-5 pc:grid-cols-[17rem_minmax(0,1fr)_auto] pc:gap-x-6";
+  "grid w-full grid-cols-[minmax(18rem,max-content)_minmax(0,1fr)_auto] items-center gap-x-5 pc:grid-cols-[minmax(21rem,max-content)_minmax(0,1fr)_auto] pc:gap-x-6";
 
-const FLIGHT_ROUTE_ROW_CLASS = "flex items-center gap-x-5 pl-10 pc:gap-x-6 pc:pl-12";
+const FLIGHT_ROUTE_ROW_CLASS =
+  "grid w-max max-w-full grid-cols-[5.75rem_5.5rem_5.75rem] items-center gap-x-5 pc:grid-cols-[6.25rem_6rem_6.25rem] pc:gap-x-6";
 
-const FLIGHT_ROUTE_DEPART_COL_CLASS = "w-[4.75rem] shrink-0 pc:w-[5.25rem]";
+const FLIGHT_ROUTE_TIME_COL_CLASS = "min-w-0";
 
-const FLIGHT_ROUTE_ARROW_COL_CLASS = "w-[5.5rem] shrink-0 pc:w-[6rem]";
-
-const FLIGHT_ROUTE_ARRIVE_COL_CLASS = "w-[5.75rem] shrink-0 pc:w-[6.25rem]";
+const FLIGHT_ROUTE_ARROW_COL_CLASS = "w-full";
 
 const DIRECT_LOWEST_GRADIENT_STYLE = {
   background:
@@ -199,20 +199,18 @@ export function FlightSegmentCard({
 
       <div className={`relative z-[1] ${contentPadding} ${isTransferLowest ? "pt-9" : ""}`}>
         <div className={FLIGHT_CARD_GRID_CLASS}>
-          <div className="flex min-w-0 items-center gap-3 pc:gap-4">
+          <div className="flex items-center gap-3 pc:gap-4">
             <AirlineLogo segment={segment} />
-            <div className="flex min-w-0 flex-col gap-2">
+            <div className="flex flex-col gap-2">
               {airlineFlightLabel ? (
                 <p className={FLIGHT_AIRLINE_CLASS}>{airlineFlightLabel}</p>
               ) : null}
-              {planeMetaLine ? (
-                <p className={`truncate ${FLIGHT_PLANE_CLASS}`}>{planeMetaLine}</p>
-              ) : null}
+              {planeMetaLine ? <p className={FLIGHT_PLANE_CLASS}>{planeMetaLine}</p> : null}
             </div>
           </div>
 
           <div className={FLIGHT_ROUTE_ROW_CLASS}>
-            <div className={`flex flex-col items-start gap-2 ${FLIGHT_ROUTE_DEPART_COL_CLASS}`}>
+            <div className={`flex flex-col items-start gap-2 ${FLIGHT_ROUTE_TIME_COL_CLASS}`}>
               <p className={FLIGHT_TIME_CLASS}>{formatFlightTime(segment.TakeoffTime)}</p>
               <p className={`w-full ${FLIGHT_AIRPORT_CLASS}`}>
                 {formatFlightListAirportLine(
@@ -225,7 +223,7 @@ export function FlightSegmentCard({
 
             <FlightRouteMiddle segment={segment} />
 
-            <div className={`flex flex-col items-start gap-2 ${FLIGHT_ROUTE_ARRIVE_COL_CLASS}`}>
+            <div className={`flex flex-col items-start gap-2 ${FLIGHT_ROUTE_TIME_COL_CLASS}`}>
               <p className={FLIGHT_TIME_CLASS}>
                 {formatFlightTime(segment.ArrivalTime)}
                 {arrivalDayOffset ? (
