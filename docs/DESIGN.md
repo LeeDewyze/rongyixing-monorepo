@@ -231,6 +231,7 @@ Reference files:
 ### Filter Sheet
 
 - Prefer the flight filter sheet structure for complex list filtering:
+
   - Full-screen fixed dialog wrapper.
   - Blurred dark backdrop.
   - Bottom sheet panel at `65dvh`.
@@ -238,8 +239,10 @@ Reference files:
   - Small drag handle.
   - Gradient header fading into page background.
   - Optional quick toggles under the title.
+
   - White rounded body with left category rail and right content pane.
   - Fixed footer with outline reset and primary gradient confirm.
+
 - Category rail active state uses white background, brand text, and a 3px gradient left marker.
 - Dirty categories use a small brand dot.
 - Selected rows use pale blue fill, brand text, and custom radio/checkbox controls.
@@ -303,6 +306,7 @@ Reference files:
 - 2026-08-01 - Hotel order list status context: kept the order-level status badge, added legacy hotel payment type beside the amount, and added room-level status beside the passenger for both H5 and Web cards.
 - 2026-08-01 - Flight/train order list status context: moved ticket-level status beside passenger names, added “含保险” amount metadata, and surfaced train `CommandPrompt` warnings in both H5 and Web order cards.
 - 2026-08-01 - Order Inspur repush sheet: added a shared H5/Web TMC order-detail bottom sheet for “重推浪潮”, using compact passenger cards, optional per-passenger linkman selection, loading/empty/error states, and a fixed gradient submit action.
+- 2026-08-05 - ResourcePicker staff variant: employee selection uses a persistent search field, selected-row feedback, staff avatar initials, result count, skeleton loading, and a dedicated empty state. The same structure is constrained to `max-w-2xl` on larger screens while remaining full-screen on mobile.
 
 ## H5 Dialog And Sheet Inventory
 
@@ -368,6 +372,7 @@ Before creating any new dialog, sheet, toast, or modal-like surface, first check
 - `apps/h5/src/components/travel/ApprovalTaskList.tsx` - approval task list cards with status pills, skeleton, error, empty, and load-more states.
 - `apps/h5/src/components/order/OrderListCard.tsx` - order list card with flight ticket-level rows/actions and shared transport/hotel bodies.
 - `apps/h5/src/components/search/PickerShell.tsx` - shared full-screen picker chrome with default and form-gradient tones.
+- `apps/h5/src/components/search/ResourcePicker.tsx` / `apps/web/src/components/search/ResourcePicker.tsx` - shared resource picker with a staff-focused employee selection variant.
 - `apps/h5/src/pages/flight/FlightListPage.tsx` - reference travel result-list chrome for H5 list pages.
 - `apps/h5/src/components/flight/FlightFilterSheet.tsx` - reference complex list filter sheet with category rail, dirty state, reset, and confirm footer.
 - `apps/h5/src/components/flight/FlightSegmentCard.tsx` - reference dense result card with right-anchored price, compact metadata, value badges, and tap feedback.

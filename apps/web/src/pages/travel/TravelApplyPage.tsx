@@ -734,6 +734,10 @@ export function TravelApplyPage() {
         placeholder="搜索姓名或工号"
         showAllOptions
         onSearch={searchStaffOptions}
+        variant="staff"
+        selectedOptionId={
+          staffPickerIndex == null ? undefined : travelers[staffPickerIndex]?.account.value
+        }
         onClose={closeStaffPicker}
         onSelect={(option) => {
           if (staffPickerIndex == null) return;
