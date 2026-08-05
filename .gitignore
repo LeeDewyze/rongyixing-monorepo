@@ -10,6 +10,14 @@ node_modules/
 dist/
 *.tsbuildinfo
 deploy/release/out/*
+!deploy/release/out/rongyixing-business-h5-test/
+!deploy/release/out/rongyixing-business-h5-test/**
+!deploy/release/out/rongyixing-business-h5-prod/
+!deploy/release/out/rongyixing-business-h5-prod/**
+!deploy/release/out/rongyixing-business-web-test/
+!deploy/release/out/rongyixing-business-web-test/**
+!deploy/release/out/rongyixing-business-web-prod/
+!deploy/release/out/rongyixing-business-web-prod/**
 !deploy/release/out/rongyixing-h5-web-dist-test/
 !deploy/release/out/rongyixing-h5-web-dist-test/**
 !deploy/release/out/rongyixing-h5-web-dist-prod/

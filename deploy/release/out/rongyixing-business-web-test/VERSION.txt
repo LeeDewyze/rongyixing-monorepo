@@ -1,0 +1,12 @@
+name=rongyixing-business-web-test
+build_time=2026-08-05T07:26:40Z
+build_timestamp=20260805152637
+deploy_env=business-same-origin-test
+app=web
+git_commit=6360b5d957397a1968502985b91cfe65530d79bf
+git_branch=main
+base_path=/web/
+static_dir=web
+api_mode=direct
+api_base_url=__SAME_ORIGIN__
+api_domain=__AUTO__
