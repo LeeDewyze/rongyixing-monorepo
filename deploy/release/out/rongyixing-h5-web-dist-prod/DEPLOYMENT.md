@@ -4,6 +4,9 @@
 `rongyixing-h5-web-dist-test` 或 `rongyixing-h5-web-dist-prod` 交付包，
 不需要源码、Node.js、pnpm 或重新构建项目。
 
+本地 Vite 启动、服务器 IP 访问、Prod 域名访问的完整对应关系见
+[RongYiXing 启动与访问地址对照](./deployment-access-map.md)。
+
 ## 1. 交付包内容
 
 完整交付包结构如下：

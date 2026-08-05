@@ -22,6 +22,7 @@ describe("normalizePickerItems flight city order", () => {
     const items: Trafficline[] = [
       {
         Id: "1",
+        Tag: "Airport",
         Code: "YIE",
         Name: "阿尔山伊尔施机场",
         Nickname: "阿尔山伊尔施",
@@ -31,6 +32,7 @@ describe("normalizePickerItems flight city order", () => {
       },
       {
         Id: "2",
+        Tag: "Airport",
         Code: "AAT",
         Name: "阿勒泰机场",
         Nickname: "阿勒泰",
@@ -40,6 +42,7 @@ describe("normalizePickerItems flight city order", () => {
       },
       {
         Id: "3",
+        Tag: "Airport",
         Code: "AKU",
         Name: "阿克苏机场",
         Nickname: "阿克苏",
@@ -59,6 +62,7 @@ describe("normalizePickerItems flight city order", () => {
     const items: Trafficline[] = [
       {
         Id: "1",
+        Tag: "AirportCity",
         Code: "BAV",
         Name: "包头",
         Nickname: "包头",
@@ -68,6 +72,7 @@ describe("normalizePickerItems flight city order", () => {
       },
       {
         Id: "2",
+        Tag: "AirportCity",
         Code: "BJS",
         Name: "北京",
         Nickname: "北京",
@@ -91,6 +96,7 @@ describe("displayTrafficlineBrowseName", () => {
     expect(
       displayTrafficlineBrowseName({
         Id: "1",
+        Tag: "Airport",
         Code: "AVA",
         Name: "安顺黄果树机场",
         Nickname: "黄果树机场",
@@ -102,6 +108,7 @@ describe("displayTrafficlineBrowseName", () => {
     expect(
       displayTrafficlineBrowseName({
         Id: "2",
+        Tag: "AirportCity",
         Code: "BJS",
         Name: "北京",
         Nickname: "北京",
