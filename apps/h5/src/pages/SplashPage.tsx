@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import splashLogo from "@/assets/splash/logo.png";
-import { designCqw, designHeightPercent } from "@/config/design";
+import { designHeightPercent, designMobileVw } from "@/config/design";
 import { SPLASH_SLOGAN } from "@/config/splash";
 
 export function SplashPage() {
@@ -35,7 +35,7 @@ export function SplashPage() {
           className="absolute left-1/2 m-0 w-full -translate-x-1/2 text-center font-normal leading-normal"
           style={{
             top: designHeightPercent(SPLASH_SLOGAN.top),
-            fontSize: designCqw(SPLASH_SLOGAN.fontSize),
+            fontSize: designMobileVw(SPLASH_SLOGAN.fontSize),
             color: SPLASH_SLOGAN.color,
             fontFamily: SPLASH_SLOGAN.fontFamily,
             letterSpacing: 0,

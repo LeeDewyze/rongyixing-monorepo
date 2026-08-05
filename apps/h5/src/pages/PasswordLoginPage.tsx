@@ -5,7 +5,7 @@ import passwordBg from "@/assets/login/password-bg.jpg";
 import { LegalDocumentSheet } from "@/components/contact/LegalDocumentSheet";
 import { DesignScreen } from "@/components/DesignScreen";
 import { PageToast } from "@/components/layout/PageToast";
-import { designCqw, designHeightPercent, designWidthPercent } from "@/config/design";
+import { designMobileVw, designHeightPercent, designWidthPercent } from "@/config/design";
 import { LOGIN_FONT, PASSWORD_LOGIN_LAYOUT, PASSWORD_LOGIN_SHARED } from "@/config/password-login";
 import { useMobileLogin, usePasswordLogin, useSendLoginCode } from "@/hooks/useAuth";
 import { resolveInternalReturnTo } from "@/lib/base-path";
@@ -59,7 +59,7 @@ function InputClearButton({ onClear, size }: { onClear: () => void; size: number
       type="button"
       aria-label="Clear input"
       className="flex shrink-0 items-center justify-center rounded-full border-none bg-white/25 p-0 text-white"
-      style={{ width: designCqw(size), height: designCqw(size) }}
+      style={{ width: designMobileVw(size), height: designMobileVw(size) }}
       onClick={onClear}
     >
       <svg viewBox="0 0 24 24" fill="none" aria-hidden style={{ width: "55%", height: "55%" }}>
@@ -92,7 +92,7 @@ function PasswordVisibilityToggle({
       type="button"
       aria-label={visible ? "Hide password" : "Show password"}
       className="flex shrink-0 items-center justify-center overflow-visible border-none bg-transparent p-0 text-white"
-      style={{ width: designCqw(size), height: designCqw(size) }}
+      style={{ width: designMobileVw(size), height: designMobileVw(size) }}
       onClick={onToggle}
     >
       {visible ? (
@@ -115,8 +115,8 @@ function LoginFieldRow({ children }: { children: ReactNode }) {
     <div
       className="border-b border-white/90"
       style={{
-        minHeight: designCqw(72),
-        paddingBottom: designCqw(20),
+        minHeight: designMobileVw(72),
+        paddingBottom: designMobileVw(20),
       }}
     >
       {children}
@@ -328,7 +328,7 @@ export function PasswordLoginPage() {
               width: "max-content",
               maxWidth: "100%",
               minHeight: designHeightPercent(title.height),
-              fontSize: designCqw(title.fontSize),
+              fontSize: designMobileVw(title.fontSize),
               fontWeight: title.fontWeight,
               lineHeight: "normal",
               letterSpacing: 0,
@@ -341,9 +341,9 @@ export function PasswordLoginPage() {
           <div
             className="flex rounded-full bg-white/15 p-1"
             style={{
-              marginTop: designCqw(37),
+              marginTop: designMobileVw(37),
               width: designWidthPercent(loginModeTabs.width),
-              height: designCqw(loginModeTabs.height),
+              height: designMobileVw(loginModeTabs.height),
               backdropFilter: "blur(10px)",
             }}
           >
@@ -355,7 +355,7 @@ export function PasswordLoginPage() {
                 style={{
                   background: loginMode === mode ? "rgba(255,255,255,0.92)" : "transparent",
                   color: loginMode === mode ? "var(--brand-primary)" : "rgba(255,255,255,0.72)",
-                  fontSize: designCqw(24),
+                  fontSize: designMobileVw(24),
                   fontWeight: loginMode === mode ? 600 : 400,
                 }}
                 onClick={() => {
@@ -368,9 +368,12 @@ export function PasswordLoginPage() {
             ))}
           </div>
 
-          <div className="flex flex-col" style={{ marginTop: designCqw(33), gap: designCqw(57) }}>
+          <div
+            className="flex flex-col"
+            style={{ marginTop: designMobileVw(33), gap: designMobileVw(57) }}
+          >
             <LoginFieldRow>
-              <div className="flex items-center" style={{ gap: designCqw(12) }}>
+              <div className="flex items-center" style={{ gap: designMobileVw(12) }}>
                 <input
                   type="text"
                   autoComplete={loginMode === "password" ? "username" : "tel"}
@@ -384,7 +387,7 @@ export function PasswordLoginPage() {
                   }
                   onFocus={scrollFocusedInputIntoView}
                   className="min-w-0 flex-1 border-none bg-transparent p-0 text-white outline-none"
-                  style={{ fontSize: designCqw(accountInput.fontSize), caretColor: "#33a1f9" }}
+                  style={{ fontSize: designMobileVw(accountInput.fontSize), caretColor: "#33a1f9" }}
                 />
                 {(loginMode === "password" ? account : mobile) ? (
                   <InputClearButton
@@ -412,11 +415,17 @@ export function PasswordLoginPage() {
                   }
                   onFocus={scrollFocusedInputIntoView}
                   className="min-w-0 flex-1 border-none bg-transparent p-0 text-white outline-none"
-                  style={{ fontSize: designCqw(passwordInput.fontSize), caretColor: "#33a1f9" }}
+                  style={{
+                    fontSize: designMobileVw(passwordInput.fontSize),
+                    caretColor: "#33a1f9",
+                  }}
                 />
                 <div
                   className="relative z-10 flex shrink-0 items-center"
-                  style={{ gap: designCqw(passwordInput.actionGap), marginLeft: designCqw(8) }}
+                  style={{
+                    gap: designMobileVw(passwordInput.actionGap),
+                    marginLeft: designMobileVw(8),
+                  }}
                 >
                   {(loginMode === "password" ? password : smsCode) ? (
                     <InputClearButton
@@ -434,7 +443,7 @@ export function PasswordLoginPage() {
                     <button
                       type="button"
                       className="rounded-full border-none bg-white/15 px-2 py-1 text-white disabled:opacity-55"
-                      style={{ fontSize: designCqw(22) }}
+                      style={{ fontSize: designMobileVw(22) }}
                       disabled={sendCode.isPending || countdown > 0}
                       onClick={() => void handleSendCode()}
                     >
@@ -455,7 +464,7 @@ export function PasswordLoginPage() {
           <style>{`
             input::placeholder {
               color: ${accountInput.placeholderColor};
-              font-size: ${designCqw(accountInput.fontSize)};
+              font-size: ${designMobileVw(accountInput.fontSize)};
             }
           `}</style>
 
@@ -463,8 +472,8 @@ export function PasswordLoginPage() {
             <p
               className="text-white/50"
               style={{
-                marginTop: designCqw(24),
-                fontSize: designCqw(22),
+                marginTop: designMobileVw(24),
+                fontSize: designMobileVw(22),
               }}
             >
               开发 Mock 模式：不会发起网络请求
@@ -475,11 +484,11 @@ export function PasswordLoginPage() {
             type="button"
             className="flex w-full items-center justify-center border-none text-white"
             style={{
-              marginTop: designCqw(68),
-              height: designCqw(button.height),
-              borderRadius: designCqw(button.borderRadius),
+              marginTop: designMobileVw(68),
+              height: designMobileVw(button.height),
+              borderRadius: designMobileVw(button.borderRadius),
               background: button.gradient,
-              fontSize: designCqw(button.fontSize),
+              fontSize: designMobileVw(button.fontSize),
               fontWeight: 500,
               opacity: pending ? 0.7 : canSubmit ? 1 : 0.55,
             }}
@@ -490,12 +499,15 @@ export function PasswordLoginPage() {
           </button>
 
           {loginMode === "password" ? (
-            <div className="flex items-center justify-between" style={{ marginTop: designCqw(40) }}>
+            <div
+              className="flex items-center justify-between"
+              style={{ marginTop: designMobileVw(40) }}
+            >
               <label
                 className="flex cursor-pointer items-center"
                 style={{
-                  gap: designCqw(12),
-                  fontSize: designCqw(rememberPasswordRow.fontSize),
+                  gap: designMobileVw(12),
+                  fontSize: designMobileVw(rememberPasswordRow.fontSize),
                   color: rememberPasswordRow.color,
                   lineHeight: "normal",
                 }}
@@ -512,8 +524,8 @@ export function PasswordLoginPage() {
                   }}
                   className="login-remember-checkbox shrink-0 appearance-none rounded-full border border-white/70 bg-transparent"
                   style={{
-                    width: designCqw(rememberPasswordRow.checkboxSize),
-                    height: designCqw(rememberPasswordRow.checkboxSize),
+                    width: designMobileVw(rememberPasswordRow.checkboxSize),
+                    height: designMobileVw(rememberPasswordRow.checkboxSize),
                   }}
                 />
                 <span className="whitespace-nowrap">{rememberPasswordRow.text}</span>
@@ -522,7 +534,7 @@ export function PasswordLoginPage() {
                 to="/login/forgot-password"
                 className="no-underline"
                 style={{
-                  fontSize: designCqw(forgotPasswordLink.fontSize),
+                  fontSize: designMobileVw(forgotPasswordLink.fontSize),
                   fontWeight: forgotPasswordLink.fontWeight,
                   lineHeight: "normal",
                   letterSpacing: 0,
@@ -555,10 +567,10 @@ export function PasswordLoginPage() {
             marginTop: "auto",
             paddingLeft: LOGIN_HORIZONTAL_PADDING,
             paddingRight: LOGIN_HORIZONTAL_PADDING,
-            paddingTop: designCqw(32),
+            paddingTop: designMobileVw(32),
             paddingBottom: `max(${designHeightPercent(agreement.bottom)}, env(safe-area-inset-bottom))`,
-            gap: designCqw(12),
-            fontSize: designCqw(agreement.fontSize),
+            gap: designMobileVw(12),
+            fontSize: designMobileVw(agreement.fontSize),
             color: agreement.color,
             lineHeight: 1.4,
           }}
@@ -589,8 +601,8 @@ export function PasswordLoginPage() {
             onClick={(event) => event.stopPropagation()}
             className="login-agreement-checkbox shrink-0 appearance-none rounded-full border border-white/70 bg-transparent"
             style={{
-              width: designCqw(agreement.checkboxSize),
-              height: designCqw(agreement.checkboxSize),
+              width: designMobileVw(agreement.checkboxSize),
+              height: designMobileVw(agreement.checkboxSize),
             }}
           />
           <style>{`

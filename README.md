@@ -151,6 +151,17 @@ cp apps/h5/.env.example apps/h5/.env
 cp apps/web/.env.example apps/web/.env
 ```
 
+## Deployment & Verification
+
+If you need the full release and deployment guide for:
+
+- local Vite validation
+- local Nginx validation
+- IP + domain verification on your own server
+- customer server deployment
+
+read [docs/deployment-readme.md](docs/deployment-readme.md).
+
 ### Mobile H5 (`@ryx/h5`)
 
 ```bash

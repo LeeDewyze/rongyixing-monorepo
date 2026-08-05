@@ -19,3 +19,11 @@ export function designHeightPercent(px: number): string {
 export function designCqw(px: number): string {
   return `${(px / DESIGN_CANVAS.width) * 100}cqw`;
 }
+
+/** Stable mobile WebView scale for the 750-wide artboard without relying on cqw. */
+export function designMobileVw(px: number): string {
+  const preferred = (px / DESIGN_CANVAS.width) * 100;
+  const min = px * 0.42;
+  const max = px * 0.7;
+  return `clamp(${min}px, ${preferred}vw, ${max}px)`;
+}
