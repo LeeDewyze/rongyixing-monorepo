@@ -94,6 +94,7 @@ export function PassengerSelectEntry({
         passengerName={policyPassengerName}
         policy={travelPolicy}
         loading={isLoading}
+        productType={forType}
         onClose={() => setPolicyOpen(false)}
       />
     </>

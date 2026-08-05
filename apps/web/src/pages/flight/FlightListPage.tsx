@@ -631,6 +631,7 @@ export function FlightListPage() {
         passengerName={selfTravelPolicyPassengerName}
         policy={selfTravelPolicy}
         loading={passengerContext.isLoading}
+        productType={ProductType.Flight}
         onClose={() => setTravelPolicyOpen(false)}
       />
 

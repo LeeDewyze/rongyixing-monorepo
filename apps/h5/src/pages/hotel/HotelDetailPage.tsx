@@ -492,6 +492,7 @@ export function HotelDetailPage() {
         passengerName={selfTravelPolicyPassengerName}
         policy={selfTravelPolicy}
         loading={passengerContext.isLoading}
+        productType={ProductType.Hotel}
         onClose={() => setTravelPolicyOpen(false)}
       />
     </div>

@@ -699,6 +699,7 @@ export function TrainListPage() {
         passengerName={selfTravelPolicyPassengerName}
         policy={selfTravelPolicy}
         loading={passengerContext.isLoading}
+        productType={ProductType.Train}
         onClose={() => setTravelPolicyOpen(false)}
       />
 

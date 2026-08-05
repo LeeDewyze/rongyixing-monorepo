@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { ProductType } from "@ryx/shared-types";
 
 import "./travel-policy-dialog.css";
 
@@ -9,6 +10,7 @@ interface TravelPolicyDialogProps {
   passengerName?: string;
   policy?: TravelPolicyRecord | null;
   loading?: boolean;
+  productType?: ProductType;
   onClose: () => void;
 }
 
@@ -18,6 +20,7 @@ interface PolicyRow {
 }
 
 interface PolicySection {
+  key: "flight" | "train" | "hotel";
   title: string;
   items: string[];
 }
@@ -58,13 +61,14 @@ function rowsToItems(rows: PolicyRow[]): string[] {
 }
 
 function buildPolicySection(
+  key: "flight" | "train" | "hotel",
   title: string,
   description: unknown,
   fallbackRows: PolicyRow[],
 ): PolicySection | null {
   const descriptionItems = splitDescription(description);
   const items = descriptionItems.length ? descriptionItems : rowsToItems(fallbackRows);
-  return items.length ? { title, items } : null;
+  return items.length ? { key, title, items } : null;
 }
 
 function buildPolicySections(policy: TravelPolicyRecord | null | undefined): PolicySection[] {
@@ -106,10 +110,29 @@ function buildPolicySections(policy: TravelPolicyRecord | null | undefined): Pol
   addRow(hotel, "超标提示", record.HotelIllegalTip);
 
   return [
-    buildPolicySection("机票", record.FlightDescription, flight),
-    buildPolicySection("火车", record.TrainDescription, train),
-    buildPolicySection("酒店", record.HotelDescription, hotel),
+    buildPolicySection("flight", "机票", record.FlightDescription, flight),
+    buildPolicySection("train", "火车", record.TrainDescription, train),
+    buildPolicySection("hotel", "酒店", record.HotelDescription, hotel),
   ].filter((section): section is PolicySection => Boolean(section));
+}
+
+function resolveVisiblePolicySections(
+  sections: PolicySection[],
+  productType?: ProductType,
+): PolicySection[] {
+  if (productType == null) return sections;
+  switch (productType) {
+    case ProductType.Flight:
+    case ProductType.InternationalFlight:
+      return sections.filter((section) => section.key === "flight");
+    case ProductType.Hotel:
+    case ProductType.HotelInternational:
+      return sections.filter((section) => section.key === "hotel");
+    case ProductType.Train:
+      return sections.filter((section) => section.key === "train");
+    default:
+      return sections;
+  }
 }
 
 export function resolveTravelPolicyRecord(value: unknown): TravelPolicyRecord | null {
@@ -143,10 +166,14 @@ export function TravelPolicyDialog({
   passengerName,
   policy,
   loading = false,
+  productType,
   onClose,
 }: TravelPolicyDialogProps) {
   const [visible, setVisible] = useState(false);
-  const sections = useMemo(() => buildPolicySections(policy), [policy]);
+  const sections = useMemo(
+    () => resolveVisiblePolicySections(buildPolicySections(policy), productType),
+    [policy, productType],
+  );
 
   useEffect(() => {
     if (open) {
