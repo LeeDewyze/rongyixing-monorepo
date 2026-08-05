@@ -1,5 +1,5 @@
 import { addDays, todayDateString } from "@/lib/date-search";
-import { getWorkflowSite } from "@/lib/workflow-site";
+import { getBpmExpenseSite, getWorkflowSite } from "@/lib/workflow-site";
 
 export interface TravelApplyRawControl {
   id: string | null;
@@ -36,6 +36,8 @@ export interface TravelApplySegment {
 
 export interface TravelApplyMeta {
   addUrl: string;
+  /** Legacy `window.SendUrl` — POST with `Id` + `IsIgnoreWarning` after Form/Add. */
+  sendUrl: string;
   workflowId: string;
   controls: TravelApplyRawControl[];
   travelNumber: TravelApplyOption;
@@ -63,6 +65,11 @@ export interface TravelApplySubmitResult {
   Data?: {
     Id?: number;
   };
+}
+
+export interface TravelApplySubmitOptions {
+  /** Legacy `#isSend` — when true (default), call TravelTask/Send after save. */
+  submitForApproval?: boolean;
 }
 
 interface FlowFormDefaultValue {
@@ -119,6 +126,11 @@ function parseFlowControls(html: string): TravelApplyRawControl[] {
     throw new Error("未解析到出差申请表单字段");
   }
   return JSON.parse(match[1]) as TravelApplyRawControl[];
+}
+
+function parseSendUrl(html: string): string {
+  const match = html.match(/SendUrl\s*=\s*"([^"]+)"/);
+  return match?.[1] ?? "";
 }
 
 function parseAddUrl(html: string): string {
@@ -277,10 +289,72 @@ export function emptyTravelApplyTraveler(): TravelApplyTraveler {
   return { account: { label: "", value: "" } };
 }
 
+export function resolveTravelApplyCityByLabel(
+  cities: TravelApplyCity[],
+  label: string,
+): TravelApplyCity {
+  const trimmed = label.trim();
+  if (!trimmed) return emptyTravelApplyCity();
+  return cities.find((city) => city.label === trimmed) ?? { label: trimmed, value: "" };
+}
+
+export function resolveTravelApplyStaffByLabel(
+  staffOptions: TravelApplyOption[],
+  label: string,
+): TravelApplyOption {
+  const trimmed = label.trim();
+  if (!trimmed) return { label: "", value: "" };
+  return staffOptions.find((staff) => staff.label === trimmed) ?? { label: trimmed, value: "" };
+}
+
+function decodeHtmlEntities(text: string): string {
+  return text
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex: string) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, num: string) => String.fromCodePoint(Number(num)))
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"');
+}
+
+function normalizeDetailDate(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  return trimmed.slice(0, 10);
+}
+
+/** Legacy Form/Detail HTML — slave rows are rendered but not returned by Form/Get JSON. */
+export function parseTravelFormDetailHtml(html: string): {
+  accounts: Record<string, string>[];
+  details: Record<string, string>[];
+} {
+  const accounts: Record<string, string>[] = [];
+  const details: Record<string, string>[] = [];
+  const blocks = html.split(/<span class="formDetail-title">/i).slice(1);
+
+  for (const block of blocks) {
+    const titleMatch = block.match(/^([^<]+)</);
+    if (!titleMatch) continue;
+    const title = decodeHtmlEntities(titleMatch[1].trim());
+    const fields: Record<string, string> = {};
+    const fieldRe =
+      /class="element-tip">([^<]+)<\/div>\s*<div class="element-content"[^>]*>\s*([\s\S]*?)<\/div>/g;
+    let match: RegExpExecArray | null;
+    while ((match = fieldRe.exec(block)) !== null) {
+      fields[decodeHtmlEntities(match[1].trim())] = decodeHtmlEntities(match[2].trim());
+    }
+    if (title.startsWith("TravelAccount")) accounts.push(fields);
+    if (title.startsWith("TravelDetail")) details.push(fields);
+  }
+
+  return { accounts, details };
+}
+
 export async function fetchTravelApplyMeta(ticket: string): Promise<TravelApplyMeta> {
   const html = await fetchText(`${getWorkflowSite()}/Form/Flow?flowtag=Travel&ticket=${ticket}`);
   const controls = parseFlowControls(html);
   const addUrl = parseAddUrl(html);
+  const sendUrl = parseSendUrl(html);
   const workflowId = parseWorkflowId(html);
 
   const travelTypeControl = findControl(controls, (control) => control.tag === "TravelType");
@@ -321,6 +395,7 @@ export async function fetchTravelApplyMeta(ticket: string): Promise<TravelApplyM
 
   return {
     addUrl: toAbsoluteWorkflowUrl(addUrl),
+    sendUrl: toAbsoluteWorkflowUrl(sendUrl),
     workflowId,
     controls,
     travelNumber,
@@ -528,29 +603,115 @@ export function buildTravelApplyBody(
   return body;
 }
 
-export async function submitTravelApply(
-  meta: TravelApplyMeta,
-  values: TravelApplyFormValues,
+/** Legacy `window.SendUrl` — expense-bpm TravelTask/Send. */
+export function buildTravelSendUrl(ticket: string): string {
+  const params = new URLSearchParams({ ticket, CheckFlowType: "", FlowTag: "Travel" });
+  return `${getBpmExpenseSite()}/TravelTask/Send?${params.toString()}`;
+}
+
+/** Legacy `window.RemoveUrl` — workflow Form/Remove. */
+export function buildTravelRemoveUrl(ticket: string): string {
+  const params = new URLSearchParams({
+    SaveNotifyUrl: "",
+    ticket,
+    CheckFlowType: "",
+    FlowTag: "Travel",
+  });
+  return `${getWorkflowSite()}/Form/Remove?${params.toString()}`;
+}
+
+async function postTravelSend(
+  sendUrl: string,
+  formId: string | number,
 ): Promise<TravelApplySubmitResult> {
-  const travelers = await resolveTravelersWithPolicy(meta, values.travelers);
-  const body = buildTravelApplyBody(meta, { ...values, travelers });
-  return fetchJson<TravelApplySubmitResult>(meta.addUrl, {
+  const url = appendQueryParam(sendUrl, "Id", String(formId));
+  return fetchJson<TravelApplySubmitResult>(url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body,
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ IsIgnoreWarning: "true" }).toString(),
   });
 }
 
-// ── Form/Get 加载主表字段（编辑反填） ──────────────────────────────────
-// 注意：workflow Form/Get 只返回主表控件，slave 数据不可用。
-// 因此编辑时只能恢复出差类型和事由，出差人和行程使用默认值。
+/** Legacy `task.saveSend` / list `task.send` — submit saved form for approval. */
+export async function sendTravelApplyForApproval(
+  meta: TravelApplyMeta,
+  formId: string | number,
+): Promise<TravelApplySubmitResult> {
+  const ticket = new URL(meta.addUrl).searchParams.get("ticket") ?? "";
+  const sendUrl = meta.sendUrl || (ticket ? buildTravelSendUrl(ticket) : "");
+  if (!sendUrl) {
+    return { Status: false, Message: "未解析到出差申请报审地址" };
+  }
+  return postTravelSend(sendUrl, formId);
+}
+
+/** List-page 报审 — same TravelTask/Send as create-page immediate submit. */
+export async function sendTravelApplyForApprovalByTicket(
+  ticket: string,
+  formId: string | number,
+): Promise<TravelApplySubmitResult> {
+  return postTravelSend(buildTravelSendUrl(ticket), formId);
+}
+
+async function saveAndMaybeSendTravelApply(
+  meta: TravelApplyMeta,
+  saveUrl: string,
+  body: URLSearchParams,
+  options: TravelApplySubmitOptions,
+  formIdForSend?: string | number,
+): Promise<TravelApplySubmitResult> {
+  const submitForApproval = options.submitForApproval ?? true;
+  const saveResult = await fetchJson<TravelApplySubmitResult>(saveUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body,
+  });
+
+  if (!saveResult.Status || !submitForApproval) {
+    return saveResult;
+  }
+
+  const formId = formIdForSend ?? saveResult.Data?.Id;
+  if (formId == null) {
+    return { Status: false, Message: "保存成功但未返回表单 ID", Data: saveResult.Data };
+  }
+
+  const sendResult = await sendTravelApplyForApproval(meta, formId);
+  if (!sendResult.Status) {
+    return {
+      Status: false,
+      Message: sendResult.Message ?? "报审失败",
+      Data: saveResult.Data,
+    };
+  }
+
+  return saveResult;
+}
+
+export async function submitTravelApply(
+  meta: TravelApplyMeta,
+  values: TravelApplyFormValues,
+  options: TravelApplySubmitOptions = {},
+): Promise<TravelApplySubmitResult> {
+  const travelers = await resolveTravelersWithPolicy(meta, values.travelers);
+  const body = buildTravelApplyBody(meta, { ...values, travelers });
+  return saveAndMaybeSendTravelApply(meta, meta.addUrl, body, options);
+}
+
+// ── Form/Get + Form/Detail 加载（编辑反填） ─────────────────────────────
+// Form/Get JSON 不返回 slave 行数据（slaveDatas 为空），需从 Form/Detail HTML 解析行程/出差人。
 
 /** Form/Get 返回的控件数组（同 Form/Flow 的 var datas 结构）。 */
 export type FormGetResponse = TravelApplyRawControl[];
 
-/** 通过 Form/Get 加载已有表单数据。 */
+export interface TravelApplyEditValues {
+  travelTypes: string[];
+  reason: string;
+  travelers: TravelApplyTraveler[];
+  segments: TravelApplySegment[];
+}
+
+/** 通过 Form/Get 加载已有表单主表字段。 */
 export async function fetchTravelFormData(
   ticket: string,
   formId: string,
@@ -589,6 +750,84 @@ export async function fetchTravelFormData(
   }
 }
 
+/** Legacy Form/Detail — contains rendered slave rows for edit backfill. */
+export async function fetchTravelFormDetailHtml(ticket: string, formId: string): Promise<string> {
+  const params = new URLSearchParams({
+    Id: formId,
+    ticket,
+    CheckFlowType: "",
+    FlowTag: "Travel",
+  });
+  const url = `${getWorkflowSite()}/Form/Detail?${params.toString()}`;
+  return fetchText(url);
+}
+
+function parseTravelersFromDetail(
+  meta: TravelApplyMeta,
+  accounts: Record<string, string>[],
+): TravelApplyTraveler[] {
+  return accounts
+    .map((row) => {
+      const account = resolveTravelApplyStaffByLabel(meta.staffOptions, row["出差人"] ?? "");
+      if (!account.label && !account.value) return null;
+      return {
+        account,
+        policyId: row.PolicyId?.trim() || undefined,
+      } satisfies TravelApplyTraveler;
+    })
+    .filter((item): item is TravelApplyTraveler => item != null);
+}
+
+function parseSegmentsFromDetail(
+  meta: TravelApplyMeta,
+  details: Record<string, string>[],
+): TravelApplySegment[] {
+  return details.map((row) => ({
+    startDate: normalizeDetailDate(row["开始日期"] ?? ""),
+    endDate: normalizeDetailDate(row["结束日期"] ?? ""),
+    fromCity: resolveTravelApplyCityByLabel(meta.cities, row["出发城市"] ?? ""),
+    toCity: resolveTravelApplyCityByLabel(meta.cities, row["目的城市"] ?? ""),
+  }));
+}
+
+async function resolveTravelersPolicies(
+  meta: TravelApplyMeta,
+  travelers: TravelApplyTraveler[],
+): Promise<TravelApplyTraveler[]> {
+  if (!meta.policyDefaultUrl) return travelers;
+  return Promise.all(
+    travelers.map(async (traveler) => {
+      if (traveler.policyId || !traveler.account.value) return traveler;
+      const policyId = await fetchTravelApplyPolicy(meta.policyDefaultUrl, traveler.account.value);
+      return policyId ? { ...traveler, policyId } : traveler;
+    }),
+  );
+}
+
+/** Load main + slave fields for edit screen. */
+export async function fetchTravelFormEditValues(
+  ticket: string,
+  formId: string,
+  meta: TravelApplyMeta,
+): Promise<TravelApplyEditValues | null> {
+  const [controls, detailHtml] = await Promise.all([
+    fetchTravelFormData(ticket, formId),
+    fetchTravelFormDetailHtml(ticket, formId),
+  ]);
+  const main = controls ? parseFormDataToValues(meta, controls) : null;
+  if (!main) return null;
+
+  const { accounts, details } = parseTravelFormDetailHtml(detailHtml);
+  const travelers = await resolveTravelersPolicies(meta, parseTravelersFromDetail(meta, accounts));
+  const segments = parseSegmentsFromDetail(meta, details);
+
+  return {
+    ...main,
+    travelers,
+    segments,
+  };
+}
+
 /** 从控件中读取 defaultValue，兼容 string / {label, value} 格式。 */
 function readControlDefault(control: TravelApplyRawControl): string {
   const raw = (control as unknown as { defaultValue?: unknown }).defaultValue;
@@ -606,12 +845,10 @@ function readControlDefault(control: TravelApplyRawControl): string {
   return String(raw);
 }
 
-/** 从 Form/Get 响应中提取前端可用的表单字段。 */
+/** 从 Form/Get 响应中提取主表字段（出差类型、事由）。 */
 export function parseFormDataToValues(
   _meta: TravelApplyMeta,
   controls: FormGetResponse,
-  _cities: TravelApplyCity[],
-  _staffOptions: TravelApplyOption[],
 ): { travelTypes: string[]; reason: string } | null {
   if (!Array.isArray(controls) || controls.length === 0) return null;
 
@@ -636,12 +873,24 @@ export async function modifyTravelApply(
   meta: TravelApplyMeta,
   values: TravelApplyFormValues,
   formId: string | number,
+  options: TravelApplySubmitOptions = {},
 ): Promise<TravelApplySubmitResult> {
   const modifyUrl = meta.addUrl.replace("/Form/Add?", "/Form/Modify?");
   const travelers = await resolveTravelersWithPolicy(meta, values.travelers);
   const body = buildTravelApplyBody(meta, { ...values, travelers });
   body.append("Id", String(formId));
-  return fetchJson<TravelApplySubmitResult>(modifyUrl, {
+  return saveAndMaybeSendTravelApply(meta, modifyUrl, body, options, formId);
+}
+
+// ── 删除（Form/Remove） ────────────────────────────────────────────────
+
+/** Delete a saved travel form (legacy weber Remove — POST body `id`). */
+export async function deleteTravelApply(
+  ticket: string,
+  formId: string | number,
+): Promise<TravelApplySubmitResult> {
+  const body = new URLSearchParams({ id: String(formId) });
+  return fetchJson<TravelApplySubmitResult>(buildTravelRemoveUrl(ticket), {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body,
@@ -669,16 +918,35 @@ export async function revokeTravelApply(
   });
 }
 
-/** Status values where revoke is allowed: 草稿(1), 审批中(2 or 4). */
+/** Status values where revoke is allowed: pending approval (2 or 4). */
 export function isTravelFormRevokable(status?: string | number): boolean {
   const s = typeof status === "string" ? Number(status) : (status ?? 0);
-  return s === 1 || s === 2 || s === 4;
+  return s === 2 || s === 4;
 }
 
-/** Status values where edit is allowed: 草稿(1), 已驳回(5). */
+function travelFormStatusCode(status?: string | number): number {
+  return typeof status === "string" ? Number(status) : (status ?? 0);
+}
+
+/** Saved but not submitted — legacy list shows 等待报送 (Status=3). */
+export function isTravelFormWaitingSubmit(status?: string | number): boolean {
+  return travelFormStatusCode(status) === 3;
+}
+
+/** List-page 报审 — only while waiting to submit. */
+export function isTravelFormSendable(status?: string | number): boolean {
+  return isTravelFormWaitingSubmit(status);
+}
+
+/** List-page 删除 — only while waiting to submit. */
+export function isTravelFormDeletable(status?: string | number): boolean {
+  return isTravelFormWaitingSubmit(status);
+}
+
+/** Edit allowed: 等待报送(3) or 已驳回(5). */
 export function isTravelFormEditable(status?: string | number): boolean {
-  const s = typeof status === "string" ? Number(status) : (status ?? 0);
-  return s === 1 || s === 5;
+  const s = travelFormStatusCode(status);
+  return s === 3 || s === 5;
 }
 
 export function validateTravelApply(values: TravelApplyFormValues): string | null {

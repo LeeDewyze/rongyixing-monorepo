@@ -2,13 +2,26 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   buildTravelApplyBody,
+  defaultTravelApplySegment,
+  emptyTravelApplyTraveler,
   fetchTravelApplyMeta,
+  isTravelFormDeletable,
+  isTravelFormEditable,
+  isTravelFormRevokable,
+  isTravelFormSendable,
+  isTravelFormWaitingSubmit,
+  parseTravelFormDetailHtml,
+  resolveTravelApplyCityByLabel,
+  sendTravelApplyForApproval,
+  staffPickerOptions,
+  submitTravelApply,
   validateTravelApply,
   type TravelApplyMeta,
 } from "./travel-apply";
 
 const meta: TravelApplyMeta = {
   addUrl: "http://workflow.rtesp.com/Form/Add?ticket=test&FlowTag=Travel",
+  sendUrl: "http://expense-bpm.rtesp.com/TravelTask/Send?ticket=test&FlowTag=Travel",
   workflowId: "318",
   travelNumber: { label: "Travel001", value: "Travel001" },
   applicant: { label: "姜茗豪", value: "40390000000011" },
@@ -168,6 +181,187 @@ describe("travel apply form submit", () => {
         ],
       }),
     ).toBe("出差人不能重复");
+  });
+
+  it("emptyTravelApplyTraveler requires selection before submit", () => {
+    expect(emptyTravelApplyTraveler().account.value).toBe("");
+    expect(
+      validateTravelApply({
+        travelTypes: ["国内机票"],
+        reason: "测试",
+        travelers: [{ account: meta.defaultAccount }, emptyTravelApplyTraveler()],
+        segments: [
+          {
+            startDate: "2026-06-25",
+            endDate: "2026-06-30",
+            fromCity: { label: "北京", value: "1101" },
+            toCity: { label: "上海", value: "3101" },
+          },
+        ],
+      }),
+    ).toBe("请选择出差人");
+  });
+
+  it("indexes staff picker search by number and name", () => {
+    const options = staffPickerOptions([
+      { label: "007-范梦杭", value: "3680000000003" },
+      { label: "1611558-姜茗豪", value: "40390000000011" },
+    ]);
+
+    expect(options[0]?.searchText).toContain("007");
+    expect(options[0]?.searchText).toContain("范梦杭");
+    expect(options[1]?.searchText).toContain("姜茗豪");
+  });
+
+  it("defaultTravelApplySegment leaves cities unselected", () => {
+    const segment = defaultTravelApplySegment(meta.cities);
+    expect(segment.fromCity).toEqual({ label: "", value: "" });
+    expect(segment.toCity).toEqual({ label: "", value: "" });
+    expect(
+      validateTravelApply({
+        travelTypes: ["国内机票"],
+        reason: "测试",
+        travelers: [{ account: meta.defaultAccount }],
+        segments: [segment],
+      }),
+    ).toBe("请选择行程出发城市");
+  });
+});
+
+describe("travel apply submit for approval", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const validValues = {
+    travelTypes: ["国内机票"],
+    reason: "客户拜访",
+    travelers: [{ account: meta.defaultAccount, policyId: "policy-1" }],
+    segments: [
+      {
+        startDate: "2026-06-25",
+        endDate: "2026-06-30",
+        fromCity: { label: "北京", value: "1101" },
+        toCity: { label: "上海", value: "3101" },
+      },
+    ],
+  };
+
+  it("sends for approval after save when submitForApproval is true", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        text: async () => JSON.stringify({ Status: true, Data: { Id: 42 } }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        text: async () => JSON.stringify({ Status: true }),
+      });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await submitTravelApply(meta, validValues, { submitForApproval: true });
+
+    expect(result.Status).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[1]?.[0]).toContain("TravelTask/Send");
+    expect(fetchMock.mock.calls[1]?.[0]).toContain("Id=42");
+  });
+
+  it("skips send when submitForApproval is false", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      text: async () => JSON.stringify({ Status: true, Data: { Id: 42 } }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await submitTravelApply(meta, validValues, { submitForApproval: false });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0]?.[0]).toContain("Form/Add");
+  });
+
+  it("posts IsIgnoreWarning when sending for approval", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      text: async () => JSON.stringify({ Status: true }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await sendTravelApplyForApproval(meta, 99);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("TravelTask/Send"),
+      expect.objectContaining({
+        method: "POST",
+        body: "IsIgnoreWarning=true",
+      }),
+    );
+  });
+});
+
+describe("travel form status helpers", () => {
+  it("maps legacy waiting-submit and pending-approval states", () => {
+    expect(isTravelFormWaitingSubmit(3)).toBe(true);
+    expect(isTravelFormSendable(3)).toBe(true);
+    expect(isTravelFormDeletable(3)).toBe(true);
+    expect(isTravelFormEditable(3)).toBe(true);
+    expect(isTravelFormRevokable(3)).toBe(false);
+
+    expect(isTravelFormRevokable(2)).toBe(true);
+    expect(isTravelFormRevokable(4)).toBe(true);
+    expect(isTravelFormSendable(2)).toBe(false);
+    expect(isTravelFormEditable(5)).toBe(true);
+  });
+});
+
+describe("travel form detail html parser", () => {
+  it("parses travelers and segments from legacy Form/Detail HTML", () => {
+    const html = `
+      <span class="formDetail-title">TravelAccount1</span>
+      <div class="element">
+        <div class="element-tip">&#x51FA;&#x5DEE;&#x4EBA;</div>
+        <div class="element-content">3157173-孙雪</div>
+      </div>
+      <span class="formDetail-title">TravelDetail1</span>
+      <div class="element">
+        <div class="element-tip">&#x51FA;&#x53D1;&#x57CE;&#x5E02;</div>
+        <div class="element-content">北京</div>
+      </div>
+      <div class="element">
+        <div class="element-tip">&#x76EE;&#x7684;&#x57CE;&#x5E02;</div>
+        <div class="element-content">上海</div>
+      </div>
+      <div class="element">
+        <div class="element-tip">&#x5F00;&#x59CB;&#x65E5;&#x671F;</div>
+        <div class="element-content">2026-08-04 00:00</div>
+      </div>
+      <div class="element">
+        <div class="element-tip">&#x7ED3;&#x675F;&#x65E5;&#x671F;</div>
+        <div class="element-content">2026-08-05 00:00</div>
+      </div>
+    `;
+
+    const parsed = parseTravelFormDetailHtml(html);
+    expect(parsed.accounts).toEqual([{ 出差人: "3157173-孙雪" }]);
+    expect(parsed.details[0]).toMatchObject({
+      出发城市: "北京",
+      目的城市: "上海",
+      开始日期: "2026-08-04 00:00",
+      结束日期: "2026-08-05 00:00",
+    });
+  });
+
+  it("resolves city labels from meta city list", () => {
+    const cities = [
+      { label: "北京", value: "1101" },
+      { label: "上海", value: "3101" },
+    ];
+    expect(resolveTravelApplyCityByLabel(cities, "北京")).toEqual({
+      label: "北京",
+      value: "1101",
+    });
+    expect(resolveTravelApplyCityByLabel(cities, "")).toEqual({ label: "", value: "" });
   });
 });
 

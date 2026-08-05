@@ -16,8 +16,7 @@ import {
   defaultTravelApplySegment,
   defaultTravelApplyTraveler,
   emptyTravelApplyTraveler,
-  fetchTravelFormData,
-  parseFormDataToValues,
+  fetchTravelFormEditValues,
   staffPickerOptions,
   travelCityPickerAdapter,
   validateTravelApply,
@@ -282,6 +281,7 @@ export function TravelApplyPage() {
   const [staffPickerIndex, setStaffPickerIndex] = useState<number | null>(null);
   const pendingTravelerAddRef = useRef<number | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [submitForApproval, setSubmitForApproval] = useState(true);
   const [loadingEdit, setLoadingEdit] = useState(false);
 
   const isEditing = Boolean(editId);
@@ -311,22 +311,22 @@ export function TravelApplyPage() {
       return;
     }
 
-    fetchTravelFormData(ticketVal, editId)
-      .then((controls) => {
-        if (!controls) {
-          setValidationError("加载申请单数据失败");
-          return;
-        }
-        const parsed = parseFormDataToValues(meta, controls, meta.cities, meta.staffOptions);
+    fetchTravelFormEditValues(ticketVal, editId, meta)
+      .then((parsed) => {
         if (!parsed) {
-          setValidationError("解析申请单数据失败");
+          setValidationError("加载申请单数据失败");
           return;
         }
         setTravelTypes(parsed.travelTypes);
         setReason(parsed.reason);
-        // travelers/segments use defaults (API doesn't return slave data)
-        setTravelers([defaultTravelApplyTraveler(meta.defaultAccount)]);
-        setSegments([defaultTravelApplySegment(meta.cities)]);
+        setTravelers(
+          parsed.travelers.length
+            ? parsed.travelers
+            : [defaultTravelApplyTraveler(meta.defaultAccount)],
+        );
+        setSegments(
+          parsed.segments.length ? parsed.segments : [defaultTravelApplySegment(meta.cities)],
+        );
       })
       .catch(() => setValidationError("加载申请单数据失败"))
       .finally(() => setLoadingEdit(false));
@@ -409,8 +409,8 @@ export function TravelApplyPage() {
     setValidationError(null);
     try {
       const result = isEditing
-        ? await modifyApply.mutateAsync({ values, formId: editId! })
-        : await submitApply.mutateAsync(values);
+        ? await modifyApply.mutateAsync({ values, formId: editId!, submitForApproval })
+        : await submitApply.mutateAsync({ values, submitForApproval });
       if (result.Status) {
         navigate(TRAVEL_MINE_APPROVAL_PATH, { replace: true });
         return;
@@ -653,20 +653,40 @@ export function TravelApplyPage() {
         </div>
       </div>
 
-      <div className={`${WEB_PAGE_BOTTOM_BAR} bg-white/95 px-4 pt-3 backdrop-blur-md`}>
-        <div className="mx-auto w-full max-w-2xl pc:max-w-3xl">
-          <button
-            type="button"
-            disabled={submitApply.isPending || modifyApply.isPending}
-            className="flex h-[50px] w-full items-center justify-center rounded-full bg-gradient-to-r from-brand-btn-start to-brand-btn-end text-[16px] font-medium text-white shadow-[0_8px_24px_rgba(39,104,250,0.28)] transition-opacity disabled:opacity-60 active:opacity-90"
-            onClick={() => void handleSubmit()}
-          >
-            {submitApply.isPending || modifyApply.isPending
-              ? "提交中…"
-              : isEditing
-                ? "保存修改"
-                : "提交申请"}
-          </button>
+      <div
+        className={`${WEB_PAGE_BOTTOM_BAR} border-t border-[#EEF1F6] bg-white/95 px-4 pt-3 shadow-[0_-8px_24px_rgba(15,23,42,0.06)] backdrop-blur-md`}
+      >
+        <div className="mx-auto flex w-full max-w-2xl flex-col gap-3 pc:max-w-3xl">
+          <label className="flex cursor-pointer items-center justify-end gap-2 self-end rounded-full bg-[#F5F8FF] px-3 py-1.5 text-[13px] text-[#6B7280] active:bg-[#EEF4FF]">
+            <input
+              type="checkbox"
+              checked={submitForApproval}
+              onChange={(event) => setSubmitForApproval(event.target.checked)}
+              className="size-4 shrink-0 rounded border-[#C4C9D4] text-brand-primary accent-brand-primary"
+            />
+            <span className="leading-none">立即报审</span>
+          </label>
+          <div className="grid grid-cols-[minmax(0,5.5rem)_minmax(0,1fr)] gap-2.5 sm:grid-cols-[minmax(0,6.5rem)_minmax(0,1fr)] sm:gap-3">
+            <button
+              type="button"
+              className="flex h-[50px] items-center justify-center rounded-full border border-[#D6E4FF] bg-white text-[15px] font-medium text-brand-primary active:bg-[#EEF4FF]"
+              onClick={goHome}
+            >
+              取消
+            </button>
+            <button
+              type="button"
+              disabled={submitApply.isPending || modifyApply.isPending}
+              className="flex h-[50px] items-center justify-center rounded-full bg-gradient-to-r from-brand-btn-start to-brand-btn-end text-[16px] font-medium text-white shadow-[0_6px_20px_rgba(39,104,250,0.24)] transition-opacity disabled:opacity-60 active:opacity-90"
+              onClick={() => void handleSubmit()}
+            >
+              {submitApply.isPending || modifyApply.isPending
+                ? "提交中…"
+                : isEditing
+                  ? "保存修改"
+                  : "确定"}
+            </button>
+          </div>
         </div>
       </div>
 

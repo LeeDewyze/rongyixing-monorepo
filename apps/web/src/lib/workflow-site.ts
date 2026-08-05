@@ -13,6 +13,13 @@ export function getWorkflowSite(): string {
   return site.replace(/\/$/, "");
 }
 
+/** Expense BPM host for TravelTask/Send and related travel endpoints. */
+export function getBpmExpenseSite(): string {
+  const configured = readCachedApiConfig()?.Urls?.BpmWebsiteExpenseUrl?.trim();
+  const site = configured || `${getAppBaseProtocol()}//expense-bpm.${getAppBaseDomain()}`;
+  return site.replace(/\/$/, "");
+}
+
 /** Hostname only — used to recognise workflow URLs that must be embedded instead of opened. */
 export function getWorkflowHost(): string {
   try {

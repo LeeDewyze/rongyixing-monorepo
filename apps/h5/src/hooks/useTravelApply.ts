@@ -7,6 +7,7 @@ import {
   submitTravelApply,
   type TravelApplyFormValues,
   type TravelApplyMeta,
+  type TravelApplySubmitOptions,
 } from "@/lib/travel-apply";
 
 export function useTravelApplyMeta() {
@@ -23,9 +24,16 @@ export function useTravelApplyMeta() {
 export function useSubmitTravelApply(meta: TravelApplyMeta | undefined) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (values: TravelApplyFormValues) => {
+    mutationFn: ({
+      values,
+      submitForApproval,
+    }: {
+      values: TravelApplyFormValues;
+      submitForApproval?: boolean;
+    }) => {
       if (!meta) throw new Error("出差申请表单未加载完成");
-      return submitTravelApply(meta, values);
+      const options: TravelApplySubmitOptions = { submitForApproval };
+      return submitTravelApply(meta, values, options);
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["travel"] });
@@ -40,12 +48,15 @@ export function useModifyTravelApply(meta: TravelApplyMeta | undefined) {
     mutationFn: ({
       values,
       formId,
+      submitForApproval,
     }: {
       values: TravelApplyFormValues;
       formId: string;
+      submitForApproval?: boolean;
     }) => {
       if (!meta) throw new Error("出差申请表单未加载完成");
-      return modifyTravelApply(meta, values, formId);
+      const options: TravelApplySubmitOptions = { submitForApproval };
+      return modifyTravelApply(meta, values, formId, options);
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["travel"] });

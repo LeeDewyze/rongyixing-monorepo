@@ -6,9 +6,9 @@ import { getWorkflowSite } from "@/lib/workflow-site";
 
 const TRAVEL_FORM_STATUS: Record<number, string> = {
   1: "草稿",
-  2: "审批中",
-  3: "已通过",
-  4: "审批中",
+  2: "待审核",
+  3: "等待报送",
+  4: "待审核",
   5: "已驳回",
   6: "已关闭",
 };
