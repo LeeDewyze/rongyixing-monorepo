@@ -607,15 +607,6 @@ export function TravelApplyPage() {
                 ? `共 ${segments.length} 段 · 合计 ${totalTripDays} 天`
                 : `共 ${tripDaysBetween(segments[0]!.startDate, segments[0]!.endDate)} 天`
             }
-            action={
-              <button
-                type="button"
-                className="shrink-0 rounded-full px-3 py-1 text-xs font-medium text-brand-primary active:bg-[#EEF4FF]"
-                onClick={addSegment}
-              >
-                添加
-              </button>
-            }
           >
             {segments.map((segment, index) => (
               <div
