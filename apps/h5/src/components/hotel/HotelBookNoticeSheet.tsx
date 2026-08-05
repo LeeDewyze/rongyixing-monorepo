@@ -4,6 +4,7 @@ interface HotelBookNoticeSheetProps {
   open: boolean;
   checkInOutTime?: string;
   bookingNotice?: string;
+  cancelRule?: string;
   onClose: () => void;
 }
 
@@ -41,6 +42,11 @@ export function formatHotelCheckInOutNoticeLine(raw?: string): ParsedCheckInOut 
   return { fallback: raw.trim() };
 }
 
+export function formatHotelCancelRuleNotice(raw?: string): string | null {
+  const content = raw?.trim();
+  return content ? content : null;
+}
+
 function SheetCloseButton({ onClose }: { onClose: () => void }) {
   return (
     <button
@@ -66,13 +72,16 @@ export function HotelBookNoticeSheet({
   open,
   checkInOutTime,
   bookingNotice,
+  cancelRule,
   onClose,
 }: HotelBookNoticeSheetProps) {
   if (!open) return null;
 
   const noticeParagraphs = splitHotelBookingNoticeParagraphs(bookingNotice);
   const parsedCheckInOut = formatHotelCheckInOutNoticeLine(checkInOutTime);
-  const hasContent = noticeParagraphs.length > 0 || parsedCheckInOut != null;
+  const cancelRuleNotice = formatHotelCancelRuleNotice(cancelRule);
+  const hasContent =
+    noticeParagraphs.length > 0 || parsedCheckInOut != null || cancelRuleNotice != null;
 
   return (
     <div
@@ -112,6 +121,15 @@ export function HotelBookNoticeSheet({
                   <h3 className="text-[15px] font-semibold text-[#333333]">入离时间</h3>
                   <p className="mt-2 text-[13px] leading-[1.65] text-[#666666]">
                     {parsedCheckInOut.line ?? parsedCheckInOut.fallback}
+                  </p>
+                </section>
+              ) : null}
+
+              {cancelRuleNotice ? (
+                <section>
+                  <h3 className="text-[15px] font-semibold text-[#333333]">取消规则</h3>
+                  <p className="mt-2 text-[13px] leading-[1.65] text-[#666666]">
+                    {cancelRuleNotice}
                   </p>
                 </section>
               ) : null}

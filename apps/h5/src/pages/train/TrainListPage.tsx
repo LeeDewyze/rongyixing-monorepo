@@ -55,6 +55,7 @@ import {
   loadTrainExchangeSession,
   TRAIN_EXCHANGE_SESSION_EVENT,
 } from "@/lib/train-exchange-session";
+import { persistTrainSearchDate } from "@/lib/train-search";
 import { getTicket } from "@/lib/session";
 import {
   applyTrainFilters,
@@ -146,12 +147,14 @@ export function TrainListPage() {
     if (listParams.Date < today) {
       const params = new URLSearchParams(searchParams);
       params.set("date", today);
+      persistTrainSearchDate(today);
       navigate(`/train/list?${params.toString()}`, { replace: true });
       return;
     }
     if (listParams.Date > maxDate) {
       const params = new URLSearchParams(searchParams);
       params.set("date", maxDate);
+      persistTrainSearchDate(maxDate);
       navigate(`/train/list?${params.toString()}`, { replace: true });
     }
   }, [listParams.Date, listParams.FromStation, listParams.ToStation, navigate, searchParams]);
@@ -446,6 +449,7 @@ export function TrainListPage() {
 
   function handleDateSelect(date: string) {
     resetListFilters();
+    persistTrainSearchDate(date);
     navigate(buildListUrl(searchParams, date), { replace: true });
   }
 
@@ -487,6 +491,7 @@ export function TrainListPage() {
 
   function handleModifySearch(params: URLSearchParams) {
     resetListFilters();
+    persistTrainSearchDate(params.get("date") ?? "");
     if (productChannel) params.set("channel", productChannel);
     navigate(`/train/list?${params.toString()}`, { replace: true });
   }

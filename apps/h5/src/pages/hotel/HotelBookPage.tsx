@@ -52,6 +52,7 @@ import {
   resolveHotelBillNights,
   resolveHotelBookDisplayAmount,
   resolveHotelBookOrderId,
+  resolveHotelRoomPlanRulesDesc,
   resolveHotelShowCreditCard,
   resolvePassengerServiceFee,
   validateHotelBookForms,
@@ -278,9 +279,7 @@ export function HotelBookPage() {
 
   const personHoldMinutes = resolveHotelHoldMinutes(initBook.data);
 
-  const cancelRule =
-    (selection?.plan.VariablesObj?.RoomRateRule as string | undefined) ??
-    selection?.plan.CancelPolicy;
+  const cancelRule = selection ? resolveHotelRoomPlanRulesDesc(selection.plan) : "";
 
   function handleBack() {
     const fallback =
@@ -669,6 +668,7 @@ export function HotelBookPage() {
         open={noticeOpen}
         checkInOutTime={selection.checkInOutTime}
         bookingNotice={selection.bookingNotice}
+        cancelRule={cancelRule}
         onClose={() => setNoticeOpen(false)}
       />
 
