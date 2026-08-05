@@ -83,11 +83,7 @@ export function createRyxDevProxy({ apiBase, apiDomain }: RyxDevProxyOptions): P
   const domain = normalizeDomain(apiDomain) ?? deriveDomainFromApiBase(normalizedApiBase);
 
   return {
-    "/Home/Proxy": {
-      target: normalizedApiBase,
-      changeOrigin: true,
-    },
-    "/Home/Setting": {
+    "/Home": {
       target: normalizedApiBase,
       changeOrigin: true,
     },

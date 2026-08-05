@@ -204,7 +204,14 @@ export function createApi(config: CreateApiConfig): Api {
   const proxy = createProxyClient(proxyConfig);
   const gateway = createGatewayClient({
     baseUrl: config.baseUrl,
+    appId: config.appId,
     fetchImpl: config.fetchImpl,
+    getTicket: config.getTicket,
+    getTicketName: config.getTicketName,
+    getDomain: config.getDomain,
+    getLanguage: config.getLanguage,
+    getExtraFields: config.getExtraFields,
+    apiConfig: config.apiConfig,
   });
 
   return {
