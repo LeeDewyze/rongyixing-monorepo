@@ -9,6 +9,7 @@ type SettingsMenuIconVariant =
   | "password"
   | "phone"
   | "history"
+  | "dingtalk"
   | "accountDelete";
 
 const ICON_CLASS = "size-[18px]";
@@ -112,6 +113,24 @@ function AccountDeleteIcon() {
   return <DangerWarningIcon className={ICON_CLASS} />;
 }
 
+function DingTalkIcon() {
+  return (
+    <svg viewBox="0 0 20 20" className={ICON_CLASS} fill="none" aria-hidden>
+      <path
+        d="M5 7.2c0-1.8 1.6-3.2 3.5-3.2h3c1.9 0 3.5 1.4 3.5 3.2v4.1c0 1.8-1.6 3.2-3.5 3.2h-3C6.6 14.5 5 13.1 5 11.3V7.2Z"
+        stroke="currentColor"
+        strokeWidth="1.4"
+      />
+      <path
+        d="M7.5 8.4h5M7.5 11.2h3.2"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 const VARIANT_STYLES: Record<SettingsMenuIconVariant, { shell: string; icon: ReactNode }> = {
   security: {
     shell: "bg-[#EEF4FF] text-brand-primary",
@@ -136,6 +155,10 @@ const VARIANT_STYLES: Record<SettingsMenuIconVariant, { shell: string; icon: Rea
   history: {
     shell: "bg-[#F5F3FF] text-[#7C3AED]",
     icon: <HistoryIcon />,
+  },
+  dingtalk: {
+    shell: "bg-[#EAF5FF] text-[#1677FF]",
+    icon: <DingTalkIcon />,
   },
   accountDelete: {
     shell: "bg-[#FFF1F0] text-[#FF4D4F]",

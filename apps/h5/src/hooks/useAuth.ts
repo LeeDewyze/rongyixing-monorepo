@@ -6,7 +6,7 @@ import { preloadBusinessBookingPermission } from "@/lib/booking-permission-prelo
 import { queryClient } from "@/lib/query";
 import { getDeviceId, getDeviceName } from "@/lib/request-context";
 import { startSessionGuard } from "@/lib/session-guard";
-import { saveLoginResult, setWebSocketUrl } from "@/lib/session";
+import { clearSession, saveLoginResult, setWebSocketUrl } from "@/lib/session";
 
 async function loadWebSocketUrlAfterLogin(mode: string, ticket?: string) {
   if (mode === "mock" || !ticket) return;
@@ -97,6 +97,38 @@ export function useDeviceLogin() {
       startSessionGuardAfterLogin(mode);
       loadWebSocketUrlInBackground(mode, result.Ticket);
       return result;
+    },
+  });
+}
+
+export function useDingTalkLogin() {
+  return useMutation({
+    mutationFn: async (code: string) => {
+      const mode = getApiMode();
+      const result = await getApi().authProxy.dingTalkLogin({
+        Code: code,
+        Device: getDeviceId(),
+        DeviceName: getDeviceName(),
+      });
+      if (!result?.Ticket) {
+        throw new Error("钉钉登录未返回有效登录信息");
+      }
+
+      try {
+        const identity = await getApi().identity.get(result.Ticket);
+        if (!identity?.Ticket) {
+          throw new Error("钉钉登录身份校验失败，请重试");
+        }
+        const finalResult = { ...result, ...identity, Ticket: identity.Ticket };
+        saveLoginResult(finalResult);
+        await preloadBusinessBookingPermission(queryClient, { reset: true });
+        startSessionGuardAfterLogin(mode);
+        loadWebSocketUrlInBackground(mode, finalResult.Ticket);
+        return finalResult;
+      } catch (error) {
+        clearSession();
+        throw error;
+      }
     },
   });
 }

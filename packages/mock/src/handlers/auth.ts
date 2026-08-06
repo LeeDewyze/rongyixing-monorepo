@@ -1,5 +1,5 @@
 import type { IResponse } from "@ryx/shared-types";
-import { AUTH_FLOW_METHODS, successResponse } from "@ryx/api";
+import { AUTH_FLOW_METHODS, AUTH_METHODS, successResponse } from "@ryx/api";
 
 import { mockIdentityCheckResponse } from "../fixtures/identity-check.js";
 import { mockIdentityGet, mockLoginSuccess } from "../fixtures/auth.js";
@@ -20,11 +20,16 @@ export function createAuthMockHandlers(): Record<string, (data: unknown) => IRes
       return mockLoginSuccess();
     },
     [AUTH_FLOW_METHODS.MOBILE_LOGIN]: () => mockLoginSuccess(),
+    [AUTH_FLOW_METHODS.DINGTALK_LOGIN]: () => mockLoginSuccess(),
     [AUTH_FLOW_METHODS.LOGOUT]: () => successResponse(true),
     [AUTH_FLOW_METHODS.IDENTITY_GET]: () => mockIdentityGet(),
     [AUTH_FLOW_METHODS.IDENTITY_CHECK]: () => mockIdentityCheckResponse(),
     [AUTH_FLOW_METHODS.IDENTITY_WEBSOCKET]: () =>
       successResponse({ Url: "wss://mock.rongtrip.cn/ws" }),
+    [AUTH_METHODS.DINGTALK_CHECK]: () => successResponse(null),
+    [AUTH_METHODS.DINGTALK_BIND]: () => successResponse(true, "绑定成功"),
+    [AUTH_METHODS.DINGTALK_LIST]: () => successResponse([{ Id: "ding-001", Name: "测试钉钉账号" }]),
+    [AUTH_METHODS.DINGTALK_REMOVE]: () => successResponse(true, "解绑成功"),
   };
 }
 

@@ -52,6 +52,7 @@ import { ContactUsPage } from "@/pages/contact/ContactUsPage";
 import { NoticeListPage } from "@/pages/notice/NoticeListPage";
 import { NoticeDetailPage } from "@/pages/notice/NoticeDetailPage";
 import { OpenUrlPage } from "@/pages/open-url/OpenUrlPage";
+import { DingTalkBindingPage } from "@/pages/settings/DingTalkBindingPage";
 
 export const router = createBrowserRouter(
   [
@@ -154,6 +155,7 @@ export const router = createBrowserRouter(
             { path: "password", element: <ChangePasswordPage /> },
             { path: "devices", element: <LoginDevicesPage /> },
             { path: "notifications", element: <MessageNotificationPage /> },
+            { path: "dingtalk", element: <DingTalkBindingPage /> },
           ],
         },
         {

@@ -2,7 +2,14 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { LegalDocumentSheet } from "@/components/contact/LegalDocumentSheet";
-import { useMobileLogin, usePasswordLogin, useSendLoginCode } from "@/hooks/useAuth";
+import {
+  useDingTalkLogin,
+  useMobileLogin,
+  usePasswordLogin,
+  useSendLoginCode,
+} from "@/hooks/useAuth";
+import { useDingTalkAvailability } from "@/hooks/useDingTalk";
+import { consumeDingTalkCode, requestDingTalkCode } from "@/lib/dingtalk";
 import { resolveInternalReturnTo } from "@/lib/base-path";
 import {
   contactUrlOptionsFromApiConfig,
@@ -291,6 +298,8 @@ export function PasswordLoginPage() {
   const login = usePasswordLogin();
   const mobileLogin = useMobileLogin();
   const sendCode = useSendLoginCode();
+  const dingTalkLogin = useDingTalkLogin();
+  const dingTalkAvailability = useDingTalkAvailability("login");
   const initialForm = getInitialFormState();
   const [loginMode, setLoginMode] = useState<LoginMode>("password");
   const [account, setAccount] = useState(initialForm.account);
@@ -344,8 +353,18 @@ export function PasswordLoginPage() {
     navigate(resolveInternalReturnTo(returnTo, "/"), { replace: true });
   }
 
+  useEffect(() => {
+    if (!dingTalkAvailability.enabled) return;
+    const code = consumeDingTalkCode();
+    if (!code) return;
+    void dingTalkLogin
+      .mutateAsync(code)
+      .then(navigateAfterLogin)
+      .catch(() => undefined);
+  }, [dingTalkAvailability.enabled]);
+
   async function handleLogin() {
-    if (login.isPending || mobileLogin.isPending) return;
+    if (login.isPending || mobileLogin.isPending || dingTalkLogin.isPending) return;
     if (loginMode === "sms") {
       await handleSmsLogin();
       return;
@@ -375,6 +394,20 @@ export function PasswordLoginPage() {
       navigateAfterLogin();
     } catch {
       // Login error is surfaced through mutation state.
+    }
+  }
+
+  async function handleDingTalkLogin() {
+    if (dingTalkLogin.isPending) return;
+    setFormHint(null);
+    try {
+      const code = await requestDingTalkCode("login", resolveInternalReturnTo(returnTo, "/"));
+      if (code) {
+        await dingTalkLogin.mutateAsync(code);
+        navigateAfterLogin();
+      }
+    } catch (error) {
+      setFormHint(error instanceof Error ? error.message : "钉钉登录失败");
     }
   }
 
@@ -428,7 +461,7 @@ export function PasswordLoginPage() {
     }
   }
 
-  const pending = login.isPending || mobileLogin.isPending;
+  const pending = login.isPending || mobileLogin.isPending || dingTalkLogin.isPending;
   const authError = loginMode === "password" ? login.error : mobileLogin.error || sendCode.error;
   const canSubmit =
     agreed &&
@@ -635,6 +668,17 @@ export function PasswordLoginPage() {
               >
                 {pending ? "登录中…" : "登录"}
               </button>
+
+              {dingTalkAvailability.enabled ? (
+                <button
+                  type="button"
+                  className="mt-4 inline-flex h-14 w-full items-center justify-center rounded-[14px] border border-brand-primary/25 bg-[#F5F9FF] text-[18px] font-bold text-brand-primary transition-all hover:bg-[#EEF5FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/30 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70"
+                  disabled={pending}
+                  onClick={() => void handleDingTalkLogin()}
+                >
+                  {dingTalkLogin.isPending ? "钉钉登录中…" : "钉钉登录"}
+                </button>
+              ) : null}
 
               {formHint ? (
                 <p className="mt-3 text-center text-[14px] text-amber-500" role="alert">

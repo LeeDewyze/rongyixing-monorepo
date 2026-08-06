@@ -1,5 +1,10 @@
 import type {
   DeviceLoginParams,
+  DingTalkBindingItem,
+  DingTalkBindParams,
+  DingTalkCheckResult,
+  DingTalkLoginParams,
+  DingTalkRemoveParams,
   IdentityCheckResult,
   IdentityDto,
   LoginResultDto,
@@ -10,6 +15,7 @@ import type {
 } from "@ryx/shared-types";
 
 import { AUTH_FLOW_METHODS } from "../methods/auth-flow.js";
+import { AUTH_METHODS } from "../methods/auth.js";
 import type { ProxyClient } from "../proxy/proxy-client.js";
 
 const H5_LOGIN_TYPE = "H5";
@@ -19,6 +25,7 @@ export interface AuthProxyApi {
   login(params: PasswordLoginParams): Promise<LoginResultDto>;
   mobileLogin(params: MobileLoginParams): Promise<LoginResultDto>;
   rybLogin(params: RybLoginParams): Promise<LoginResultDto>;
+  dingTalkLogin(params: DingTalkLoginParams): Promise<LoginResultDto>;
   logout(): Promise<boolean>;
 }
 
@@ -69,10 +76,65 @@ export function createAuthProxyApi(proxy: ProxyClient): AuthProxyApi {
         },
       });
     },
+    dingTalkLogin(params) {
+      return proxy.send<LoginResultDto>({
+        method: AUTH_FLOW_METHODS.DINGTALK_LOGIN,
+        data: {
+          Code: params.Code,
+          ...(params.Device ? { Device: params.Device } : {}),
+          ...(params.DeviceName ? { DeviceName: params.DeviceName } : {}),
+        },
+      });
+    },
     logout() {
       return proxy.send<boolean>({
         method: AUTH_FLOW_METHODS.LOGOUT,
         data: {},
+      });
+    },
+  };
+}
+
+export interface DingTalkApi {
+  check(): Promise<DingTalkCheckResult>;
+  bind(params: DingTalkBindParams): Promise<boolean>;
+  list(): Promise<DingTalkBindingItem[]>;
+  remove(params: DingTalkRemoveParams): Promise<boolean>;
+}
+
+export function createDingTalkApi(proxy: ProxyClient): DingTalkApi {
+  return {
+    async check() {
+      const response = await proxy.sendResponse<unknown>({
+        method: AUTH_METHODS.DINGTALK_CHECK,
+        data: { SdkType: "DingTalk" },
+      });
+      return {
+        shouldBind: response.Status === true,
+        message: response.Message?.trim() || undefined,
+      };
+    },
+    bind(params) {
+      return proxy.send<boolean>({
+        method: AUTH_METHODS.DINGTALK_BIND,
+        data: params,
+      });
+    },
+    async list() {
+      const data = await proxy.send<unknown>({
+        method: AUTH_METHODS.DINGTALK_LIST,
+        data: {},
+      });
+      if (Array.isArray(data)) return data as DingTalkBindingItem[];
+      if (data && typeof data === "object" && "Data" in data && Array.isArray(data.Data)) {
+        return data.Data as DingTalkBindingItem[];
+      }
+      return [];
+    },
+    remove(params) {
+      return proxy.send<boolean>({
+        method: AUTH_METHODS.DINGTALK_REMOVE,
+        data: params,
       });
     },
   };
@@ -90,6 +152,7 @@ export function createIdentityApi(proxy: ProxyClient): IdentityApi {
       return proxy.send<IdentityDto>({
         method: AUTH_FLOW_METHODS.IDENTITY_GET,
         data: ticket ? { Ticket: ticket } : {},
+        requestFields: ticket ? { Ticket: ticket } : undefined,
       });
     },
     async check(loginType = H5_LOGIN_TYPE) {

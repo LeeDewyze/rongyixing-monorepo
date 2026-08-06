@@ -49,6 +49,7 @@ import { OpenUrlPage } from "@/pages/open-url/OpenUrlPage";
 import { TravelApplyPage } from "@/pages/travel/TravelApplyPage";
 import { TravelApprovalPage } from "@/pages/travel/TravelApprovalPage";
 import { TravelTaskPage } from "@/pages/travel/TravelTaskPage";
+import { DingTalkBindingPage } from "@/pages/settings/DingTalkBindingPage";
 import { isAuthenticated } from "@/lib/auth";
 import { getRouterBasename } from "@/lib/base-path";
 
@@ -108,6 +109,7 @@ export const router = createBrowserRouter(
                 { path: "password", element: <ChangePasswordPage /> },
                 { path: "devices", element: <LoginDevicesPage /> },
                 { path: "notifications", element: <MessageNotificationPage /> },
+                { path: "dingtalk", element: <DingTalkBindingPage /> },
               ],
             },
             { path: "me/settings", element: <Navigate to="/settings" replace /> },

@@ -6,6 +6,8 @@ import { SettingsMenuIcon } from "@/components/settings/SettingsMenuIcon";
 import { SettingsPageChrome } from "@/components/settings/SettingsPageChrome";
 import { SettingsSectionLabel } from "@/components/settings/SettingsSectionLabel";
 import { useMemberProfile } from "@/hooks/useMemberProfile";
+import { useDingTalkBindings } from "@/hooks/useDingTalk";
+import { isDingTalkContainer } from "@/lib/dingtalk";
 
 function displayMobile(mobile?: string): string {
   return mobile?.trim() || "未绑定";
@@ -15,6 +17,8 @@ export function AccountSecurityPage() {
   const navigate = useNavigate();
   usePageHeader({ visible: false });
   const profileQuery = useMemberProfile();
+  const dingTalkSupported = isDingTalkContainer();
+  const dingTalkBindings = useDingTalkBindings(dingTalkSupported);
 
   const profile = profileQuery.data;
 
@@ -39,6 +43,30 @@ export function AccountSecurityPage() {
               borderless
             />
           </SettingsMenuCard>
+        </div>
+
+        <div>
+          {dingTalkSupported ? (
+            <>
+              <SettingsSectionLabel>第三方账号</SettingsSectionLabel>
+              <SettingsMenuCard>
+                <SettingsMenuRow
+                  label="钉钉账号"
+                  icon={<SettingsMenuIcon variant="dingtalk" />}
+                  value={
+                    dingTalkBindings.isLoading
+                      ? "…"
+                      : dingTalkBindings.data?.length
+                        ? `已绑定 ${dingTalkBindings.data.length} 个`
+                        : "未绑定"
+                  }
+                  valueTone={dingTalkBindings.data?.length ? "primary" : "default"}
+                  onClick={() => navigate("/settings/dingtalk")}
+                  borderless
+                />
+              </SettingsMenuCard>
+            </>
+          ) : null}
         </div>
 
         <div>

@@ -26,6 +26,10 @@ export interface ApiConfigSetting {
   LoginUrl?: string;
   /** Tenant domain — Legacy `ApiConfig.Domain`, sent on every Proxy request. */
   Domain?: string;
+  /** Legacy app switch for the DingTalk binding page. */
+  HasDingtalkBind?: boolean;
+  /** Optional app switch for the DingTalk login entry. */
+  HasDingtalkLogin?: boolean;
 }
 
 export type ApiMode = "mock" | "proxy" | "direct";

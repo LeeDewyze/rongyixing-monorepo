@@ -2,8 +2,10 @@ import type { ApiMode, ApiConfigSetting } from "@ryx/shared-types";
 
 import {
   createAuthProxyApi,
+  createDingTalkApi,
   createIdentityApi,
   type AuthProxyApi,
+  type DingTalkApi,
   type IdentityApi,
 } from "./apis/auth-proxy.js";
 import { createAccountCardApi, type AccountCardApi } from "./apis/account-card.js";
@@ -51,8 +53,10 @@ export {
 export { createAuthApi, type AuthApi } from "./apis/auth.js";
 export {
   createAuthProxyApi,
+  createDingTalkApi,
   createIdentityApi,
   type AuthProxyApi,
+  type DingTalkApi,
   type IdentityApi,
 } from "./apis/auth-proxy.js";
 export { createBookApi, type BookApi } from "./apis/book.js";
@@ -159,6 +163,7 @@ export interface Api {
   gateway: GatewayClient;
   auth: ReturnType<typeof createAuthApi>;
   authProxy: AuthProxyApi;
+  dingtalk: DingTalkApi;
   identity: IdentityApi;
   hotel: HotelApi;
   flight: FlightApi;
@@ -220,6 +225,7 @@ export function createApi(config: CreateApiConfig): Api {
     gateway,
     auth: createAuthApi(client),
     authProxy: createAuthProxyApi(proxy),
+    dingtalk: createDingTalkApi(proxy),
     identity: createIdentityApi(proxy),
     hotel: createHotelApi(proxy),
     flight: createFlightApi(proxy),

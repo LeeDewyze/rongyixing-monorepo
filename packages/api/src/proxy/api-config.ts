@@ -19,6 +19,8 @@ export function normalizeApiConfigSetting(payload: unknown): ApiConfigSetting {
     Urls: data.Urls ?? {},
     LoginUrl: data.LoginUrl,
     Domain: data.Domain,
+    HasDingtalkBind: data.HasDingtalkBind,
+    HasDingtalkLogin: data.HasDingtalkLogin,
   };
 }
 

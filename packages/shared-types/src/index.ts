@@ -40,6 +40,15 @@ export type {
   RybLoginParams,
   WebSocketUrlDto,
 } from "./auth-proxy.js";
+export {
+  isDingTalkUserAgent,
+  type DingTalkBindParams,
+  type DingTalkBindingItem,
+  type DingTalkCheckResult,
+  type DingTalkEnvironment,
+  type DingTalkLoginParams,
+  type DingTalkRemoveParams,
+} from "./dingtalk.js";
 
 export type {
   HotelBookCredentialsDto,

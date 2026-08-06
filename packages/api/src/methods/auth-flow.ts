@@ -8,10 +8,10 @@ export const AUTH_FLOW_METHODS = {
   LOGIN: "ApiLoginUrl-Home-Login",
   MOBILE_LOGIN: "ApiLoginUrl-Home-MobileLogin",
   RYB_LOGIN: "ApiLoginUrl-Home-RYBLogin",
+  DINGTALK_LOGIN: "ApiLoginUrl-Home-DingTalkLogin",
   IDENTITY_GET: OTHER_METHODS.IDENTITY_GET,
   IDENTITY_CHECK: OTHER_METHODS.IDENTITY_CHECK,
   IDENTITY_WEBSOCKET: OTHER_METHODS.IDENTITY_GETWEBSOCKETURL,
 } as const;
 
-export type AuthFlowMethod =
-  (typeof AUTH_FLOW_METHODS)[keyof typeof AUTH_FLOW_METHODS];
+export type AuthFlowMethod = (typeof AUTH_FLOW_METHODS)[keyof typeof AUTH_FLOW_METHODS];
