@@ -52,8 +52,10 @@ import {
 } from "@/lib/train-book-policy";
 import { saveTrainBookSelection } from "@/lib/train-book-session";
 import {
-  loadTrainExchangeSession,
+  isTrainExchangeListActive,
+  syncTrainExchangeSessionForListUrl,
   TRAIN_EXCHANGE_SESSION_EVENT,
+  type TrainExchangeSession,
 } from "@/lib/train-exchange-session";
 import { persistTrainSearchDate } from "@/lib/train-search";
 import { getTicket } from "@/lib/session";
@@ -103,8 +105,10 @@ export function TrainListPage() {
 
   const fromName = listParams.FromName ?? listParams.FromStation;
   const toName = listParams.ToName ?? listParams.ToStation;
-  const [exchangeSession, setExchangeSession] = useState(() => loadTrainExchangeSession());
-  const isExchangeMode = searchParams.get("exchange") === "1" || Boolean(exchangeSession);
+  const [exchangeSession, setExchangeSession] = useState<TrainExchangeSession | null>(() =>
+    syncTrainExchangeSessionForListUrl(searchParams),
+  );
+  const isExchangeMode = isTrainExchangeListActive(searchParams, exchangeSession);
   const passengerContext = useBusinessSelfBookPassenger(
     ProductType.Train,
     isBusinessMode && !isExchangeMode,
@@ -127,11 +131,13 @@ export function TrainListPage() {
   }, [exchangeSession, isExchangeMode, passengerContext.passengers]);
 
   useEffect(() => {
-    const syncExchangeSession = () => setExchangeSession(loadTrainExchangeSession());
+    const syncExchangeSession = () => {
+      setExchangeSession(syncTrainExchangeSessionForListUrl(searchParams));
+    };
     syncExchangeSession();
     window.addEventListener(TRAIN_EXCHANGE_SESSION_EVENT, syncExchangeSession);
     return () => window.removeEventListener(TRAIN_EXCHANGE_SESSION_EVENT, syncExchangeSession);
-  }, []);
+  }, [searchParams]);
 
   const hasListQuery = Boolean(
     parseLocalDate(listParams.Date) && listParams.FromStation && listParams.ToStation,

@@ -41,6 +41,27 @@ export function clearTrainExchangeSession(): void {
   notifyChange();
 }
 
+/** Exchange list is active only when URL flag and session both exist. */
+export function isTrainExchangeListActive(
+  searchParams: Pick<URLSearchParams, "get">,
+  session: TrainExchangeSession | null,
+): boolean {
+  return searchParams.get("exchange") === "1" && session != null;
+}
+
+/** Drop leftover exchange session when user opens a normal train search list. */
+export function syncTrainExchangeSessionForListUrl(
+  searchParams: Pick<URLSearchParams, "get">,
+): TrainExchangeSession | null {
+  if (searchParams.get("exchange") !== "1") {
+    if (loadTrainExchangeSession()) {
+      clearTrainExchangeSession();
+    }
+    return null;
+  }
+  return loadTrainExchangeSession();
+}
+
 export function buildTrainExchangeListPath(info: TrainExchangeInfo): string {
   const params = new URLSearchParams();
   if (info.Date) {
