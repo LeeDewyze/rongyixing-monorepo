@@ -270,6 +270,45 @@ describe("normalizeTrainExchangeInfo", () => {
     });
   });
 
+  it("keeps exchange passenger AccountId from OrderTrainTicket for policy matching", () => {
+    const result = normalizeTrainExchangeInfo({
+      TravelFormId: "tf-001",
+      DefaultCredentials: {
+        Id: "cred-001",
+        Number: "110101199001011234",
+        HideCredentialsNumber: "110101********1234",
+        CredentialsType: 1,
+        CredentialsTypeName: "身份证",
+      },
+      OrderTrainTicket: {
+        Passenger: {
+          Id: "passenger-001",
+          Name: "孙雪",
+          Mobile: "13800000001",
+          Account: { Id: "74690000000031" },
+        },
+      },
+    });
+
+    expect(result.passengerSnapshot).toMatchObject({
+      clientId: "cred-001",
+      passenger: {
+        Id: "passenger-001",
+        AccountId: "74690000000031",
+        Name: "孙雪",
+        Mobile: "13800000001",
+        travelFormId: "tf-001",
+      },
+      credential: {
+        Id: "cred-001",
+        AccountId: "74690000000031",
+        Number: "110101199001011234",
+        HideCredentialsNumber: "110101********1234",
+        CredentialsTypeName: "身份证",
+      },
+    });
+  });
+
   it("falls back to trip Price when TicketPrice is absent", () => {
     expect(
       normalizeTrainExchangeInfo({

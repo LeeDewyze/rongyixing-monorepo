@@ -121,6 +121,18 @@ function findPassengerPolicyEntry(
   return results.find((entry) => entry.PassengerKey == accountId);
 }
 
+export function hasTrainPolicyPassengerCoverage(
+  results: TrainPolicyPassengerResult[] | undefined,
+  passengers: PassengerBookInfo[],
+): boolean {
+  if (!passengers.length) return true;
+  if (!results?.length) return false;
+  return passengers.every((passenger) => {
+    const accountId = resolvePassengerAccountId(passenger);
+    return results.some((entry) => entry.PassengerKey == accountId);
+  });
+}
+
 export function applyTrainPolicyColors(
   trains: TrainItem[],
   policyResults: TrainPolicyPassengerResult[] | undefined,
@@ -248,6 +260,6 @@ export function findSeatPolicyForPassenger(
   const passenger = passengers.find((item) => item.id === passengerId);
   if (!passenger) return undefined;
   const accountId = resolvePassengerAccountId(passenger);
-  const entry = policyResults?.find((item) => item.PassengerKey === accountId);
+  const entry = policyResults?.find((item) => item.PassengerKey == accountId);
   return findSeatPolicy(entry?.TrainPolicies, train, seat);
 }

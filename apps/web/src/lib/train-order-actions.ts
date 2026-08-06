@@ -42,7 +42,7 @@ export async function startTrainExchangeFlow(input: {
   orderId?: string;
   navigate: (path: string) => void;
 }): Promise<void> {
-  const [exchangeInfo, passengerSnapshot] = await Promise.all([
+  const [exchangeInfo, fallbackPassengerSnapshot] = await Promise.all([
     getApi().train.getExchangeInfo({
       channel: input.channel,
       TicketId: input.ticketId,
@@ -52,6 +52,8 @@ export async function startTrainExchangeFlow(input: {
       TicketId: input.ticketId,
     }),
   ]);
+  // Legacy policy matching uses OrderTrainTicket.Passenger.AccountId from GetExchangeInfo.
+  const passengerSnapshot = exchangeInfo.passengerSnapshot ?? fallbackPassengerSnapshot;
   const passengers = passengerSnapshot
     ? [
         enrichExchangePassengerContact(

@@ -92,6 +92,8 @@ export interface TrainExchangeInfo {
   InsuranceAmount?: number;
   /** Original ticket passenger mobile for exchange contact fallback. */
   PassengerMobile?: string;
+  /** Passenger/credential snapshot from Home-GetExchangeInfo for legacy exchange policy matching. */
+  passengerSnapshot?: TrainPassengerBookSnapshot | null;
 }
 
 export interface TrainPassengerInfoParams {

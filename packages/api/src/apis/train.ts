@@ -462,6 +462,139 @@ function readRecordString(record: LegacyRecord | undefined, ...keys: string[]): 
   return undefined;
 }
 
+function readLegacyRecord(value: unknown): LegacyRecord | undefined {
+  if (Array.isArray(value)) {
+    return value.find((item): item is LegacyRecord =>
+      Boolean(item && typeof item === "object" && !Array.isArray(item)),
+    );
+  }
+  if (!value || typeof value !== "object") return undefined;
+  return value as LegacyRecord;
+}
+
+function readCredentialTypeValue(
+  preferred: LegacyRecord | undefined,
+  fallback: LegacyRecord | undefined,
+): string | number | undefined {
+  const value =
+    preferred?.CredentialsType ??
+    preferred?.Type ??
+    preferred?.CredentialType ??
+    fallback?.CredentialsType ??
+    fallback?.Type ??
+    fallback?.CredentialType;
+  return typeof value === "string" || typeof value === "number" ? value : undefined;
+}
+
+function readNestedAccountId(record: LegacyRecord | undefined): string | undefined {
+  return (
+    readRecordString(record, "AccountId") ??
+    readRecordString(readLegacyRecord(record?.Account), "Id", "AccountId")
+  );
+}
+
+function selectTrainExchangePassengerRecord(
+  payload: LegacyRecord,
+  orderTrainTicket: LegacyRecord | undefined,
+): LegacyRecord | undefined {
+  const candidates = [
+    readLegacyRecord(orderTrainTicket?.Passenger),
+    readLegacyRecord(payload.BookStaff),
+    readLegacyRecord(payload.Passenger),
+  ];
+  return candidates.find((record) => readRecordString(record, "Name"));
+}
+
+function normalizeTrainExchangePassengerSnapshot(
+  payload: LegacyRecord,
+  orderTrainTicket: LegacyRecord | undefined,
+  orderVariables: LegacyRecord | undefined,
+): TrainPassengerBookSnapshot | null {
+  const passengerRecord = selectTrainExchangePassengerRecord(payload, orderTrainTicket);
+  if (!passengerRecord) return null;
+
+  const credentialRecord =
+    readLegacyRecord(payload.DefaultCredentials) ??
+    readLegacyRecord(payload.DefaultCredential) ??
+    readLegacyRecord(passengerRecord.Credential) ??
+    readLegacyRecord(passengerRecord.Credentials);
+  const tmcAccount = readLegacyRecord(readLegacyRecord(payload.Tmc)?.Account);
+  const name =
+    readRecordString(passengerRecord, "Name") ?? readRecordString(credentialRecord, "Name");
+  if (!name) return null;
+
+  const accountId =
+    readNestedAccountId(passengerRecord) ??
+    readNestedAccountId(credentialRecord) ??
+    readRecordString(tmcAccount, "Id", "AccountId");
+  const passengerId =
+    readRecordString(passengerRecord, "Id", "PassengerId", "ClientId") ?? accountId ?? name;
+  const credentialId =
+    readRecordString(credentialRecord, "Id", "CredentialsId", "CredentialId") ??
+    readRecordString(passengerRecord, "CredentialsId", "CredentialId") ??
+    passengerId;
+  const mobile =
+    readRecordString(passengerRecord, "Mobile") ?? readRecordString(credentialRecord, "Mobile");
+  const orgName =
+    readRecordString(passengerRecord, "OrgName", "OrganizationName") ??
+    readRecordString(credentialRecord, "OrgName", "OrganizationName");
+  const number =
+    readRecordString(credentialRecord, "CredentialsNumber", "Number") ??
+    readRecordString(passengerRecord, "CredentialsNumber", "Number");
+  const hideNumber =
+    readRecordString(credentialRecord, "HideCredentialsNumber", "HideNumber") ??
+    readRecordString(passengerRecord, "HideCredentialsNumber", "HideNumber") ??
+    number;
+  const credentialsType = readCredentialTypeValue(credentialRecord, passengerRecord);
+  const credentialsTypeName =
+    readRecordString(credentialRecord, "CredentialsTypeName", "CredentialTypeName", "TypeName") ??
+    readRecordString(passengerRecord, "CredentialsTypeName", "CredentialTypeName", "TypeName");
+  const travelFormId =
+    readRecordString(payload, "TravelFormId", "TravelFromId") ??
+    readRecordString(orderTrainTicket, "TravelFormId", "TravelFromId") ??
+    readRecordString(orderVariables, "TravelFormId", "TravelFromId");
+  const travelNumber =
+    readRecordString(payload, "TravelNumber") ??
+    readRecordString(orderTrainTicket, "TravelNumber") ??
+    readRecordString(orderVariables, "TravelNumber");
+
+  const passenger = {
+    Id: passengerId,
+    AccountId: accountId,
+    Name: name,
+    Mobile: mobile,
+    OrgName: orgName,
+    CredentialsType: credentialsType,
+    CredentialsTypeName: credentialsTypeName,
+    Number: number,
+    HideNumber: hideNumber,
+    ...(travelFormId ? { travelFormId } : {}),
+    ...(travelNumber ? { travelNumber } : {}),
+  };
+  const credential = {
+    Id: credentialId,
+    AccountId: accountId,
+    Name: name,
+    Mobile: mobile,
+    OrgName: orgName,
+    CredentialsType: credentialsType,
+    CredentialsTypeName: credentialsTypeName,
+    Number: number,
+    HideNumber: hideNumber,
+    HideCredentialsNumber: hideNumber,
+    ...(travelFormId ? { travelFormId } : {}),
+    ...(travelNumber ? { travelNumber } : {}),
+  };
+
+  return {
+    clientId: credentialId,
+    passenger,
+    credential,
+    isNotWhitelist:
+      passengerRecord.IsNotWhiteList === true || passengerRecord.isNotWhiteList === true,
+  };
+}
+
 export function normalizeTrainExchangeInfo(res: unknown): TrainExchangeInfo {
   if (!res || typeof res !== "object") {
     return {};
@@ -478,6 +611,11 @@ export function normalizeTrainExchangeInfo(res: unknown): TrainExchangeInfo {
   const passengerMobile = ticketPassenger
     ? readExchangeString(ticketPassenger, "Mobile")
     : undefined;
+  const passengerSnapshot = normalizeTrainExchangePassengerSnapshot(
+    payload,
+    orderTrainTicket,
+    orderVariables,
+  );
 
   return {
     TicketId:
@@ -495,6 +633,7 @@ export function normalizeTrainExchangeInfo(res: unknown): TrainExchangeInfo {
     TravelPayType: travelPayType,
     InsuranceAmount: insuranceAmount,
     PassengerMobile: passengerMobile,
+    passengerSnapshot,
   };
 }
 

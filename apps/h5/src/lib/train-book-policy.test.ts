@@ -5,6 +5,8 @@ import { TrainSeatType } from "@ryx/shared-types";
 import {
   applyTrainPolicyColors,
   buildTrainPolicyParams,
+  findSeatPolicyForPassenger,
+  hasTrainPolicyPassengerCoverage,
   isTrainSeatBookable,
   matchesTrainPolicySeat,
   resolvePolicySeatType,
@@ -263,6 +265,81 @@ describe("isTrainSeatBookable", () => {
   it("allows agent to book danger seats (legacy keeps bookInfo)", () => {
     expect(isTrainSeatBookable("warning", true)).toBe(true);
     expect(isTrainSeatBookable("danger", true)).toBe(true);
+  });
+});
+
+describe("hasTrainPolicyPassengerCoverage", () => {
+  const passengers = [
+    {
+      id: "p1",
+      passenger: { Id: "p1", AccountId: "101", Name: "张三" },
+      credential: { Id: "c1", AccountId: "101", Name: "张三" },
+    },
+    {
+      id: "p2",
+      passenger: { Id: "p2", AccountId: "102", Name: "李四" },
+      credential: { Id: "c2", AccountId: "102", Name: "李四" },
+    },
+  ] as const;
+
+  it("requires a policy result for every booking passenger", () => {
+    expect(
+      hasTrainPolicyPassengerCoverage(
+        [{ PassengerKey: "101", TrainPolicies: [] }],
+        passengers as never,
+      ),
+    ).toBe(false);
+    expect(
+      hasTrainPolicyPassengerCoverage(
+        [
+          { PassengerKey: "101", TrainPolicies: [] },
+          { PassengerKey: "102", TrainPolicies: [] },
+        ],
+        passengers as never,
+      ),
+    ).toBe(true);
+  });
+
+  it("treats an empty response as unchecked", () => {
+    expect(hasTrainPolicyPassengerCoverage([], passengers as never)).toBe(false);
+  });
+});
+
+describe("findSeatPolicyForPassenger", () => {
+  it("matches PassengerKey with legacy loose equality", () => {
+    const train: TrainItem = {
+      Id: "g1",
+      TrainNo: "G1",
+      TrainCode: "G1",
+      StartTime: "2026-08-19 08:00",
+      ArrivalTime: "2026-08-19 08:30",
+      FromStation: "北京南",
+      ToStation: "天津",
+      Seats: [],
+    };
+    const seat = { SeatType: TrainSeatType.SecondClassSeat, SeatTypeName: "二等座" };
+    const passengers = [
+      {
+        id: "p1",
+        passenger: { Id: "p1", AccountId: "101", Name: "张三" },
+        credential: { Id: "c1", AccountId: "101", Name: "张三" },
+      },
+    ] as const;
+
+    expect(
+      findSeatPolicyForPassenger(
+        [
+          {
+            PassengerKey: 101 as never,
+            TrainPolicies: [{ TrainNo: "G1", SeatType: TrainSeatType.SecondClassSeat }],
+          },
+        ],
+        passengers as never,
+        train,
+        seat,
+        "p1",
+      ),
+    ).toBeDefined();
   });
 });
 

@@ -48,6 +48,7 @@ import {
   buildTrainPolicyExceedAlertMessage,
   buildTrainPolicyParams,
   findSeatPolicyForPassenger,
+  hasTrainPolicyPassengerCoverage,
   isTrainSeatBookable,
 } from "@/lib/train-book-policy";
 import { saveTrainBookSelection } from "@/lib/train-book-session";
@@ -215,7 +216,10 @@ export function TrainListPage() {
     bookingPassengers.length > 0 &&
     (isPolicyLoading || isPolicyFetching);
 
-  const policyChecked = !isPolicyFetching && !isPolicyError && Boolean(policyResults);
+  const policyChecked =
+    !isPolicyFetching &&
+    !isPolicyError &&
+    hasTrainPolicyPassengerCoverage(policyResults, isBusinessMode ? bookingPassengers : []);
   const showPolicyFilter =
     isBusinessMode &&
     !isExchangeMode &&
@@ -376,6 +380,11 @@ export function TrainListPage() {
       }
 
       if (isBusinessMode && bookingPassengers.length > 0) {
+        if (!policyChecked) {
+          setPolicyAlertMessage("暂未获取到当前出行人的差旅标准，请刷新后重试");
+          return;
+        }
+
         for (const passenger of bookingPassengers) {
           const passengerPolicy = findSeatPolicyForPassenger(
             policyResults,
