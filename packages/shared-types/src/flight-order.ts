@@ -1,4 +1,5 @@
 import type { HotelOrderBillLine, HotelOrderHistory, HotelOrderTraveler } from "./hotel.js";
+import type { PassengerCredential, StaffPassenger } from "./passenger.js";
 import type { TrainOrderTicket } from "./train-order.js";
 
 export interface FlightOrderTrip {
@@ -56,6 +57,13 @@ export interface FlightExchangeInfoParams {
   ExchangeDate?: string;
 }
 
+export interface FlightPassengerBookSnapshot {
+  clientId: string;
+  passenger: StaffPassenger;
+  credential: PassengerCredential;
+  isNotWhitelist?: boolean;
+}
+
 export interface FlightExchangeInfo {
   TicketId?: string;
   OrderId?: string;
@@ -73,6 +81,8 @@ export interface FlightExchangeInfo {
   TravelPayType?: number;
   OriginalTicketPrice?: number;
   PassengerMobile?: string;
+  /** Original passenger returned by ExchangeFlightInitalize for exchange policy matching. */
+  passengerSnapshot?: FlightPassengerBookSnapshot | null;
 }
 
 export interface FlightCancelParams {

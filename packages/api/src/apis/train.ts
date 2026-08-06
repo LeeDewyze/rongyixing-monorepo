@@ -493,24 +493,12 @@ function readNestedAccountId(record: LegacyRecord | undefined): string | undefin
   );
 }
 
-function selectTrainExchangePassengerRecord(
-  payload: LegacyRecord,
-  orderTrainTicket: LegacyRecord | undefined,
-): LegacyRecord | undefined {
-  const candidates = [
-    readLegacyRecord(orderTrainTicket?.Passenger),
-    readLegacyRecord(payload.BookStaff),
-    readLegacyRecord(payload.Passenger),
-  ];
-  return candidates.find((record) => readRecordString(record, "Name"));
-}
-
 function normalizeTrainExchangePassengerSnapshot(
   payload: LegacyRecord,
   orderTrainTicket: LegacyRecord | undefined,
   orderVariables: LegacyRecord | undefined,
 ): TrainPassengerBookSnapshot | null {
-  const passengerRecord = selectTrainExchangePassengerRecord(payload, orderTrainTicket);
+  const passengerRecord = readLegacyRecord(orderTrainTicket?.Passenger);
   if (!passengerRecord) return null;
 
   const credentialRecord =
@@ -518,15 +506,12 @@ function normalizeTrainExchangePassengerSnapshot(
     readLegacyRecord(payload.DefaultCredential) ??
     readLegacyRecord(passengerRecord.Credential) ??
     readLegacyRecord(passengerRecord.Credentials);
-  const tmcAccount = readLegacyRecord(readLegacyRecord(payload.Tmc)?.Account);
   const name =
     readRecordString(passengerRecord, "Name") ?? readRecordString(credentialRecord, "Name");
   if (!name) return null;
 
-  const accountId =
-    readNestedAccountId(passengerRecord) ??
-    readNestedAccountId(credentialRecord) ??
-    readRecordString(tmcAccount, "Id", "AccountId");
+  const accountId = readNestedAccountId(passengerRecord);
+  if (!accountId) return null;
   const passengerId =
     readRecordString(passengerRecord, "Id", "PassengerId", "ClientId") ?? accountId ?? name;
   const credentialId =
@@ -590,8 +575,7 @@ function normalizeTrainExchangePassengerSnapshot(
     clientId: credentialId,
     passenger,
     credential,
-    isNotWhitelist:
-      passengerRecord.IsNotWhiteList === true || passengerRecord.isNotWhiteList === true,
+    isNotWhitelist: !readLegacyRecord(payload.BookStaff),
   };
 }
 

@@ -319,6 +319,7 @@ export type {
   FlightOrderTicket,
   FlightExchangeInfo,
   FlightExchangeInfoParams,
+  FlightPassengerBookSnapshot,
   FlightOrderTrip,
   FlightRefundParams,
   FlightTicketRefundInfo,

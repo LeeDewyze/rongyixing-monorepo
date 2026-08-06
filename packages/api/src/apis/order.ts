@@ -4,6 +4,7 @@ import type {
   FlightExchangeInfo,
   FlightExchangeInfoParams,
   FlightNonVoluntaryRefundParams,
+  FlightPassengerBookSnapshot,
   FlightRefundParams,
   FlightTicketRefundInfo,
   FlightTicketRefundInfoParams,
@@ -103,12 +104,135 @@ function readStringOrNumber(value: unknown): string | number | undefined {
 
 function firstRecord(...values: unknown[]): LegacyRecord | null {
   for (const value of values) {
-    const record = asRecord(value);
-    if (record) return record;
     const [first] = asArray<LegacyRecord>(value);
     if (first) return first;
+    const record = asRecord(value);
+    if (record) return record;
   }
   return null;
+}
+
+function flightExchangeTicketMatches(ticket: LegacyRecord, ticketId: string): boolean {
+  return [
+    ticket.Id,
+    ticket.Key,
+    ticket.OrderFlightTicketId,
+    ticket.TicketId,
+  ].some((value) => readString(value) === ticketId);
+}
+
+function resolveFlightExchangeTicket(
+  payload: LegacyRecord,
+  order: LegacyRecord,
+  ticketId: string,
+): LegacyRecord {
+  const singleTicket = asRecord(payload.OrderFlightTicket);
+  if (singleTicket) return singleTicket;
+
+  const tickets = [
+    ...asArray<LegacyRecord>(payload.OrderFlightTickets),
+    ...asArray<LegacyRecord>(order.OrderFlightTickets),
+  ];
+  if (tickets.length === 1) return tickets[0] ?? {};
+  return tickets.find((ticket) => flightExchangeTicketMatches(ticket, ticketId)) ?? {};
+}
+
+function normalizeFlightExchangePassengerSnapshot(
+  payload: LegacyRecord,
+  ticket: LegacyRecord,
+): FlightPassengerBookSnapshot | null {
+  const passenger =
+    firstRecord(ticket.Passenger, payload.Passenger, payload.OrderPassengers) ?? undefined;
+  if (!passenger) return null;
+
+  const passengerAccount = asRecord(passenger.Account);
+  const accountId = readString(passenger.AccountId ?? passengerAccount?.Id);
+  const name = readString(passenger.Name);
+  if (!accountId || !name) return null;
+
+  const passengerNumber = readString(passenger.CredentialsNumber ?? passenger.Number);
+  const credentialCandidates = [
+    ...asArray<LegacyRecord>(payload.credentails),
+    ...asArray<LegacyRecord>(payload.Credentials),
+    ...asArray<LegacyRecord>(payload.DefaultCredentials),
+  ];
+  const credential =
+    credentialCandidates.find(
+      (item) =>
+        Boolean(passengerNumber) &&
+        readString(item.CredentialsNumber ?? item.Number) === passengerNumber,
+    ) ??
+    firstRecord(payload.DefaultCredentials, passenger.Credential) ??
+    undefined;
+  const number =
+    readString(passenger.CredentialsNumber ?? passenger.Number ?? credential?.CredentialsNumber ?? credential?.Number) ||
+    undefined;
+  const hideNumber =
+    readString(
+      credential?.HideCredentialsNumber ??
+        credential?.HideNumber ??
+        passenger.HideCredentialsNumber ??
+        passenger.HideNumber,
+    ) || undefined;
+  const credentialsType = readStringOrNumber(
+    passenger.CredentialsType ??
+      passenger.CredentialType ??
+      credential?.CredentialsType ??
+      credential?.CredentialType ??
+      credential?.Type,
+  );
+  const credentialsTypeName =
+    readString(
+      passenger.CredentialsTypeName ??
+        passenger.CredentialTypeName ??
+        credential?.CredentialsTypeName ??
+        credential?.CredentialTypeName ??
+        credential?.TypeName,
+    ) || undefined;
+  const mobile = readString(passenger.Mobile ?? credential?.Mobile) || undefined;
+  const email = readString(passenger.Email ?? credential?.Email) || undefined;
+  const travelFormId = readString(payload.TravelFormId ?? ticket.TravelFormId) || undefined;
+  const passengerId = readString(passenger.Id ?? passenger.PassengerId) || accountId;
+  const credentialId =
+    readString(credential?.Id ?? passenger.CredentialsId ?? passenger.CredentialId) ||
+    (number ? `${accountId}:${number}` : accountId);
+
+  const credentialSnapshot = {
+    Id: credentialId,
+    AccountId: accountId,
+    Name: name,
+    Mobile: mobile,
+    Number: number,
+    HideNumber: hideNumber,
+    HideCredentialsNumber: hideNumber,
+    Type: credentialsType,
+    TypeName: credentialsTypeName,
+    CredentialsType: credentialsType,
+    CredentialsTypeName: credentialsTypeName,
+    ...(email ? { Email: email } : {}),
+    ...(travelFormId ? { travelFormId } : {}),
+  };
+  const passengerSnapshot = {
+    Id: passengerId,
+    AccountId: accountId,
+    Name: name,
+    Mobile: mobile,
+    CredentialsType: credentialsType,
+    CredentialsTypeName: credentialsTypeName,
+    Number: number,
+    HideNumber: hideNumber,
+    Credentials: [credentialSnapshot],
+    ...(email ? { Email: email } : {}),
+    ...(travelFormId ? { travelFormId } : {}),
+  };
+
+  return {
+    clientId: `flight-exchange-${accountId}`,
+    passenger: passengerSnapshot,
+    credential: credentialSnapshot,
+    isNotWhitelist:
+      passenger.IsNotWhiteList === true || passenger.isNotWhiteList === true,
+  };
 }
 
 function payloadArray(raw: unknown, ...keys: string[]): LegacyRecord[] {
@@ -169,13 +293,12 @@ function normalizeFlightExchangeInfo(
   const payload = extractPayload(raw);
   const order = asRecord(payload.Order) ?? payload;
   const orderVariables = parseVariablesObj(order);
-  const ticket =
-    firstRecord(payload.OrderFlightTicket, payload.OrderFlightTickets, order.OrderFlightTickets) ??
-    {};
+  const ticket = resolveFlightExchangeTicket(payload, order, params.TicketId);
   const ticketVariables = parseVariablesObj(ticket);
   const trip =
     firstRecord(payload.OrderFlightTrip, payload.OrderFlightTrips, ticket.OrderFlightTrips) ?? {};
   const passenger = firstRecord(payload.Passenger, ticket.Passenger, payload.OrderPassengers);
+  const passengerSnapshot = normalizeFlightExchangePassengerSnapshot(payload, ticket);
 
   const ticketId = params.TicketId;
   const orderId = readString(payload.OrderId ?? order.Id ?? order.OrderId ?? params.OrderId);
@@ -217,6 +340,7 @@ function normalizeFlightExchangeInfo(
       payload.OriginalTicketPrice ?? payload.TicketPrice ?? trip.TicketPrice ?? ticket.TicketPrice,
     ),
     PassengerMobile: readString(payload.PassengerMobile ?? passenger?.Mobile) || undefined,
+    passengerSnapshot,
   };
 }
 

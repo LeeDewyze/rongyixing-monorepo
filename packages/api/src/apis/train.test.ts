@@ -309,6 +309,37 @@ describe("normalizeTrainExchangeInfo", () => {
     });
   });
 
+  it("does not fall back to BookStaff, Passenger, credential, or Tmc account for exchange passenger", () => {
+    const result = normalizeTrainExchangeInfo({
+      BookStaff: {
+        Id: "staff-001",
+        Name: "兜底员工",
+        AccountId: "staff-account",
+      },
+      Passenger: {
+        Id: "payload-passenger",
+        Name: "兜底乘客",
+        AccountId: "payload-account",
+      },
+      DefaultCredentials: {
+        Id: "cred-001",
+        Name: "证件人",
+        AccountId: "credential-account",
+      },
+      Tmc: {
+        Account: { Id: "tmc-account" },
+      },
+      OrderTrainTicket: {
+        Passenger: {
+          Id: "passenger-001",
+          Name: "孙雪",
+        },
+      },
+    });
+
+    expect(result.passengerSnapshot).toBeNull();
+  });
+
   it("falls back to trip Price when TicketPrice is absent", () => {
     expect(
       normalizeTrainExchangeInfo({

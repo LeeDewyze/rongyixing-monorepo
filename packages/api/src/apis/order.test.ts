@@ -159,7 +159,28 @@ describe("createOrderApi list and detail channel routing", () => {
     const send = vi.fn().mockResolvedValue({
       TicketId: "21600000000391",
       Order: { Id: "ORD-1" },
-      OrderFlightTicket: { Id: "TICKET-1" },
+      TravelFormId: "TF-1",
+      credentails: [
+        {
+          Id: "CRED-1",
+          CredentialsNumber: "411521198811171528",
+          HideCredentialsNumber: "411521********1528",
+          CredentialsType: 1,
+          CredentialsTypeName: "身份证",
+        },
+      ],
+      OrderFlightTicket: {
+        Id: "TICKET-1",
+        Passenger: {
+          Id: "PASSENGER-1",
+          Account: { Id: "74690000000031" },
+          Name: "孙雪",
+          Mobile: "18910943089",
+          CredentialsNumber: "411521198811171528",
+          CredentialsType: 1,
+          CredentialsTypeName: "身份证",
+        },
+      },
       OrderFlightTrip: { TakeoffTime: "2026-07-12T08:00:00" },
     });
     const api = createOrderApi({ send } as never);
@@ -179,6 +200,94 @@ describe("createOrderApi list and detail channel routing", () => {
       },
     });
     expect(result.TicketId).toBe("TICKET-1");
+    expect(result.passengerSnapshot).toMatchObject({
+      clientId: "flight-exchange-74690000000031",
+      passenger: {
+        Id: "PASSENGER-1",
+        AccountId: "74690000000031",
+        Name: "孙雪",
+      },
+      credential: {
+        Id: "CRED-1",
+        AccountId: "74690000000031",
+        Number: "411521198811171528",
+        HideNumber: "411521********1528",
+        CredentialsType: "1",
+        CredentialsTypeName: "身份证",
+      },
+    });
+  });
+
+  it("does not create an exchange passenger from a ticket without account identity", async () => {
+    const send = vi.fn().mockResolvedValue({
+      OrderFlightTicket: {
+        Id: "TICKET-1",
+        Passenger: { Id: "PASSENGER-1", Name: "孙雪" },
+      },
+    });
+    const api = createOrderApi({ send } as never);
+
+    const result = await api.getExchangeFlightTrip({
+      OrderId: "ORD-1",
+      TicketId: "TICKET-1",
+    });
+
+    expect(result.passengerSnapshot).toBeNull();
+  });
+
+  it("matches the exchange passenger by ticket id for multi-passenger flight orders", async () => {
+    const send = vi.fn().mockResolvedValue({
+      Order: { Id: "ORD-1" },
+      credentails: [
+        { Id: "CRED-1", CredentialsNumber: "110101199001011111" },
+        { Id: "CRED-2", CredentialsNumber: "110101199002022222" },
+      ],
+      OrderFlightTickets: [
+        {
+          Id: "TICKET-1",
+          Passenger: {
+            Id: "PASSENGER-1",
+            Account: { Id: "ACCOUNT-1" },
+            Name: "张三",
+            CredentialsNumber: "110101199001011111",
+          },
+          OrderFlightTrips: [{ FromAirport: "PEK", ToAirport: "SHA", TakeoffTime: "2026-08-19" }],
+        },
+        {
+          Id: "TICKET-2",
+          Passenger: {
+            Id: "PASSENGER-2",
+            Account: { Id: "ACCOUNT-2" },
+            Name: "李四",
+            CredentialsNumber: "110101199002022222",
+          },
+          OrderFlightTrips: [{ FromAirport: "PKX", ToAirport: "PVG", TakeoffTime: "2026-08-20" }],
+        },
+      ],
+    });
+    const api = createOrderApi({ send } as never);
+
+    const result = await api.getExchangeFlightTrip({
+      OrderId: "ORD-1",
+      TicketId: "TICKET-2",
+    });
+
+    expect(result.Date).toBe("2026-08-20");
+    expect(result.FromCode).toBe("PKX");
+    expect(result.ToCode).toBe("PVG");
+    expect(result.passengerSnapshot).toMatchObject({
+      clientId: "flight-exchange-ACCOUNT-2",
+      passenger: {
+        Id: "PASSENGER-2",
+        AccountId: "ACCOUNT-2",
+        Name: "李四",
+      },
+      credential: {
+        Id: "CRED-2",
+        AccountId: "ACCOUNT-2",
+        Number: "110101199002022222",
+      },
+    });
   });
 
   it("normalizes Inspur repush passengers from legacy order passengers", async () => {
