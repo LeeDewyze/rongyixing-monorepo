@@ -1,4 +1,4 @@
-# RongYiXing Business Same-Origin WEB test Build 20260806013743
+# RongYiXing Business Same-Origin WEB test Build 20260806103159
 
 这个包用于交付业务方部署到 legacy 同源站点。
 
@@ -25,6 +25,6 @@
 
 构建信息：
 
-- build_time: 2026-08-05T17:37:55Z
+- build_time: 2026-08-06T02:32:10Z
 - git_branch: main
-- git_commit: 11e037857610a83d589c82a80b7faa2f2ea83998
+- git_commit: 219c9b1228e2eda7364558fcea9b03b4ac402881
