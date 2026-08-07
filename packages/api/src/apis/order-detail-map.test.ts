@@ -628,6 +628,61 @@ describe("normalizeFlightOrderDetail", () => {
     expect(detail.Actions?.showPay).toBe(false);
     expect(detail.Actions?.showCancel).toBe(true);
   });
+
+  it("labels the legacy exchange tax item as upgrade difference", () => {
+    const detail = normalizeFlightOrderDetail({
+      Order: {
+        Id: "ORD-FLT-EXCHANGE-001",
+        StatusName: "预订成功",
+        OrderFlightTickets: [
+          {
+            Id: "T-EXCHANGE-1",
+            Key: "exchange-key-1",
+            StatusName: "预订成功",
+            Variables: JSON.stringify({ OriginalTicketId: "T-ORIGINAL-1" }),
+            Passenger: { Id: "p1", Name: "张三" },
+            OrderFlightTrips: [
+              {
+                FlightNumber: "MU5100",
+                FromCityName: "北京",
+                ToCityName: "上海",
+              },
+            ],
+          },
+        ],
+        OrderItems: [
+          {
+            Key: "exchange-key-1",
+            Tag: "FlightTicket",
+            Name: "机票票价",
+            Amount: 1980,
+          },
+          {
+            Key: "exchange-key-1",
+            Tag: "FlightTicketExchangeTax",
+            Name: "机票税",
+            Amount: 370,
+          },
+        ],
+        OrderPassengers: [{ Id: "p1", Name: "张三" }],
+      },
+    });
+
+    expect(detail.BillItems).toEqual([
+      {
+        Key: "exchange-key-1",
+        Tag: "FlightTicket",
+        Name: "机票票价",
+        Amount: 1980,
+      },
+      {
+        Key: "exchange-key-1",
+        Tag: "FlightTicketExchangeTax",
+        Name: "升舱差价",
+        Amount: 370,
+      },
+    ]);
+  });
 });
 
 describe("shouldNormalizeFlightDetail", () => {

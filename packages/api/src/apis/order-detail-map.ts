@@ -525,10 +525,11 @@ function mapTraveler(
 }
 
 function mapBillItem(item: LegacyRecord): HotelOrderBillLine {
+  const tag = readString(item.Tag) || undefined;
   return {
-    Name: readString(item.Name) || "费用",
+    Name: tag === "FlightTicketExchangeTax" ? "升舱差价" : readString(item.Name) || "费用",
     Amount: readNumber(item.Amount) ?? 0,
-    Tag: readString(item.Tag) || undefined,
+    Tag: tag,
     Key: readString(item.Key) || undefined,
   };
 }
