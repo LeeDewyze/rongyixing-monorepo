@@ -31,11 +31,21 @@ function readFormDetail(form: TravelFormRow, name: string): string {
   return form.FormDetails?.find((row) => row.Name === name)?.Content?.trim() ?? "";
 }
 
+function decodeHtmlAttribute(value: string): string {
+  return value
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&#x27;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&amp;/gi, "&");
+}
+
 function parseDetailIdFromBlock(block: string): string {
-  const match =
-    block.match(/Form\/Detail\?[^"'<>]*(?:^|[?&])Id=(\d+)/i) ??
-    block.match(/Form\/Detail\?Id=(\d+)/i);
-  return match?.[1] ?? "";
+  const match = block.match(/Form\/Detail\?([^"'<>]+)/i);
+  if (!match?.[1]) return "";
+
+  const query = decodeHtmlAttribute(match[1]);
+  return new URLSearchParams(query).get("Id") ?? "";
 }
 
 function resolveFormId(form: TravelFormRow, detailId: string): string {
@@ -82,15 +92,20 @@ export function buildTravelFormDetailOpenUrl(formId: string): string | undefined
 /** Legacy workflow `Form/List?FlowTag=Travel` — applications submitted by current user. */
 export function parseTravelFormListHtml(html: string, ticket: string): ApprovalTask[] {
   const tasks: ApprovalTask[] = [];
-  const blocks = html.split(/<div class="mytask-task"/i).slice(1);
+  const formDataMatches = Array.from(
+    html.matchAll(/\bform-data\s*=\s*(['"])([\s\S]*?)\1/gi),
+  );
 
-  for (const block of blocks) {
-    const formDataMatch = block.match(/form-data='([^']+)'/);
-    if (!formDataMatch?.[1]) continue;
+  for (const [index, formDataMatch] of formDataMatches.entries()) {
+    const blockStart = formDataMatch.index ?? 0;
+    const nextBlockStart = formDataMatches[index + 1]?.index ?? html.length;
+    const block = html.slice(blockStart, nextBlockStart);
+    const formData = decodeHtmlAttribute(formDataMatch[2] ?? "");
+    if (!formData) continue;
 
     let form: TravelFormRow;
     try {
-      form = JSON.parse(formDataMatch[1]) as TravelFormRow;
+      form = JSON.parse(formData) as TravelFormRow;
     } catch {
       continue;
     }
