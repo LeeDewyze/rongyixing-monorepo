@@ -528,7 +528,9 @@ export function FlightCabinsPage() {
         <FlightCabinsHeader
           title={departTitle}
           onBack={handleBack}
-          showPolicyFilter={isBusinessMode && !isSelf && selectedPassengers.length > 0}
+          showPolicyFilter={
+            isBusinessMode && !isExchangeBook && !isSelf && selectedPassengers.length > 0
+          }
           onOpenPolicyFilter={() => setPolicyFilterOpen(true)}
         />
       </div>
@@ -539,7 +541,7 @@ export function FlightCabinsPage() {
       >
         <FlightCabinsSummary segment={segment} detailSegments={detail?.FlightSegments} />
 
-        {isBusinessMode && policyFilterEnabled && filterPassengerName ? (
+        {isBusinessMode && !isExchangeBook && policyFilterEnabled && filterPassengerName ? (
           <FlightCabinsPolicyBanner
             passengerName={filterPassengerName}
             onClick={() => setPolicyFilterOpen(true)}
@@ -632,7 +634,7 @@ export function FlightCabinsPage() {
         />
 
         <FlightPolicyFilterSheet
-          open={isBusinessMode && policyFilterOpen}
+          open={isBusinessMode && !isExchangeBook && policyFilterOpen}
           passengers={selectedPassengers}
           showAllSelected={!policyFilterEnabled}
           selectedPassengerId={filterPassengerId}
