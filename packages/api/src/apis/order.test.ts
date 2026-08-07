@@ -235,6 +235,55 @@ describe("createOrderApi list and detail channel routing", () => {
     expect(result.passengerSnapshot).toBeNull();
   });
 
+  it("reads flight exchange query conditions from legacy lowercase order and trip fields", async () => {
+    const send = vi.fn().mockResolvedValue({
+      order: {
+        Id: "ORD-1",
+        OrderFlightTickets: [
+          {
+            Id: "TICKET-2",
+            Passenger: {
+              Id: "PASSENGER-2",
+              Account: { Id: "ACCOUNT-2" },
+              Name: "李四",
+              CredentialsNumber: "110101199002022222",
+            },
+          },
+        ],
+      },
+      trip: {
+        FromAirport: "PKX",
+        ToAirport: "PVG",
+        FromCityName: "北京",
+        ToCityName: "上海",
+        TakeoffTime: "2026-08-20T08:00:00",
+      },
+      credentails: [
+        { Id: "CRED-2", CredentialsNumber: "110101199002022222" },
+      ],
+    });
+    const api = createOrderApi({ send } as never);
+
+    const result = await api.getExchangeFlightTrip({
+      OrderId: "ORD-1",
+      TicketId: "TICKET-2",
+      ExchangeDate: "2026-08-20",
+    });
+
+    expect(result).toMatchObject({
+      TicketId: "TICKET-2",
+      OrderId: "ORD-1",
+      Date: "2026-08-20",
+      FromCode: "PKX",
+      ToCode: "PVG",
+      FromName: "北京",
+      ToName: "上海",
+      passengerSnapshot: {
+        passenger: { AccountId: "ACCOUNT-2", Name: "李四" },
+      },
+    });
+  });
+
   it("matches the exchange passenger by ticket id for multi-passenger flight orders", async () => {
     const send = vi.fn().mockResolvedValue({
       Order: { Id: "ORD-1" },

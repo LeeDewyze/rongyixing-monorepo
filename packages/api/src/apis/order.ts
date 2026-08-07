@@ -291,12 +291,17 @@ function normalizeFlightExchangeInfo(
   params: FlightExchangeInfoParams,
 ): FlightExchangeInfo {
   const payload = extractPayload(raw);
-  const order = asRecord(payload.Order) ?? payload;
+  const order = asRecord(payload.Order ?? payload.order) ?? payload;
   const orderVariables = parseVariablesObj(order);
   const ticket = resolveFlightExchangeTicket(payload, order, params.TicketId);
   const ticketVariables = parseVariablesObj(ticket);
   const trip =
-    firstRecord(payload.OrderFlightTrip, payload.OrderFlightTrips, ticket.OrderFlightTrips) ?? {};
+    firstRecord(
+      payload.OrderFlightTrip,
+      payload.OrderFlightTrips,
+      payload.trip,
+      ticket.OrderFlightTrips,
+    ) ?? {};
   const passenger = firstRecord(payload.Passenger, ticket.Passenger, payload.OrderPassengers);
   const passengerSnapshot = normalizeFlightExchangePassengerSnapshot(payload, ticket);
 
