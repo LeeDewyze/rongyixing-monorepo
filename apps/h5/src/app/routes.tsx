@@ -1,58 +1,146 @@
+import { lazy, type ComponentType } from "react";
 import { Navigate, createBrowserRouter } from "react-router-dom";
 
 import { RootLayout } from "@/app/layouts/RootLayout";
 import { RequireAuth } from "@/app/layouts/RequireAuth";
 import { TabLayout } from "@/app/layouts/TabLayout";
-import { FlightCabinsPage } from "@/pages/flight/FlightCabinsPage";
-import { FlightBookPage } from "@/pages/flight/FlightBookPage";
-import { FlightListPage } from "@/pages/flight/FlightListPage";
-import { FlightPayPage } from "@/pages/flight/FlightPayPage";
-import { FlightResultPage } from "@/pages/flight/FlightResultPage";
-import { FlightSelectCityPage } from "@/pages/flight/FlightSelectCityPage";
 import { HomeTabPage } from "@/pages/home/HomeTabPage";
-import { OrdersTabPage } from "@/pages/home/OrdersTabPage";
-import { ProfileTabPage } from "@/pages/home/ProfileTabPage";
-import { OrderHotelDetailPage } from "@/pages/order/OrderHotelDetailPage";
-import { OrderFlightDetailPage } from "@/pages/order/OrderFlightDetailPage";
-import { OrderTrainDetailPage } from "@/pages/order/OrderTrainDetailPage";
-import { OrderListPage } from "@/pages/order/OrderListPage";
 import { OrderListRedirect } from "@/app/routes/OrderListRedirect";
-import { HotelBookPage } from "@/pages/hotel/HotelBookPage";
-import { HotelDetailPage } from "@/pages/hotel/HotelDetailPage";
-import { HotelListPage } from "@/pages/hotel/HotelListPage";
-import { HotelKeywordSearchPage } from "@/pages/hotel/HotelKeywordSearchPage";
-import { HotelPayPage } from "@/pages/hotel/HotelPayPage";
-import { HotelResultPage } from "@/pages/hotel/HotelResultPage";
-import { HotelShowImagesPage } from "@/pages/hotel/HotelShowImagesPage";
-import { HotelRoomDetailPage } from "@/pages/hotel/HotelRoomDetailPage";
-import { PassengerSelectPage } from "@/pages/passenger/PassengerSelectPage";
-import { PassengerCredentialPage } from "@/pages/passenger/PassengerCredentialPage";
 import { PasswordLoginPage } from "@/pages/PasswordLoginPage";
-import { ForgotPasswordPage } from "@/pages/ForgotPasswordPage";
-import { ProfileCenterPage } from "@/pages/profile/ProfileCenterPage";
 import { SplashPage } from "@/pages/SplashPage";
-import { TrainListPage } from "@/pages/train/TrainListPage";
-import { TrainBookPage } from "@/pages/train/TrainBookPage";
-import { TrainPayPage } from "@/pages/train/TrainPayPage";
-import { TravelApplyPage } from "@/pages/travel/TravelApplyPage";
-import { TravelApprovalPage } from "@/pages/travel/TravelApprovalPage";
-import { TravelTaskPage } from "@/pages/travel/TravelTaskPage";
 import { getRouterBasename } from "@/lib/base-path";
-import { CredentialListPage } from "@/pages/credential/CredentialListPage";
-import { AccountDeletionPage } from "@/pages/settings/AccountDeletionPage";
-import { AccountSecurityPage } from "@/pages/settings/AccountSecurityPage";
-import { AccountCardFormPage } from "@/pages/account-card/AccountCardFormPage";
-import { AccountCardListPage } from "@/pages/account-card/AccountCardListPage";
-import { BindMobilePage } from "@/pages/settings/BindMobilePage";
-import { ChangePasswordPage } from "@/pages/settings/ChangePasswordPage";
-import { MessageNotificationPage } from "@/pages/settings/MessageNotificationPage";
-import { LoginDevicesPage } from "@/pages/settings/LoginDevicesPage";
-import { SettingsPage } from "@/pages/settings/SettingsPage";
-import { ContactUsPage } from "@/pages/contact/ContactUsPage";
-import { NoticeListPage } from "@/pages/notice/NoticeListPage";
-import { NoticeDetailPage } from "@/pages/notice/NoticeDetailPage";
-import { OpenUrlPage } from "@/pages/open-url/OpenUrlPage";
-import { DingTalkBindingPage } from "@/pages/settings/DingTalkBindingPage";
+
+function lazyPage(loader: () => Promise<unknown>, exportName: string) {
+  return lazy(async () => {
+    const module = (await loader()) as Record<string, unknown>;
+    const component = module[exportName];
+    if (typeof component !== "function" && typeof component !== "object") {
+      throw new Error(`Unable to load route component: ${exportName}`);
+    }
+    return { default: component as ComponentType<any> };
+  });
+}
+
+const ForgotPasswordPage = lazyPage(
+  () => import("@/pages/ForgotPasswordPage"),
+  "ForgotPasswordPage",
+);
+const OrdersTabPage = lazyPage(() => import("@/pages/home/OrdersTabPage"), "OrdersTabPage");
+const ProfileTabPage = lazyPage(() => import("@/pages/home/ProfileTabPage"), "ProfileTabPage");
+const OrderHotelDetailPage = lazyPage(
+  () => import("@/pages/order/OrderHotelDetailPage"),
+  "OrderHotelDetailPage",
+);
+const OrderFlightDetailPage = lazyPage(
+  () => import("@/pages/order/OrderFlightDetailPage"),
+  "OrderFlightDetailPage",
+);
+const OrderTrainDetailPage = lazyPage(
+  () => import("@/pages/order/OrderTrainDetailPage"),
+  "OrderTrainDetailPage",
+);
+const OrderListPage = lazyPage(() => import("@/pages/order/OrderListPage"), "OrderListPage");
+const HotelBookPage = lazyPage(() => import("@/pages/hotel/HotelBookPage"), "HotelBookPage");
+const HotelDetailPage = lazyPage(() => import("@/pages/hotel/HotelDetailPage"), "HotelDetailPage");
+const HotelListPage = lazyPage(() => import("@/pages/hotel/HotelListPage"), "HotelListPage");
+const HotelKeywordSearchPage = lazyPage(
+  () => import("@/pages/hotel/HotelKeywordSearchPage"),
+  "HotelKeywordSearchPage",
+);
+const HotelPayPage = lazyPage(() => import("@/pages/hotel/HotelPayPage"), "HotelPayPage");
+const HotelResultPage = lazyPage(() => import("@/pages/hotel/HotelResultPage"), "HotelResultPage");
+const HotelShowImagesPage = lazyPage(
+  () => import("@/pages/hotel/HotelShowImagesPage"),
+  "HotelShowImagesPage",
+);
+const HotelRoomDetailPage = lazyPage(
+  () => import("@/pages/hotel/HotelRoomDetailPage"),
+  "HotelRoomDetailPage",
+);
+const PassengerSelectPage = lazyPage(
+  () => import("@/pages/passenger/PassengerSelectPage"),
+  "PassengerSelectPage",
+);
+const PassengerCredentialPage = lazyPage(
+  () => import("@/pages/passenger/PassengerCredentialPage"),
+  "PassengerCredentialPage",
+);
+const ProfileCenterPage = lazyPage(
+  () => import("@/pages/profile/ProfileCenterPage"),
+  "ProfileCenterPage",
+);
+const TrainListPage = lazyPage(() => import("@/pages/train/TrainListPage"), "TrainListPage");
+const TrainBookPage = lazyPage(() => import("@/pages/train/TrainBookPage"), "TrainBookPage");
+const TrainPayPage = lazyPage(() => import("@/pages/train/TrainPayPage"), "TrainPayPage");
+const TravelApplyPage = lazyPage(
+  () => import("@/pages/travel/TravelApplyPage"),
+  "TravelApplyPage",
+);
+const TravelApprovalPage = lazyPage(
+  () => import("@/pages/travel/TravelApprovalPage"),
+  "TravelApprovalPage",
+);
+const TravelTaskPage = lazyPage(() => import("@/pages/travel/TravelTaskPage"), "TravelTaskPage");
+const CredentialListPage = lazyPage(
+  () => import("@/pages/credential/CredentialListPage"),
+  "CredentialListPage",
+);
+const AccountDeletionPage = lazyPage(
+  () => import("@/pages/settings/AccountDeletionPage"),
+  "AccountDeletionPage",
+);
+const AccountSecurityPage = lazyPage(
+  () => import("@/pages/settings/AccountSecurityPage"),
+  "AccountSecurityPage",
+);
+const AccountCardFormPage = lazyPage(
+  () => import("@/pages/account-card/AccountCardFormPage"),
+  "AccountCardFormPage",
+);
+const AccountCardListPage = lazyPage(
+  () => import("@/pages/account-card/AccountCardListPage"),
+  "AccountCardListPage",
+);
+const BindMobilePage = lazyPage(() => import("@/pages/settings/BindMobilePage"), "BindMobilePage");
+const ChangePasswordPage = lazyPage(
+  () => import("@/pages/settings/ChangePasswordPage"),
+  "ChangePasswordPage",
+);
+const MessageNotificationPage = lazyPage(
+  () => import("@/pages/settings/MessageNotificationPage"),
+  "MessageNotificationPage",
+);
+const LoginDevicesPage = lazyPage(
+  () => import("@/pages/settings/LoginDevicesPage"),
+  "LoginDevicesPage",
+);
+const SettingsPage = lazyPage(() => import("@/pages/settings/SettingsPage"), "SettingsPage");
+const ContactUsPage = lazyPage(() => import("@/pages/contact/ContactUsPage"), "ContactUsPage");
+const NoticeListPage = lazyPage(() => import("@/pages/notice/NoticeListPage"), "NoticeListPage");
+const NoticeDetailPage = lazyPage(
+  () => import("@/pages/notice/NoticeDetailPage"),
+  "NoticeDetailPage",
+);
+const OpenUrlPage = lazyPage(() => import("@/pages/open-url/OpenUrlPage"), "OpenUrlPage");
+const DingTalkBindingPage = lazyPage(
+  () => import("@/pages/settings/DingTalkBindingPage"),
+  "DingTalkBindingPage",
+);
+const FlightCabinsPage = lazyPage(
+  () => import("@/pages/flight/FlightCabinsPage"),
+  "FlightCabinsPage",
+);
+const FlightBookPage = lazyPage(() => import("@/pages/flight/FlightBookPage"), "FlightBookPage");
+const FlightListPage = lazyPage(() => import("@/pages/flight/FlightListPage"), "FlightListPage");
+const FlightPayPage = lazyPage(() => import("@/pages/flight/FlightPayPage"), "FlightPayPage");
+const FlightResultPage = lazyPage(
+  () => import("@/pages/flight/FlightResultPage"),
+  "FlightResultPage",
+);
+const FlightSelectCityPage = lazyPage(
+  () => import("@/pages/flight/FlightSelectCityPage"),
+  "FlightSelectCityPage",
+);
 
 export const router = createBrowserRouter(
   [

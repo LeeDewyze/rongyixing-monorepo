@@ -1,0 +1,1 @@
+function r(){const o=document.querySelector("main.overflow-y-auto");o&&(o.scrollTop=0,o.scrollTo({top:0,behavior:"auto"}))}function t(){r(),requestAnimationFrame(()=>{r(),requestAnimationFrame(r)})}export{t as a,r as s};

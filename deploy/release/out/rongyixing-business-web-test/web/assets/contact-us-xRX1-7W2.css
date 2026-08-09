@@ -1,0 +1,1 @@
+@keyframes legal-document-sheet-in{0%{transform:translateY(100%)}to{transform:translateY(0)}}.legal-document-sheet-panel{animation:legal-document-sheet-in .32s cubic-bezier(.22,1,.36,1) both}

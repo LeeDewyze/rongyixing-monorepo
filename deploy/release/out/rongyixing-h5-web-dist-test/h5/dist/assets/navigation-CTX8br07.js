@@ -1,0 +1,1 @@
+function i(){var t;const n=(t=window.history.state)==null?void 0:t.idx;return typeof n=="number"?n:null}function r(){const n=i();return n!==null?n>0:window.history.length>1}function u(n,t,e){if(r()){n(-1);return}n(t,{replace:!0,...e})}function o(n,t,e){if(r()){n(-1);return}n(t,{replace:!0,...e})}export{o as a,u as n};

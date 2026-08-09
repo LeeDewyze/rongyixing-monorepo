@@ -208,6 +208,22 @@ pnpm dev:h5:prod   # http://localhost:5175/ -> rongtrip prod
 pnpm dev:web:prod  # http://localhost:5176/ -> rongtrip prod
 ```
 
+One-shot local prod validation:
+
+```bash
+pnpm local:prod       # starts H5/Web Vite prod + H5/Web Nginx prod
+pnpm local:prod:stop  # stops the local prod servers above
+```
+
+This command serves:
+
+```text
+H5 Vite:   http://localhost:5175/
+Web Vite:  http://localhost:5176/
+H5 Nginx:  http://localhost:18088/
+Web Nginx: http://localhost:18089/
+```
+
 ### Local or Self-Hosted Nginx Validation
 
 Use the internal validation packages:
@@ -393,6 +409,8 @@ const login = await getApi().authProxy.login({ Name: "demo", Password: "123456" 
 | `pnpm dev:web`             | Start Web dev server (:5174)                     |
 | `pnpm dev:web:test`        | Web dev against test env (:5174, `/`)            |
 | `pnpm dev:web:prod`        | Web dev against prod env (:5176, `/`)            |
+| `pnpm local:prod`          | Start H5/Web prod Vite and Nginx validation URLs |
+| `pnpm local:prod:stop`     | Stop local prod Vite and Nginx validation URLs   |
 | `pnpm build:workspace`     | Build shared-types, api, mock (for mock mode)    |
 | `pnpm analyze-ryx-scope`   | ryx 迁移范围分析 → METHODS-RYX-SCOPE.md          |
 | `pnpm analyze-ryx-pages`   | 页面→接口矩阵 → PAGE-API-MATRIX.md               |

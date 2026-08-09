@@ -1,0 +1,1 @@
+@keyframes hotel-warm-reminder-shake{0%,to{transform:translate(0)}20%,60%{transform:translate(-4px)}40%,80%{transform:translate(4px)}}.hotel-warm-reminder-shake{animation:hotel-warm-reminder-shake .45s ease-in-out}

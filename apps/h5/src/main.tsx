@@ -1,4 +1,4 @@
-import { StrictMode } from "react";
+import { Suspense, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "react-router-dom";
@@ -24,7 +24,15 @@ async function main() {
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
       <QueryClientProvider client={queryClient}>
-        <RouterProvider router={router} />
+        <Suspense
+          fallback={
+            <div className="flex min-h-dvh items-center justify-center bg-[#F5F6F9] text-sm text-[#666666]">
+              加载中…
+            </div>
+          }
+        >
+          <RouterProvider router={router} />
+        </Suspense>
         <AppConfirmDialogHost />
         <SessionGuardHost />
         <DevMenu />

@@ -1,0 +1,1 @@
+const s="ryx_hotel_gallery_images";function a(e){sessionStorage.setItem(s,JSON.stringify(e))}function n(){try{const e=sessionStorage.getItem(s);if(!e)return[];const t=JSON.parse(e);return Array.isArray(t)?t.filter(r=>typeof r=="string"&&r.trim().length>0):[]}catch{return[]}}export{n as l,a as s};
