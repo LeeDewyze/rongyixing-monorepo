@@ -17,15 +17,9 @@ export function isDingTalkContainer(): boolean {
 
 export async function isDingTalkEntryEnabled(entry: DingTalkEntry): Promise<boolean> {
   if (!isDingTalkContainer()) return false;
+  if (entry === "login") return false;
   const configured = await getApi().proxy.loadApiConfig();
-  const envOverride =
-    entry === "login"
-      ? import.meta.env.VITE_DINGTALK_ENABLE_LOGIN
-      : import.meta.env.VITE_DINGTALK_ENABLE_BIND;
-  return (
-    configured?.[entry === "login" ? "HasDingtalkLogin" : "HasDingtalkBind"] === true ||
-    envOverride === "true"
-  );
+  return configured?.HasDingtalkBind === true || import.meta.env.VITE_DINGTALK_ENABLE_BIND === "true";
 }
 
 function removeCodeFromUrl(): void {
