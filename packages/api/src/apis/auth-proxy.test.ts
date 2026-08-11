@@ -25,7 +25,7 @@ describe("createAuthProxyApi (mock mode)", () => {
 });
 
 describe("createAuthProxyApi RYBLogin", () => {
-  it("posts external ticket to ApiLoginUrl Home/RYBLogin with legacy top-level fields", async () => {
+  it("posts external ticket only in Data when exchanging it through RYBLogin", async () => {
     let capturedUrl = "";
     let capturedBody = "";
     const proxy = createProxyClient({
@@ -55,13 +55,14 @@ describe("createAuthProxyApi RYBLogin", () => {
     expect(result.Ticket).toBe("real-ticket");
     expect(capturedUrl).toBe("/__ryx/ApiLoginUrl/Home/RYBLogin");
     expect(fields.get("Method")).toBe(AUTH_FLOW_METHODS.RYB_LOGIN);
-    expect(fields.get("Ticket")).toBe("external-ticket");
+    expect(fields.get("Ticket")).toBe("");
     expect(fields.get("TicketName")).toBe("");
     expect(fields.get("authType")).toBe("1");
     expect(fields.get("Token")).toBe("setting-token");
     expect(fields.get("Data")).toBe(
       JSON.stringify({ ticket: "external-ticket", LoginType: "ryb" }),
     );
+    expect(capturedBody).not.toContain("old-session-ticket");
     expect(fields.get("Sign")).toBeTruthy();
   });
 });

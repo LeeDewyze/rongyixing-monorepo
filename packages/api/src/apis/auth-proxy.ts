@@ -70,7 +70,7 @@ export function createAuthProxyApi(proxy: ProxyClient): AuthProxyApi {
           LoginType: params.LoginType ?? "ryb",
         },
         requestFields: {
-          Ticket: params.ticket,
+          Ticket: "",
           TicketName: "",
           authType: 1,
         },
