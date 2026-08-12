@@ -61,6 +61,15 @@ function deriveDomainFromApiBase(apiBase: string): string {
   }
 }
 
+function workflowSiteTarget(apiBase: string, domain: string): string {
+  try {
+    const protocol = new URL(apiBase).protocol;
+    return `${protocol}//workflow.${domain}`;
+  } catch {
+    return `https://workflow.${domain}`;
+  }
+}
+
 function serviceTarget(hostPrefix: string, domain: string): string {
   return `http://${hostPrefix}.${domain}`;
 }
@@ -101,6 +110,12 @@ export function createRyxDevProxy({ apiBase, apiDomain }: RyxDevProxyOptions): P
       target: serviceTarget("ronglv-feature", domain),
       changeOrigin: true,
       secure: true,
+    },
+    "/workflow-embed": {
+      target: workflowSiteTarget(normalizedApiBase, domain),
+      changeOrigin: true,
+      secure: true,
+      rewrite: (requestPath: string) => requestPath.replace(/^\/workflow-embed/, "") || "/",
     },
   };
 }

@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import type { ApprovalTask } from "@ryx/shared-types";
 
@@ -36,6 +36,8 @@ const TAB_LABELS: Record<ApprovalTab, string> = {
 
 const APPROVAL_TABS: ApprovalTab[] = ["mine", "pending", "done"];
 
+const APPROVAL_HEADER_FALLBACK_HEIGHT = 112;
+
 function resolveTab(value: string | null): ApprovalTab {
   if (value === "mine" || value === "done") return value;
   return "pending";
@@ -55,6 +57,8 @@ export function TravelApprovalPage() {
 
   const goHome = useHomeBack();
   usePageHeader({ visible: false });
+  const headerRef = useRef<HTMLDivElement>(null);
+  const [headerHeight, setHeaderHeight] = useState(APPROVAL_HEADER_FALLBACK_HEIGHT);
 
   const [revokingId, setRevokingId] = useState<string | null>(null);
   const [sendingId, setSendingId] = useState<string | null>(null);
@@ -249,6 +253,30 @@ export function TravelApprovalPage() {
     return () => document.removeEventListener("visibilitychange", refreshOnVisible);
   }, [queryClient]);
 
+  useLayoutEffect(() => {
+    const header = headerRef.current;
+    if (!header) {
+      return;
+    }
+
+    const updateHeight = () => {
+      setHeaderHeight(header.offsetHeight);
+    };
+
+    updateHeight();
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
+
   const isLoading = isListPending;
   const error = activeQuery.error;
   const emptyMessage = tab === "mine" ? "暂无申请" : tab === "pending" ? "暂无审批" : "暂无内容";
@@ -272,71 +300,82 @@ export function TravelApprovalPage() {
 
   return (
     <div
-      className="min-h-full bg-[#F5F6F9]"
+      className="relative h-dvh overflow-hidden"
       style={{ background: "var(--brand-form-header-gradient)" }}
     >
-      <div className="sticky top-0 z-20 pb-7 pt-[env(safe-area-inset-top)]">
-        <div className="flex h-11 items-center px-1">
-          <button
-            type="button"
-            className="flex h-11 w-10 shrink-0 items-center justify-center rounded-full text-[26px] font-light leading-none text-brand-title transition-opacity hover:opacity-80 active:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2"
-            aria-label="返回"
-            onClick={goHome}
-          >
-            ‹
-          </button>
-          <h1 className="min-w-0 flex-1 truncate text-center text-[17px] font-medium text-brand-title">
-            审批任务
-          </h1>
-          <span className="w-10 shrink-0" aria-hidden />
-        </div>
+      <div
+        ref={headerRef}
+        className="fixed inset-x-0 top-0 z-30 w-full"
+        style={{ background: "var(--brand-form-header-gradient)" }}
+      >
+        <div className="pb-3 pt-[env(safe-area-inset-top)]">
+          <div className="flex h-11 items-center px-1">
+            <button
+              type="button"
+              className="flex h-11 w-10 shrink-0 items-center justify-center rounded-full text-[26px] font-light leading-none text-brand-title transition-opacity hover:opacity-80 active:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2"
+              aria-label="返回"
+              onClick={goHome}
+            >
+              ‹
+            </button>
+            <h1 className="min-w-0 flex-1 truncate text-center text-[17px] font-medium text-brand-title">
+              审批任务
+            </h1>
+            <span className="w-10 shrink-0" aria-hidden />
+          </div>
 
-        <div className="px-4 pt-2">
-          <div className="grid grid-cols-3 rounded-2xl bg-white/85 p-1 shadow-sm ring-1 ring-white/70 backdrop-blur">
-            {APPROVAL_TABS.map((value) => {
-              const active = tab === value;
-              const hasPendingCount = value === "pending" && waitingTaskCount > 0;
-              return (
-                <button
-                  key={value}
-                  type="button"
-                  aria-pressed={active}
-                  className={`relative flex h-10 items-center justify-center rounded-xl text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 ${
-                    active
-                      ? "bg-brand-primary text-white shadow-sm"
-                      : "text-gray-600 hover:bg-blue-50 hover:text-brand-primary active:bg-blue-100"
-                  }`}
-                  onClick={() => handleTabChange(value)}
-                >
-                  {TAB_LABELS[value]}
-                  {hasPendingCount ? (
-                    <span
-                      className={`ml-1 min-w-4 rounded-full px-1 text-[10px] leading-4 ${
-                        active ? "bg-white text-brand-primary" : "bg-red-500 text-white"
-                      }`}
-                    >
-                      {waitingTaskCount}
-                    </span>
-                  ) : null}
-                </button>
-              );
-            })}
+          <div className="px-4 pt-2">
+            <div className="grid grid-cols-3 rounded-2xl bg-white/85 p-1 shadow-sm ring-1 ring-white/70 backdrop-blur">
+              {APPROVAL_TABS.map((value) => {
+                const active = tab === value;
+                const hasPendingCount = value === "pending" && waitingTaskCount > 0;
+                return (
+                  <button
+                    key={value}
+                    type="button"
+                    aria-pressed={active}
+                    className={`relative flex h-10 items-center justify-center rounded-xl text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 ${
+                      active
+                        ? "bg-brand-primary text-white shadow-sm"
+                        : "text-gray-600 hover:bg-blue-50 hover:text-brand-primary active:bg-blue-100"
+                    }`}
+                    onClick={() => handleTabChange(value)}
+                  >
+                    {TAB_LABELS[value]}
+                    {hasPendingCount ? (
+                      <span
+                        className={`ml-1 min-w-4 rounded-full px-1 text-[10px] leading-4 ${
+                          active ? "bg-white text-brand-primary" : "bg-red-500 text-white"
+                        }`}
+                      >
+                        {waitingTaskCount}
+                      </span>
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
 
-      <ApprovalTaskList
-        tasks={tasksForList}
-        isLoading={isLoading}
-        errorMessage={error ? formatApiError(error) : undefined}
-        emptyMessage={emptyMessage}
-        hasMore={hasMore}
-        isFetchingMore={isFetchingMore}
-        onLoadMore={loadMore}
-        onOpenTask={handleOpenTask}
-        renderActions={tab === "mine" ? renderActions : undefined}
-        className="-mt-4 px-4 pb-6"
-      />
+      <div
+        className="h-full overflow-y-auto overscroll-y-contain [-webkit-overflow-scrolling:touch]"
+        style={{ paddingTop: headerHeight }}
+      >
+        <ApprovalTaskList
+          tasks={tasksForList}
+          isLoading={isLoading}
+          errorMessage={error ? formatApiError(error) : undefined}
+          emptyMessage={emptyMessage}
+          hasMore={hasMore}
+          isFetchingMore={isFetchingMore}
+          onLoadMore={loadMore}
+          onOpenTask={handleOpenTask}
+          renderActions={tab === "mine" ? renderActions : undefined}
+          className="px-4 pb-6"
+        />
+      </div>
     </div>
   );
 }

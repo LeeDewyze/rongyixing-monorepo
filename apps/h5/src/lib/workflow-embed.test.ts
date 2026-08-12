@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
+  injectWorkflowEmbedBridge,
+  injectWorkflowIframeQueryShim,
   injectWorkflowPageTicket,
+  isWorkflowBackMessage,
   isWorkflowEmbedUrl,
   prepareWorkflowSrcdoc,
 } from "./workflow-embed";
@@ -44,6 +47,14 @@ describe("injectWorkflowPageTicket", () => {
     expect(result.indexOf("window.ticket")).toBeLessThan(result.indexOf("/js/detail.js"));
   });
 
+  it("injects window.ticket in head before other scripts", () => {
+    const html = "<head><title>流程</title></head><body></body>";
+    const result = injectWorkflowPageTicket(html, "ticket-abc");
+    expect(result).toContain(
+      '<head><script type="text/javascript">window.ticket = "ticket-abc";</script>',
+    );
+  });
+
   it("does not duplicate ticket when already present", () => {
     const html = 'window.ticket = "existing";';
     expect(injectWorkflowPageTicket(html, "new")).toBe(html);
@@ -56,5 +67,44 @@ describe("prepareWorkflowSrcdoc", () => {
     expect(prepareWorkflowSrcdoc(html, "http://workflow.rtesp.com")).toContain(
       '<base href="http://workflow.rtesp.com/">',
     );
+  });
+});
+
+describe("injectWorkflowIframeQueryShim", () => {
+  it("injects query helpers and window.ticket into head", () => {
+    const html = "<head><title>流程</title></head><body></body>";
+    const result = injectWorkflowIframeQueryShim(html, "ticket=abc&opentype=iframe");
+    expect(result).toContain('var __wfSearch = "ticket=abc&opentype=iframe"');
+    expect(result).toContain("window.ticket = __wfTicket");
+  });
+});
+
+describe("injectWorkflowEmbedBridge", () => {
+  it("hooks alert for workflow task success", () => {
+    const html = "<head></head><body></body>";
+    const result = injectWorkflowEmbedBridge(html);
+    expect(result).toContain("notifyWorkflowComplete");
+    expect(result).toContain('text.indexOf("成功")');
+    expect(result).toContain("showEmbedAlert");
+    expect(result).toContain("data-ryx-embed-alert");
+    expect(result).toContain("patchLocationReload");
+    expect(result).not.toContain("window.location.reload = function");
+  });
+});
+
+describe("isWorkflowBackMessage", () => {
+  it("matches legacy back and appCheckGoBack payloads", () => {
+    expect(isWorkflowBackMessage({ type: "back", isBack: true })).toBe(true);
+    expect(isWorkflowBackMessage({ type: "appCheckGoBack", payload: true })).toBe(true);
+    expect(isWorkflowBackMessage({ type: "appCheckCanBack", data: true })).toBe(true);
+    expect(isWorkflowBackMessage({ type: "windowclose" })).toBe(true);
+    expect(isWorkflowBackMessage({ type: "back" })).toBe(false);
+    expect(isWorkflowBackMessage({ type: "appCheckGoBack" })).toBe(false);
+    expect(isWorkflowBackMessage(null)).toBe(false);
+  });
+
+  it("accepts string truthy flags", () => {
+    expect(isWorkflowBackMessage({ type: "back", isBack: "true" })).toBe(true);
+    expect(isWorkflowBackMessage({ type: "appCheckGoBack", payload: "1" })).toBe(true);
   });
 });

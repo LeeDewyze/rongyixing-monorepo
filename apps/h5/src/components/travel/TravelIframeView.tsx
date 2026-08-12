@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 
-import { fetchWorkflowEmbedSrcdoc, isWorkflowEmbedUrl } from "@/lib/workflow-embed";
+import {
+  fetchWorkflowEmbedSrcdoc,
+  isWorkflowBackMessage,
+  isWorkflowEmbedUrl,
+} from "@/lib/workflow-embed";
 
 interface TravelIframeViewProps {
   title: string;
@@ -47,8 +51,7 @@ export function TravelIframeView({ title, url, onWorkflowBack }: TravelIframeVie
 
   useEffect(() => {
     function onMessage(event: MessageEvent) {
-      const data = event.data as { type?: string } | null;
-      if (data?.type === "back") {
+      if (isWorkflowBackMessage(event.data)) {
         onWorkflowBack?.();
       }
     }
@@ -56,22 +59,25 @@ export function TravelIframeView({ title, url, onWorkflowBack }: TravelIframeVie
     return () => window.removeEventListener("message", onMessage);
   }, [onWorkflowBack]);
 
-  const useDirectSrc = !isWorkflowEmbedUrl(url) || loadError;
+  const isWorkflowEmbed = isWorkflowEmbedUrl(url);
+  const useDirectSrc = !isWorkflowEmbed;
   const iframeSrc = useDirectSrc ? url : undefined;
+  const canRenderIframe = useDirectSrc ? Boolean(url) : Boolean(srcdoc);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col bg-white">
-      {loadError ? (
-        <div className="flex items-center justify-end gap-3 border-b border-[#ECECEC] px-3 py-2">
+      {loadError && isWorkflowEmbed ? (
+        <div className="flex flex-col gap-2 border-b border-[#ECECEC] px-3 py-2">
+          <p className="text-sm text-[#808080]">工作流页面加载失败，请重试或浏览器打开。</p>
           <a href={url} target="_blank" rel="noreferrer" className="text-sm text-brand-primary">
             浏览器打开
           </a>
         </div>
       ) : null}
-      {!useDirectSrc && !srcdoc ? (
+      {isWorkflowEmbed && !srcdoc && !loadError ? (
         <p className="p-4 text-sm text-[#808080]">正在加载详情…</p>
       ) : null}
-      {useDirectSrc || srcdoc ? (
+      {canRenderIframe ? (
         <iframe
           title={title}
           src={iframeSrc}

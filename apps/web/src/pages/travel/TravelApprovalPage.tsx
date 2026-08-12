@@ -272,10 +272,10 @@ export function TravelApprovalPage() {
 
   return (
     <div
-      className="min-h-full bg-[#F5F6F9]"
+      className="flex min-h-0 flex-1 flex-col overflow-hidden"
       style={{ background: "var(--brand-form-header-gradient)" }}
     >
-      <div className="sticky top-0 z-20 pb-7 pt-[env(safe-area-inset-top)]">
+      <div className="shrink-0 pb-3 pt-[env(safe-area-inset-top)]">
         <div className="flex h-11 items-center px-1">
           <button
             type="button"
@@ -325,18 +325,20 @@ export function TravelApprovalPage() {
         </div>
       </div>
 
-      <ApprovalTaskList
-        tasks={tasksForList}
-        isLoading={isLoading}
-        errorMessage={error ? formatApiError(error) : undefined}
-        emptyMessage={emptyMessage}
-        hasMore={hasMore}
-        isFetchingMore={isFetchingMore}
-        onLoadMore={loadMore}
-        onOpenTask={handleOpenTask}
-        renderActions={tab === "mine" ? renderActions : undefined}
-        className="-mt-4 px-4 pb-6"
-      />
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain [-webkit-overflow-scrolling:touch]">
+        <ApprovalTaskList
+          tasks={tasksForList}
+          isLoading={isLoading}
+          errorMessage={error ? formatApiError(error) : undefined}
+          emptyMessage={emptyMessage}
+          hasMore={hasMore}
+          isFetchingMore={isFetchingMore}
+          onLoadMore={loadMore}
+          onOpenTask={handleOpenTask}
+          renderActions={tab === "mine" ? renderActions : undefined}
+          className="px-4 pb-6"
+        />
+      </div>
     </div>
   );
 }

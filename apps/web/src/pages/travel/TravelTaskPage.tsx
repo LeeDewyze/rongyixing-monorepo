@@ -39,9 +39,10 @@ export function TravelTaskPage() {
     }
   }, [navigate, url]);
 
-  function handleWorkflowBack() {
-    handleBack();
-  }
+  const handleWorkflowBack = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: ["approval"] });
+    navigate(`/travel/approval?tab=${returnTab}`, { replace: true });
+  }, [navigate, queryClient, returnTab]);
 
   if (!url) {
     return null;
