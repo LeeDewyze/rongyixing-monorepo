@@ -1,1 +1,0 @@
-import{u as e}from"./useQuery-TTfayfK1.js";import{a as r}from"./index-CkMLAlG_.js";function u(){return e({queryKey:["member","profile"],queryFn:()=>r().member.getProfile(),staleTime:300*1e3})}export{u};

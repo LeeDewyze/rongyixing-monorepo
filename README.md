@@ -165,7 +165,7 @@ This builds all release artifacts under `deploy/release/out/`:
 
 | Artifact | Usage | Static base |
 | --- | --- | --- |
-| `rongyixing-business-h5-test/` | Customer test H5 delivery | `/www/` |
+| `rongyixing-business-h5-test/` | Customer test H5 delivery | `/rl/` |
 | `rongyixing-business-h5-prod/` | Customer prod H5 delivery | `/www/` |
 | `rongyixing-business-web-test/` | Customer test Web delivery | `/web/` |
 | `rongyixing-business-web-prod/` | Customer prod Web delivery | `/web/` |
@@ -187,7 +187,7 @@ BUILD_BUSINESS_WWW=0 pnpm release:all   # only build internal Nginx validation p
 | Local Vite | `http://localhost:5173/` | `http://localhost:5174/` | `http://localhost:5175/` | `http://localhost:5176/` |
 | Local/self-hosted Nginx IP | `http://<ip>:18080/` | `http://<ip>:18081/` | `http://<ip>:18088/` | `http://<ip>:18089/` |
 | Self-hosted prod domain | - | - | `http://h5.songguoren.site/` | `http://web.songguoren.site/` |
-| Customer same-origin | `https://app.rongtrip.cn/www/index.html` | `https://app.rongtrip.cn/web/index.html` | `https://app.rongtrip.cn/www/index.html` | `https://app.rongtrip.cn/web/index.html` |
+| Customer same-origin | `https://app.rongtrip.cn/rl/index.html` | `https://app.rongtrip.cn/web/index.html` | `https://app.rongtrip.cn/www/index.html` | `https://app.rongtrip.cn/web/index.html` |
 | Backend env | `rtesp.com` | `rtesp.com` | `rongtrip.cn` | `rongtrip.cn` |
 
 Ticket direct-entry examples:
@@ -196,7 +196,8 @@ Ticket direct-entry examples:
 http://localhost:5173/?ticket=xxxx
 http://<ip>:18088/?ticket=xxxx
 http://h5.songguoren.site/?ticket=xxxx
-https://app.rongtrip.cn/www/index.html?ticket=xxxx
+https://app.rongtrip.cn/rl/index.html?ticket=xxxx       # customer test
+https://app.rongtrip.cn/www/index.html?ticket=xxxx      # customer prod
 ```
 
 ### Local Vite Commands
@@ -253,7 +254,8 @@ Customer delivery uses the `rongyixing-business-*` packages. Replace the corresp
 
 | Package content | Customer target |
 | --- | --- |
-| `rongyixing-business-h5-*/www` | `wwwroot/www` |
+| `rongyixing-business-h5-test/rl` | `wwwroot/rl` |
+| `rongyixing-business-h5-prod/www` | `wwwroot/www` |
 | `rongyixing-business-web-*/web` | `wwwroot/web` |
 
 Customer packages are same-origin builds: they request `/Home/Setting` on the current host, then call the legacy backend URLs returned by that setting response.

@@ -1,30 +1,30 @@
-# RongYiXing Business Same-Origin H5 test Build 20260812132350
+# RongYiXing Business Same-Origin H5 test Build 20260812140956
 
 这个包用于交付业务方部署到 legacy 同源站点。
 
 部署方式：
 
 ```text
-把本目录下的 www/ 整个目录内容，替换到业务方服务器的 wwwroot/www。
+把本目录下的 rl/ 整个目录内容，替换到业务方服务器的 wwwroot/rl。
 ```
 
 典型访问：
 
 ```text
-/www/index.html?wechatopenid=&ticketname=ticket&root=www&ticket=xxxx
+/rl/index.html?wechatopenid=&ticketname=ticket&root=rl&ticket=xxxx
 ```
 
 运行方式：
 
 - 应用：H5
 - 环境：test
-- 静态资源 base：/www/
+- 静态资源 base：/rl/
 - API 配置：请求当前访问域名下的 /Home/Setting
 - 后续接口：按 /Home/Setting 返回的 Urls 直接访问 legacy 后端服务
 - Domain：从当前访问域名推导，也可以由 URL query 的 domain 覆盖
 
 构建信息：
 
-- build_time: 2026-08-12T05:23:55Z
+- build_time: 2026-08-12T06:10:04Z
 - git_branch: main
-- git_commit: 5224504f980bc9ac69275752176e5e189b0f9521
+- git_commit: e3cfb94d09ffaab3063888fcc2cc11597fe66f15

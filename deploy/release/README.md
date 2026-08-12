@@ -36,7 +36,8 @@ deploy/release/out/RELEASE-<timestamp>.md          # 本次 release 清单
 ```
 
 业务方同源包只需要把对应目录下的静态目录整体替换到业务方服务器的
-`wwwroot/www` 或 `wwwroot/web`；它会在运行时请求当前访问域名下的
+`wwwroot/rl`（测试 H5）、`wwwroot/www`（生产 H5）或 `wwwroot/web`（Web）；
+它会在运行时请求当前访问域名下的
 `/Home/Setting`，再按 legacy 配置访问后续后端服务。我们自己的 localhost、
 IP、songguoren.site 验证继续使用 `rongyixing-h5-web-dist-test/prod` 里的 nginx
 安装脚本。

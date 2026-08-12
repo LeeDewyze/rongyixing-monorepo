@@ -9,7 +9,8 @@ CREATE_ARCHIVE="${CREATE_ARCHIVE:-0}"
 BUILD_BUSINESS_WWW="${BUILD_BUSINESS_WWW:-1}"
 BUILD_INTERNAL="${BUILD_INTERNAL:-1}"
 BUSINESS_PACKAGE_PREFIX="${BUSINESS_PACKAGE_PREFIX:-rongyixing-business}"
-BUSINESS_H5_BASE_PATH="${BUSINESS_H5_BASE_PATH:-/www/}"
+BUSINESS_H5_TEST_BASE_PATH="${BUSINESS_H5_TEST_BASE_PATH:-/rl/}"
+BUSINESS_H5_PROD_BASE_PATH="${BUSINESS_H5_PROD_BASE_PATH:-/www/}"
 BUSINESS_WEB_BASE_PATH="${BUSINESS_WEB_BASE_PATH:-/web/}"
 BUSINESS_ENVS="${BUSINESS_ENVS:-test prod}"
 INTERNAL_PACKAGE_NAME_PREFIX="${INTERNAL_PACKAGE_NAME_PREFIX:-rongyixing-h5-web-dist}"
@@ -31,9 +32,10 @@ This is the one-shot release entrypoint. It builds:
      deploy/release/out/rongyixing-business-h5-prod/
      deploy/release/out/rongyixing-business-web-test/
      deploy/release/out/rongyixing-business-web-prod/
-     - H5 static files under www/
+     - H5 test static files under rl/
+     - H5 prod static files under www/
      - Web static files under web/
-     - Built with /www/ and /web/ base paths.
+     - Built with /rl/ (test), /www/ (prod), and /web/ base paths.
      - API calls use current origin + /Home/Setting, then legacy direct service URLs.
      - Intended for customer deployment under app.rongtrip.cn/www, /web, or test equivalent.
 
@@ -51,7 +53,8 @@ Environment:
   BUILD_BUSINESS_WWW=1|0
   BUILD_INTERNAL=1|0
   BUSINESS_PACKAGE_PREFIX=rongyixing-business
-  BUSINESS_H5_BASE_PATH=/www/
+  BUSINESS_H5_TEST_BASE_PATH=/rl/
+  BUSINESS_H5_PROD_BASE_PATH=/www/
   BUSINESS_WEB_BASE_PATH=/web/
   BUSINESS_ENVS="test prod"
   INTERNAL_PACKAGE_NAME_PREFIX=rongyixing-h5-web-dist
@@ -87,6 +90,22 @@ base_path_to_dir() {
   else
     printf '%s' "${cleaned}"
   fi
+}
+
+business_h5_base_path() {
+  local env_name="$1"
+  case "${env_name}" in
+    test)
+      printf '%s' "${BUSINESS_H5_TEST_BASE_PATH}"
+      ;;
+    prod)
+      printf '%s' "${BUSINESS_H5_PROD_BASE_PATH}"
+      ;;
+    *)
+      log "unsupported business env: ${env_name}"
+      exit 1
+      ;;
+  esac
 }
 
 build_business_app() {
@@ -177,7 +196,7 @@ build_business_packages() {
   for env_name in ${BUSINESS_ENVS}; do
     case "${env_name}" in
       test|prod)
-        build_business_app "h5" "${env_name}" "${BUSINESS_H5_BASE_PATH}"
+        build_business_app "h5" "${env_name}" "$(business_h5_base_path "${env_name}")"
         build_business_app "web" "${env_name}" "${BUSINESS_WEB_BASE_PATH}"
         ;;
       *)
@@ -239,14 +258,16 @@ EOF
 
   if [[ "${BUILD_BUSINESS_WWW}" == "1" ]]; then
     local env_name
+    local h5_base_path
     cat >>"${MANIFEST_PATH}" <<EOF
 业务方同源部署：
 
 EOF
     for env_name in ${BUSINESS_ENVS}; do
+      h5_base_path="$(business_h5_base_path "${env_name}")"
       cat >>"${MANIFEST_PATH}" <<EOF
 \`\`\`text
-$(business_package_name h5 "${env_name}")/$(base_path_to_dir "${BUSINESS_H5_BASE_PATH}") -> customer ${env_name} wwwroot/$(base_path_to_dir "${BUSINESS_H5_BASE_PATH}")
+$(business_package_name h5 "${env_name}")/$(base_path_to_dir "${h5_base_path}") -> customer ${env_name} wwwroot/$(base_path_to_dir "${h5_base_path}")
 $(business_package_name web "${env_name}")/$(base_path_to_dir "${BUSINESS_WEB_BASE_PATH}") -> customer ${env_name} wwwroot/$(base_path_to_dir "${BUSINESS_WEB_BASE_PATH}")
 \`\`\`
 
