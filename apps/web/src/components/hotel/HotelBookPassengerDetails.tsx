@@ -4,6 +4,7 @@ import type { FlightOutNumberField } from "@ryx/shared-types";
 import { HotelBookTravelFields } from "@/components/hotel/HotelBookTravelFields";
 import { BookContactCheckboxMark } from "@/components/book/BookContactCheckbox";
 import { ClearableFieldInput } from "@/components/form";
+import { formatTravelOutNumberLabel } from "@/lib/flight-book-outnumber";
 import type { GroupedApproverLevel } from "@/lib/flight-book-approval";
 import type { HotelPassengerBookForm } from "@/lib/hotel-book";
 
@@ -245,7 +246,7 @@ export function HotelBookPassengerDetails({
 
       {outNumberFields.map((field) =>
         field.canSelect ? (
-          <DetailRow key={field.key} label={field.label}>
+          <DetailRow key={field.key} label={formatTravelOutNumberLabel(field)}>
             <button
               type="button"
               className={detailActionClass}
@@ -260,7 +261,7 @@ export function HotelBookPassengerDetails({
             </button>
           </DetailRow>
         ) : (
-          <DetailRow key={field.key} label={field.label}>
+          <DetailRow key={field.key} label={formatTravelOutNumberLabel(field)}>
             <ClearableFieldInput
               type="text"
               value={form.outNumbers[field.key] ?? field.value ?? ""}

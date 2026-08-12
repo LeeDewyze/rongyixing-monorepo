@@ -55,6 +55,7 @@ import { TAB_ID_TO_PARAM } from "@/lib/order-list-params";
 import { formatApiError } from "@/lib/formatApiError";
 import { getApi } from "@/lib/api";
 import { scrollH5MainToTop } from "@/lib/scroll-h5-main";
+import { formatTravelOutNumberLabel, isTravelOutNumberField } from "@/lib/flight-book-outnumber";
 import {
   buildTrainInitBookDto,
   buildTrainOrderBookDto,
@@ -335,8 +336,8 @@ export function TrainBookPage() {
   const personHoldMinutes = resolveTrainHoldMinutes(initBook.data);
   const exchangeOnlineFee = resolveTrainExchangeOnlineFee(initBook.data);
   const outNumberFieldsByPassenger = useMemo(
-    () => buildTrainPassengerOutNumberFieldsMap(initBook.data, bookPassengers),
-    [initBook.data, bookPassengers],
+    () => buildTrainPassengerOutNumberFieldsMap(initBook.data, bookPassengers, travelMode),
+    [initBook.data, bookPassengers, travelMode],
   );
 
   const displayAmount = useMemo(() => {
@@ -632,7 +633,10 @@ export function TrainBookPage() {
                     passenger,
                     initBook.data?.ServiceFees,
                   );
-                  const outNumberFields = outNumberFieldsByPassenger[passenger.id] ?? [];
+                  const allOutNumberFields = outNumberFieldsByPassenger[passenger.id] ?? [];
+                  const outNumberFields = allOutNumberFields.filter(
+                    (field) => !isTravelOutNumberField(field),
+                  );
                   const staff = findInitStaffForPassenger(passenger, initBook.data?.Staffs);
                   const trainPolicy = selection?.policy;
                   const approvalInput = {
@@ -736,6 +740,31 @@ export function TrainBookPage() {
               onChange={setBookSeatLocations}
             />
           ) : null}
+
+          {isBusinessMode && !isExchangeBook
+            ? bookPassengers.flatMap((passenger) => {
+                const travelFields = (outNumberFieldsByPassenger[passenger.id] ?? []).filter(
+                  isTravelOutNumberField,
+                );
+                return travelFields.map((field) => {
+                  const form = forms[passenger.id];
+                  const selected =
+                    form?.outNumbers[field.key]?.trim() || field.value?.trim() || "";
+                  return (
+                    <HotelBookOptionRow
+                      key={`${passenger.id}-${field.key}`}
+                      label={formatTravelOutNumberLabel(field)}
+                      value={selected || "请选择出差审批单"}
+                      required={field.required}
+                      onClick={() => {
+                        if (!field.canSelect) return;
+                        setOutNumberPicker({ passengerId: passenger.id, field });
+                      }}
+                    />
+                  );
+                });
+              })
+            : null}
 
           {isBusinessMode && isDisplayNotifyLanguage ? (
             <HotelBookOptionRow

@@ -1,6 +1,5 @@
 import type {
   FlightAuthorizedContact,
-  FlightInitStaff,
   FlightOutNumberField,
   FlightInitBookResponse,
   FlightPassengerContactOption,
@@ -24,13 +23,13 @@ import {
 import { splitContactOptions, findInitStaffForPassenger } from "@/lib/flight-book-passenger-form";
 import { buildAuthorizedLinkmans, validateAuthorizedContacts } from "@/lib/flight-book-contacts";
 import { isBusinessTravelMode, resolveFlightTravelType } from "@/lib/flight-travel-mode";
+import type { HomeTravelMode } from "@/config/home-assets";
 import {
   resolveTrainPassengerApprovalId,
   shouldAllowSelectTrainApprover,
   validatePassengerTrainApprover,
 } from "@/lib/train-book-approval";
 import type { TrainBookSelection } from "@/lib/train-book-session";
-import type { HomeTravelMode } from "@/config/home-assets";
 
 export const TRAIN_BOOK_CHANNEL = "客户H5";
 const BERTH_SUFFIX_PATTERN = /[上中下]$/;
@@ -522,16 +521,26 @@ export function buildTrainOrderBookDto(input: {
 export function buildTrainPassengerOutNumberFieldsMap(
   init: TrainInitBookResponse | undefined,
   passengers: PassengerBookInfo[],
+  travelMode?: HomeTravelMode,
 ): Record<string, FlightOutNumberField[]> {
+  const initAsFlight = init as FlightInitBookResponse | undefined;
+  const sharedTravelNumber =
+    typeof initAsFlight?.TravelFrom?.TravelNumber === "string"
+      ? initAsFlight.TravelFrom.TravelNumber
+      : undefined;
   const map: Record<string, FlightOutNumberField[]> = {};
   for (const passenger of passengers) {
-    const staff = init?.Staffs?.find((item) => item.Id === passenger.id) as
-      | FlightInitStaff
-      | undefined;
+    const staff = findInitStaffForPassenger(passenger, init?.Staffs);
+    const passengerTravelNumber =
+      "travelNumber" in passenger.passenger && passenger.passenger.travelNumber
+        ? String(passenger.passenger.travelNumber)
+        : undefined;
     map[passenger.id] = buildPassengerOutNumberFields({
       passenger,
       staff,
-      init: init as FlightInitBookResponse | undefined,
+      init: initAsFlight,
+      travelNumber: sharedTravelNumber ?? passengerTravelNumber,
+      travelMode,
       travelType: "Train",
     });
   }

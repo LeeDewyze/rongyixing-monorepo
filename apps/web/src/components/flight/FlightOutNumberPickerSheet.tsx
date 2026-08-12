@@ -5,6 +5,8 @@ import type { FlightOutNumberField, TravelUrlRow } from "@ryx/shared-types";
 import {
   fetchTravelUrlOptions,
   filterTravelUrlRows,
+  formatTravelOutNumberLabel,
+  formatTravelUrlRowSubtitle,
   resolveOutNumberValueFromTravelUrlRow,
 } from "@/lib/flight-book-outnumber";
 import { formatApiError } from "@/lib/formatApiError";
@@ -23,17 +25,6 @@ function formatTravelUrlRowLabel(row: TravelUrlRow, isTravelNumber?: boolean): s
   return isTravelNumber ? `单号 ${number}` : number;
 }
 
-function formatTravelUrlRowSubtitle(row: TravelUrlRow): string {
-  const parts: string[] = [];
-  if (row.Subject?.trim()) parts.push(row.Subject.trim());
-  if (row.StartDate || row.EndDate) {
-    parts.push([row.StartDate, row.EndDate].filter(Boolean).join(" ~ "));
-  }
-  const trips = (row.Trips ?? []).filter(Boolean);
-  if (trips.length) parts.push(trips.join(" / "));
-  return parts.join(" · ");
-}
-
 export function FlightOutNumberPickerSheet({
   open,
   field,
@@ -48,18 +39,27 @@ export function FlightOutNumberPickerSheet({
   }, [open]);
 
   const query = useQuery({
-    queryKey: ["travel", "getTravelUrl", field?.key, field?.staffNumber, field?.staffOutNumber],
+    queryKey: [
+      "travel",
+      "getTravelUrl",
+      field?.key,
+      field?.staffNumber,
+      field?.staffOutNumber,
+      field?.travelType,
+    ],
     queryFn: () => fetchTravelUrlOptions(field!),
     enabled: open && field != null,
     staleTime: 30_000,
   });
 
-  const visibleRows = useMemo(
-    () => filterTravelUrlRows(query.data ?? [], keyword),
-    [keyword, query.data],
-  );
+  const allRows = query.data ?? [];
+  const visibleRows = useMemo(() => filterTravelUrlRows(allRows, keyword), [allRows, keyword]);
+  const trimmedKeyword = keyword.trim();
 
   if (!open || !field) return null;
+
+  const emptyMessage =
+    allRows.length === 0 ? "暂无数据" : trimmedKeyword ? "无匹配结果" : "暂无数据";
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/40">
@@ -67,7 +67,9 @@ export function FlightOutNumberPickerSheet({
       <div className="flex max-h-[70vh] flex-col rounded-t-2xl bg-white pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div className="border-b border-[#eeeeee] px-4 py-3">
           <div className="mb-3 flex items-center justify-between">
-            <p className="text-[16px] font-semibold text-[#333333]">选择{field.label}</p>
+            <p className="text-[16px] font-semibold text-[#333333]">
+              选择{formatTravelOutNumberLabel(field)}
+            </p>
             <button type="button" className="text-[22px] text-[#999999]" onClick={onClose}>
               ×
             </button>
@@ -77,6 +79,7 @@ export function FlightOutNumberPickerSheet({
             value={keyword}
             onChange={(event) => setKeyword(event.target.value)}
             placeholder="请输入关键字"
+            autoFocus
             className="w-full rounded-lg border border-[#eeeeee] px-3 py-2 text-[14px] outline-none"
           />
         </div>
@@ -89,7 +92,7 @@ export function FlightOutNumberPickerSheet({
               {formatApiError(query.error)}
             </li>
           ) : visibleRows.length === 0 ? (
-            <li className="px-4 py-6 text-center text-[14px] text-[#808080]">暂无数据</li>
+            <li className="px-4 py-6 text-center text-[14px] text-[#808080]">{emptyMessage}</li>
           ) : (
             visibleRows.map((row, index) => {
               const value = resolveOutNumberValueFromTravelUrlRow(row);

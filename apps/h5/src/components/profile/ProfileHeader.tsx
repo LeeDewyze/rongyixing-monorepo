@@ -53,16 +53,9 @@ interface ProfileHeaderProps {
   /** TMC enterprise code from `GetTmc`, not member `OrganizationCode`. */
   orgCode?: string;
   balance?: number;
-  messageCount?: number;
 }
 
-export function ProfileHeader({
-  profile,
-  displayName,
-  orgCode,
-  balance,
-  messageCount,
-}: ProfileHeaderProps) {
+export function ProfileHeader({ profile, displayName, orgCode, balance }: ProfileHeaderProps) {
   return (
     <header className="px-3 pb-14 pt-10" style={{ background: PROFILE_PAGE_GRADIENT }}>
       <div className="flex items-center gap-3">
@@ -78,21 +71,11 @@ export function ProfileHeader({
             <BuildingIcon />
             <span>组织编码：{orgCode?.trim() || "—"}</span>
           </p>
-          {(balance != null && balance > 0) || (messageCount != null && messageCount > 0) ? (
+          {balance != null && balance > 0 ? (
             <div className="mt-2 flex items-center gap-3">
-              {balance != null && balance > 0 ? (
-                <span className="text-xs text-[#666666]">
-                  积分：<span className="font-medium text-[#5099fe]">{balance}</span>
-                </span>
-              ) : null}
-              {messageCount != null && messageCount > 0 ? (
-                <span className="text-xs text-[#666666]">
-                  消息：
-                  <span className="inline-flex min-w-[18px] items-center justify-center rounded-full bg-[#ff4d4f] px-1.5 py-0.5 text-[11px] font-medium text-white">
-                    {messageCount}
-                  </span>
-                </span>
-              ) : null}
+              <span className="text-xs text-[#666666]">
+                积分：<span className="font-medium text-[#5099fe]">{balance}</span>
+              </span>
             </div>
           ) : null}
         </div>

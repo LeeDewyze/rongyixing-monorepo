@@ -17,6 +17,7 @@ import { buildApprovalTaskOpenUrl } from "@/lib/approval-task-url";
 import { buildTravelFormDetailOpenUrl, buildTravelFormEditUrl } from "@/lib/travel-form-list";
 import { formatApiError } from "@/lib/formatApiError";
 import { getTicket } from "@/lib/session";
+import { WEB_PAGE_BODY, WEB_PAGE_ROOT, WEB_PAGE_STICKY_HEADER } from "@/lib/web-page-layout";
 import {
   deleteTravelApply,
   isTravelFormDeletable,
@@ -286,11 +287,11 @@ export function TravelApprovalPage() {
   }
 
   return (
-    <div
-      className="flex min-h-0 flex-1 flex-col overflow-hidden"
-      style={{ background: "var(--brand-form-header-gradient)" }}
-    >
-      <div className="shrink-0 pb-3 pt-[env(safe-area-inset-top)]">
+    <div className={WEB_PAGE_ROOT} style={{ background: "var(--brand-form-header-gradient)" }}>
+      <div
+        className={`${WEB_PAGE_STICKY_HEADER} pb-3 pt-[env(safe-area-inset-top)]`}
+        style={{ background: "var(--brand-form-header-gradient)" }}
+      >
         <div className="flex h-11 items-center px-1">
           <button
             type="button"
@@ -340,7 +341,7 @@ export function TravelApprovalPage() {
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain [-webkit-overflow-scrolling:touch]">
+      <div className={WEB_PAGE_BODY}>
         <ApprovalTaskList
           tasks={tasksForList}
           isLoading={isLoading}

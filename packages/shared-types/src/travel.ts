@@ -10,6 +10,16 @@ export interface GetTravelUrlParams {
   outNumberName?: string;
 }
 
+/** DingTalk itinerary segment in GetTravelUrl rows (legacy TravelUrlInfo). */
+export interface DingTalkTravelRow {
+  StartTime?: string;
+  EndTime?: string;
+  Departure?: string;
+  Arrival?: string;
+  Vehicle?: string;
+  SingleOrReturn?: string;
+}
+
 /** Row in GetTravelUrl response (TravelResponseDto / TravelUrlInfo subset). */
 export interface TravelUrlRow {
   TravelFormId?: string;
@@ -20,7 +30,9 @@ export interface TravelUrlRow {
   Status?: string;
   StatusType?: string;
   OrganizationName?: string;
-  Trips?: string[];
+  Trips?: string[] | string;
+  Partner?: string;
+  DingTalkTravels?: DingTalkTravelRow[];
   Passengers?: unknown[];
 }
 

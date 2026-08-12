@@ -17,9 +17,12 @@ vi.mock("@/lib/api", () => ({
 
 import {
   buildPassengerOutNumberFields,
+  buildTravelUrlRowSearchText,
   fetchTravelUrlOptions,
   filterTravelUrlRows,
   resolveOutNumberValueFromTravelUrlRow,
+  resolveTmcBookingConfig,
+  unwrapTravelUrlRows,
 } from "./flight-book-outnumber";
 
 describe("buildPassengerOutNumberFields", () => {
@@ -28,7 +31,7 @@ describe("buildPassengerOutNumberFields", () => {
     apiMocks.getTravelUrl.mockReset();
   });
 
-  it("enables canSelect for all out-number fields when GetTravelUrl is on", () => {
+  it("enables canSelect only for TravelNumber when GetTravelUrl is on", () => {
     const fields = buildPassengerOutNumberFields({
       passenger: {
         id: "p1",
@@ -42,10 +45,12 @@ describe("buildPassengerOutNumberFields", () => {
           OutNumberNameArray: ["TravelNumber", "StaffNumber"],
         },
       },
+      travelMode: "business",
     });
 
     expect(fields).toHaveLength(2);
-    expect(fields.every((field) => field.canSelect)).toBe(true);
+    expect(fields.find((field) => field.key === "TravelNumber")?.canSelect).toBe(true);
+    expect(fields.find((field) => field.key === "StaffNumber")?.canSelect).toBe(false);
   });
 
   it("disables canSelect when travel number is prefilled from TravelFrom", () => {
@@ -89,7 +94,41 @@ describe("buildPassengerOutNumberFields", () => {
 
     expect(fields).toHaveLength(1);
     expect(fields[0]?.key).toBe("StaffNumber");
-    expect(fields.some((field) => field.isTravelNumber || field.key === "TravelNumber")).toBe(false);
+    expect(fields.some((field) => field.isTravelNumber || field.key === "TravelNumber")).toBe(
+      false,
+    );
+  });
+
+  it("reads GetTravelUrl from Tmc.Variables JSON", () => {
+    const fields = buildPassengerOutNumberFields({
+      passenger: {
+        id: "p1",
+        passenger: { Id: "p1", Name: "张三", AccountId: "acc-1" },
+        credential: { Id: "c1", Name: "张三", Number: "110101199001011234", CredentialsType: 1 },
+      },
+      staff: { Number: "10001", OutNumber: "S001" },
+      init: {
+        Tmc: {
+          Variables: JSON.stringify({ GetTravelUrl: "https://example.com/travel" }),
+        },
+      },
+      travelMode: "business",
+      travelType: "Train",
+    });
+
+    expect(fields).toHaveLength(1);
+    expect(fields[0]?.key).toBe("TravelNumber");
+    expect(fields[0]?.canSelect).toBe(true);
+    expect(fields[0]?.travelType).toBe("Train");
+  });
+
+  it("merge Variables with top-level Tmc fields", () => {
+    const config = resolveTmcBookingConfig({
+      Variables: JSON.stringify({ OutNumberNameArray: ["TravelNumber"] }),
+      GetTravelUrl: true,
+    });
+    expect(config.GetTravelUrl).toBe(true);
+    expect(config.OutNumberNameArray).toEqual(["TravelNumber"]);
   });
 
   it("does not call GetTravelUrl when the field cannot select a business travel form", async () => {
@@ -122,11 +161,42 @@ describe("filterTravelUrlRows", () => {
     },
   ];
 
-  it("filters by travel number, subject, and trips", () => {
+  it("filters by travel number, subject, trips, and dingtalk routes", () => {
     expect(filterTravelUrlRows(rows, "上海")).toHaveLength(1);
     expect(filterTravelUrlRows(rows, "TR20260615001")).toHaveLength(1);
     expect(filterTravelUrlRows(rows, "北京")).toHaveLength(1);
     expect(filterTravelUrlRows(rows, "")).toHaveLength(2);
+    expect(
+      filterTravelUrlRows(
+        [
+          {
+            TravelNumber: "TR-XM",
+            DingTalkTravels: [{ Departure: "厦门北", Arrival: "上海虹桥" }],
+          },
+        ],
+        "厦门",
+      ),
+    ).toHaveLength(1);
+  });
+});
+
+describe("unwrapTravelUrlRows", () => {
+  it("unwraps nested and direct response shapes", () => {
+    const row = { TravelNumber: "TR001" };
+    expect(unwrapTravelUrlRows({ value: { Data: [row] } })).toEqual([row]);
+    expect(unwrapTravelUrlRows({ Data: [row] })).toEqual([row]);
+    expect(unwrapTravelUrlRows([row])).toEqual([row]);
+  });
+});
+
+describe("buildTravelUrlRowSearchText", () => {
+  it("includes dingtalk departure and arrival", () => {
+    const text = buildTravelUrlRowSearchText({
+      TravelNumber: "TR001",
+      DingTalkTravels: [{ Departure: "厦门北", Arrival: "上海虹桥" }],
+    });
+    expect(text).toContain("厦门北");
+    expect(text).toContain("上海虹桥");
   });
 });
 
