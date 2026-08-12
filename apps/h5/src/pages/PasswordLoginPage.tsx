@@ -1,4 +1,13 @@
-import { useEffect, useState, type FocusEvent, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type AnimationEvent,
+  type CSSProperties,
+  type FocusEvent,
+  type ReactNode,
+} from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import passwordBg from "@/assets/login/password-bg.jpg";
@@ -148,6 +157,8 @@ export function PasswordLoginPage() {
   const dingTalkLogin = useDingTalkLogin();
   const dingTalkAvailability = useDingTalkAvailability("login");
   const initialForm = getInitialFormState();
+  const accountInputRef = useRef<HTMLInputElement>(null);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
   const [loginMode, setLoginMode] = useState<LoginMode>("password");
   const [account, setAccount] = useState(initialForm.account);
   const [password, setPassword] = useState(initialForm.password);
@@ -160,6 +171,27 @@ export function PasswordLoginPage() {
   const [agreed, setAgreed] = useState(true);
   const [toast, setToast] = useState<ToastState>(null);
   const [legalDoc, setLegalDoc] = useState<LegalDoc>(null);
+
+  const syncPasswordAutofillFields = useCallback(() => {
+    if (loginMode !== "password") return;
+
+    const nextAccount = accountInputRef.current?.value.trim() ?? "";
+    const nextPassword = passwordInputRef.current?.value ?? "";
+    if (nextAccount) {
+      setAccount((current) => (current === nextAccount ? current : nextAccount));
+    }
+    if (nextPassword) {
+      setPassword((current) => (current === nextPassword ? current : nextPassword));
+    }
+  }, [loginMode]);
+
+  const handleAuthInputAnimationStart = useCallback(
+    (event: AnimationEvent<HTMLInputElement>) => {
+      if (event.animationName !== "ryx-login-autofill-start") return;
+      window.requestAnimationFrame(syncPasswordAutofillFields);
+    },
+    [syncPasswordAutofillFields],
+  );
 
   function showToast(message: string, tone: "success" | "error" = "error") {
     setToast({ message, tone });
@@ -191,6 +223,13 @@ export function PasswordLoginPage() {
     const timer = window.setTimeout(() => setToast(null), TOAST_DURATION_MS);
     return () => window.clearTimeout(timer);
   }, [toast]);
+
+  useEffect(() => {
+    const timers = [0, 100, 300, 700, 1500].map((delay) =>
+      window.setTimeout(syncPasswordAutofillFields, delay),
+    );
+    return () => timers.forEach((timer) => window.clearTimeout(timer));
+  }, [syncPasswordAutofillFields]);
 
   const legalOptions = contactUrlOptionsFromApiConfig();
   const legalTitle =
@@ -408,7 +447,9 @@ export function PasswordLoginPage() {
             <LoginFieldRow>
               <div className="flex items-center" style={{ gap: designMobileVw(12) }}>
                 <input
+                  ref={accountInputRef}
                   type="text"
+                  name={loginMode === "password" ? "username" : "mobile"}
                   autoComplete={loginMode === "password" ? "username" : "tel"}
                   inputMode={loginMode === "password" ? "text" : "tel"}
                   placeholder={loginMode === "password" ? accountInput.placeholder : "请输入手机号"}
@@ -418,9 +459,19 @@ export function PasswordLoginPage() {
                       ? setAccount(e.target.value)
                       : setMobile(e.target.value)
                   }
-                  onFocus={scrollFocusedInputIntoView}
-                  className="min-w-0 flex-1 border-none bg-transparent p-0 text-white outline-none"
-                  style={{ fontSize: designMobileVw(accountInput.fontSize), caretColor: "#33a1f9" }}
+                  onFocus={(event) => {
+                    scrollFocusedInputIntoView(event);
+                    syncPasswordAutofillFields();
+                  }}
+                  onInput={syncPasswordAutofillFields}
+                  onAnimationStart={handleAuthInputAnimationStart}
+                  className="login-auth-input min-w-0 flex-1 border-none bg-transparent p-0 text-white outline-none"
+                  style={{
+                    fontSize: designMobileVw(accountInput.fontSize),
+                    lineHeight: "normal",
+                    caretColor: "#33a1f9",
+                    "--ryx-login-input-font-size": designMobileVw(accountInput.fontSize),
+                  } as CSSProperties}
                 />
                 {(loginMode === "password" ? account : mobile) ? (
                   <InputClearButton
@@ -434,7 +485,9 @@ export function PasswordLoginPage() {
             <LoginFieldRow>
               <div className="flex min-w-0 items-center">
                 <input
+                  ref={passwordInputRef}
                   type={loginMode === "password" && !showPassword ? "password" : "text"}
+                  name={loginMode === "password" ? "password" : "sms-code"}
                   autoComplete={loginMode === "password" ? "current-password" : "one-time-code"}
                   inputMode={loginMode === "password" ? "text" : "numeric"}
                   placeholder={
@@ -446,12 +499,19 @@ export function PasswordLoginPage() {
                       ? setPassword(e.target.value)
                       : setSmsCode(e.target.value)
                   }
-                  onFocus={scrollFocusedInputIntoView}
-                  className="min-w-0 flex-1 border-none bg-transparent p-0 text-white outline-none"
+                  onFocus={(event) => {
+                    scrollFocusedInputIntoView(event);
+                    syncPasswordAutofillFields();
+                  }}
+                  onInput={syncPasswordAutofillFields}
+                  onAnimationStart={handleAuthInputAnimationStart}
+                  className="login-auth-input min-w-0 flex-1 border-none bg-transparent p-0 text-white outline-none"
                   style={{
                     fontSize: designMobileVw(passwordInput.fontSize),
+                    lineHeight: "normal",
                     caretColor: "#33a1f9",
-                  }}
+                    "--ryx-login-input-font-size": designMobileVw(passwordInput.fontSize),
+                  } as CSSProperties}
                 />
                 <div
                   className="relative z-10 flex shrink-0 items-center"
@@ -495,6 +555,71 @@ export function PasswordLoginPage() {
           </div>
 
           <style>{`
+            .login-auth-input {
+              -webkit-appearance: none;
+              appearance: none;
+              background-color: transparent;
+              -webkit-text-fill-color: #ffffff;
+              color: #ffffff;
+              caret-color: #33a1f9;
+              font-family: inherit;
+              font-size: var(--ryx-login-input-font-size);
+              font-weight: 400;
+              line-height: normal;
+              letter-spacing: 0;
+            }
+
+            .login-auth-input:-webkit-autofill,
+            .login-auth-input:-webkit-autofill:hover,
+            .login-auth-input:-webkit-autofill:focus,
+            .login-auth-input:-webkit-autofill:active {
+              animation-name: ryx-login-autofill-start;
+              animation-duration: 0.01s;
+              -webkit-text-fill-color: #ffffff !important;
+              -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+              box-shadow: 0 0 0 1000px transparent inset !important;
+              background-color: transparent !important;
+              caret-color: #33a1f9 !important;
+              font-family: inherit !important;
+              font-size: var(--ryx-login-input-font-size) !important;
+              font-weight: 400 !important;
+              line-height: normal !important;
+              letter-spacing: 0 !important;
+              transition: background-color 99999s ease-in-out 0s;
+            }
+
+            .login-auth-input:-webkit-autofill::first-line {
+              font-family: ${LOGIN_FONT} !important;
+              font-size: var(--ryx-login-input-font-size) !important;
+              font-weight: 400 !important;
+              line-height: normal !important;
+              letter-spacing: 0 !important;
+            }
+
+            .login-auth-input:-internal-autofill-previewed,
+            .login-auth-input:-internal-autofill-selected {
+              -webkit-text-fill-color: #ffffff !important;
+              color: #ffffff !important;
+              font-family: ${LOGIN_FONT} !important;
+              font-size: var(--ryx-login-input-font-size) !important;
+              font-weight: 400 !important;
+              line-height: normal !important;
+              letter-spacing: 0 !important;
+              background-color: transparent !important;
+              -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+              box-shadow: 0 0 0 1000px transparent inset !important;
+              transform: none !important;
+            }
+
+            @keyframes ryx-login-autofill-start {
+              from {
+                opacity: 1;
+              }
+              to {
+                opacity: 1;
+              }
+            }
+
             input::placeholder {
               color: ${accountInput.placeholderColor};
               font-size: ${designMobileVw(accountInput.fontSize)};

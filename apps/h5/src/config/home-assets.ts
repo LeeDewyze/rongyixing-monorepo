@@ -10,7 +10,6 @@ import carActiveIcon from "@/assets/home/car-active.png";
 import flightActiveIcon from "@/assets/home/flight-active.png";
 import flightDefaultIcon from "@/assets/home/flight-default.png";
 import flightSwapCitiesIcon from "@/assets/home/flight-swap-cities.png";
-import heroBanner from "@/assets/home/hero-banner.png";
 import hotelActiveIcon from "@/assets/home/hotel-active.png";
 import hotelDefaultIcon from "@/assets/home/hotel-default.png";
 import myLocationIcon from "@/assets/home/my-location.svg";
@@ -29,8 +28,6 @@ export type HomeTravelMode = "business" | "personal";
 export type HomeProductId = "flight" | "train" | "hotel";
 
 export const HOME_ASSETS = {
-  /** Figma 10:216 — home hero banner (375×208) */
-  heroBanner,
   travelMode: {
     /** Figma 10:218 */
     track: travelModeTrack,

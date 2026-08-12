@@ -1,4 +1,12 @@
-import { useEffect, useState, type ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type AnimationEvent,
+  type ReactNode,
+  type RefObject,
+} from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { LegalDocumentSheet } from "@/components/contact/LegalDocumentSheet";
@@ -39,6 +47,11 @@ type InputFieldProps = {
   onChange: (value: string) => void;
   onClear?: () => void;
   icon?: ReactNode;
+  inputRef?: RefObject<HTMLInputElement | null>;
+  name?: string;
+  onInput?: () => void;
+  onFocus?: () => void;
+  onAnimationStart?: (event: AnimationEvent<HTMLInputElement>) => void;
 };
 
 function FeaturePill({ children }: { children: string }) {
@@ -188,6 +201,11 @@ function InputField({
   onChange,
   onClear,
   icon,
+  inputRef,
+  name,
+  onInput,
+  onFocus,
+  onAnimationStart,
 }: InputFieldProps) {
   return (
     <label className="block">
@@ -195,12 +213,17 @@ function InputField({
       <div className="flex h-14 items-center gap-3 rounded-xl border border-[#D8E2F4] bg-[#F8FAFF] px-4 text-[#98A2B3] transition-shadow duration-200 focus-within:border-brand-primary/30 focus-within:bg-white focus-within:shadow-[0_0_0_4px_rgba(39,104,250,0.08)]">
         {icon ?? (label === "账号" ? <IconUser /> : <IconLock />)}
         <input
+          ref={inputRef}
           type={type}
+          name={name}
           autoComplete={autoComplete}
           value={value}
           placeholder={placeholder}
-          className="min-w-0 flex-1 border-0 bg-transparent p-0 text-[16px] text-brand-title outline-none placeholder:text-[#98A2B3]"
+          className="login-auth-input min-w-0 flex-1 border-0 bg-transparent p-0 text-[16px] text-brand-title outline-none placeholder:text-[#98A2B3]"
           onChange={(e) => onChange(e.target.value)}
+          onInput={onInput}
+          onFocus={onFocus}
+          onAnimationStart={onAnimationStart}
         />
         <div className="flex items-center gap-2">{rightAction}</div>
         {value && onClear ? (
@@ -301,6 +324,8 @@ export function PasswordLoginPage() {
   const dingTalkLogin = useDingTalkLogin();
   const dingTalkAvailability = useDingTalkAvailability("login");
   const initialForm = getInitialFormState();
+  const accountInputRef = useRef<HTMLInputElement>(null);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
   const [loginMode, setLoginMode] = useState<LoginMode>("password");
   const [account, setAccount] = useState(initialForm.account);
   const [password, setPassword] = useState(initialForm.password);
@@ -313,6 +338,27 @@ export function PasswordLoginPage() {
   const [agreed, setAgreed] = useState(true);
   const [formHint, setFormHint] = useState<string | null>(null);
   const [legalDoc, setLegalDoc] = useState<LegalDoc>(null);
+
+  const syncPasswordAutofillFields = useCallback(() => {
+    if (loginMode !== "password") return;
+
+    const nextAccount = accountInputRef.current?.value.trim() ?? "";
+    const nextPassword = passwordInputRef.current?.value ?? "";
+    if (nextAccount) {
+      setAccount((current) => (current === nextAccount ? current : nextAccount));
+    }
+    if (nextPassword) {
+      setPassword((current) => (current === nextPassword ? current : nextPassword));
+    }
+  }, [loginMode]);
+
+  const handleAuthInputAnimationStart = useCallback(
+    (event: AnimationEvent<HTMLInputElement>) => {
+      if (event.animationName !== "ryx-login-autofill-start") return;
+      window.requestAnimationFrame(syncPasswordAutofillFields);
+    },
+    [syncPasswordAutofillFields],
+  );
 
   useEffect(() => {
     document.title = "融易行 - 登录";
@@ -338,6 +384,13 @@ export function PasswordLoginPage() {
     const timer = window.setTimeout(() => setCountdown((value) => Math.max(0, value - 1)), 1000);
     return () => window.clearTimeout(timer);
   }, [countdown]);
+
+  useEffect(() => {
+    const timers = [0, 100, 300, 700, 1500].map((delay) =>
+      window.setTimeout(syncPasswordAutofillFields, delay),
+    );
+    return () => timers.forEach((timer) => window.clearTimeout(timer));
+  }, [syncPasswordAutofillFields]);
 
   const legalOptions = contactUrlOptionsFromApiConfig();
   const legalTitle =
@@ -552,7 +605,12 @@ export function PasswordLoginPage() {
                       value={account}
                       placeholder="请输入账号"
                       autoComplete="username"
+                      inputRef={accountInputRef}
+                      name="username"
                       onChange={setAccount}
+                      onInput={syncPasswordAutofillFields}
+                      onFocus={syncPasswordAutofillFields}
+                      onAnimationStart={handleAuthInputAnimationStart}
                       onClear={() => setAccount("")}
                     />
                     <label className="block">
@@ -562,12 +620,17 @@ export function PasswordLoginPage() {
                       <div className="flex h-14 items-center gap-3 rounded-xl border border-[#D8E2F4] bg-[#F8FAFF] px-4 text-[#98A2B3] transition-shadow duration-200 focus-within:border-brand-primary/30 focus-within:bg-white focus-within:shadow-[0_0_0_4px_rgba(39,104,250,0.08)]">
                         <IconLock />
                         <input
+                          ref={passwordInputRef}
                           type={showPassword ? "text" : "password"}
+                          name="password"
                           autoComplete="current-password"
                           value={password}
                           placeholder="请输入密码"
-                          className="min-w-0 flex-1 border-0 bg-transparent p-0 text-[16px] text-brand-title outline-none placeholder:text-[#98A2B3]"
+                          className="login-auth-input min-w-0 flex-1 border-0 bg-transparent p-0 text-[16px] text-brand-title outline-none placeholder:text-[#98A2B3]"
                           onChange={(e) => setPassword(e.target.value)}
+                          onInput={syncPasswordAutofillFields}
+                          onFocus={syncPasswordAutofillFields}
+                          onAnimationStart={handleAuthInputAnimationStart}
                         />
                         <button
                           type="button"
@@ -597,6 +660,7 @@ export function PasswordLoginPage() {
                       value={mobile}
                       placeholder="请输入手机号"
                       autoComplete="tel"
+                      name="mobile"
                       icon={<IconPhone />}
                       onChange={setMobile}
                       onClear={() => setMobile("")}
@@ -606,6 +670,7 @@ export function PasswordLoginPage() {
                       value={smsCode}
                       placeholder="请输入验证码"
                       autoComplete="one-time-code"
+                      name="sms-code"
                       icon={<IconCode />}
                       onChange={setSmsCode}
                       onClear={() => setSmsCode("")}
@@ -629,6 +694,73 @@ export function PasswordLoginPage() {
                   </>
                 )}
               </div>
+
+              <style>{`
+                .login-auth-input {
+                  -webkit-appearance: none;
+                  appearance: none;
+                  background-color: transparent;
+                  -webkit-text-fill-color: var(--brand-title);
+                  color: var(--brand-title);
+                  caret-color: var(--brand-primary);
+                  font-family: inherit;
+                  font-size: 16px;
+                  font-weight: 400;
+                  line-height: normal;
+                  letter-spacing: 0;
+                }
+
+                .login-auth-input:-webkit-autofill,
+                .login-auth-input:-webkit-autofill:hover,
+                .login-auth-input:-webkit-autofill:focus,
+                .login-auth-input:-webkit-autofill:active {
+                  animation-name: ryx-login-autofill-start;
+                  animation-duration: 0.01s;
+                  -webkit-text-fill-color: var(--brand-title) !important;
+                  -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+                  box-shadow: 0 0 0 1000px transparent inset !important;
+                  background-color: transparent !important;
+                  caret-color: var(--brand-primary) !important;
+                  font-family: inherit !important;
+                  font-size: 16px !important;
+                  font-weight: 400 !important;
+                  line-height: normal !important;
+                  letter-spacing: 0 !important;
+                  transition: background-color 99999s ease-in-out 0s;
+                }
+
+                .login-auth-input:-webkit-autofill::first-line {
+                  font-family: inherit !important;
+                  font-size: 16px !important;
+                  font-weight: 400 !important;
+                  line-height: normal !important;
+                  letter-spacing: 0 !important;
+                }
+
+                .login-auth-input:-internal-autofill-previewed,
+                .login-auth-input:-internal-autofill-selected {
+                  -webkit-text-fill-color: var(--brand-title) !important;
+                  color: var(--brand-title) !important;
+                  font-family: inherit !important;
+                  font-size: 16px !important;
+                  font-weight: 400 !important;
+                  line-height: normal !important;
+                  letter-spacing: 0 !important;
+                  background-color: transparent !important;
+                  -webkit-box-shadow: 0 0 0 1000px transparent inset !important;
+                  box-shadow: 0 0 0 1000px transparent inset !important;
+                  transform: none !important;
+                }
+
+                @keyframes ryx-login-autofill-start {
+                  from {
+                    opacity: 1;
+                  }
+                  to {
+                    opacity: 1;
+                  }
+                }
+              `}</style>
 
               {loginMode === "password" ? (
                 <div className="mt-4 flex items-center justify-between gap-4 text-[15px] text-[#667085]">
