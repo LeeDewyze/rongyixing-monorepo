@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { shouldBootstrapExternalTicket, shouldUsePageTicketDirectly } from "./external-ticket";
+import {
+  resolveTicketEntryTargetPath,
+  shouldBootstrapExternalTicket,
+  shouldUsePageTicketDirectly,
+} from "./external-ticket";
 
 describe("shouldBootstrapExternalTicket", () => {
   it("allows RYB ticket exchange only in OneMessage user agent", () => {
@@ -52,5 +56,18 @@ describe("shouldBootstrapExternalTicket", () => {
         "OneMessage",
       ),
     ).toBe(true);
+  });
+
+  it("always sends ticket entries to home regardless of caller URL", () => {
+    const urls = [
+      "https://app.rongtrip.cn/www/index.html?wechatopenid=&ticketname=ticket&root=www&ticket=t",
+      "https://app.rongtrip.cn/www/index.html?ticket=t&path=tabs_ryx/tab-tmc-home_ryx",
+      "https://app.rongtrip.cn/www/flight/list?ticket=t&returnTo=%2Forders",
+      "https://app.rongtrip.cn/www/index.html?ticket=t&path=account-dingtalk",
+    ];
+
+    for (const value of urls) {
+      expect(resolveTicketEntryTargetPath(new URL(value))).toBe("/home");
+    }
   });
 });

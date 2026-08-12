@@ -1,5 +1,5 @@
 import { getApi } from "@/lib/api";
-import { resolveInternalReturnTo, stripAppBasePath, withAppBasePath } from "@/lib/base-path";
+import { withAppBasePath } from "@/lib/base-path";
 import { getApiMode } from "@/lib/env";
 import { startSessionGuard } from "@/lib/session-guard";
 import {
@@ -13,6 +13,8 @@ import {
 const TICKET_PARAM = "ticket";
 const TICKET_NAME_PARAM = "ticketName";
 const LEGACY_TICKET_NAME_PARAM = "ticketname";
+const TICKET_ENTRY_HOME_PATH = "/home";
+const TICKET_ENTRY_LOGIN_PATH = "/login/password";
 
 function currentUserAgent(): string {
   return typeof navigator === "undefined" ? "" : navigator.userAgent;
@@ -61,59 +63,28 @@ function readTicketNameParam(url: URL): string {
   );
 }
 
-function cleanExternalTicketParams(url: URL): URL {
-  const next = new URL(url.href);
-  next.searchParams.delete(TICKET_PARAM);
-  next.searchParams.delete(TICKET_NAME_PARAM);
-  next.searchParams.delete(LEGACY_TICKET_NAME_PARAM);
-  return next;
-}
-
-function buildInternalPath(url: URL): string {
-  const currentPath = stripAppBasePath(`${url.pathname}${url.search}${url.hash}`);
-  if (currentPath === "/index.html") return "/";
-  if (currentPath.startsWith("/index.html?")) return `/?${currentPath.slice("/index.html?".length)}`;
-  if (currentPath.startsWith("/index.html#")) return `/#${currentPath.slice("/index.html#".length)}`;
-  return currentPath;
-}
-
-function resolveTicketTargetPath(url: URL, fallbackPath: string): string {
-  const returnTo = url.searchParams.get("returnTo");
-  if (returnTo) {
-    return resolveInternalReturnTo(returnTo, fallbackPath);
-  }
-
-  const cleanUrl = cleanExternalTicketParams(url);
-  const currentPath = buildInternalPath(cleanUrl);
-  if (currentPath === "/" || currentPath.startsWith("/login")) {
-    return fallbackPath;
-  }
-  return resolveInternalReturnTo(currentPath, fallbackPath);
+export function resolveTicketEntryTargetPath(_url: URL): string {
+  return TICKET_ENTRY_HOME_PATH;
 }
 
 function replaceLocation(path: string): void {
   window.history.replaceState(window.history.state, "", withAppBasePath(path));
 }
 
-function replaceToLogin(returnTo: string): void {
-  const path = `/login/password?returnTo=${encodeURIComponent(returnTo)}`;
-  replaceLocation(path);
+function replaceTicketEntryLogin(): void {
+  replaceLocation(TICKET_ENTRY_LOGIN_PATH);
 }
 
 async function hydrateSessionFromTicket(ticket: string): Promise<void> {
   if (getApiMode() === "mock") return;
   const api = getApi();
-  try {
-    const identity = await api.identity.get(ticket);
-    saveLoginResult({
-      Ticket: identity.Ticket || ticket,
-      Id: identity.Id,
-      Name: identity.Name,
-      Token: identity.Token,
-    });
-  } catch (error) {
-    console.warn("[ryx] page ticket: failed to hydrate identity", error);
-  }
+  const identity = await api.identity.get(ticket);
+  saveLoginResult({
+    Ticket: identity.Ticket || ticket,
+    Id: identity.Id,
+    Name: identity.Name,
+    Token: identity.Token,
+  });
 
   try {
     const ws = await api.identity.getWebSocketUrl();
@@ -126,8 +97,8 @@ async function hydrateSessionFromTicket(ticket: string): Promise<void> {
   startSessionGuard();
 }
 
-async function usePageTicketDirectly(url: URL, ticket: string, fallbackPath: string): Promise<void> {
-  const targetPath = resolveTicketTargetPath(url, fallbackPath);
+async function usePageTicketDirectly(url: URL, ticket: string): Promise<void> {
+  const targetPath = resolveTicketEntryTargetPath(url);
   const ticketName = readTicketNameParam(url);
 
   clearSession();
@@ -136,20 +107,26 @@ async function usePageTicketDirectly(url: URL, ticket: string, fallbackPath: str
     setTicketName(ticketName);
   }
   replaceLocation(targetPath);
-  await hydrateSessionFromTicket(ticket);
+  try {
+    await hydrateSessionFromTicket(ticket);
+  } catch (error) {
+    console.warn("[ryx] page ticket: identity check failed", error);
+    clearSession();
+    replaceTicketEntryLogin();
+  }
 }
 
 /** Exchange SSO-style `?ticket=...` for the normal RongYiXing local session. */
-export async function bootstrapExternalTicket(fallbackPath = "/home"): Promise<void> {
+export async function bootstrapExternalTicket(): Promise<void> {
   const url = new URL(window.location.href);
   const ticket = normalizeExternalTicket(url.searchParams.get(TICKET_PARAM));
   if (!ticket) return;
   if (!shouldBootstrapExternalTicket(url)) {
-    await usePageTicketDirectly(url, ticket, fallbackPath);
+    await usePageTicketDirectly(url, ticket);
     return;
   }
 
-  const targetPath = resolveTicketTargetPath(url, fallbackPath);
+  const targetPath = resolveTicketEntryTargetPath(url);
 
   clearSession();
   replaceLocation(targetPath);
@@ -185,6 +162,6 @@ export async function bootstrapExternalTicket(fallbackPath = "/home"): Promise<v
   } catch (error) {
     console.warn("[ryx] external ticket: identity check failed", error);
     clearSession();
-    replaceToLogin(targetPath);
+    replaceTicketEntryLogin();
   }
 }

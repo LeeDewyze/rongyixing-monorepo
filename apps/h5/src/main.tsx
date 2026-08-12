@@ -18,7 +18,7 @@ import { setupVConsoleFromUrl } from "@/lib/vconsole";
 async function main() {
   await setupVConsoleFromUrl();
   await bootstrapApi();
-  await bootstrapExternalTicket("/home");
+  await bootstrapExternalTicket();
   await preloadBusinessBookingPermission(queryClient, { silentUnauthorized: true });
 
   createRoot(document.getElementById("root")!).render(
