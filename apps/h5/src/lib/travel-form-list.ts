@@ -88,11 +88,50 @@ function resolveTravelFormNumber(form: TravelFormRow): string {
 
 function decodeHtmlAttribute(value: string): string {
   return value
+    .replace(/&#x([0-9a-fA-F]+);/gi, (_, hex: string) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, num: string) => String.fromCodePoint(Number(num)))
     .replace(/&quot;/gi, '"')
     .replace(/&#39;|&#x27;/gi, "'")
     .replace(/&lt;/gi, "<")
     .replace(/&gt;/gi, ">")
     .replace(/&amp;/gi, "&");
+}
+
+function resolveTravelFormStatusName(form: TravelFormRow): string | undefined {
+  const detailStatus = readFormDetail(form, "状态");
+  if (detailStatus) return detailStatus;
+
+  const status = form.Status;
+  if (typeof status === "number") {
+    return TRAVEL_FORM_STATUS[status];
+  }
+  return status != null ? String(status) : undefined;
+}
+
+/** Form/List Status stays at 2/4 after workflow completes — read rendered 状态 from Form/Detail. */
+export function parseTravelFormStatusFromDetailHtml(html: string): string | undefined {
+  const basicInfoMatch = html.match(
+    /<span class="formDetail-title">基础信息<\/span>([\s\S]*?)(?:<span class="formDetail-title">|$)/i,
+  );
+  const scope = basicInfoMatch?.[1] ?? html;
+  const fieldRe =
+    /class="element-tip">([^<]+)<\/div>\s*<div class="element-content"[^>]*>\s*([\s\S]*?)<\/div>/gi;
+  let match: RegExpExecArray | null;
+  while ((match = fieldRe.exec(scope)) !== null) {
+    const label = decodeHtmlAttribute(match[1].trim());
+    if (label !== "状态") continue;
+    const value = decodeHtmlAttribute(match[2].replace(/<[^>]+>/g, "").trim());
+    return value || undefined;
+  }
+  return undefined;
+}
+
+export async function fetchTravelFormStatusByFormId(
+  ticket: string,
+  formId: string,
+): Promise<string | undefined> {
+  const detailHtml = await fetchTravelFormDetailHtml(ticket, formId);
+  return parseTravelFormStatusFromDetailHtml(detailHtml);
 }
 
 function parseDetailIdFromBlock(block: string): string {
@@ -283,9 +322,7 @@ export function parseTravelFormListHtml(html: string, ticket: string): ApprovalT
     const travelNumber = resolveTravelFormNumber(form);
     const reason = readFormDetail(form, "出差事由");
     const status = form.Status;
-    const statusName =
-      (typeof status === "number" ? TRAVEL_FORM_STATUS[status] : undefined) ??
-      (status != null ? String(status) : undefined);
+    const statusName = resolveTravelFormStatusName(form);
 
     tasks.push({
       id,

@@ -11,6 +11,7 @@ import {
   useWaitingTaskCount,
 } from "@/hooks/useApprovalTasks";
 import { useApprovalTaskTravelNumbers } from "@/hooks/useApprovalTaskTravelNumbers";
+import { useMyTravelApplicationStatuses } from "@/hooks/useMyTravelApplicationStatuses";
 import { useHomeBack } from "@/lib/app-back";
 import { buildApprovalTaskOpenUrl } from "@/lib/approval-task-url";
 import { buildTravelFormDetailOpenUrl, buildTravelFormEditUrl } from "@/lib/travel-form-list";
@@ -70,13 +71,27 @@ export function TravelApprovalPage() {
     return data?.pages.flat() ?? [];
   }, [doneTasks.data, myApplications.data, pendingTasks.data, tab]);
 
-  const { tasks: displayTasks, isResolvingTravelNumbers } = useApprovalTaskTravelNumbers(
+  const { tasks: myTasksWithStatus, isResolvingStatuses } = useMyTravelApplicationStatuses(
     tasks,
+    tab === "mine",
+  );
+  const { tasks: displayTasks, isResolvingTravelNumbers } = useApprovalTaskTravelNumbers(
+    tab === "mine" ? myTasksWithStatus : tasks,
     myApplications.data,
     tab !== "mine",
   );
-  const isListPending = activeQuery.isLoading || (tab !== "mine" && isResolvingTravelNumbers);
-  const tasksForList = tab !== "mine" && isResolvingTravelNumbers ? [] : displayTasks;
+  const isListPending =
+    activeQuery.isLoading ||
+    (tab === "mine" && isResolvingStatuses) ||
+    (tab !== "mine" && isResolvingTravelNumbers);
+  const tasksForList =
+    tab === "mine"
+      ? isResolvingStatuses
+        ? []
+        : displayTasks
+      : isResolvingTravelNumbers
+        ? []
+        : displayTasks;
 
   const handleOpenTask = useCallback(
     (task: ApprovalTask) => {
@@ -170,7 +185,7 @@ export function TravelApprovalPage() {
       const canSend = isTravelFormSendable(status);
       const canEdit = isTravelFormEditable(status);
       const canDelete = isTravelFormDeletable(status);
-      const canRevoke = isTravelFormRevokable(status);
+      const canRevoke = isTravelFormRevokable(status, task.statusName);
       if (!canSend && !canEdit && !canDelete && !canRevoke) return null;
       return (
         <>

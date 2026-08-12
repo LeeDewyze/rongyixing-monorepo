@@ -943,7 +943,17 @@ export async function revokeTravelApply(
 }
 
 /** Status values where revoke is allowed: pending approval (2 or 4). */
-export function isTravelFormRevokable(status?: string | number): boolean {
+export function isTravelFormRevokable(status?: string | number, statusName?: string): boolean {
+  const label = statusName?.trim();
+  if (
+    label &&
+    (label.includes("通过") ||
+      label.includes("关闭") ||
+      label.includes("驳回") ||
+      label.includes("取消"))
+  ) {
+    return false;
+  }
   const s = typeof status === "string" ? Number(status) : (status ?? 0);
   return s === 2 || s === 4;
 }

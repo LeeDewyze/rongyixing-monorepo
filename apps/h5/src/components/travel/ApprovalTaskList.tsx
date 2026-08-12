@@ -156,46 +156,54 @@ export function ApprovalTaskList({
       {tasks.map((task) => {
         const status = resolveStatusPill(task.statusName);
         return (
-        <article key={task.id} className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5">
-          <button
-            type="button"
-            className="group block w-full p-4 text-left outline-none transition-colors hover:bg-gray-50 active:bg-gray-100 focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2"
-            onClick={() => onOpenTask(task)}
+          <article
+            key={task.id}
+            className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5"
           >
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 flex-1 space-y-2">
-                <p className="truncate text-[16px] font-semibold leading-snug text-brand-title">
-                  {task.name}
-                </p>
-                {task.number ? <TaskMetaLine label="单号" value={task.number} /> : null}
+            <button
+              type="button"
+              className="group block w-full p-4 text-left outline-none transition-colors hover:bg-gray-50 active:bg-gray-100 focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2"
+              onClick={() => onOpenTask(task)}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1 space-y-2">
+                  <p className="truncate text-[16px] font-semibold leading-snug text-brand-title">
+                    {task.name}
+                  </p>
+                  {task.number ? <TaskMetaLine label="单号" value={task.number} /> : null}
+                </div>
+                <span
+                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-medium leading-none ring-1 ${status.className}`}
+                >
+                  <span className={`size-1.5 rounded-full ${status.dotClassName}`} aria-hidden />
+                  {status.label}
+                </span>
               </div>
-              <span
-                className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-medium leading-none ring-1 ${status.className}`}
-              >
-                <span className={`size-1.5 rounded-full ${status.dotClassName}`} aria-hidden />
-                {status.label}
-              </span>
-            </div>
 
-            <div className="mt-3 flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                {task.expiredTime ? (
-                  <TaskMetaLine label="过期" value={task.expiredTime} />
-                ) : (
-                  <p className="text-[12px] text-gray-400">点击查看详情</p>
-                )}
+              <div className="mt-3 flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  {task.expiredTime ? (
+                    <TaskMetaLine label="过期" value={task.expiredTime} />
+                  ) : (
+                    <p className="text-[12px] text-gray-400">点击查看详情</p>
+                  )}
+                </div>
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-gray-50 text-gray-400 transition-colors group-hover:bg-blue-50 group-hover:text-brand-primary">
+                  <TaskChevronIcon />
+                </span>
               </div>
-              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-gray-50 text-gray-400 transition-colors group-hover:bg-blue-50 group-hover:text-brand-primary">
-                <TaskChevronIcon />
-              </span>
-            </div>
-          </button>
-          {renderActions ? (
-            <div className="flex justify-end gap-2 border-t border-gray-100 bg-gray-50/60 px-4 py-2.5">
-              {renderActions(task)}
-            </div>
-          ) : null}
-        </article>
+            </button>
+            {renderActions
+              ? (() => {
+                  const actions = renderActions(task);
+                  return actions ? (
+                    <div className="flex justify-end gap-2 border-t border-gray-100 bg-gray-50/60 px-4 py-2.5">
+                      {actions}
+                    </div>
+                  ) : null;
+                })()
+              : null}
+          </article>
         );
       })}
 

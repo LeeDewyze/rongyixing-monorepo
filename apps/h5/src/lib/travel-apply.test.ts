@@ -327,6 +327,8 @@ describe("travel form status helpers", () => {
 
     expect(isTravelFormRevokable(2)).toBe(true);
     expect(isTravelFormRevokable(4)).toBe(true);
+    expect(isTravelFormRevokable(4, "审批通过")).toBe(false);
+    expect(isTravelFormRevokable(2, "已驳回")).toBe(false);
     expect(isTravelFormSendable(2)).toBe(false);
     expect(isTravelFormEditable(5)).toBe(true);
   });
