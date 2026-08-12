@@ -1,4 +1,4 @@
-# RongYiXing Business Same-Origin H5 prod Build 20260812092159
+# RongYiXing Business Same-Origin H5 prod Build 20260812131841
 
 这个包用于交付业务方部署到 legacy 同源站点。
 
@@ -25,6 +25,6 @@
 
 构建信息：
 
-- build_time: 2026-08-12T01:22:18Z
+- build_time: 2026-08-12T05:19:27Z
 - git_branch: main
-- git_commit: e1358ef69b8d60188d3959bd722450c24e3497bc
+- git_commit: 66a154a69ce0c818e78b5b7f78aa0dbff222e655
