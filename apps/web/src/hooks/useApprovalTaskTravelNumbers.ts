@@ -1,5 +1,5 @@
 import type { ApprovalTask } from "@ryx/shared-types";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { fetchTravelNumberByApprovalTask } from "@/lib/travel-form-list";
 import { getTicket } from "@/lib/session";
@@ -23,14 +23,26 @@ function resolveKnownNumber(
   return undefined;
 }
 
+function isAppendedTaskListKey(previousKey: string, nextKey: string): boolean {
+  if (!previousKey || previousKey === nextKey) return false;
+  return nextKey.startsWith(`${previousKey},`);
+}
+
+export interface ApprovalTaskTravelNumbersResult {
+  tasks: ApprovalTask[];
+  /** True while the first page of travel numbers is loading (tab switch / refresh). */
+  isResolvingTravelNumbers: boolean;
+}
+
 /** Fill missing travel numbers on approval cards via workflow embed HTML (same as detail page). */
 export function useApprovalTaskTravelNumbers(
   tasks: ApprovalTask[],
   myApplications: ApprovalTask[] | undefined,
   enabled: boolean,
-): ApprovalTask[] {
+): ApprovalTaskTravelNumbersResult {
   const ticket = getTicket() ?? "";
-  const [resolved, setResolved] = useState<Record<string, string | null>>({});
+  const [resolved, setResolved] = useState<Record<string, string>>({});
+  const [isResolvingTravelNumbers, setIsResolvingTravelNumbers] = useState(false);
 
   const knownNumbersByFormId = useMemo(() => {
     const map = new Map<string, string>();
@@ -40,50 +52,83 @@ export function useApprovalTaskTravelNumbers(
     return map;
   }, [myApplications]);
 
-  const pendingTasks = useMemo(() => {
-    if (!enabled || !ticket) return [];
-    return tasks.filter((task) => {
-      if (!isTravelTask(task) || task.number) return false;
-      if (resolved[task.id] !== undefined) return false;
-      return !resolveKnownNumber(task, knownNumbersByFormId);
-    });
-  }, [enabled, knownNumbersByFormId, resolved, tasks, ticket]);
+  const taskListKey = useMemo(
+    () => tasks.map((task) => `${task.id}:${task.consumerId ?? ""}`).join(","),
+    [tasks],
+  );
 
-  const pendingTaskKey = pendingTasks.map((task) => task.id).join(",");
+  const tasksRef = useRef(tasks);
+  tasksRef.current = tasks;
+  const knownNumbersRef = useRef(knownNumbersByFormId);
+  knownNumbersRef.current = knownNumbersByFormId;
+  const prevTaskListKeyRef = useRef("");
 
   useEffect(() => {
-    if (!ticket || pendingTasks.length === 0) return;
+    if (!enabled || !ticket) {
+      setIsResolvingTravelNumbers(false);
+      return;
+    }
 
-    let cancelled = false;
+    const previousKey = prevTaskListKeyRef.current;
+    const isAppend = isAppendedTaskListKey(previousKey, taskListKey);
+    prevTaskListKeyRef.current = taskListKey;
+
+    if (!isAppend && previousKey !== taskListKey) {
+      setResolved({});
+    }
+
+    const targets = tasksRef.current.filter(
+      (task) =>
+        isTravelTask(task) &&
+        !task.number &&
+        !resolveKnownNumber(task, knownNumbersRef.current),
+    );
+
+    if (targets.length === 0) {
+      setIsResolvingTravelNumbers(false);
+      return;
+    }
+
+    if (!isAppend) {
+      setIsResolvingTravelNumbers(true);
+    }
+
+    let active = true;
     void Promise.all(
-      pendingTasks.map(async (task) => {
-        const known = resolveKnownNumber(task, knownNumbersByFormId);
-        if (known) return [task.id, known] as const;
-        const number = await fetchTravelNumberByApprovalTask(task);
-        return [task.id, number] as const;
-      }),
-    ).then((results) => {
-      if (cancelled) return;
-      setResolved((prev) => {
-        const next = { ...prev };
-        for (const [taskId, number] of results) {
-          next[taskId] = number ?? null;
+      targets.map(async (task) => {
+        try {
+          return [task.id, await fetchTravelNumberByApprovalTask(task)] as const;
+        } catch {
+          return [task.id, undefined] as const;
         }
-        return next;
+      }),
+    )
+      .then((results) => {
+        if (!active) return;
+        setResolved((prev) => {
+          const next = { ...prev };
+          for (const [taskId, number] of results) {
+            if (number) next[taskId] = number;
+          }
+          return next;
+        });
+      })
+      .finally(() => {
+        if (active) setIsResolvingTravelNumbers(false);
       });
-    });
 
     return () => {
-      cancelled = true;
+      active = false;
     };
-  }, [knownNumbersByFormId, pendingTaskKey, ticket]);
+  }, [enabled, taskListKey, ticket]);
 
-  return useMemo(() => {
+  const enrichedTasks = useMemo(() => {
     return tasks.map((task) => {
       if (task.number || !isTravelTask(task)) return task;
-      const number =
-        resolveKnownNumber(task, knownNumbersByFormId) ?? resolved[task.id] ?? undefined;
+      const number = resolveKnownNumber(task, knownNumbersByFormId) ?? resolved[task.id];
       return number ? { ...task, number } : task;
     });
   }, [knownNumbersByFormId, resolved, tasks]);
+
+  return { tasks: enrichedTasks, isResolvingTravelNumbers };
 }

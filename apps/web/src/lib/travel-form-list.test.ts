@@ -2,6 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   buildTravelFormDetailOpenUrl,
+  fetchTravelNumberByApprovalTask,
+  fetchTravelNumberByFormId,
+  parseFormIdFromWorkflowHtml,
   parseTravelFormListHtml,
   parseTravelNumberFromWorkflowHtml,
 } from "./travel-form-list";
@@ -13,6 +16,13 @@ vi.mock("@/lib/session", () => ({
 vi.mock("@/lib/request-context", () => ({
   getRequestLanguage: () => "cn",
 }));
+
+vi.mock("@/lib/workflow-embed", () => ({
+  isWorkflowEmbedUrl: () => true,
+  fetchWorkflowEmbedSrcdoc: vi.fn(),
+}));
+
+import { fetchWorkflowEmbedSrcdoc } from "@/lib/workflow-embed";
 
 describe("parseTravelFormListHtml", () => {
   it("uses Form/Detail Id from list HTML, not FormDetails field id", () => {
@@ -74,6 +84,95 @@ describe("parseTravelFormListHtml", () => {
     expect(parseTravelNumberFromWorkflowHtml(html, "24080000000532")).toBe(
       "Travel202608110945131796564",
     );
+  });
+
+  it("loads travel number from approval task embed html", async () => {
+    vi.mocked(fetchWorkflowEmbedSrcdoc).mockResolvedValue(`
+      <div form-data='{"Name":"出差申请","Tag":"Travel","FormDetails":[{"Name":"差旅单号","Content":"Travel202608110945131796564"}]}'></div>
+    `);
+
+    const number = await fetchTravelNumberByApprovalTask({
+      id: "44880000000013",
+      name: "孙雪向您发起了【出差申请】审批流程",
+      tag: "Travel",
+      handleUrl: "http://workflow.rtesp.com/FormTask/Handle?flowtag=Travel",
+    });
+
+    expect(number).toBe("Travel202608110945131796564");
+  });
+
+  it("loads travel number via FormId from handle page when form-data is missing", async () => {
+    vi.mocked(fetchWorkflowEmbedSrcdoc).mockResolvedValue(`
+      <script>window.FormId = "24080000000532";</script>
+    `);
+
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      const url = String(input);
+      if (url.includes("/Form/Detail?")) {
+        return new Response(
+          `<div form-data='{"FormDetails":[{"Name":"差旅单号","Content":"Travel202608110945131796564"}]}'></div>`,
+          { status: 200 },
+        );
+      }
+      return new Response("{}", { status: 404 });
+    });
+
+    const number = await fetchTravelNumberByApprovalTask({
+      id: "44880000000013",
+      name: "孙雪向您发起了【出差申请】审批流程",
+      tag: "Travel",
+      handleUrl: "http://workflow.rtesp.com/FormTask/Handle?flowtag=Travel",
+    });
+
+    fetchMock.mockRestore();
+    expect(number).toBe("Travel202608110945131796564");
+  });
+
+  it("parses FormId from workflow bootstrap script", () => {
+    expect(parseFormIdFromWorkflowHtml('window.FormId = "24080000000532";')).toBe("24080000000532");
+  });
+
+  it("parses travel number from FormTask/Handle where labels are html entities", () => {
+    const html = `
+      <div class="element">
+        <div class="element-tip">&#x5DEE;&#x65C5;&#x5355;&#x53F7;</div>
+        <div class="element-content" detailCtrlTag="TravelNumber" detailCtrlName="&#x5DEE;&#x65C5;&#x5355;&#x53F7;">
+Travel202608121111523157173                                </div>
+      </div>
+    `;
+
+    expect(parseTravelNumberFromWorkflowHtml(html)).toBe("Travel202608121111523157173");
+  });
+
+  it("returns undefined for a handle page without form detail content", () => {
+    const html = `<html><body><div class="element">no form rendered</div></body></html>`;
+    expect(parseTravelNumberFromWorkflowHtml(html)).toBeUndefined();
+  });
+
+  it("loads distinct travel numbers per form id from Form/Detail", async () => {
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      const url = String(input);
+      if (url.includes("Id=24080000000531")) {
+        return new Response(
+          `<div form-data='{"FormDetails":[{"Name":"差旅单号","Content":"Travel202608121111523157173"}]}'></div>`,
+          { status: 200 },
+        );
+      }
+      if (url.includes("Id=24080000000532")) {
+        return new Response(
+          `<div form-data='{"FormDetails":[{"Name":"差旅单号","Content":"Travel202608121201131796564"}]}'></div>`,
+          { status: 200 },
+        );
+      }
+      return new Response("{}", { status: 404 });
+    });
+
+    const first = await fetchTravelNumberByFormId("ticket", "24080000000531");
+    const second = await fetchTravelNumberByFormId("ticket", "24080000000532");
+    fetchMock.mockRestore();
+
+    expect(first).toBe("Travel202608121111523157173");
+    expect(second).toBe("Travel202608121201131796564");
   });
 
   it("parses mobile workflow markup that uses navlist instead of mytask-task", () => {

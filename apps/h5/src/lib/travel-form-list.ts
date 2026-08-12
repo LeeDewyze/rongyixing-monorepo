@@ -3,7 +3,7 @@ import type { ApprovalTask } from "@ryx/shared-types";
 import { buildApprovalTaskOpenUrl } from "@/lib/approval-task-url";
 import { getRequestLanguage } from "@/lib/request-context";
 import { getTicket } from "@/lib/session";
-import { getWorkflowSite, getBpmExpenseSite } from "@/lib/workflow-site";
+import { getWorkflowSite } from "@/lib/workflow-site";
 import { fetchWorkflowEmbedSrcdoc, isWorkflowEmbedUrl } from "@/lib/workflow-embed";
 import {
   fetchTravelFormData,
@@ -172,6 +172,14 @@ export function parseTravelNumberFromWorkflowHtml(
     if (travelNumber) return travelNumber;
   }
 
+  // FormTask/Handle escapes field labels as entities (差旅单号 → &#x5DEE;…), so the rendered
+  // detail block can only be matched on the control tag attribute, not the localized label.
+  const controlMatch = html.match(/detailCtrlTag=["']TravelNumber["'][^>]*>([\s\S]*?)<\/div>/i);
+  if (controlMatch?.[1]) {
+    const number = decodeHtmlAttribute(controlMatch[1].replace(/<[^>]+>/g, "").trim());
+    if (isTravelDisplayNumber(number)) return number;
+  }
+
   const fieldMatch = html.match(
     /class="element-tip">差旅单号<\/div>\s*<div class="element-content"[^>]*>\s*([\s\S]*?)<\/div>/i,
   );
@@ -189,52 +197,33 @@ export function parseFormIdFromWorkflowHtml(html: string): string | undefined {
   return match?.[1];
 }
 
-async function fetchTravelNumberFromBpm(
-  ticket: string,
-  formId: string,
-): Promise<string | undefined> {
-  const params = new URLSearchParams({ tag: "Travel", ticket, formId });
-  try {
-    const response = await fetch(
-      `${getBpmExpenseSite()}/TravelNumberCtrl/DefaultData?${params.toString()}`,
-    );
-    if (!response.ok) return undefined;
-    const data = (await response.json()) as { label?: string; value?: string };
-    const value = (data.value ?? data.label ?? "").trim();
-    return isTravelDisplayNumber(value) ? value : undefined;
-  } catch {
-    return undefined;
-  }
-}
-
 /** Resolve travel number for approval cards — same sources as 我的申请 list parsing. */
 export async function fetchTravelNumberByFormId(
   ticket: string,
   formId: string,
 ): Promise<string | undefined> {
+  const detailHtml = await fetchTravelFormDetailHtml(ticket, formId);
+  const fromDetail = parseTravelNumberFromWorkflowHtml(detailHtml, formId);
+  if (fromDetail) return fromDetail;
+
   const controls = await fetchTravelFormData(ticket, formId);
   const fromGet = readTravelNumberFromFormGet(controls);
   if (fromGet && isTravelDisplayNumber(fromGet)) return fromGet;
 
-  const fromBpm = await fetchTravelNumberFromBpm(ticket, formId);
-  if (fromBpm) return fromBpm;
-
-  const detailHtml = await fetchTravelFormDetailHtml(ticket, formId);
-  return parseTravelNumberFromWorkflowHtml(detailHtml, formId);
+  return undefined;
 }
 
 async function resolveTravelNumberFromTaskEmbed(
   task: ApprovalTask,
   ticket: string,
-  taskUrl: string,
 ): Promise<string | undefined> {
-  const html = await fetchWorkflowEmbedSrcdoc(taskUrl);
+  const html = await fetchWorkflowEmbedSrcdoc(buildApprovalTaskOpenUrl(task) ?? "");
   if (!html) return undefined;
 
-  const number = parseTravelNumberFromWorkflowHtml(html, task.consumerId);
+  const formId = task.consumerId ?? parseFormIdFromWorkflowHtml(html);
+  const number = parseTravelNumberFromWorkflowHtml(html, formId);
   if (number) return number;
 
-  const formId = task.consumerId ?? parseFormIdFromWorkflowHtml(html);
   if (!formId) return undefined;
   return fetchTravelNumberByFormId(ticket, formId);
 }
@@ -248,7 +237,7 @@ export async function fetchTravelNumberByApprovalTask(
 
   if (taskUrl && isWorkflowEmbedUrl(taskUrl) && ticket) {
     try {
-      const number = await resolveTravelNumberFromTaskEmbed(task, ticket, taskUrl);
+      const number = await resolveTravelNumberFromTaskEmbed(task, ticket);
       if (number) return number;
     } catch {
       // fall through to form id lookup

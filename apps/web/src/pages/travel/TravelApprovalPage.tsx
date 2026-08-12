@@ -70,7 +70,13 @@ export function TravelApprovalPage() {
     return data?.pages.flat() ?? [];
   }, [doneTasks.data, myApplications.data, pendingTasks.data, tab]);
 
-  const displayTasks = useApprovalTaskTravelNumbers(tasks, myApplications.data, true);
+  const { tasks: displayTasks, isResolvingTravelNumbers } = useApprovalTaskTravelNumbers(
+    tasks,
+    myApplications.data,
+    tab !== "mine",
+  );
+  const isListPending = activeQuery.isLoading || (tab !== "mine" && isResolvingTravelNumbers);
+  const tasksForList = tab !== "mine" && isResolvingTravelNumbers ? [] : displayTasks;
 
   const handleOpenTask = useCallback(
     (task: ApprovalTask) => {
@@ -243,7 +249,7 @@ export function TravelApprovalPage() {
     return () => document.removeEventListener("visibilitychange", refreshOnVisible);
   }, [queryClient]);
 
-  const isLoading = activeQuery.isLoading;
+  const isLoading = isListPending;
   const error = activeQuery.error;
   const emptyMessage = tab === "mine" ? "暂无申请" : tab === "pending" ? "暂无审批" : "暂无内容";
   const hasMore =
@@ -320,7 +326,7 @@ export function TravelApprovalPage() {
       </div>
 
       <ApprovalTaskList
-        tasks={displayTasks}
+        tasks={tasksForList}
         isLoading={isLoading}
         errorMessage={error ? formatApiError(error) : undefined}
         emptyMessage={emptyMessage}
