@@ -1,0 +1,1 @@
+import{u as r,r as s}from"./index-D_T-Kfn2.js";function u(){const t=r();return s.useCallback(()=>{t("/home")},[t])}function i(t="/home"){const e=r();return s.useCallback(()=>{var o;const a=(o=window.history.state)==null?void 0:o.idx;if(typeof a=="number"&&a>0){e(-1);return}e(t)},[e,t])}export{i as a,u};
