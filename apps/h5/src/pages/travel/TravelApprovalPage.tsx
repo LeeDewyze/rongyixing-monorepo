@@ -10,6 +10,7 @@ import {
   useOrderApprovalTasks,
   useWaitingTaskCount,
 } from "@/hooks/useApprovalTasks";
+import { useApprovalTaskTravelNumbers } from "@/hooks/useApprovalTaskTravelNumbers";
 import { useHomeBack } from "@/lib/app-back";
 import { buildApprovalTaskOpenUrl } from "@/lib/approval-task-url";
 import { buildTravelFormDetailOpenUrl, buildTravelFormEditUrl } from "@/lib/travel-form-list";
@@ -68,6 +69,8 @@ export function TravelApprovalPage() {
     const data = tab === "done" ? doneTasks.data : pendingTasks.data;
     return data?.pages.flat() ?? [];
   }, [doneTasks.data, myApplications.data, pendingTasks.data, tab]);
+
+  const displayTasks = useApprovalTaskTravelNumbers(tasks, myApplications.data, true);
 
   const handleOpenTask = useCallback(
     (task: ApprovalTask) => {
@@ -317,7 +320,7 @@ export function TravelApprovalPage() {
       </div>
 
       <ApprovalTaskList
-        tasks={tasks}
+        tasks={displayTasks}
         isLoading={isLoading}
         errorMessage={error ? formatApiError(error) : undefined}
         emptyMessage={emptyMessage}

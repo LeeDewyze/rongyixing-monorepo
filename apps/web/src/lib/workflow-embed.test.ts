@@ -14,18 +14,18 @@ describe("isWorkflowEmbedUrl", () => {
   it("matches workflow detail URLs of the test environment", () => {
     vi.stubEnv("VITE_API_BASE_URL", "http://app.rtesp.com");
     expect(
-      isWorkflowEmbedUrl(
-        "http://workflow.rtesp.com/Form/Detail?Id=1&ticket=abc&opentype=iframe",
-      ),
+      isWorkflowEmbedUrl("http://workflow.rtesp.com/Form/Detail?Id=1&ticket=abc&opentype=iframe"),
     ).toBe(true);
-    expect(isWorkflowEmbedUrl("https://workflow.rongtrip.cn/Form/Detail?Id=1")).toBe(false);
+    expect(isWorkflowEmbedUrl("https://workflow.rongtrip.cn/Form/Detail?Id=1&ticket=abc")).toBe(
+      true,
+    );
     expect(isWorkflowEmbedUrl("http://example.com/page")).toBe(false);
   });
 
   it("matches workflow detail URLs of the production environment", () => {
     vi.stubEnv("VITE_API_BASE_URL", "https://app.rongtrip.cn");
     expect(isWorkflowEmbedUrl("https://workflow.rongtrip.cn/Form/Detail?Id=1")).toBe(true);
-    expect(isWorkflowEmbedUrl("http://workflow.rtesp.com/Form/Detail?Id=1")).toBe(false);
+    expect(isWorkflowEmbedUrl("http://workflow.rtesp.com/Form/Detail?Id=1&ticket=abc")).toBe(true);
   });
 });
 

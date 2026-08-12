@@ -1,8 +1,9 @@
-import { getWorkflowHost } from "@/lib/workflow-site";
+import { getWorkflowHost, isWorkflowUrl, resolveWorkflowUrl } from "@/lib/workflow-site";
 
 export function isWorkflowEmbedUrl(url: string): boolean {
   try {
-    return new URL(url).hostname === getWorkflowHost();
+    const resolved = resolveWorkflowUrl(url);
+    return isWorkflowUrl(resolved) && new URL(resolved).hostname === getWorkflowHost();
   } catch {
     return false;
   }
@@ -36,14 +37,15 @@ export function prepareWorkflowSrcdoc(html: string, origin: string): string {
 }
 
 export async function fetchWorkflowEmbedSrcdoc(url: string): Promise<string | undefined> {
+  const resolved = resolveWorkflowUrl(url);
   let parsed: URL;
   try {
-    parsed = new URL(url);
+    parsed = new URL(resolved);
   } catch {
     return undefined;
   }
 
-  if (parsed.hostname !== getWorkflowHost()) {
+  if (!isWorkflowUrl(resolved) || parsed.hostname !== getWorkflowHost()) {
     return undefined;
   }
 
@@ -52,7 +54,7 @@ export async function fetchWorkflowEmbedSrcdoc(url: string): Promise<string | un
     return undefined;
   }
 
-  const response = await fetch(url);
+  const response = await fetch(resolved);
   if (!response.ok) {
     throw new Error(`workflow embed fetch failed: HTTP ${response.status}`);
   }

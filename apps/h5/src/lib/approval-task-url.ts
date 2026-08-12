@@ -2,6 +2,7 @@ import type { ApprovalTask } from "@ryx/shared-types";
 
 import { getRequestLanguage } from "@/lib/request-context";
 import { getTicket } from "@/lib/session";
+import { resolveWorkflowUrl } from "@/lib/workflow-site";
 
 /** Legacy header title: text inside the first 【】 pair. */
 export function extractTaskTitle(name: string | undefined): string {
@@ -28,7 +29,7 @@ function appendQueryParams(base: string, params: Record<string, string>): string
 export function buildWorkflowOpenUrl(url: string): string {
   const ticket = getTicket() ?? "";
   const lang = getRequestLanguage();
-  return appendQueryParams(url, {
+  return appendQueryParams(resolveWorkflowUrl(url), {
     ticket,
     isApp: "true",
     lang,
@@ -38,7 +39,7 @@ export function buildWorkflowOpenUrl(url: string): string {
 
 /** Legacy `getTaskHandleUrl` — append ticket for in-app H5 approval pages. */
 export function buildApprovalTaskOpenUrl(task: ApprovalTask): string | undefined {
-  const base = task.handleUrl ?? task.url;
+  const base = resolveWorkflowUrl(task.handleUrl ?? task.url ?? "");
   if (!base) return undefined;
   const ticket = getTicket() ?? "";
   const lang = getRequestLanguage();

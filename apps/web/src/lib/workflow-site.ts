@@ -28,3 +28,30 @@ export function getWorkflowHost(): string {
     return `workflow.${getAppBaseDomain()}`;
   }
 }
+
+/** Whether a URL targets a workflow site (any environment). */
+export function isWorkflowUrl(url: string): boolean {
+  try {
+    return new URL(url).hostname.startsWith("workflow.");
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Rewrite workflow URLs from API payloads to the active workflow site.
+ * Task list responses may still reference a legacy host (e.g. workflow.rtesp.com on prod).
+ */
+export function resolveWorkflowUrl(url: string): string {
+  if (!url || url.startsWith("#")) return url;
+  try {
+    const parsed = new URL(url);
+    if (!parsed.hostname.startsWith("workflow.")) return url;
+    const site = new URL(getWorkflowSite());
+    parsed.protocol = site.protocol;
+    parsed.host = site.host;
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}

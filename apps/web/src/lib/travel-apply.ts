@@ -841,7 +841,8 @@ export async function fetchTravelFormEditValues(
 
 /** 从控件中读取 defaultValue，兼容 string / {label, value} 格式。 */
 function readControlDefault(control: TravelApplyRawControl): string {
-  const raw = (control as unknown as { defaultValue?: unknown }).defaultValue;
+  const extended = control as unknown as { defaultValue?: unknown; value?: unknown };
+  const raw = extended.defaultValue ?? extended.value;
   if (raw == null) return "";
   if (typeof raw === "string") return raw;
   if (typeof raw === "object") {
@@ -854,6 +855,18 @@ function readControlDefault(control: TravelApplyRawControl): string {
     return String(obj.value ?? obj.Value ?? obj.label ?? obj.Text ?? "");
   }
   return String(raw);
+}
+
+export function readTravelNumberFromFormGet(
+  controls: FormGetResponse | null | undefined,
+): string | undefined {
+  if (!controls?.length) return undefined;
+  const control =
+    controls.find((item) => item.tag === "TravelNumber" && !item.slaves) ??
+    controls.find((item) => item.label === "差旅单号" && !item.slaves);
+  if (!control) return undefined;
+  const value = readControlDefault(control).trim();
+  return value || undefined;
 }
 
 /** 从 Form/Get 响应中提取主表字段（出差类型、事由）。 */

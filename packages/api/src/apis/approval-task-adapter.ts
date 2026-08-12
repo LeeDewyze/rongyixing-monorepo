@@ -32,6 +32,47 @@ function normalizeExpiredTime(value: unknown): string {
   return text.length >= 19 ? text.slice(0, 19) : text;
 }
 
+/** Legacy workflow `Number` is an internal id; travel tasks use 差旅单号 / TravelNumber. */
+function isInternalWorkflowNumber(value: string): boolean {
+  return /^[0-9a-f]{32}$/i.test(value.trim());
+}
+
+function isNumericEntityId(value: string): boolean {
+  return /^\d{10,}$/.test(value.trim());
+}
+
+function isTravelDisplayNumber(value: string): boolean {
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  if (isInternalWorkflowNumber(trimmed)) return false;
+  if (isNumericEntityId(trimmed)) return false;
+  return true;
+}
+
+function resolveTaskNumber(row: LegacyRecord, variables: LegacyRecord): string {
+  const tag = readString(row.Tag);
+
+  if (tag === "TravelForm" || tag === "Travel") {
+    const travelNumber =
+      readString(row.TravelNumber) ||
+      readString(row.travelNumber) ||
+      readString(variables.TravelNumber) ||
+      readString(variables.travelNumber) ||
+      readString(row.OutNumber) ||
+      readString(variables.OutNumber) ||
+      readString(row.Number);
+    return isTravelDisplayNumber(travelNumber) ? travelNumber : "";
+  }
+
+  const orderId = readString(row.OrderId) || readString(variables.OrderId);
+  if (orderId) return orderId;
+
+  const consumerId = readString(row.ConsumerId) || readString(variables.ConsumerId);
+  const workflowNumber = readString(row.Number);
+  if (consumerId) return consumerId;
+  return !isInternalWorkflowNumber(workflowNumber) ? workflowNumber : "";
+}
+
 export function normalizeApprovalTask(raw: unknown): ApprovalTask {
   const row = asRecord(raw) ?? {};
   const variables = parseVariables(row.Variables);
@@ -47,7 +88,13 @@ export function normalizeApprovalTask(raw: unknown): ApprovalTask {
     statusName: readString(row.StatusName) || readString(row.Status),
     remark: readString(row.Remark),
     level: readString(row.Level),
-    number: readString(row.Number),
+    number: resolveTaskNumber(row, variables) || undefined,
+    consumerId:
+      readString(row.ConsumerId) ||
+      readString(row.consumerId) ||
+      readString(variables.ConsumerId) ||
+      readString(variables.consumerId) ||
+      undefined,
     expiredTime: normalizeExpiredTime(row.ExpiredTime),
     tag: readString(row.Tag),
     handleUrl: handleUrl || undefined,
@@ -59,7 +106,9 @@ export function normalizeApprovalTask(raw: unknown): ApprovalTask {
 export function normalizeApprovalTaskList(raw: unknown): ApprovalTask[] {
   const row = asRecord(raw);
   const list = row?.Data ?? raw;
-  return asArray<unknown>(list).map(normalizeApprovalTask).filter((task) => Boolean(task.id));
+  return asArray<unknown>(list)
+    .map(normalizeApprovalTask)
+    .filter((task) => Boolean(task.id));
 }
 
 export function normalizeWorkflowNotify(raw: unknown): WorkflowNotify {
@@ -75,7 +124,9 @@ export function normalizeWorkflowNotify(raw: unknown): WorkflowNotify {
 export function normalizeWorkflowNotifyList(raw: unknown): WorkflowNotify[] {
   const row = asRecord(raw);
   const list = row?.Data ?? raw;
-  return asArray<unknown>(list).map(normalizeWorkflowNotify).filter((item) => Boolean(item.id));
+  return asArray<unknown>(list)
+    .map(normalizeWorkflowNotify)
+    .filter((item) => Boolean(item.id));
 }
 
 export function normalizeWaitingTaskCount(raw: unknown): number {

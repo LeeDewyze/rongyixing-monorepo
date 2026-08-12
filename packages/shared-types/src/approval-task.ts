@@ -20,6 +20,8 @@ export interface ApprovalTask {
   remark?: string;
   level?: string;
   number?: string;
+  /** Travel form entity id on order approval tasks (`ConsumerId`). */
+  consumerId?: string;
   expiredTime?: string;
   tag?: string;
   handleUrl?: string;

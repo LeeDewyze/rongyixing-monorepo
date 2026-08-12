@@ -10,6 +10,7 @@ import {
   useOrderApprovalTasks,
   useWaitingTaskCount,
 } from "@/hooks/useApprovalTasks";
+import { useApprovalTaskTravelNumbers } from "@/hooks/useApprovalTaskTravelNumbers";
 import { useHomeBack } from "@/lib/app-back";
 import { buildApprovalTaskOpenUrl } from "@/lib/approval-task-url";
 import { buildTravelFormDetailOpenUrl, buildTravelFormEditUrl } from "@/lib/travel-form-list";
@@ -59,8 +60,7 @@ export function TravelApprovalPage() {
   const [sendingId, setSendingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const activeQuery =
-    tab === "mine" ? myApplications : tab === "done" ? doneTasks : pendingTasks;
+  const activeQuery = tab === "mine" ? myApplications : tab === "done" ? doneTasks : pendingTasks;
 
   const tasks = useMemo(() => {
     if (tab === "mine") {
@@ -69,6 +69,8 @@ export function TravelApprovalPage() {
     const data = tab === "done" ? doneTasks.data : pendingTasks.data;
     return data?.pages.flat() ?? [];
   }, [doneTasks.data, myApplications.data, pendingTasks.data, tab]);
+
+  const displayTasks = useApprovalTaskTravelNumbers(tasks, myApplications.data, true);
 
   const handleOpenTask = useCallback(
     (task: ApprovalTask) => {
@@ -158,8 +160,7 @@ export function TravelApprovalPage() {
   const renderActions = useCallback(
     (task: ApprovalTask) => {
       if (!task.tag || task.tag !== "Travel") return null;
-      const status =
-        typeof task.status === "string" ? Number(task.status) : (task.status ?? 0);
+      const status = typeof task.status === "string" ? Number(task.status) : (task.status ?? 0);
       const canSend = isTravelFormSendable(status);
       const canEdit = isTravelFormEditable(status);
       const canDelete = isTravelFormDeletable(status);
@@ -221,7 +222,15 @@ export function TravelApprovalPage() {
         </>
       );
     },
-    [deletingId, handleDelete, handleEdit, handleRevoke, handleSendForApproval, revokingId, sendingId],
+    [
+      deletingId,
+      handleDelete,
+      handleEdit,
+      handleRevoke,
+      handleSendForApproval,
+      revokingId,
+      sendingId,
+    ],
   );
 
   useEffect(() => {
@@ -236,11 +245,15 @@ export function TravelApprovalPage() {
 
   const isLoading = activeQuery.isLoading;
   const error = activeQuery.error;
-  const emptyMessage =
-    tab === "mine" ? "暂无申请" : tab === "pending" ? "暂无审批" : "暂无内容";
-  const hasMore = tab === "mine" ? false : tab === "done" ? doneTasks.hasNextPage : pendingTasks.hasNextPage;
+  const emptyMessage = tab === "mine" ? "暂无申请" : tab === "pending" ? "暂无审批" : "暂无内容";
+  const hasMore =
+    tab === "mine" ? false : tab === "done" ? doneTasks.hasNextPage : pendingTasks.hasNextPage;
   const isFetchingMore =
-    tab === "mine" ? false : tab === "done" ? doneTasks.isFetchingNextPage : pendingTasks.isFetchingNextPage;
+    tab === "mine"
+      ? false
+      : tab === "done"
+        ? doneTasks.isFetchingNextPage
+        : pendingTasks.isFetchingNextPage;
   const loadMore =
     tab === "mine"
       ? undefined
@@ -252,7 +265,10 @@ export function TravelApprovalPage() {
   }
 
   return (
-    <div className="min-h-full bg-[#F5F6F9]" style={{ background: "var(--brand-form-header-gradient)" }}>
+    <div
+      className="min-h-full bg-[#F5F6F9]"
+      style={{ background: "var(--brand-form-header-gradient)" }}
+    >
       <div className="sticky top-0 z-20 pb-7 pt-[env(safe-area-inset-top)]">
         <div className="flex h-11 items-center px-1">
           <button
@@ -304,7 +320,7 @@ export function TravelApprovalPage() {
       </div>
 
       <ApprovalTaskList
-        tasks={tasks}
+        tasks={displayTasks}
         isLoading={isLoading}
         errorMessage={error ? formatApiError(error) : undefined}
         emptyMessage={emptyMessage}

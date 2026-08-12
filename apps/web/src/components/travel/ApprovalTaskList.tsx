@@ -56,10 +56,12 @@ function TaskListSkeleton() {
         <div key={item} className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-black/5">
           <div className="motion-safe:animate-pulse">
             <div className="flex items-start justify-between gap-3">
-              <div className="h-5 w-28 rounded-full bg-gray-100" />
+              <div className="min-w-0 flex-1 space-y-2">
+                <div className="h-5 w-28 rounded-full bg-gray-100" />
+                <div className="h-3.5 w-48 rounded-full bg-gray-100" />
+              </div>
               <div className="h-6 w-16 rounded-full bg-blue-50" />
             </div>
-            <div className="mt-4 h-4 w-56 rounded-full bg-gray-100" />
             <div className="mt-3 h-3 w-40 rounded-full bg-gray-100" />
           </div>
         </div>
@@ -161,7 +163,7 @@ export function ApprovalTaskList({
             onClick={() => onOpenTask(task)}
           >
             <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1 space-y-2">
                 <p className="truncate text-[16px] font-semibold leading-snug text-brand-title">
                   {task.name}
                 </p>

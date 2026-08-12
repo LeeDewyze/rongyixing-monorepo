@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   buildTravelFormDetailOpenUrl,
   parseTravelFormListHtml,
+  parseTravelNumberFromWorkflowHtml,
 } from "./travel-form-list";
 
 vi.mock("@/lib/session", () => ({
@@ -28,6 +29,51 @@ describe("parseTravelFormListHtml", () => {
     expect(tasks[0]?.name).toBe("出差申请 · 项目出差");
     expect(tasks[0]?.statusName).toBe("等待报送");
     expect(tasks[0]?.url).toContain("Id=23540000000004");
+  });
+
+  it("ignores internal workflow Number when 差旅单号 is missing", () => {
+    const html = `
+      <div class="mytask-task" form-data='{"Name":"出差申请","Tag":"Travel","Status":3,"Number":"d857e32007e74aa0b458cc9bed3f17b3","FormDetails":[{"Name":"出差事由","Content":"项目出差"}]}'>
+        <a href="http://workflow.rtesp.com/Form/Detail?Id=23540000000004&amp;opentype=&amp;ticket=old&amp;CheckFlowType=&amp;FlowTag=">查看详情</a>
+      </div>
+    `;
+
+    const tasks = parseTravelFormListHtml(html, "mock-ticket");
+    expect(tasks[0]?.number).toBeUndefined();
+  });
+
+  it("ignores numeric form entity id when 差旅单号 is missing", () => {
+    const html = `
+      <div class="mytask-task" form-data='{"Name":"出差申请","Tag":"Travel","Status":3,"Number":"24080000000532","FormDetails":[{"Name":"出差事由","Content":"项目出差"}]}'>
+        <a href="http://workflow.rtesp.com/Form/Detail?Id=24080000000532&amp;opentype=&amp;ticket=old&amp;CheckFlowType=&amp;FlowTag=">查看详情</a>
+      </div>
+    `;
+
+    const tasks = parseTravelFormListHtml(html, "mock-ticket");
+    expect(tasks[0]?.number).toBeUndefined();
+  });
+
+  it("reads travel number from FormDetails Tag TravelNumber", () => {
+    const html = `
+      <div class="mytask-task" form-data='{"Name":"出差申请","Tag":"Travel","Status":3,"FormDetails":[{"Tag":"TravelNumber","Number":"Travel202608110945131796564"}]}'>
+        <a href="http://workflow.rtesp.com/Form/Detail?Id=24080000000532&amp;opentype=&amp;ticket=old&amp;CheckFlowType=&amp;FlowTag=">查看详情</a>
+      </div>
+    `;
+
+    const tasks = parseTravelFormListHtml(html, "mock-ticket");
+    expect(tasks[0]?.number).toBe("Travel202608110945131796564");
+  });
+
+  it("parses travel number from Form/Detail html form-data", () => {
+    const html = `
+      <div form-data='{"Name":"出差申请","Tag":"Travel","Status":4,"FormDetails":[{"Name":"差旅单号","Content":"Travel202608110945131796564"}]}'>
+        <a href="http://workflow.rtesp.com/Form/Detail?Id=24080000000532&amp;ticket=old">详情</a>
+      </div>
+    `;
+
+    expect(parseTravelNumberFromWorkflowHtml(html, "24080000000532")).toBe(
+      "Travel202608110945131796564",
+    );
   });
 
   it("parses mobile workflow markup that uses navlist instead of mytask-task", () => {

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { getWorkflowHost, getWorkflowSite } from "./workflow-site";
+import { getWorkflowHost, getWorkflowSite, resolveWorkflowUrl } from "./workflow-site";
 
 function stubCachedApiConfig(workflowWebsiteUrl?: string) {
   const setting = {
@@ -48,5 +48,23 @@ describe("getWorkflowSite", () => {
     stubCachedApiConfig();
 
     expect(getWorkflowSite()).toBe("https://workflow.rongtrip.cn");
+  });
+});
+
+describe("resolveWorkflowUrl", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+  });
+
+  it("rewrites legacy workflow hosts to the active workflow site", () => {
+    vi.stubEnv("VITE_API_BASE_URL", "https://app.rongtrip.cn");
+    stubCachedApiConfig("https://workflow.rongtrip.cn/");
+
+    expect(
+      resolveWorkflowUrl(
+        "http://workflow.rtesp.com/FormTask/Handle?flowtag=Travel&taskid=1",
+      ),
+    ).toBe("https://workflow.rongtrip.cn/FormTask/Handle?flowtag=Travel&taskid=1");
   });
 });

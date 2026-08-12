@@ -1,8 +1,15 @@
 import type { ApprovalTask } from "@ryx/shared-types";
 
+import { buildApprovalTaskOpenUrl } from "@/lib/approval-task-url";
 import { getRequestLanguage } from "@/lib/request-context";
 import { getTicket } from "@/lib/session";
-import { getWorkflowSite } from "@/lib/workflow-site";
+import { getWorkflowSite, getBpmExpenseSite } from "@/lib/workflow-site";
+import { fetchWorkflowEmbedSrcdoc, isWorkflowEmbedUrl } from "@/lib/workflow-embed";
+import {
+  fetchTravelFormData,
+  fetchTravelFormDetailHtml,
+  readTravelNumberFromFormGet,
+} from "@/lib/travel-apply";
 
 const TRAVEL_FORM_STATUS: Record<number, string> = {
   1: "草稿",
@@ -16,6 +23,8 @@ const TRAVEL_FORM_STATUS: Record<number, string> = {
 type FormDetailRow = {
   Name?: string;
   Content?: string;
+  Number?: string;
+  Tag?: string;
   Id?: number | string;
 };
 
@@ -24,11 +33,57 @@ type TravelFormRow = {
   Name?: string;
   Status?: number;
   Number?: string;
+  OutNumber?: string;
   FormDetails?: FormDetailRow[];
 };
 
+function isInternalWorkflowNumber(value: string): boolean {
+  return /^[0-9a-f]{32}$/i.test(value.trim());
+}
+
+function isNumericEntityId(value: string): boolean {
+  return /^\d{10,}$/.test(value.trim());
+}
+
+function isTravelDisplayNumber(value: string): boolean {
+  const trimmed = value.trim();
+  if (!trimmed) return false;
+  if (isInternalWorkflowNumber(trimmed)) return false;
+  if (isNumericEntityId(trimmed)) return false;
+  return true;
+}
+
 function readFormDetail(form: TravelFormRow, name: string): string {
-  return form.FormDetails?.find((row) => row.Name === name)?.Content?.trim() ?? "";
+  for (const row of form.FormDetails ?? []) {
+    if (row.Name?.trim() !== name) continue;
+    const value = row.Content?.trim() || row.Number?.trim() || "";
+    if (value) return value;
+  }
+  return "";
+}
+
+function readTravelFormDetail(form: TravelFormRow): string {
+  for (const row of form.FormDetails ?? []) {
+    const name = row.Name?.trim() ?? "";
+    const tag = row.Tag?.trim() ?? "";
+    if (name !== "差旅单号" && tag !== "TravelNumber") continue;
+    const value = row.Content?.trim() || row.Number?.trim() || "";
+    if (value) return value;
+  }
+  return "";
+}
+
+function resolveTravelFormNumber(form: TravelFormRow): string {
+  const travelNumber = readTravelFormDetail(form);
+  if (travelNumber) return travelNumber;
+
+  const outNumber = form.OutNumber?.trim() ?? "";
+  if (isTravelDisplayNumber(outNumber)) return outNumber;
+
+  const formNumber = form.Number?.trim() ?? "";
+  if (isTravelDisplayNumber(formNumber)) return formNumber;
+
+  return "";
 }
 
 function decodeHtmlAttribute(value: string): string {
@@ -89,12 +144,135 @@ export function buildTravelFormDetailOpenUrl(formId: string): string | undefined
   return `${getWorkflowSite()}/Form/Detail?${params.toString()}`;
 }
 
+/** Parse travel number from workflow HTML (Form/List or Form/Detail form-data). */
+export function parseTravelNumberFromWorkflowHtml(
+  html: string,
+  formId?: string,
+): string | undefined {
+  const formDataMatches = Array.from(html.matchAll(/\bform-data\s*=\s*(['"])([\s\S]*?)\1/gi));
+
+  for (const [index, formDataMatch] of formDataMatches.entries()) {
+    const blockStart = formDataMatch.index ?? 0;
+    const nextBlockStart = formDataMatches[index + 1]?.index ?? html.length;
+    const block = html.slice(blockStart, nextBlockStart);
+    const formData = decodeHtmlAttribute(formDataMatch[2] ?? "");
+    if (!formData) continue;
+
+    let form: TravelFormRow;
+    try {
+      form = JSON.parse(formData) as TravelFormRow;
+    } catch {
+      continue;
+    }
+
+    const id = resolveFormId(form, parseDetailIdFromBlock(block));
+    if (formId && id && id !== formId) continue;
+
+    const travelNumber = resolveTravelFormNumber(form);
+    if (travelNumber) return travelNumber;
+  }
+
+  const fieldMatch = html.match(
+    /class="element-tip">差旅单号<\/div>\s*<div class="element-content"[^>]*>\s*([\s\S]*?)<\/div>/i,
+  );
+  if (fieldMatch?.[1]) {
+    const number = decodeHtmlAttribute(fieldMatch[1].replace(/<[^>]+>/g, "").trim());
+    if (isTravelDisplayNumber(number)) return number;
+  }
+
+  return undefined;
+}
+
+/** Parse legacy workflow page bootstrap id (FormTask/Handle, Form/Detail). */
+export function parseFormIdFromWorkflowHtml(html: string): string | undefined {
+  const match = html.match(/window\.FormId\s*=\s*['"](\d+)['"]/);
+  return match?.[1];
+}
+
+async function fetchTravelNumberFromBpm(
+  ticket: string,
+  formId: string,
+): Promise<string | undefined> {
+  const params = new URLSearchParams({ tag: "Travel", ticket, formId });
+  try {
+    const response = await fetch(
+      `${getBpmExpenseSite()}/TravelNumberCtrl/DefaultData?${params.toString()}`,
+    );
+    if (!response.ok) return undefined;
+    const data = (await response.json()) as { label?: string; value?: string };
+    const value = (data.value ?? data.label ?? "").trim();
+    return isTravelDisplayNumber(value) ? value : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Resolve travel number for approval cards — same sources as 我的申请 list parsing. */
+export async function fetchTravelNumberByFormId(
+  ticket: string,
+  formId: string,
+): Promise<string | undefined> {
+  const controls = await fetchTravelFormData(ticket, formId);
+  const fromGet = readTravelNumberFromFormGet(controls);
+  if (fromGet && isTravelDisplayNumber(fromGet)) return fromGet;
+
+  const fromBpm = await fetchTravelNumberFromBpm(ticket, formId);
+  if (fromBpm) return fromBpm;
+
+  const detailHtml = await fetchTravelFormDetailHtml(ticket, formId);
+  return parseTravelNumberFromWorkflowHtml(detailHtml, formId);
+}
+
+async function resolveTravelNumberFromTaskEmbed(
+  task: ApprovalTask,
+  ticket: string,
+  taskUrl: string,
+): Promise<string | undefined> {
+  const html = await fetchWorkflowEmbedSrcdoc(taskUrl);
+  if (!html) return undefined;
+
+  const number = parseTravelNumberFromWorkflowHtml(html, task.consumerId);
+  if (number) return number;
+
+  const formId = task.consumerId ?? parseFormIdFromWorkflowHtml(html);
+  if (!formId) return undefined;
+  return fetchTravelNumberByFormId(ticket, formId);
+}
+
+/** Resolve travel number using the same workflow embed HTML as the approval detail page. */
+export async function fetchTravelNumberByApprovalTask(
+  task: ApprovalTask,
+): Promise<string | undefined> {
+  const ticket = getTicket();
+  const taskUrl = buildApprovalTaskOpenUrl(task);
+
+  if (taskUrl && isWorkflowEmbedUrl(taskUrl) && ticket) {
+    try {
+      const number = await resolveTravelNumberFromTaskEmbed(task, ticket, taskUrl);
+      if (number) return number;
+    } catch {
+      // fall through to form id lookup
+    }
+  }
+
+  if (!ticket) return undefined;
+
+  if (task.consumerId) {
+    const number = await fetchTravelNumberByFormId(ticket, task.consumerId);
+    if (number) return number;
+  }
+
+  if (task.url?.includes("/Form/Detail")) {
+    return fetchTravelNumberByFormId(ticket, task.id);
+  }
+
+  return undefined;
+}
+
 /** Legacy workflow `Form/List?FlowTag=Travel` — applications submitted by current user. */
 export function parseTravelFormListHtml(html: string, ticket: string): ApprovalTask[] {
   const tasks: ApprovalTask[] = [];
-  const formDataMatches = Array.from(
-    html.matchAll(/\bform-data\s*=\s*(['"])([\s\S]*?)\1/gi),
-  );
+  const formDataMatches = Array.from(html.matchAll(/\bform-data\s*=\s*(['"])([\s\S]*?)\1/gi));
 
   for (const [index, formDataMatch] of formDataMatches.entries()) {
     const blockStart = formDataMatch.index ?? 0;
@@ -113,7 +291,7 @@ export function parseTravelFormListHtml(html: string, ticket: string): ApprovalT
     const id = resolveFormId(form, parseDetailIdFromBlock(block));
     if (!id) continue;
 
-    const travelNumber = readFormDetail(form, "差旅单号") || form.Number || "";
+    const travelNumber = resolveTravelFormNumber(form);
     const reason = readFormDetail(form, "出差事由");
     const status = form.Status;
     const statusName =
