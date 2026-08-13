@@ -145,7 +145,7 @@ describe("resolveUrl", () => {
     ).toBe("/__ryx/TmcTouristOrderUrl/Order/Detail");
   });
 
-  it("routes Home-Tourist through legacy gateway proxy", () => {
+  it("resolves Home-Tourist through its configured legacy service URL", () => {
     expect(
       resolveUrl({
         baseUrl: "",
@@ -155,7 +155,21 @@ describe("resolveUrl", () => {
           Urls: { TmcApiHomeUrl: "http://api-tmc.rtesp.com" },
         },
       }),
-    ).toBe("/Home/Proxy");
+    ).toBe("/__ryx/TmcApiHomeUrl/Home/Tourist");
+  });
+
+  it("keeps Home-Tourist direct in business mode", () => {
+    expect(
+      resolveUrl({
+        baseUrl: "",
+        method: "TmcApiHomeUrl-Home-Tourist",
+        mode: "direct",
+        apiConfig: {
+          Token: "t",
+          Urls: { TmcApiHomeUrl: "https://api-tmc.rongtrip.cn" },
+        },
+      }),
+    ).toBe("https://api-tmc.rongtrip.cn/Home/Tourist");
   });
 
   it("routes workflow approval lists through vite dev proxy", () => {

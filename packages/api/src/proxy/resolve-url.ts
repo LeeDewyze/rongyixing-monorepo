@@ -1,15 +1,11 @@
 import type { ApiConfigSetting } from "@ryx/shared-types";
 
 import { AUTH_FLOW_METHODS } from "../methods/auth-flow.js";
-import { TMC_METHODS } from "../methods/tmc.js";
 
 const DEFAULT_PROXY_PATH = "/Home/Proxy";
 
 /** Legacy posts unsigned identity websocket to /Home/Proxy (empty Method in getUrl). */
-const PROXY_ONLY_METHODS = new Set<string>([
-  AUTH_FLOW_METHODS.IDENTITY_WEBSOCKET,
-  TMC_METHODS.HOME_TOURIST,
-]);
+const PROXY_ONLY_METHODS = new Set<string>([AUTH_FLOW_METHODS.IDENTITY_WEBSOCKET]);
 
 const LOGIN_URL_METHODS = new Set<string>([
   AUTH_FLOW_METHODS.LOGIN,
