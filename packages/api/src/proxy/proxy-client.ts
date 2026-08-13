@@ -145,8 +145,7 @@ export function createProxyClient(config: ProxyClientConfig): ProxyClient {
       domain: config.getDomain?.() ?? undefined,
     });
     const url = config.rewriteUrl ? config.rewriteUrl(resolvedUrl) : resolvedUrl;
-    const attachExtraFields =
-      !options.skipSign && isGatewayProxyUrl(resolvedUrl) && Boolean(config.getExtraFields);
+    const attachExtraFields = isGatewayProxyUrl(resolvedUrl) && Boolean(config.getExtraFields);
 
     const req = createRequestEntity(options.method, options.data, {
       getTicket: isLoginMethod(options.method) ? () => "" : config.getTicket,

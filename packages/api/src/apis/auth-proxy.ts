@@ -151,14 +151,17 @@ export function createIdentityApi(proxy: ProxyClient): IdentityApi {
     get(ticket) {
       return proxy.send<IdentityDto>({
         method: AUTH_FLOW_METHODS.IDENTITY_GET,
-        data: ticket ? { Ticket: ticket } : {},
+        data: JSON.stringify({ Ticket: ticket ?? "" }),
         requestFields: ticket ? { Ticket: ticket } : undefined,
+        skipSign: true,
       });
     },
     async check(loginType = H5_LOGIN_TYPE) {
       const response = await proxy.sendResponse<unknown>({
         method: AUTH_FLOW_METHODS.IDENTITY_CHECK,
-        data: { LoginType: loginType },
+        data: JSON.stringify({ LoginType: loginType }),
+        skipSign: true,
+        isShowLoading: true,
       });
       const message = response.Message?.trim();
       return {

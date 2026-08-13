@@ -4,8 +4,12 @@ import { AUTH_FLOW_METHODS } from "../methods/auth-flow.js";
 
 const DEFAULT_PROXY_PATH = "/Home/Proxy";
 
-/** Legacy posts unsigned identity websocket to /Home/Proxy (empty Method in getUrl). */
-const PROXY_ONLY_METHODS = new Set<string>([AUTH_FLOW_METHODS.IDENTITY_WEBSOCKET]);
+/** Legacy identity session requests use /Home/Proxy instead of ApiHomeUrl direct services. */
+const PROXY_ONLY_METHODS = new Set<string>([
+  AUTH_FLOW_METHODS.IDENTITY_GET,
+  AUTH_FLOW_METHODS.IDENTITY_CHECK,
+  AUTH_FLOW_METHODS.IDENTITY_WEBSOCKET,
+]);
 
 const LOGIN_URL_METHODS = new Set<string>([
   AUTH_FLOW_METHODS.LOGIN,

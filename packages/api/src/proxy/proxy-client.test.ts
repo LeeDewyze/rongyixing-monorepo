@@ -87,6 +87,58 @@ describe("createProxyClient proxy mode", () => {
 
     expect(capturedUrls).toEqual(["/Home/Setting", "/__ryx/TmcTouristTrainUrl/Home/Search"]);
   });
+
+  it("posts legacy identity session methods unsigned through /Home/Proxy with root extras", async () => {
+    const captured: Array<{ url: string; body: string }> = [];
+    const client = createProxyClient({
+      baseUrl: "",
+      mode: "direct",
+      apiConfig: {
+        Token: "setting-token",
+        Urls: { ApiHomeUrl: "https://api.rongtrip.cn" },
+      },
+      getTicket: () => "ticket-id",
+      getDomain: () => "rongtrip.cn",
+      getExtraFields: () => ({ root: "www" }),
+      fetchImpl: async (url, init) => {
+        captured.push({ url: String(url), body: String(init?.body ?? "") });
+        return new Response(JSON.stringify(successResponse({ Ticket: "ticket-id" })), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      },
+    });
+
+    await client.send({
+      method: "ApiHomeUrl-Identity-Get",
+      data: JSON.stringify({ Ticket: "ticket-id" }),
+      requestFields: { Ticket: "ticket-id" },
+      skipSign: true,
+    });
+
+    await client.sendResponse({
+      method: "ApiHomeUrl-Identity-Check",
+      data: JSON.stringify({ LoginType: "H5" }),
+      skipSign: true,
+      isShowLoading: true,
+    });
+
+    expect(captured.map((entry) => entry.url)).toEqual([
+      "/Home/Proxy?domain=rongtrip.cn",
+      "/Home/Proxy?domain=rongtrip.cn",
+    ]);
+    expect(captured[0]?.body).toContain("Method=ApiHomeUrl-Identity-Get");
+    expect(captured[0]?.body).toContain('Data={"Ticket":"ticket-id"}');
+    expect(captured[0]?.body).toContain("root=www");
+    expect(captured[0]?.body).not.toContain("Sign=");
+    expect(captured[0]?.body).not.toContain("Token=");
+    expect(captured[1]?.body).toContain("Method=ApiHomeUrl-Identity-Check");
+    expect(captured[1]?.body).toContain('Data={"LoginType":"H5"}');
+    expect(captured[1]?.body).toContain("IsShowLoading=true");
+    expect(captured[1]?.body).toContain("root=www");
+    expect(captured[1]?.body).not.toContain("Sign=");
+    expect(captured[1]?.body).not.toContain("Token=");
+  });
 });
 
 describe("createProxyClient mock mode", () => {

@@ -58,96 +58,14 @@ function clearStartupSession(queryClient: QueryClient): void {
   queryClient.clear();
 }
 
-/**
- * Warm the legacy Staff.Get booking permission before route pages render.
- * This keeps self-book-only pages from briefly taking the normal passenger flow.
- */
-export async function preloadBusinessBookingPermission(
+async function preloadSelfCredentials(
   queryClient: QueryClient,
-  options: BookingPermissionPreloadOptions = {},
+  api: ReturnType<typeof getApi>,
 ): Promise<void> {
-  const ticket = getTicket();
-  if (getApiMode() !== "mock" && !ticket) return;
-
-  if (options.reset) {
-    queryClient.removeQueries({ queryKey: IDENTITY_QUERY_KEY });
-    queryClient.removeQueries({ queryKey: BOOKING_PERMISSION_QUERY_KEY });
-  }
-
-  const silentUnauthorized = Boolean(options.silentUnauthorized);
-  const api = getApi();
-  if (silentUnauthorized) {
-    const [identityResponse, staffResponse] = await Promise.all([
-      api.proxy.sendResponse<IdentityDto>({
-        method: AUTH_FLOW_METHODS.IDENTITY_GET,
-        data: ticket ? { Ticket: ticket } : {},
-      }),
-      api.proxy.sendResponse<StaffDto>({
-        method: TRAVEL_FLOW_METHODS.STAFF_GET,
-        data: undefined,
-        requestFields: { forceRefresh: true },
-      }),
-    ]);
-
-    if (isUnauthorizedResponse(identityResponse) || isUnauthorizedResponse(staffResponse)) {
-      clearStartupSession(queryClient);
-      return;
-    }
-
-    if (!identityResponse.Status || !staffResponse.Status) {
-      console.warn("[ryx] booking permission preload failed", {
-        identity: !identityResponse.Status ? identityResponse : undefined,
-        staff: !staffResponse.Status ? staffResponse : undefined,
-      });
-      return;
-    }
-
-    queryClient.setQueryData(IDENTITY_QUERY_KEY, identityResponse.Data);
-    queryClient.setQueryData(BOOKING_PERMISSION_STAFF_QUERY_KEY, staffResponse.Data);
-
-    const identity = identityResponse.Data;
-    const staff = staffResponse.Data;
-    const accountId = staffAccountId(staff, identity);
-    if (!isSelfBookTypeValue(staff.BookType) || !accountId) return;
-
-    await queryClient
-      .prefetchQuery({
-        queryKey: bookingPermissionSelfCredentialsQueryKey(accountId),
-        queryFn: () => api.passenger.getStaffCredentials({ AccountId: accountId }),
-        staleTime: FIVE_MINUTES,
-      })
-      .catch((error) => {
-        console.warn("[ryx] self passenger credential preload failed", error);
-      });
-    return;
-  }
-
-  const [identityResult, staffResult] = await Promise.allSettled([
-    queryClient.fetchQuery({
-      queryKey: IDENTITY_QUERY_KEY,
-      queryFn: () => api.identity.get(ticket ?? undefined),
-      staleTime: FIVE_MINUTES,
-    }),
-    queryClient.fetchQuery({
-      queryKey: BOOKING_PERMISSION_STAFF_QUERY_KEY,
-      queryFn: () => api.travel.getStaff(),
-      staleTime: FIVE_MINUTES,
-    }),
-  ]);
-
-  if (identityResult.status === "rejected" || staffResult.status === "rejected") {
-    console.warn("[ryx] booking permission preload failed", {
-      identity: identityResult.status === "rejected" ? identityResult.reason : undefined,
-      staff: staffResult.status === "rejected" ? staffResult.reason : undefined,
-    });
-  }
-
-  if (staffResult.status !== "fulfilled") return;
-
-  const identity = identityResult.status === "fulfilled" ? identityResult.value : undefined;
-  const staff = staffResult.value;
+  const staff = queryClient.getQueryData<StaffDto>(BOOKING_PERMISSION_STAFF_QUERY_KEY);
+  const identity = queryClient.getQueryData<IdentityDto>(IDENTITY_QUERY_KEY);
   const accountId = staffAccountId(staff, identity);
-  if (!isSelfBookTypeValue(staff.BookType) || !accountId) return;
+  if (!staff || !isSelfBookTypeValue(staff.BookType) || !accountId) return;
 
   await queryClient
     .prefetchQuery({
@@ -158,4 +76,113 @@ export async function preloadBusinessBookingPermission(
     .catch((error) => {
       console.warn("[ryx] self passenger credential preload failed", error);
     });
+}
+
+export async function preloadBusinessStaffPermission(
+  queryClient: QueryClient,
+  options: BookingPermissionPreloadOptions = {},
+): Promise<void> {
+  const ticket = getTicket();
+  if (getApiMode() !== "mock" && !ticket) return;
+
+  if (options.reset) {
+    queryClient.removeQueries({ queryKey: BOOKING_PERMISSION_QUERY_KEY });
+    queryClient.removeQueries({ queryKey: BOOKING_PERMISSION_STAFF_QUERY_KEY });
+  }
+
+  const silentUnauthorized = Boolean(options.silentUnauthorized);
+  const api = getApi();
+  if (silentUnauthorized) {
+    const staffResponse = await api.proxy.sendResponse<StaffDto>({
+      method: TRAVEL_FLOW_METHODS.STAFF_GET,
+      data: undefined,
+      requestFields: { forceRefresh: true },
+    });
+    if (isUnauthorizedResponse(staffResponse)) {
+      clearStartupSession(queryClient);
+      return;
+    }
+    if (!staffResponse.Status) {
+      console.warn("[ryx] staff permission preload failed", staffResponse);
+      return;
+    }
+    queryClient.setQueryData(BOOKING_PERMISSION_STAFF_QUERY_KEY, staffResponse.Data);
+    await preloadSelfCredentials(queryClient, api);
+    return;
+  }
+
+  try {
+    await queryClient.fetchQuery({
+      queryKey: BOOKING_PERMISSION_STAFF_QUERY_KEY,
+      queryFn: () => api.travel.getStaff(),
+      staleTime: FIVE_MINUTES,
+    });
+    await preloadSelfCredentials(queryClient, api);
+  } catch (error) {
+    console.warn("[ryx] staff permission preload failed", error);
+  }
+}
+
+export async function preloadBusinessIdentityPermission(
+  queryClient: QueryClient,
+  options: BookingPermissionPreloadOptions = {},
+): Promise<void> {
+  const ticket = getTicket();
+  if (getApiMode() !== "mock" && !ticket) return;
+
+  if (options.reset) {
+    queryClient.removeQueries({ queryKey: IDENTITY_QUERY_KEY });
+  }
+
+  const silentUnauthorized = Boolean(options.silentUnauthorized);
+  const api = getApi();
+  if (silentUnauthorized) {
+    const identityResponse = await api.proxy.sendResponse<IdentityDto>({
+      method: AUTH_FLOW_METHODS.IDENTITY_GET,
+      data: JSON.stringify({ Ticket: ticket ?? "" }),
+      skipSign: true,
+    });
+    if (isUnauthorizedResponse(identityResponse)) {
+      clearStartupSession(queryClient);
+      return;
+    }
+    if (!identityResponse.Status) {
+      console.warn("[ryx] identity permission preload failed", identityResponse);
+      return;
+    }
+    queryClient.setQueryData(IDENTITY_QUERY_KEY, identityResponse.Data);
+    await preloadSelfCredentials(queryClient, api);
+    return;
+  }
+
+  try {
+    await queryClient.fetchQuery({
+      queryKey: IDENTITY_QUERY_KEY,
+      queryFn: () => api.identity.get(ticket ?? undefined),
+      staleTime: FIVE_MINUTES,
+    });
+    await preloadSelfCredentials(queryClient, api);
+  } catch (error) {
+    console.warn("[ryx] identity permission preload failed", error);
+  }
+}
+
+/**
+ * Warm the legacy Identity.Get and Staff.Get permissions before route pages render.
+ * This keeps self-book-only pages from briefly taking the normal passenger flow.
+ */
+export async function preloadBusinessBookingPermission(
+  queryClient: QueryClient,
+  options: BookingPermissionPreloadOptions = {},
+): Promise<void> {
+  if (options.reset) {
+    queryClient.removeQueries({ queryKey: IDENTITY_QUERY_KEY });
+    queryClient.removeQueries({ queryKey: BOOKING_PERMISSION_QUERY_KEY });
+    queryClient.removeQueries({ queryKey: BOOKING_PERMISSION_STAFF_QUERY_KEY });
+  }
+
+  await Promise.all([
+    preloadBusinessStaffPermission(queryClient, { ...options, reset: false }),
+    preloadBusinessIdentityPermission(queryClient, { ...options, reset: false }),
+  ]);
 }

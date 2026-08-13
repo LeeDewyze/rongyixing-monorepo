@@ -2,7 +2,10 @@ import { useMutation } from "@tanstack/react-query";
 
 import { getApi } from "@/lib/api";
 import { getApiMode } from "@/lib/env";
-import { preloadBusinessBookingPermission } from "@/lib/booking-permission-preload";
+import {
+  preloadBusinessIdentityPermission,
+  preloadBusinessStaffPermission,
+} from "@/lib/booking-permission-preload";
 import { queryClient } from "@/lib/query";
 import { getDeviceId, getDeviceName } from "@/lib/request-context";
 import { startSessionGuard } from "@/lib/session-guard";
@@ -31,6 +34,15 @@ function loadWebSocketUrlInBackground(mode: string, ticket?: string): void {
   void loadWebSocketUrlAfterLogin(mode, ticket);
 }
 
+function preloadBookingPermissionInBackground(reset = false): void {
+  void preloadBusinessStaffPermission(queryClient, { reset }).catch((error) => {
+    console.warn("[ryx] staff permission preload after login failed", error);
+  });
+  void preloadBusinessIdentityPermission(queryClient, { reset }).catch((error) => {
+    console.warn("[ryx] identity permission preload after login failed", error);
+  });
+}
+
 export function usePasswordLogin() {
   return useMutation({
     mutationFn: async (params: { Name: string; Password: string }) => {
@@ -47,7 +59,7 @@ export function usePasswordLogin() {
       });
 
       saveLoginResult(result);
-      await preloadBusinessBookingPermission(queryClient, { reset: true });
+      preloadBookingPermissionInBackground(true);
       startSessionGuardAfterLogin(mode);
       loadWebSocketUrlInBackground(mode, result.Ticket);
 
@@ -67,7 +79,7 @@ export function useMobileLogin() {
       });
 
       saveLoginResult(result);
-      await preloadBusinessBookingPermission(queryClient, { reset: true });
+      preloadBookingPermissionInBackground(true);
       startSessionGuardAfterLogin(mode);
       loadWebSocketUrlInBackground(mode, result.Ticket);
 
@@ -105,7 +117,7 @@ export function useDingTalkLogin() {
         }
         const finalResult = { ...result, ...identity, Ticket: identity.Ticket };
         saveLoginResult(finalResult);
-        await preloadBusinessBookingPermission(queryClient, { reset: true });
+        preloadBookingPermissionInBackground(true);
         startSessionGuardAfterLogin(mode);
         loadWebSocketUrlInBackground(mode, finalResult.Ticket);
         return finalResult;

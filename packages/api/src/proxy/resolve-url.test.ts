@@ -228,17 +228,33 @@ describe("resolveUrl", () => {
     ).toBe("https://ronglv-feature.rongtrip.cn/Jyx/LoginByRyx");
   });
 
-  it("uses /Home/Proxy for Identity GetWebSocketUrl (Legacy unsigned)", () => {
+  it("uses /Home/Proxy for legacy identity session methods", () => {
+    const apiConfig = {
+      Token: "t",
+      Urls: { ApiHomeUrl: "http://api.rtesp.com" },
+    };
+
+    for (const method of [
+      "ApiHomeUrl-Identity-Get",
+      "ApiHomeUrl-Identity-Check",
+      "ApiHomeUrl-Identity-GetWebSocketUrl",
+    ]) {
+      expect(
+        resolveUrl({
+          baseUrl: "",
+          method,
+          apiConfig,
+        }),
+      ).toBe("/Home/Proxy");
+    }
+
     expect(
       resolveUrl({
-        baseUrl: "",
+        baseUrl: "https://app.rongtrip.cn",
         method: "ApiHomeUrl-Identity-GetWebSocketUrl",
-        apiConfig: {
-          Token: "t",
-          Urls: { ApiHomeUrl: "http://api.rtesp.com" },
-        },
+        apiConfig,
       }),
-    ).toBe("/Home/Proxy");
+    ).toBe("https://app.rongtrip.cn/Home/Proxy");
   });
 
   it("uses explicit url when provided", () => {
