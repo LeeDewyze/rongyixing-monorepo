@@ -29,7 +29,7 @@ async function main() {
       <QueryClientProvider client={queryClient}>
         <Suspense
           fallback={
-            <div className="flex min-h-dvh items-center justify-center bg-[#F5F6F9] text-sm text-[#666666]">
+            <div className="ryx-viewport-min flex items-center justify-center bg-[#F5F6F9] text-sm text-[#666666]">
               加载中…
             </div>
           }

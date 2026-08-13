@@ -2,6 +2,39 @@
 
 pnpm workspace monorepo for the RongYiXing platform. Three client surfaces share the same backend APIs and design system while keeping UI tailored per device.
 
+## Legacy Reference Project
+
+The legacy RongYiXing application is located at:
+
+```text
+/Users/jiangjiankang/work/self/rongyixing/legacy/beeantmobile
+```
+
+The RongYiXing source is under `projects/ryx`. Use this project as the reference
+for existing business behavior, API methods, request payloads, response shapes,
+and migration edge cases. The legacy project is an Angular/Ionic/Capacitor
+application and is reference-only: do not copy its stack, large services, or UI
+implementation directly into this monorepo.
+
+## Why This Monorepo Exists
+
+`rongyixing-monorepo` is the modernization and incremental migration project for
+the legacy RongYiXing application. It exists to:
+
+- replace the aging Angular/Ionic client implementation with React, TypeScript,
+  and a maintainable workspace structure;
+- support separate mobile H5 and Pad/PC Web experiences while sharing API
+  clients, DTOs, UI primitives, and business rules;
+- migrate the legacy product page by page instead of rewriting all legacy
+  methods at once;
+- preserve compatibility with the existing backend Proxy/RPC APIs while
+  providing typed API adapters, mock handlers, tests, and environment switching;
+- make releases and deployments for the different client surfaces consistent
+  and repeatable.
+
+The migration target is behavioral and contractual parity with the legacy
+application, not a one-to-one port of its Angular/Ionic code.
+
 ## Client Surfaces
 
 | Surface   | Package    | Port | Description                                       |

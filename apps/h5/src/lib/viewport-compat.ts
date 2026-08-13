@@ -43,5 +43,4 @@ export function setupViewportCompatibilityVars() {
   window.addEventListener("resize", scheduleWrite, { passive: true });
   window.addEventListener("orientationchange", scheduleWrite, { passive: true });
   window.visualViewport?.addEventListener("resize", scheduleWrite, { passive: true });
-  window.visualViewport?.addEventListener("scroll", scheduleWrite, { passive: true });
 }

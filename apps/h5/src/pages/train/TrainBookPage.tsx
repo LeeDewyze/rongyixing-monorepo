@@ -567,10 +567,10 @@ export function TrainBookPage() {
 
   if (initBook.isLoading) {
     return (
-      <div className="relative h-dvh overflow-hidden" style={TRAIN_BOOK_PAGE_BACKGROUND}>
+      <div className="ryx-viewport-h relative overflow-hidden" style={TRAIN_BOOK_PAGE_BACKGROUND}>
         <TrainBookHeader ref={headerRef} title={isExchangeBook ? "确认信息" : undefined} />
         <div
-          className="absolute inset-x-0 bottom-0 overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="absolute inset-x-0 bottom-0 min-h-0 overflow-y-auto touch-pan-y [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           style={{ top: headerHeight }}
         >
           <p className="p-6 text-center text-sm text-[#999999]">加载预订信息…</p>
@@ -581,10 +581,10 @@ export function TrainBookPage() {
 
   if (initBook.error && bookPassengers.length > 0) {
     return (
-      <div className="relative h-dvh overflow-hidden" style={TRAIN_BOOK_PAGE_BACKGROUND}>
+      <div className="ryx-viewport-h relative overflow-hidden" style={TRAIN_BOOK_PAGE_BACKGROUND}>
         <TrainBookHeader ref={headerRef} title={isExchangeBook ? "确认信息" : undefined} />
         <div
-          className="absolute inset-x-0 bottom-0 overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="absolute inset-x-0 bottom-0 min-h-0 overflow-y-auto touch-pan-y [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           style={{ top: headerHeight }}
         >
           <p className="p-6 text-center text-sm text-[#ff4d4f]">
@@ -607,12 +607,12 @@ export function TrainBookPage() {
         )?.notifyLanguage ?? FLIGHT_NOTIFY_LANGUAGE_DEFAULT) as FlightNotifyLanguage);
 
   return (
-    <div className="relative h-dvh overflow-hidden" style={TRAIN_BOOK_PAGE_BACKGROUND}>
+    <div className="ryx-viewport-h relative overflow-hidden" style={TRAIN_BOOK_PAGE_BACKGROUND}>
       <TrainBookHeader ref={headerRef} title={isExchangeBook ? "确认信息" : undefined} />
 
       <div
         ref={contentRef}
-        className="absolute inset-x-0 bottom-0 overflow-y-auto overscroll-contain pb-[calc(8.5rem+env(safe-area-inset-bottom))] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="absolute inset-x-0 bottom-0 min-h-0 overflow-y-auto overscroll-contain touch-pan-y pb-[calc(8.5rem+env(safe-area-inset-bottom))] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         style={{ top: headerHeight }}
       >
         <TrainBookSummary selection={selection} />

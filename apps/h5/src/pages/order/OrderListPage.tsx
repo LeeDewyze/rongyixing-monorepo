@@ -555,14 +555,6 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
   }, [embeddedInTab]);
 
   useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, []);
-
-  useEffect(() => {
     if (!toastMessage) {
       return;
     }
@@ -572,7 +564,7 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
 
   const rootClassName = embeddedInTab
     ? "relative h-full min-h-0 overflow-hidden"
-    : "relative h-dvh overflow-hidden bg-[#F5F6F9]";
+    : "ryx-viewport-h relative overflow-hidden bg-[#F5F6F9]";
 
   return (
     <div className={rootClassName}>
@@ -638,7 +630,7 @@ export function OrderListPage({ embeddedInTab = false }: OrderListPageProps) {
 
       <div
         ref={handleScrollRoot}
-        className="h-full overflow-y-auto overscroll-y-contain [-webkit-overflow-scrolling:touch]"
+        className="h-full min-h-0 overflow-y-auto overscroll-y-contain touch-pan-y [-webkit-overflow-scrolling:touch]"
         style={{ paddingTop: headerHeight }}
       >
         <div

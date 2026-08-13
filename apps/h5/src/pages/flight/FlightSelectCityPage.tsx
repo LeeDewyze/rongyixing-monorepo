@@ -67,7 +67,7 @@ export function FlightSelectCityPage() {
   };
 
   return (
-    <div className="flex h-dvh flex-col overflow-hidden bg-[#F5F6F8] text-foreground">
+    <div className="ryx-viewport-h flex flex-col overflow-hidden bg-[#F5F6F8] text-foreground">
       <header className="shrink-0 bg-gradient-to-b from-[#D6E8FF] to-[#F5F6F8] px-4 pb-2 pt-[max(0.75rem,env(safe-area-inset-top))]">
         <div className="flex min-h-11 items-center gap-2">
           <button
@@ -97,7 +97,7 @@ export function FlightSelectCityPage() {
       </div>
 
       <div className="relative min-h-0 flex-1 overflow-hidden">
-        <div ref={scrollRef} className="absolute inset-0 overflow-y-auto pb-6 pr-8">
+        <div ref={scrollRef} className="absolute inset-0 overflow-y-auto touch-pan-y pb-6 pr-8">
           {isLoading ? (
             <p className="px-4 py-8 text-center text-sm text-[#9CA3AF]">加载中…</p>
           ) : null}

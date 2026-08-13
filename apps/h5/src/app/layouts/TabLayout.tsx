@@ -51,12 +51,12 @@ export function TabLayout() {
   return (
     <div
       className={`flex flex-col bg-[#F5F6F9] text-foreground ${
-        lockMainScroll ? "h-dvh overflow-hidden" : "min-h-dvh"
+        lockMainScroll ? "ryx-viewport-h overflow-hidden" : "ryx-viewport-min"
       }`}
     >
       <main
         className={`flex min-h-0 flex-1 flex-col pb-[calc(3.5rem+env(safe-area-inset-bottom))] ${
-          lockMainScroll ? "overflow-hidden" : "overflow-y-auto"
+          lockMainScroll ? "overflow-hidden" : "overflow-y-auto touch-pan-y"
         }`}
       >
         <Outlet />

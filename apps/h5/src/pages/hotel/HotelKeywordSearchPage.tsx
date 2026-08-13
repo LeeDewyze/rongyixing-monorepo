@@ -185,7 +185,7 @@ export function HotelKeywordSearchPage() {
 
   return (
     <div
-      className={`min-h-dvh ${HOTEL_KEYWORD_FONT}`}
+      className={`ryx-viewport-min ${HOTEL_KEYWORD_FONT}`}
       style={{ background: "var(--brand-form-header-gradient)" }}
     >
       <div

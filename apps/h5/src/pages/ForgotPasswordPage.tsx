@@ -252,7 +252,7 @@ export function ForgotPasswordPage() {
 
   return (
     <div
-      className="flex min-h-dvh flex-col bg-[#F5F6F9]"
+      className="ryx-viewport-min flex flex-col bg-[#F5F6F9]"
       style={{ background: "var(--brand-form-header-gradient)" }}
     >
       <header className="shrink-0 pt-[env(safe-area-inset-top)]">

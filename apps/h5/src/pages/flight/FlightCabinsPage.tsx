@@ -517,7 +517,7 @@ export function FlightCabinsPage() {
 
   return (
     <div
-      className="relative h-dvh overflow-hidden"
+      className="ryx-viewport-h relative overflow-hidden"
       style={{ background: "var(--brand-form-header-gradient)" }}
     >
       <div
@@ -536,7 +536,7 @@ export function FlightCabinsPage() {
       </div>
 
       <div
-        className="absolute inset-x-0 bottom-0 overflow-y-auto overscroll-y-contain pb-[max(1rem,env(safe-area-inset-bottom))] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="absolute inset-x-0 bottom-0 min-h-0 overflow-y-auto overscroll-y-contain touch-pan-y pb-[max(1rem,env(safe-area-inset-bottom))] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         style={{ top: headerHeight }}
       >
         <FlightCabinsSummary segment={segment} detailSegments={detail?.FlightSegments} />

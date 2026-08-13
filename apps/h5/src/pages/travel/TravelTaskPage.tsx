@@ -48,7 +48,7 @@ export function TravelTaskPage() {
   }
 
   return (
-    <div className="relative flex h-dvh flex-col overflow-hidden bg-white [margin-bottom:calc(-1*max(0.5rem,env(safe-area-inset-bottom)))]">
+    <div className="ryx-viewport-h relative flex flex-col overflow-hidden bg-white [margin-bottom:calc(-1*max(0.5rem,env(safe-area-inset-bottom)))]">
       <div className="shrink-0 bg-gradient-to-b from-brand-header-start to-brand-header-end pt-[env(safe-area-inset-top)]">
         <div className="flex items-center px-1 pb-2 pt-1">
           <button

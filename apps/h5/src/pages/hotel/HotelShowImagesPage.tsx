@@ -83,7 +83,7 @@ export function HotelShowImagesPage() {
   }
 
   return (
-    <div className={`fixed inset-0 z-50 flex min-h-dvh flex-col bg-black ${HOTEL_DETAIL_FONT}`}>
+    <div className={`ryx-viewport-min fixed inset-0 z-50 flex flex-col bg-black ${HOTEL_DETAIL_FONT}`}>
       <header
         className="shrink-0 pt-[env(safe-area-inset-top)]"
         style={{ background: HOTEL_HEADER_GRADIENT }}

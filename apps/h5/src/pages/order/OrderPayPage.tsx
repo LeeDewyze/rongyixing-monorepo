@@ -190,7 +190,7 @@ export function OrderPayPage({
 
   return (
     <div
-      className="relative h-dvh overflow-hidden"
+      className="ryx-viewport-h relative overflow-hidden"
       style={{ background: "var(--brand-form-header-gradient)" }}
     >
       <div
@@ -225,7 +225,7 @@ export function OrderPayPage({
       </div>
 
       <div className="flex h-full flex-col" style={{ paddingTop: headerHeight }}>
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-4 pb-4 pt-3 [-webkit-overflow-scrolling:touch]">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain touch-pan-y px-4 pb-4 pt-3 [-webkit-overflow-scrolling:touch]">
           <section className="mb-4 rounded-2xl bg-white/78 px-4 py-4 shadow-sm backdrop-blur">
             {subtitle ? (
               <p className="truncate text-[15px] leading-5 text-brand-title/65">{subtitle}</p>

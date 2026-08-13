@@ -392,12 +392,12 @@ export function OrderFlightDetailPage() {
     exchangePending;
 
   return (
-    <div className="relative h-dvh overflow-hidden" style={ORDER_FLIGHT_DETAIL_BACKGROUND}>
+    <div className="ryx-viewport-h relative overflow-hidden" style={ORDER_FLIGHT_DETAIL_BACKGROUND}>
       <HotelOrderDetailHeader ref={headerRef} onBack={handleBack} variant="form" />
 
       <div
         ref={contentRef}
-        className="absolute inset-x-0 bottom-0 overflow-y-auto overscroll-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="absolute inset-x-0 bottom-0 min-h-0 overflow-y-auto overscroll-contain touch-pan-y [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         style={{ top: headerHeight }}
       >
         {isLoading ? (

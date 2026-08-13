@@ -545,7 +545,7 @@ export function TravelApplyPage() {
 
   return (
     <div
-      className="relative h-dvh overflow-hidden"
+      className="ryx-viewport-h relative overflow-hidden"
       style={{ background: "var(--brand-form-header-gradient)" }}
     >
       <div
@@ -572,7 +572,7 @@ export function TravelApplyPage() {
       </div>
 
       <div
-        className="h-full overflow-y-auto overscroll-y-contain [-webkit-overflow-scrolling:touch]"
+        className="h-full min-h-0 overflow-y-auto overscroll-y-contain touch-pan-y [-webkit-overflow-scrolling:touch]"
         style={{ paddingTop: headerHeight }}
       >
         <div className="relative -mt-2 pb-10">

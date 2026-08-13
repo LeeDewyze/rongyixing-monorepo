@@ -142,7 +142,7 @@ export function CredentialListPage() {
 
   return (
     <div
-      className="relative h-dvh overflow-hidden"
+      className="ryx-viewport-h relative overflow-hidden"
       style={{ background: "var(--brand-form-header-gradient)" }}
     >
       <div
@@ -198,7 +198,7 @@ export function CredentialListPage() {
       </div>
 
       <div className="flex h-full flex-col" style={{ paddingTop: headerHeight }}>
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain pb-4 pt-3 [-webkit-overflow-scrolling:touch]">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain touch-pan-y pb-4 pt-3 [-webkit-overflow-scrolling:touch]">
           {credentialQuery.isLoading ? (
             <p className="py-10 text-center text-sm text-[#999999]">加载中…</p>
           ) : null}

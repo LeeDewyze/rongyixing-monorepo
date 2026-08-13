@@ -378,18 +378,18 @@ export function PasswordLoginPage() {
         src={passwordBg}
         alt=""
         className="fixed inset-0 h-full w-full object-cover object-bottom"
-        style={{ height: "var(--ryx-viewport-height, 100dvh)" }}
+        style={{ height: "var(--ryx-viewport-height, 100vh)" }}
         aria-hidden
       />
       <div
         className="fixed inset-0"
-        style={{ height: "var(--ryx-viewport-height, 100dvh)", background: overlay.background }}
+        style={{ height: "var(--ryx-viewport-height, 100vh)", background: overlay.background }}
         aria-hidden
       />
 
       <div
-        className="relative z-10 flex min-h-dvh w-full flex-col"
-        style={{ minHeight: "var(--ryx-viewport-height, 100dvh)", fontFamily: LOGIN_FONT }}
+        className="ryx-viewport-min relative z-10 flex w-full flex-col"
+        style={{ minHeight: "var(--ryx-viewport-height, 100vh)", fontFamily: LOGIN_FONT }}
       >
         <div
           className="flex flex-1 flex-col overflow-y-auto overscroll-y-contain"

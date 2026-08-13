@@ -351,24 +351,6 @@ export function FlightListPage() {
     scrollContainerRef.current?.scrollTo({ top: 0, behavior: "auto" });
   }, [listParams.Date, filterApplied, activeTab, priceLowToHigh, timeEarlyToLate]);
 
-  useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    const main = document.querySelector("main");
-    const previousMainOverflow = main instanceof HTMLElement ? main.style.overflow : "";
-    if (main instanceof HTMLElement) {
-      main.style.overflow = "hidden";
-    }
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      if (main instanceof HTMLElement) {
-        main.style.overflow = previousMainOverflow;
-      }
-    };
-  }, []);
-
   if (!hasListQuery) return null;
 
   function handleDateSelect(date: string) {
@@ -463,7 +445,7 @@ export function FlightListPage() {
   }
 
   return (
-    <div className="relative h-dvh overflow-hidden bg-[#F5F6F9]">
+    <div className="ryx-viewport-h relative overflow-hidden bg-[#F5F6F9]">
       <div ref={headerRef} className="fixed inset-x-0 top-0 z-50 w-full">
         <FlightListHeader
           fromName={fromName}
@@ -482,7 +464,7 @@ export function FlightListPage() {
 
       <div
         ref={scrollContainerRef}
-        className={`h-full overscroll-y-contain [-webkit-overflow-scrolling:touch] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+        className={`h-full min-h-0 overscroll-y-contain touch-pan-y [-webkit-overflow-scrolling:touch] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
           filterOpen || modifyOpen ? "overflow-hidden" : "overflow-y-auto"
         }`}
         style={{ paddingTop: headerHeight }}

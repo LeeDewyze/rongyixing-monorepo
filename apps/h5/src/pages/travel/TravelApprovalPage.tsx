@@ -284,14 +284,6 @@ export function TravelApprovalPage() {
     return () => observer.disconnect();
   }, []);
 
-  useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, []);
-
   const isLoading = isListPending;
   const error = activeQuery.error;
   const emptyMessage = tab === "mine" ? "暂无申请" : tab === "pending" ? "暂无审批" : "暂无内容";
@@ -315,7 +307,7 @@ export function TravelApprovalPage() {
 
   return (
     <div
-      className="relative h-dvh overflow-hidden"
+      className="ryx-viewport-h relative overflow-hidden"
       style={{ background: "var(--brand-form-header-gradient)" }}
     >
       <div
@@ -375,7 +367,7 @@ export function TravelApprovalPage() {
       </div>
 
       <div
-        className="h-full overflow-y-auto overscroll-y-contain [-webkit-overflow-scrolling:touch]"
+        className="h-full min-h-0 overflow-y-auto overscroll-y-contain touch-pan-y [-webkit-overflow-scrolling:touch]"
         style={{ paddingTop: headerHeight }}
       >
         <ApprovalTaskList

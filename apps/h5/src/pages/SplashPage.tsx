@@ -18,10 +18,10 @@ export function SplashPage() {
   }, [navigate]);
 
   return (
-    <div className="flex min-h-dvh justify-center bg-white">
+    <div className="ryx-viewport-min flex justify-center bg-white">
       <div
         className="relative w-full max-w-[375px] bg-white @container"
-        style={{ height: "100dvh" }}
+        style={{ height: "var(--ryx-viewport-height, 100vh)" }}
       >
         <img
           src={splashLogo}

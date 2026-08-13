@@ -94,7 +94,7 @@
   --brand-form-header-gradient: linear-gradient(180deg, var(--brand-form-header-start) 0px, var(--brand-form-header-end) 200px);
 
   --ryx-viewport-width: 100vw;
-  --ryx-viewport-height: 100dvh;
+  --ryx-viewport-height: 100vh;
   --ryx-design-width: min(100vw, 480px);
   --ryx-design-vw: 1vw;
   --ryx-design-scale: 1;
@@ -137,10 +137,29 @@
   html,
   body,
   #root {
-    min-height: var(--ryx-viewport-height, 100dvh);
+    min-height: var(--ryx-viewport-height, 100vh);
   }
   html::-webkit-scrollbar,
   body::-webkit-scrollbar {
     display: none;
+  }
+}
+
+@layer utilities {
+  .ryx-viewport-min {
+    min-height: var(--ryx-viewport-height, 100vh);
+  }
+
+  .ryx-viewport-h {
+    height: var(--ryx-viewport-height, 100vh);
+    min-height: var(--ryx-viewport-height, 100vh);
+  }
+
+  .ryx-scroll-y {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
   }
 }

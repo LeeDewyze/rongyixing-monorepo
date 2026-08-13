@@ -393,15 +393,15 @@ export function HotelBookPage() {
   }
 
   if (redirecting || !selection) {
-    return <div className="relative h-dvh overflow-hidden" style={HOTEL_BOOK_PAGE_BACKGROUND} />;
+    return <div className="ryx-viewport-h relative overflow-hidden" style={HOTEL_BOOK_PAGE_BACKGROUND} />;
   }
 
   if (initBook.isLoading) {
     return (
-      <div className="relative h-dvh overflow-hidden" style={HOTEL_BOOK_PAGE_BACKGROUND}>
+      <div className="ryx-viewport-h relative overflow-hidden" style={HOTEL_BOOK_PAGE_BACKGROUND}>
         <HotelBookHeader ref={headerRef} onBack={handleBack} />
         <div
-          className="absolute inset-x-0 bottom-0 overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="absolute inset-x-0 bottom-0 min-h-0 overflow-y-auto touch-pan-y [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           style={{ top: headerHeight }}
         >
           <p className="p-6 text-center text-sm text-[#999999]">加载预订信息…</p>
@@ -412,10 +412,10 @@ export function HotelBookPage() {
 
   if (initBook.error) {
     return (
-      <div className="relative h-dvh overflow-hidden" style={HOTEL_BOOK_PAGE_BACKGROUND}>
+      <div className="ryx-viewport-h relative overflow-hidden" style={HOTEL_BOOK_PAGE_BACKGROUND}>
         <HotelBookHeader ref={headerRef} onBack={handleBack} />
         <div
-          className="absolute inset-x-0 bottom-0 overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="absolute inset-x-0 bottom-0 min-h-0 overflow-y-auto touch-pan-y [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           style={{ top: headerHeight }}
         >
           <p className="p-6 text-center text-sm text-[#ff4d4f]">{formatApiError(initBook.error)}</p>
@@ -428,12 +428,12 @@ export function HotelBookPage() {
   const isSubmittingOrChecking = submitBook.isPending || checkingPay;
 
   return (
-    <div className="relative h-dvh overflow-hidden" style={HOTEL_BOOK_PAGE_BACKGROUND}>
+    <div className="ryx-viewport-h relative overflow-hidden" style={HOTEL_BOOK_PAGE_BACKGROUND}>
       <HotelBookHeader ref={headerRef} onBack={handleBack} />
 
       <div
         ref={contentRef}
-        className="absolute inset-x-0 bottom-0 overflow-y-auto overscroll-contain pb-[calc(8.5rem+env(safe-area-inset-bottom))] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="absolute inset-x-0 bottom-0 min-h-0 overflow-y-auto overscroll-contain touch-pan-y pb-[calc(8.5rem+env(safe-area-inset-bottom))] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         style={{ top: headerHeight }}
       >
         <HotelBookSummaryCard

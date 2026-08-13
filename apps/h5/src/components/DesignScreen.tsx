@@ -10,7 +10,7 @@ export function DesignScreen({ children }: DesignScreenProps) {
     <div
       className="relative mx-auto w-full bg-[#0a1628] @container"
       style={{
-        minHeight: "var(--ryx-viewport-height, 100dvh)",
+        minHeight: "var(--ryx-viewport-height, 100vh)",
         maxWidth: "var(--ryx-design-width, 480px)",
         containerType: "inline-size",
       }}

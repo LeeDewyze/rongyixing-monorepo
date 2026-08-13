@@ -65,7 +65,7 @@ export function LegalDocumentSheet({ open, title, url, onClose }: LegalDocumentS
 
   return (
     <div className="fixed inset-0 z-[60] flex flex-col">
-      <div className="legal-document-sheet-panel flex min-h-dvh flex-col bg-[#F5F6F9]">
+      <div className="legal-document-sheet-panel ryx-viewport-min flex flex-col bg-[#F5F6F9]">
         <div className="shrink-0 bg-gradient-to-b from-brand-header-start to-brand-header-end pt-[env(safe-area-inset-top)]">
           <div className="flex items-center px-1 pb-2 pt-1">
             <button

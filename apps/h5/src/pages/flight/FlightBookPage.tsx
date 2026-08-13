@@ -674,7 +674,7 @@ export function FlightBookPage() {
   }
 
   return (
-    <div className="relative h-dvh overflow-hidden" style={FLIGHT_BOOK_PAGE_BACKGROUND}>
+    <div className="ryx-viewport-h relative overflow-hidden" style={FLIGHT_BOOK_PAGE_BACKGROUND}>
       <div
         ref={headerRef}
         className="fixed inset-x-0 top-0 z-30 mx-auto w-full max-w-lg overflow-hidden"
@@ -687,7 +687,7 @@ export function FlightBookPage() {
       </div>
 
       <div
-        className="absolute inset-x-0 bottom-0 overflow-y-auto overscroll-contain pb-[calc(8.75rem+env(safe-area-inset-bottom))] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="absolute inset-x-0 bottom-0 min-h-0 overflow-y-auto overscroll-contain touch-pan-y pb-[calc(8.75rem+env(safe-area-inset-bottom))] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         style={{ top: headerHeight }}
       >
         <FlightBookSummary selection={selection} onShowRules={() => setRulesOpen(true)} />

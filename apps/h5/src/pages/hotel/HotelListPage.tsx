@@ -321,24 +321,6 @@ export function HotelListPage() {
     scrollContainerRef.current?.scrollTo({ top: 0, behavior: "auto" });
   }, [cityCode, checkIn, checkOut, keyword, keywordType, hotelId, lat, lng, listFilterKey]);
 
-  useEffect(() => {
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    const main = document.querySelector("main");
-    const previousMainOverflow = main instanceof HTMLElement ? main.style.overflow : "";
-    if (main instanceof HTMLElement) {
-      main.style.overflow = "hidden";
-    }
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      if (main instanceof HTMLElement) {
-        main.style.overflow = previousMainOverflow;
-      }
-    };
-  }, []);
-
   const listParams = useMemo(() => {
     if (!listReady || !resolvedCity) return {};
     const baseParams = {
@@ -548,7 +530,7 @@ export function HotelListPage() {
 
   return (
     <div
-      className="relative h-dvh overflow-hidden"
+      className="ryx-viewport-h relative overflow-hidden"
       style={{ background: "var(--brand-form-header-gradient)" }}
     >
       <div
@@ -572,7 +554,7 @@ export function HotelListPage() {
 
       <div
         ref={handleScrollRoot}
-        className="h-full overflow-y-auto overscroll-y-contain [-webkit-overflow-scrolling:touch]"
+        className="h-full min-h-0 overflow-y-auto overscroll-y-contain touch-pan-y [-webkit-overflow-scrolling:touch]"
         style={{ paddingTop: headerHeight }}
       >
         <div
