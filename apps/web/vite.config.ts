@@ -1,5 +1,4 @@
 import path from "node:path";
-import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { readFileSync } from "node:fs";
 import tailwindcss from "@tailwindcss/vite";
@@ -17,15 +16,7 @@ function resolveAppVersion(): string {
   const envVersion = process.env.VITE_APP_VERSION?.trim();
   if (envVersion) return envVersion;
 
-  try {
-    return execSync("git rev-parse --short HEAD", {
-      cwd: __dirname,
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "ignore"],
-    }).trim();
-  } catch {
-    return appPackage.version ?? "0.0.0";
-  }
+  return appPackage.version ?? "0.0.0";
 }
 
 function normalizeViteBase(value: string | undefined): string {
