@@ -11,7 +11,7 @@ function isSameOriginApiBase(value: string): boolean {
 }
 
 export function getAppName(): string {
-  return import.meta.env.VITE_APP_NAME ?? "RongYiXing H5";
+  return import.meta.env.VITE_APP_NAME ?? "融易行";
 }
 
 export function getAppId(): string {

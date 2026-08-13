@@ -6,13 +6,15 @@ import { designHeightPercent, designMobileVw } from "@/config/design";
 import { SPLASH_SLOGAN } from "@/config/splash";
 import { isAuthenticated } from "@/lib/auth";
 
+const SPLASH_DURATION_MS = 1500;
+
 export function SplashPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
       navigate(isAuthenticated() ? "/home" : "/login/password", { replace: true });
-    }, 2500);
+    }, SPLASH_DURATION_MS);
 
     return () => window.clearTimeout(timer);
   }, [navigate]);

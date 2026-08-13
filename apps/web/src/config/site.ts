@@ -4,6 +4,6 @@ export const BREAKPOINTS = {
 } as const;
 
 export const SITE = {
-  name: "RongYiXing Web",
+  name: "融易行",
   description: "Pad and PC web application for RongYiXing",
 } as const;

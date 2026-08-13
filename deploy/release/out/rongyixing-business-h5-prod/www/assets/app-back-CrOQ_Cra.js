@@ -1,0 +1,1 @@
+import{w as s,m as n}from"./index-89UnKt_9.js";function u(){const t=s();return n.useCallback(()=>{t("/home")},[t])}function i(t="/home"){const e=s();return n.useCallback(()=>{var o;const a=(o=window.history.state)==null?void 0:o.idx;if(typeof a=="number"&&a>0){e(-1);return}e(t)},[e,t])}export{i as a,u};
