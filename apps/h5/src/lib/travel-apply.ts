@@ -335,6 +335,43 @@ function normalizeDetailDate(value: string): string {
   return trimmed.slice(0, 10);
 }
 
+function stripHtmlTags(value: string): string {
+  return value.replace(/<[^>]+>/g, "").trim();
+}
+
+function parseDetailFieldsFromBlock(block: string): Record<string, string> {
+  const fields: Record<string, string> = {};
+
+  const desktopFieldRe =
+    /class="element-tip">([^<]+)<\/div>\s*<div class="element-content"[^>]*>\s*([\s\S]*?)<\/div>/g;
+  let match: RegExpExecArray | null;
+  while ((match = desktopFieldRe.exec(block)) !== null) {
+    const label = decodeHtmlEntities(match[1].trim());
+    fields[label] = decodeHtmlEntities(stripHtmlTags(match[2]));
+  }
+  if (Object.keys(fields).length > 0) return fields;
+
+  const mobileRowRe = /<tr>\s*<td>([^<]*)<\/td>\s*<td([^>]*)>([\s\S]*?)<\/td>\s*<\/tr>/gi;
+  while ((match = mobileRowRe.exec(block)) !== null) {
+    const nameMatch = match[2].match(/detailCtrlName="([^"]*)"/i);
+    const label = decodeHtmlEntities((nameMatch?.[1] ?? match[1]).trim());
+    const value = decodeHtmlEntities(stripHtmlTags(match[3]));
+    if (label) fields[label] = value;
+  }
+
+  return fields;
+}
+
+function pushParsedDetailSection(
+  title: string,
+  fields: Record<string, string>,
+  accounts: Record<string, string>[],
+  details: Record<string, string>[],
+): void {
+  if (title.startsWith("TravelAccount")) accounts.push(fields);
+  if (title.startsWith("TravelDetail")) details.push(fields);
+}
+
 /** Legacy Form/Detail HTML — slave rows are rendered but not returned by Form/Get JSON. */
 export function parseTravelFormDetailHtml(html: string): {
   accounts: Record<string, string>[];
@@ -342,21 +379,29 @@ export function parseTravelFormDetailHtml(html: string): {
 } {
   const accounts: Record<string, string>[] = [];
   const details: Record<string, string>[] = [];
-  const blocks = html.split(/<span class="formDetail-title">/i).slice(1);
 
-  for (const block of blocks) {
-    const titleMatch = block.match(/^([^<]+)</);
-    if (!titleMatch) continue;
-    const title = decodeHtmlEntities(titleMatch[1].trim());
-    const fields: Record<string, string> = {};
-    const fieldRe =
-      /class="element-tip">([^<]+)<\/div>\s*<div class="element-content"[^>]*>\s*([\s\S]*?)<\/div>/g;
-    let match: RegExpExecArray | null;
-    while ((match = fieldRe.exec(block)) !== null) {
-      fields[decodeHtmlEntities(match[1].trim())] = decodeHtmlEntities(match[2].trim());
+  if (/<span class="formDetail-title">\s*Travel(?:Account|Detail)/i.test(html)) {
+    const blocks = html.split(/<span class="formDetail-title">/i).slice(1);
+    for (const block of blocks) {
+      const titleMatch = block.match(/^([^<]+)</);
+      if (!titleMatch) continue;
+      const title = decodeHtmlEntities(titleMatch[1].trim());
+      pushParsedDetailSection(title, parseDetailFieldsFromBlock(block), accounts, details);
     }
-    if (title.startsWith("TravelAccount")) accounts.push(fields);
-    if (title.startsWith("TravelDetail")) details.push(fields);
+    if (accounts.length > 0 || details.length > 0) {
+      return { accounts, details };
+    }
+  }
+
+  const mobileSectionRe =
+    /<div[^>]*detailCtrlType="(TravelAccount|TravelDetail)"[^>]*>([\s\S]*?)(?=<div[^>]*detailCtrlType="Travel|$)/gi;
+  let sectionMatch: RegExpExecArray | null;
+  while ((sectionMatch = mobileSectionRe.exec(html)) !== null) {
+    const type = sectionMatch[1];
+    const block = sectionMatch[2];
+    const numMatch = block.match(/Travel(?:Account|Detail)(\d+)/i);
+    const title = numMatch ? `${type}${numMatch[1]}` : type;
+    pushParsedDetailSection(title, parseDetailFieldsFromBlock(block), accounts, details);
   }
 
   return { accounts, details };

@@ -371,6 +371,58 @@ describe("travel form detail html parser", () => {
     });
   });
 
+  it("parses slave rows from mobile Form/Detail html", () => {
+    const html = `
+      <div class="form-content detials" detailCtrlType="TravelAccount">
+        <div class="formdetaildiv">
+          <h3><span class="title-icon"></span>TravelAccount1</h3>
+          <table class="formdetail-table">
+            <tr>
+              <td>&#x51FA;&#x5DEE;&#x4EBA;</td>
+              <td detailCtrlTag="FormTravelAccount" detailCtrlName="&#x51FA;&#x5DEE;&#x4EBA;">1796564-张海肖</td>
+            </tr>
+            <tr>
+              <td>PolicyId </td>
+              <td detailCtrlTag="FormTravelAccount" detailCtrlName="PolicyId"></td>
+            </tr>
+          </table>
+        </div>
+      </div>
+      <div class="form-content detials" detailCtrlType="TravelDetail">
+        <div class="formdetaildiv">
+          <h3><span class="title-icon"></span>TravelDetail1</h3>
+          <table class="formdetail-table">
+            <tr>
+              <td>&#x51FA;&#x53D1;&#x57CE;&#x5E02;</td>
+              <td detailCtrlTag="FormTravelDetail" detailCtrlName="&#x51FA;&#x53D1;&#x57CE;&#x5E02;">北京</td>
+            </tr>
+            <tr>
+              <td>&#x76EE;&#x7684;&#x57CE;&#x5E02;</td>
+              <td detailCtrlTag="FormTravelDetail" detailCtrlName="&#x76EE;&#x7684;&#x57CE;&#x5E02;">上海</td>
+            </tr>
+            <tr>
+              <td>&#x5F00;&#x59CB;&#x65E5;&#x671F;</td>
+              <td detailCtrlTag="FormTravelDetail" detailCtrlName="&#x5F00;&#x59CB;&#x65E5;&#x671F;">2026-08-18 00:00</td>
+            </tr>
+            <tr>
+              <td>&#x7ED3;&#x675F;&#x65E5;&#x671F;</td>
+              <td detailCtrlTag="FormTravelDetail" detailCtrlName="&#x7ED3;&#x675F;&#x65E5;&#x671F;">2026-08-19 00:00</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    `;
+
+    const parsed = parseTravelFormDetailHtml(html);
+    expect(parsed.accounts).toEqual([{ 出差人: "1796564-张海肖", PolicyId: "" }]);
+    expect(parsed.details[0]).toMatchObject({
+      出发城市: "北京",
+      目的城市: "上海",
+      开始日期: "2026-08-18 00:00",
+      结束日期: "2026-08-19 00:00",
+    });
+  });
+
   it("resolves city labels from meta city list", () => {
     const cities = [
       { label: "北京", value: "1101" },
