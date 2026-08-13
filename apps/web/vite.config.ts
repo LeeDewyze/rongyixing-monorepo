@@ -1,5 +1,7 @@
 import path from "node:path";
+import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { readFileSync } from "node:fs";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig, loadEnv } from "vite";
@@ -7,6 +9,24 @@ import { createRyxDevProxy } from "../../tooling/vite/ryx-dev-proxy";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const monorepoRoot = path.resolve(__dirname, "../..");
+const appPackage = JSON.parse(readFileSync(path.resolve(__dirname, "package.json"), "utf8")) as {
+  version?: string;
+};
+
+function resolveAppVersion(): string {
+  const envVersion = process.env.VITE_APP_VERSION?.trim();
+  if (envVersion) return envVersion;
+
+  try {
+    return execSync("git rev-parse --short HEAD", {
+      cwd: __dirname,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+  } catch {
+    return appPackage.version ?? "0.0.0";
+  }
+}
 
 function normalizeViteBase(value: string | undefined): string {
   const raw = value?.trim();
@@ -24,6 +44,9 @@ export default defineConfig(({ mode }) => {
   return {
     base: appBase,
     plugins: [react(), tailwindcss()],
+    define: {
+      __APP_VERSION__: JSON.stringify(resolveAppVersion()),
+    },
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),

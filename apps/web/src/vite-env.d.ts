@@ -10,6 +10,8 @@ interface ImportMetaEnv {
   readonly VITE_API_MOCK_DELAY?: string;
 }
 
+declare const __APP_VERSION__: string;
+
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }

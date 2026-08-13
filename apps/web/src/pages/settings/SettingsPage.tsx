@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { SettingsMenuItem } from "@ryx/shared-types";
 import { DEFAULT_SETTINGS_MENU } from "@ryx/api";
 import { useNavigate } from "react-router-dom";
 
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { usePageHeader } from "@/components/layout";
+import { PageToast, usePageHeader } from "@/components/layout";
 import {
   SettingsMenuCard,
   SettingsMenuRow,
@@ -13,6 +13,8 @@ import {
 import { SettingsMenuIcon, settingsMenuIconForId } from "@/components/settings/SettingsMenuIcon";
 import { SettingsPageChrome } from "@/components/settings/SettingsPageChrome";
 import { SettingsSectionLabel } from "@/components/settings/SettingsSectionLabel";
+import { getAppVersion } from "@/lib/app-version";
+import { handleVConsoleVersionTap } from "@/lib/vconsole";
 import { useLogout } from "@/hooks/useAccountSettings";
 
 const MENU_DESCRIPTIONS: Record<string, string> = {
@@ -29,6 +31,8 @@ export function SettingsPage() {
   const logout = useLogout();
 
   const [logoutOpen, setLogoutOpen] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const toastTimerRef = useRef<number | null>(null);
 
   const menuItems = DEFAULT_SETTINGS_MENU;
 
@@ -40,6 +44,17 @@ export function SettingsPage() {
 
   function handleOpenIcpRecord() {
     window.open(ICP_RECORD_URL, "_blank", "noopener,noreferrer");
+  }
+
+  function showToast(message: string) {
+    if (toastTimerRef.current !== null) {
+      window.clearTimeout(toastTimerRef.current);
+    }
+    setToast(message);
+    toastTimerRef.current = window.setTimeout(() => {
+      setToast(null);
+      toastTimerRef.current = null;
+    }, 2500);
   }
 
   return (
@@ -66,8 +81,17 @@ export function SettingsPage() {
         </div>
 
         <div>
-          <SettingsSectionLabel>备案信息</SettingsSectionLabel>
+          <SettingsSectionLabel>版本信息</SettingsSectionLabel>
           <SettingsMenuCard>
+            <SettingsMenuRow
+              label="版本号"
+              value={getAppVersion()}
+              valueTone="hint"
+              showChevron={false}
+              onClick={() => {
+                handleVConsoleVersionTap(showToast);
+              }}
+            />
             <SettingsMenuRow
               label="备案号"
               value={ICP_RECORD_NUMBER}
@@ -107,6 +131,7 @@ export function SettingsPage() {
           服务端退出可能未完成，已清除本地登录状态
         </p>
       ) : null}
+      <PageToast message={toast} placement="center" />
     </SettingsPageChrome>
   );
 }

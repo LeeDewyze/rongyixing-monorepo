@@ -5,7 +5,6 @@ import { RouterProvider } from "react-router-dom";
 
 import "@ryx/ui/globals.css";
 
-import { router } from "@/app/routes";
 import { AppConfirmDialogHost } from "@/components/AppConfirmDialogHost";
 import { DevMenu } from "@/components/DevMenu";
 import { SessionGuardHost } from "@/components/SessionGuardHost";
@@ -20,6 +19,8 @@ async function main() {
   await bootstrapApi();
   await bootstrapExternalTicket();
   await preloadBusinessBookingPermission(queryClient, { silentUnauthorized: true });
+
+  const { router } = await import("@/app/routes");
 
   createRoot(document.getElementById("root")!).render(
     <StrictMode>

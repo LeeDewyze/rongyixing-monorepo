@@ -4,13 +4,14 @@ import { useNavigate } from "react-router-dom";
 import splashLogo from "@/assets/splash/logo.png";
 import { designHeightPercent, designMobileVw } from "@/config/design";
 import { SPLASH_SLOGAN } from "@/config/splash";
+import { isAuthenticated } from "@/lib/auth";
 
 export function SplashPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      navigate("/login/password", { replace: true });
+      navigate(isAuthenticated() ? "/home" : "/login/password", { replace: true });
     }, 2500);
 
     return () => window.clearTimeout(timer);
