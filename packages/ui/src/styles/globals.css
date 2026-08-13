@@ -92,6 +92,12 @@
   --brand-form-header-start: #7AB1FF;
   --brand-form-header-end: #F5F6F9;
   --brand-form-header-gradient: linear-gradient(180deg, var(--brand-form-header-start) 0px, var(--brand-form-header-end) 200px);
+
+  --ryx-viewport-width: 100vw;
+  --ryx-viewport-height: 100dvh;
+  --ryx-design-width: min(100vw, 480px);
+  --ryx-design-vw: 1vw;
+  --ryx-design-scale: 1;
 }
 
 .dark {
@@ -125,6 +131,13 @@
   html, body {
     scrollbar-width: none;
     -ms-overflow-style: none;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  html,
+  body,
+  #root {
+    min-height: var(--ryx-viewport-height, 100dvh);
   }
   html::-webkit-scrollbar,
   body::-webkit-scrollbar {

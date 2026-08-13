@@ -378,13 +378,18 @@ export function PasswordLoginPage() {
         src={passwordBg}
         alt=""
         className="fixed inset-0 h-full w-full object-cover object-bottom"
+        style={{ height: "var(--ryx-viewport-height, 100dvh)" }}
         aria-hidden
       />
-      <div className="fixed inset-0" style={{ background: overlay.background }} aria-hidden />
+      <div
+        className="fixed inset-0"
+        style={{ height: "var(--ryx-viewport-height, 100dvh)", background: overlay.background }}
+        aria-hidden
+      />
 
       <div
         className="relative z-10 flex min-h-dvh w-full flex-col"
-        style={{ fontFamily: LOGIN_FONT }}
+        style={{ minHeight: "var(--ryx-viewport-height, 100dvh)", fontFamily: LOGIN_FONT }}
       >
         <div
           className="flex flex-1 flex-col overflow-y-auto overscroll-y-contain"
@@ -467,10 +472,10 @@ export function PasswordLoginPage() {
                   onAnimationStart={handleAuthInputAnimationStart}
                   className="login-auth-input min-w-0 flex-1 border-none bg-transparent p-0 text-white outline-none"
                   style={{
-                    fontSize: designMobileVw(accountInput.fontSize),
+                    fontSize: "16px",
                     lineHeight: "normal",
                     caretColor: "#33a1f9",
-                    "--ryx-login-input-font-size": designMobileVw(accountInput.fontSize),
+                    "--ryx-login-input-font-size": "16px",
                   } as CSSProperties}
                 />
                 {(loginMode === "password" ? account : mobile) ? (
@@ -507,10 +512,10 @@ export function PasswordLoginPage() {
                   onAnimationStart={handleAuthInputAnimationStart}
                   className="login-auth-input min-w-0 flex-1 border-none bg-transparent p-0 text-white outline-none"
                   style={{
-                    fontSize: designMobileVw(passwordInput.fontSize),
+                    fontSize: "16px",
                     lineHeight: "normal",
                     caretColor: "#33a1f9",
-                    "--ryx-login-input-font-size": designMobileVw(passwordInput.fontSize),
+                    "--ryx-login-input-font-size": "16px",
                   } as CSSProperties}
                 />
                 <div
@@ -567,6 +572,8 @@ export function PasswordLoginPage() {
               font-weight: 400;
               line-height: normal;
               letter-spacing: 0;
+              -webkit-text-size-adjust: 100%;
+              text-size-adjust: 100%;
             }
 
             .login-auth-input:-webkit-autofill,
@@ -622,7 +629,7 @@ export function PasswordLoginPage() {
 
             input::placeholder {
               color: ${accountInput.placeholderColor};
-              font-size: ${designMobileVw(accountInput.fontSize)};
+              font-size: 16px;
             }
           `}</style>
 

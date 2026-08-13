@@ -12,8 +12,10 @@ import { preloadBusinessBookingPermission } from "@/lib/booking-permission-prelo
 import { bootstrapExternalTicket } from "@/lib/external-ticket";
 import { queryClient } from "@/lib/query";
 import { setupVConsoleFromUrl } from "@/lib/vconsole";
+import { setupViewportCompatibilityVars } from "@/lib/viewport-compat";
 
 async function main() {
+  setupViewportCompatibilityVars();
   await setupVConsoleFromUrl();
   await bootstrapApi();
   await bootstrapExternalTicket("/");

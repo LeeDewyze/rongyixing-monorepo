@@ -526,6 +526,7 @@ export function PasswordLoginPage() {
     <div
       className="relative h-dvh overflow-hidden bg-[#F5F6F9] text-brand-title"
       style={{
+        height: "var(--ryx-viewport-height, 100dvh)",
         background:
           "radial-gradient(circle at 20% 12%, rgba(39, 104, 250, 0.52), transparent 34%), radial-gradient(circle at 72% 6%, rgba(51, 161, 249, 0.3), transparent 35%), linear-gradient(180deg, var(--brand-form-header-start) 0%, var(--brand-form-header-end) 48%)",
       }}
@@ -708,6 +709,8 @@ export function PasswordLoginPage() {
                   font-weight: 400;
                   line-height: normal;
                   letter-spacing: 0;
+                  -webkit-text-size-adjust: 100%;
+                  text-size-adjust: 100%;
                 }
 
                 .login-auth-input:-webkit-autofill,
