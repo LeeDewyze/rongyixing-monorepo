@@ -6,6 +6,7 @@ import {
   fetchTravelNumberByFormId,
   parseFormIdFromWorkflowHtml,
   parseTravelFormListHtml,
+  parseTravelFormStatusFromDetailHtml,
   parseTravelNumberFromWorkflowHtml,
 } from "./travel-form-list";
 
@@ -72,6 +73,25 @@ describe("parseTravelFormListHtml", () => {
 
     const tasks = parseTravelFormListHtml(html, "mock-ticket");
     expect(tasks[0]?.number).toBe("Travel202608110945131796564");
+  });
+
+  it("parses travel form status from Form/Detail basic info block", () => {
+    const html = `
+      <span class="formDetail-title">基础信息</span>
+      <div class="element-tip">状态</div>
+      <div class="element-content">审批通过</div>
+    `;
+
+    expect(parseTravelFormStatusFromDetailHtml(html)).toBe("审批通过");
+  });
+
+  it("parses travel form status when element-tip has ctrlType attributes", () => {
+    const html = `
+      <div class="element-tip" ctrlType="_base_status">状态</div>
+      <div class="element-content">&#x5BA1;&#x6279;&#x901A;&#x8FC7;</div>
+    `;
+
+    expect(parseTravelFormStatusFromDetailHtml(html)).toBe("审批通过");
   });
 
   it("parses travel number from Form/Detail html form-data", () => {

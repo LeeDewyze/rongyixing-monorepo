@@ -86,6 +86,26 @@ describe("parseTravelFormListHtml", () => {
     expect(parseTravelFormStatusFromDetailHtml(html)).toBe("审批通过");
   });
 
+  it("parses travel form status when element-tip has ctrlType attributes", () => {
+    const html = `
+      <span class="formDetail-title">基础信息</span>
+      <div class="element-tip" ctrlType="_base_status">状态</div>
+      <div class="element-content">&#x5BA1;&#x6279;&#x901A;&#x8FC7;</div>
+    `;
+
+    expect(parseTravelFormStatusFromDetailHtml(html)).toBe("审批通过");
+  });
+
+  it("parses travel form status from detailCtrlType on element-content", () => {
+    const html = `
+      <span class="formDetail-title">基础信息</span>
+      <div class="element-tip">状态</div>
+      <div class="element-content" detailCtrlType="_base_status">&#x5BA1;&#x6279;&#x901A;&#x8FC7;</div>
+    `;
+
+    expect(parseTravelFormStatusFromDetailHtml(html)).toBe("审批通过");
+  });
+
   it("parses travel number from Form/Detail html form-data", () => {
     const html = `
       <div form-data='{"Name":"出差申请","Tag":"Travel","Status":4,"FormDetails":[{"Name":"差旅单号","Content":"Travel202608110945131796564"}]}'>

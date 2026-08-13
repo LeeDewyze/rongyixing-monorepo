@@ -108,21 +108,36 @@ function resolveTravelFormStatusName(form: TravelFormRow): string | undefined {
   return status != null ? String(status) : undefined;
 }
 
+function readTravelFormStatusValue(raw: string): string | undefined {
+  const value = decodeHtmlAttribute(raw.replace(/<[^>]+>/g, "").trim());
+  return value || undefined;
+}
+
 /** Form/List Status stays at 2/4 after workflow completes — read rendered 状态 from Form/Detail. */
 export function parseTravelFormStatusFromDetailHtml(html: string): string | undefined {
   const basicInfoMatch = html.match(
-    /<span class="formDetail-title">基础信息<\/span>([\s\S]*?)(?:<span class="formDetail-title">|$)/i,
+    /<span class="formDetail-title"[^>]*>基础信息<\/span>([\s\S]*?)(?:<span class="formDetail-title"|$)/i,
   );
   const scope = basicInfoMatch?.[1] ?? html;
+
   const fieldRe =
-    /class="element-tip">([^<]+)<\/div>\s*<div class="element-content"[^>]*>\s*([\s\S]*?)<\/div>/gi;
+    /class="element-tip"[^>]*>([^<]+)<\/div>\s*<div class="element-content"[^>]*>\s*([\s\S]*?)<\/div>/gi;
   let match: RegExpExecArray | null;
   while ((match = fieldRe.exec(scope)) !== null) {
     const label = decodeHtmlAttribute(match[1].trim());
     if (label !== "状态") continue;
-    const value = decodeHtmlAttribute(match[2].replace(/<[^>]+>/g, "").trim());
-    return value || undefined;
+    const value = readTravelFormStatusValue(match[2]);
+    if (value) return value;
   }
+
+  const statusControlMatch = html.match(
+    /(?:detailCtrlType|ctrlType)=["']_base_status["'][^>]*>([\s\S]*?)<\/div>/i,
+  );
+  if (statusControlMatch?.[1]) {
+    const value = readTravelFormStatusValue(statusControlMatch[1]);
+    if (value) return value;
+  }
+
   return undefined;
 }
 
