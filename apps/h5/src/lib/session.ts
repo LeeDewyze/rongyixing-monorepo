@@ -5,12 +5,22 @@ const WEBSOCKET_URL_KEY = "websocketUrl";
 const LOGIN_USER_NAME_KEY = "loginUserName";
 const LOGIN_USER_ID_KEY = "loginUserId";
 const TICKET_NAME_KEY = "ticketName";
+const IDENTITY_PERMISSION_STORAGE_KEY = "ryx_identity_permission";
+
+export const SESSION_CHANGED_EVENT = "ryx:session-changed";
+
+function emitSessionChanged(): void {
+  window.dispatchEvent(new Event(SESSION_CHANGED_EVENT));
+}
 
 export function getTicket(): string | null {
   return localStorage.getItem(TICKET_KEY);
 }
 
 export function setTicket(ticket: string): void {
+  if (localStorage.getItem(TICKET_KEY) !== ticket) {
+    sessionStorage.removeItem(IDENTITY_PERMISSION_STORAGE_KEY);
+  }
   localStorage.setItem(TICKET_KEY, ticket);
 }
 
@@ -52,6 +62,8 @@ export function clearSession(): void {
   localStorage.removeItem(LOGIN_USER_NAME_KEY);
   localStorage.removeItem(LOGIN_USER_ID_KEY);
   localStorage.removeItem(TICKET_NAME_KEY);
+  sessionStorage.removeItem(IDENTITY_PERMISSION_STORAGE_KEY);
+  emitSessionChanged();
 }
 
 export function saveLoginResult(result: {
@@ -71,4 +83,5 @@ export function saveLoginResult(result: {
     setLoginToken(result.Token);
     localStorage.setItem(ACCESS_TOKEN_KEY, result.Token);
   }
+  emitSessionChanged();
 }

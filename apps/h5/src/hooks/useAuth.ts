@@ -3,7 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { getApi } from "@/lib/api";
 import { getApiMode } from "@/lib/env";
 import {
-  preloadBusinessIdentityPermission,
+  cacheBusinessIdentityPermission,
   preloadBusinessStaffPermission,
 } from "@/lib/booking-permission-preload";
 import { queryClient } from "@/lib/query";
@@ -34,12 +34,9 @@ function loadWebSocketUrlInBackground(mode: string, ticket?: string): void {
   void loadWebSocketUrlAfterLogin(mode, ticket);
 }
 
-function preloadBookingPermissionInBackground(reset = false): void {
+function preloadStaffPermissionInBackground(reset = false): void {
   void preloadBusinessStaffPermission(queryClient, { reset }).catch((error) => {
     console.warn("[ryx] staff permission preload after login failed", error);
-  });
-  void preloadBusinessIdentityPermission(queryClient, { reset }).catch((error) => {
-    console.warn("[ryx] identity permission preload after login failed", error);
   });
 }
 
@@ -61,7 +58,7 @@ export function usePasswordLogin() {
       });
 
       saveLoginResult(result);
-      preloadBookingPermissionInBackground(true);
+      preloadStaffPermissionInBackground(true);
       startSessionGuardAfterLogin(mode);
       loadWebSocketUrlInBackground(mode, result.Ticket);
 
@@ -81,7 +78,7 @@ export function useMobileLogin() {
       });
 
       saveLoginResult(result);
-      preloadBookingPermissionInBackground(true);
+      preloadStaffPermissionInBackground(true);
       startSessionGuardAfterLogin(mode);
       loadWebSocketUrlInBackground(mode, result.Ticket);
 
@@ -105,7 +102,7 @@ export function useDeviceLogin() {
       const mode = getApiMode();
       const result = await getApi().authProxy.deviceLogin({ Device: deviceId });
       saveLoginResult(result);
-      preloadBookingPermissionInBackground(true);
+      preloadStaffPermissionInBackground(true);
       startSessionGuardAfterLogin(mode);
       loadWebSocketUrlInBackground(mode, result.Ticket);
       return result;
@@ -133,7 +130,8 @@ export function useDingTalkLogin() {
         }
         const finalResult = { ...result, ...identity, Ticket: identity.Ticket };
         saveLoginResult(finalResult);
-        preloadBookingPermissionInBackground(true);
+        preloadStaffPermissionInBackground(true);
+        cacheBusinessIdentityPermission(queryClient, finalResult.Ticket, identity);
         startSessionGuardAfterLogin(mode);
         loadWebSocketUrlInBackground(mode, finalResult.Ticket);
         return finalResult;

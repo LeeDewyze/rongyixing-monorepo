@@ -1,9 +1,9 @@
 name=rongyixing-business-h5-test
-build_time=2026-08-14T05:29:35Z
-build_timestamp=20260814132930
+build_time=2026-08-14T06:57:37Z
+build_timestamp=20260814145732
 deploy_env=business-same-origin-test
 app=h5
-git_commit=ed27e5afd0a7f33817de050c3f1447fc070e74ce
+git_commit=9a54461f56c264fa8af531bd897ec8c57f038604
 git_branch=main
 base_path=/rl/
 static_dir=rl
