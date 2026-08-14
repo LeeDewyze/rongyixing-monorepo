@@ -73,6 +73,12 @@ export interface TravelApplySubmitOptions {
   submitForApproval?: boolean;
 }
 
+/** Legacy `task.send` — optional CC people for list-page 报审. */
+export interface TravelSendApprovalOptions {
+  notifyType?: string;
+  notifiers?: Array<{ id: string; name: string }>;
+}
+
 interface FlowFormDefaultValue {
   label?: string | null;
   value?: string | number | null;
@@ -683,12 +689,22 @@ export function buildTravelRemoveUrl(ticket: string): string {
 async function postTravelSend(
   sendUrl: string,
   formId: string | number,
+  options?: TravelSendApprovalOptions,
 ): Promise<TravelApplySubmitResult> {
   const url = appendQueryParam(sendUrl, "Id", String(formId));
+  const body = new URLSearchParams({ IsIgnoreWarning: "true" });
+  const notifiers = options?.notifiers ?? [];
+  if (notifiers.length > 0) {
+    body.set("NotifyType", options?.notifyType?.trim() || "1");
+    body.set(
+      "NewNotifiers",
+      JSON.stringify(notifiers.map((item) => ({ Id: item.id, Name: item.name }))),
+    );
+  }
   return fetchJson<TravelApplySubmitResult>(url, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ IsIgnoreWarning: "true" }).toString(),
+    body: body.toString(),
   });
 }
 
@@ -709,8 +725,9 @@ export async function sendTravelApplyForApproval(
 export async function sendTravelApplyForApprovalByTicket(
   ticket: string,
   formId: string | number,
+  options?: TravelSendApprovalOptions,
 ): Promise<TravelApplySubmitResult> {
-  return postTravelSend(buildTravelSendUrl(ticket), formId);
+  return postTravelSend(buildTravelSendUrl(ticket), formId, options);
 }
 
 async function saveAndMaybeSendTravelApply(

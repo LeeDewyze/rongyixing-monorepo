@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { getWorkflowHost, getWorkflowSite, resolveWorkflowUrl } from "./workflow-site";
+import {
+  getWorkflowApiSite,
+  getWorkflowHost,
+  getWorkflowSite,
+  resolveWorkflowUrl,
+} from "./workflow-site";
 
 function stubCachedApiConfig(workflowWebsiteUrl?: string) {
   const setting = {
@@ -49,6 +54,12 @@ describe("getWorkflowSite", () => {
 
     expect(getWorkflowSite()).toBe("https://workflow.rongtrip.cn");
   });
+
+  it("derives the workflow API site from the app base", () => {
+    vi.stubEnv("VITE_API_BASE_URL", "https://app.rongtrip.cn");
+    stubCachedApiConfig();
+    expect(getWorkflowApiSite()).toBe("https://api-workflow.rongtrip.cn");
+  });
 });
 
 describe("resolveWorkflowUrl", () => {
@@ -62,9 +73,7 @@ describe("resolveWorkflowUrl", () => {
     stubCachedApiConfig("https://workflow.rongtrip.cn/");
 
     expect(
-      resolveWorkflowUrl(
-        "http://workflow.rtesp.com/FormTask/Handle?flowtag=Travel&taskid=1",
-      ),
+      resolveWorkflowUrl("http://workflow.rtesp.com/FormTask/Handle?flowtag=Travel&taskid=1"),
     ).toBe("https://workflow.rongtrip.cn/FormTask/Handle?flowtag=Travel&taskid=1");
   });
 });

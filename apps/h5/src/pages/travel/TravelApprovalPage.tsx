@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import type { ApprovalTask } from "@ryx/shared-types";
 
 import { ApprovalTaskList } from "@/components/travel/ApprovalTaskList";
+import { TravelSendApprovalDialog } from "@/components/travel/TravelSendApprovalDialog";
 import { usePageHeader } from "@/components/layout";
 import {
   useMyTravelApplications,
@@ -24,7 +25,6 @@ import {
   isTravelFormRevokable,
   isTravelFormSendable,
   revokeTravelApply,
-  sendTravelApplyForApprovalByTicket,
 } from "@/lib/travel-apply";
 
 type ApprovalTab = "mine" | "pending" | "done";
@@ -62,8 +62,8 @@ export function TravelApprovalPage() {
   const [headerHeight, setHeaderHeight] = useState(APPROVAL_HEADER_FALLBACK_HEIGHT);
 
   const [revokingId, setRevokingId] = useState<string | null>(null);
-  const [sendingId, setSendingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [launchFormId, setLaunchFormId] = useState<string | null>(null);
 
   const activeQuery = tab === "mine" ? myApplications : tab === "done" ? doneTasks : pendingTasks;
 
@@ -105,29 +105,6 @@ export function TravelApprovalPage() {
       navigate("/travel/task", { state: { url, title: task.name, returnTab: tab } });
     },
     [navigate, tab],
-  );
-
-  const handleSendForApproval = useCallback(
-    async (task: ApprovalTask) => {
-      if (sendingId === task.id) return;
-      if (!window.confirm("确定要报审此出差申请吗？")) return;
-      setSendingId(task.id);
-      try {
-        const ticket = getTicket();
-        if (!ticket) return;
-        const result = await sendTravelApplyForApprovalByTicket(ticket, task.id);
-        if (result.Status) {
-          void queryClient.invalidateQueries({ queryKey: ["approval"] });
-        } else {
-          alert(result.Message ?? "报审失败");
-        }
-      } catch {
-        alert("报审失败，请重试");
-      } finally {
-        setSendingId(null);
-      }
-    },
-    [queryClient, sendingId],
   );
 
   const handleDelete = useCallback(
@@ -196,14 +173,13 @@ export function TravelApprovalPage() {
           {canSend ? (
             <button
               type="button"
-              disabled={sendingId === task.id}
-              className="inline-flex h-8 items-center rounded-full border border-brand-primary bg-white px-3 text-xs font-medium text-brand-primary transition-colors hover:bg-blue-50 active:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-8 items-center rounded-full border border-brand-primary bg-white px-3 text-xs font-medium text-brand-primary transition-colors hover:bg-blue-50 active:bg-blue-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary focus-visible:ring-offset-2"
               onClick={(e) => {
                 e.stopPropagation();
-                void handleSendForApproval(task);
+                setLaunchFormId(task.id);
               }}
             >
-              {sendingId === task.id ? "报审中…" : "报审"}
+              报审
             </button>
           ) : null}
           {canEdit ? (
@@ -247,15 +223,7 @@ export function TravelApprovalPage() {
         </>
       );
     },
-    [
-      deletingId,
-      handleDelete,
-      handleEdit,
-      handleRevoke,
-      handleSendForApproval,
-      revokingId,
-      sendingId,
-    ],
+    [deletingId, handleDelete, handleEdit, handleRevoke, revokingId],
   );
 
   useEffect(() => {
@@ -383,6 +351,14 @@ export function TravelApprovalPage() {
           className="px-4 pb-6"
         />
       </div>
+      <TravelSendApprovalDialog
+        open={launchFormId != null}
+        formId={launchFormId}
+        onClose={() => {
+          setLaunchFormId(null);
+          void queryClient.invalidateQueries({ queryKey: ["approval"] });
+        }}
+      />
     </div>
   );
 }

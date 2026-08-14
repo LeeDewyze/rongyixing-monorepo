@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   fetchWorkflowEmbedSrcdoc,
@@ -12,10 +12,16 @@ interface TravelIframeViewProps {
   onWorkflowBack?: () => void;
 }
 
+function measureEmbedHeight(doc: Document): number {
+  return Math.max(doc.documentElement?.scrollHeight ?? 0, doc.body?.scrollHeight ?? 0);
+}
+
 /** Legacy `OpenUrlComponent` / workflow embed — iframe with external fallback link. */
 export function TravelIframeView({ title, url, onWorkflowBack }: TravelIframeViewProps) {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   const [srcdoc, setSrcdoc] = useState<string | null>(null);
   const [loadError, setLoadError] = useState(false);
+  const [frameHeight, setFrameHeight] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -23,11 +29,13 @@ export function TravelIframeView({ title, url, onWorkflowBack }: TravelIframeVie
     if (!isWorkflowEmbedUrl(url)) {
       setSrcdoc(null);
       setLoadError(false);
+      setFrameHeight(null);
       return;
     }
 
     setSrcdoc(null);
     setLoadError(false);
+    setFrameHeight(null);
 
     void fetchWorkflowEmbedSrcdoc(url)
       .then((doc) => {
@@ -46,6 +54,7 @@ export function TravelIframeView({ title, url, onWorkflowBack }: TravelIframeVie
 
     return () => {
       cancelled = true;
+      document.querySelector("[data-ryx-taskinfo-modal]")?.remove();
     };
   }, [url]);
 
@@ -59,13 +68,58 @@ export function TravelIframeView({ title, url, onWorkflowBack }: TravelIframeVie
     return () => window.removeEventListener("message", onMessage);
   }, [onWorkflowBack]);
 
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe || !srcdoc) return;
+
+    let cancelled = false;
+    let mutationObserver: MutationObserver | undefined;
+    let resizeObserver: ResizeObserver | undefined;
+
+    function measure() {
+      const doc = iframe.contentDocument;
+      if (!doc || cancelled) return;
+      const height = measureEmbedHeight(doc);
+      if (height > 0) {
+        setFrameHeight(height);
+      }
+    }
+
+    function attach() {
+      const doc = iframe.contentDocument;
+      if (!doc?.documentElement) return;
+      measure();
+      mutationObserver = new MutationObserver(measure);
+      mutationObserver.observe(doc.documentElement, {
+        childList: true,
+        subtree: true,
+      });
+      if (typeof ResizeObserver !== "undefined" && doc.body) {
+        resizeObserver = new ResizeObserver(measure);
+        resizeObserver.observe(doc.body);
+      }
+    }
+
+    iframe.addEventListener("load", attach);
+    if (iframe.contentDocument?.readyState === "complete") {
+      attach();
+    }
+
+    return () => {
+      cancelled = true;
+      iframe.removeEventListener("load", attach);
+      mutationObserver?.disconnect();
+      resizeObserver?.disconnect();
+    };
+  }, [srcdoc]);
+
   const isWorkflowEmbed = isWorkflowEmbedUrl(url);
   const useDirectSrc = !isWorkflowEmbed;
   const iframeSrc = useDirectSrc ? url : undefined;
   const canRenderIframe = useDirectSrc ? Boolean(url) : Boolean(srcdoc);
 
   return (
-    <div className="flex h-full min-h-0 flex-1 flex-col bg-white">
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-white">
       {loadError && isWorkflowEmbed ? (
         <div className="flex flex-col gap-2 border-b border-[#ECECEC] px-3 py-2">
           <p className="text-sm text-[#808080]">工作流页面加载失败，请重试或浏览器打开。</p>
@@ -78,12 +132,16 @@ export function TravelIframeView({ title, url, onWorkflowBack }: TravelIframeVie
         <p className="p-4 text-sm text-[#808080]">正在加载详情…</p>
       ) : null}
       {canRenderIframe ? (
-        <iframe
-          title={title}
-          src={iframeSrc}
-          srcDoc={srcdoc ?? undefined}
-          className="min-h-0 w-full flex-1 border-0"
-        />
+        <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain touch-pan-y [-webkit-overflow-scrolling:touch]">
+          <iframe
+            ref={iframeRef}
+            title={title}
+            src={iframeSrc}
+            srcDoc={srcdoc ?? undefined}
+            className={useDirectSrc ? "min-h-0 h-full w-full border-0" : "block w-full border-0"}
+            style={useDirectSrc ? undefined : { height: frameHeight ? `${frameHeight}px` : "100%" }}
+          />
+        </div>
       ) : null}
     </div>
   );

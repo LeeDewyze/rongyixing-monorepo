@@ -14,6 +14,7 @@ import {
   parseTravelFormDetailHtml,
   resolveTravelApplyCityByLabel,
   sendTravelApplyForApproval,
+  sendTravelApplyForApprovalByTicket,
   staffPickerOptions,
   submitTravelApply,
   validateTravelApply,
@@ -314,6 +315,30 @@ describe("travel apply submit for approval", () => {
         body: "IsIgnoreWarning=true",
       }),
     );
+  });
+
+  it("posts NewNotifiers when sending with CC people", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      text: async () => JSON.stringify({ Status: true }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await sendTravelApplyForApprovalByTicket("ticket-1", "99", {
+      notifyType: "1",
+      notifiers: [{ id: "a1", name: "李四" }],
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("TravelTask/Send"),
+      expect.objectContaining({
+        method: "POST",
+        body: expect.stringContaining("NewNotifiers="),
+      }),
+    );
+    const body = String(fetchMock.mock.calls[0]?.[1]?.body);
+    expect(body).toContain("NotifyType=1");
+    expect(decodeURIComponent(body)).toContain('"Name":"李四"');
   });
 });
 

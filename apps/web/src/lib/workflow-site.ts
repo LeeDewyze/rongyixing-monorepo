@@ -13,6 +13,13 @@ export function getWorkflowSite(): string {
   return site.replace(/\/$/, "");
 }
 
+/** Workflow API host for StaffCtrl and related JSON endpoints. */
+export function getWorkflowApiSite(): string {
+  const configured = readCachedApiConfig()?.Urls?.WorkflowApiUrl?.trim();
+  const site = configured || `${getAppBaseProtocol()}//api-workflow.${getAppBaseDomain()}`;
+  return site.replace(/\/$/, "");
+}
+
 /** Expense BPM host for TravelTask/Send and related travel endpoints. */
 export function getBpmExpenseSite(): string {
   const configured = readCachedApiConfig()?.Urls?.BpmWebsiteExpenseUrl?.trim();

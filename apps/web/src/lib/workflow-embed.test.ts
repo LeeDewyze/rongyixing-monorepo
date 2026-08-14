@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   injectWorkflowEmbedBridge,
+  injectWorkflowEmbedScroll,
   injectWorkflowIframeQueryShim,
   injectWorkflowPageTicket,
   isWorkflowBackMessage,
@@ -76,6 +77,27 @@ describe("injectWorkflowIframeQueryShim", () => {
     const result = injectWorkflowIframeQueryShim(html, "ticket=abc&opentype=iframe");
     expect(result).toContain('var __wfSearch = "ticket=abc&opentype=iframe"');
     expect(result).toContain("window.ticket = __wfTicket");
+  });
+});
+
+describe("injectWorkflowEmbedScroll", () => {
+  it("lets the embed document grow so the parent can scroll", () => {
+    const result = injectWorkflowEmbedScroll("<head></head><body></body>");
+    expect(result).toContain('data-ryx-embed-scroll="true"');
+    expect(result).toContain("height: auto !important");
+    expect(result).toContain("overflow-x: hidden !important");
+    expect(result).toContain("overflow-y: visible !important");
+    expect(result).toContain(':has(> [task="tasktab"])');
+    expect(result).toContain("flex-direction: row !important");
+    expect(result).toContain("border-bottom: 2px solid #2768fa");
+    expect(result).toContain("unlock(document.body)");
+    expect(result).toContain(".taskinfo");
+    expect(result).toContain("data-ryx-taskinfo-modal");
+    expect(result).toContain("parent.document");
+    expect(result).toContain("关闭");
+    expect(result).toContain("overflow-y:auto");
+    expect(result).toContain("min-height:0");
+    expect(result).not.toContain("data-ryx-taskinfo-mask");
   });
 });
 
