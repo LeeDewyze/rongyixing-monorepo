@@ -291,6 +291,7 @@ https://app.rongtrip.cn/web/index.html?ticket=xxxx
 ### 客户包的运行方式
 
 - 静态资源 base 固定为 `/www/` 或 `/web/`
+- business test 包保留 vConsole；business prod 包构建时移除 vConsole
 - 先请求当前访问域名下的 `/Home/Setting`
 - 再按 `/Home/Setting` 返回的 `Urls` 直接访问 legacy 后端
 - 不走我们内部的 `/__ryx/*` 代理体系
@@ -330,4 +331,3 @@ Vite 用来快调，Nginx 用来验最终部署形态。两种都留着，最稳
 ### 为什么不是只换 `index.html`
 
 因为真实部署需要同时替换整套静态目录，还要保留路由回退和后端代理配置。
-

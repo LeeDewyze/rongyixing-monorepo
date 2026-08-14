@@ -205,6 +205,9 @@ This builds all release artifacts under `deploy/release/out/`:
 | `rongyixing-h5-web-dist-test/` | Local/self-hosted Nginx test validation | `/` |
 | `rongyixing-h5-web-dist-prod/` | Local/self-hosted Nginx prod validation | `/` |
 
+Business test packages keep `vConsole` enabled. Business prod packages are built with
+`vConsole` removed; internal validation packages keep it enabled for diagnostics.
+
 Optional switches:
 
 ```bash

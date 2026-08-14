@@ -129,7 +129,7 @@ build_business_app() {
   local env_name="$2"
   local base_path="$3"
   local api_root="$4"
-  local package_name package_dir archive_path static_dir build_time git_commit git_branch app_label target_dir
+  local package_name package_dir archive_path static_dir build_time git_commit git_branch app_label target_dir vconsole_enabled
 
   package_name="$(business_package_name "${app_name}" "${env_name}")"
   package_dir="${OUT_ROOT}/${package_name}"
@@ -140,17 +140,22 @@ build_business_app() {
   build_time="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
   git_commit="$(git rev-parse HEAD 2>/dev/null || true)"
   git_branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
+  vconsole_enabled="true"
+  if [[ "${env_name}" == "prod" ]]; then
+    vconsole_enabled="false"
+  fi
 
   log "prepare business same-origin ${env_name} ${app_label} package ${package_dir}"
   rm -rf "${package_dir}" "${archive_path}"
   mkdir -p "${target_dir}"
 
-  log "build business ${env_name} ${app_label} with base ${base_path}"
+  log "build business ${env_name} ${app_label} with base ${base_path} (vconsole=${vconsole_enabled})"
   VITE_BASE_PATH="${base_path}" \
   VITE_API_ROOT="${api_root}" \
   VITE_API_MODE=direct \
   VITE_API_BASE_URL=__SAME_ORIGIN__ \
   VITE_API_DOMAIN=__AUTO__ \
+  VITE_ENABLE_VCONSOLE="${vconsole_enabled}" \
   pnpm --filter "@ryx/${app_name}" build --mode "${env_name}"
 
   node "${SCRIPT_DIR}/check-webview-css.mjs" "${ROOT_DIR}/apps/${app_name}/dist"
@@ -171,6 +176,7 @@ api_mode=direct
 api_base_url=__SAME_ORIGIN__
 api_domain=__AUTO__
 api_root=${api_root}
+vconsole_enabled=${vconsole_enabled}
 EOF
 
   cat >"${package_dir}/README.md" <<EOF
@@ -199,6 +205,7 @@ ${base_path}index.html?wechatopenid=&ticketname=ticket&root=${static_dir}&ticket
 - 后续接口：按 /Home/Setting 返回的 Urls 直接访问 legacy 后端服务
 - Request root：${api_root}
 - Domain：从当前访问域名推导，也可以由 URL query 的 domain 覆盖
+- vConsole：${vconsole_enabled}
 
 构建信息：
 
