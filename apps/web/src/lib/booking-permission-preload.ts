@@ -16,6 +16,7 @@ export const BOOKING_PERMISSION_STAFF_QUERY_KEY = ["booking-permission", "staff"
 interface BookingPermissionPreloadOptions {
   reset?: boolean;
   silentUnauthorized?: boolean;
+  preloadCredentials?: boolean;
 }
 
 export function bookingPermissionSelfCredentialsQueryKey(accountId: string | undefined) {
@@ -107,7 +108,9 @@ export async function preloadBusinessStaffPermission(
       return;
     }
     queryClient.setQueryData(BOOKING_PERMISSION_STAFF_QUERY_KEY, staffResponse.Data);
-    await preloadSelfCredentials(queryClient, api);
+    if (options.preloadCredentials !== false) {
+      await preloadSelfCredentials(queryClient, api);
+    }
     return;
   }
 
@@ -117,7 +120,9 @@ export async function preloadBusinessStaffPermission(
       queryFn: () => api.travel.getStaff(),
       staleTime: FIVE_MINUTES,
     });
-    await preloadSelfCredentials(queryClient, api);
+    if (options.preloadCredentials !== false) {
+      await preloadSelfCredentials(queryClient, api);
+    }
   } catch (error) {
     console.warn("[ryx] staff permission preload failed", error);
   }

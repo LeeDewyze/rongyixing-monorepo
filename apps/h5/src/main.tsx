@@ -9,7 +9,7 @@ import { AppConfirmDialogHost } from "@/components/AppConfirmDialogHost";
 import { DevMenu } from "@/components/DevMenu";
 import { SessionGuardHost } from "@/components/SessionGuardHost";
 import { bootstrapApi } from "@/lib/api";
-import { preloadBusinessBookingPermission } from "@/lib/booking-permission-preload";
+import { preloadBusinessStaffPermission } from "@/lib/booking-permission-preload";
 import { bootstrapExternalTicket } from "@/lib/external-ticket";
 import { queryClient } from "@/lib/query";
 import { setupVConsoleFromUrl } from "@/lib/vconsole";
@@ -22,7 +22,10 @@ async function main() {
   bootstrapWechatOAuthCallback();
   await bootstrapApi();
   await bootstrapExternalTicket();
-  await preloadBusinessBookingPermission(queryClient, { silentUnauthorized: true });
+  await preloadBusinessStaffPermission(queryClient, {
+    silentUnauthorized: true,
+    preloadCredentials: false,
+  });
 
   const { router } = await import("@/app/routes");
 

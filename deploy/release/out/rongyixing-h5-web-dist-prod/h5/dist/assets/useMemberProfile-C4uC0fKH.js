@@ -1,1 +1,0 @@
-import{u as e}from"./routes-DWin4-sb.js";import{F as r}from"./index-CJ7qlmhJ.js";function u(){return e({queryKey:["member","profile"],queryFn:()=>r().member.getProfile(),staleTime:300*1e3})}export{u};

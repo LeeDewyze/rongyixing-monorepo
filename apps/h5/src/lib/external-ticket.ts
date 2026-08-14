@@ -1,14 +1,6 @@
 import { getApi } from "@/lib/api";
 import { withAppBasePath } from "@/lib/base-path";
-import { getApiMode } from "@/lib/env";
-import { startSessionGuard } from "@/lib/session-guard";
-import {
-  clearSession,
-  saveLoginResult,
-  setTicket,
-  setTicketName,
-  setWebSocketUrl,
-} from "@/lib/session";
+import { clearSession, saveLoginResult, setTicket, setTicketName } from "@/lib/session";
 
 const TICKET_PARAM = "ticket";
 const TICKET_NAME_PARAM = "ticketName";
@@ -75,29 +67,7 @@ function replaceTicketEntryLogin(): void {
   replaceLocation(TICKET_ENTRY_LOGIN_PATH);
 }
 
-async function hydrateSessionFromTicket(ticket: string): Promise<void> {
-  if (getApiMode() === "mock") return;
-  const api = getApi();
-  const identity = await api.identity.get(ticket);
-  saveLoginResult({
-    Ticket: identity.Ticket || ticket,
-    Id: identity.Id,
-    Name: identity.Name,
-    Token: identity.Token,
-  });
-
-  try {
-    const ws = await api.identity.getWebSocketUrl();
-    if (ws?.Url) {
-      setWebSocketUrl(ws.Url);
-    }
-  } catch (error) {
-    console.warn("[ryx] page ticket: failed to load websocket url", error);
-  }
-  startSessionGuard();
-}
-
-async function usePageTicketDirectly(url: URL, ticket: string): Promise<void> {
+function usePageTicketDirectly(url: URL, ticket: string): void {
   const targetPath = resolveTicketEntryTargetPath(url);
   const ticketName = readTicketNameParam(url);
 
@@ -107,13 +77,6 @@ async function usePageTicketDirectly(url: URL, ticket: string): Promise<void> {
     setTicketName(ticketName);
   }
   replaceLocation(targetPath);
-  try {
-    await hydrateSessionFromTicket(ticket);
-  } catch (error) {
-    console.warn("[ryx] page ticket: identity check failed", error);
-    clearSession();
-    replaceTicketEntryLogin();
-  }
 }
 
 /** Exchange SSO-style `?ticket=...` for the normal RongYiXing local session. */
@@ -122,7 +85,7 @@ export async function bootstrapExternalTicket(): Promise<void> {
   const ticket = normalizeExternalTicket(url.searchParams.get(TICKET_PARAM));
   if (!ticket) return;
   if (!shouldBootstrapExternalTicket(url)) {
-    await usePageTicketDirectly(url, ticket);
+    usePageTicketDirectly(url, ticket);
     return;
   }
 
@@ -139,28 +102,8 @@ export async function bootstrapExternalTicket(): Promise<void> {
     }
 
     saveLoginResult(loginResult);
-
-    const identity = await api.identity.get(loginResult.Ticket);
-    saveLoginResult({
-      Ticket: identity.Ticket || loginResult.Ticket,
-      Id: identity.Id || loginResult.Id,
-      Name: identity.Name || loginResult.Name,
-      Token: identity.Token || loginResult.Token,
-    });
-
-    if (getApiMode() !== "mock") {
-      try {
-        const ws = await api.identity.getWebSocketUrl();
-        if (ws?.Url) {
-          setWebSocketUrl(ws.Url);
-        }
-      } catch (error) {
-        console.warn("[ryx] external ticket: failed to load websocket url", error);
-      }
-      startSessionGuard();
-    }
   } catch (error) {
-    console.warn("[ryx] external ticket: identity check failed", error);
+    console.warn("[ryx] external ticket login failed", error);
     clearSession();
     replaceTicketEntryLogin();
   }
