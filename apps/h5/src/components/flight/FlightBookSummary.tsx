@@ -9,7 +9,6 @@ import { buildFlightTransferItinerary } from "@/lib/flight-detail";
 import { FlightRoutePlaneIcon } from "@/components/flight/FlightRoutePlaneIcon";
 import { formatFlightTime } from "@/utils/flight-list";
 import {
-  formatFlightListPlaneLabel,
   shortAirlineName,
   shortAirportName,
 } from "@/utils/flight-list-display";
@@ -32,10 +31,7 @@ export function FlightBookSummary({ selection, onShowRules }: FlightBookSummaryP
   const durationLabel = formatFlightBookDuration(segment.FlyTimeName || cabinsQuery.flyTimeName);
   const flightNumber = segment.Number || segment.FlightNumber || cabinsQuery.flightNumber;
   const airlineName = shortAirlineName(segment.AirlineName || cabinsQuery.airlineName);
-  const planeLabel = formatFlightListPlaneLabel(
-    segment.PlaneTypeDescribe || cabinsQuery.planeTypeDescribe,
-    segment.PlaneType,
-  );
+  const planeLabel = segment.PlaneType?.trim() || "";
   const fromAirport = shortAirportName(segment.FromAirportName || cabinsQuery.fromAirportName);
   const toAirport = shortAirportName(segment.ToAirportName || cabinsQuery.toAirportName);
   const airlineFlightLabel = [airlineName, flightNumber].filter(Boolean).join("");

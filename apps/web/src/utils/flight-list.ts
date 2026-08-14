@@ -15,7 +15,37 @@ export function parseFlightTimestamp(value: string | undefined): number {
   return Number.isFinite(ts) ? ts : 0;
 }
 
+function readTrimmedString(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+/** List/detail may send PascalCase or camelCase plane fields (TMC vs Tourist). */
+export function resolvePlaneTypeDescribe(
+  segment: FlightSegment | Record<string, unknown> | undefined,
+): string {
+  if (!segment) return "";
+  const record = segment as Record<string, unknown>;
+  return (
+    readTrimmedString(record.PlaneTypeDescribe) ||
+    readTrimmedString(record.planeTypeDescribe) ||
+    readTrimmedString(record.AirplaneTypeDescribe) ||
+    readTrimmedString(record.airplaneTypeDescribe) ||
+    readTrimmedString(record.PlaneDescribe) ||
+    readTrimmedString(record.planeDescribe)
+  );
+}
+
+export function resolvePlaneTypeCode(
+  segment: FlightSegment | Record<string, unknown> | undefined,
+): string {
+  if (!segment) return "";
+  const record = segment as Record<string, unknown>;
+  return readTrimmedString(record.PlaneType) || readTrimmedString(record.planeType);
+}
+
 export function enrichSegment(seg: FlightSegment): FlightSegment {
+  const planeType = resolvePlaneTypeCode(seg);
+  const planeTypeDescribe = resolvePlaneTypeDescribe(seg);
   return {
     ...seg,
     Number: seg.Number || seg.FlightNumber || "",
@@ -23,6 +53,8 @@ export function enrichSegment(seg: FlightSegment): FlightSegment {
     FlyTimeName: seg.FlyTimeName ?? seg.Duration,
     TakeoffTimeStamp: seg.TakeoffTimeStamp ?? parseFlightTimestamp(seg.TakeoffTime ?? ""),
     ArrivalTimeStamp: seg.ArrivalTimeStamp ?? parseFlightTimestamp(seg.ArrivalTime ?? ""),
+    ...(planeType ? { PlaneType: planeType } : {}),
+    ...(planeTypeDescribe ? { PlaneTypeDescribe: planeTypeDescribe } : {}),
   };
 }
 

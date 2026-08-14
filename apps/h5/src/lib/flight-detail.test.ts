@@ -67,6 +67,17 @@ describe("resolveDetailSegment", () => {
     expect(segment.ArrivalTime).toBe("2026-06-25 08:50:00");
     expect(segment.FlyTimeName).toBe("10小时10分");
   });
+
+  it("uses Home-Detail PlaneType and ignores list planeTypeDescribe", () => {
+    const segment = resolveDetailSegment(baseQuery, {
+      Number: "MU5176",
+      PlaneType: "320",
+      PlaneTypeDescribe: "",
+    });
+
+    expect(segment.PlaneType).toBe("320");
+    expect(segment.PlaneTypeDescribe).toBe("");
+  });
 });
 
 describe("buildFlightTransferItinerary", () => {

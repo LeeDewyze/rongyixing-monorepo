@@ -100,4 +100,17 @@ describe("flight-list-refresh", () => {
     );
     expect(path).toContain("bookType=2");
   });
+
+  it("buildCabinsPath forwards camelCase tourist planeTypeDescribe", () => {
+    const path = buildCabinsPath(
+      {
+        Id: "seg-mu",
+        Number: "MU5176",
+        planeTypeDescribe: "空客A320(小)",
+      } as never,
+      new URLSearchParams(),
+    );
+    expect(path).toContain("planeTypeDescribe=");
+    expect(decodeURIComponent(path)).toContain("空客A320(小)");
+  });
 });

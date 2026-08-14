@@ -159,7 +159,6 @@ const ROUTE_DISPLAY_FIELDS = [
   "FlyTimeName",
   "AirlineName",
   "AirlineSrc",
-  "PlaneTypeDescribe",
   "Meal",
 ] as const satisfies ReadonlyArray<keyof FlightSegment>;
 
@@ -272,7 +271,7 @@ export function buildFlightTransferItinerary(
 
   const legs: FlightTransferLegView[] = segments.map((segment) => {
     const flightNo = (segment.Number ?? segment.FlightNumber ?? "").trim();
-    const planeLabel = segment.PlaneTypeDescribe || segment.PlaneType || "";
+    const planeLabel = segment.PlaneType?.trim() || "";
     const mealLabel = formatFlightCabinsMealLabel(segment.Meal);
     const legTakeoffDate = segment.TakeoffTime?.slice(0, 10);
 

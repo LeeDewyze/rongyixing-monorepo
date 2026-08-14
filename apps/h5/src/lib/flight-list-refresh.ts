@@ -1,7 +1,7 @@
 import type { FlightSegment, PassengerBookInfo } from "@ryx/shared-types";
 
 import type { FlightCabinsQuery } from "@/lib/flight-detail";
-import { resolveFlightSegmentId } from "@/utils/flight-list";
+import { resolveFlightSegmentId, resolvePlaneTypeDescribe } from "@/utils/flight-list";
 
 /** Legacy: refetch when returning after 2+ minutes. */
 export const FLIGHT_LIST_STALE_MS = 2 * 60 * 1000;
@@ -65,7 +65,8 @@ export function buildCabinsPath(segment: FlightSegment, searchParams: URLSearchP
   if (segment.ToAirportName) params.set("toAirportName", segment.ToAirportName);
   if (segment.FromTerminal) params.set("fromTerminal", segment.FromTerminal);
   if (segment.ToTerminal) params.set("toTerminal", segment.ToTerminal);
-  if (segment.PlaneTypeDescribe) params.set("planeTypeDescribe", segment.PlaneTypeDescribe);
+  const planeTypeDescribe = resolvePlaneTypeDescribe(segment);
+  if (planeTypeDescribe) params.set("planeTypeDescribe", planeTypeDescribe);
   if (segment.Meal) params.set("meal", segment.Meal);
   const detailKey = segment.DetailKey ?? segment.Data;
   if (detailKey) params.set("detailKey", detailKey);

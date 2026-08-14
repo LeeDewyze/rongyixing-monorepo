@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { formatFlightTime, normalizeFlightSegments, resolveFlightSegmentId } from "./flight-list";
+import {
+  formatFlightTime,
+  normalizeFlightSegments,
+  resolveFlightSegmentId,
+  resolvePlaneTypeDescribe,
+} from "./flight-list";
 
 describe("formatFlightTime", () => {
   it("extracts HH:mm from ISO datetime", () => {
@@ -57,5 +62,23 @@ describe("normalizeFlightSegments", () => {
         DetailKey: "dk-kn",
       }),
     ).toBe("dk-kn");
+  });
+
+  it("maps camelCase tourist planeTypeDescribe onto PlaneTypeDescribe", () => {
+    const [segment] = normalizeFlightSegments({
+      FlightViews: [
+        {
+          Price: "650",
+          Segment: {
+            Number: "MU5176",
+            planeType: "320",
+            planeTypeDescribe: "空客A320(小)",
+          } as never,
+        },
+      ],
+    });
+    expect(segment?.PlaneType).toBe("320");
+    expect(segment?.PlaneTypeDescribe).toBe("空客A320(小)");
+    expect(resolvePlaneTypeDescribe(segment)).toBe("空客A320(小)");
   });
 });

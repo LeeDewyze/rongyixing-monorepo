@@ -18,7 +18,7 @@ import {
 import type { FlightExchangeSession } from "@/lib/flight-exchange-session";
 import { loadFlightListSnapshot } from "@/lib/flight-list-session";
 import { buildFlightPolicySessionKey, saveFlightPolicySession } from "@/lib/flight-policy-session";
-import { resolveFlightSegmentId } from "@/utils/flight-list";
+import { resolveFlightSegmentId, resolvePlaneTypeDescribe } from "@/utils/flight-list";
 
 export function buildCabinsQueryFromSegment(
   segment: FlightSegment,
@@ -51,7 +51,7 @@ export function buildCabinsQueryFromSegment(
     toAirportName: segment.ToAirportName ?? "",
     fromTerminal: segment.FromTerminal ?? "",
     toTerminal: segment.ToTerminal ?? "",
-    planeTypeDescribe: segment.PlaneTypeDescribe ?? "",
+    planeTypeDescribe: resolvePlaneTypeDescribe(segment),
     meal: segment.Meal ?? "",
     airlineSrc: segment.AirlineSrc ?? "",
     ticketId: searchParams.get("ticketId") ?? "",

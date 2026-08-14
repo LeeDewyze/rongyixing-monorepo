@@ -57,7 +57,7 @@ export function FlightCabinsSummary({ segment, detailSegments }: FlightCabinsSum
     segment.ToAirportName,
     segment.ToTerminal,
   );
-  const planeLabel = segment.PlaneTypeDescribe || segment.PlaneType || "";
+  const planeLabel = segment.PlaneType?.trim() || "";
   const durationLabel = formatFlightMetaDuration(segment.FlyTimeName);
   const mealLabel = formatFlightCabinsMealLabel(segment.Meal);
   const airlineName = segment.AirlineName?.trim() ?? "";

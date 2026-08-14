@@ -1,6 +1,6 @@
 import type { FlightSegment, PassengerBookInfo } from "@ryx/shared-types";
 
-import { resolveFlightSegmentId } from "@/utils/flight-list";
+import { resolveFlightSegmentId, resolvePlaneTypeDescribe } from "@/utils/flight-list";
 
 /** Minimal cabins query shape for list refresh href (list pages are out of scope). */
 type FlightCabinsQuery = {
@@ -75,7 +75,8 @@ export function buildCabinsPath(segment: FlightSegment, searchParams: URLSearchP
   if (segment.ToAirportName) params.set("toAirportName", segment.ToAirportName);
   if (segment.FromTerminal) params.set("fromTerminal", segment.FromTerminal);
   if (segment.ToTerminal) params.set("toTerminal", segment.ToTerminal);
-  if (segment.PlaneTypeDescribe) params.set("planeTypeDescribe", segment.PlaneTypeDescribe);
+  const planeTypeDescribe = resolvePlaneTypeDescribe(segment);
+  if (planeTypeDescribe) params.set("planeTypeDescribe", planeTypeDescribe);
   if (segment.Meal) params.set("meal", segment.Meal);
   const detailKey = segment.DetailKey ?? segment.Data;
   if (detailKey) params.set("detailKey", detailKey);
