@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 
 import { HOME_ASSETS } from "@/config/home-assets";
 import { WebSectionTitle } from "@/components/home/WebSectionTitle";
+import { useWaitingTaskCount } from "@/hooks/useApprovalTasks";
 
 const SHORTCUTS = [
   { id: "apply", label: "出差申请", icon: HOME_ASSETS.business.apply, to: "/travel/apply" },
@@ -41,6 +42,8 @@ function MenuChevronRightIcon() {
 
 export function WebBusinessPanel() {
   const navigate = useNavigate();
+  const waitingCount = useWaitingTaskCount();
+  const pendingCount = waitingCount.data ?? 0;
 
   return (
     <section className="mt-5">
@@ -50,21 +53,31 @@ export function WebBusinessPanel() {
       >
         <WebSectionTitle>出差申请</WebSectionTitle>
         <div className="grid grid-cols-2 gap-3 pad:grid-cols-4 pc:gap-4">
-          {SHORTCUTS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className="flex min-h-14 items-center gap-3 rounded-xl bg-white px-4 py-3 text-left shadow-sm transition-colors hover:bg-[#FAFBFC] pointer-coarse:min-h-[60px]"
-              aria-label={item.label}
-              onClick={() => navigate(item.to)}
-            >
-              <img src={item.icon} alt="" className="size-8 shrink-0 object-contain" aria-hidden />
-              <span className="min-w-0 flex-1 text-[18px] font-medium leading-none text-[#666666] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]">
-                {item.label}
-              </span>
-              <MenuChevronRightIcon />
-            </button>
-          ))}
+          {SHORTCUTS.map((item) => {
+            const showBadge = item.id === "pending" && pendingCount > 0;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                className="flex min-h-14 items-center gap-3 rounded-xl bg-white px-4 py-3 text-left shadow-sm transition-colors hover:bg-[#FAFBFC] pointer-coarse:min-h-[60px]"
+                aria-label={showBadge ? `${item.label} ${pendingCount}` : item.label}
+                onClick={() => navigate(item.to)}
+              >
+                <span className="relative shrink-0">
+                  <img src={item.icon} alt="" className="size-8 object-contain" aria-hidden />
+                  {showBadge ? (
+                    <span className="absolute -right-2 -top-1.5 min-w-4 rounded-full bg-red-500 px-1 text-center text-[10px] leading-4 text-white">
+                      {pendingCount}
+                    </span>
+                  ) : null}
+                </span>
+                <span className="min-w-0 flex-1 text-[18px] font-medium leading-none text-[#666666] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]">
+                  {item.label}
+                </span>
+                <MenuChevronRightIcon />
+              </button>
+            );
+          })}
         </div>
       </div>
     </section>

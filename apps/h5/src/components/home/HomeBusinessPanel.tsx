@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 
 import { HOME_ASSETS } from "@/config/home-assets";
+import { useWaitingTaskCount } from "@/hooks/useApprovalTasks";
 
 const SHORTCUTS = [
   { id: "apply", label: "出差申请", icon: HOME_ASSETS.business.apply, to: "/travel/apply" },
@@ -30,6 +31,8 @@ const BUSINESS_PANEL_GRADIENT =
 
 export function HomeBusinessPanel() {
   const navigate = useNavigate();
+  const waitingCount = useWaitingTaskCount();
+  const pendingCount = waitingCount.data ?? 0;
 
   return (
     <section className="mx-3 mt-4">
@@ -37,24 +40,37 @@ export function HomeBusinessPanel() {
         className="overflow-hidden rounded-lg px-3 pb-3 pt-3"
         style={{ background: BUSINESS_PANEL_GRADIENT }}
       >
-        <h2 className="mb-3 text-[16px] font-medium leading-[22px]" style={{ color: "var(--brand-title)" }}>
+        <h2
+          className="mb-3 text-[16px] font-medium leading-[22px]"
+          style={{ color: "var(--brand-title)" }}
+        >
           出差申请
         </h2>
         <div className="grid grid-cols-4 rounded-lg bg-white px-2 py-4">
-          {SHORTCUTS.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className="flex flex-col items-center gap-1.5 border-none bg-transparent p-0"
-              aria-label={item.label}
-              onClick={() => navigate(item.to)}
-            >
-              <img src={item.icon} alt="" className="size-6 object-contain" aria-hidden />
-              <span className="text-center text-[14px] font-normal leading-none tracking-normal text-[#666666] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]">
-                {item.label}
-              </span>
-            </button>
-          ))}
+          {SHORTCUTS.map((item) => {
+            const showBadge = item.id === "pending" && pendingCount > 0;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                className="flex flex-col items-center gap-1.5 border-none bg-transparent p-0"
+                aria-label={showBadge ? `${item.label} ${pendingCount}` : item.label}
+                onClick={() => navigate(item.to)}
+              >
+                <span className="relative">
+                  <img src={item.icon} alt="" className="size-6 object-contain" aria-hidden />
+                  {showBadge ? (
+                    <span className="absolute -right-2.5 -top-1.5 min-w-4 rounded-full bg-red-500 px-1 text-center text-[10px] leading-4 text-white">
+                      {pendingCount}
+                    </span>
+                  ) : null}
+                </span>
+                <span className="text-center text-[14px] font-normal leading-none tracking-normal text-[#666666] [font-family:'HarmonyOS_Sans_SC','HarmonyOS_Sans','PingFang_SC',sans-serif]">
+                  {item.label}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
     </section>
