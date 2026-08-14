@@ -117,7 +117,7 @@ export function FlightBookTravelSection({
                 onClick={onOpenIllegalReason}
               >
                 <span className="w-[5.5rem] shrink-0 whitespace-nowrap text-[14px] text-[#808080]">
-                  超标原因{requireIllegalReason ? " *" : ""}
+                  超标原因{requireIllegalReason ? <span className="text-[#ff4d4f]"> *</span> : null}
                 </span>
                 <span className="min-w-0 flex-1 truncate text-right text-[14px] text-[#333333]">
                   {form.otherIllegalReason || form.illegalReason || "请选择或填写"}
@@ -127,7 +127,7 @@ export function FlightBookTravelSection({
             ) : (
               <div className="flex items-center gap-3 border-b border-[#f0f0f0] py-3">
                 <span className="w-[5.5rem] shrink-0 whitespace-nowrap text-[14px] text-[#808080]">
-                  超标原因{requireIllegalReason ? " *" : ""}
+                  超标原因{requireIllegalReason ? <span className="text-[#ff4d4f]"> *</span> : null}
                 </span>
                 <input
                   type="text"
@@ -150,7 +150,7 @@ export function FlightBookTravelSection({
               >
                 <span className="w-[5.5rem] shrink-0 whitespace-nowrap text-[14px] text-[#808080]">
                   {field.label}
-                  {field.required ? " *" : ""}
+                  {field.required ? <span className="text-[#ff4d4f]"> *</span> : null}
                 </span>
                 <span className="min-w-0 flex-1 truncate text-right text-[14px] text-[#333333]">
                   {(form.outNumbers[field.key] ?? field.value ?? "").trim() || "请选择"}
@@ -164,7 +164,7 @@ export function FlightBookTravelSection({
               >
                 <span className="w-[5.5rem] shrink-0 whitespace-nowrap text-[14px] text-[#808080]">
                   {field.label}
-                  {field.required ? " *" : ""}
+                  {field.required ? <span className="text-[#ff4d4f]"> *</span> : null}
                 </span>
                 <input
                   type="text"
