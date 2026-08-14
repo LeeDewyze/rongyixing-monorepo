@@ -123,6 +123,7 @@ describe("legacy H5 tourist pay", () => {
         token: "token-1",
         tmcId: "10001",
         mmsId: "1",
+        openid: "openid-1",
       }),
     );
     expect(`${url.origin}${url.pathname}`).toBe("http://app.rtesp.com/home/Pay");
@@ -131,6 +132,7 @@ describe("legacy H5 tourist pay", () => {
     expect(url.searchParams.get("Version")).toBe("2.0");
     expect(url.searchParams.get("TmcId")).toBe("10001");
     expect(url.searchParams.get("MmsId")).toBe("1");
+    expect(url.searchParams.get("openid")).toBe("openid-1");
     expect(JSON.parse(url.searchParams.get("Data") ?? "{}")).toMatchObject({
       Channel: "App",
       Type: "2",

@@ -96,6 +96,11 @@ export function createRyxDevProxy({ apiBase, apiDomain }: RyxDevProxyOptions): P
       target: normalizedApiBase,
       changeOrigin: true,
     },
+    // Legacy mobile OAuth/payment endpoints use lowercase `/home/*`.
+    "/home": {
+      target: normalizedApiBase,
+      changeOrigin: true,
+    },
     "/legal-doc": {
       target: normalizedApiBase,
       changeOrigin: true,

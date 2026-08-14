@@ -15,17 +15,15 @@ import {
   buildLegacyH5PayUrl,
   executeOrderPayFlow,
   formatPayHoldCountdown,
+  resolveLegacyH5PayType,
   shouldUseLegacyH5PayRedirect,
 } from "@/lib/order-pay";
 import { getApi } from "@/lib/api";
-import { getAppId, getLegacyAppBaseUrl } from "@/lib/env";
-import {
-  getRequestDomain,
-  getRequestLanguage,
-  getTicketName,
-} from "@/lib/request-context";
+import { getApiMode, getAppId, getLegacyAppBaseUrl } from "@/lib/env";
+import { getRequestDomain, getRequestLanguage, getTicketName } from "@/lib/request-context";
 import { getTicket } from "@/lib/session";
 import { resolveTouristContext } from "@/lib/tourist-context";
+import { getWechatOpenId, isWechatH5, redirectToWechatOAuth } from "@/lib/wechat-oauth";
 
 export interface OrderPayPageProps {
   title: string;
@@ -141,6 +139,19 @@ export function OrderPayPage({
   async function handlePay() {
     if (!selected) return;
     if (shouldUseLegacyH5PayRedirect({ channel, productType, payType: selected })) {
+      const openid = getWechatOpenId();
+      if (isWechatH5() && !openid && resolveLegacyH5PayType(selected) === "3") {
+        redirectToWechatOAuth({
+          appBaseUrl:
+            getApiMode() === "proxy" && typeof window !== "undefined"
+              ? window.location.origin
+              : getLegacyAppBaseUrl(),
+          domain: getRequestDomain(),
+          ticket: getTicket() ?? "",
+          ticketName: getTicketName(),
+        });
+        return;
+      }
       const api = getApi();
       const apiConfig = api.proxy.getApiConfig() ?? (await api.proxy.loadApiConfig());
       const context = await resolveTouristContext({
@@ -159,6 +170,7 @@ export function OrderPayPage({
           token: apiConfig.Token ?? "",
           tmcId: context.TouristTmcId,
           mmsId: context.TouristMmsId,
+          openid,
         }),
       );
       return;

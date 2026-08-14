@@ -48,16 +48,33 @@ H5 场景中，支付宝/微信会走 legacy 移动支付入口：
 order-tourist-tmc.rongtrip.cn/Pay/Create
 ```
 
+### 2.1 微信 H5 OpenID 获取
+
+微信支付在微信内 H5 中需要将当前公众号用户的 `wechatopenid` 传给 legacy 支付入口。新版 H5 与 legacy 对齐的流程如下：
+
+```text
+点击微信支付
+  -> 读取 URL / Cookie / WebView storage 中的 wechatopenid
+  -> 已有 OpenID：直接跳转 /home/Pay?openid=<wechatopenid>
+  -> 没有 OpenID：保存当前支付页 URL
+  -> 跳转 /home/GetWechatCode?domain=...&ticket=...&path=...
+  -> 微信 OAuth 回调携带 wechatopenid
+  -> 保存 OpenID，恢复原支付页
+  -> 再跳转 /home/Pay?openid=<wechatopenid>&Method=TmcTouristOrderUrl-Pay-Create
+```
+
+OpenID 由 legacy `/home/GetWechatCode` 依赖公众号 OAuth 配置获取，H5 不自行生成或换取 OpenID。待恢复地址保存在 `sessionStorage`，因此不会把订单号、`channel=tourist`、产品类型和 tourist 上下文丢失。非微信环境、支付宝和因公支付不进入这条 OAuth 分支。
+
 请求体关键字段：
 
-| 字段 | 说明 |
-| --- | --- |
-| `Channel` | 固定为 `App` |
-| `Type` | `2` 支付宝，`3` 微信，`7` 工行 |
-| `OrderId` | 订单号 |
-| `IsApp` | H5 为 `false` |
-| `CreateType` | H5 支付宝/微信为 `Mobile` |
-| `TmcId` / `MmsId` | tourist 上下文必带 |
+| 字段              | 说明                           |
+| ----------------- | ------------------------------ |
+| `Channel`         | 固定为 `App`                   |
+| `Type`            | `2` 支付宝，`3` 微信，`7` 工行 |
+| `OrderId`         | 订单号                         |
+| `IsApp`           | H5 为 `false`                  |
+| `CreateType`      | H5 支付宝/微信为 `Mobile`      |
+| `TmcId` / `MmsId` | tourist 上下文必带             |
 
 注意：legacy 因私火车新版填单页在 checkPay 成功后，直接拉起 `payOrder` 的代码已被注释，实际更偏向先进入订单详情/列表，再从订单入口支付。
 
@@ -81,11 +98,11 @@ Book 返回 TradeNo / HasTasks / IsCheckPay
 
 因公个付的支付方式 Type 与因私一致，但 Method 前缀不同：
 
-| 支付渠道 | Type | Create Method | Process Method |
-| --- | --- | --- | --- |
-| 支付宝 | `2` | `TmcApiOrderUrl-Pay-Create` | `TmcApiOrderUrl-Pay-Process` |
-| 微信 | `3` | `TmcApiOrderUrl-Pay-Create` | `TmcApiOrderUrl-Pay-Process` |
-| 工行 | `7` | `TmcApiOrderUrl-Pay-Create` | 由返回 `Url` 后的支付服务接管 |
+| 支付渠道 | Type | Create Method               | Process Method                |
+| -------- | ---- | --------------------------- | ----------------------------- |
+| 支付宝   | `2`  | `TmcApiOrderUrl-Pay-Create` | `TmcApiOrderUrl-Pay-Process`  |
+| 微信     | `3`  | `TmcApiOrderUrl-Pay-Create` | `TmcApiOrderUrl-Pay-Process`  |
+| 工行     | `7`  | `TmcApiOrderUrl-Pay-Create` | 由返回 `Url` 后的支付服务接管 |
 
 详情页“去支付”按钮只应在满足以下条件时展示：
 
@@ -122,11 +139,11 @@ Book 返回 TradeNo / HasTasks / IsCheckPay
 
 H5 实现应按以下规则选择接口域与后续动作：
 
-| 场景 | 接口域 | 下单后 | 支付页 |
-| --- | --- | --- | --- |
-| 因私个付 | `TmcTouristOrderUrl-*` / `TmcTouristBookUrl-*` | checkPay 后进入订单详情/列表 | `/train/pay/:id?channel=tourist` 等 |
-| 因公个付 | `TmcApiOrderUrl-*` / `TmcApiBookUrl-*` | checkPay 后按审批与支付状态进入详情/支付 | `/train/pay/:id?channel=tmc` 等 |
-| 因公公付 | `TmcApiOrderUrl-*` / `TmcApiBookUrl-*` | checkPay 后进入审批/详情 | 不进入个人支付页 |
+| 场景     | 接口域                                         | 下单后                                   | 支付页                              |
+| -------- | ---------------------------------------------- | ---------------------------------------- | ----------------------------------- |
+| 因私个付 | `TmcTouristOrderUrl-*` / `TmcTouristBookUrl-*` | checkPay 后进入订单详情/列表             | `/train/pay/:id?channel=tourist` 等 |
+| 因公个付 | `TmcApiOrderUrl-*` / `TmcApiBookUrl-*`         | checkPay 后按审批与支付状态进入详情/支付 | `/train/pay/:id?channel=tmc` 等     |
+| 因公公付 | `TmcApiOrderUrl-*` / `TmcApiBookUrl-*`         | checkPay 后进入审批/详情                 | 不进入个人支付页                    |
 
 落地约束：
 

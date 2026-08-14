@@ -14,10 +14,12 @@ import { bootstrapExternalTicket } from "@/lib/external-ticket";
 import { queryClient } from "@/lib/query";
 import { setupVConsoleFromUrl } from "@/lib/vconsole";
 import { setupViewportCompatibilityVars } from "@/lib/viewport-compat";
+import { bootstrapWechatOAuthCallback } from "@/lib/wechat-oauth";
 
 async function main() {
   setupViewportCompatibilityVars();
   await setupVConsoleFromUrl();
+  bootstrapWechatOAuthCallback();
   await bootstrapApi();
   await bootstrapExternalTicket();
   await preloadBusinessBookingPermission(queryClient, { silentUnauthorized: true });
