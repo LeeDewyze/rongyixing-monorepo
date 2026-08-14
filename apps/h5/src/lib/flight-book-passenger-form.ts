@@ -26,7 +26,8 @@ function resolvePassengerAccountId(passenger: PassengerBookInfo): string {
 }
 
 function resolvePassengerOrgName(passenger: PassengerBookInfo): string {
-  const passengerOrgName = "OrgName" in passenger.passenger ? passenger.passenger.OrgName : undefined;
+  const passengerOrgName =
+    "OrgName" in passenger.passenger ? passenger.passenger.OrgName : undefined;
   return passenger.credential.OrgName ?? passengerOrgName ?? "";
 }
 
@@ -62,9 +63,7 @@ export function createPassengerBookForm(
     otherEmail: "",
     organization: {
       code: staff?.Organization?.Code ?? "",
-      name:
-        staff?.Organization?.Name ??
-        resolvePassengerOrgName(passenger),
+      name: staff?.Organization?.Name ?? resolvePassengerOrgName(passenger),
     },
     otherOrganizationName: "",
     costCenter: {
@@ -74,7 +73,7 @@ export function createPassengerBookForm(
     otherCostCenterName: "",
     otherCostCenterCode: "",
     expanded: false,
-    showTravelDetail: false,
+    showTravelDetail: true,
     expenseType: "",
     illegalReason: "",
     otherIllegalReason: "",

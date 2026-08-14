@@ -20,7 +20,9 @@ import {
   buildTravelUrlRowSearchText,
   fetchTravelUrlOptions,
   filterTravelUrlRows,
+  pickSoleTravelUrlNumber,
   resolveOutNumberValueFromTravelUrlRow,
+  resolvePrefillTravelNumber,
   resolveTmcBookingConfig,
   unwrapTravelUrlRows,
 } from "./flight-book-outnumber";
@@ -204,5 +206,45 @@ describe("resolveOutNumberValueFromTravelUrlRow", () => {
     expect(
       resolveOutNumberValueFromTravelUrlRow({ TravelNumber: "TR001" } satisfies TravelUrlRow),
     ).toBe("TR001");
+  });
+});
+
+describe("resolvePrefillTravelNumber", () => {
+  it("prefers TravelFrom over passenger.travelNumber", () => {
+    expect(
+      resolvePrefillTravelNumber(
+        { TravelFrom: { TravelNumber: "TF-001" } },
+        {
+          id: "p1",
+          passenger: { Id: "p1", Name: "张三", travelNumber: "TN-PASS" },
+          credential: { Id: "c1", Name: "张三", Number: "1", CredentialsType: 1 },
+        },
+      ),
+    ).toBe("TF-001");
+  });
+
+  it("falls back to passenger.travelNumber", () => {
+    expect(
+      resolvePrefillTravelNumber(undefined, {
+        id: "p1",
+        passenger: { Id: "p1", Name: "张三", travelNumber: "TN-PASS" },
+        credential: { Id: "c1", Name: "张三", Number: "1", CredentialsType: 1 },
+      }),
+    ).toBe("TN-PASS");
+  });
+});
+
+describe("pickSoleTravelUrlNumber", () => {
+  it("returns TravelNumber only when GetTravelUrl has exactly one row", () => {
+    expect(pickSoleTravelUrlNumber([])).toBe("");
+    expect(
+      pickSoleTravelUrlNumber([
+        { TravelNumber: "Travel202608141132303157173" },
+        { TravelNumber: "Travel202608141132303157174" },
+      ]),
+    ).toBe("");
+    expect(pickSoleTravelUrlNumber([{ TravelNumber: "Travel202608141132303157173" }])).toBe(
+      "Travel202608141132303157173",
+    );
   });
 });

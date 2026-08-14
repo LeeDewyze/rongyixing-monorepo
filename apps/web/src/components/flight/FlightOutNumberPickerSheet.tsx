@@ -64,7 +64,7 @@ export function FlightOutNumberPickerSheet({
   return (
     <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/40">
       <button type="button" className="flex-1" aria-label="关闭" onClick={onClose} />
-      <div className="flex max-h-[70vh] flex-col rounded-t-2xl bg-white pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <div className="flex min-h-[min(52vh,24rem)] max-h-[70vh] flex-col rounded-t-2xl bg-white pb-[max(1rem,env(safe-area-inset-bottom))]">
         <div className="border-b border-[#eeeeee] px-4 py-3">
           <div className="mb-3 flex items-center justify-between">
             <p className="text-[16px] font-semibold text-[#333333]">

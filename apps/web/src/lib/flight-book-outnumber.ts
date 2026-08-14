@@ -273,6 +273,25 @@ export function resolveOutNumberValueFromTravelUrlRow(row: TravelUrlRow): string
   return String(row.TravelNumber ?? "").trim();
 }
 
+/** Prefill from Initialize.TravelFrom, then passenger.travelNumber (legacy getTravelFormNumber). */
+export function resolvePrefillTravelNumber(
+  init?: FlightInitBookResponse,
+  passenger?: PassengerBookInfo,
+): string {
+  const fromInit = init?.TravelFrom?.TravelNumber?.trim() ?? "";
+  if (fromInit) return fromInit;
+  if (passenger && "travelNumber" in passenger.passenger && passenger.passenger.travelNumber) {
+    return String(passenger.passenger.travelNumber).trim();
+  }
+  return "";
+}
+
+/** Legacy book page: auto-fill TravelNumber only when GetTravelUrl returns exactly one row. */
+export function pickSoleTravelUrlNumber(rows: TravelUrlRow[]): string {
+  if (rows.length !== 1) return "";
+  return resolveOutNumberValueFromTravelUrlRow(rows[0]!);
+}
+
 export function validatePassengerOutNumbers(
   fields: FlightOutNumberField[],
   values: Record<string, string>,

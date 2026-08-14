@@ -14,7 +14,12 @@ import {
   shouldShowApproverPicker,
   shouldShowTravelSection,
 } from "@/lib/flight-book-approval";
-import { buildPassengerOutNumberFields } from "@/lib/flight-book-outnumber";
+import {
+  buildPassengerOutNumberFields,
+  isTravelOutNumberField,
+  resolvePrefillTravelNumber,
+} from "@/lib/flight-book-outnumber";
+import { useAutoFillTravelOutNumber } from "@/hooks/useAutoFillTravelOutNumber";
 import { policyHasViolation } from "@/lib/flight-book-policy";
 import { filterFlightExpenseTypes, shouldRequireIllegalReason } from "@/lib/flight-book-travel";
 import type { HomeTravelMode } from "@/config/home-assets";
@@ -52,9 +57,15 @@ export function FlightBookTravelSection({
     passenger,
     staff,
     init,
-    travelNumber: init?.TravelFrom?.TravelNumber,
+    travelNumber: resolvePrefillTravelNumber(init, passenger),
     travelMode,
   });
+  const selectableTravelField = outNumberFields.find(
+    (field) => field.canSelect && isTravelOutNumberField(field),
+  );
+  const travelFieldValue = selectableTravelField
+    ? (form.outNumbers[selectableTravelField.key] ?? selectableTravelField.value ?? "").trim()
+    : "";
   const expenseTypes = filterFlightExpenseTypes(init?.ExpenseTypes);
   const showSection = shouldShowTravelSection({
     policy,
@@ -63,6 +74,15 @@ export function FlightBookTravelSection({
     init,
     outNumberFieldCount: outNumberFields.length,
     passenger,
+  });
+  useAutoFillTravelOutNumber({
+    field: selectableTravelField,
+    currentValue: travelFieldValue,
+    enabled: Boolean(selectableTravelField) && showSection,
+    onFill: (key, value) =>
+      onUpdate({
+        outNumbers: { ...form.outNumbers, [key]: value },
+      }),
   });
   const showApproverPicker = shouldShowApproverPicker({ init, policy, staff, passenger });
   const showApproveNode = shouldShowApproveNode(init, policy);
@@ -99,7 +119,7 @@ export function FlightBookTravelSection({
                 <span className="w-[5.5rem] shrink-0 whitespace-nowrap text-[14px] text-[#808080]">
                   超标原因{requireIllegalReason ? " *" : ""}
                 </span>
-                <span className="min-w-0 flex-1 truncate text-[14px] text-[#333333]">
+                <span className="min-w-0 flex-1 truncate text-right text-[14px] text-[#333333]">
                   {form.otherIllegalReason || form.illegalReason || "请选择或填写"}
                 </span>
                 <span className="text-[#cccccc]">›</span>
@@ -132,8 +152,8 @@ export function FlightBookTravelSection({
                   {field.label}
                   {field.required ? " *" : ""}
                 </span>
-                <span className="min-w-0 flex-1 truncate text-[14px] text-[#333333]">
-                  {form.outNumbers[field.key] ?? field.value ?? "请选择"}
+                <span className="min-w-0 flex-1 truncate text-right text-[14px] text-[#333333]">
+                  {(form.outNumbers[field.key] ?? field.value ?? "").trim() || "请选择"}
                 </span>
                 <span className="text-[#cccccc]">›</span>
               </button>
@@ -173,7 +193,7 @@ export function FlightBookTravelSection({
               <span className="w-[5.5rem] shrink-0 whitespace-nowrap text-[14px] text-[#808080]">
                 费用类别
               </span>
-              <span className="min-w-0 flex-1 truncate text-[14px] text-[#333333]">
+              <span className="min-w-0 flex-1 truncate text-right text-[14px] text-[#333333]">
                 {form.expenseType || "请选择"}
               </span>
               <span className="text-[#cccccc]">›</span>
@@ -204,7 +224,7 @@ export function FlightBookTravelSection({
               <span className="w-[5.5rem] shrink-0 whitespace-nowrap text-[14px] text-[#808080]">
                 选择审批人
               </span>
-              <span className="min-w-0 flex-1 truncate text-[14px] text-[#333333]">
+              <span className="min-w-0 flex-1 truncate text-right text-[14px] text-[#333333]">
                 {form.selectedApproverName || "请选择"}
               </span>
               <span className="text-[#cccccc]">›</span>
@@ -248,7 +268,7 @@ export function buildPassengerOutNumberFieldsMap(input: {
       passenger,
       staff,
       init,
-      travelNumber: init?.TravelFrom?.TravelNumber,
+      travelNumber: resolvePrefillTravelNumber(init, passenger),
       travelMode,
     });
   }
