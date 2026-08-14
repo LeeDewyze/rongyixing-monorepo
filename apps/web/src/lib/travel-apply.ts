@@ -351,7 +351,9 @@ function parseDetailFieldsFromBlock(block: string): Record<string, string> {
   }
   if (Object.keys(fields).length > 0) return fields;
 
-  const mobileRowRe = /<tr>\s*<td>([^<]*)<\/td>\s*<td([^>]*)>([\s\S]*?)<\/td>\s*<\/tr>/gi;
+  // Mobile Form/Detail emits `<tr >` (space before `>`) and may wrap cell text on the next line.
+  const mobileRowRe =
+    /<tr\b[^>]*>\s*<td\b[^>]*>([\s\S]*?)<\/td>\s*<td\b([^>]*)>([\s\S]*?)<\/td>\s*<\/tr>/gi;
   while ((match = mobileRowRe.exec(block)) !== null) {
     const nameMatch = match[2].match(/detailCtrlName="([^"]*)"/i);
     const label = decodeHtmlEntities((nameMatch?.[1] ?? match[1]).trim());

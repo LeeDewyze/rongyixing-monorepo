@@ -423,6 +423,53 @@ describe("travel form detail html parser", () => {
     });
   });
 
+  it("parses production mobile Form/Detail rows with spaced tr tags", () => {
+    const html = `
+      <div class="form-content detials" detailCtrlType="TravelAccount">
+        <table class="formdetail-table">
+          <tr >
+            <td>&#x51FA;&#x5DEE;&#x4EBA; </td>
+            <td detailCtrlTag="FormTravelAccount" detailCtrlName="&#x51FA;&#x5DEE;&#x4EBA;">
+193-郭洁婷                                        </td>
+          </tr>
+        </table>
+      </div>
+      <div class="form-content detials" detailCtrlType="TravelDetail">
+        <table class="formdetail-table">
+          <tr >
+            <td>&#x51FA;&#x53D1;&#x57CE;&#x5E02; </td>
+            <td detailCtrlTag="FormTravelDetail" detailCtrlName="&#x51FA;&#x53D1;&#x57CE;&#x5E02;">
+宁波                                        </td>
+          </tr>
+          <tr >
+            <td>&#x76EE;&#x7684;&#x57CE;&#x5E02; </td>
+            <td detailCtrlTag="FormTravelDetail" detailCtrlName="&#x76EE;&#x7684;&#x57CE;&#x5E02;">
+三亚                                        </td>
+          </tr>
+          <tr >
+            <td>&#x5F00;&#x59CB;&#x65E5;&#x671F; </td>
+            <td detailCtrlTag="FormTravelDetail" detailCtrlName="&#x5F00;&#x59CB;&#x65E5;&#x671F;">
+2026-09-01 00:00                                        </td>
+          </tr>
+          <tr >
+            <td>&#x7ED3;&#x675F;&#x65E5;&#x671F; </td>
+            <td detailCtrlTag="FormTravelDetail" detailCtrlName="&#x7ED3;&#x675F;&#x65E5;&#x671F;">
+2026-10-02 00:00                                        </td>
+          </tr>
+        </table>
+      </div>
+    `;
+
+    const parsed = parseTravelFormDetailHtml(html);
+    expect(parsed.accounts).toEqual([{ 出差人: "193-郭洁婷" }]);
+    expect(parsed.details[0]).toMatchObject({
+      出发城市: "宁波",
+      目的城市: "三亚",
+      开始日期: "2026-09-01 00:00",
+      结束日期: "2026-10-02 00:00",
+    });
+  });
+
   it("resolves city labels from meta city list", () => {
     const cities = [
       { label: "北京", value: "1101" },
