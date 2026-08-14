@@ -135,7 +135,7 @@ write_nginx_proxy_conf() {
   fi
 
   cat >"${proxy_conf}" <<EOF
-location ^~ /Home/ {
+location ~ ^/Home/ {
   proxy_http_version 1.1;
   proxy_set_header Host \$proxy_host;
   proxy_set_header X-Real-IP \$remote_addr;
@@ -144,7 +144,25 @@ location ^~ /Home/ {
   proxy_pass ${api_scheme}://${api_host};
 }
 
-location ^~ /home/ {
+location = /home/GetWechatCode {
+  proxy_http_version 1.1;
+  proxy_set_header Host \$proxy_host;
+  proxy_set_header X-Real-IP \$remote_addr;
+  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto \$scheme;
+  proxy_pass ${api_scheme}://${api_host};
+}
+
+location = /home/GetDingTalkCode {
+  proxy_http_version 1.1;
+  proxy_set_header Host \$proxy_host;
+  proxy_set_header X-Real-IP \$remote_addr;
+  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto \$scheme;
+  proxy_pass ${api_scheme}://${api_host};
+}
+
+location = /home/Pay {
   proxy_http_version 1.1;
   proxy_set_header Host \$proxy_host;
   proxy_set_header X-Real-IP \$remote_addr;
@@ -259,6 +277,11 @@ http {
       add_header Cache-Control "public, immutable";
     }
 
+    location ~ ^/home/(?!GetWechatCode(?:/|$)|GetDingTalkCode(?:/|$)|Pay(?:/|$)) {
+      root ${ROOT_DIR}/apps/h5/dist;
+      try_files \$uri \$uri/ /index.html;
+    }
+
     location / {
       root ${ROOT_DIR}/apps/h5/dist;
       try_files \$uri \$uri/ /index.html;
@@ -276,6 +299,11 @@ http {
       alias ${ROOT_DIR}/apps/web/dist/assets/;
       expires 30d;
       add_header Cache-Control "public, immutable";
+    }
+
+    location ~ ^/home/(?!GetWechatCode(?:/|$)|GetDingTalkCode(?:/|$)|Pay(?:/|$)) {
+      root ${ROOT_DIR}/apps/web/dist;
+      try_files \$uri \$uri/ /index.html;
     }
 
     location / {

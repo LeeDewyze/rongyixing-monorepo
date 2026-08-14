@@ -1,4 +1,4 @@
-# RongYiXing Business Same-Origin WEB test Build 20260814080221
+# RongYiXing Business Same-Origin WEB test Build 20260814105241
 
 这个包用于交付业务方部署到 legacy 同源站点。
 
@@ -21,10 +21,11 @@
 - 静态资源 base：/web/
 - API 配置：请求当前访问域名下的 /Home/Setting
 - 后续接口：按 /Home/Setting 返回的 Urls 直接访问 legacy 后端服务
+- Request root：rl
 - Domain：从当前访问域名推导，也可以由 URL query 的 domain 覆盖
 
 构建信息：
 
-- build_time: 2026-08-14T00:02:33Z
+- build_time: 2026-08-14T02:52:53Z
 - git_branch: main
-- git_commit: 5a2001de5933aa15fb3e0773f9529c203d4a8e88
+- git_commit: 75abc3daa8b1a14bb5c5afbb1243848bfd27568d

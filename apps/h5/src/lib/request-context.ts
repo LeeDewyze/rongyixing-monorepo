@@ -14,17 +14,18 @@ const QUERY_SKIP = new Set([
   "style",
   "path",
   "domain",
+  "root",
 ]);
 
 /** Product root for proxy form body (beeant `root`, e.g. `rl`). Not the SPA route segment. */
 export function getApiRoot(): string {
-  const fromQuery = readQueryParams().get("root");
-  if (fromQuery) {
-    return fromQuery;
-  }
   const fromEnv = import.meta.env.VITE_API_ROOT?.trim();
   if (fromEnv) {
     return fromEnv;
+  }
+  const fromQuery = readQueryParams().get("root");
+  if (fromQuery) {
+    return fromQuery;
   }
   return "rl";
 }

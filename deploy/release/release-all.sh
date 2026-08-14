@@ -108,10 +108,27 @@ business_h5_base_path() {
   esac
 }
 
+business_api_root() {
+  local env_name="$1"
+  case "${env_name}" in
+    test)
+      printf 'rl'
+      ;;
+    prod)
+      printf 'www'
+      ;;
+    *)
+      log "unsupported business env: ${env_name}"
+      exit 1
+      ;;
+  esac
+}
+
 build_business_app() {
   local app_name="$1"
   local env_name="$2"
   local base_path="$3"
+  local api_root="$4"
   local package_name package_dir archive_path static_dir build_time git_commit git_branch app_label target_dir
 
   package_name="$(business_package_name "${app_name}" "${env_name}")"
@@ -130,10 +147,13 @@ build_business_app() {
 
   log "build business ${env_name} ${app_label} with base ${base_path}"
   VITE_BASE_PATH="${base_path}" \
+  VITE_API_ROOT="${api_root}" \
   VITE_API_MODE=direct \
   VITE_API_BASE_URL=__SAME_ORIGIN__ \
   VITE_API_DOMAIN=__AUTO__ \
   pnpm --filter "@ryx/${app_name}" build --mode "${env_name}"
+
+  node "${SCRIPT_DIR}/check-webview-css.mjs" "${ROOT_DIR}/apps/${app_name}/dist"
 
   cp -a "${ROOT_DIR}/apps/${app_name}/dist/." "${target_dir}/"
 
@@ -150,6 +170,7 @@ static_dir=${static_dir}
 api_mode=direct
 api_base_url=__SAME_ORIGIN__
 api_domain=__AUTO__
+api_root=${api_root}
 EOF
 
   cat >"${package_dir}/README.md" <<EOF
@@ -176,6 +197,7 @@ ${base_path}index.html?wechatopenid=&ticketname=ticket&root=${static_dir}&ticket
 - 静态资源 base：${base_path}
 - API 配置：请求当前访问域名下的 /Home/Setting
 - 后续接口：按 /Home/Setting 返回的 Urls 直接访问 legacy 后端服务
+- Request root：${api_root}
 - Domain：从当前访问域名推导，也可以由 URL query 的 domain 覆盖
 
 构建信息：
@@ -196,8 +218,8 @@ build_business_packages() {
   for env_name in ${BUSINESS_ENVS}; do
     case "${env_name}" in
       test|prod)
-        build_business_app "h5" "${env_name}" "$(business_h5_base_path "${env_name}")"
-        build_business_app "web" "${env_name}" "${BUSINESS_WEB_BASE_PATH}"
+        build_business_app "h5" "${env_name}" "$(business_h5_base_path "${env_name}")" "$(business_api_root "${env_name}")"
+        build_business_app "web" "${env_name}" "${BUSINESS_WEB_BASE_PATH}" "$(business_api_root "${env_name}")"
         ;;
       *)
         log "unsupported business env: ${env_name}"

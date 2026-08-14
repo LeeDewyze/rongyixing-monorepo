@@ -35,13 +35,35 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
+  /* Tailwind's default palette is emitted as oklch in v4. Keep the colors
+   * used by the apps parseable by older Android WebViews. */
+  --color-amber-500: #f59e0b;
+  --color-amber-600: #d97706;
+  --color-blue-50: #eff6ff;
+  --color-blue-100: #dbeafe;
+  --color-emerald-50: #ecfdf5;
+  --color-emerald-100: #d1fae5;
+  --color-emerald-500: #10b981;
+  --color-emerald-600: #059669;
+  --color-emerald-700: #047857;
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-red-50: #fef2f2;
+  --color-red-100: #fee2e2;
+  --color-red-500: #ef4444;
+  --color-red-600: #dc2626;
+
   /* ===== RYX Brand Color Tokens ===== */
   --color-brand-title: #010101;
-  --color-brand-primary: #2768FA;
-  --color-brand-btn-start: #33A1F9;
-  --color-brand-btn-end: #2768FA;
-  --color-brand-form-start: #7AB1FF;
-  --color-brand-form-end: #F5F6F9;
+  --color-brand-primary: #2768fa;
+  --color-brand-btn-start: #33a1f9;
+  --color-brand-btn-end: #2768fa;
+  --color-brand-form-start: #7ab1ff;
+  --color-brand-form-end: #f5f6f9;
   --color-brand-header-start: #5099fe;
   --color-brand-header-end: #6aabff;
   --color-brand-accent: #5099fe;
@@ -49,36 +71,36 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --background: #ffffff;
+  --foreground: #252525;
+  --card: #ffffff;
+  --card-foreground: #252525;
+  --popover: #ffffff;
+  --popover-foreground: #252525;
+  --primary: #353535;
+  --primary-foreground: #fafafa;
+  --secondary: #f5f5f5;
+  --secondary-foreground: #353535;
+  --muted: #f5f5f5;
+  --muted-foreground: #8a8a8a;
+  --accent: #f5f5f5;
+  --accent-foreground: #353535;
+  --destructive: #e3393f;
+  --border: #ebebeb;
+  --input: #ebebeb;
+  --ring: #b0b0b0;
 
   /* ===== RYX Brand Tokens ===== */
 
   /* 主品牌蓝 — 文字/边框/对焦环等交互态 */
-  --brand-primary: #2768FA;
+  --brand-primary: #2768fa;
 
   /* 标题文字 — 用于浅色背景上的标题 */
   --brand-title: #010101;
 
   /* 主按钮渐变 — 左浅右深 */
-  --brand-btn-start: #33A1F9;
-  --brand-btn-end: #2768FA;
+  --brand-btn-start: #33a1f9;
+  --brand-btn-end: #2768fa;
   --brand-btn-gradient: linear-gradient(90deg, var(--brand-btn-start), var(--brand-btn-end));
 
   /* 页面 header 渐变 — 用于顶部导航栏 */
@@ -89,9 +111,13 @@
   --brand-accent: #5099fe;
 
   /* 表单页头部渐变 — 顶部 ~200px 从 brand-blue 渐变到页面底色 */
-  --brand-form-header-start: #7AB1FF;
-  --brand-form-header-end: #F5F6F9;
-  --brand-form-header-gradient: linear-gradient(180deg, var(--brand-form-header-start) 0px, var(--brand-form-header-end) 200px);
+  --brand-form-header-start: #7ab1ff;
+  --brand-form-header-end: #f5f6f9;
+  --brand-form-header-gradient: linear-gradient(
+    180deg,
+    var(--brand-form-header-start) 0px,
+    var(--brand-form-header-end) 200px
+  );
 
   --ryx-viewport-width: 100vw;
   --ryx-viewport-height: 100vh;
@@ -101,24 +127,24 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --background: #252525;
+  --foreground: #fafafa;
+  --card: #353535;
+  --card-foreground: #fafafa;
+  --popover: #353535;
+  --popover-foreground: #fafafa;
+  --primary: #ebebeb;
+  --primary-foreground: #353535;
+  --secondary: #454545;
+  --secondary-foreground: #fafafa;
+  --muted: #454545;
+  --muted-foreground: #b0b0b0;
+  --accent: #454545;
+  --accent-foreground: #fafafa;
+  --destructive: #f06b70;
+  --border: rgb(255 255 255 / 10%);
+  --input: rgb(255 255 255 / 15%);
+  --ring: #8a8a8a;
 }
 
 @layer base {
@@ -128,7 +154,8 @@
   body {
     @apply bg-background text-foreground;
   }
-  html, body {
+  html,
+  body {
     scrollbar-width: none;
     -ms-overflow-style: none;
     -webkit-text-size-adjust: 100%;
@@ -162,4 +189,38 @@
     touch-action: pan-y;
     -webkit-overflow-scrolling: touch;
   }
+}
+
+/* Tailwind v4 emits `in oklab` for directional gradients. Older Android
+ * WebViews reject that syntax and drop the whole background image. */
+.bg-gradient-to-t {
+  --tw-gradient-position: to top;
+}
+
+.bg-gradient-to-tr {
+  --tw-gradient-position: to top right;
+}
+
+.bg-gradient-to-r {
+  --tw-gradient-position: to right;
+}
+
+.bg-gradient-to-br {
+  --tw-gradient-position: to bottom right;
+}
+
+.bg-gradient-to-b {
+  --tw-gradient-position: to bottom;
+}
+
+.bg-gradient-to-bl {
+  --tw-gradient-position: to bottom left;
+}
+
+.bg-gradient-to-l {
+  --tw-gradient-position: to left;
+}
+
+.bg-gradient-to-tl {
+  --tw-gradient-position: to top left;
 }

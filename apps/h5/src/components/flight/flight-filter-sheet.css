@@ -33,8 +33,11 @@
   position: relative;
   z-index: 1;
   display: flex;
+  height: 65vh;
   height: 65dvh;
+  min-height: 65vh;
   min-height: 65dvh;
+  max-height: 65vh;
   max-height: 65dvh;
   flex-direction: column;
   overflow: hidden;

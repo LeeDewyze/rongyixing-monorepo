@@ -10,7 +10,7 @@
   inset: 0;
   width: 100%;
   border: 0;
-  background: color-mix(in srgb, var(--brand-title) 32%, transparent);
+  background: rgb(1 1 1 / 32%);
   opacity: 0;
   transition: opacity 180ms ease-out;
 }
@@ -25,10 +25,10 @@
   transform: translate(-50%, -46%);
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--brand-primary) 12%, transparent);
+  border: 1px solid rgb(39 104 250 / 12%);
   border-radius: 14px;
   background: var(--brand-form-header-end);
-  box-shadow: 0 20px 50px color-mix(in srgb, var(--brand-title) 22%, transparent);
+  box-shadow: 0 20px 50px rgb(1 1 1 / 22%);
   opacity: 0;
   transition:
     transform 240ms ease-out,
@@ -86,7 +86,7 @@
 
 .travel-policy-dialog__header p {
   margin: 3px 0 0;
-  color: color-mix(in srgb, var(--brand-title) 62%, transparent);
+  color: rgb(1 1 1 / 62%);
   font-size: 12px;
 }
 
@@ -98,7 +98,7 @@
   justify-content: center;
   border: 0;
   border-radius: 999px;
-  color: color-mix(in srgb, var(--brand-title) 68%, transparent);
+  color: rgb(1 1 1 / 68%);
   cursor: pointer;
   font-size: 25px;
   line-height: 1;
@@ -109,7 +109,7 @@
 }
 
 .travel-policy-dialog__close:hover {
-  background: color-mix(in srgb, var(--brand-primary) 10%, transparent);
+  background: rgb(39 104 250 / 10%);
   color: var(--brand-title);
 }
 
@@ -144,9 +144,9 @@
 .travel-policy-dialog__section ul {
   margin: 0;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--brand-title) 8%, transparent);
+  border: 1px solid rgb(1 1 1 / 8%);
   border-radius: 8px;
-  background: color-mix(in srgb, var(--brand-title) 3%, transparent);
+  background: rgb(1 1 1 / 3%);
   list-style: none;
   padding: 0;
 }
@@ -161,7 +161,7 @@
 }
 
 .travel-policy-dialog__item + .travel-policy-dialog__item {
-  border-top: 1px solid color-mix(in srgb, var(--brand-title) 7%, transparent);
+  border-top: 1px solid rgb(1 1 1 / 7%);
 }
 
 .travel-policy-dialog__item::before {
@@ -183,7 +183,7 @@
   justify-content: center;
   flex-direction: column;
   gap: 8px;
-  color: color-mix(in srgb, var(--brand-title) 55%, transparent);
+  color: rgb(1 1 1 / 55%);
   text-align: center;
 }
 
@@ -201,7 +201,7 @@
   width: 86%;
   height: 14px;
   border-radius: 6px;
-  background: color-mix(in srgb, var(--brand-primary) 14%, transparent);
+  background: rgb(39 104 250 / 14%);
   animation: travel-policy-dialog-pulse 1.2s ease-in-out infinite;
 }
 
@@ -217,7 +217,7 @@
 
 .travel-policy-dialog__footer {
   padding: 10px 14px calc(12px + env(safe-area-inset-bottom));
-  border-top: 1px solid color-mix(in srgb, var(--brand-title) 8%, transparent);
+  border-top: 1px solid rgb(1 1 1 / 8%);
   background: var(--brand-form-header-end);
 }
 

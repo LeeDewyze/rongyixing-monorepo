@@ -57,7 +57,7 @@
   height: 96px;
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--brand-primary) 10%, white) 0%,
+    rgb(228 237 253) 0%,
     rgb(255 255 255 / 0) 100%
   );
 }
@@ -78,14 +78,14 @@
   border-radius: 50%;
   background: linear-gradient(
     145deg,
-    color-mix(in srgb, var(--brand-primary) 9%, white) 0%,
+    rgb(232 239 255) 0%,
     white 100%
   );
   color: var(--brand-primary);
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--brand-primary) 18%, white),
+    inset 0 0 0 1px rgb(216 228 255),
     inset 0 1px 0 rgb(255 255 255 / 0.9),
-    0 6px 16px color-mix(in srgb, var(--brand-primary) 14%, transparent);
+    0 6px 16px rgb(39 104 250 / 14%);
 }
 
 .passenger-select-alert__title {
@@ -102,9 +102,9 @@
 
 .passenger-select-alert__notice {
   border-radius: 12px;
-  background: color-mix(in srgb, var(--brand-form-header-end) 74%, white);
+  background: #f8f9fc;
   padding: 14px 14px 12px;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand-primary) 6%, var(--brand-form-header-end));
+  box-shadow: inset 0 0 0 1px rgb(39 104 250 / 6%);
 }
 
 .passenger-select-alert__notice-row {
@@ -112,14 +112,14 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  border-bottom: 1px solid color-mix(in srgb, var(--brand-primary) 8%, var(--brand-form-header-end));
+  border-bottom: 1px solid rgb(39 104 250 / 8%);
   padding-bottom: 10px;
 }
 
 .passenger-select-alert__notice-label {
   font-size: 13px;
   font-weight: 500;
-  color: color-mix(in srgb, var(--brand-title) 62%, white);
+  color: rgb(1 1 1 / 62%);
 }
 
 .passenger-select-alert__notice-value {
@@ -132,18 +132,18 @@
   margin-top: 10px;
   font-size: 13px;
   line-height: 1.65;
-  color: color-mix(in srgb, var(--brand-title) 62%, white);
+  color: rgb(1 1 1 / 62%);
 }
 
 .passenger-select-alert__message {
   border-radius: 12px;
-  background: color-mix(in srgb, var(--brand-form-header-end) 74%, white);
+  background: #f8f9fc;
   padding: 14px 16px;
   font-size: 14px;
   line-height: 1.65;
-  color: color-mix(in srgb, var(--brand-title) 62%, white);
+  color: rgb(1 1 1 / 62%);
   text-align: center;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--brand-primary) 6%, var(--brand-form-header-end));
+  box-shadow: inset 0 0 0 1px rgb(39 104 250 / 6%);
 }
 
 .passenger-select-alert__footer {
@@ -159,7 +159,7 @@
   border: 0;
   border-radius: 999px;
   background: linear-gradient(270deg, var(--brand-btn-end) 0%, var(--brand-btn-start) 100%);
-  box-shadow: 0 6px 16px color-mix(in srgb, var(--brand-primary) 26%, transparent);
+  box-shadow: 0 6px 16px rgb(39 104 250 / 26%);
   cursor: pointer;
   font-size: 15px;
   font-weight: 500;
@@ -171,7 +171,7 @@
 }
 
 .passenger-select-alert__confirm:hover {
-  box-shadow: 0 8px 18px color-mix(in srgb, var(--brand-primary) 30%, transparent);
+  box-shadow: 0 8px 18px rgb(39 104 250 / 30%);
 }
 
 .passenger-select-alert__confirm:active {

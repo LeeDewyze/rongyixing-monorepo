@@ -11,7 +11,7 @@ interface WebShellProps {
 
 export function WebShell({ children }: WebShellProps) {
   return (
-    <div className="flex h-dvh flex-col overflow-hidden bg-[#F5F6F9] text-foreground">
+    <div className="ryx-viewport-h flex flex-col overflow-hidden bg-[#F5F6F9] text-foreground">
       <div className="hidden shrink-0 border-b bg-muted/40 px-4 py-2 text-center text-sm text-muted-foreground max-[767px]:block">
         For the full mobile experience, visit the H5 app.
       </div>

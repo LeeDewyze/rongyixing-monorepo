@@ -16,6 +16,11 @@ server {
     add_header Cache-Control "public, immutable";
   }
 
+  location ~ ^/home/(?!GetWechatCode(?:/|$)|GetDingTalkCode(?:/|$)|Pay(?:/|$)) {
+    root __RYX_INSTALL_DIR__/h5/dist;
+    try_files $uri $uri/ /index.html;
+  }
+
   location / {
     root __RYX_INSTALL_DIR__/h5/dist;
     try_files $uri $uri/ /index.html;
@@ -40,6 +45,11 @@ server {
     alias __RYX_INSTALL_DIR__/web/dist/assets/;
     expires 30d;
     add_header Cache-Control "public, immutable";
+  }
+
+  location ~ ^/home/(?!GetWechatCode(?:/|$)|GetDingTalkCode(?:/|$)|Pay(?:/|$)) {
+    root __RYX_INSTALL_DIR__/web/dist;
+    try_files $uri $uri/ /index.html;
   }
 
   location / {

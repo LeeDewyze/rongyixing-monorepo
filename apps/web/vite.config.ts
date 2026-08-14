@@ -5,6 +5,7 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig, loadEnv } from "vite";
 import { createRyxDevProxy } from "../../tooling/vite/ryx-dev-proxy";
+import { ryxWebviewCompat } from "../../tooling/vite/ryx-webview-compat";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const monorepoRoot = path.resolve(__dirname, "../..");
@@ -34,7 +35,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     base: appBase,
-    plugins: [react(), tailwindcss()],
+    plugins: [react(), tailwindcss(), ryxWebviewCompat()],
     define: {
       __APP_VERSION__: JSON.stringify(resolveAppVersion()),
     },
