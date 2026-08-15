@@ -96,6 +96,7 @@ function handleWebSocketMessage(data: string | ArrayBuffer | Blob): void {
   try {
     const payload = JSON.parse(data) as { Type?: string };
     if (payload.Type === "CheckForceLogout") {
+      console.warn("[ryx] session guard: received CheckForceLogout websocket event");
       void runIdentityCheck();
     }
   } catch {
@@ -154,6 +155,7 @@ async function runIdentityCheck(): Promise<void> {
     if (!isRunning || isForceLogoutInProgress()) return;
 
     if (result.forceLogout) {
+      console.warn("[ryx] session guard: Identity/Check confirmed forced logout");
       await performForceLogout({
         message: result.message,
         preventAutoLogin: true,
