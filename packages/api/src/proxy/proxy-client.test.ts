@@ -88,7 +88,7 @@ describe("createProxyClient proxy mode", () => {
     expect(capturedUrls).toEqual(["/Home/Setting", "/__ryx/TmcTouristTrainUrl/Home/Search"]);
   });
 
-  it("posts legacy identity session methods unsigned through /Home/Proxy with root extras", async () => {
+  it("posts legacy Identity/Get through /Home/Proxy and Identity/Check directly", async () => {
     const captured: Array<{ url: string; body: string }> = [];
     const client = createProxyClient({
       baseUrl: "",
@@ -125,7 +125,7 @@ describe("createProxyClient proxy mode", () => {
 
     expect(captured.map((entry) => entry.url)).toEqual([
       "/Home/Proxy?domain=rongtrip.cn",
-      "/Home/Proxy?domain=rongtrip.cn",
+      "https://api.rongtrip.cn/Identity/Check",
     ]);
     expect(captured[0]?.body).toContain("Method=ApiHomeUrl-Identity-Get");
     expect(captured[0]?.body).toContain('Data={"Ticket":"ticket-id"}');
@@ -135,7 +135,7 @@ describe("createProxyClient proxy mode", () => {
     expect(captured[1]?.body).toContain("Method=ApiHomeUrl-Identity-Check");
     expect(captured[1]?.body).toContain('Data={"LoginType":"H5"}');
     expect(captured[1]?.body).toContain("IsShowLoading=true");
-    expect(captured[1]?.body).toContain("root=www");
+    expect(captured[1]?.body).not.toContain("root=www");
     expect(captured[1]?.body).not.toContain("Sign=");
     expect(captured[1]?.body).not.toContain("Token=");
   });

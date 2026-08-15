@@ -181,6 +181,12 @@ export function startSessionGuard(): void {
   connectWebSocket();
 }
 
+/** Connect the websocket after an asynchronous GetWebSocketUrl response is stored. */
+export function refreshSessionGuardWebSocket(): void {
+  if (!isRunning || getApiMode() === "mock" || !getTicket()) return;
+  connectWebSocket();
+}
+
 /** Stop polling and websocket guard. */
 export function stopSessionGuard(): void {
   isRunning = false;

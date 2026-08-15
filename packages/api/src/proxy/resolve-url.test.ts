@@ -228,17 +228,13 @@ describe("resolveUrl", () => {
     ).toBe("https://ronglv-feature.rongtrip.cn/Jyx/LoginByRyx");
   });
 
-  it("uses /Home/Proxy for legacy identity session methods", () => {
+  it("uses /Home/Proxy for legacy Identity/Get and GetWebSocketUrl", () => {
     const apiConfig = {
       Token: "t",
       Urls: { ApiHomeUrl: "http://api.rtesp.com" },
     };
 
-    for (const method of [
-      "ApiHomeUrl-Identity-Get",
-      "ApiHomeUrl-Identity-Check",
-      "ApiHomeUrl-Identity-GetWebSocketUrl",
-    ]) {
+    for (const method of ["ApiHomeUrl-Identity-Get", "ApiHomeUrl-Identity-GetWebSocketUrl"]) {
       expect(
         resolveUrl({
           baseUrl: "",
@@ -255,6 +251,30 @@ describe("resolveUrl", () => {
         apiConfig,
       }),
     ).toBe("https://app.rongtrip.cn/Home/Proxy");
+  });
+
+  it("uses ApiHomeUrl directly for legacy Identity/Check", () => {
+    const apiConfig = {
+      Token: "t",
+      Urls: { ApiHomeUrl: "https://api.rongtrip.cn" },
+    };
+
+    expect(
+      resolveUrl({
+        baseUrl: "",
+        method: "ApiHomeUrl-Identity-Check",
+        apiConfig,
+      }),
+    ).toBe("/__ryx/ApiHomeUrl/Identity/Check");
+
+    expect(
+      resolveUrl({
+        baseUrl: "",
+        method: "ApiHomeUrl-Identity-Check",
+        apiConfig,
+        mode: "direct",
+      }),
+    ).toBe("https://api.rongtrip.cn/Identity/Check");
   });
 
   it("uses explicit url when provided", () => {

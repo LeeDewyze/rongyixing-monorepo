@@ -8,7 +8,7 @@ import {
 } from "@/lib/booking-permission-preload";
 import { queryClient } from "@/lib/query";
 import { getDeviceId, getDeviceName } from "@/lib/request-context";
-import { startSessionGuard } from "@/lib/session-guard";
+import { refreshSessionGuardWebSocket, startSessionGuard } from "@/lib/session-guard";
 import { clearSession, saveLoginResult, setWebSocketUrl } from "@/lib/session";
 
 async function loadWebSocketUrlAfterLogin(mode: string, ticket?: string) {
@@ -17,6 +17,7 @@ async function loadWebSocketUrlAfterLogin(mode: string, ticket?: string) {
     const ws = await getApi().identity.getWebSocketUrl();
     if (ws?.Url) {
       setWebSocketUrl(ws.Url);
+      refreshSessionGuardWebSocket();
     } else {
       console.warn("[ryx] GetWebSocketUrl returned empty Url");
     }

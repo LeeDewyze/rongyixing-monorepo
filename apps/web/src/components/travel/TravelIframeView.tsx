@@ -77,7 +77,7 @@ export function TravelIframeView({ title, url, onWorkflowBack }: TravelIframeVie
     let resizeObserver: ResizeObserver | undefined;
 
     function measure() {
-      const doc = iframe.contentDocument;
+      const doc = iframeRef.current?.contentDocument;
       if (!doc || cancelled) return;
       const height = measureEmbedHeight(doc);
       if (height > 0) {
@@ -86,7 +86,7 @@ export function TravelIframeView({ title, url, onWorkflowBack }: TravelIframeVie
     }
 
     function attach() {
-      const doc = iframe.contentDocument;
+      const doc = iframeRef.current?.contentDocument;
       if (!doc?.documentElement) return;
       measure();
       mutationObserver = new MutationObserver(measure);
