@@ -16,6 +16,22 @@ let idleIntervalId: ReturnType<typeof setInterval> | null = null;
 let lastMessageAt = 0;
 let identityCheckInFlight = false;
 
+function maskSecret(value: string | null | undefined): string {
+  if (!value) return "<empty>";
+  if (value.length <= 8) return `${value.slice(0, 2)}***`;
+  return `${value.slice(0, 4)}...${value.slice(-4)}`;
+}
+
+function describeWebSocketUrl(rawUrl: string | null): string {
+  if (!rawUrl) return "<empty>";
+  try {
+    const url = new URL(rawUrl, window.location.href);
+    return `${url.protocol}//${url.host}${url.pathname}${url.search ? "?[redacted]" : ""}`;
+  } catch {
+    return "<invalid-url>";
+  }
+}
+
 function clearPoll(): void {
   if (pollTimeoutId !== null) {
     clearTimeout(pollTimeoutId);
@@ -94,7 +110,11 @@ function handleWebSocketMessage(data: string | ArrayBuffer | Blob): void {
   if (typeof data !== "string" || !data.trim()) return;
 
   try {
-    const payload = JSON.parse(data) as { Type?: string };
+    const payload = JSON.parse(data) as { Type?: string } & Record<string, unknown>;
+    console.info("[ryx] session guard: websocket message", {
+      ticket: maskSecret(getTicket()),
+      payload,
+    });
     if (payload.Type === "CheckForceLogout") {
       console.warn("[ryx] session guard: received CheckForceLogout websocket event");
       void runIdentityCheck();
@@ -112,12 +132,20 @@ function connectWebSocket(): void {
 
   try {
     const url = normalizeWebSocketUrl(rawUrl);
+    console.info("[ryx] session guard: websocket connecting", {
+      ticket: maskSecret(getTicket()),
+      url: describeWebSocketUrl(url),
+    });
     const nextSocket = new WebSocket(url);
     socket = nextSocket;
     lastMessageAt = Date.now();
 
     nextSocket.onopen = () => {
       if (!isRunning || socket !== nextSocket) return;
+      console.info("[ryx] session guard: websocket opened", {
+        ticket: maskSecret(getTicket()),
+        readyState: nextSocket.readyState,
+      });
       startHeartbeat();
       startIdleWatch();
     };
@@ -127,12 +155,22 @@ function connectWebSocket(): void {
       handleWebSocketMessage(event.data);
     };
 
-    nextSocket.onerror = () => {
-      // Silent fallback to polling.
+    nextSocket.onerror = (event) => {
+      console.warn("[ryx] session guard: websocket error; polling remains enabled", {
+        ticket: maskSecret(getTicket()),
+        url: describeWebSocketUrl(url),
+        event,
+      });
     };
 
-    nextSocket.onclose = () => {
+    nextSocket.onclose = (event) => {
       if (socket !== nextSocket) return;
+      console.warn("[ryx] session guard: websocket closed", {
+        ticket: maskSecret(getTicket()),
+        code: event.code,
+        reason: event.reason || "<empty>",
+        wasClean: event.wasClean,
+      });
       clearHeartbeat();
       clearIdleWatch();
       socket = null;
@@ -150,9 +188,19 @@ async function runIdentityCheck(): Promise<void> {
   }
 
   identityCheckInFlight = true;
+  const ticket = getTicket();
+  console.info("[ryx] session guard: Identity/Check started", {
+    ticket: maskSecret(ticket),
+  });
   try {
     const result = await getApi().identity.check();
     if (!isRunning || isForceLogoutInProgress()) return;
+
+    console.info("[ryx] session guard: Identity/Check result", {
+      ticket: maskSecret(ticket),
+      forceLogout: result.forceLogout,
+      message: result.message || "<empty>",
+    });
 
     if (result.forceLogout) {
       console.warn("[ryx] session guard: Identity/Check confirmed forced logout");

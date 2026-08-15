@@ -1,1 +1,0 @@
-import{u as e}from"./useQuery-BvP-QtHH.js";import{f as r}from"./index-Ca2e_mL2.js";function u(){return e({queryKey:["member","profile"],queryFn:()=>r().member.getProfile(),staleTime:300*1e3})}export{u};
