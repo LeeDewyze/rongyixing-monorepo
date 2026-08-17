@@ -1,8 +1,8 @@
 name=rongyixing-h5-web-dist-prod
-build_time=2026-08-17T08:23:29Z
-build_timestamp=20260817162303
+build_time=2026-08-17T14:21:13Z
+build_timestamp=20260817222046
 deploy_env=prod
-git_commit=ca248d20c8b11efd80fd88cc5ca2200490441ee5
+git_commit=2d21fe37e6d2ad5cbfe139f9de35bcd45b731a60
 git_branch=main
 api_base_url=https://app.rongtrip.cn
 api_domain=rongtrip.cn

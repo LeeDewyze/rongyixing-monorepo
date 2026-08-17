@@ -1,1 +1,0 @@
-import{b as s,r as n}from"./index-HYfOQdQm.js";function u(){const t=s();return n.useCallback(()=>{t("/")},[t])}function i(t="/"){const a=s();return n.useCallback(()=>{var r;const e=(r=window.history.state)==null?void 0:r.idx;if(typeof e=="number"&&e>0){a(-1);return}a(t)},[a,t])}export{u as a,i as u};
