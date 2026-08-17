@@ -19,11 +19,13 @@ import {
 import { useDingTalkAvailability } from "@/hooks/useDingTalk";
 import { consumeDingTalkCode, requestDingTalkCode } from "@/lib/dingtalk";
 import { resolveInternalReturnTo } from "@/lib/base-path";
+import { showAppAlertDialog } from "@/lib/app-confirm-dialog";
 import {
   contactUrlOptionsFromApiConfig,
   getPrivacyPolicyUrl,
   getUserAgreementUrl,
 } from "@/lib/contact-us";
+import { takePendingExternalTicketError } from "@/lib/external-ticket";
 import { clearPreventAutoLogin, PREVENT_AUTO_LOGIN_KEY } from "@/lib/force-logout";
 import { queryClient } from "@/lib/query";
 import {
@@ -368,6 +370,15 @@ export function PasswordLoginPage() {
     stopSessionGuard();
     clearSession();
     queryClient.clear();
+  }, []);
+
+  useEffect(() => {
+    const message = takePendingExternalTicketError();
+    if (!message) return;
+    const timer = window.setTimeout(() => {
+      void showAppAlertDialog(message);
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {

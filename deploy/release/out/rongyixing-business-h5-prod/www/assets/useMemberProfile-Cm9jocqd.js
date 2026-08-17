@@ -1,0 +1,1 @@
+import{u as e}from"./routes-XDm909Zv.js";import{E as r}from"./index-tuc68RNH.js";function u(){return e({queryKey:["member","profile"],queryFn:()=>r().member.getProfile(),staleTime:300*1e3})}export{u};

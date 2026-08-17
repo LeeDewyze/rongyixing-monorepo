@@ -17,6 +17,7 @@ import type {
 import { AUTH_FLOW_METHODS } from "../methods/auth-flow.js";
 import { AUTH_METHODS } from "../methods/auth.js";
 import type { ProxyClient } from "../proxy/proxy-client.js";
+import { assertSuccess } from "../proxy/response-adapter.js";
 
 const H5_LOGIN_TYPE = "H5";
 
@@ -62,8 +63,10 @@ export function createAuthProxyApi(proxy: ProxyClient): AuthProxyApi {
         data: params,
       });
     },
-    rybLogin(params) {
-      return proxy.send<LoginResultDto>({
+    async rybLogin(params) {
+      // RYBLogin starts without a local session. Keep its failure response local so
+      // the caller can show the SSO failure message before navigating to login.
+      const response = await proxy.sendResponse<LoginResultDto>({
         method: AUTH_FLOW_METHODS.RYB_LOGIN,
         data: {
           ticket: params.ticket,
@@ -75,6 +78,7 @@ export function createAuthProxyApi(proxy: ProxyClient): AuthProxyApi {
           authType: 1,
         },
       });
+      return assertSuccess(response);
     },
     dingTalkLogin(params) {
       return proxy.send<LoginResultDto>({

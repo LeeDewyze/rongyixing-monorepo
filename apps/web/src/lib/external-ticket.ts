@@ -5,6 +5,9 @@ import { clearSession, saveLoginResult, setTicket, setTicketName } from "@/lib/s
 const TICKET_PARAM = "ticket";
 const TICKET_NAME_PARAM = "ticketName";
 const LEGACY_TICKET_NAME_PARAM = "ticketname";
+const EXTERNAL_TICKET_ERROR_KEY = "ryx_external_ticket_error";
+export const EXTERNAL_TICKET_LOGIN_ERROR_MESSAGE =
+  "系统没有找到您有效的单点登录账户信息，这可能是您没有注册或注册了多个账户导致的";
 
 function currentUserAgent(): string {
   return typeof navigator === "undefined" ? "" : navigator.userAgent;
@@ -88,6 +91,16 @@ function replaceToLogin(returnTo: string): void {
   replaceLocation(path);
 }
 
+function saveExternalTicketError(message: string): void {
+  sessionStorage.setItem(EXTERNAL_TICKET_ERROR_KEY, message);
+}
+
+export function takePendingExternalTicketError(): string | null {
+  const message = sessionStorage.getItem(EXTERNAL_TICKET_ERROR_KEY)?.trim() || null;
+  sessionStorage.removeItem(EXTERNAL_TICKET_ERROR_KEY);
+  return message;
+}
+
 function usePageTicketDirectly(url: URL, ticket: string, fallbackPath: string): void {
   const targetPath = resolveTicketTargetPath(url, fallbackPath);
   const ticketName = readTicketNameParam(url);
@@ -119,13 +132,14 @@ export async function bootstrapExternalTicket(fallbackPath = "/"): Promise<void>
     const api = getApi();
     const loginResult = await api.authProxy.rybLogin({ ticket });
     if (!loginResult.Ticket) {
-      throw new Error("RYBLogin returned empty ticket");
+      throw new Error(EXTERNAL_TICKET_LOGIN_ERROR_MESSAGE);
     }
 
     saveLoginResult(loginResult);
   } catch (error) {
     console.warn("[ryx] external ticket login failed", error);
     clearSession();
+    saveExternalTicketError(EXTERNAL_TICKET_LOGIN_ERROR_MESSAGE);
     replaceToLogin(targetPath);
   }
 }

@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { createAuthProxyApi, createIdentityApi } from "./auth-proxy.js";
 import { AUTH_FLOW_METHODS } from "../methods/auth-flow.js";
 import { createProxyClient } from "../proxy/proxy-client.js";
-import { successResponse } from "../proxy/response-adapter.js";
+import { errorResponse, successResponse } from "../proxy/response-adapter.js";
 
 describe("createAuthProxyApi (mock mode)", () => {
   const proxy = createProxyClient({
@@ -64,6 +64,24 @@ describe("createAuthProxyApi RYBLogin", () => {
     );
     expect(capturedBody).not.toContain("old-session-ticket");
     expect(fields.get("Sign")).toBeTruthy();
+  });
+
+  it("preserves the backend failure message without invoking global unauthorized handling", async () => {
+    const onUnauthorized = vi.fn();
+    const proxy = createProxyClient({
+      baseUrl: "",
+      mode: "mock",
+      onUnauthorized,
+      mockHandler: async () => errorResponse("NOLOGIN", "单点登录凭证已失效"),
+    });
+
+    await expect(
+      createAuthProxyApi(proxy).rybLogin({ ticket: "external-ticket" }),
+    ).rejects.toMatchObject({
+      message: "单点登录凭证已失效",
+      code: "NOLOGIN",
+    });
+    expect(onUnauthorized).not.toHaveBeenCalled();
   });
 });
 
