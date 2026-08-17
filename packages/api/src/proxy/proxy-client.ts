@@ -94,7 +94,7 @@ export function createProxyClient(config: ProxyClientConfig): ProxyClient {
 
   function handleErrorCode(code: string | null | undefined, message: string): void {
     const normalized = code?.trim().toLowerCase();
-    if (normalized === "nologin" || message.includes("登陆超时")) {
+    if (normalized === "nologin") {
       config.onUnauthorized?.();
       return;
     }

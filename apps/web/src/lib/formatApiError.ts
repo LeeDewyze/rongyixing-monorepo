@@ -21,7 +21,7 @@ const LOGIN_EXPIRED: Record<ApiErrorContext, string> = {
 /** Human-readable API failure for page-level error UI. */
 export function formatApiError(error: unknown, context: ApiErrorContext = "generic"): string {
   if (error instanceof ApiError) {
-    if (error.code?.toLowerCase() === "nologin" || error.message.includes("登陆超时")) {
+    if (error.code?.toLowerCase() === "nologin") {
       return LOGIN_EXPIRED[context];
     }
     if (error.message.includes("没有获取列表")) {

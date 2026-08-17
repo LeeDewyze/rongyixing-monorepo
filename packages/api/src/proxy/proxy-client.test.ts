@@ -222,14 +222,14 @@ describe("createProxyClient unauthorized handling", () => {
     expect(onUnauthorized).toHaveBeenCalledTimes(1);
   });
 
-  it("invokes onUnauthorized when only the message reports a login timeout", async () => {
+  it("does not invoke onUnauthorized when only the message reports a login timeout", async () => {
     const { client, onUnauthorized } = createUnauthorizedClient({
-      Code: "",
+      Code: "SESSION_ERROR",
       Message: "登陆超时",
     });
 
     await expect(client.send({ method: "TmcApiHomeUrl-Member-Get", data: {} })).rejects.toThrow();
-    expect(onUnauthorized).toHaveBeenCalledTimes(1);
+    expect(onUnauthorized).not.toHaveBeenCalled();
   });
 
   it("skips onUnauthorized for sendResponse (Identity-Check)", async () => {

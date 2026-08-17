@@ -39,6 +39,7 @@ const TOURIST_MMS_QUERY_KEYS = [
 ] as const;
 
 const TMC_ID_FIELD_KEYS = ["tmcId", "TmcId", "tmcid", "TMCId"] as const;
+const TOURIST_CONTEXT_TIMEOUT_MS = 30_000;
 
 let touristContextPromise: Promise<TouristContext> | null = null;
 
@@ -91,6 +92,7 @@ async function fetchTouristContext(
   const response = await sender.send<Partial<TouristContext>>({
     method: TMC_METHODS.HOME_TOURIST,
     data: { AppId: appId },
+    timeoutMs: TOURIST_CONTEXT_TIMEOUT_MS,
     requestFields: {
       IsRedirctLogin: false,
       IsRedirctNoAuthorize: false,

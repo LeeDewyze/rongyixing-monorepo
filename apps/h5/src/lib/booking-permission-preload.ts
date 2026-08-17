@@ -122,8 +122,8 @@ function staffAccountId(staff: StaffDto | undefined, identity?: { Id?: string })
   return present(staff?.AccountId) ?? present(legacyAccount?.Id) ?? present(identity?.Id);
 }
 
-function isUnauthorizedLike(code: string | undefined, message: string): boolean {
-  return code?.trim().toLowerCase() === "nologin" || message.includes("登陆超时");
+function isUnauthorizedLike(code: string | undefined): boolean {
+  return code?.trim().toLowerCase() === "nologin";
 }
 
 function isUnauthorizedResponse(response: {
@@ -131,7 +131,7 @@ function isUnauthorizedResponse(response: {
   Code?: string | null;
   Message?: string | null;
 }): boolean {
-  return !response.Status && isUnauthorizedLike(response.Code ?? undefined, response.Message ?? "");
+  return !response.Status && isUnauthorizedLike(response.Code ?? undefined);
 }
 
 function clearStartupSession(queryClient: QueryClient): void {

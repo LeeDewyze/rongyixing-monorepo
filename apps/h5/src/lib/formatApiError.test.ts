@@ -18,4 +18,10 @@ describe("formatApiError", () => {
     expect(formatApiError(error, "train")).toContain("查询车次");
     expect(formatApiError(error, "flight")).toContain("查询航班");
   });
+
+  it("does not treat a timeout message without NOLOGIN as session expiry", () => {
+    const error = new ApiError("登陆超时", 500, "SESSION_ERROR");
+
+    expect(formatApiError(error)).toBe("登陆超时");
+  });
 });

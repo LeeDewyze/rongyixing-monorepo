@@ -68,6 +68,7 @@ describe("tourist-context", () => {
     expect(captured).toMatchObject({
       method: "TmcApiHomeUrl-Home-Tourist",
       data: { AppId: "com.test.app" },
+      timeoutMs: 30_000,
       requestFields: {
         IsRedirctLogin: false,
         IsRedirctNoAuthorize: false,
