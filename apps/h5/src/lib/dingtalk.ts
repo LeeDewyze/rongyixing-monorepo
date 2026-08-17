@@ -1,6 +1,7 @@
 import { isDingTalkUserAgent } from "@ryx/shared-types";
 
 import { getApi } from "@/lib/api";
+import { getDomain } from "@/lib/domain";
 import { getLegacyAppBaseUrl } from "@/lib/env";
 import { getTicket } from "@/lib/session";
 import { getTicketName } from "@/lib/request-context";
@@ -41,12 +42,27 @@ export function consumeDingTalkCode(): string | null {
 
 export function buildDingTalkRedirectUrl(entry: DingTalkEntry, returnTo: string): string {
   const url = new URL(`${getLegacyAppBaseUrl()}/home/GetDingTalkCode`);
-  url.searchParams.set("domain", getLegacyAppBaseUrl().replace(/^https?:\/\//, ""));
+  url.searchParams.set("domain", getDomain());
   url.searchParams.set("path", entry === "login" ? "login" : "account-dingtalk");
   url.searchParams.set("returnTo", returnTo);
   const ticket = getTicket();
   if (entry === "bind" && ticket) {
     url.searchParams.set(getTicketName(), ticket);
+  }
+  const ticketName = getTicketName().toLowerCase();
+  const excludedParams = new Set([
+    "domain",
+    "path",
+    "islogin",
+    "wechatcode",
+    "dingtalkcode",
+    "dingTalkCode".toLowerCase(),
+    ticketName,
+  ]);
+  for (const [key, value] of new URLSearchParams(window.location.search)) {
+    if (value && !excludedParams.has(key.toLowerCase()) && !url.searchParams.has(key)) {
+      url.searchParams.set(key, value);
+    }
   }
   return url.toString();
 }
@@ -69,14 +85,30 @@ export async function requestDingTalkCode(
       };
     }
   ).dd;
-  const requestAuthCode = dd?.runtime?.permission?.requestAuthCode;
-  if (requestAuthCode) {
+  const permission = dd?.runtime?.permission;
+  const requestAuthCode = permission?.requestAuthCode;
+  const corpId = import.meta.env.VITE_DINGTALK_CORP_ID?.trim();
+  if (requestAuthCode && corpId) {
     const code = await new Promise<string | null>((resolve) => {
-      requestAuthCode({ corpId: import.meta.env.VITE_DINGTALK_CORP_ID }, (result) =>
-        resolve(result.code?.trim() || null),
-      );
+      let settled = false;
+      const finish = (value: string | null) => {
+        if (settled) return;
+        settled = true;
+        resolve(value);
+      };
+      const timeoutId = window.setTimeout(() => finish(null), 5_000);
+      try {
+        requestAuthCode.call(permission, { corpId }, (result) => {
+          window.clearTimeout(timeoutId);
+          finish(result?.code?.trim() || null);
+        });
+      } catch {
+        window.clearTimeout(timeoutId);
+        finish(null);
+      }
     });
-    return code;
+    if (code) return code;
+    console.warn("[ryx] DingTalk SDK authorization failed; falling back to legacy redirect");
   }
   window.location.assign(buildDingTalkRedirectUrl(entry, returnTo));
   return null;
