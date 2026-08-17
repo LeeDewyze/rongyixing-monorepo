@@ -1,4 +1,4 @@
-# RongYiXing Business Same-Origin WEB prod Build 20260817222016
+# RongYiXing Business Same-Origin WEB prod Build 20260817223750
 
 这个包用于交付业务方部署到 legacy 同源站点。
 
@@ -27,6 +27,6 @@
 
 构建信息：
 
-- build_time: 2026-08-17T14:20:40Z
+- build_time: 2026-08-17T14:38:15Z
 - git_branch: main
-- git_commit: 2d21fe37e6d2ad5cbfe139f9de35bcd45b731a60
+- git_commit: 892ab72630f56061de30d620b9fe1b8ee1290df7

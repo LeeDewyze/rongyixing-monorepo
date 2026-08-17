@@ -1,1 +1,0 @@
-import{u as e}from"./useQuery-t5MOXQKh.js";import{i as r}from"./index-Bpc_JxH5.js";function o(){return e({queryKey:["member","profile"],queryFn:()=>r().member.getProfile(),staleTime:300*1e3})}export{o as u};
