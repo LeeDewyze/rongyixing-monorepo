@@ -313,4 +313,117 @@ describe("filterFlightFaresByPolicy", () => {
     expect(rows.find((row) => row.fare.Code === "T")?.color).toBe("danger");
     expect(rows.find((row) => row.fare.Code === "T")?.isAllowBook).toBe(false);
   });
+
+  it("blocks business cabins the policy marked bookable when economy-only applies", () => {
+    const businessFares: FlightFare[] = [
+      {
+        Id: "biz-r",
+        BookCode: "R",
+        SalesPrice: "1569",
+        FlightFareBasics: [
+          { CabinCode: "R", CabinType: 2, CabinTypeName: "公务舱", FareBasic: "R" },
+        ],
+      },
+      {
+        Id: "biz-d",
+        BookCode: "D",
+        SalesPrice: "7169",
+        FlightFareBasics: [
+          { CabinCode: "D", CabinType: 2, CabinTypeName: "公务舱", FareBasic: "D" },
+        ],
+      },
+    ];
+    const rows = filterFlightFaresByPolicy({
+      fares: [...fares, ...businessFares],
+      policyResults: [
+        {
+          PassengerKey: "acc-1",
+          FlightPolicies: [
+            { Id: "fare-y", FlightNo: "CA1501", IsAllowBook: true },
+            { Id: "biz-r", FlightNo: "CA1501", IsAllowBook: true, Rules: [], Descriptions: [] },
+            {
+              Id: "biz-d",
+              FlightNo: "CA1501",
+              IsAllowBook: false,
+              Rules: ["违反舱位类别政策只能选择经济舱"],
+              Descriptions: ["违反舱位类别政策只能选择经济舱"],
+            },
+          ],
+        },
+      ],
+      passengers,
+      filterPassengerId: "p1",
+      filterEnabled: true,
+      flightNumber: "CA1501",
+    });
+
+    const businessRow = rows.find((row) => row.fare.BookCode === "R");
+    expect(businessRow?.isAllowBook).toBe(false);
+    expect(businessRow?.color).toBe("danger");
+    expect(formatFlightCabinPolicyHint(businessRow?.policy)).toBe("违反舱位类别政策只能选择经济舱");
+    expect(rows.find((row) => row.fare.Code === "Y")?.isAllowBook).toBe(true);
+  });
+
+  it("blocks unmatched business cabins when policy only allows economy", () => {
+    const businessFares: FlightFare[] = [
+      {
+        Id: "biz-r",
+        BookCode: "R",
+        SalesPrice: "1569",
+        FlightFareBasics: [
+          { CabinCode: "R", CabinType: 2, CabinTypeName: "公务舱", FareBasic: "R" },
+        ],
+      },
+      {
+        Id: "biz-z",
+        BookCode: "Z",
+        SalesPrice: "2169",
+        FlightFareBasics: [
+          { CabinCode: "Z", CabinType: 2, CabinTypeName: "公务舱", FareBasic: "Z" },
+        ],
+      },
+      {
+        Id: "biz-d",
+        BookCode: "D",
+        SalesPrice: "7169",
+        FlightFareBasics: [
+          { CabinCode: "D", CabinType: 2, CabinTypeName: "公务舱", FareBasic: "D" },
+        ],
+      },
+    ];
+    const rows = filterFlightFaresByPolicy({
+      fares: [...fares, ...businessFares],
+      policyResults: [
+        {
+          PassengerKey: "acc-1",
+          FlightPolicies: [
+            {
+              Id: "fare-y",
+              FlightNo: "CA1501",
+              IsAllowBook: true,
+            },
+            {
+              Id: "biz-d",
+              FlightNo: "CA1501",
+              IsAllowBook: false,
+              Rules: ["违反舱位类别政策只能选择经济舱"],
+              Descriptions: ["违反舱位类别政策只能选择经济舱"],
+            },
+          ],
+        },
+      ],
+      passengers,
+      filterPassengerId: "p1",
+      filterEnabled: true,
+      flightNumber: "CA1501",
+    });
+
+    const businessRows = rows.filter((row) =>
+      ["R", "Z", "D"].includes(String(row.fare.BookCode ?? "")),
+    );
+    expect(businessRows).toHaveLength(3);
+    expect(businessRows.every((row) => row.isAllowBook === false)).toBe(true);
+    expect(businessRows.every((row) => row.color === "danger")).toBe(true);
+    expect(rows.find((row) => row.fare.Code === "Y")?.isAllowBook).toBe(true);
+  });
 });

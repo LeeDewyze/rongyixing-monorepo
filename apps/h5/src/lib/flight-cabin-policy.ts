@@ -10,6 +10,7 @@ import {
   findPolicyForFare,
   resolvePassengerAccountId,
 } from "@/lib/flight-book-policy";
+import { isEconomyFare } from "@/lib/flight-detail";
 
 export type FlightCabinPolicyColor = "success" | "warning" | "danger" | "default";
 
@@ -87,12 +88,39 @@ function dedupePolicyRows(rows: FlightCabinPolicyRow[]): FlightCabinPolicyRow[] 
   return deduped;
 }
 
+function isCabinClassRestrictionPolicy(policy: FlightBookPolicy): boolean {
+  const texts = [...(policy.Rules ?? []), ...(policy.Descriptions ?? [])];
+  return texts.some((text) => /舱位类别|只能选择经济舱/.test(text));
+}
+
+/**
+ * Home-Policy reports the economy-only restriction per cabin, and some business
+ * cabins come back allowed. The restriction applies to the whole cabin class, so
+ * it wins over any per-row `IsAllowBook` for non-economy fares.
+ */
+function findCabinClassRestriction(policies: FlightBookPolicy[]): FlightBookPolicy | undefined {
+  return policies.find(
+    (policy) => !coercePolicyIsAllowBook(policy) && isCabinClassRestrictionPolicy(policy),
+  );
+}
+
+function resolvePolicyForFare(
+  policies: FlightBookPolicy[],
+  fare: FlightFare,
+): FlightBookPolicy | undefined {
+  if (!isEconomyFare(fare)) {
+    const restriction = findCabinClassRestriction(policies);
+    if (restriction) return restriction;
+  }
+  return findPolicyForFare(policies, fare);
+}
+
 function enrichFaresWithPolicy(
   fares: FlightFare[],
   policies: FlightBookPolicy[],
 ): FlightCabinPolicyRow[] {
   const rows = fares.map((fare) => {
-    const policy = findPolicyForFare(policies, fare);
+    const policy = resolvePolicyForFare(policies, fare);
     if (policy) return buildRowFromFareAndPolicy(fare, policy);
     return {
       fare,
@@ -107,7 +135,8 @@ function enrichFaresWithPolicy(
     if (!merged) continue;
     const key = fareRowKey(merged.fare);
     if (knownKeys.has(key)) continue;
-    rows.push(merged);
+    const effective = resolvePolicyForFare(policies, merged.fare) ?? policy;
+    rows.push(buildRowFromFareAndPolicy(merged.fare, effective));
     knownKeys.add(key);
   }
 
@@ -139,7 +168,12 @@ function policiesForFlight(
   if (!normalized) return policies;
   const matched = policies.filter((policy) => {
     const flightNo = (policy.FlightNo ?? policy.FlightNumber ?? "").toUpperCase();
-    return !flightNo || flightNo === normalized || flightNo.includes(normalized) || normalized.includes(flightNo);
+    return (
+      !flightNo ||
+      flightNo === normalized ||
+      flightNo.includes(normalized) ||
+      normalized.includes(flightNo)
+    );
   });
   return matched.length > 0 ? matched : policies;
 }
@@ -190,7 +224,7 @@ export function resolvePolicyForRow(input: {
   if (!entry) return undefined;
 
   const policies = policiesForFlight(entry.FlightPolicies, flightNumber);
-  return findPolicyForFare(policies, row.fare);
+  return resolvePolicyForFare(policies, row.fare);
 }
 
 export function attachPolicyToRow(
