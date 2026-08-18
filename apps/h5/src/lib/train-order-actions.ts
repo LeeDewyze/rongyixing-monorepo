@@ -9,6 +9,19 @@ import {
 } from "@/lib/train-exchange-passenger";
 import { buildTrainExchangeListPath, saveTrainExchangeSession } from "@/lib/train-exchange-session";
 
+const TRAIN_TICKET_BOOKING_STATUSES = new Set(["1", "Booking"]);
+
+export function isTrainTicketBookingInProgress(ticket?: TrainOrderTicket): boolean {
+  if (!ticket) return false;
+  const status = ticket.Status?.trim();
+  if (status && TRAIN_TICKET_BOOKING_STATUSES.has(status)) return true;
+  if (status === "2" || status === "Booked" || status === "8" || status === "BookExchanged") {
+    return false;
+  }
+  const labels = [ticket.AppStatusName, ticket.StatusName].filter(Boolean).join(" ");
+  return /预订中/.test(labels);
+}
+
 export function mergeTrainFooterActions(
   orderActions: HotelOrderActionFlags | undefined,
   ticket?: TrainOrderTicket,
@@ -18,6 +31,16 @@ export function mergeTrainFooterActions(
     showCancel: false,
     smsAction: "none",
   };
+  if (isTrainTicketBookingInProgress(ticket)) {
+    return {
+      ...base,
+      showPay: false,
+      showCancel: false,
+      showIssue: false,
+      showRefund: ticket?.Actions?.showRefund,
+      showExchange: ticket?.Actions?.showExchange,
+    };
+  }
   return {
     ...base,
     showCancel: base.showCancel || Boolean(ticket?.Actions?.showCancel),

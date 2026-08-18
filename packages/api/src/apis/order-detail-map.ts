@@ -360,9 +360,9 @@ function resolveCredentialTypeCode(passenger: LegacyRecord): string | number | u
   const credential = resolvePassengerCredential(passenger);
   const raw =
     passenger.CredentialsType ??
-      passenger.CredentialType ??
-      credential?.CredentialsType ??
-      credential?.Type;
+    passenger.CredentialType ??
+    credential?.CredentialsType ??
+    credential?.Type;
   return readNumber(raw) ?? readString(raw) ?? undefined;
 }
 
@@ -1169,6 +1169,7 @@ function sortTrainTicketsForTabs(tickets: TrainOrderTicket[]): TrainOrderTicket[
 }
 
 const TRAIN_TICKET_BOOKED_STATUSES = new Set(["2", "8", "Booked", "BookExchanged"]);
+const TRAIN_TICKET_BOOKING_STATUSES = new Set(["1", "Booking"]);
 
 function isTrainTicketBookedSuccess(ticket: TrainOrderTicket): boolean {
   const status = ticket.Status?.trim();
@@ -1177,6 +1178,19 @@ function isTrainTicketBookedSuccess(ticket: TrainOrderTicket): boolean {
   }
   const label = (ticket.StatusName ?? "").trim();
   return label.includes("预订成功") || label.includes("预订修改成功");
+}
+
+/** Legacy `OrderTrainTicketStatusType.Booking` — confirm-issue/cancel wait until booked. */
+function isTrainTicketBooking(ticket: TrainOrderTicket): boolean {
+  const status = ticket.Status?.trim();
+  if (status && TRAIN_TICKET_BOOKING_STATUSES.has(status)) {
+    return true;
+  }
+  if (isTrainTicketBookedSuccess(ticket)) {
+    return false;
+  }
+  const labels = [ticket.StatusName, ticket.AppStatusName].filter(Boolean).join(" ");
+  return /预订中/.test(labels);
 }
 
 function isTrainTicketPendingIssue(ticket: TrainOrderTicket): boolean {
@@ -1242,13 +1256,19 @@ function buildTrainActionFlags(
     status !== "WaitHandle" &&
     isPersonalPay &&
     hasHoldWindow;
+  const bookingInProgress = tickets.some(isTrainTicketBooking);
   const resolvedIssueFlag = resolveTrainIssueFlag(orderVariables, tickets, order);
-  // Legacy train detail footer: pay-hold + non-personal pay always offers「确认出票」.
+  // Legacy train detail footer: pay-hold + non-personal pay offers「确认出票」 after booked.
   const legacyBusinessHoldIssue =
-    !isPersonalPay && hasHoldWindow && orderVariables?.isShowIssueButton !== false;
-  const showIssue = showPay ? false : resolvedIssueFlag || legacyBusinessHoldIssue;
-  const showCancel =
-    Boolean(orderVariables?.isShowCancelButton) || showPay || showIssue || hasHoldWindow;
+    !isPersonalPay &&
+    hasHoldWindow &&
+    !bookingInProgress &&
+    orderVariables?.isShowIssueButton !== false;
+  const showIssue =
+    bookingInProgress || showPay ? false : resolvedIssueFlag || legacyBusinessHoldIssue;
+  const showCancel = bookingInProgress
+    ? false
+    : Boolean(orderVariables?.isShowCancelButton) || showPay || showIssue || hasHoldWindow;
 
   return {
     showPay,

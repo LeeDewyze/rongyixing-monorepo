@@ -859,6 +859,42 @@ describe("normalizeTrainOrderDetail", () => {
     expect(detail.Actions?.showIssue).toBe(false);
   });
 
+  it("hides confirm issue during booking even with a business pay-hold window", () => {
+    const detail = normalizeTrainOrderDetail({
+      Order: {
+        Id: "ORD-TRN-booking-business",
+        Status: "WaitPay",
+        StatusName: "等待支付",
+        Variables: JSON.stringify({
+          OrderPayHoldTime: 6,
+          isShowCancelButton: true,
+          TravelPayType: 1,
+        }),
+        OrderTrainTickets: [
+          {
+            Id: "448800000000010",
+            Key: "train-key-1",
+            Status: "1",
+            StatusName: "预订中",
+            Passenger: { Name: "孙雪" },
+            OrderTrainTrips: [
+              {
+                TrainCode: "G3",
+                FromStationName: "北京南",
+                ToStationName: "天津南",
+              },
+            ],
+          },
+        ],
+      },
+      TravelPayType: "公付",
+    });
+
+    expect(detail.Actions?.showIssue).toBe(false);
+    expect(detail.Actions?.showCancel).toBe(false);
+    expect(detail.Actions?.showPay).toBe(false);
+  });
+
   it("shows confirm issue for business pay during waiting-pay hold window", () => {
     const detail = normalizeTrainOrderDetail({
       Order: {
