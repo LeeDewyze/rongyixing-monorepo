@@ -1,0 +1,1 @@
+import{u as e}from"./routes-HoG76RQ-.js";import{E as r}from"./index-DVs7zIIP.js";function u(){return e({queryKey:["member","profile"],queryFn:()=>r().member.getProfile(),staleTime:300*1e3})}export{u};

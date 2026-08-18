@@ -1,10 +1,11 @@
 import { isDingTalkUserAgent } from "@ryx/shared-types";
 
 import { getApi } from "@/lib/api";
+import { withAppBasePath } from "@/lib/base-path";
 import { getDomain } from "@/lib/domain";
 import { getLegacyAppBaseUrl } from "@/lib/env";
 import { getTicket } from "@/lib/session";
-import { getTicketName } from "@/lib/request-context";
+import { getApiRoot, getTicketName } from "@/lib/request-context";
 
 type DingTalkEntry = "login" | "bind";
 
@@ -44,7 +45,8 @@ export function buildDingTalkRedirectUrl(entry: DingTalkEntry, returnTo: string)
   const url = new URL(`${getLegacyAppBaseUrl()}/home/GetDingTalkCode`);
   url.searchParams.set("domain", getDomain());
   url.searchParams.set("path", entry === "login" ? "login" : "account-dingtalk");
-  url.searchParams.set("returnTo", returnTo);
+  url.searchParams.set("returnTo", withAppBasePath(returnTo));
+  url.searchParams.set("root", getApiRoot());
   const ticket = getTicket();
   if (entry === "bind" && ticket) {
     url.searchParams.set(getTicketName(), ticket);

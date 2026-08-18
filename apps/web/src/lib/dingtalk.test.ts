@@ -42,4 +42,22 @@ describe("DingTalk redirect", () => {
 
     expect(assign).toHaveBeenCalledWith(expect.stringContaining("/home/GetDingTalkCode"));
   });
+
+  it("includes the deployed app base path in the legacy callback", () => {
+    vi.stubEnv("BASE_URL", "/www/");
+    vi.stubEnv("VITE_API_ROOT", "www");
+    vi.stubGlobal("window", {
+      location: {
+        origin: "https://app.rongtrip.cn",
+        search: "?domain=rongtrip.cn&ticket=current-ticket",
+      },
+    });
+    vi.stubGlobal("location", { search: "?domain=rongtrip.cn&ticket=current-ticket" });
+    vi.stubGlobal("localStorage", { getItem: () => null });
+
+    const url = new URL(buildDingTalkRedirectUrl("bind", "/settings/dingtalk"));
+
+    expect(url.searchParams.get("returnTo")).toBe("/www/settings/dingtalk");
+    expect(url.searchParams.get("root")).toBe("www");
+  });
 });
