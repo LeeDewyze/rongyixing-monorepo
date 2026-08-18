@@ -1,4 +1,4 @@
-# RongYiXing Business Same-Origin H5 test Build 20260817223750
+# RongYiXing Business Same-Origin H5 test Build 20260818092723
 
 这个包用于交付业务方部署到 legacy 同源站点。
 
@@ -24,9 +24,11 @@
 - Request root：rl
 - Domain：从当前访问域名推导，也可以由 URL query 的 domain 覆盖
 - vConsole：true
+- vConsole 默认启动：false
+- vConsole 开启方式：设置页点击版本号 5 次（2 秒内）
 
 构建信息：
 
-- build_time: 2026-08-17T14:37:55Z
+- build_time: 2026-08-18T01:27:28Z
 - git_branch: main
-- git_commit: 892ab72630f56061de30d620b9fe1b8ee1290df7
+- git_commit: e4855856b7d5c1e68bec60460dd7ff4d864f6c97

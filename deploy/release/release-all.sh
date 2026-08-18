@@ -129,7 +129,7 @@ build_business_app() {
   local env_name="$2"
   local base_path="$3"
   local api_root="$4"
-  local package_name package_dir archive_path static_dir build_time git_commit git_branch app_label target_dir vconsole_enabled
+  local package_name package_dir archive_path static_dir build_time git_commit git_branch app_label target_dir vconsole_enabled vconsole_tap_to_enable
 
   package_name="$(business_package_name "${app_name}" "${env_name}")"
   package_dir="${OUT_ROOT}/${package_name}"
@@ -141,9 +141,7 @@ build_business_app() {
   git_commit="$(git rev-parse HEAD 2>/dev/null || true)"
   git_branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
   vconsole_enabled="true"
-  if [[ "${env_name}" == "prod" ]]; then
-    vconsole_enabled="false"
-  fi
+  vconsole_tap_to_enable="true"
 
   log "prepare business same-origin ${env_name} ${app_label} package ${package_dir}"
   rm -rf "${package_dir}" "${archive_path}"
@@ -156,6 +154,7 @@ build_business_app() {
   VITE_API_BASE_URL=__SAME_ORIGIN__ \
   VITE_API_DOMAIN=__AUTO__ \
   VITE_ENABLE_VCONSOLE="${vconsole_enabled}" \
+  VITE_VCONSOLE_TAP_TO_ENABLE="${vconsole_tap_to_enable}" \
   pnpm --filter "@ryx/${app_name}" build --mode "${env_name}"
 
   node "${SCRIPT_DIR}/check-webview-css.mjs" "${ROOT_DIR}/apps/${app_name}/dist"
@@ -177,6 +176,7 @@ api_base_url=__SAME_ORIGIN__
 api_domain=__AUTO__
 api_root=${api_root}
 vconsole_enabled=${vconsole_enabled}
+vconsole_tap_to_enable=${vconsole_tap_to_enable}
 EOF
 
   cat >"${package_dir}/README.md" <<EOF
@@ -206,6 +206,8 @@ ${base_path}index.html?wechatopenid=&ticketname=ticket&root=${static_dir}&ticket
 - Request root：${api_root}
 - Domain：从当前访问域名推导，也可以由 URL query 的 domain 覆盖
 - vConsole：${vconsole_enabled}
+- vConsole 默认启动：false
+- vConsole 开启方式：设置页点击版本号 5 次（2 秒内）
 
 构建信息：
 
