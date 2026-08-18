@@ -63,7 +63,7 @@ describe("performForceLogout", () => {
     expect(mocks.resetApi).toHaveBeenCalledTimes(1);
     expect(store.get("ryx_prevent_auto_login")).toBe("1");
     expect(replace).toHaveBeenCalledTimes(1);
-    expect(replace).toHaveBeenCalledWith("/login/password?preventAutoLogin=1&returnTo=%2Fhome");
+    expect(replace).toHaveBeenCalledWith("/login/password?preventAutoLogin=1");
   });
 
   it("redirects to login without alert when session is already missing", async () => {
@@ -74,7 +74,7 @@ describe("performForceLogout", () => {
     await performForceLogout({ message: "登录已失效" });
     expect(mocks.showAppAlertDialog).not.toHaveBeenCalled();
     expect(mocks.clearSession).not.toHaveBeenCalled();
-    expect(replace).toHaveBeenCalledWith("/login/password?returnTo=%2Fhome%2Fmine");
+    expect(replace).toHaveBeenCalledWith("/login/password");
   });
 
   it("can force logout again after a no-session redirect releases the guard", async () => {
@@ -90,7 +90,7 @@ describe("performForceLogout", () => {
     await secondLogout({ message: "您的账号已在其他设备登录", preventAutoLogin: true });
     expect(mocks.showAppAlertDialog).toHaveBeenCalledTimes(1);
     expect(replace).toHaveBeenCalledTimes(2);
-    expect(replace).toHaveBeenLastCalledWith("/login/password?preventAutoLogin=1&returnTo=%2Fhome");
+    expect(replace).toHaveBeenLastCalledWith("/login/password?preventAutoLogin=1");
   });
 
   it("clears the session without alert or redirect while already on the login page", async () => {

@@ -24,12 +24,11 @@ export function clearPreventAutoLogin(): void {
   sessionStorage.removeItem(PREVENT_AUTO_LOGIN_KEY);
 }
 
-function buildLoginRedirectPath(path: string, options: ForceLogoutOptions): string {
-  const returnTo = encodeURIComponent(path);
+function buildLoginRedirectPath(options: ForceLogoutOptions): string {
   if (options.preventAutoLogin) {
-    return `/login/password?preventAutoLogin=1&returnTo=${returnTo}`;
+    return "/login/password?preventAutoLogin=1";
   }
-  return `/login/password?returnTo=${returnTo}`;
+  return "/login/password";
 }
 
 export async function performForceLogout(options: ForceLogoutOptions = {}): Promise<void> {
@@ -64,5 +63,5 @@ export async function performForceLogout(options: ForceLogoutOptions = {}): Prom
     return;
   }
 
-  window.location.replace(withAppBasePath(buildLoginRedirectPath(path, options)));
+  window.location.replace(withAppBasePath(buildLoginRedirectPath(options)));
 }
