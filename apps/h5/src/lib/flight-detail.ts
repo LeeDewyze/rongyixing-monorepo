@@ -397,27 +397,53 @@ export function formatFareSalesPrice(price: string | number | undefined): string
   return String(Math.round(value));
 }
 
-/** Legacy exchange cabins: SalesPrice + Tax, or summed exchange fee taxes. */
-export function formatExchangeFareDisplayPrice(fare: FlightFare): string {
+export type ExchangeFareDisplay =
+  | { mode: "total"; amount: string }
+  | { mode: "breakdown"; lines: Array<{ name: string; amount: string }> };
+
+/**
+ * Legacy `tmc-flight-item-cabins_ryx` exchange price:
+ * - positive SalesPrice + Tax → single 改签费 amount
+ * - otherwise → FlightFareBasics.FlightTaxs line items
+ *
+ * A negative sum means the new cabin is cheaper than the original ticket; that
+ * fare difference is settled by the refund flow and is never a payable fee.
+ */
+export function resolveExchangeFareDisplay(fare: FlightFare): ExchangeFareDisplay {
   const cabin = prepareFlightFareForDisplay(fare);
   const sales = Number(cabin.SalesPrice ?? 0);
   const tax = Number(cabin.Tax ?? 0);
-  if (Number.isFinite(sales + tax) && (sales > 0 || tax > 0)) {
-    return formatFareSalesPrice(sales + tax);
+  const total = sales + tax;
+
+  if (Number.isFinite(total) && total > 0) {
+    return { mode: "total", amount: formatFareSalesPrice(total) };
   }
 
-  const feeTotal = (cabin.FlightFareBasics ?? [])
-    .flatMap((basic) => basic.FlightTaxs ?? [])
-    .reduce((sum, item) => {
+  const lines: Array<{ name: string; amount: string }> = [];
+  for (const basic of cabin.FlightFareBasics ?? []) {
+    for (const item of basic.FlightTaxs ?? []) {
       const value = Number(item.Tax ?? 0);
-      return Number.isFinite(value) ? sum + value : sum;
-    }, 0);
-
-  if (feeTotal > 0) {
-    return formatFareSalesPrice(feeTotal);
+      if (!Number.isFinite(value) || value <= 0) continue;
+      lines.push({
+        name: item.Name?.trim() || "费用",
+        amount: formatFareSalesPrice(value),
+      });
+    }
   }
 
-  return formatFareSalesPrice(cabin.SalesPrice);
+  if (lines.length > 0) {
+    return { mode: "breakdown", lines };
+  }
+
+  return { mode: "total", amount: "0" };
+}
+
+/** Legacy exchange cabins: SalesPrice + Tax, or summed exchange fee taxes. */
+export function formatExchangeFareDisplayPrice(fare: FlightFare): string {
+  const display = resolveExchangeFareDisplay(fare);
+  if (display.mode === "total") return display.amount;
+  const total = display.lines.reduce((sum, line) => sum + Number(line.amount), 0);
+  return formatFareSalesPrice(total);
 }
 
 function formatBasicName(basic: FlightFareBasic): string {

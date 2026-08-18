@@ -18,6 +18,7 @@ import {
   prepareFlightFareRulesForSheet,
   partitionCabinsByTab,
   resolveDetailSegment,
+  resolveExchangeFareDisplay,
   shouldShowFareRemainCount,
 } from "./flight-detail";
 
@@ -402,6 +403,78 @@ describe("prepareFlightFareRulesForSheet", () => {
     expect(rows[1]?.Tag).toBeUndefined();
     expect(rows[0]?.Details?.[0]?.value).toBe("￥33/人");
     expect(rows[2]?.Description).toBe("1件,每件23KG,体积不超过40*60*100cm");
+  });
+});
+
+describe("resolveExchangeFareDisplay", () => {
+  it("shows SalesPrice + Tax when either is positive (legacy ryx cabins)", () => {
+    expect(
+      resolveExchangeFareDisplay({
+        SalesPrice: 289,
+        Tax: "50",
+      }),
+    ).toEqual({ mode: "total", amount: "339" });
+  });
+
+  it("shows FlightTaxs breakdown instead of negative SalesPrice", () => {
+    expect(
+      resolveExchangeFareDisplay({
+        SalesPrice: -897,
+        Tax: "0",
+        FlightFareBasics: [
+          {
+            FlightTaxs: [
+              { Name: "改签手续费", Tax: 120 },
+              { Name: "差价", Tax: 169 },
+            ],
+          },
+        ],
+      }),
+    ).toEqual({
+      mode: "breakdown",
+      lines: [
+        { name: "改签手续费", amount: "120" },
+        { name: "差价", amount: "169" },
+      ],
+    });
+  });
+
+  it("falls back to zero when exchange fare has no positive components", () => {
+    expect(
+      resolveExchangeFareDisplay({
+        SalesPrice: -897,
+        Tax: "0",
+      }),
+    ).toEqual({ mode: "total", amount: "0" });
+  });
+
+  it("never shows a negative total when Tax is positive but the sum is negative", () => {
+    expect(
+      resolveExchangeFareDisplay({
+        SalesPrice: -947,
+        Tax: "50",
+      }),
+    ).toEqual({ mode: "total", amount: "0" });
+  });
+
+  it("skips non-positive FlightTaxs line items", () => {
+    expect(
+      resolveExchangeFareDisplay({
+        SalesPrice: -897,
+        Tax: "0",
+        FlightFareBasics: [
+          {
+            FlightTaxs: [
+              { Name: "票面价差", Tax: -1000 },
+              { Name: "改签手续费", Tax: 120 },
+            ],
+          },
+        ],
+      }),
+    ).toEqual({
+      mode: "breakdown",
+      lines: [{ name: "改签手续费", amount: "120" }],
+    });
   });
 });
 

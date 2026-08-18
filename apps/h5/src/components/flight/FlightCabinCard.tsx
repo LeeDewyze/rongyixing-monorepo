@@ -4,11 +4,11 @@ import { FLIGHT_CABINS_FONT } from "@/components/flight/flight-cabins-chrome";
 import type { FlightCabinPolicyColor } from "@/lib/flight-cabin-policy";
 import {
   formatCabinInfoLine,
-  formatExchangeFareDisplayPrice,
   formatFareRemainLabel,
   formatFareSalesPrice,
   isFlightFareBookable,
   prepareFlightFareForDisplay,
+  resolveExchangeFareDisplay,
 } from "@/lib/flight-detail";
 
 interface FlightCabinCardProps {
@@ -79,9 +79,8 @@ export function FlightCabinCard({
   const cabin = prepareFlightFareForDisplay(fare);
   const remainLabel = formatFareRemainLabel(cabin);
   const isSoldOut = soldOut ?? !isFlightFareBookable(cabin);
-  const priceLabel = isExchange
-    ? formatExchangeFareDisplayPrice(cabin)
-    : formatFareSalesPrice(cabin.SalesPrice);
+  const exchangeDisplay = isExchange ? resolveExchangeFareDisplay(cabin) : null;
+  const priceLabel = isExchange ? "" : formatFareSalesPrice(cabin.SalesPrice);
 
   return (
     <div
@@ -90,13 +89,31 @@ export function FlightCabinCard({
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-            <div className="flex items-baseline gap-0.5 text-[24px] font-medium leading-none tracking-normal text-[#FF383C]">
-              {isExchange ? (
-                <span className="mr-1 text-[12px] font-medium text-[#666666]">改签费</span>
-              ) : null}
-              <span>¥</span>
-              <span>{priceLabel}</span>
-            </div>
+            {isExchange && exchangeDisplay?.mode === "breakdown" ? (
+              <div className="space-y-1">
+                {exchangeDisplay.lines.map((line) => (
+                  <div
+                    key={`${line.name}-${line.amount}`}
+                    className="flex flex-wrap items-baseline gap-x-1.5 text-[14px] leading-snug text-[#FF383C]"
+                  >
+                    <span className="text-[12px] font-medium text-[#666666]">{line.name}</span>
+                    <span className="font-medium">¥{line.amount}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-baseline gap-0.5 text-[24px] font-medium leading-none tracking-normal text-[#FF383C]">
+                {isExchange ? (
+                  <span className="mr-1 text-[12px] font-medium text-[#666666]">改签费</span>
+                ) : null}
+                <span>¥</span>
+                <span>
+                  {isExchange && exchangeDisplay?.mode === "total"
+                    ? exchangeDisplay.amount
+                    : priceLabel}
+                </span>
+              </div>
+            )}
             {cabin.IsAgreement ? (
               <span className="rounded-full bg-[#EEF4FF] px-2 py-0.5 text-[10px] font-medium text-[#2768FA] ring-1 ring-[#D6E4FF]">
                 协议价
