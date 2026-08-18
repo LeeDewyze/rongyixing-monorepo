@@ -23,25 +23,29 @@ export function useVisibleHomeProducts(travelMode: HomeTravelMode): VisibleHomeP
   const hasTicket = Boolean(getTicket());
   const apiMode = getApiMode();
 
-  const query = useQuery({
-    queryKey: ["home", "visible-products", travelMode],
-    queryFn: async () => {
-      if (travelMode === "personal") {
-        return loadPersonalVisibleHomeProducts();
-      }
-
-      const workbenches = await getApi().tmc.getWorkbenches();
-      return getVisibleHomeProductsFromWorkbenches(workbenches);
-    },
-    enabled: travelMode === "personal" || hasTicket || apiMode === "mock",
+  const businessQuery = useQuery({
+    queryKey: ["tmc", "workbench"],
+    queryFn: () => getApi().tmc.getWorkbenches(),
+    enabled: travelMode === "business" && (hasTicket || apiMode === "mock"),
+    staleTime: PRODUCTS_STALE_MS,
+    retry: false,
+  });
+  const personalQuery = useQuery({
+    queryKey: ["home", "visible-products", "personal"],
+    queryFn: loadPersonalVisibleHomeProducts,
+    enabled: travelMode === "personal",
     staleTime: (query) => resolveProductsStaleTime(query.state.data),
     retry: false,
   });
 
-  const products = query.data ?? [];
+  const products =
+    travelMode === "business"
+      ? getVisibleHomeProductsFromWorkbenches(businessQuery.data ?? [])
+      : (personalQuery.data ?? []);
+  const activeQuery = travelMode === "business" ? businessQuery : personalQuery;
 
   return {
     products,
-    isLoading: query.isPending || (query.isFetching && products.length === 0),
+    isLoading: activeQuery.isPending || (activeQuery.isFetching && products.length === 0),
   };
 }

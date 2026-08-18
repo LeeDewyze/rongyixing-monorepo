@@ -36,6 +36,11 @@ import {
 
 export { ApiError } from "./errors.js";
 export { createApiClient, type ApiClient, type ApiClientConfig } from "./client.js";
+export {
+  readResourceCache,
+  writeResourceCache,
+  type ResourceCacheRecord,
+} from "./resource-cache.js";
 export { createAccountCardApi, type AccountCardApi } from "./apis/account-card.js";
 export { createAccountApi, type AccountApi } from "./apis/account.js";
 export { createAccountSecurityApi, type AccountSecurityApi } from "./apis/account-security.js";

@@ -1,6 +1,7 @@
 import type { ApiConfigSetting, IResponse } from "@ryx/shared-types";
 
 const DEFAULT_STORAGE_KEY = "ryx_api_config";
+const inFlightLoads = new Map<string, Promise<ApiConfigSetting>>();
 
 export interface ApiConfigLoaderOptions {
   baseUrl: string;
@@ -30,26 +31,47 @@ function buildSettingUrl(baseUrl: string, appId?: string): string {
   return `${base}/Home/Setting${query}`;
 }
 
+function getLoadKey(baseUrl: string, appId?: string): string {
+  return `${baseUrl.replace(/\/$/, "")}\n${appId ?? ""}`;
+}
+
 export async function loadApiConfig(options: ApiConfigLoaderOptions): Promise<ApiConfigSetting> {
+  const loadKey = getLoadKey(options.baseUrl, options.appId);
+  const existingLoad = inFlightLoads.get(loadKey);
+  if (existingLoad) {
+    return existingLoad;
+  }
+
   const fetchImpl = options.fetchImpl ?? globalThis.fetch.bind(globalThis);
-  const response = await fetchImpl(buildSettingUrl(options.baseUrl, options.appId));
+  const load = (async () => {
+    const response = await fetchImpl(buildSettingUrl(options.baseUrl, options.appId));
 
-  if (!response.ok) {
-    throw new Error(`Failed to load API config: HTTP ${response.status}`);
-  }
+    if (!response.ok) {
+      throw new Error(`Failed to load API config: HTTP ${response.status}`);
+    }
 
-  const payload = (await response.json()) as unknown;
-  const setting = normalizeApiConfigSetting(payload);
-  const storage = options.storage ?? globalThis.localStorage;
-  const key = options.storageKey ?? DEFAULT_STORAGE_KEY;
+    const payload = (await response.json()) as unknown;
+    const setting = normalizeApiConfigSetting(payload);
+    const storage = options.storage ?? globalThis.localStorage;
+    const key = options.storageKey ?? DEFAULT_STORAGE_KEY;
 
+    try {
+      storage?.setItem(key, JSON.stringify(setting));
+    } catch {
+      // ignore quota / SSR
+    }
+
+    return setting;
+  })();
+
+  inFlightLoads.set(loadKey, load);
   try {
-    storage?.setItem(key, JSON.stringify(setting));
-  } catch {
-    // ignore quota / SSR
+    return await load;
+  } finally {
+    if (inFlightLoads.get(loadKey) === load) {
+      inFlightLoads.delete(loadKey);
+    }
   }
-
-  return setting;
 }
 
 export function readCachedApiConfig(

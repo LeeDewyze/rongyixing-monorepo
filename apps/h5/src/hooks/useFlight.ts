@@ -5,7 +5,9 @@ import type {
   FlightPolicyParams,
   FlightPolicyPassengerResult,
   FlightSearchParams,
+  Trafficline,
 } from "@ryx/shared-types";
+import { readResourceCache, writeResourceCache } from "@ryx/api";
 
 import { FLIGHT_LIST_STALE_MS } from "@/lib/flight-list-refresh";
 import { normalizeFlightDetailResponse } from "@ryx/api";
@@ -17,12 +19,24 @@ function canQueryFlightList(params?: { TicketId?: string }): boolean {
   return getApiMode() === "mock" || Boolean(getTicket()) || Boolean(params?.TicketId);
 }
 
+const AIRPORT_CACHE_KEY = "ryx:h5:resource:airports:v1";
+const RESOURCE_STALE_TIME = 24 * 60 * 60 * 1000;
+const RESOURCE_GC_TIME = 7 * 24 * 60 * 60 * 1000;
+
 export function useFlightAirports(options?: { enabled?: boolean }) {
   const enabled = options?.enabled ?? true;
+  const cached = readResourceCache<Trafficline[]>(AIRPORT_CACHE_KEY);
   return useQuery({
     queryKey: ["flight", "airports"],
-    queryFn: () => getApi().flight.getAirports(),
-    staleTime: 1000 * 60 * 30,
+    queryFn: async () => {
+      const airports = await getApi().flight.getAirports();
+      writeResourceCache(AIRPORT_CACHE_KEY, airports);
+      return airports;
+    },
+    initialData: cached?.data,
+    initialDataUpdatedAt: cached?.updatedAt,
+    staleTime: RESOURCE_STALE_TIME,
+    gcTime: RESOURCE_GC_TIME,
     enabled,
   });
 }

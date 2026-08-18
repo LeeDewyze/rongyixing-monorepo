@@ -1,0 +1,1 @@
+function c(r,n=globalThis.localStorage){try{const t=n==null?void 0:n.getItem(r);if(!t)return null;const e=JSON.parse(t);return!e||typeof e.updatedAt!="number"||!("data"in e)?null:e}catch{return null}}function l(r,n,t=globalThis.localStorage,e=Date.now()){try{t==null||t.setItem(r,JSON.stringify({data:n,updatedAt:e}))}catch{}}export{c as r,l as w};

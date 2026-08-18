@@ -1,17 +1,23 @@
 import { useCallback, useMemo } from "react";
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
+  HotelCity,
   HotelDetailParams,
   HotelKeywordSearchParams,
   HotelListParams,
   HotelPolicyParams,
 } from "@ryx/shared-types";
+import { readResourceCache, writeResourceCache } from "@ryx/api";
 
 import { getApi } from "@/lib/api";
 
 export const HOTEL_LIST_PAGE_SIZE = 20;
 
 export const hotelListQueryKey = (params: HotelListParams) => ["hotel", "list", params] as const;
+
+const HOTEL_CITY_CACHE_KEY = "ryx:web:resource:domestic-hotel-cities:v1";
+const RESOURCE_STALE_TIME = 24 * 60 * 60 * 1000;
+const RESOURCE_GC_TIME = 7 * 24 * 60 * 60 * 1000;
 
 export function useHotelList(params: HotelListParams = {}, enabled = true) {
   const hasRequired = Boolean(params.CityCode && params.CheckInDate && params.CheckOutDate);
@@ -85,9 +91,18 @@ export function useHotelPolicy(params: HotelPolicyParams | null, enabled = true)
 }
 
 export function useHotelCities() {
+  const cached = readResourceCache<HotelCity[]>(HOTEL_CITY_CACHE_KEY);
   return useQuery({
     queryKey: ["hotel", "cities"],
-    queryFn: () => getApi().hotel.getCities(),
+    queryFn: async () => {
+      const cities = await getApi().hotel.getCities();
+      writeResourceCache(HOTEL_CITY_CACHE_KEY, cities);
+      return cities;
+    },
+    initialData: cached?.data,
+    initialDataUpdatedAt: cached?.updatedAt,
+    staleTime: RESOURCE_STALE_TIME,
+    gcTime: RESOURCE_GC_TIME,
   });
 }
 

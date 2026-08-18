@@ -7,7 +7,7 @@ import type {
 } from "@ryx/shared-types";
 
 import { ApiError } from "../errors.js";
-import { loadApiConfig, readCachedApiConfig } from "./api-config.js";
+import { loadApiConfig as loadApiConfigFromServer, readCachedApiConfig } from "./api-config.js";
 import {
   createRequestEntity,
   buildUnsignedFormBody,
@@ -48,7 +48,7 @@ export interface ProxyClient {
     options: ProxySendOptions,
     responseOptions?: ProxyResponseOptions,
   ): Promise<IResponse<TRes>>;
-  loadApiConfig(): Promise<ApiConfigSetting>;
+  loadApiConfig(options?: { forceRefresh?: boolean }): Promise<ApiConfigSetting>;
   getApiConfig(): ApiConfigSetting | null;
 }
 
@@ -72,9 +72,40 @@ export function createProxyClient(config: ProxyClientConfig): ProxyClient {
   const fetchImpl = config.fetchImpl ?? globalThis.fetch.bind(globalThis);
   const mode = config.mode ?? "proxy";
   let apiConfig = config.apiConfig ?? readCachedApiConfig() ?? null;
+  let apiConfigPromise: Promise<ApiConfigSetting> | null = null;
 
   function getToken(): string {
     return apiConfig?.Token ?? "";
+  }
+
+  function hasBaseApiConfig(value = apiConfig): value is ApiConfigSetting {
+    return Boolean(value?.Token && value.Urls && Object.keys(value.Urls).length > 0);
+  }
+
+  async function loadApiConfig(
+    options: { forceRefresh?: boolean } = {},
+  ): Promise<ApiConfigSetting> {
+    if (!options.forceRefresh && hasBaseApiConfig()) {
+      return apiConfig as ApiConfigSetting;
+    }
+    if (apiConfigPromise) {
+      return apiConfigPromise;
+    }
+
+    apiConfigPromise = loadApiConfigFromServer({
+      baseUrl: config.baseUrl,
+      appId: config.appId,
+      fetchImpl,
+    })
+      .then((nextConfig) => {
+        apiConfig = nextConfig;
+        return nextConfig;
+      })
+      .finally(() => {
+        apiConfigPromise = null;
+      });
+
+    return apiConfigPromise;
   }
 
   async function ensureApiConfig(method: string): Promise<ApiConfigSetting | null> {
@@ -90,11 +121,7 @@ export function createProxyClient(config: ProxyClientConfig): ProxyClient {
       return apiConfig;
     }
     try {
-      apiConfig = await loadApiConfig({
-        baseUrl: config.baseUrl,
-        appId: config.appId,
-        fetchImpl,
-      });
+      await loadApiConfig({ forceRefresh: true });
     } catch {
       // direct/proxy may still work via /Home/Proxy
     }
@@ -243,13 +270,8 @@ export function createProxyClient(config: ProxyClientConfig): ProxyClient {
       });
     },
 
-    async loadApiConfig(): Promise<ApiConfigSetting> {
-      apiConfig = await loadApiConfig({
-        baseUrl: config.baseUrl,
-        appId: config.appId,
-        fetchImpl,
-      });
-      return apiConfig;
+    async loadApiConfig(options?: { forceRefresh?: boolean }): Promise<ApiConfigSetting> {
+      return loadApiConfig(options);
     },
 
     getApiConfig(): ApiConfigSetting | null {

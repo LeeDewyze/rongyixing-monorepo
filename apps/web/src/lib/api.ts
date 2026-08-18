@@ -82,9 +82,14 @@ export function getApi() {
     attachTouristContextProxy(apiInstance);
 
     if (mode !== "mock") {
-      void apiInstance.proxy.loadApiConfig().then((cfg) => {
-        if (cfg.Domain) persistDomain(cfg.Domain);
-      });
+      void apiInstance.proxy
+        .loadApiConfig()
+        .then((cfg) => {
+          if (cfg.Domain) persistDomain(cfg.Domain);
+        })
+        .catch((error) => {
+          console.warn("[ryx] background ApiConfig load failed", error);
+        });
     }
   }
 

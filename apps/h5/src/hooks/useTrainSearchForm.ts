@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { TrainStation } from "@ryx/shared-types";
 import { useQuery } from "@tanstack/react-query";
+import { readResourceCache, writeResourceCache } from "@ryx/api";
 
 import { getApi } from "@/lib/api";
 import {
@@ -22,11 +23,24 @@ export interface TrainSearchQueryInitial {
   date: string;
 }
 
+const TRAIN_STATION_CACHE_KEY = "ryx:h5:resource:train-stations:v1";
+const RESOURCE_STALE_TIME = 24 * 60 * 60 * 1000;
+const RESOURCE_GC_TIME = 7 * 24 * 60 * 60 * 1000;
+
 export function useTrainStations(options?: { enabled?: boolean }) {
   const enabled = options?.enabled ?? true;
+  const cached = readResourceCache<TrainStation[]>(TRAIN_STATION_CACHE_KEY);
   return useQuery({
     queryKey: ["train", "stations"],
-    queryFn: () => getApi().train.getStations(),
+    queryFn: async () => {
+      const stations = await getApi().train.getStations();
+      writeResourceCache(TRAIN_STATION_CACHE_KEY, stations);
+      return stations;
+    },
+    initialData: cached?.data,
+    initialDataUpdatedAt: cached?.updatedAt,
+    staleTime: RESOURCE_STALE_TIME,
+    gcTime: RESOURCE_GC_TIME,
     enabled,
   });
 }

@@ -4,6 +4,52 @@ import { successResponse } from "./response-adapter.js";
 import { createProxyClient } from "./proxy-client.js";
 
 describe("createProxyClient proxy mode", () => {
+  it("uses the cached ApiConfig when loading explicitly", async () => {
+    const fetchImpl = vi.fn<typeof fetch>();
+    const client = createProxyClient({
+      baseUrl: "",
+      mode: "proxy",
+      apiConfig: {
+        Token: "cached-token",
+        Urls: { TmcApiHomeUrl: "http://home-api-tmc.rtesp.com" },
+      },
+      fetchImpl,
+    });
+
+    const config = await client.loadApiConfig();
+
+    expect(config.Token).toBe("cached-token");
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
+  it("deduplicates concurrent ApiConfig loads", async () => {
+    let settingRequests = 0;
+    const client = createProxyClient({
+      baseUrl: "",
+      mode: "proxy",
+      fetchImpl: async (url) => {
+        expect(String(url)).toBe("/Home/Setting");
+        settingRequests += 1;
+        await Promise.resolve();
+        return new Response(
+          JSON.stringify(
+            successResponse({
+              Token: "loaded-token",
+              Urls: { TmcApiHomeUrl: "http://home-api-tmc.rtesp.com" },
+            }),
+          ),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        );
+      },
+    });
+
+    const [first, second] = await Promise.all([client.loadApiConfig(), client.loadApiConfig()]);
+
+    expect(first.Token).toBe("loaded-token");
+    expect(second).toBe(first);
+    expect(settingRequests).toBe(1);
+  });
+
   it("omits gateway extras (root) on direct microservice URLs", async () => {
     let capturedBody = "";
     const client = createProxyClient({
