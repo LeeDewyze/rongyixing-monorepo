@@ -20,7 +20,7 @@ export async function isDingTalkEntryEnabled(entry: DingTalkEntry): Promise<bool
   if (!isDingTalkContainer()) return false;
   if (entry === "login") return false;
   const configured = await getApi().proxy.loadApiConfig();
-  return configured?.HasDingtalkBind === true || import.meta.env.VITE_DINGTALK_ENABLE_BIND === "true";
+  return configured?.HasDingtalkBind === true;
 }
 
 function removeCodeFromUrl(): void {
@@ -71,45 +71,6 @@ export async function requestDingTalkCode(
   entry: DingTalkEntry,
   returnTo: string,
 ): Promise<string | null> {
-  const dd = (
-    globalThis as typeof globalThis & {
-      dd?: {
-        runtime?: {
-          permission?: {
-            requestAuthCode?: (
-              options: { corpId?: string },
-              callback: (result: { code?: string; errCode?: string; errMsg?: string }) => void,
-            ) => void;
-          };
-        };
-      };
-    }
-  ).dd;
-  const permission = dd?.runtime?.permission;
-  const requestAuthCode = permission?.requestAuthCode;
-  const corpId = import.meta.env.VITE_DINGTALK_CORP_ID?.trim();
-  if (requestAuthCode && corpId) {
-    const code = await new Promise<string | null>((resolve) => {
-      let settled = false;
-      const finish = (value: string | null) => {
-        if (settled) return;
-        settled = true;
-        resolve(value);
-      };
-      const timeoutId = window.setTimeout(() => finish(null), 5_000);
-      try {
-        requestAuthCode.call(permission, { corpId }, (result) => {
-          window.clearTimeout(timeoutId);
-          finish(result?.code?.trim() || null);
-        });
-      } catch {
-        window.clearTimeout(timeoutId);
-        finish(null);
-      }
-    });
-    if (code) return code;
-    console.warn("[ryx] DingTalk SDK authorization failed; falling back to legacy redirect");
-  }
   window.location.assign(buildDingTalkRedirectUrl(entry, returnTo));
   return null;
 }

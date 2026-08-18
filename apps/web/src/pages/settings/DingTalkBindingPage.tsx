@@ -54,7 +54,7 @@ export function DingTalkBindingPage() {
     if (!code) return;
     void bind
       .mutateAsync(code)
-      .then(() => showToast("钉钉账号绑定成功", "success"))
+      .then((result) => showToast(result.message || "钉钉账号绑定成功", "success"))
       .catch((error) => showToast(dingTalkErrorMessage(error)));
   }, [dingTalkSupported]);
 
@@ -63,8 +63,8 @@ export function DingTalkBindingPage() {
     try {
       const code = await requestDingTalkCode("bind", "/settings/dingtalk");
       if (code) {
-        await bind.mutateAsync(code);
-        showToast("钉钉账号绑定成功", "success");
+        const result = await bind.mutateAsync(code);
+        showToast(result.message || "钉钉账号绑定成功", "success");
       }
     } catch (error) {
       showToast(dingTalkErrorMessage(error));
@@ -88,12 +88,14 @@ export function DingTalkBindingPage() {
     <SettingsPageChrome title="钉钉绑定" backTo="/settings/security">
       <div className="min-h-full rounded-t-2xl bg-white pb-10 shadow-[0_-4px_24px_rgba(0,0,0,0.06)]">
         <div className="mx-auto flex w-full max-w-2xl flex-col px-4 pt-5">
-          <div className="flex items-center gap-3 rounded-2xl border border-[#D6E8FF] bg-[#F5F9FF] px-4 py-4">
-            <DingTalkMark />
-            <p className="m-0 text-[13px] leading-relaxed text-[#5C6678]">
-              绑定后可使用钉钉账号快速登录融易行。
-            </p>
-          </div>
+          {availability.enabled ? (
+            <div className="flex items-center gap-3 rounded-2xl border border-[#D6E8FF] bg-[#F5F9FF] px-4 py-4">
+              <DingTalkMark />
+              <p className="m-0 text-[13px] leading-relaxed text-[#5C6678]">
+                绑定后可使用钉钉账号快速登录融易行。
+              </p>
+            </div>
+          ) : null}
 
           <div className="mt-4">
             {bindings.isLoading ? (
@@ -135,14 +137,16 @@ export function DingTalkBindingPage() {
             )}
           </div>
 
-          <button
-            type="button"
-            className="mt-5 flex h-12 w-full items-center justify-center rounded-full bg-brand-primary text-[16px] font-medium text-white shadow-[0_8px_20px_rgba(39,104,250,0.24)] disabled:opacity-50"
-            disabled={!availability.enabled || bind.isPending}
-            onClick={() => void handleBind()}
-          >
-            {bind.isPending ? "绑定中…" : "绑定钉钉"}
-          </button>
+          {availability.enabled ? (
+            <button
+              type="button"
+              className="mt-5 flex h-12 w-full items-center justify-center rounded-full bg-brand-primary text-[16px] font-medium text-white shadow-[0_8px_20px_rgba(39,104,250,0.24)] disabled:opacity-50"
+              disabled={bind.isPending}
+              onClick={() => void handleBind()}
+            >
+              {bind.isPending ? "绑定中…" : "绑定钉钉"}
+            </button>
+          ) : null}
         </div>
       </div>
 

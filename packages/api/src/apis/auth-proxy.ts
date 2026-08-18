@@ -101,9 +101,14 @@ export function createAuthProxyApi(proxy: ProxyClient): AuthProxyApi {
 
 export interface DingTalkApi {
   check(): Promise<DingTalkCheckResult>;
-  bind(params: DingTalkBindParams): Promise<boolean>;
+  bind(params: DingTalkBindParams): Promise<DingTalkActionResult>;
   list(): Promise<DingTalkBindingItem[]>;
   remove(params: DingTalkRemoveParams): Promise<boolean>;
+}
+
+export interface DingTalkActionResult {
+  data: boolean;
+  message?: string;
 }
 
 export function createDingTalkApi(proxy: ProxyClient): DingTalkApi {
@@ -118,11 +123,19 @@ export function createDingTalkApi(proxy: ProxyClient): DingTalkApi {
         message: response.Message?.trim() || undefined,
       };
     },
-    bind(params) {
-      return proxy.send<boolean>({
-        method: AUTH_METHODS.DINGTALK_BIND,
-        data: params,
-      });
+    async bind(params) {
+      const response = await proxy.sendResponse<boolean>(
+        {
+          method: AUTH_METHODS.DINGTALK_BIND,
+          data: params,
+          isShowLoading: true,
+        },
+        { handleErrors: true },
+      );
+      return {
+        data: assertSuccess(response),
+        message: response.Message?.trim() || undefined,
+      };
     },
     async list() {
       const data = await proxy.send<unknown>({
@@ -139,6 +152,7 @@ export function createDingTalkApi(proxy: ProxyClient): DingTalkApi {
       return proxy.send<boolean>({
         method: AUTH_METHODS.DINGTALK_REMOVE,
         data: params,
+        isShowLoading: true,
       });
     },
   };

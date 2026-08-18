@@ -49,3 +49,8 @@ export interface ProxySendOptions {
   /** Beeant RequestEntity.Timeout (seconds) included in form body */
   requestTimeout?: number;
 }
+
+export interface ProxyResponseOptions {
+  /** Run the same code-based global handlers as `send`. */
+  handleErrors?: boolean;
+}

@@ -5,7 +5,14 @@ export interface ApiResponse<T> {
   success: boolean;
 }
 
-export type { ApiConfigSetting, ApiMode, ApiResult, IResponse, ProxySendOptions } from "./proxy.js";
+export type {
+  ApiConfigSetting,
+  ApiMode,
+  ApiResult,
+  IResponse,
+  ProxyResponseOptions,
+  ProxySendOptions,
+} from "./proxy.js";
 
 export type {
   ApprovalTask,

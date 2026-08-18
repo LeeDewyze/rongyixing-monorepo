@@ -9,12 +9,23 @@ const IDENTITY_PERMISSION_STORAGE_KEY = "ryx_identity_permission";
 
 export const SESSION_CHANGED_EVENT = "ryx:session-changed";
 
+function getTicketNameFromContext(): string {
+  const params = new URLSearchParams(globalThis.location?.search ?? "");
+  const fromUrl = params.get(TICKET_NAME_KEY)?.trim();
+  const fromStorage = localStorage.getItem(TICKET_NAME_KEY)?.trim();
+  return fromUrl || fromStorage || TICKET_KEY;
+}
+
 function emitSessionChanged(): void {
   window.dispatchEvent(new Event(SESSION_CHANGED_EVENT));
 }
 
 export function getTicket(): string | null {
-  return localStorage.getItem(TICKET_KEY);
+  const params = new URLSearchParams(globalThis.location?.search ?? "");
+  const ticketName = getTicketNameFromContext();
+  const fromUrl = params.get(ticketName)?.trim();
+  if (fromUrl) return fromUrl;
+  return localStorage.getItem(ticketName) || localStorage.getItem(TICKET_KEY);
 }
 
 export function setTicket(ticket: string): void {

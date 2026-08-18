@@ -1,4 +1,10 @@
-import type { ApiConfigSetting, ApiMode, IResponse, ProxySendOptions } from "@ryx/shared-types";
+import type {
+  ApiConfigSetting,
+  ApiMode,
+  IResponse,
+  ProxyResponseOptions,
+  ProxySendOptions,
+} from "@ryx/shared-types";
 
 import { ApiError } from "../errors.js";
 import { loadApiConfig, readCachedApiConfig } from "./api-config.js";
@@ -37,8 +43,11 @@ export interface ProxyClientConfig {
 
 export interface ProxyClient {
   send<TRes = unknown>(options: ProxySendOptions): Promise<TRes>;
-  /** Returns raw envelope without assertSuccess or global error handlers (e.g. Identity-Check). */
-  sendResponse<TRes = unknown>(options: ProxySendOptions): Promise<IResponse<TRes>>;
+  /** Returns a raw envelope. Global code handlers are opt-in for success-message consumers. */
+  sendResponse<TRes = unknown>(
+    options: ProxySendOptions,
+    responseOptions?: ProxyResponseOptions,
+  ): Promise<IResponse<TRes>>;
   loadApiConfig(): Promise<ApiConfigSetting>;
   getApiConfig(): ApiConfigSetting | null;
 }
@@ -225,8 +234,13 @@ export function createProxyClient(config: ProxyClientConfig): ProxyClient {
       return assertSuccess(response);
     },
 
-    async sendResponse<TRes = unknown>(options: ProxySendOptions): Promise<IResponse<TRes>> {
-      return dispatch<TRes>(options, { skipGlobalErrorHandling: true });
+    async sendResponse<TRes = unknown>(
+      options: ProxySendOptions,
+      responseOptions?: ProxyResponseOptions,
+    ): Promise<IResponse<TRes>> {
+      return dispatch<TRes>(options, {
+        skipGlobalErrorHandling: responseOptions?.handleErrors !== true,
+      });
     },
 
     async loadApiConfig(): Promise<ApiConfigSetting> {
