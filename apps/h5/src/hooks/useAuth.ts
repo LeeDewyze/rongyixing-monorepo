@@ -8,32 +8,7 @@ import {
 } from "@/lib/booking-permission-preload";
 import { queryClient } from "@/lib/query";
 import { getDeviceId, getDeviceName } from "@/lib/request-context";
-import { refreshSessionGuardWebSocket, startSessionGuard } from "@/lib/session-guard";
-import { clearSession, saveLoginResult, setWebSocketUrl } from "@/lib/session";
-
-async function loadWebSocketUrlAfterLogin(mode: string, ticket?: string) {
-  if (mode === "mock" || !ticket) return;
-  try {
-    const ws = await getApi().identity.getWebSocketUrl();
-    if (ws?.Url) {
-      setWebSocketUrl(ws.Url);
-      refreshSessionGuardWebSocket();
-    } else {
-      console.warn("[ryx] GetWebSocketUrl returned empty Url");
-    }
-  } catch (error) {
-    console.warn("[ryx] failed to load websocket url after login", error);
-  }
-}
-
-function startSessionGuardAfterLogin(mode: string): void {
-  if (mode === "mock") return;
-  startSessionGuard();
-}
-
-function loadWebSocketUrlInBackground(mode: string, ticket?: string): void {
-  void loadWebSocketUrlAfterLogin(mode, ticket);
-}
+import { clearSession, saveLoginResult } from "@/lib/session";
 
 function preloadStaffPermissionInBackground(reset = false): void {
   void preloadBusinessStaffPermission(queryClient, { reset }).catch((error) => {
@@ -60,8 +35,6 @@ export function usePasswordLogin() {
 
       saveLoginResult(result);
       preloadStaffPermissionInBackground(true);
-      startSessionGuardAfterLogin(mode);
-      loadWebSocketUrlInBackground(mode, result.Ticket);
 
       return result;
     },
@@ -71,7 +44,6 @@ export function usePasswordLogin() {
 export function useMobileLogin() {
   return useMutation({
     mutationFn: async (params: { Mobile: string; Code: string }) => {
-      const mode = getApiMode();
       const result = await getApi().authProxy.mobileLogin({
         Mobile: params.Mobile,
         Code: params.Code,
@@ -80,8 +52,6 @@ export function useMobileLogin() {
 
       saveLoginResult(result);
       preloadStaffPermissionInBackground(true);
-      startSessionGuardAfterLogin(mode);
-      loadWebSocketUrlInBackground(mode, result.Ticket);
 
       return result;
     },
@@ -100,12 +70,9 @@ export function useSendLoginCode() {
 export function useDeviceLogin() {
   return useMutation({
     mutationFn: async (deviceId: string) => {
-      const mode = getApiMode();
       const result = await getApi().authProxy.deviceLogin({ Device: deviceId });
       saveLoginResult(result);
       preloadStaffPermissionInBackground(true);
-      startSessionGuardAfterLogin(mode);
-      loadWebSocketUrlInBackground(mode, result.Ticket);
       return result;
     },
   });
@@ -114,7 +81,6 @@ export function useDeviceLogin() {
 export function useDingTalkLogin() {
   return useMutation({
     mutationFn: async (code: string) => {
-      const mode = getApiMode();
       const result = await getApi().authProxy.dingTalkLogin({
         Code: code,
         Device: getDeviceId(),
@@ -133,8 +99,6 @@ export function useDingTalkLogin() {
         saveLoginResult(finalResult);
         preloadStaffPermissionInBackground(true);
         cacheBusinessIdentityPermission(queryClient, finalResult.Ticket, identity);
-        startSessionGuardAfterLogin(mode);
-        loadWebSocketUrlInBackground(mode, finalResult.Ticket);
         return finalResult;
       } catch (error) {
         clearSession();

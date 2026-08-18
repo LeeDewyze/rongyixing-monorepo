@@ -8,7 +8,11 @@ import {
 import { getApiMode } from "@/lib/env";
 import { queryClient } from "@/lib/query";
 import { getTicket, SESSION_CHANGED_EVENT, setWebSocketUrl } from "@/lib/session";
-import { onSessionGuardVisibility, startSessionGuard } from "@/lib/session-guard";
+import {
+  onSessionGuardVisibility,
+  refreshSessionGuardWebSocket,
+  startSessionGuard,
+} from "@/lib/session-guard";
 
 let bootstrappedTicket: string | null = null;
 
@@ -26,6 +30,7 @@ function bootstrapSessionData(ticket: string): void {
       .then((ws) => {
         if (ws?.Url) {
           setWebSocketUrl(ws.Url);
+          refreshSessionGuardWebSocket();
         }
         startSessionGuard();
       })
@@ -69,6 +74,7 @@ export function SessionGuardHost() {
           stopBusinessIdentityPermissionRefresh();
           return;
         }
+        bootstrapSessionData(currentTicket);
         void preloadBusinessIdentityPermission(queryClient).catch((error) => {
           console.warn("[ryx] identity permission preload after login failed", error);
         });
