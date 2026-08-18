@@ -379,7 +379,12 @@ export type HotelInitBookParams = HotelOrderBookDto;
 export interface HotelInitStaff {
   Id: string;
   Name: string;
+  Number?: string;
+  OutNumber?: string;
   isAllowSelectApprove?: boolean;
+  Account?: { Id?: string | number; Mobile?: string; Email?: string | null };
+  Organization?: { Code?: string; Name?: string };
+  CostCenter?: { Code?: string; Name?: string };
   Approvers?: { Id?: string; Name?: string; AccountId?: string }[];
 }
 
@@ -398,6 +403,7 @@ export interface HotelInitBookResponse {
   OutNumbers?: Record<string, string[]>;
   Tmc?: Record<string, unknown>;
   TmcServices?: { Id?: string | number; Name?: string; LogoFullFileName?: string }[];
+  TravelFrom?: { TravelNumber?: string; Id?: string; Numbers?: string[] };
   isSkipApprove?: boolean;
   Linkman?: HotelBookLinkmanDto;
 }

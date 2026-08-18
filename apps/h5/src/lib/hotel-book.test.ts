@@ -12,10 +12,13 @@ import {
   prepareHotelBookSubmitDto,
   buildHotelWarmReminderParagraphs,
   buildHotelWarmReminderSections,
+  buildHotelPassengerOutNumberFieldsMap,
   resolveHotelRoomPlanRulesDesc,
   calcHotelNights,
   createEmptyHotelCreditCardForm,
   createHotelPassengerBookForm,
+  findHotelInitStaff,
+  mergeHotelInitStaffIntoForm,
   resolveHotelArrivalTimeOptions,
   resolveHotelShowCreditCard,
   validateHotelBookForms,
@@ -396,6 +399,104 @@ describe("resolveHotelShowCreditCard", () => {
     };
     expect(resolveHotelShowCreditCard(selfPaySelection, "2026-06-20 18:00")).toBe(true);
     expect(resolveHotelShowCreditCard(selfPaySelection, "2026-06-20 14:00")).toBe(false);
+  });
+});
+
+describe("buildHotelPassengerOutNumberFieldsMap", () => {
+  const selfBookPassenger: PassengerBookInfo = {
+    id: "p-sun",
+    passenger: { Id: "370000000267", AccountId: "68050000000037", Name: "孙雪" },
+    credential: {
+      Id: "cred-sun",
+      AccountId: "68050000000037",
+      Name: "孙雪",
+      Number: "411521198811171528",
+      Type: 1,
+    },
+  };
+  const initStaff = {
+    Id: "370000000267",
+    Name: "孙雪",
+    Number: "113",
+    OutNumber: "",
+    Account: { Id: 68050000000037, Mobile: "18910943089" },
+  };
+
+  it("builds a selectable required TravelNumber from Initialize Tmc", () => {
+    const fields = buildHotelPassengerOutNumberFieldsMap({
+      passengers: [selfBookPassenger],
+      staffs: [initStaff],
+      travelMode: "business",
+      init: {
+        Tmc: {
+          OutNumberNameArray: ["TravelNumber"],
+          OutNumberRequiryNameArray: ["TravelNumber"],
+          GetTravelUrl:
+            "PresentationTmcApiForwardUrl/TravelForm/GetTravelForms?tmcid=10365&IsShowBeforeApproval=true",
+        },
+      },
+    });
+    const field = fields["p-sun"]?.[0];
+    expect(field?.key).toBe("TravelNumber");
+    expect(field?.required).toBe(true);
+    expect(field?.canSelect).toBe(true);
+    expect(field?.staffNumber).toBe("113");
+    expect(field?.travelType).toBe("Hotel");
+  });
+
+  it("prefills TravelNumber from Initialize.TravelFrom", () => {
+    const fields = buildHotelPassengerOutNumberFieldsMap({
+      passengers: [selfBookPassenger],
+      staffs: [initStaff],
+      travelMode: "business",
+      init: {
+        TravelFrom: { TravelNumber: "Travel202608141132303157173" },
+        Tmc: {
+          OutNumberNameArray: ["TravelNumber"],
+          GetTravelUrl: "https://example.com/travel",
+        },
+      },
+    });
+    const field = fields["p-sun"]?.[0];
+    expect(field?.value).toBe("Travel202608141132303157173");
+    expect(field?.canSelect).toBe(false);
+  });
+});
+
+describe("createHotelPassengerBookForm contacts", () => {
+  const selfBookPassenger: PassengerBookInfo = {
+    id: "p-sun",
+    passenger: { Id: "370000000267", AccountId: "68050000000037", Name: "孙雪" },
+    credential: {
+      Id: "cred-sun",
+      AccountId: "68050000000037",
+      Name: "孙雪",
+      Number: "411521198811171528",
+      Type: 1,
+    },
+  };
+  const initStaff = {
+    Id: "370000000267",
+    Name: "孙雪",
+    Account: { Id: 68050000000037, Mobile: "18910943089", Email: "" },
+    Organization: { Code: "A002", Name: "差旅事业部" },
+  };
+
+  it("prefills the staff account mobile from Initialize when the credential has none", () => {
+    const form = createHotelPassengerBookForm(selfBookPassenger, "2026-09-15 14:00", initStaff);
+    expect(form.mobileOptions).toEqual([{ value: "18910943089", checked: true }]);
+  });
+
+  it("matches Initialize staff by Account.Id, not Staff.Id", () => {
+    expect(findHotelInitStaff(selfBookPassenger, [initStaff])?.Account?.Mobile).toBe("18910943089");
+  });
+
+  it("fills an empty form after Initialize staff arrives", () => {
+    const empty = createHotelPassengerBookForm(selfBookPassenger, "2026-09-15 14:00");
+    expect(empty.mobileOptions).toEqual([]);
+
+    const merged = mergeHotelInitStaffIntoForm(empty, selfBookPassenger, initStaff);
+    expect(merged.mobileOptions).toEqual([{ value: "18910943089", checked: true }]);
   });
 });
 

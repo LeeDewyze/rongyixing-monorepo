@@ -34,6 +34,7 @@ import { HotelBookRoomCard } from "@/components/hotel/HotelBookRoomCard";
 import { HotelBookRoomSection } from "@/components/hotel/HotelBookRoomSection";
 import { HotelBookServiceFeeRow } from "@/components/hotel/HotelBookServiceFeeRow";
 import { HotelBookSummaryCard } from "@/components/hotel/HotelBookSummaryCard";
+import { HotelBookTravelSection } from "@/components/hotel/HotelBookTravelSection";
 import { PassengerSelectAlertDialog } from "@/components/passenger";
 import { useBookOrgCostVisibility } from "@/hooks/useBookOrgCostVisibility";
 import { useHotelBookPassengerForms } from "@/hooks/useHotelBookPassengerForms";
@@ -127,6 +128,9 @@ export function HotelBookPage() {
     passengerId: string;
     field: FlightOutNumberField;
   } | null>(null);
+  const [collapsedTravelSections, setCollapsedTravelSections] = useState<Record<string, boolean>>(
+    {},
+  );
   const [orgSheetPassengerId, setOrgSheetPassengerId] = useState<string | null>(null);
   const [costSheetPassengerId, setCostSheetPassengerId] = useState<string | null>(null);
   const [credentialSheetPassenger, setCredentialSheetPassenger] =
@@ -464,7 +468,6 @@ export function HotelBookPage() {
           const credentialSubtitle = `${credentialDisplayType(passenger.credential)}：${credentialDisplayNumber(passenger.credential)}`;
           const canSwitchCredential = Boolean(resolveStaffAccountId(passenger));
           const fee = resolvePassengerServiceFee(passenger, initBook.data?.ServiceFees);
-          const outNumberFields = outNumberFieldsByPassenger[passenger.id] ?? [];
 
           const showServiceFee = tmcFlags.isShowServiceFee && fee > 0;
 
@@ -496,7 +499,7 @@ export function HotelBookPage() {
                       showCostCenter={isBusinessMode && showCostCenter}
                       requiresApprover={requiresApprover}
                       isSkipApproveEnabled={isBusinessMode && Boolean(initBook.data?.isSkipApprove)}
-                      outNumberFields={isBusinessMode ? outNumberFields : []}
+                      outNumberFields={[]}
                       illegalReasons={isBusinessMode ? (initBook.data?.IllegalReasons ?? []) : []}
                       expenseTypes={isBusinessMode ? expenseTypeOptions : []}
                       requiresIllegalReason={requiresIllegalReason}
@@ -517,6 +520,33 @@ export function HotelBookPage() {
             />
           );
         })}
+
+        {isBusinessMode
+          ? passengers.map((passenger) => (
+              <HotelBookTravelSection
+                key={passenger.id}
+                fields={outNumberFieldsByPassenger[passenger.id] ?? []}
+                values={forms[passenger.id]?.outNumbers ?? {}}
+                expanded={!collapsedTravelSections[passenger.id]}
+                subtitle={passengers.length > 1 ? passenger.credential.Name : undefined}
+                onToggle={() =>
+                  setCollapsedTravelSections((current) => ({
+                    ...current,
+                    [passenger.id]: !current[passenger.id],
+                  }))
+                }
+                onOpenPicker={(field) => setOutNumberPicker({ passengerId: passenger.id, field })}
+                onChange={(key, value) =>
+                  updateForm(passenger.id, {
+                    outNumbers: {
+                      ...(forms[passenger.id]?.outNumbers ?? {}),
+                      [key]: value,
+                    },
+                  })
+                }
+              />
+            ))
+          : null}
 
         {isBusinessMode ? (
           <FlightBookAuthorizedContacts

@@ -3,18 +3,10 @@ import type { HotelInitStaff, PassengerBookInfo } from "@ryx/shared-types";
 
 import {
   createHotelPassengerBookForm,
-  resolveHotelInitClientId,
+  findHotelInitStaff,
+  mergeHotelInitStaffIntoForm,
   type HotelPassengerBookForm,
 } from "@/lib/hotel-book";
-
-function findHotelInitStaff(
-  passenger: PassengerBookInfo,
-  staffs: HotelInitStaff[] | undefined,
-): HotelInitStaff | undefined {
-  if (!staffs?.length) return undefined;
-  const accountId = resolveHotelInitClientId(passenger);
-  return staffs.find((staff) => String(staff.Id) === accountId);
-}
 
 export function useHotelBookPassengerForms(
   passengers: PassengerBookInfo[],
@@ -27,17 +19,13 @@ export function useHotelBookPassengerForms(
     setForms((prev) => {
       const next: Record<string, HotelPassengerBookForm> = {};
       for (const passenger of passengers) {
-        const existing = prev[passenger.id];
-        if (!existing) {
-          next[passenger.id] = createHotelPassengerBookForm(passenger, defaultArrivalTime);
-        } else {
-          next[passenger.id] = {
-            ...existing,
-            arrivalTime: existing.arrivalTime || defaultArrivalTime,
-          };
-        }
-
         const staff = findHotelInitStaff(passenger, staffs);
+        const existing = prev[passenger.id];
+        const base = existing
+          ? { ...existing, arrivalTime: existing.arrivalTime || defaultArrivalTime }
+          : createHotelPassengerBookForm(passenger, defaultArrivalTime, staff);
+        next[passenger.id] = mergeHotelInitStaffIntoForm(base, passenger, staff);
+
         if (staff?.Approvers?.length && !next[passenger.id].approvalId) {
           const approver = staff.Approvers[0];
           next[passenger.id] = {

@@ -22,6 +22,7 @@ import { resolvePassengerTravelPolicy } from "@/lib/flight-book-cabin";
 import { splitContactOptions } from "@/lib/flight-book-passenger-form";
 import {
   buildPassengerOutNumberFields,
+  resolvePrefillTravelNumber,
   validatePassengerOutNumbers,
 } from "@/lib/flight-book-outnumber";
 import { isBusinessTravelMode, resolveFlightTravelType } from "@/lib/flight-travel-mode";
@@ -77,6 +78,40 @@ export function resolveHotelInitClientId(info: PassengerBookInfo): string {
     ("AccountId" in info.passenger ? info.passenger.AccountId : undefined) ??
     info.credential.AccountId;
   return String(accountId ?? info.credential.Id ?? info.id ?? "");
+}
+
+export function findHotelInitStaff(
+  passenger: PassengerBookInfo,
+  staffs: HotelInitStaff[] | undefined,
+): HotelInitStaff | undefined {
+  if (!staffs?.length) return undefined;
+  const accountId = resolveHotelInitClientId(passenger);
+  return staffs.find((staff) => {
+    const staffAccountId = String(staff.Account?.Id ?? "");
+    const staffId = String(staff.Id ?? "");
+    return staffAccountId === accountId || staffId === accountId;
+  });
+}
+
+function resolvePassengerMobile(passenger: PassengerBookInfo): string | undefined {
+  const credentialMobile = passenger.credential.Mobile?.trim();
+  if (credentialMobile) return credentialMobile;
+  const passengerMobile =
+    "Mobile" in passenger.passenger && typeof passenger.passenger.Mobile === "string"
+      ? passenger.passenger.Mobile.trim()
+      : "";
+  return passengerMobile || undefined;
+}
+
+function resolvePassengerOrgName(passenger: PassengerBookInfo): string {
+  const credentialOrg =
+    typeof (passenger.credential as { OrgName?: string }).OrgName === "string"
+      ? (passenger.credential as { OrgName?: string }).OrgName
+      : undefined;
+  if (credentialOrg?.trim()) return credentialOrg;
+  return typeof (passenger.passenger as { OrgName?: string }).OrgName === "string"
+    ? ((passenger.passenger as { OrgName?: string }).OrgName ?? "")
+    : "";
 }
 
 function resolveHotelPassengerFormMobile(form?: HotelPassengerBookForm): string {
@@ -710,21 +745,24 @@ export function buildHotelPassengerOutNumberFieldsMap(input: {
 }): Record<string, FlightOutNumberField[]> {
   const map: Record<string, FlightOutNumberField[]> = {};
   for (const passenger of input.passengers) {
-    const accountId = resolveHotelInitClientId(passenger);
-    const hotelStaff = input.staffs?.find((staff) => String(staff.Id) === accountId);
+    const hotelStaff = findHotelInitStaff(passenger, input.staffs);
     const staff: FlightInitStaff | undefined = hotelStaff
       ? {
           Id: hotelStaff.Id,
           Name: hotelStaff.Name,
-          Number: hotelStaff.Id,
-          OutNumber: "",
-          Account: { Id: hotelStaff.Id },
+          Number: hotelStaff.Number ?? "",
+          OutNumber: hotelStaff.OutNumber ?? "",
+          Account: { Id: hotelStaff.Account?.Id ?? hotelStaff.Id },
         }
       : undefined;
     map[passenger.id] = buildPassengerOutNumberFields({
       passenger,
       staff,
       init: input.init as FlightInitBookResponse | undefined,
+      travelNumber: resolvePrefillTravelNumber(
+        input.init as FlightInitBookResponse | undefined,
+        passenger,
+      ),
       travelMode: input.travelMode,
       travelType: "Hotel",
     });
@@ -763,9 +801,11 @@ export function validateHotelCreditCard(card: HotelCreditCardForm): string | nul
 export function createHotelPassengerBookForm(
   passenger: PassengerBookInfo,
   defaultArrivalTime: string,
+  staff?: HotelInitStaff,
 ): HotelPassengerBookForm {
-  const accountMobile = passenger.credential.Mobile ?? passenger.passenger.Mobile ?? undefined;
-  const mobileOptions = splitContactOptions(accountMobile);
+  const accountMobile = staff?.Account?.Mobile?.trim() || resolvePassengerMobile(passenger);
+  const mobileOptions = splitContactOptions(accountMobile, passenger.credential.Mobile);
+  const emailOptions = splitContactOptions(staff?.Account?.Email ?? undefined);
 
   return {
     passengerId: passenger.id,
@@ -777,28 +817,42 @@ export function createHotelPassengerBookForm(
     expenseTypeId: "",
     roommate: "",
     mobileOptions,
-    emailOptions: [],
+    emailOptions,
     otherMobile: mobileOptions.length === 0 ? (accountMobile ?? "") : "",
     otherEmail: "",
     organization: {
-      code: "",
-      name:
-        (typeof (passenger.credential as { OrgName?: string }).OrgName === "string"
-          ? (passenger.credential as { OrgName?: string }).OrgName
-          : undefined) ??
-        (typeof (passenger.passenger as { OrgName?: string }).OrgName === "string"
-          ? (passenger.passenger as { OrgName?: string }).OrgName
-          : "") ??
-        "",
+      code: staff?.Organization?.Code ?? "",
+      name: staff?.Organization?.Name ?? resolvePassengerOrgName(passenger),
     },
     otherOrganizationName: "",
-    costCenter: { code: "", name: "" },
+    costCenter: {
+      code: staff?.CostCenter?.Code ?? "",
+      name: staff?.CostCenter?.Name ?? "",
+    },
     otherCostCenterName: "",
     otherCostCenterCode: "",
     approvalId: "",
     approvalName: "",
     isSkipApprove: false,
     outNumbers: {},
+  };
+}
+
+export function mergeHotelInitStaffIntoForm(
+  form: HotelPassengerBookForm,
+  passenger: PassengerBookInfo,
+  staff?: HotelInitStaff,
+): HotelPassengerBookForm {
+  if (!staff) return form;
+  const seeded = createHotelPassengerBookForm(passenger, form.arrivalTime, staff);
+  return {
+    ...form,
+    mobileOptions: form.mobileOptions.length ? form.mobileOptions : seeded.mobileOptions,
+    emailOptions: form.emailOptions.length ? form.emailOptions : seeded.emailOptions,
+    otherMobile:
+      form.otherMobile.trim() || form.mobileOptions.length ? form.otherMobile : seeded.otherMobile,
+    organization: form.organization.name ? form.organization : seeded.organization,
+    costCenter: form.costCenter.name || form.costCenter.code ? form.costCenter : seeded.costCenter,
   };
 }
 
