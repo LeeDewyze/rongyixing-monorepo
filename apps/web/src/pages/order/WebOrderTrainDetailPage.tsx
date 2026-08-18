@@ -199,6 +199,7 @@ export function WebOrderTrainDetailPage() {
     try {
       await issueMutation.mutateAsync({ OrderId: detail.OrderId, channel });
       setIssueOpen(false);
+      setSuppressFooterActions(true);
       showToast("出票请求已提交");
       await refetch();
     } catch (err) {
