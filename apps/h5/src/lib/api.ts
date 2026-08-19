@@ -111,7 +111,9 @@ export async function bootstrapApi(): Promise<void> {
 }
 
 /** Reset cached client (e.g. after switching API mode). */
-export function resetApi(): void {
+export function resetApi(options: { clearConfigCache?: boolean } = {}): void {
   apiInstance = null;
-  clearApiConfigCache();
+  if (options.clearConfigCache !== false) {
+    clearApiConfigCache();
+  }
 }

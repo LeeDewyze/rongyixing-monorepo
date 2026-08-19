@@ -2,12 +2,15 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 
 import { getApi, resetApi } from "@/lib/api";
-import { clearSession } from "@/lib/session";
+import { clearSession, getTicket } from "@/lib/session";
+import { getTicketName } from "@/lib/request-context";
 import { stopSessionGuard } from "@/lib/session-guard";
 
 export async function logoutMutationFn(): Promise<void> {
   // Legacy account-setting uses LoginService.logout() → ApiLoginUrl-Home-Logout only.
-  await getApi().authProxy.logout();
+  const ticket = getTicket();
+  if (!ticket) return;
+  await getApi().authProxy.logout({ ticket, ticketName: getTicketName() });
 }
 
 export function useLogout() {
@@ -20,7 +23,7 @@ export function useLogout() {
       stopSessionGuard();
       clearSession();
       queryClient.clear();
-      resetApi();
+      resetApi({ clearConfigCache: false });
       navigate("/login/password", { replace: true });
     },
   });

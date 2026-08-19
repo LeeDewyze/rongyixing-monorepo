@@ -24,6 +24,43 @@ describe("createAuthProxyApi (mock mode)", () => {
   });
 });
 
+describe("createAuthProxyApi logout", () => {
+  it("matches legacy logout: unsigned ticket payload through /Home/Proxy", async () => {
+    let capturedUrl = "";
+    let capturedBody = "";
+    const proxy = createProxyClient({
+      baseUrl: "",
+      mode: "proxy",
+      apiConfig: {
+        Token: "setting-token",
+        Urls: { ApiLoginUrl: "https://login-api.rongtrip.cn" },
+      },
+      getTicket: () => "ticket-1",
+      fetchImpl: async (url, init) => {
+        capturedUrl = String(url);
+        capturedBody = String(init?.body ?? "");
+        return new Response(JSON.stringify(successResponse(true)), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      },
+    });
+
+    await createAuthProxyApi(proxy).logout({ ticket: "ticket-1", ticketName: "ticket" });
+
+    const fields = new URLSearchParams(capturedBody);
+    expect(capturedUrl).toBe("/Home/Proxy");
+    expect(fields.get("Method")).toBe(AUTH_FLOW_METHODS.LOGOUT);
+    expect(fields.get("Data")).toBe(
+      JSON.stringify({ Ticket: "ticket-1", ticket: "ticket-1" }),
+    );
+    expect(fields.get("Ticket")).toBe("ticket-1");
+    expect(fields.get("TicketName")).toBe("");
+    expect(fields.get("Sign")).toBeNull();
+    expect(fields.get("Token")).toBeNull();
+  });
+});
+
 describe("createAuthProxyApi RYBLogin", () => {
   it("posts external ticket only in Data when exchanging it through RYBLogin", async () => {
     let capturedUrl = "";

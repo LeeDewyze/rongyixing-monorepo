@@ -55,7 +55,7 @@ export async function performForceLogout(options: ForceLogoutOptions = {}): Prom
     const { resetApi } = await import("@/lib/api");
     clearSession();
     queryClient.clear();
-    resetApi();
+    resetApi({ clearConfigCache: false });
   }
 
   if (onLoginPage) {

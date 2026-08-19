@@ -27,7 +27,7 @@ export interface AuthProxyApi {
   mobileLogin(params: MobileLoginParams): Promise<LoginResultDto>;
   rybLogin(params: RybLoginParams): Promise<LoginResultDto>;
   dingTalkLogin(params: DingTalkLoginParams): Promise<LoginResultDto>;
-  logout(): Promise<boolean>;
+  logout(params?: { ticket?: string; ticketName?: string }): Promise<boolean>;
 }
 
 export function createAuthProxyApi(proxy: ProxyClient): AuthProxyApi {
@@ -90,10 +90,17 @@ export function createAuthProxyApi(proxy: ProxyClient): AuthProxyApi {
         },
       });
     },
-    logout() {
+    logout(params = {}) {
+      const ticket = params.ticket ?? "";
+      const ticketName = params.ticketName || "ticket";
       return proxy.send<boolean>({
         method: AUTH_FLOW_METHODS.LOGOUT,
-        data: {},
+        // Legacy LoginService.logout sends the ticket again inside Data and
+        // posts the request unsigned to the gateway proxy.
+        url: "/Home/Proxy",
+        data: JSON.stringify({ Ticket: ticket, [ticketName]: ticket }),
+        skipSign: true,
+        timeoutMs: 30_000,
       });
     },
   };

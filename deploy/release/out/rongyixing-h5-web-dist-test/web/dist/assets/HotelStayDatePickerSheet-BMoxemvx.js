@@ -1,0 +1,1 @@
+import{j as i}from"./index-BmXAkH7M.js";import{C as s}from"./TravelPolicyDialog-CCp_hY2W.js";import{H as m}from"./CalendarGrid-OAhNPL5C.js";function c({open:t,checkIn:e,checkOut:r,onClose:a,onConfirm:o}){return i.jsx(s,{open:t,config:m,startDate:e,endDate:r,onClose:a,onConfirm:o})}export{c as H};

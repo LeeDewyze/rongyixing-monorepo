@@ -15,6 +15,14 @@ vi.mock("@/lib/api", () => ({
   resetApi: vi.fn(),
 }));
 
+vi.mock("@/lib/session", () => ({
+  getTicket: () => "ticket-1",
+}));
+
+vi.mock("@/lib/request-context", () => ({
+  getTicketName: () => "ticket",
+}));
+
 import { logoutMutationFn } from "./useAccountSettings";
 
 describe("logoutMutationFn", () => {
@@ -27,7 +35,7 @@ describe("logoutMutationFn", () => {
   it("calls only authProxy.logout (ApiLoginUrl-Home-Logout)", async () => {
     await logoutMutationFn();
 
-    expect(authLogoutMock).toHaveBeenCalledTimes(1);
+    expect(authLogoutMock).toHaveBeenCalledWith({ ticket: "ticket-1", ticketName: "ticket" });
     expect(accountLogoutMock).not.toHaveBeenCalled();
   });
 });

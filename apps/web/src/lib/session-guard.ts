@@ -231,12 +231,6 @@ export function startSessionGuard(): void {
   connectWebSocket();
 }
 
-/** Connect the websocket after an asynchronous GetWebSocketUrl response is stored. */
-export function refreshSessionGuardWebSocket(): void {
-  if (!isRunning || getApiMode() === "mock" || !getTicket()) return;
-  connectWebSocket();
-}
-
 /** Stop polling and websocket guard. */
 export function stopSessionGuard(): void {
   isRunning = false;
@@ -245,8 +239,8 @@ export function stopSessionGuard(): void {
   disconnectWebSocket();
 }
 
-/** Run an immediate identity check when the app returns to the foreground. */
-export async function onSessionGuardVisibility(): Promise<void> {
+/** Run the legacy fallback check when websocket initialization fails. */
+export async function checkSessionGuardNow(): Promise<void> {
   if (!isRunning || getApiMode() === "mock") return;
   if (!getTicket()) {
     stopSessionGuard();
