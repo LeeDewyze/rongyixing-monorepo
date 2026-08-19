@@ -18,6 +18,7 @@ import {
   buildSubmitCredentials,
   resolveFlightBookBillBreakdown,
   resolveFlightBookDisplayAmount,
+  resolveFlightExchangeAmount,
   resolveFlightBookOrderId,
   resolveFlightTicketNoticeRules,
 } from "./flight-book";
@@ -358,6 +359,30 @@ describe("buildFlightOrderBookDto", () => {
     expect(dto.Passengers[0]?.Credentials).toBeUndefined();
     expect(dto.Passengers[0]?.FlightCabin?.BookCode).toBe("Y");
     expect(dto.Passengers[0]?.FlightSegments?.[0]?.FlightNumber).toBe("KN5977");
+  });
+
+  it("copies authoritative exchange amounts into FlightCabin variables", () => {
+    const dto = buildFlightExchangeBookDto({
+      selection: {
+        ...selection,
+        isExchange: true,
+        exchangeTicketId: "FL-TICKET-1",
+      },
+      passengers,
+      exchangeInit: {
+        ExchangeAmount: "120",
+        ChangeDeductionAmount: 80,
+        NominalSpreadAmount: "40",
+      },
+    });
+    expect(dto.Passengers[0]?.FlightCabin?.VariablesObj).toMatchObject({
+      ExchangeAmount: "120",
+      ChangeDeductionAmount: 80,
+      NominalSpreadAmount: "40",
+    });
+    expect(dto.Passengers[0]?.FlightCabin?.Variables).toEqual(
+      dto.Passengers[0]?.FlightCabin?.VariablesObj,
+    );
   });
 
   it("sets MessageLang on each passenger for Book API (Legacy combindInfo.notifyLanguage)", () => {
@@ -732,6 +757,42 @@ describe("resolveFlightBookBillBreakdown", () => {
     });
     expect(breakdown.passengers[0]?.taxLines).toHaveLength(2);
     expect(breakdown.total).toBe(590);
+  });
+
+  it("uses exchange initialization amounts for the bill", () => {
+    const breakdown = resolveFlightBookBillBreakdown({
+      selection,
+      passengers,
+      serviceFees: { "acc-1": 10 },
+      exchangeInit: {
+        ExchangeAmount: "120",
+        NominalSpreadAmount: "40",
+        ChangeDeductionAmount: "80",
+        ServiceFee: "5",
+      },
+    });
+    expect(breakdown.total).toBe(125);
+    expect(breakdown.exchange).toEqual({
+      exchangeAmount: 120,
+      nominalSpreadAmount: 40,
+      changeDeductionAmount: 80,
+      serviceFee: 5,
+    });
+    expect(breakdown.passengers[0]?.ticketPrice).toBe(0);
+  });
+});
+
+describe("resolveFlightExchangeAmount", () => {
+  it("prefers ExchangeAmount", () => {
+    expect(resolveFlightExchangeAmount({ ExchangeAmount: "120", OrderAmount: 999 })).toBe(120);
+  });
+
+  it("falls back to OrderAmount", () => {
+    expect(resolveFlightExchangeAmount({ OrderAmount: 120 })).toBe(120);
+  });
+
+  it("returns null for invalid amounts", () => {
+    expect(resolveFlightExchangeAmount({ ExchangeAmount: "invalid" })).toBeNull();
   });
 });
 

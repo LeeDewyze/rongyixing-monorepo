@@ -6,8 +6,11 @@ import { resolveFlightSegmentId, resolvePlaneTypeDescribe } from "@/utils/flight
 /** Legacy: refetch when returning after 2+ minutes. */
 export const FLIGHT_LIST_STALE_MS = 2 * 60 * 1000;
 
+/** Legacy: flight cabin prices remain valid for 10 minutes. */
+export const FLIGHT_PRICE_STALE_MS = 10 * 60 * 1000;
+
 /** Legacy: `pagePopTimeoutTime` — price may be stale after 10 minutes. */
-export const FLIGHT_LIST_TIMEOUT_MS = 10 * 60 * 1000;
+export const FLIGHT_LIST_TIMEOUT_MS = FLIGHT_PRICE_STALE_MS;
 
 export const FLIGHT_LIST_TIMEOUT_MESSAGE = "您的停留时间过长，价格信息可能发生变动，请重新查询";
 

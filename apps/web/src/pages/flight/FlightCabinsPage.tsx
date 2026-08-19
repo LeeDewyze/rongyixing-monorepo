@@ -162,7 +162,10 @@ export function FlightCabinsPage() {
     error,
     refetch,
     dataUpdatedAt,
-  } = useFlightDetail(detailParams);
+  } = useFlightDetail(detailParams, {
+    initialData: cachedPolicySession?.detailSnapshot,
+    initialDataUpdatedAt: cachedPolicySession?.savedAt,
+  });
 
   const detail = useMemo(
     () =>

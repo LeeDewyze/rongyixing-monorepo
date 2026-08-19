@@ -3,6 +3,8 @@ import type {
   FlightBookLinkmanDto,
   FlightBookPassengerDto,
   FlightBookPolicy,
+  FlightFare,
+  FlightInitBookResponse,
   FlightInsuranceProduct,
   FlightOrderBookDto,
   FlightOutNumberField,
@@ -450,8 +452,9 @@ export function buildFlightExchangeBookDto(input: {
   selection: FlightBookSelection;
   passengers: PassengerBookInfo[];
   channel?: "tmc" | "tourist";
+  exchangeInit?: FlightInitBookResponse;
 }): FlightOrderBookDto {
-  const { selection, passengers, channel } = input;
+  const { selection, passengers, channel, exchangeInit } = input;
   const resolvedCabin = prepareBookFlightCabinDto({
     flightPolicy: selection.flightPolicy,
     fare: selection.fare,
@@ -472,9 +475,10 @@ export function buildFlightExchangeBookDto(input: {
     normalizeFlightSegment,
   );
 
+  const flightCabin = applyFlightExchangeAmounts(resolvedCabin, exchangeInit);
   const dto: FlightOrderBookDto = {
     Passengers: passengers.map(() => ({
-      FlightCabin: resolvedCabin,
+      FlightCabin: flightCabin,
       FlightSegments: flightSegments,
     })),
   };
@@ -483,6 +487,40 @@ export function buildFlightExchangeBookDto(input: {
   }
   applyFlightExchangeTicketId(dto, selection);
   return dto;
+}
+
+function applyFlightExchangeAmounts(
+  cabin: FlightFare,
+  init: FlightInitBookResponse | undefined,
+): FlightFare {
+  if (!init) return cabin;
+
+  const amounts = {
+    ExchangeAmount: init.ExchangeAmount,
+    ChangeDeductionAmount: init.ChangeDeductionAmount,
+    NominalSpreadAmount: init.NominalSpreadAmount,
+  };
+  if (Object.values(amounts).every((value) => value == null || value === "")) return cabin;
+
+  let variables = cabin.VariablesObj;
+  if (!variables && cabin.Variables && typeof cabin.Variables === "object") {
+    variables = cabin.Variables;
+  }
+  if (!variables && typeof cabin.Variables === "string") {
+    try {
+      const parsed = JSON.parse(cabin.Variables);
+      if (parsed && typeof parsed === "object") {
+        variables = parsed as FlightFare["VariablesObj"];
+      }
+    } catch {
+      variables = undefined;
+    }
+  }
+  return {
+    ...cabin,
+    Variables: { ...(variables ?? {}), ...amounts },
+    VariablesObj: { ...(variables ?? {}), ...amounts },
+  };
 }
 
 export function resolveFlightBookOrderId(result: {
@@ -514,6 +552,12 @@ export interface FlightBookPassengerBill {
 export interface FlightBookBillBreakdown {
   passengers: FlightBookPassengerBill[];
   total: number;
+  exchange?: {
+    exchangeAmount: number;
+    nominalSpreadAmount: number;
+    changeDeductionAmount: number;
+    serviceFee: number;
+  };
 }
 
 function toAmount(value: unknown): number {
@@ -561,9 +605,42 @@ export function resolveFlightBookBillBreakdown(input: {
   selection: FlightBookSelection;
   passengers: PassengerBookInfo[];
   serviceFees?: Record<string, number | string>;
+  exchangeInit?: FlightInitBookResponse;
 }): FlightBookBillBreakdown {
-  const { selection, passengers, serviceFees } = input;
+  const { selection, passengers, serviceFees, exchangeInit } = input;
   const { segment, fare, cabinsQuery } = selection;
+  const exchangeAmount = exchangeInit ? resolveFlightExchangeAmount(exchangeInit) : null;
+  if (exchangeInit && exchangeAmount !== null) {
+    const fromCity = segment.FromCityName ?? cabinsQuery.fromName ?? "";
+    const toCity = segment.ToCityName ?? cabinsQuery.toName ?? "";
+    const flightNumber = segment.Number ?? segment.FlightNumber ?? cabinsQuery.flightNumber ?? "";
+    const serviceFee =
+      toAmount(exchangeInit?.ServiceFee) ||
+      passengers.reduce(
+        (sum, passenger) => sum + resolvePassengerServiceFee(passenger, serviceFees),
+        0,
+      );
+    return {
+      passengers: passengers.map((passenger) => ({
+        passengerName: passenger.credential.Name ?? passenger.passenger.Name ?? "",
+        credentialNumber: credentialDisplayNumber(passenger.credential),
+        fromCity,
+        toCity,
+        ticketPrice: 0,
+        flightRouteLabel: flightNumber + fromCity + "--" + toCity,
+        taxLines: [],
+        serviceFee: 0,
+        subtotal: 0,
+      })),
+      total: exchangeAmount + serviceFee,
+      exchange: {
+        exchangeAmount,
+        nominalSpreadAmount: toAmount(exchangeInit.NominalSpreadAmount),
+        changeDeductionAmount: toAmount(exchangeInit.ChangeDeductionAmount),
+        serviceFee,
+      },
+    };
+  }
   const ticketPrice = toAmount(fare.SalesPrice ?? fare.TicketPrice);
   const taxLines = resolveFlightFareTaxLines(fare);
   const taxTotal = taxLines.reduce((sum, line) => sum + line.amount, 0);
@@ -591,6 +668,16 @@ export function resolveFlightBookBillBreakdown(input: {
     passengers: passengerBills,
     total: passengerBills.reduce((sum, bill) => sum + bill.subtotal, 0),
   };
+}
+
+export function resolveFlightExchangeAmount(
+  init: FlightInitBookResponse | undefined,
+): number | null {
+  if (!init) return null;
+  const value = init.ExchangeAmount ?? init.OrderAmount;
+  if (value == null || value === "") return null;
+  const amount = Number(value);
+  return Number.isFinite(amount) ? amount : null;
 }
 
 /** 底部合计：机票票价 + 税费 + Initialize 服务费（对齐 Legacy calcTotalPrice）。 */

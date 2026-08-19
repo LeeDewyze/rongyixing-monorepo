@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   FLIGHT_LIST_STALE_MS,
+  FLIGHT_PRICE_STALE_MS,
   FLIGHT_LIST_TIMEOUT_MS,
   buildCabinsPath,
   buildFlightListRefreshHref,
@@ -28,6 +29,7 @@ describe("flight-list-refresh", () => {
     expect(isFlightListStale(now - FLIGHT_LIST_STALE_MS + 1, now)).toBe(false);
     expect(isFlightListTimedOut(now - FLIGHT_LIST_TIMEOUT_MS, now)).toBe(true);
     expect(msUntilFlightListTimeout(now - 1_000, now)).toBe(FLIGHT_LIST_TIMEOUT_MS - 1_000);
+    expect(FLIGHT_PRICE_STALE_MS).toBe(10 * 60 * 1000);
   });
 
   it("empty message differs when filters active", () => {

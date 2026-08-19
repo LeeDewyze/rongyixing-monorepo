@@ -64,6 +64,7 @@ import {
   resolveFlightBookBillBreakdown,
   resolveFlightBookDisplayAmount,
   resolveFlightBookOrderId,
+  resolveFlightExchangeAmount,
   resolveFlightTicketNoticeRules,
   resolvePassengerServiceFee,
   validateFlightOrderLinkman,
@@ -192,6 +193,9 @@ export function FlightBookPage() {
   const isBusinessMode = isBusinessTravelMode(travelMode);
   const productChannel = resolveProductChannel(travelMode);
   const isExchangeBook = Boolean(selection?.isExchange && selection.exchangeTicketId);
+  // Legacy TMC exchange goes straight to Flight-ExchangeBook; it has no
+  // Flight-Initialize step. Tourist exchange still uses ExchangeInitialize.
+  const isDirectTmcExchange = isExchangeBook && productChannel === "tmc";
   const passengerContext = useBusinessSelfBookPassenger(
     ProductType.Flight,
     isBusinessMode && !isExchangeBook,
@@ -200,7 +204,7 @@ export function FlightBookPage() {
   const setSelected = passengerContext.setSelected;
 
   const initParams = useMemo(() => {
-    if (isExchangeBook) return null;
+    if (isDirectTmcExchange) return null;
     if (!selection || selected.length === 0) return null;
     return buildFlightInitBookDto({
       selection,
@@ -209,7 +213,7 @@ export function FlightBookPage() {
       travelMode,
       channel: productChannel,
     });
-  }, [agentId, isExchangeBook, productChannel, selection, selected, travelMode]);
+  }, [agentId, isDirectTmcExchange, productChannel, selection, selected, travelMode]);
 
   const ticketNoticeRules = useMemo(
     () => resolveFlightTicketNoticeRules(selection?.detailSnapshot),
@@ -415,8 +419,13 @@ export function FlightBookPage() {
   );
   const billBreakdown = useMemo(() => {
     if (!selection || selected.length === 0) return null;
-    return resolveFlightBookBillBreakdown({ selection, passengers: selected, serviceFees });
-  }, [selection, selected, serviceFees]);
+    return resolveFlightBookBillBreakdown({
+      selection,
+      passengers: selected,
+      serviceFees,
+      exchangeInit: isExchangeBook ? initBook.data : undefined,
+    });
+  }, [initBook.data, isExchangeBook, selection, selected, serviceFees]);
 
   const tmcHasInsurance = Boolean(
     (initBook.data?.Tmc as { FlightHasInsurance?: boolean } | undefined)?.FlightHasInsurance,
@@ -451,11 +460,19 @@ export function FlightBookPage() {
     return null;
   }
 
-  const initOrderAmount = Number(initBook.data?.OrderAmount);
+  const exchangeAmount = isExchangeBook ? resolveFlightExchangeAmount(initBook.data) : null;
+  const exchangeServiceFee = isExchangeBook
+    ? Number(initBook.data?.ServiceFee ?? 0) ||
+      selected.reduce(
+        (sum, passenger) => sum + resolvePassengerServiceFee(passenger, serviceFees),
+        0,
+      )
+    : 0;
   const orderAmount =
-    isExchangeBook && Number.isFinite(initOrderAmount)
-      ? initOrderAmount
+    isExchangeBook && exchangeAmount !== null
+      ? exchangeAmount + exchangeServiceFee + totalInsurance
       : resolveFlightBookDisplayAmount(selection, selected, serviceFees) + totalInsurance;
+  const exchangePricingReady = isDirectTmcExchange || !isExchangeBook || exchangeAmount !== null;
   const timedOut = isFlightListTimedOut(selection.priceSnapshotAt);
   const isInitBlocking = initBook.isFetching && !initBook.data;
   const isPending =
@@ -482,7 +499,12 @@ export function FlightBookPage() {
   }
 
   async function submitOrder(isSave: boolean) {
-    if (!selection || selected.length === 0 || (!isExchangeBook && !initParams)) {
+    if (
+      !selection ||
+      selected.length === 0 ||
+      (!isDirectTmcExchange && !initParams) ||
+      !exchangePricingReady
+    ) {
       showAlert("订单信息不完整，请返回舱位页重新选择");
       return;
     }
@@ -507,6 +529,7 @@ export function FlightBookPage() {
           selection,
           passengers: selected,
           channel: productChannel,
+          exchangeInit: initBook.data,
         });
         const result = await submitBook.mutateAsync(exchangeDto);
         const orderId = resolveFlightBookOrderId(result);
@@ -904,10 +927,14 @@ export function FlightBookPage() {
             />
           ) : null}
 
-          {!isExchangeBook && initError ? (
+          {initError ? (
             <p className="text-[13px] text-destructive">
               订单初始化失败：{formatApiError(initError)}
             </p>
+          ) : null}
+
+          {isExchangeBook && !initBook.isFetching && !initError && !exchangePricingReady ? (
+            <p className="text-[13px] text-destructive">改签费用核算结果无效，请返回重试</p>
           ) : null}
 
           {submitError ? (
@@ -922,7 +949,7 @@ export function FlightBookPage() {
         pending={isPending}
         pendingLabel={submitPendingLabel}
         submitLabel={isExchangeBook ? "改签预订" : undefined}
-        disabled={selected.length === 0 || isPending || (!isExchangeBook && initBook.isError)}
+        disabled={selected.length === 0 || isPending || initBook.isError || !exchangePricingReady}
         showTicketNotice={ticketNoticeRules.length > 0}
         showSaveOrder={showSaveOrder}
         billOpen={billOpen}

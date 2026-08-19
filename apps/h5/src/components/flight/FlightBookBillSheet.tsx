@@ -55,6 +55,25 @@ export function FlightBookBillSheet({ breakdown }: FlightBookBillSheetProps) {
 
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
         <div className="space-y-3">
+          {breakdown.exchange ? (
+            <section className="overflow-hidden rounded-xl bg-[#F8F9FC] ring-1 ring-[#EEF1F6]">
+              <div className="border-b border-[#EEF1F6] bg-white/70 px-3.5 py-2.5">
+                <p className="text-[15px] font-semibold text-[#333333]">改签费用</p>
+              </div>
+              <div className="bg-white px-3.5 py-2">
+                <BillLineRow label="改签应付金额" amount={breakdown.exchange.exchangeAmount} />
+                {breakdown.exchange.nominalSpreadAmount !== 0 ? (
+                  <BillLineRow label="票面价差" amount={breakdown.exchange.nominalSpreadAmount} />
+                ) : null}
+                {breakdown.exchange.changeDeductionAmount !== 0 ? (
+                  <BillLineRow label="改签费" amount={breakdown.exchange.changeDeductionAmount} />
+                ) : null}
+                {breakdown.exchange.serviceFee > 0 ? (
+                  <BillLineRow label="服务费" amount={breakdown.exchange.serviceFee} />
+                ) : null}
+              </div>
+            </section>
+          ) : null}
           {breakdown.passengers.map((bill, index) => (
             <section
               key={`${bill.passengerName}-${bill.credentialNumber}-${index}`}
@@ -74,26 +93,30 @@ export function FlightBookBillSheet({ breakdown }: FlightBookBillSheetProps) {
                   <RouteRow fromCity={bill.fromCity} toCity={bill.toCity} />
                 ) : null}
 
-                <div className="rounded-lg bg-white px-3 py-1 ring-1 ring-[#EEF1F6]">
-                  <BillLineRow label="机票票价" amount={bill.ticketPrice} />
-                  {bill.flightRouteLabel ? (
-                    <p className="pb-1.5 text-[12px] leading-snug text-[#999999]">
-                      {bill.flightRouteLabel}
-                    </p>
-                  ) : null}
+                {breakdown.exchange ? (
+                  <p className="text-[12px] leading-snug text-[#999999]">{bill.flightRouteLabel}</p>
+                ) : (
+                  <div className="rounded-lg bg-white px-3 py-1 ring-1 ring-[#EEF1F6]">
+                    <BillLineRow label="机票票价" amount={bill.ticketPrice} />
+                    {bill.flightRouteLabel ? (
+                      <p className="pb-1.5 text-[12px] leading-snug text-[#999999]">
+                        {bill.flightRouteLabel}
+                      </p>
+                    ) : null}
 
-                  {bill.taxLines.map((line) => (
-                    <BillLineRow
-                      key={`${bill.passengerName}-${line.name}`}
-                      label={line.name}
-                      amount={line.amount}
-                    />
-                  ))}
+                    {bill.taxLines.map((line) => (
+                      <BillLineRow
+                        key={`${bill.passengerName}-${line.name}`}
+                        label={line.name}
+                        amount={line.amount}
+                      />
+                    ))}
 
-                  {bill.serviceFee > 0 ? (
-                    <BillLineRow label="服务费" amount={bill.serviceFee} />
-                  ) : null}
-                </div>
+                    {bill.serviceFee > 0 ? (
+                      <BillLineRow label="服务费" amount={bill.serviceFee} />
+                    ) : null}
+                  </div>
+                )}
 
                 {hasMultiplePassengers ? (
                   <div className="flex items-center justify-between border-t border-dashed border-[#E5E8EF] pt-2.5">

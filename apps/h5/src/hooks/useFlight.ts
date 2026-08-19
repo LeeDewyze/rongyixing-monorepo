@@ -2,6 +2,7 @@ import { ApiError } from "@ryx/api";
 import { useQuery } from "@tanstack/react-query";
 import type {
   FlightDetailParams,
+  FlightDetailResult,
   FlightPolicyParams,
   FlightPolicyPassengerResult,
   FlightSearchParams,
@@ -9,7 +10,7 @@ import type {
 } from "@ryx/shared-types";
 import { readResourceCache, writeResourceCache } from "@ryx/api";
 
-import { FLIGHT_LIST_STALE_MS } from "@/lib/flight-list-refresh";
+import { FLIGHT_LIST_STALE_MS, FLIGHT_PRICE_STALE_MS } from "@/lib/flight-list-refresh";
 import { normalizeFlightDetailResponse } from "@ryx/api";
 import { getApi } from "@/lib/api";
 import { getApiMode } from "@/lib/env";
@@ -66,7 +67,10 @@ export function useFlightList(params: FlightSearchParams | null) {
   });
 }
 
-export function useFlightDetail(params: FlightDetailParams | null) {
+export function useFlightDetail(
+  params: FlightDetailParams | null,
+  options?: { initialData?: FlightDetailResult; initialDataUpdatedAt?: number },
+) {
   return useQuery({
     queryKey: ["flight", "detail", params],
     queryFn: async () => {
@@ -83,8 +87,10 @@ export function useFlightDetail(params: FlightDetailParams | null) {
         params?.FlightNumber &&
         canQueryFlightList(params),
     ),
-    staleTime: 0,
-    refetchOnMount: "always",
+    initialData: options?.initialData,
+    initialDataUpdatedAt: options?.initialDataUpdatedAt,
+    staleTime: FLIGHT_PRICE_STALE_MS,
+    refetchOnMount: true,
     refetchOnWindowFocus: false,
     retry: (failureCount) => failureCount < 1,
   });

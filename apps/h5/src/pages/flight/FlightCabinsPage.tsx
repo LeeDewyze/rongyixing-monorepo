@@ -163,7 +163,10 @@ export function FlightCabinsPage() {
     error,
     refetch,
     dataUpdatedAt,
-  } = useFlightDetail(detailParams);
+  } = useFlightDetail(detailParams, {
+    initialData: cachedPolicySession?.detailSnapshot,
+    initialDataUpdatedAt: cachedPolicySession?.savedAt,
+  });
 
   const detail = useMemo(
     () =>
@@ -618,6 +621,7 @@ export function FlightCabinsPage() {
                     }
                     soldOut={isFlightCabinSoldOut(row)}
                     isExchange={isExchangeBook}
+                    exchangeChannel={query.channel ?? (isBusinessMode ? "tmc" : "tourist")}
                     onBook={() => handleBook(row)}
                     onShowRules={handleShowRules}
                   />

@@ -19,6 +19,7 @@ import {
   partitionCabinsByTab,
   resolveDetailSegment,
   resolveExchangeFareDisplay,
+  resolveExchangeFareFeeLines,
   shouldShowFareRemainCount,
 } from "./flight-detail";
 
@@ -413,10 +414,10 @@ describe("resolveExchangeFareDisplay", () => {
         SalesPrice: 289,
         Tax: "50",
       }),
-    ).toEqual({ mode: "total", amount: "339" });
+    ).toEqual({ showTotal: true, amount: "339" });
   });
 
-  it("shows FlightTaxs breakdown instead of negative SalesPrice", () => {
+  it("does not expose unverified FlightTaxs as a payable amount", () => {
     expect(
       resolveExchangeFareDisplay({
         SalesPrice: -897,
@@ -430,13 +431,7 @@ describe("resolveExchangeFareDisplay", () => {
           },
         ],
       }),
-    ).toEqual({
-      mode: "breakdown",
-      lines: [
-        { name: "改签手续费", amount: "120" },
-        { name: "差价", amount: "169" },
-      ],
-    });
+    ).toEqual({ showTotal: false, amount: "0" });
   });
 
   it("falls back to zero when exchange fare has no positive components", () => {
@@ -445,19 +440,19 @@ describe("resolveExchangeFareDisplay", () => {
         SalesPrice: -897,
         Tax: "0",
       }),
-    ).toEqual({ mode: "total", amount: "0" });
+    ).toEqual({ showTotal: false, amount: "0" });
   });
 
-  it("never shows a negative total when Tax is positive but the sum is negative", () => {
+  it("shows the total when Tax is positive even if the sum is negative", () => {
     expect(
       resolveExchangeFareDisplay({
         SalesPrice: -947,
         Tax: "50",
       }),
-    ).toEqual({ mode: "total", amount: "0" });
+    ).toEqual({ showTotal: true, amount: "-897" });
   });
 
-  it("skips non-positive FlightTaxs line items", () => {
+  it("does not expose positive FlightTaxs without a verified total", () => {
     expect(
       resolveExchangeFareDisplay({
         SalesPrice: -897,
@@ -471,10 +466,56 @@ describe("resolveExchangeFareDisplay", () => {
           },
         ],
       }),
-    ).toEqual({
-      mode: "breakdown",
-      lines: [{ name: "改签手续费", amount: "120" }],
-    });
+    ).toEqual({ showTotal: false, amount: "0" });
+  });
+});
+
+describe("resolveExchangeFareFeeLines", () => {
+  it("keeps legacy exchange tax rows and adds the fallback exchange fee", () => {
+    expect(
+      resolveExchangeFareFeeLines(
+        {
+          SalesPrice: 0,
+          FlightFareBasics: [
+            {
+              FlightTaxs: [
+                { Name: "升舱费", Tag: "tax", Tax: 50 },
+                { Name: "机场税", Tag: "tax", Tax: 0 },
+              ],
+            },
+          ],
+        },
+        "tmc",
+      ),
+    ).toEqual([
+      { name: "升舱费", amount: "50" },
+      { name: "", amount: "0" },
+      { name: "", amount: "0" },
+    ]);
+  });
+
+  it("does not add a duplicate fallback when a change fee exists", () => {
+    expect(
+      resolveExchangeFareFeeLines(
+        {
+          SalesPrice: 120,
+          FlightFareBasics: [{ FlightTaxs: [{ Name: "改签手续费", Tax: 120 }] }],
+        },
+        "tmc",
+      ),
+    ).toEqual([{ name: "改签手续费", amount: "120" }]);
+  });
+
+  it("always appends the public legacy fallback row", () => {
+    expect(
+      resolveExchangeFareFeeLines(
+        { SalesPrice: 50, FlightFareBasics: [{ FlightTaxs: [{ Name: "升舱费", Tax: 50 }] }] },
+        "tourist",
+      ),
+    ).toEqual([
+      { name: "升舱费", amount: "50" },
+      { name: "改签手续费（含税差）", amount: "50" },
+    ]);
   });
 });
 

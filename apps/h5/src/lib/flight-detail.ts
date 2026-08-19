@@ -397,17 +397,16 @@ export function formatFareSalesPrice(price: string | number | undefined): string
   return String(Math.round(value));
 }
 
-export type ExchangeFareDisplay =
-  | { mode: "total"; amount: string }
-  | { mode: "breakdown"; lines: Array<{ name: string; amount: string }> };
+export type ExchangeFareDisplay = { showTotal: boolean; amount: string };
+
+export interface ExchangeFareFeeLine {
+  name: string;
+  amount: string;
+}
 
 /**
- * Legacy `tmc-flight-item-cabins_ryx` exchange price:
- * - positive SalesPrice + Tax → single 改签费 amount
- * - otherwise → FlightFareBasics.FlightTaxs line items
- *
- * A negative sum means the new cabin is cheaper than the original ticket; that
- * fare difference is settled by the refund flow and is never a payable fee.
+ * Cabin-list exchange quote. This is only an estimate; the confirmation page
+ * obtains the authoritative amount from ExchangeInitialize.
  */
 export function resolveExchangeFareDisplay(fare: FlightFare): ExchangeFareDisplay {
   const cabin = prepareFlightFareForDisplay(fare);
@@ -415,35 +414,43 @@ export function resolveExchangeFareDisplay(fare: FlightFare): ExchangeFareDispla
   const tax = Number(cabin.Tax ?? 0);
   const total = sales + tax;
 
-  if (Number.isFinite(total) && total > 0) {
-    return { mode: "total", amount: formatFareSalesPrice(total) };
+  if (Number.isFinite(sales) && Number.isFinite(tax) && (sales > 0 || tax > 0)) {
+    return { showTotal: true, amount: formatFareSalesPrice(total) };
   }
 
-  const lines: Array<{ name: string; amount: string }> = [];
-  for (const basic of cabin.FlightFareBasics ?? []) {
-    for (const item of basic.FlightTaxs ?? []) {
-      const value = Number(item.Tax ?? 0);
-      if (!Number.isFinite(value) || value <= 0) continue;
-      lines.push({
-        name: item.Name?.trim() || "费用",
-        amount: formatFareSalesPrice(value),
-      });
-    }
-  }
-
-  if (lines.length > 0) {
-    return { mode: "breakdown", lines };
-  }
-
-  return { mode: "total", amount: "0" };
+  return { showTotal: false, amount: "0" };
 }
 
-/** Legacy exchange cabins: SalesPrice + Tax, or summed exchange fee taxes. */
+/** Legacy exchange cabin rows, including channel-specific fallback behavior. */
+export function resolveExchangeFareFeeLines(
+  fare: FlightFare,
+  channel: "tmc" | "tourist" = "tmc",
+): ExchangeFareFeeLine[] {
+  const cabin = prepareFlightFareForDisplay(fare);
+  return (cabin.FlightFareBasics ?? []).flatMap((basic) => {
+    const lines = (basic.FlightTaxs ?? [])
+      .map((tax) => {
+        if (tax.Tax == null) return null;
+        return {
+          name: tax.Tax ? (tax.Name ?? "") : "",
+          amount: String(tax.Tax),
+        };
+      })
+      .filter((line): line is ExchangeFareFeeLine => line !== null);
+
+    if (channel === "tourist" || !lines.some((line) => line.name.includes("改签"))) {
+      lines.push({
+        name: channel === "tourist" || cabin.SalesPrice ? "改签手续费（含税差）" : "",
+        amount: cabin.SalesPrice == null ? "" : String(cabin.SalesPrice),
+      });
+    }
+    return lines;
+  });
+}
+
+/** Exchange cabin estimate: SalesPrice + Tax; final pricing comes from Initialize. */
 export function formatExchangeFareDisplayPrice(fare: FlightFare): string {
-  const display = resolveExchangeFareDisplay(fare);
-  if (display.mode === "total") return display.amount;
-  const total = display.lines.reduce((sum, line) => sum + Number(line.amount), 0);
-  return formatFareSalesPrice(total);
+  return resolveExchangeFareDisplay(fare).amount;
 }
 
 function formatBasicName(basic: FlightFareBasic): string {

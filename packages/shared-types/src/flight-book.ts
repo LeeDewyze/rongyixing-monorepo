@@ -192,6 +192,14 @@ export type FlightInitBookParams = FlightOrderBookDto;
 
 export interface FlightInitBookResponse {
   OrderAmount?: number;
+  /** Legacy Flight-ExchangeInitialize: authoritative exchange settlement amount. */
+  ExchangeAmount?: number | string;
+  /** Legacy Flight-ExchangeInitialize: new-vs-original ticket fare difference. */
+  NominalSpreadAmount?: number | string;
+  /** Legacy Flight-ExchangeInitialize: airline exchange deduction. */
+  ChangeDeductionAmount?: number | string;
+  /** Tourist Flight-ExchangeInitialize returns a single service fee. */
+  ServiceFee?: number | string;
   ServiceFees?: Record<string, number | string>;
   PayTypes?: Record<string, string>;
   IllegalReasons?: string[];
