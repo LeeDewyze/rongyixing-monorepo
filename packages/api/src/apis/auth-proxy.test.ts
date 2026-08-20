@@ -197,4 +197,28 @@ describe("createIdentityApi (mock mode)", () => {
     });
     expect(onUnauthorized).not.toHaveBeenCalled();
   });
+
+  it("does not treat websocket bootstrap failure as session logout", async () => {
+    const onUnauthorized = vi.fn();
+    const proxy = createProxyClient({
+      baseUrl: "https://example.com",
+      mode: "mock",
+      mockHandler: async (method) => {
+        if (method === AUTH_FLOW_METHODS.IDENTITY_WEBSOCKET) {
+          return {
+            Status: false,
+            Code: "NOLOGIN",
+            Message: "登陆超时",
+            Data: null,
+          };
+        }
+        return successResponse(null);
+      },
+      onUnauthorized,
+    });
+    const identity = createIdentityApi(proxy);
+
+    await expect(identity.getWebSocketUrl()).resolves.toBeNull();
+    expect(onUnauthorized).not.toHaveBeenCalled();
+  });
 });

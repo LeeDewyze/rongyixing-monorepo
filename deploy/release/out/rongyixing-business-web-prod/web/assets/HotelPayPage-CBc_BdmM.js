@@ -1,1 +1,0 @@
-import{U as e,o as t,j as o,N as n}from"./index-cFW5mmu7.js";function m(){const{orderId:r=""}=e(),[s]=t(),a=s.toString();return o.jsx(n,{to:`/orders/hotel/${r}/pay${a?`?${a}`:""}`,replace:!0})}export{m as HotelPayPage};

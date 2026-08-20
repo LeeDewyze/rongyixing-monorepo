@@ -168,7 +168,7 @@ export function createDingTalkApi(proxy: ProxyClient): DingTalkApi {
 export interface IdentityApi {
   get(ticket?: string): Promise<IdentityDto>;
   check(loginType?: string): Promise<IdentityCheckResult>;
-  getWebSocketUrl(): Promise<WebSocketUrlDto>;
+  getWebSocketUrl(): Promise<WebSocketUrlDto | null>;
 }
 
 export function createIdentityApi(proxy: ProxyClient): IdentityApi {
@@ -194,13 +194,16 @@ export function createIdentityApi(proxy: ProxyClient): IdentityApi {
         message: message || undefined,
       };
     },
-    getWebSocketUrl() {
-      return proxy.send<WebSocketUrlDto>({
+    async getWebSocketUrl() {
+      // WebSocket bootstrap is optional. Match Identity/Check by consuming the
+      // raw response so a backend session message cannot trigger global logout.
+      const response = await proxy.sendResponse<WebSocketUrlDto>({
         method: AUTH_FLOW_METHODS.IDENTITY_WEBSOCKET,
         data: {},
         skipSign: true,
         isShowLoading: true,
       });
+      return response.Status ? response.Data : null;
     },
   };
 }
