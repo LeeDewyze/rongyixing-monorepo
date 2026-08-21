@@ -38,7 +38,11 @@ export function consumeDingTalkCode(): string | null {
   if (typeof window === "undefined") return null;
   const params = new URLSearchParams(window.location.search);
   const code = params.get("dingtalkcode") ?? params.get("DingTalkCode");
-  if (!code) return null;
+  if (!code) {
+    console.info("[ryx][dingtalk] no callback code on current page");
+    return null;
+  }
+  console.info("[ryx][dingtalk] consuming callback code");
   removeCodeFromUrl();
   return code.trim() || null;
 }
@@ -97,6 +101,14 @@ export function buildDingTalkRedirectUrl(entry: DingTalkEntry, returnTo: string)
       url.searchParams.set(key, value);
     }
   }
+  console.info("[ryx][dingtalk] authorization URL built", {
+    entry,
+    path: url.pathname,
+    root: url.searchParams.get("root"),
+    tmcid: url.searchParams.get("tmcid"),
+    hasTicket: !!url.searchParams.get(getTicketName()),
+    returnTo: url.searchParams.get("returnTo"),
+  });
   return url.toString();
 }
 
@@ -104,6 +116,8 @@ export async function requestDingTalkCode(
   entry: DingTalkEntry,
   returnTo: string,
 ): Promise<string | null> {
-  window.location.assign(buildDingTalkRedirectUrl(entry, returnTo));
+  const redirectUrl = buildDingTalkRedirectUrl(entry, returnTo);
+  console.info("[ryx][dingtalk] redirecting to legacy authorization endpoint", redirectUrl);
+  window.location.assign(redirectUrl);
   return null;
 }

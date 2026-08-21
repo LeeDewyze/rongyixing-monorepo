@@ -1,0 +1,1 @@
+import{V as t,o as e,j as o,N as n}from"./index-lOxMWDhH.js";function i(){const{orderId:r=""}=t(),[s]=e(),a=s.toString();return o.jsx(n,{to:`/orders/flight/${r}/pay${a?`?${a}`:""}`,replace:!0})}export{i as FlightPayPage};

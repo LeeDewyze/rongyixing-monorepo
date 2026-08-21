@@ -33,6 +33,14 @@ function isDingTalkTicketFlow(url: URL): boolean {
   );
 }
 
+function buildDingTalkBindingPath(url: URL): string {
+  const params = new URLSearchParams(url.search);
+  params.delete(TICKET_NAME_PARAM);
+  params.delete(LEGACY_TICKET_NAME_PARAM);
+  const query = params.toString();
+  return `/settings/dingtalk${query ? `?${query}` : ""}`;
+}
+
 export function shouldBootstrapExternalTicket(url: URL, userAgent = currentUserAgent()): boolean {
   return (
     !!normalizeExternalTicket(url.searchParams.get(TICKET_PARAM)) &&
@@ -102,8 +110,18 @@ export function takePendingExternalTicketError(): string | null {
 }
 
 function usePageTicketDirectly(url: URL, ticket: string, fallbackPath: string): void {
-  const targetPath = resolveTicketTargetPath(url, fallbackPath);
+  const dingTalkFlow = isDingTalkTicketFlow(url);
+  const targetPath = dingTalkFlow
+    ? buildDingTalkBindingPath(url)
+    : resolveTicketTargetPath(url, fallbackPath);
   const ticketName = readTicketNameParam(url);
+
+  console.info("[ryx][dingtalk] legacy callback detected", {
+    path: url.searchParams.get("path"),
+    hasCode: !!(url.searchParams.get("dingtalkcode") || url.searchParams.get("DingTalkCode")),
+    tmcid: url.searchParams.get("tmcid") || url.searchParams.get("TmcId"),
+    targetPath,
+  });
 
   clearSession();
   setTicket(ticket);
@@ -117,6 +135,14 @@ function usePageTicketDirectly(url: URL, ticket: string, fallbackPath: string): 
 export async function bootstrapExternalTicket(fallbackPath = "/"): Promise<void> {
   const url = new URL(window.location.href);
   const ticket = normalizeExternalTicket(url.searchParams.get(TICKET_PARAM));
+  if (isDingTalkTicketFlow(url)) {
+    console.info("[ryx][dingtalk] bootstrap callback flow", {
+      href: url.href,
+      hasTicket: !!ticket,
+    });
+    usePageTicketDirectly(url, ticket, fallbackPath);
+    return;
+  }
   if (!ticket) return;
   if (!shouldBootstrapExternalTicket(url)) {
     usePageTicketDirectly(url, ticket, fallbackPath);

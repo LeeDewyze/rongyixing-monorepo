@@ -49,17 +49,26 @@ export function DingTalkBindingPage() {
   }
 
   useEffect(() => {
-    if (!dingTalkSupported) return;
     const code = consumeDingTalkCode();
     if (!code) return;
+    console.info("[ryx][dingtalk] binding page received callback code", {
+      inDingTalkContainer: dingTalkSupported,
+    });
     void bind
       .mutateAsync(code)
-      .then((result) => showToast(result.message || "钉钉账号绑定成功", "success"))
-      .catch((error) => showToast(dingTalkErrorMessage(error)));
-  }, [dingTalkSupported]);
+      .then((result) => {
+        console.info("[ryx][dingtalk] bind success", result);
+        showToast(result.message || "钉钉账号绑定成功", "success");
+      })
+      .catch((error) => {
+        console.error("[ryx][dingtalk] bind failed", error);
+        showToast(dingTalkErrorMessage(error));
+      });
+  }, [bind, dingTalkSupported]);
 
   async function handleBind() {
     if (bind.isPending) return;
+    console.info("[ryx][dingtalk] user starts binding");
     try {
       const code = await requestDingTalkCode("bind", "/settings/dingtalk");
       if (code) {
@@ -67,6 +76,7 @@ export function DingTalkBindingPage() {
         showToast(result.message || "钉钉账号绑定成功", "success");
       }
     } catch (error) {
+      console.error("[ryx][dingtalk] authorization failed", error);
       showToast(dingTalkErrorMessage(error));
     }
   }

@@ -34,6 +34,9 @@ for (const file of files) {
   if (/oklch\(/.test(content)) {
     failures.push(`${file}: uses unsupported oklch colors`);
   }
+  if (/@layer\s+[a-z]+\s*\{/.test(content)) {
+    failures.push(`${file}: CSS cascade layers not stripped (old WebViews drop the whole block)`);
+  }
 }
 
 if (failures.length > 0) {
