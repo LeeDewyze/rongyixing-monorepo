@@ -60,4 +60,36 @@ describe("DingTalk redirect", () => {
     expect(url.searchParams.get("returnTo")).toBe("/www/settings/dingtalk");
     expect(url.searchParams.get("root")).toBe("www");
   });
+
+  it("uses the cached identity tenant when the entry URL has no tmcid", () => {
+    vi.stubGlobal("window", {
+      location: { origin: "https://app.rongtrip.cn", search: "?root=www" },
+    });
+    vi.stubGlobal("location", { search: "?root=www" });
+    vi.stubGlobal("localStorage", { getItem: () => null });
+    vi.stubGlobal("sessionStorage", {
+      getItem: () => JSON.stringify({ data: { Numbers: { TmcId: "10099" } } }),
+    });
+
+    const url = new URL(buildDingTalkRedirectUrl("bind", "/settings/dingtalk"));
+
+    expect(url.searchParams.get("tmcid")).toBe("10099");
+  });
+
+  it("preserves the tmcid supplied by the legacy entry URL", () => {
+    vi.stubGlobal("window", {
+      location: {
+        origin: "https://app.rongtrip.cn",
+        search: "?root=www&tmcid=10099&ticket=current-ticket",
+      },
+    });
+    vi.stubGlobal("location", {
+      search: "?root=www&tmcid=10099&ticket=current-ticket",
+    });
+    vi.stubGlobal("localStorage", { getItem: () => null });
+
+    const url = new URL(buildDingTalkRedirectUrl("bind", "/settings/dingtalk"));
+
+    expect(url.searchParams.get("tmcid")).toBe("10099");
+  });
 });

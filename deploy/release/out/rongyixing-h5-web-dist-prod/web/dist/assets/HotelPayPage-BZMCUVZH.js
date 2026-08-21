@@ -1,0 +1,1 @@
+import{V as e,o as t,j as o,N as n}from"./index-A3qw00VT.js";function m(){const{orderId:r=""}=e(),[s]=t(),a=s.toString();return o.jsx(n,{to:`/orders/hotel/${r}/pay${a?`?${a}`:""}`,replace:!0})}export{m as HotelPayPage};

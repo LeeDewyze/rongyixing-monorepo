@@ -4,10 +4,10 @@ import { AUTH_FLOW_METHODS, TRAVEL_FLOW_METHODS } from "@ryx/api";
 
 import { getApi } from "@/lib/api";
 import { getApiMode } from "@/lib/env";
-import { clearSession, getTicket } from "@/lib/session";
-import { stopSessionGuard } from "@/lib/session-guard";
+import { getTicket } from "@/lib/session";
 
-const FIVE_MINUTES = 5 * 60 * 1000;
+const STAFF_PERMISSION_CACHE_TTL = 60 * 60 * 1000;
+const STAFF_PERMISSION_RETRY_INTERVAL_MS = 10_000;
 const IDENTITY_RETRY_INTERVAL_MS = 10_000;
 
 export const IDENTITY_QUERY_KEY = ["identity"] as const;
@@ -15,16 +15,26 @@ export const BOOKING_PERMISSION_QUERY_KEY = ["booking-permission"] as const;
 export const BOOKING_PERMISSION_STAFF_QUERY_KEY = ["booking-permission", "staff"] as const;
 
 const IDENTITY_PERMISSION_STORAGE_KEY = "ryx_identity_permission";
+const STAFF_PERMISSION_STORAGE_KEY = "ryx_staff_permission";
 
 interface StoredIdentityPermission {
   ticket: string;
   data: IdentityDto;
 }
 
+interface StoredStaffPermission {
+  ticket: string;
+  savedAt: number;
+  data: StaffDto;
+}
+
 let identityRefreshTicket: string | null = null;
 let identityRefreshPromise: Promise<void> | null = null;
 let identityRetryTimer: ReturnType<typeof setTimeout> | null = null;
 let identityReadyTicket: string | null = null;
+let staffRefreshTicket: string | null = null;
+let staffRefreshPromise: Promise<void> | null = null;
+let staffRetryTimer: ReturnType<typeof setTimeout> | null = null;
 
 export function readStoredBusinessIdentityPermission(ticket: string | null): IdentityDto | null {
   if (!ticket) return null;
@@ -50,6 +60,44 @@ function persistIdentityPermission(ticket: string, data: IdentityDto): void {
   } catch {
     // Storage can be unavailable in restricted WebViews; the query cache still works.
   }
+}
+
+function readStoredStaffPermission(ticket: string): StoredStaffPermission | null {
+  try {
+    const raw = sessionStorage.getItem(STAFF_PERMISSION_STORAGE_KEY);
+    if (!raw) return null;
+    const stored = JSON.parse(raw) as Partial<StoredStaffPermission>;
+    if (stored.ticket !== ticket || !stored.savedAt || !stored.data) return null;
+    return stored as StoredStaffPermission;
+  } catch {
+    return null;
+  }
+}
+
+function persistStaffPermission(ticket: string, data: StaffDto): void {
+  try {
+    const stored: StoredStaffPermission = { ticket, savedAt: Date.now(), data };
+    sessionStorage.setItem(STAFF_PERMISSION_STORAGE_KEY, JSON.stringify(stored));
+  } catch {
+    // Storage can be unavailable in restricted WebViews; the query cache still works.
+  }
+}
+
+export function bookingPermissionStaffQueryKey(ticket: string | null = getTicket()) {
+  return ["booking-permission", "staff", ticket ?? ""] as const;
+}
+
+export function restoreBusinessStaffPermission(
+  queryClient: QueryClient,
+  ticket: string | null = getTicket(),
+): boolean {
+  if (!ticket) return false;
+  const stored = readStoredStaffPermission(ticket);
+  if (!stored) return false;
+  queryClient.setQueryData(bookingPermissionStaffQueryKey(ticket), stored.data, {
+    updatedAt: stored.savedAt,
+  });
+  return true;
 }
 
 export function restoreBusinessIdentityPermission(queryClient: QueryClient): boolean {
@@ -82,6 +130,13 @@ function clearIdentityRetryTimer(): void {
   }
 }
 
+function clearStaffRetryTimer(): void {
+  if (staffRetryTimer !== null) {
+    clearTimeout(staffRetryTimer);
+    staffRetryTimer = null;
+  }
+}
+
 function resetIdentityPermissionState(): void {
   clearIdentityRetryTimer();
   identityRefreshTicket = null;
@@ -89,14 +144,20 @@ function resetIdentityPermissionState(): void {
   identityReadyTicket = null;
 }
 
+function resetStaffPermissionState(): void {
+  clearStaffRetryTimer();
+  staffRefreshTicket = null;
+  staffRefreshPromise = null;
+}
+
 /** Stop the background Identity/Get retry for the current application session. */
 export function stopBusinessIdentityPermissionRefresh(): void {
   resetIdentityPermissionState();
+  resetStaffPermissionState();
 }
 
 interface BookingPermissionPreloadOptions {
   reset?: boolean;
-  silentUnauthorized?: boolean;
   preloadCredentials?: boolean;
 }
 
@@ -122,29 +183,13 @@ function staffAccountId(staff: StaffDto | undefined, identity?: { Id?: string })
   return present(staff?.AccountId) ?? present(legacyAccount?.Id) ?? present(identity?.Id);
 }
 
-function isUnauthorizedLike(code: string | undefined): boolean {
-  return code?.trim().toLowerCase() === "nologin";
-}
-
-function isUnauthorizedResponse(response: {
-  Status: boolean;
-  Code?: string | null;
-  Message?: string | null;
-}): boolean {
-  return !response.Status && isUnauthorizedLike(response.Code ?? undefined);
-}
-
-function clearStartupSession(queryClient: QueryClient): void {
-  stopSessionGuard();
-  clearSession();
-  queryClient.clear();
-}
-
 async function preloadSelfCredentials(
   queryClient: QueryClient,
   api: ReturnType<typeof getApi>,
 ): Promise<void> {
-  const staff = queryClient.getQueryData<StaffDto>(BOOKING_PERMISSION_STAFF_QUERY_KEY);
+  const staff = queryClient.getQueryData<StaffDto>(
+    bookingPermissionStaffQueryKey(getTicket()),
+  );
   const identity = queryClient.getQueryData<IdentityDto>(IDENTITY_QUERY_KEY);
   const accountId = staffAccountId(staff, identity);
   if (!staff || !isSelfBookTypeValue(staff.BookType) || !accountId) return;
@@ -153,7 +198,7 @@ async function preloadSelfCredentials(
     .prefetchQuery({
       queryKey: bookingPermissionSelfCredentialsQueryKey(accountId),
       queryFn: () => api.passenger.getStaffCredentials({ AccountId: accountId }),
-      staleTime: FIVE_MINUTES,
+      staleTime: STAFF_PERMISSION_CACHE_TTL,
     })
     .catch((error) => {
       console.warn("[ryx] self passenger credential preload failed", error);
@@ -172,42 +217,66 @@ export async function preloadBusinessStaffPermission(
     queryClient.removeQueries({ queryKey: BOOKING_PERMISSION_STAFF_QUERY_KEY });
     queryClient.removeQueries({ queryKey: IDENTITY_QUERY_KEY });
     resetIdentityPermissionState();
+    resetStaffPermissionState();
   }
 
-  const silentUnauthorized = Boolean(options.silentUnauthorized);
+  const staffQueryKey = bookingPermissionStaffQueryKey(ticket);
+  restoreBusinessStaffPermission(queryClient, ticket);
   const api = getApi();
-  if (silentUnauthorized) {
-    const staffResponse = await api.proxy.sendResponse<StaffDto>({
-      method: TRAVEL_FLOW_METHODS.STAFF_GET,
-      data: undefined,
-      requestFields: { forceRefresh: true },
-    });
-    if (isUnauthorizedResponse(staffResponse)) {
-      clearStartupSession(queryClient);
-      return;
-    }
-    if (!staffResponse.Status) {
-      console.warn("[ryx] staff permission preload failed", staffResponse);
-      return;
-    }
-    queryClient.setQueryData(BOOKING_PERMISSION_STAFF_QUERY_KEY, staffResponse.Data);
-    if (options.preloadCredentials !== false) {
-      await preloadSelfCredentials(queryClient, api);
-    }
+  if (staffRefreshTicket === ticket && staffRefreshPromise) {
+    await staffRefreshPromise;
     return;
   }
 
-  try {
-    await queryClient.fetchQuery({
-      queryKey: BOOKING_PERMISSION_STAFF_QUERY_KEY,
-      queryFn: () => api.travel.getStaff(),
-      staleTime: FIVE_MINUTES,
+  const refresh = (async () => {
+    const staff = await queryClient.fetchQuery({
+      queryKey: staffQueryKey,
+      queryFn: async () => {
+        const response = await api.proxy.sendResponse<StaffDto>({
+          method: TRAVEL_FLOW_METHODS.STAFF_GET,
+          data: undefined,
+          requestFields: { forceRefresh: true },
+        });
+        if (!response.Status || !response.Data) {
+          throw new Error(response.Message?.trim() || "Staff/Get failed");
+        }
+        if (ticket) {
+          persistStaffPermission(ticket, response.Data);
+        }
+        return response.Data;
+      },
+      staleTime: STAFF_PERMISSION_CACHE_TTL,
+      retry: false,
     });
+    clearStaffRetryTimer();
     if (options.preloadCredentials !== false) {
       await preloadSelfCredentials(queryClient, api);
     }
+    return staff;
+  })();
+
+  staffRefreshTicket = ticket;
+  staffRefreshPromise = refresh.then(
+    () => undefined,
+    () => undefined,
+  );
+  try {
+    await refresh;
   } catch (error) {
-    console.warn("[ryx] staff permission preload failed", error);
+    if (staffRefreshTicket === ticket && getTicket() === ticket) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.warn(`[ryx] staff permission preload failed; retrying: ${message}`);
+      if (staffRetryTimer === null) {
+        staffRetryTimer = setTimeout(() => {
+          staffRetryTimer = null;
+          void preloadBusinessStaffPermission(queryClient);
+        }, STAFF_PERMISSION_RETRY_INTERVAL_MS);
+      }
+    }
+  } finally {
+    if (staffRefreshTicket === ticket) {
+      staffRefreshPromise = null;
+    }
   }
 }
 
@@ -307,6 +376,7 @@ export async function preloadBusinessBookingPermission(
     queryClient.removeQueries({ queryKey: BOOKING_PERMISSION_QUERY_KEY });
     queryClient.removeQueries({ queryKey: BOOKING_PERMISSION_STAFF_QUERY_KEY });
     resetIdentityPermissionState();
+    resetStaffPermissionState();
   }
 
   await Promise.all([

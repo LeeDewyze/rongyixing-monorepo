@@ -5,13 +5,14 @@ import type { IdentityDto } from "@ryx/shared-types";
 const mocks = vi.hoisted(() => ({
   getTicket: vi.fn<() => string | null>(),
   identityResponse: vi.fn(),
+  staffCredentials: vi.fn(),
 }));
 
 vi.mock("@/lib/api", () => ({
   getApi: () => ({
     identity: { get: vi.fn() },
     proxy: { sendResponse: mocks.identityResponse },
-    passenger: { getStaffCredentials: vi.fn() },
+    passenger: { getStaffCredentials: mocks.staffCredentials },
   }),
 }));
 
@@ -30,6 +31,7 @@ vi.mock("@/lib/session-guard", () => ({
 
 import {
   IDENTITY_QUERY_KEY,
+  preloadBusinessStaffPermission,
   preloadBusinessIdentityPermission,
   restoreBusinessIdentityPermission,
 } from "./booking-permission-preload";
@@ -53,6 +55,8 @@ describe("booking identity permission preload", () => {
   beforeEach(() => {
     mocks.getTicket.mockReset();
     mocks.identityResponse.mockReset();
+    mocks.staffCredentials.mockReset();
+    mocks.staffCredentials.mockResolvedValue([]);
     vi.stubGlobal("sessionStorage", createMemoryStorage());
   });
 
@@ -100,6 +104,49 @@ describe("booking identity permission preload", () => {
 
       expect(mocks.identityResponse).toHaveBeenCalledTimes(2);
       expect(queryClient.getQueryData(IDENTITY_QUERY_KEY)).toEqual(identity);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("restores Staff/Get from the ticket-matched 60-minute cache", async () => {
+    mocks.getTicket.mockReturnValue("staff-cache-ticket");
+    sessionStorage.setItem(
+      "ryx_staff_permission",
+      JSON.stringify({
+        ticket: "staff-cache-ticket",
+        savedAt: Date.now(),
+        data: { AccountId: "account-1", BookType: "Self", Name: "测试用户" },
+      }),
+    );
+    const queryClient = new QueryClient();
+
+    await preloadBusinessStaffPermission(queryClient, { preloadCredentials: false });
+
+    expect(mocks.identityResponse).not.toHaveBeenCalled();
+  });
+
+  it("retries a failed Staff/Get after ten seconds without clearing the session", async () => {
+    vi.useFakeTimers();
+    try {
+      mocks.getTicket.mockReturnValue("staff-retry-ticket");
+      mocks.identityResponse
+        .mockResolvedValueOnce({ Status: false, Code: "NOLOGIN", Message: "登陆超时" })
+        .mockResolvedValueOnce({
+          Status: true,
+          Data: { AccountId: "account-1", BookType: "Self", Name: "测试用户" },
+        });
+      const queryClient = new QueryClient();
+
+      await preloadBusinessStaffPermission(queryClient, { preloadCredentials: false });
+      expect(mocks.identityResponse).toHaveBeenCalledTimes(1);
+
+      await vi.advanceTimersByTimeAsync(10_000);
+
+      expect(mocks.identityResponse).toHaveBeenCalledTimes(2);
+      expect(queryClient.getQueryData(["booking-permission", "staff", "staff-retry-ticket"])).toEqual(
+        { AccountId: "account-1", BookType: "Self", Name: "测试用户" },
+      );
     } finally {
       vi.useRealTimers();
     }

@@ -19,11 +19,14 @@ import {
   markAutoSelfBookSelection,
 } from "@/lib/passenger-selection";
 import {
-  BOOKING_PERMISSION_STAFF_QUERY_KEY,
+  bookingPermissionStaffQueryKey,
   bookingPermissionSelfCredentialsQueryKey,
   isSelfBookTypeValue,
+  preloadBusinessStaffPermission,
   present,
 } from "@/lib/booking-permission-preload";
+import { queryClient } from "@/lib/query";
+import { getTicket } from "@/lib/session";
 
 function staffDtoToPassenger(
   staff: StaffDto,
@@ -84,12 +87,17 @@ export function useBusinessSelfBookPassenger(forType: ProductType, enabled: bool
   const { selected, setSelected } = usePassengerSelection(forType);
   const identityQuery = useIdentity();
 
-  const staffQuery = useQuery({
-    queryKey: BOOKING_PERMISSION_STAFF_QUERY_KEY,
-    queryFn: () => getApi().travel.getStaff(),
-    enabled,
-    staleTime: 5 * 60 * 1000,
+  const staffQuery = useQuery<StaffDto | null>({
+    queryKey: bookingPermissionStaffQueryKey(getTicket()),
+    enabled: false,
+    staleTime: 60 * 60 * 1000,
   });
+
+  useEffect(() => {
+    if (enabled) {
+      void preloadBusinessStaffPermission(queryClient);
+    }
+  }, [enabled]);
 
   const staff = staffQuery.data;
   const isSelfBookOnly = enabled && isSelfBookTypeValue(staff?.BookType);

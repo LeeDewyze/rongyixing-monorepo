@@ -15,6 +15,7 @@ interface ImportMetaEnv {
   readonly VITE_API_LANGUAGE?: string;
   readonly VITE_DEV_DEVICE_NAME?: string;
   readonly VITE_PROXY_EXTRA_FIELDS?: string;
+  readonly VITE_TMC_ID?: string;
 }
 
 declare const __APP_VERSION__: string;

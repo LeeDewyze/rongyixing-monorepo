@@ -22,8 +22,7 @@ async function main() {
   bootstrapWechatOAuthCallback();
   await bootstrapApi();
   await bootstrapExternalTicket();
-  await preloadBusinessStaffPermission(queryClient, {
-    silentUnauthorized: true,
+  void preloadBusinessStaffPermission(queryClient, {
     preloadCredentials: false,
   });
 

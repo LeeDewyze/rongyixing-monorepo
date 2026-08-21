@@ -9,6 +9,8 @@ import { getApiRoot, getTicketName } from "@/lib/request-context";
 
 type DingTalkEntry = "login" | "bind";
 
+const IDENTITY_PERMISSION_STORAGE_KEY = "ryx_identity_permission";
+
 function currentUserAgent(): string {
   return typeof navigator === "undefined" ? "" : navigator.userAgent;
 }
@@ -41,12 +43,41 @@ export function consumeDingTalkCode(): string | null {
   return code.trim() || null;
 }
 
+function getTmcId(): string | null {
+  const params = new URLSearchParams(globalThis.location?.search ?? "");
+  for (const [key, value] of params) {
+    if (key.toLowerCase() === "tmcid" && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  const configured = import.meta.env.VITE_TMC_ID?.trim();
+  if (configured) return configured;
+
+  try {
+    const raw = sessionStorage.getItem(IDENTITY_PERMISSION_STORAGE_KEY);
+    const numbers = raw
+      ? (JSON.parse(raw) as { data?: { Numbers?: Record<string, unknown> } }).data?.Numbers
+      : null;
+    const value = numbers && (numbers.TmcId ?? numbers.tmcId ?? numbers.tmcid ?? numbers.TMCId);
+    return value === undefined || value === null || String(value).trim() === ""
+      ? null
+      : String(value).trim();
+  } catch {
+    return null;
+  }
+}
+
 export function buildDingTalkRedirectUrl(entry: DingTalkEntry, returnTo: string): string {
   const url = new URL(`${getLegacyAppBaseUrl()}/home/GetDingTalkCode`);
   url.searchParams.set("domain", getDomain());
   url.searchParams.set("path", entry === "login" ? "login" : "account-dingtalk");
   url.searchParams.set("returnTo", withAppBasePath(returnTo));
   url.searchParams.set("root", getApiRoot());
+  const tmcId = getTmcId();
+  if (tmcId && !url.searchParams.has("tmcid")) {
+    url.searchParams.set("tmcid", tmcId);
+  }
   const ticket = getTicket();
   if (entry === "bind" && ticket) {
     url.searchParams.set(getTicketName(), ticket);

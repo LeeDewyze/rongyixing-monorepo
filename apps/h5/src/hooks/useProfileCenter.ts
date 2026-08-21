@@ -1,7 +1,14 @@
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { MemberProfile, StaffDto } from "@ryx/shared-types";
 
 import { getApi } from "@/lib/api";
+import {
+  bookingPermissionStaffQueryKey,
+  preloadBusinessStaffPermission,
+} from "@/lib/booking-permission-preload";
+import { queryClient } from "@/lib/query";
+import { getTicket } from "@/lib/session";
 
 export interface ProfileCenterInfo extends MemberProfile {
   staff?: StaffDto | null;
@@ -23,16 +30,32 @@ function mergeProfile(member: MemberProfile, staff: StaffDto | null): ProfileCen
 }
 
 export function useProfileCenter() {
-  return useQuery({
+  const ticket = getTicket();
+  const staffQuery = useQuery({
+    queryKey: bookingPermissionStaffQueryKey(ticket),
+    queryFn: async () =>
+      queryClient.getQueryData<StaffDto>(bookingPermissionStaffQueryKey(ticket)) ?? null,
+    enabled: false,
+    staleTime: 60 * 60 * 1000,
+  });
+
+  useEffect(() => {
+    void preloadBusinessStaffPermission(queryClient, { preloadCredentials: false });
+  }, [ticket]);
+
+  const profileQuery = useQuery({
     queryKey: ["member", "profile-center"],
-    queryFn: async () => {
-      const member = await getApi().member.getProfile();
-      const staff = await getApi().travel.getStaff("").catch(() => null);
-      return mergeProfile(member, staff);
-    },
+    queryFn: () => getApi().member.getProfile(),
     staleTime: 0,
     refetchOnMount: "always",
     refetchOnWindowFocus: true,
     retry: 1,
   });
+
+  return {
+    ...profileQuery,
+    data: profileQuery.data
+      ? mergeProfile(profileQuery.data, staffQuery.data ?? null)
+      : undefined,
+  };
 }

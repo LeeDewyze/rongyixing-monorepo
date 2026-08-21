@@ -10,6 +10,7 @@ interface ImportMetaEnv {
   readonly VITE_API_MODE?: "mock" | "proxy" | "direct";
   readonly VITE_FORCE_API_MODE?: "mock" | "proxy" | "direct";
   readonly VITE_API_MOCK_DELAY?: string;
+  readonly VITE_TMC_ID?: string;
 }
 
 declare const __APP_VERSION__: string;

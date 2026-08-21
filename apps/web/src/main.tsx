@@ -19,8 +19,7 @@ async function main() {
   await setupVConsoleFromUrl();
   await bootstrapApi();
   await bootstrapExternalTicket("/");
-  await preloadBusinessStaffPermission(queryClient, {
-    silentUnauthorized: true,
+  void preloadBusinessStaffPermission(queryClient, {
     preloadCredentials: false,
   });
 
