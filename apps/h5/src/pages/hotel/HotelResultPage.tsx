@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Button } from "@ryx/ui/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@ryx/ui/components/ui/card";
 
@@ -7,6 +7,10 @@ import { usePageHeader } from "@/components/layout";
 
 export function HotelResultPage() {
   const { orderId = "" } = useParams();
+  const [searchParams] = useSearchParams();
+  const channelQuery = searchParams.get("channel")
+    ? `?channel=${searchParams.get("channel")}`
+    : "";
   const { data, isLoading, error } = useOrderDetail(orderId);
 
   usePageHeader({ title: "订单结果", showBack: true });
@@ -47,7 +51,7 @@ export function HotelResultPage() {
 
       {data.isShowPayButton ? (
         <Button asChild className="fixed bottom-4 left-4 right-4">
-          <Link to={`/hotel/pay/${orderId}`}>去支付</Link>
+          <Link to={`/hotel/pay/${orderId}${channelQuery}`}>去支付</Link>
         </Button>
       ) : (
         <p className="text-center text-sm text-muted-foreground">正在确认订单，请稍候…</p>

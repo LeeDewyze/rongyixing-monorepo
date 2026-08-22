@@ -1,4 +1,4 @@
-import { Link, useLocation, useParams } from "react-router-dom";
+import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
 import { Button } from "@ryx/ui/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@ryx/ui/components/ui/card";
 
@@ -15,6 +15,10 @@ interface FlightResultLocationState {
 export function FlightResultPage() {
   const { orderId = "" } = useParams();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const channelQuery = searchParams.get("channel")
+    ? `?channel=${searchParams.get("channel")}`
+    : "";
   const state = (location.state ?? {}) as FlightResultLocationState;
   const { data, isLoading, error } = useOrderDetail(orderId);
 
@@ -58,11 +62,11 @@ export function FlightResultPage() {
 
       {data.isShowPayButton ? (
         <Button asChild className="fixed bottom-4 left-4 right-4">
-          <Link to={`/flight/pay/${orderId}`}>去支付</Link>
+          <Link to={`/flight/pay/${orderId}${channelQuery}`}>去支付</Link>
         </Button>
       ) : (
         <Button asChild variant="outline" className="fixed bottom-4 left-4 right-4">
-          <Link to={`/orders/flight/${orderId}`}>查看订单详情</Link>
+          <Link to={`/orders/flight/${orderId}${channelQuery}`}>查看订单详情</Link>
         </Button>
       )}
     </div>
