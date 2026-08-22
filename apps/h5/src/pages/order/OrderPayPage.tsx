@@ -19,7 +19,7 @@ import {
   shouldUseLegacyH5PayRedirect,
 } from "@/lib/order-pay";
 import { getApi } from "@/lib/api";
-import { getApiMode, getAppId, getLegacyAppBaseUrl } from "@/lib/env";
+import { getApiMode, getAppId, getLegacyAppBaseUrl, getWechatAppId } from "@/lib/env";
 import { getRequestDomain, getRequestLanguage, getTicketName } from "@/lib/request-context";
 import { getTicket } from "@/lib/session";
 import { resolveTouristContext } from "@/lib/tourist-context";
@@ -158,6 +158,7 @@ export function OrderPayPage({
         appId: getAppId(),
         sender: api.proxy,
       });
+      const wechatH5 = isWechatH5();
       window.location.assign(
         buildLegacyH5PayUrl({
           appBaseUrl: getLegacyAppBaseUrl(),
@@ -170,7 +171,13 @@ export function OrderPayPage({
           token: apiConfig.Token ?? "",
           tmcId: context.TouristTmcId,
           mmsId: context.TouristMmsId,
-          openid,
+          ...(wechatH5
+            ? {
+                openid,
+                wechatAppId: getWechatAppId(),
+                createType: "JsSdk" as const,
+              }
+            : {}),
         }),
       );
       return;

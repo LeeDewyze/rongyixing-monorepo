@@ -1,4 +1,5 @@
 const DEFAULT_APP_ID = "com.ronglvonline.app";
+const DEFAULT_WECHAT_APP_ID = "wx05fda73e91cfee21";
 const DEFAULT_APP_BASE_URL = "https://app.rongtrip.cn";
 const SAME_ORIGIN_API_BASE = "__SAME_ORIGIN__";
 
@@ -16,6 +17,10 @@ export function getAppName(): string {
 
 export function getAppId(): string {
   return import.meta.env.VITE_APP_ID?.trim() || DEFAULT_APP_ID;
+}
+
+export function getWechatAppId(): string {
+  return import.meta.env.VITE_WECHAT_APP_ID?.trim() || DEFAULT_WECHAT_APP_ID;
 }
 
 export function getApiBaseUrl(): string {

@@ -42,6 +42,8 @@ const ORDER_HOTEL_DETAIL_BACKGROUND = { background: "var(--brand-form-header-gra
 
 interface OrderDetailLocationState {
   action?: "cancel";
+  bookedOrderId?: string;
+  product?: "hotel";
 }
 
 export function OrderHotelDetailPage() {
@@ -103,8 +105,12 @@ export function OrderHotelDetailPage() {
       setRepushOpen(false);
       return;
     }
+    if ((location.state as OrderDetailLocationState | null)?.bookedOrderId === orderId) {
+      navigate("/home?product=hotel", { replace: true });
+      return;
+    }
     leaveDetail();
-  }, [billOpen, leaveDetail, repushOpen, smsOpen]);
+  }, [billOpen, leaveDetail, location.state, navigate, orderId, repushOpen, smsOpen]);
 
   usePageHeader({ visible: false });
 

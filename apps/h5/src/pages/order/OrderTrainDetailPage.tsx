@@ -55,6 +55,8 @@ const ORDER_TRAIN_DETAIL_BACKGROUND = { background: "var(--brand-form-header-gra
 
 interface OrderDetailLocationState {
   action?: "cancel" | "refund";
+  bookedOrderId?: string;
+  product?: "train";
 }
 
 export function OrderTrainDetailPage() {
@@ -123,8 +125,12 @@ export function OrderTrainDetailPage() {
       setRepushOpen(false);
       return;
     }
+    if ((location.state as OrderDetailLocationState | null)?.bookedOrderId === orderId) {
+      navigate("/home?product=train", { replace: true });
+      return;
+    }
     leaveDetail();
-  }, [billOpen, explainOpen, leaveDetail, repushOpen]);
+  }, [billOpen, explainOpen, leaveDetail, location.state, navigate, orderId, repushOpen]);
 
   usePageHeader({ visible: false });
 

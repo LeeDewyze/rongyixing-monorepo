@@ -39,6 +39,8 @@ import { WEB_PAGE_BODY, WEB_PAGE_ROOT } from "@/lib/web-page-layout";
 
 interface OrderDetailLocationState {
   action?: "cancel";
+  bookedOrderId?: string;
+  product?: "hotel";
 }
 
 export function WebOrderHotelDetailPage() {
@@ -97,8 +99,12 @@ export function WebOrderHotelDetailPage() {
       setRepushOpen(false);
       return;
     }
+    if ((location.state as OrderDetailLocationState | null)?.bookedOrderId === orderId) {
+      navigate("/home?product=hotel", { replace: true });
+      return;
+    }
     leaveDetail();
-  }, [billOpen, leaveDetail, repushOpen, smsOpen]);
+  }, [billOpen, leaveDetail, location.state, navigate, orderId, repushOpen, smsOpen]);
 
   usePageHeader({ visible: false });
 

@@ -124,6 +124,8 @@ describe("legacy H5 tourist pay", () => {
         tmcId: "10001",
         mmsId: "1",
         openid: "openid-1",
+        wechatAppId: "wx-app-1",
+        createType: "JsSdk",
       }),
     );
     expect(`${url.origin}${url.pathname}`).toBe("http://app.rtesp.com/home/Pay");
@@ -137,6 +139,33 @@ describe("legacy H5 tourist pay", () => {
       Channel: "App",
       Type: "2",
       OrderId: "44880000000033",
+      IsApp: false,
+      CreateType: "JsSdk",
+      OpenId: "openid-1",
+      WechatAppId: "wx-app-1",
+    });
+    expect(url.searchParams.get("wechatAppId")).toBeNull();
+  });
+
+  it("keeps Mobile for non-WeChat H5", () => {
+    const url = new URL(
+      buildLegacyH5PayUrl({
+        appBaseUrl: "http://app.rtesp.com",
+        orderId: "ORD-1",
+        payType: "Wechatpay",
+        ticket: "ticket-1",
+        ticketName: "ticket",
+        domain: "rtesp.com",
+        language: "cn",
+        token: "token-1",
+        tmcId: "10001",
+        mmsId: "1",
+      }),
+    );
+    expect(JSON.parse(url.searchParams.get("Data") ?? "{}")).toEqual({
+      Channel: "App",
+      Type: "3",
+      OrderId: "ORD-1",
       IsApp: false,
       CreateType: "Mobile",
     });

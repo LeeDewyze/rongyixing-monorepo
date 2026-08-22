@@ -112,6 +112,7 @@ export function WebOrderPayPage({ productType }: WebOrderPayPageProps) {
             token: apiConfig.Token ?? "",
             tmcId: context.TouristTmcId,
             mmsId: context.TouristMmsId,
+            createType: "Mobile",
           }),
         );
         return;

@@ -85,6 +85,8 @@ export function buildLegacyH5PayUrl(input: {
   mmsId: string;
   path?: string;
   openid?: string;
+  wechatAppId?: string;
+  createType?: "Mobile" | "JsSdk";
 }): string {
   const type = resolveLegacyH5PayType(input.payType);
   if (!type) {
@@ -98,7 +100,9 @@ export function buildLegacyH5PayUrl(input: {
       Type: type,
       OrderId: input.orderId,
       IsApp: false,
-      CreateType: "Mobile",
+      CreateType: input.createType ?? "Mobile",
+      ...(input.openid ? { OpenId: input.openid } : {}),
+      ...(input.wechatAppId ? { WechatAppId: input.wechatAppId } : {}),
     },
     {
       getTicket: () => input.ticket,

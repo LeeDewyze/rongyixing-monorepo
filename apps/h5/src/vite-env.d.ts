@@ -5,6 +5,7 @@ interface ImportMetaEnv {
   readonly BASE_URL: string;
   readonly VITE_BASE_PATH?: string;
   readonly VITE_APP_ID?: string;
+  readonly VITE_WECHAT_APP_ID?: string;
   readonly VITE_ENABLE_VCONSOLE?: string;
   readonly VITE_VCONSOLE_TAP_TO_ENABLE?: string;
   readonly VITE_API_BASE_URL: string;

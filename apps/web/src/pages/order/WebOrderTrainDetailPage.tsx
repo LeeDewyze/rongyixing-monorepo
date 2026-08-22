@@ -51,6 +51,8 @@ import { WEB_PAGE_BODY, WEB_PAGE_ROOT } from "@/lib/web-page-layout";
 
 interface OrderDetailLocationState {
   action?: "cancel" | "refund";
+  bookedOrderId?: string;
+  product?: "train";
 }
 
 export function WebOrderTrainDetailPage() {
@@ -116,8 +118,12 @@ export function WebOrderTrainDetailPage() {
       setRepushOpen(false);
       return;
     }
+    if ((location.state as OrderDetailLocationState | null)?.bookedOrderId === orderId) {
+      navigate("/home?product=train", { replace: true });
+      return;
+    }
     leaveDetail();
-  }, [billOpen, explainOpen, leaveDetail, repushOpen]);
+  }, [billOpen, explainOpen, leaveDetail, location.state, navigate, orderId, repushOpen]);
 
   usePageHeader({ visible: false });
 
