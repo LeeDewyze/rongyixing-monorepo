@@ -1,6 +1,7 @@
 import { getApi } from "@/lib/api";
 import { resolveInternalReturnTo, stripAppBasePath, withAppBasePath } from "@/lib/base-path";
-import { clearSession, saveLoginResult, setTicket, setTicketName } from "@/lib/session";
+import { hasDingTalkCode, readDingTalkCode } from "@/lib/dingtalk";
+import { clearSession, getTicket, saveLoginResult, setTicket, setTicketName } from "@/lib/session";
 
 const TICKET_PARAM = "ticket";
 const TICKET_NAME_PARAM = "ticketName";
@@ -28,32 +29,31 @@ function isDingTalkTicketFlow(url: URL): boolean {
   return (
     path === "account-dingtalk" ||
     path.includes("account-dingtalk") ||
-    url.searchParams.has("dingtalkcode") ||
-    url.searchParams.has("DingTalkCode")
+    hasDingTalkCode(url.searchParams)
   );
 }
 
-function buildDingTalkBindingPath(url: URL): string {
+export function resolveDingTalkBindingPath(url: URL): string {
   const params = new URLSearchParams(url.search);
   params.delete(TICKET_NAME_PARAM);
   params.delete(LEGACY_TICKET_NAME_PARAM);
+  params.delete("returnTo");
   const query = params.toString();
+  console.info("[ryx][dingtalk] binding callback matched; using fixed binding page", {
+    path: url.searchParams.get("path"),
+    hasCode: hasDingTalkCode(url.searchParams),
+  });
   return `/settings/dingtalk${query ? `?${query}` : ""}`;
 }
 
 export function shouldBootstrapExternalTicket(url: URL, userAgent = currentUserAgent()): boolean {
   return (
-    !!normalizeExternalTicket(url.searchParams.get(TICKET_PARAM)) &&
-    isOneMessageUserAgent(userAgent) &&
-    !isDingTalkTicketFlow(url)
+    !!readExternalTicket(url) && isOneMessageUserAgent(userAgent) && !isDingTalkTicketFlow(url)
   );
 }
 
 export function shouldUsePageTicketDirectly(url: URL, userAgent = currentUserAgent()): boolean {
-  return (
-    !!normalizeExternalTicket(url.searchParams.get(TICKET_PARAM)) &&
-    !shouldBootstrapExternalTicket(url, userAgent)
-  );
+  return !!readExternalTicket(url) && !shouldBootstrapExternalTicket(url, userAgent);
 }
 
 function readTicketNameParam(url: URL): string {
@@ -61,6 +61,15 @@ function readTicketNameParam(url: URL): string {
     url.searchParams.get(TICKET_NAME_PARAM)?.trim() ||
     url.searchParams.get(LEGACY_TICKET_NAME_PARAM)?.trim() ||
     ""
+  );
+}
+
+function readExternalTicket(url: URL): string {
+  const ticketName = readTicketNameParam(url);
+  const namedTicket = ticketName ? url.searchParams.get(ticketName) : null;
+  return (
+    normalizeExternalTicket(namedTicket) ||
+    normalizeExternalTicket(url.searchParams.get(TICKET_PARAM))
   );
 }
 
@@ -112,19 +121,26 @@ export function takePendingExternalTicketError(): string | null {
 function usePageTicketDirectly(url: URL, ticket: string, fallbackPath: string): void {
   const dingTalkFlow = isDingTalkTicketFlow(url);
   const targetPath = dingTalkFlow
-    ? buildDingTalkBindingPath(url)
+    ? resolveDingTalkBindingPath(url)
     : resolveTicketTargetPath(url, fallbackPath);
   const ticketName = readTicketNameParam(url);
+  const existingTicket = getTicket();
 
   console.info("[ryx][dingtalk] legacy callback detected", {
     path: url.searchParams.get("path"),
-    hasCode: !!(url.searchParams.get("dingtalkcode") || url.searchParams.get("DingTalkCode")),
+    codeParameter: readDingTalkCode(url.searchParams)?.key || null,
     tmcid: url.searchParams.get("tmcid") || url.searchParams.get("TmcId"),
+    hasIncomingTicket: !!ticket,
+    hasExistingTicket: !!existingTicket,
     targetPath,
   });
 
-  clearSession();
-  setTicket(ticket);
+  if (ticket) {
+    clearSession();
+    setTicket(ticket);
+  } else if (!existingTicket) {
+    clearSession();
+  }
   if (ticketName) {
     setTicketName(ticketName);
   }
@@ -134,7 +150,7 @@ function usePageTicketDirectly(url: URL, ticket: string, fallbackPath: string): 
 /** Exchange SSO-style `?ticket=...` for the normal RongYiXing local session. */
 export async function bootstrapExternalTicket(fallbackPath = "/"): Promise<void> {
   const url = new URL(window.location.href);
-  const ticket = normalizeExternalTicket(url.searchParams.get(TICKET_PARAM));
+  const ticket = readExternalTicket(url);
   if (isDingTalkTicketFlow(url)) {
     console.info("[ryx][dingtalk] bootstrap callback flow", {
       href: url.href,

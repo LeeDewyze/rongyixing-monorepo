@@ -1,0 +1,1 @@
+import{u as e}from"./routes-BCaTeG3x.js";import{E as r}from"./index-Dyth72X1.js";function u(){return e({queryKey:["member","profile"],queryFn:()=>r().member.getProfile(),staleTime:300*1e3})}export{u};

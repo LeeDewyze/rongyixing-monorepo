@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  resolveDingTalkBindingPath,
   resolveTicketEntryTargetPath,
   shouldBootstrapExternalTicket,
   shouldUsePageTicketDirectly,
@@ -56,6 +57,25 @@ describe("shouldBootstrapExternalTicket", () => {
         "OneMessage",
       ),
     ).toBe(true);
+  });
+
+  it("reads a custom ticketName callback parameter", () => {
+    const url = new URL(
+      "https://app.rongtrip.cn/www/index.html?ticketName=auth&auth=t&path=account-dingtalk&DingTalkCode=code",
+    );
+
+    expect(shouldUsePageTicketDirectly(url, "Mozilla/5.0 Chrome")).toBe(true);
+    expect(shouldBootstrapExternalTicket(url, "Mozilla/5.0 OneMessage")).toBe(false);
+  });
+
+  it("always resolves a DingTalk callback to the binding page", () => {
+    const url = new URL(
+      "https://app.rongtrip.cn/www/index.html?path=account-dingtalk&DingTalkCode=code&returnTo=%2Forders",
+    );
+
+    expect(resolveDingTalkBindingPath(url)).toBe(
+      "/settings/dingtalk?path=account-dingtalk&DingTalkCode=code",
+    );
   });
 
   it("always sends ticket entries to home regardless of caller URL", () => {

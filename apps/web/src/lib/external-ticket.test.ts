@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { shouldBootstrapExternalTicket, shouldUsePageTicketDirectly } from "./external-ticket";
+import {
+  resolveDingTalkBindingPath,
+  shouldBootstrapExternalTicket,
+  shouldUsePageTicketDirectly,
+} from "./external-ticket";
 
 describe("shouldBootstrapExternalTicket", () => {
   it("allows RYB ticket exchange only in OneMessage user agent", () => {
@@ -52,5 +56,24 @@ describe("shouldBootstrapExternalTicket", () => {
         "OneMessage",
       ),
     ).toBe(true);
+  });
+
+  it("reads a custom ticketName callback parameter", () => {
+    const url = new URL(
+      "https://app.rongtrip.cn/www/index.html?ticketName=auth&auth=t&path=account-dingtalk&DingTalkCode=code",
+    );
+
+    expect(shouldUsePageTicketDirectly(url, "Mozilla/5.0 Chrome")).toBe(true);
+    expect(shouldBootstrapExternalTicket(url, "Mozilla/5.0 OneMessage")).toBe(false);
+  });
+
+  it("always resolves a DingTalk callback to the binding page", () => {
+    const url = new URL(
+      "https://app.rongtrip.cn/www/index.html?path=account-dingtalk&DingTalkCode=code&returnTo=%2Forders",
+    );
+
+    expect(resolveDingTalkBindingPath(url)).toBe(
+      "/settings/dingtalk?path=account-dingtalk&DingTalkCode=code",
+    );
   });
 });

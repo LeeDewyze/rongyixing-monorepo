@@ -9,7 +9,28 @@ import { getApiRoot, getTicketName } from "@/lib/request-context";
 
 type DingTalkEntry = "login" | "bind";
 
-const IDENTITY_PERMISSION_STORAGE_KEY = "ryx_identity_permission";
+type DingTalkCodeParam = {
+  key: string;
+  value: string;
+};
+
+function findQueryParam(params: URLSearchParams, name: string): DingTalkCodeParam | null {
+  const normalizedName = name.toLowerCase();
+  for (const [key, value] of params) {
+    if (key.toLowerCase() === normalizedName && value.trim()) {
+      return { key, value: value.trim() };
+    }
+  }
+  return null;
+}
+
+export function readDingTalkCode(params: URLSearchParams): DingTalkCodeParam | null {
+  return findQueryParam(params, "dingtalkcode");
+}
+
+export function hasDingTalkCode(params: URLSearchParams): boolean {
+  return readDingTalkCode(params) !== null;
+}
 
 function currentUserAgent(): string {
   return typeof navigator === "undefined" ? "" : navigator.userAgent;
@@ -29,59 +50,76 @@ export async function isDingTalkEntryEnabled(entry: DingTalkEntry): Promise<bool
 function removeCodeFromUrl(): void {
   if (typeof window === "undefined" || !window.history?.replaceState) return;
   const url = new URL(window.location.href);
-  url.searchParams.delete("dingtalkcode");
-  url.searchParams.delete("DingTalkCode");
+  for (const key of [...url.searchParams.keys()]) {
+    if (key.toLowerCase() === "dingtalkcode") url.searchParams.delete(key);
+  }
   window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
 export function consumeDingTalkCode(): string | null {
   if (typeof window === "undefined") return null;
   const params = new URLSearchParams(window.location.search);
-  const code = params.get("dingtalkcode") ?? params.get("DingTalkCode");
-  if (!code) {
+  const callback = readDingTalkCode(params);
+  if (!callback) {
     console.info("[ryx][dingtalk] no callback code on current page");
     return null;
   }
-  console.info("[ryx][dingtalk] consuming callback code");
+  console.info("[ryx][dingtalk] consuming callback code", { parameter: callback.key });
   removeCodeFromUrl();
-  return code.trim() || null;
+  return callback.value;
 }
 
-function getTmcId(): string | null {
+function normalizeTmcId(value: unknown): string | null {
+  const normalized = `${value ?? ""}`.trim();
+  return normalized || null;
+}
+
+function resolveTmcId(): { value: string | null; source: string } {
   const params = new URLSearchParams(globalThis.location?.search ?? "");
   for (const [key, value] of params) {
-    if (key.toLowerCase() === "tmcid" && value.trim()) {
-      return value.trim();
+    if (key.toLowerCase() === "tmcid") {
+      const normalized = normalizeTmcId(value);
+      if (normalized) return { value: normalized, source: `query:${key}` };
     }
   }
 
-  const configured = import.meta.env.VITE_TMC_ID?.trim();
-  if (configured) return configured;
+  const configured = normalizeTmcId(import.meta.env.VITE_TMC_ID);
+  if (configured) return { value: configured, source: "VITE_TMC_ID" };
 
-  try {
-    const raw = sessionStorage.getItem(IDENTITY_PERMISSION_STORAGE_KEY);
-    const numbers = raw
-      ? (JSON.parse(raw) as { data?: { Numbers?: Record<string, unknown> } }).data?.Numbers
-      : null;
-    const value = numbers && (numbers.TmcId ?? numbers.tmcId ?? numbers.tmcid ?? numbers.TMCId);
-    return value === undefined || value === null || String(value).trim() === ""
-      ? null
-      : String(value).trim();
-  } catch {
-    return null;
-  }
+  return { value: null, source: "missing" };
 }
 
-export function buildDingTalkRedirectUrl(entry: DingTalkEntry, returnTo: string): string {
+function resolveRequiredTmcId(): string {
+  const initial = resolveTmcId();
+  if (initial.value) {
+    console.info("[ryx][dingtalk] tmcid resolved", {
+      source: initial.source,
+      tmcid: initial.value,
+    });
+    return initial.value;
+  }
+  console.error("[ryx][dingtalk] cannot start authorization: tmcid is required", {
+    initialSource: initial.source,
+    hasTicket: !!getTicket(),
+  });
+  throw new Error("钉钉授权缺少 TMCID，请刷新页面后重试");
+}
+
+export function buildDingTalkRedirectUrl(
+  entry: DingTalkEntry,
+  returnTo: string,
+  requiredTmcId?: string,
+): string {
   const url = new URL(`${getLegacyAppBaseUrl()}/home/GetDingTalkCode`);
   url.searchParams.set("domain", getDomain());
   url.searchParams.set("path", entry === "login" ? "login" : "account-dingtalk");
-  url.searchParams.set("returnTo", withAppBasePath(returnTo));
-  url.searchParams.set("root", getApiRoot());
-  const tmcId = getTmcId();
-  if (tmcId && !url.searchParams.has("tmcid")) {
-    url.searchParams.set("tmcid", tmcId);
+  if (entry === "login") {
+    url.searchParams.set("returnTo", withAppBasePath(returnTo));
   }
+  url.searchParams.set("root", getApiRoot());
+  const tmcId = normalizeTmcId(requiredTmcId) ?? resolveRequiredTmcId();
+  if (!tmcId) throw new Error("钉钉授权缺少 TMCID，请刷新页面后重试");
+  url.searchParams.set("tmcid", tmcId);
   const ticket = getTicket();
   if (entry === "bind" && ticket) {
     url.searchParams.set(getTicketName(), ticket);
@@ -94,6 +132,7 @@ export function buildDingTalkRedirectUrl(entry: DingTalkEntry, returnTo: string)
     "wechatcode",
     "dingtalkcode",
     "dingTalkCode".toLowerCase(),
+    "tmcid",
     ticketName,
   ]);
   for (const [key, value] of new URLSearchParams(window.location.search)) {
@@ -116,7 +155,8 @@ export async function requestDingTalkCode(
   entry: DingTalkEntry,
   returnTo: string,
 ): Promise<string | null> {
-  const redirectUrl = buildDingTalkRedirectUrl(entry, returnTo);
+  const tmcId = resolveRequiredTmcId();
+  const redirectUrl = buildDingTalkRedirectUrl(entry, returnTo, tmcId);
   console.info("[ryx][dingtalk] redirecting to legacy authorization endpoint", redirectUrl);
   window.location.assign(redirectUrl);
   return null;

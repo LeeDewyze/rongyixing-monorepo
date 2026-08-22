@@ -35,6 +35,12 @@ the legacy RongYiXing application. It exists to:
 The migration target is behavioral and contractual parity with the legacy
 application, not a one-to-one port of its Angular/Ionic code.
 
+The verified legacy DingTalk binding flow is documented in
+[docs/ryx/钉钉登录技术方案.md](docs/ryx/钉钉登录技术方案.md), including the
+`GetDingTalkCode` redirect chain, callback handling, bind/list/remove APIs,
+direct-vs-Proxy routing, and the finding that `DingTalk-Check` is not part of
+the actual binding flow.
+
 ## Client Surfaces
 
 | Surface   | Package    | Port | Description                                       |
