@@ -20,6 +20,7 @@ import {
   shouldUseLegacyH5PayRedirect,
 } from "@/lib/order-pay";
 import { parseProductChannel } from "@/lib/order-page-utils";
+import { savePendingPayContext } from "@/lib/pay-result-callback";
 import { getOrderResultPath } from "@/lib/order-routes";
 import { getRequestDomain, getRequestLanguage, getTicketName } from "@/lib/request-context";
 import { getTicket } from "@/lib/session";
@@ -99,6 +100,11 @@ export function WebOrderPayPage({ productType }: WebOrderPayPageProps) {
         const context = await resolveTouristContext({
           appId: getAppId(),
           sender: api.proxy,
+        });
+        savePendingPayContext({
+          payType: selected,
+          channel,
+          productType,
         });
         window.location.assign(
           buildLegacyH5PayUrl({

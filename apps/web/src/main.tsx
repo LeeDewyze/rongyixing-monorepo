@@ -10,6 +10,7 @@ import { SessionGuardHost } from "@/components/SessionGuardHost";
 import { bootstrapApi } from "@/lib/api";
 import { preloadBusinessStaffPermission } from "@/lib/booking-permission-preload";
 import { bootstrapExternalTicket } from "@/lib/external-ticket";
+import { bootstrapWechatPayResultCallback } from "@/lib/pay-result-callback";
 import { queryClient } from "@/lib/query";
 import { setupVConsoleFromUrl } from "@/lib/vconsole";
 import { setupViewportCompatibilityVars } from "@/lib/viewport-compat";
@@ -18,6 +19,8 @@ async function main() {
   setupViewportCompatibilityVars();
   await setupVConsoleFromUrl();
   await bootstrapApi();
+  // Run in the background so a slow Pay-Process confirmation never blocks first paint.
+  void bootstrapWechatPayResultCallback();
   await bootstrapExternalTicket("/");
   void preloadBusinessStaffPermission(queryClient, {
     preloadCredentials: false,

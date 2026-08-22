@@ -11,6 +11,7 @@ import {
   resolvePayFailureMessage,
   resolvePayHoldSeconds,
   shouldUseLegacyH5PayRedirect,
+  shouldUseWechatJsSdk,
 } from "./order-pay";
 import { shouldNavigateToPay } from "./flight-book-check-pay";
 
@@ -110,6 +111,18 @@ describe("legacy H5 tourist pay", () => {
     ).toBe(false);
   });
 
+  it("uses JS-SDK for WeChat channel inside the WeChat browser regardless of channel", () => {
+    expect(
+      shouldUseWechatJsSdk({ isWechatBrowser: true, payType: "Wechatpay" }),
+    ).toBe(true);
+    expect(shouldUseWechatJsSdk({ isWechatBrowser: true, payType: "3" })).toBe(true);
+    expect(shouldUseWechatJsSdk({ isWechatBrowser: true, payType: "Alipay" })).toBe(false);
+    expect(shouldUseWechatJsSdk({ isWechatBrowser: true, payType: "Icbcpay" })).toBe(false);
+    expect(
+      shouldUseWechatJsSdk({ isWechatBrowser: false, payType: "Wechatpay" }),
+    ).toBe(false);
+  });
+
   it("builds legacy /home/Pay url for tourist train H5 pay", () => {
     const url = new URL(
       buildLegacyH5PayUrl({
@@ -187,17 +200,17 @@ describe("executeOrderPayFlow", () => {
     expect(processPay).toHaveBeenCalledWith({ OutTradeNo: "PAY-1", Type: "wechat" });
   });
 
-  it("processes ICBC (Type 6) pay when create returns out trade no", async () => {
+  it("processes ICBC (Type 7) pay when create returns out trade no", async () => {
     const createPay = vi.fn().mockResolvedValue({ OutTradeNo: "PAY-ICBC" });
     const processPay = vi.fn().mockResolvedValue({ Success: true });
     const result = await executeOrderPayFlow({
       orderId: "ORD-2",
-      payType: "6",
+      payType: "7",
       createPay,
       processPay,
     });
     expect(result.processed).toBe(true);
-    expect(createPay).toHaveBeenCalledWith({ OrderId: "ORD-2", PayType: "6" });
-    expect(processPay).toHaveBeenCalledWith({ OutTradeNo: "PAY-ICBC", Type: "6" });
+    expect(createPay).toHaveBeenCalledWith({ OrderId: "ORD-2", PayType: "7" });
+    expect(processPay).toHaveBeenCalledWith({ OutTradeNo: "PAY-ICBC", Type: "7" });
   });
 });

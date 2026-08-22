@@ -72,6 +72,19 @@ export function shouldUseLegacyH5PayRedirect(input: {
   );
 }
 
+/**
+ * WeChat H5 (in-browser) WeChat pay always goes through the JS-SDK
+ * chooseWXPay flow, matching legacy where every wechatpay service call
+ * switches to JsSdk on isWechatH5(). This avoids the whole-page /home/Pay
+ * redirect whose post-pay return would leave the new SPA.
+ */
+export function shouldUseWechatJsSdk(input: {
+  isWechatBrowser: boolean;
+  payType: string;
+}): boolean {
+  return input.isWechatBrowser && resolveLegacyH5PayType(input.payType) === "3";
+}
+
 export function buildLegacyH5PayUrl(input: {
   appBaseUrl: string;
   orderId: string;

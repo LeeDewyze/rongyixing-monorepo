@@ -17,11 +17,15 @@ import {
   formatPayHoldCountdown,
   resolvePayCreateOutTradeNo,
   resolvePayFailureMessage,
-  resolveLegacyH5PayType,
   shouldUseLegacyH5PayRedirect,
+  shouldUseWechatJsSdk,
 } from "@/lib/order-pay";
 import { getApi } from "@/lib/api";
 import { getApiMode, getAppId, getLegacyAppBaseUrl, getWechatAppId } from "@/lib/env";
+import {
+  clearPendingPayContext,
+  savePendingPayContext,
+} from "@/lib/pay-result-callback";
 import { getRequestDomain, getRequestLanguage, getTicketName } from "@/lib/request-context";
 import { getTicket } from "@/lib/session";
 import { resolveTouristContext } from "@/lib/tourist-context";
@@ -144,10 +148,14 @@ export function OrderPayPage({
   async function handlePay() {
     if (!selected) return;
     setPaymentError(null);
-    if (shouldUseLegacyH5PayRedirect({ channel, productType, payType: selected })) {
-      const openid = getWechatOpenId();
-      const wechatH5 = isWechatH5();
-      if (wechatH5 && !openid && resolveLegacyH5PayType(selected) === "3") {
+    const openid = getWechatOpenId();
+    const wechatH5 = isWechatH5();
+    const wechatJsSdk = shouldUseWechatJsSdk({
+      isWechatBrowser: wechatH5,
+      payType: selected,
+    });
+    if (wechatJsSdk) {
+      if (!openid) {
         redirectToWechatOAuth({
           appBaseUrl:
             getApiMode() === "proxy" && typeof window !== "undefined"
@@ -159,51 +167,52 @@ export function OrderPayPage({
         });
         return;
       }
-      if (wechatH5 && resolveLegacyH5PayType(selected) === "3") {
-        try {
-          const created = await payCreate.mutateAsync({
-            OrderId: orderId,
-            PayType: selected,
-            channel,
-            ProductType: productType,
-            CreateType: "JsSdk",
-            DataType: "json",
-            OpenId: openid,
-            WechatAppId: getWechatAppId(),
-            IsShowLoading: true,
-          });
-          const failureMessage = resolvePayFailureMessage(created);
-          if (failureMessage) throw new Error(failureMessage);
-          await payWithWechatJsSdk(created);
-          const outTradeNo = resolvePayCreateOutTradeNo(created);
-          if (!outTradeNo) throw new Error("微信支付未返回支付订单号");
-          await payProcess.mutateAsync({
-            OutTradeNo: outTradeNo,
-            Type: selected,
-            channel,
-            ProductType: productType,
-          });
-          const [base = successPath, search = ""] = successPath.split("?");
-          const params = new URLSearchParams(search);
-          if (channel) params.set("channel", channel);
-          const scope = searchParams.get("scope");
-          if (scope) params.set("scope", scope);
-          const nextSuccessPath = params.size > 0 ? `${base}?${params.toString()}` : base;
-          navigate(nextSuccessPath, {
-            replace: true,
-            state: { paySucceeded: true },
-          });
-        } catch (error) {
-          setPaymentError(error instanceof Error ? error.message : "微信支付失败");
-        }
-        return;
+      try {
+        const created = await payCreate.mutateAsync({
+          OrderId: orderId,
+          PayType: selected,
+          channel,
+          ProductType: productType,
+          CreateType: "JsSdk",
+          DataType: "json",
+          OpenId: openid,
+          WechatAppId: getWechatAppId(),
+          IsShowLoading: true,
+        });
+        const failureMessage = resolvePayFailureMessage(created);
+        if (failureMessage) throw new Error(failureMessage);
+        await payWithWechatJsSdk(created);
+        const outTradeNo = resolvePayCreateOutTradeNo(created);
+        if (!outTradeNo) throw new Error("微信支付未返回支付订单号");
+        await payProcess.mutateAsync({
+          OutTradeNo: outTradeNo,
+          Type: selected,
+          channel,
+          ProductType: productType,
+        });
+        const [base = successPath, search = ""] = successPath.split("?");
+        const params = new URLSearchParams(search);
+        if (channel) params.set("channel", channel);
+        const scope = searchParams.get("scope");
+        if (scope) params.set("scope", scope);
+        const nextSuccessPath = params.size > 0 ? `${base}?${params.toString()}` : base;
+        navigate(nextSuccessPath, {
+          replace: true,
+          state: { paySucceeded: true },
+        });
+      } catch (error) {
+        setPaymentError(error instanceof Error ? error.message : "微信支付失败");
       }
+      return;
+    }
+    if (shouldUseLegacyH5PayRedirect({ channel, productType, payType: selected })) {
       const api = getApi();
       const apiConfig = api.proxy.getApiConfig() ?? (await api.proxy.loadApiConfig());
       const context = await resolveTouristContext({
         appId: getAppId(),
         sender: api.proxy,
       });
+      savePendingPayContext({ payType: selected, channel, productType });
       window.location.assign(
         buildLegacyH5PayUrl({
           appBaseUrl: getLegacyAppBaseUrl(),
@@ -221,6 +230,7 @@ export function OrderPayPage({
       );
       return;
     }
+    savePendingPayContext({ payType: selected, channel, productType });
     const result = await executeOrderPayFlow({
       orderId,
       payType: selected,
@@ -230,6 +240,7 @@ export function OrderPayPage({
         payProcess.mutateAsync({ ...params, channel, ProductType: productType }),
     });
     if (result.redirected) return;
+    clearPendingPayContext();
     const [base = successPath, search = ""] = successPath.split("?");
     const params = new URLSearchParams(search);
     if (channel) {
