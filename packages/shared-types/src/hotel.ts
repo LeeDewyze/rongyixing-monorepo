@@ -584,6 +584,11 @@ export interface PayCreateParams {
   PayType: string;
   Amount?: number;
   Key?: string;
+  CreateType?: "Mobile" | "JsSdk";
+  DataType?: string;
+  OpenId?: string;
+  WechatAppId?: string;
+  IsShowLoading?: boolean;
 }
 
 export interface PayCreateResponse {
@@ -594,4 +599,9 @@ export interface PayCreateResponse {
   Url?: string;
   Status?: boolean;
   Message?: string;
+  timeStamp?: string | number;
+  nonceStr?: string;
+  package?: string;
+  signType?: string;
+  paySign?: string;
 }

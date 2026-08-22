@@ -72,6 +72,28 @@ describe("buildLegacyPayCreatePayload", () => {
       IsApp: false,
     });
   });
+
+  it("uses legacy WeChat JS SDK fields", () => {
+    expect(
+      buildLegacyPayCreatePayload({
+        orderId: "ORD-3",
+        payType: "Wechatpay",
+        createType: "JsSdk",
+        dataType: "json",
+        openId: "openid-3",
+        wechatAppId: "wx-app-3",
+      }),
+    ).toEqual({
+      Channel: "App",
+      Type: "3",
+      OrderId: "ORD-3",
+      IsApp: false,
+      CreateType: "JsSdk",
+      DataType: "json",
+      OpenId: "openid-3",
+      WechatAppId: "wx-app-3",
+    });
+  });
 });
 
 describe("normalizePayCreateResponse", () => {

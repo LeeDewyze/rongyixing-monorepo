@@ -141,6 +141,7 @@ describe("legacy H5 tourist pay", () => {
       OrderId: "44880000000033",
       IsApp: false,
       CreateType: "JsSdk",
+      DataType: "json",
       OpenId: "openid-1",
       WechatAppId: "wx-app-1",
     });

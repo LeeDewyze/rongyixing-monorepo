@@ -104,6 +104,10 @@ export function buildLegacyPayCreatePayload(input: {
   orderId: string;
   payType: string;
   key?: string;
+  createType?: "Mobile" | "JsSdk";
+  dataType?: string;
+  openId?: string;
+  wechatAppId?: string;
 }): Record<string, unknown> {
   if (isLegacyIcbcPayType(input.payType)) {
     return {
@@ -119,9 +123,11 @@ export function buildLegacyPayCreatePayload(input: {
     Type: resolveLegacyPayType(input.payType),
     OrderId: input.orderId,
     IsApp: false,
-    CreateType: "Mobile",
-    DataType: "json",
+    CreateType: input.createType ?? "Mobile",
+    DataType: input.dataType ?? "json",
     ...(input.key ? { Key: input.key } : {}),
+    ...(input.openId ? { OpenId: input.openId } : {}),
+    ...(input.wechatAppId ? { WechatAppId: input.wechatAppId } : {}),
   };
 }
 

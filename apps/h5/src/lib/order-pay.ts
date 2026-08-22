@@ -101,6 +101,7 @@ export function buildLegacyH5PayUrl(input: {
       OrderId: input.orderId,
       IsApp: false,
       CreateType: input.createType ?? "Mobile",
+      ...(input.createType === "JsSdk" ? { DataType: "json" } : {}),
       ...(input.openid ? { OpenId: input.openid } : {}),
       ...(input.wechatAppId ? { WechatAppId: input.wechatAppId } : {}),
     },

@@ -15,6 +15,8 @@ import {
   buildLegacyH5PayUrl,
   executeOrderPayFlow,
   formatPayHoldCountdown,
+  resolvePayCreateOutTradeNo,
+  resolvePayFailureMessage,
   resolveLegacyH5PayType,
   shouldUseLegacyH5PayRedirect,
 } from "@/lib/order-pay";
@@ -23,6 +25,7 @@ import { getApiMode, getAppId, getLegacyAppBaseUrl, getWechatAppId } from "@/lib
 import { getRequestDomain, getRequestLanguage, getTicketName } from "@/lib/request-context";
 import { getTicket } from "@/lib/session";
 import { resolveTouristContext } from "@/lib/tourist-context";
+import { payWithWechatJsSdk } from "@/lib/wechat-pay";
 import { getWechatOpenId, isWechatH5, redirectToWechatOAuth } from "@/lib/wechat-oauth";
 
 export interface OrderPayPageProps {
@@ -98,6 +101,7 @@ export function OrderPayPage({
   const payCreate = usePayCreate();
   const payProcess = usePayProcess();
   const [selected, setSelected] = useState("");
+  const [paymentError, setPaymentError] = useState<string | null>(null);
   const remainingSeconds = usePayHoldCountdown(payTotal?.PayHoldTime);
 
   usePageHeader({ visible: false });
@@ -130,17 +134,20 @@ export function OrderPayPage({
   const channels = pays ?? [];
   const selectedChannel = channels.find((item) => item.PayType === selected);
   const payError =
-    payCreate.error instanceof Error
+    paymentError ??
+    (payCreate.error instanceof Error
       ? payCreate.error.message
       : payProcess.error instanceof Error
         ? payProcess.error.message
-        : undefined;
+        : undefined);
 
   async function handlePay() {
     if (!selected) return;
+    setPaymentError(null);
     if (shouldUseLegacyH5PayRedirect({ channel, productType, payType: selected })) {
       const openid = getWechatOpenId();
-      if (isWechatH5() && !openid && resolveLegacyH5PayType(selected) === "3") {
+      const wechatH5 = isWechatH5();
+      if (wechatH5 && !openid && resolveLegacyH5PayType(selected) === "3") {
         redirectToWechatOAuth({
           appBaseUrl:
             getApiMode() === "proxy" && typeof window !== "undefined"
@@ -152,13 +159,51 @@ export function OrderPayPage({
         });
         return;
       }
+      if (wechatH5 && resolveLegacyH5PayType(selected) === "3") {
+        try {
+          const created = await payCreate.mutateAsync({
+            OrderId: orderId,
+            PayType: selected,
+            channel,
+            ProductType: productType,
+            CreateType: "JsSdk",
+            DataType: "json",
+            OpenId: openid,
+            WechatAppId: getWechatAppId(),
+            IsShowLoading: true,
+          });
+          const failureMessage = resolvePayFailureMessage(created);
+          if (failureMessage) throw new Error(failureMessage);
+          await payWithWechatJsSdk(created);
+          const outTradeNo = resolvePayCreateOutTradeNo(created);
+          if (!outTradeNo) throw new Error("微信支付未返回支付订单号");
+          await payProcess.mutateAsync({
+            OutTradeNo: outTradeNo,
+            Type: selected,
+            channel,
+            ProductType: productType,
+          });
+          const [base = successPath, search = ""] = successPath.split("?");
+          const params = new URLSearchParams(search);
+          if (channel) params.set("channel", channel);
+          const scope = searchParams.get("scope");
+          if (scope) params.set("scope", scope);
+          const nextSuccessPath = params.size > 0 ? `${base}?${params.toString()}` : base;
+          navigate(nextSuccessPath, {
+            replace: true,
+            state: { paySucceeded: true },
+          });
+        } catch (error) {
+          setPaymentError(error instanceof Error ? error.message : "微信支付失败");
+        }
+        return;
+      }
       const api = getApi();
       const apiConfig = api.proxy.getApiConfig() ?? (await api.proxy.loadApiConfig());
       const context = await resolveTouristContext({
         appId: getAppId(),
         sender: api.proxy,
       });
-      const wechatH5 = isWechatH5();
       window.location.assign(
         buildLegacyH5PayUrl({
           appBaseUrl: getLegacyAppBaseUrl(),
@@ -171,13 +216,7 @@ export function OrderPayPage({
           token: apiConfig.Token ?? "",
           tmcId: context.TouristTmcId,
           mmsId: context.TouristMmsId,
-          ...(wechatH5
-            ? {
-                openid,
-                wechatAppId: getWechatAppId(),
-                createType: "JsSdk" as const,
-              }
-            : {}),
+          openid,
         }),
       );
       return;

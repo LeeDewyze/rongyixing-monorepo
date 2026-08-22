@@ -44,6 +44,8 @@ function stripPayControl<T extends { channel?: string; ProductType?: string }>(
   params: T,
 ): Omit<T, "channel" | "ProductType"> {
   const { channel: _channel, ProductType: _productType, ...rest } = params;
+  void _channel;
+  void _productType;
   return rest;
 }
 
@@ -72,12 +74,20 @@ export function createPayApi(proxy: ProxyClient): PayApi {
         method: isTouristHotelPay(params)
           ? TOURIST_HOTEL_FLOW_METHODS.PAY_CREATE
           : orderPayMethods(params).PAY_CREATE,
-        version: isLegacyIcbcPayType(params.PayType) ? "2.0" : undefined,
+        version:
+          isLegacyIcbcPayType(params.PayType) || params.CreateType === "JsSdk"
+            ? "2.0"
+            : undefined,
         data: buildLegacyPayCreatePayload({
           orderId: params.OrderId,
           payType: params.PayType,
           key: params.Key,
+          createType: params.CreateType,
+          dataType: params.DataType,
+          openId: params.OpenId,
+          wechatAppId: params.WechatAppId,
         }),
+        ...(params.IsShowLoading ? { isShowLoading: true } : {}),
       });
       return normalizePayCreateResponse(result);
     },
