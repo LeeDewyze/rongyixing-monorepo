@@ -4,7 +4,7 @@ import { getApi } from "@/lib/api";
 import { withAppBasePath } from "@/lib/base-path";
 import { getDomain } from "@/lib/domain";
 import { getLegacyAppBaseUrl } from "@/lib/env";
-import { getTicket } from "@/lib/session";
+import { getTmcId, getTicket, setTmcId } from "@/lib/session";
 import { getApiRoot, getTicketName } from "@/lib/request-context";
 
 type DingTalkEntry = "login" | "bind";
@@ -74,17 +74,24 @@ function normalizeTmcId(value: unknown): string | null {
   return normalized || null;
 }
 
-function resolveTmcId(): { value: string | null; source: string } {
-  const params = new URLSearchParams(globalThis.location?.search ?? "");
-  for (const [key, value] of params) {
-    if (key.toLowerCase() === "tmcid") {
-      const normalized = normalizeTmcId(value);
-      if (normalized) return { value: normalized, source: `query:${key}` };
-    }
+function readUrlTmcId(): string | null {
+  const params = new URLSearchParams(window.location.search);
+  for (const key of ["tmcid", "TmcId", "tmcId", "TMCId"]) {
+    const value = normalizeTmcId(params.get(key));
+    if (value) return value;
   }
+  return null;
+}
 
-  const configured = normalizeTmcId(import.meta.env.VITE_TMC_ID);
-  if (configured) return { value: configured, source: "VITE_TMC_ID" };
+function resolveTmcId(): { value: string | null; source: string } {
+  const fromStorage = normalizeTmcId(getTmcId());
+  if (fromStorage) return { value: fromStorage, source: "storage" };
+
+  const fromUrl = readUrlTmcId();
+  if (fromUrl) {
+    setTmcId(fromUrl);
+    return { value: fromUrl, source: "url" };
+  }
 
   return { value: null, source: "missing" };
 }

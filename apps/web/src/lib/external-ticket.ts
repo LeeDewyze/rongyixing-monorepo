@@ -1,12 +1,20 @@
 import { getApi } from "@/lib/api";
 import { resolveInternalReturnTo, stripAppBasePath, withAppBasePath } from "@/lib/base-path";
 import { hasDingTalkCode, readDingTalkCode } from "@/lib/dingtalk";
-import { clearSession, getTicket, saveLoginResult, setTicket, setTicketName } from "@/lib/session";
+import {
+  clearSession,
+  getTicket,
+  saveLoginResult,
+  setTicket,
+  setTicketName,
+  setTmcId,
+} from "@/lib/session";
 
 const TICKET_PARAM = "ticket";
 const TICKET_NAME_PARAM = "ticketName";
 const LEGACY_TICKET_NAME_PARAM = "ticketname";
 const EXTERNAL_TICKET_ERROR_KEY = "ryx_external_ticket_error";
+const TMC_ID_QUERY_KEYS = ["tmcid", "TmcId", "tmcId", "TMCId"];
 export const EXTERNAL_TICKET_LOGIN_ERROR_MESSAGE =
   "系统没有找到您有效的单点登录账户信息，这可能是您没有注册或注册了多个账户导致的";
 
@@ -147,9 +155,21 @@ function usePageTicketDirectly(url: URL, ticket: string, fallbackPath: string): 
   replaceLocation(targetPath);
 }
 
+/** Persist an externally passed `?tmcid=` so the DingTalk bind flow can read it from storage. */
+function persistExternalTmcId(url: URL): void {
+  for (const key of TMC_ID_QUERY_KEYS) {
+    const value = `${url.searchParams.get(key) ?? ""}`.trim();
+    if (value) {
+      setTmcId(value);
+      return;
+    }
+  }
+}
+
 /** Exchange SSO-style `?ticket=...` for the normal RongYiXing local session. */
 export async function bootstrapExternalTicket(fallbackPath = "/"): Promise<void> {
   const url = new URL(window.location.href);
+  persistExternalTmcId(url);
   const ticket = readExternalTicket(url);
   if (isDingTalkTicketFlow(url)) {
     console.info("[ryx][dingtalk] bootstrap callback flow", {

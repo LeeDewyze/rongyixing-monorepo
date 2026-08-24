@@ -6,6 +6,7 @@ const LOGIN_USER_NAME_KEY = "loginUserName";
 const LOGIN_USER_ID_KEY = "loginUserId";
 const TICKET_NAME_KEY = "ticketName";
 const IDENTITY_PERMISSION_STORAGE_KEY = "ryx_identity_permission";
+const TMC_ID_KEY = "ryx_tmcid";
 
 export const SESSION_CHANGED_EVENT = "ryx:session-changed";
 
@@ -37,6 +38,18 @@ export function setTicket(ticket: string): void {
 
 export function setTicketName(ticketName: string): void {
   localStorage.setItem(TICKET_NAME_KEY, ticketName);
+}
+
+/** Externally passed `?tmcid=` — the DingTalk bind flow's required TmcId source. */
+export function getTmcId(): string | null {
+  return localStorage.getItem(TMC_ID_KEY)?.trim() || null;
+}
+
+export function setTmcId(tmcId: string): void {
+  const normalized = `${tmcId ?? ""}`.trim();
+  if (normalized) {
+    localStorage.setItem(TMC_ID_KEY, normalized);
+  }
 }
 
 export function getLoginToken(): string | null {
