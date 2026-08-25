@@ -14,7 +14,7 @@ import {
   encodeFormBody,
   toFormFields,
 } from "./request-entity.js";
-import { isGatewayProxyUrl, isLoginMethod, resolveUrl } from "./resolve-url.js";
+import { isLoginMethod, resolveUrl } from "./resolve-url.js";
 import { assertSuccess } from "./response-adapter.js";
 import { computeSign, serializeData } from "./sign.js";
 
@@ -181,7 +181,10 @@ export function createProxyClient(config: ProxyClientConfig): ProxyClient {
       domain: config.getDomain?.() ?? undefined,
     });
     const url = config.rewriteUrl ? config.rewriteUrl(resolvedUrl) : resolvedUrl;
-    const attachExtraFields = isGatewayProxyUrl(resolvedUrl) && Boolean(config.getExtraFields);
+    // Legacy RequestEntity copies URL query context into every request body.
+    // Keep that behavior for both gateway-proxy and direct service calls so
+    // tenant context like `tmcid` does not disappear on direct Password APIs.
+    const attachExtraFields = Boolean(config.getExtraFields);
 
     const req = createRequestEntity(options.method, options.data, {
       getTicket: isLoginMethod(options.method) ? () => "" : config.getTicket,

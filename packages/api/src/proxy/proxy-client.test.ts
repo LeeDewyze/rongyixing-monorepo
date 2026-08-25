@@ -50,7 +50,7 @@ describe("createProxyClient proxy mode", () => {
     expect(settingRequests).toBe(1);
   });
 
-  it("omits gateway extras (root) on direct microservice URLs", async () => {
+  it("includes legacy extras on direct microservice URLs", async () => {
     let capturedBody = "";
     const client = createProxyClient({
       baseUrl: "",
@@ -87,7 +87,43 @@ describe("createProxyClient proxy mode", () => {
     expect(capturedBody).toContain("Method=TmcApiFlightUrl-Home-Index");
     expect(capturedBody).toContain("Timeout=60");
     expect(capturedBody).toContain("Version=2.0");
-    expect(capturedBody).not.toContain("root=");
+    expect(capturedBody).toContain("root=rl");
+  });
+
+  it("keeps tmcid on direct DingTalk bind requests", async () => {
+    let capturedBody = "";
+    const client = createProxyClient({
+      baseUrl: "",
+      mode: "proxy",
+      apiConfig: {
+        Token: "41C21104DE0D4A0B8FE4229C822576B4",
+        Urls: { ApiPasswordUrl: "https://pass-api.rongtrip.cn" },
+      },
+      getTicket: () => "a85d1f7ba6ce4b439bb2dd3fe04cb381",
+      getDomain: () => "rongtrip.cn",
+      getExtraFields: () => ({ tmcid: "10099", root: "www" }),
+      fetchImpl: async (_url, init) => {
+        capturedBody = String(init?.body ?? "");
+        return new Response(
+          JSON.stringify(successResponse({ Status: true, Data: null, Message: "绑定成功" })),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+      },
+    });
+
+    await client.sendResponse({
+      method: "ApiPasswordUrl-DingTalk-Bind",
+      data: { Code: "bf998e9590c43d36af276d75e30c2d31" },
+      isShowLoading: true,
+    });
+
+    expect(capturedBody).toContain("Method=ApiPasswordUrl-DingTalk-Bind");
+    expect(capturedBody).toContain("tmcid=10099");
+    expect(capturedBody).toContain("root=www");
+    expect(capturedBody).toContain("Data=%7B%22Code%22%3A%22bf998e9590c43d36af276d75e30c2d31%22%7D");
   });
 
   it("refreshes stale ApiConfig when current method url key is missing", async () => {
@@ -181,7 +217,7 @@ describe("createProxyClient proxy mode", () => {
     expect(captured[1]?.body).toContain("Method=ApiHomeUrl-Identity-Check");
     expect(captured[1]?.body).toContain('Data={"LoginType":"H5"}');
     expect(captured[1]?.body).toContain("IsShowLoading=true");
-    expect(captured[1]?.body).not.toContain("root=www");
+    expect(captured[1]?.body).toContain("root=www");
     expect(captured[1]?.body).not.toContain("Sign=");
     expect(captured[1]?.body).not.toContain("Token=");
   });
