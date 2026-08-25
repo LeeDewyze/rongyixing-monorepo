@@ -331,3 +331,32 @@ Vite 用来快调，Nginx 用来验最终部署形态。两种都留着，最稳
 ### 为什么不是只换 `index.html`
 
 因为真实部署需要同时替换整套静态目录，还要保留路由回退和后端代理配置。
+
+---
+
+## 8. 自有服务器开启 HTTPS
+
+如果你的服务器是 Nginx，并且想给当前站点补上 HTTPS，可以在服务器上执行：
+
+```bash
+deploy/scripts/install-https-nginx.sh
+```
+
+这个脚本会做三件事：
+
+1. 用 `certbot` 申请证书
+2. 写入 Nginx 的 HTTP/HTTPS 配置
+3. 执行 `nginx -t` 并 reload Nginx
+
+默认会把 H5 和 Web 分别绑定到：
+
+- `https://h5.songguoren.site/`
+- `https://web.songguoren.site/`
+
+如果 upstream 端口不是 `18088/18089`，可以覆盖：
+
+```bash
+H5_UPSTREAM=http://127.0.0.1:18088 \
+WEB_UPSTREAM=http://127.0.0.1:18089 \
+deploy/scripts/install-https-nginx.sh
+```
