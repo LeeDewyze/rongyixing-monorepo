@@ -138,6 +138,7 @@ export function TravelIframeView({ title, url, onWorkflowBack }: TravelIframeVie
             title={title}
             src={iframeSrc}
             srcDoc={srcdoc ?? undefined}
+            allow="geolocation"
             className={useDirectSrc ? "min-h-0 h-full w-full border-0" : "block w-full border-0"}
             style={useDirectSrc ? undefined : { height: frameHeight ? `${frameHeight}px` : "100%" }}
           />
