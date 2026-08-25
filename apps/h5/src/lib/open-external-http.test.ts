@@ -9,6 +9,7 @@ import {
 
 const AMAP_URL =
   "https://uri.amap.com/marker?position=116.357754,39.915498&name=%E5%8C%97%E4%BA%AC%E5%A4%A9%E6%B3%B0%E5%AE%BE%E9%A6%86";
+const GENERIC_URL = "https://example.com/path";
 
 function createHost(overrides: Partial<OpenExternalHttpHost> = {}): OpenExternalHttpHost & {
   navigatedTo: string[];
@@ -59,12 +60,21 @@ describe("openExternalHttp", () => {
     expect(host.newTabUrls).toEqual([]);
   });
 
-  it("navigates to /open-url on Android instead of leaving the SPA document", () => {
+  it("opens amap externally on Android instead of embedding it", () => {
     const host = createHost({
       userAgent: "Mozilla/5.0 (Linux; Android 12; Pixel) AppleWebKit/537.36",
     });
     expect(openExternalHttp(AMAP_URL, host)).toBe(true);
-    expect(host.navigatedTo).toEqual([buildEmbeddedOpenUrl(AMAP_URL, "地图")]);
+    expect(host.newTabUrls).toEqual([AMAP_URL]);
+    expect(host.navigatedTo).toEqual([]);
+  });
+
+  it("still embeds ordinary external pages on Android", () => {
+    const host = createHost({
+      userAgent: "Mozilla/5.0 (Linux; Android 12; Pixel) AppleWebKit/537.36",
+    });
+    expect(openExternalHttp(GENERIC_URL, host)).toBe(true);
+    expect(host.navigatedTo).toEqual([buildEmbeddedOpenUrl(GENERIC_URL, "地图")]);
     expect(host.newTabUrls).toEqual([]);
   });
 

@@ -7,7 +7,6 @@ type WindowWithCall = Window & { call?: NativeCallPlugin };
 export interface DialPhoneHost {
   userAgent: string;
   nativeCall?: NativeCallPlugin;
-  openTelInIframe: (url: string) => void;
   clickTelAnchor: (url: string) => void;
 }
 
@@ -27,14 +26,6 @@ function createBrowserHost(): DialPhoneHost {
   return {
     userAgent: typeof navigator === "undefined" ? "" : navigator.userAgent,
     nativeCall: readNativeDialer(),
-    openTelInIframe(url) {
-      const iframe = document.createElement("iframe");
-      iframe.src = url;
-      iframe.setAttribute("aria-hidden", "true");
-      iframe.style.cssText = "display:none;width:0;height:0;border:0";
-      document.body.appendChild(iframe);
-      window.setTimeout(() => iframe.remove(), 1000);
-    },
     clickTelAnchor(url) {
       const anchor = document.createElement("a");
       anchor.href = url;
@@ -46,10 +37,6 @@ function createBrowserHost(): DialPhoneHost {
   };
 }
 
-function isAndroidUserAgent(userAgent: string): boolean {
-  return /Android/i.test(userAgent);
-}
-
 /** Dial without navigating the current WebView (some Android shells fail on in-page tel: links). */
 export function dialPhone(phone: string, host: DialPhoneHost = createBrowserHost()): boolean {
   const url = buildTelUrl(phone);
@@ -58,11 +45,6 @@ export function dialPhone(phone: string, host: DialPhoneHost = createBrowserHost
   const number = url.slice("tel:".length);
   if (host.nativeCall) {
     void host.nativeCall.callNumber(number, true);
-    return true;
-  }
-
-  if (isAndroidUserAgent(host.userAgent)) {
-    host.openTelInIframe(url);
     return true;
   }
 

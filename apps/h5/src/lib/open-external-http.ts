@@ -17,11 +17,25 @@ export function buildEmbeddedOpenUrl(url: string, title = "详情"): string {
   return `/open-url?${params.toString()}`;
 }
 
+function shouldOpenExternally(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return /(^|\.)amap\.com$/i.test(parsed.hostname);
+  } catch {
+    return false;
+  }
+}
+
 export function openExternalHttp(url: string, host: OpenExternalHttpHost): boolean {
   const trimmed = url.trim();
   if (!trimmed) return false;
 
   const title = host.title?.trim() || "详情";
+  if (shouldOpenExternally(trimmed)) {
+    host.openInNewTab(trimmed);
+    return true;
+  }
+
   if (shouldEmbedExternalHttp(host.userAgent)) {
     host.navigate(buildEmbeddedOpenUrl(trimmed, title));
     return true;
