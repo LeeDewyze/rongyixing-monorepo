@@ -60,13 +60,13 @@ describe("openExternalHttp", () => {
     expect(host.newTabUrls).toEqual([]);
   });
 
-  it("opens amap externally on Android instead of embedding it", () => {
+  it("keeps amap in the same-origin iframe route on Android", () => {
     const host = createHost({
       userAgent: "Mozilla/5.0 (Linux; Android 12; Pixel) AppleWebKit/537.36",
     });
     expect(openExternalHttp(AMAP_URL, host)).toBe(true);
-    expect(host.newTabUrls).toEqual([AMAP_URL]);
-    expect(host.navigatedTo).toEqual([]);
+    expect(host.navigatedTo).toEqual([buildEmbeddedOpenUrl(AMAP_URL, "地图")]);
+    expect(host.newTabUrls).toEqual([]);
   });
 
   it("still embeds ordinary external pages on Android", () => {

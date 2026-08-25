@@ -1,13 +1,9 @@
-interface NativeCallPlugin {
-  callNumber: (phone: string, bypassAppChooser?: boolean) => Promise<unknown>;
-}
-
-type WindowWithCall = Window & { call?: NativeCallPlugin };
+import { showAppAlertDialog } from "@/lib/app-confirm-dialog";
 
 export interface DialPhoneHost {
   userAgent: string;
-  nativeCall?: NativeCallPlugin;
-  clickTelAnchor: (url: string) => void;
+  copyText: (text: string) => Promise<boolean>;
+  notifyCopied: (phone: string) => void;
 }
 
 export function buildTelUrl(phone: string): string {
@@ -16,38 +12,56 @@ export function buildTelUrl(phone: string): string {
   return /^tel:/i.test(trimmed) ? `tel:${trimmed.slice(trimmed.indexOf(":") + 1)}` : `tel:${trimmed}`;
 }
 
-function readNativeDialer(): NativeCallPlugin | undefined {
-  if (typeof window === "undefined") return undefined;
-  const plugin = (window as WindowWithCall).call;
-  return plugin && typeof plugin.callNumber === "function" ? plugin : undefined;
+async function copyTextWithBrowser(text: string): Promise<boolean> {
+  if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // Fall through to the legacy textarea copy path for old Android WebViews.
+    }
+  }
+
+  if (typeof document === "undefined") return false;
+
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "readonly");
+  textarea.style.position = "fixed";
+  textarea.style.left = "-9999px";
+  textarea.style.top = "0";
+  document.body.appendChild(textarea);
+  textarea.select();
+
+  try {
+    return document.execCommand("copy");
+  } catch {
+    return false;
+  } finally {
+    textarea.remove();
+  }
 }
 
 function createBrowserHost(): DialPhoneHost {
   return {
     userAgent: typeof navigator === "undefined" ? "" : navigator.userAgent,
-    nativeCall: readNativeDialer(),
-    clickTelAnchor(url) {
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.style.display = "none";
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
+    copyText: copyTextWithBrowser,
+    notifyCopied(phone) {
+      void showAppAlertDialog(`电话号码已复制：${phone}`);
     },
   };
 }
 
-/** Dial without navigating the current WebView (some Android shells fail on in-page tel: links). */
+/** Copy-only phone action for H5 shells where native/tel dialing is unreliable. */
 export function dialPhone(phone: string, host: DialPhoneHost = createBrowserHost()): boolean {
   const url = buildTelUrl(phone);
   if (!url) return false;
 
   const number = url.slice("tel:".length);
-  if (host.nativeCall) {
-    void host.nativeCall.callNumber(number, true);
-    return true;
-  }
-
-  host.clickTelAnchor(url);
+  void host.copyText(number).then((copied) => {
+    if (copied) {
+      host.notifyCopied(number);
+    }
+  });
   return true;
 }

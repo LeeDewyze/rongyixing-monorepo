@@ -119,7 +119,7 @@ export function TravelIframeView({ title, url, onWorkflowBack }: TravelIframeVie
   const canRenderIframe = useDirectSrc ? Boolean(url) : Boolean(srcdoc);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-white">
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-white">
       {loadError && isWorkflowEmbed ? (
         <div className="flex flex-col gap-2 border-b border-[#ECECEC] px-3 py-2">
           <p className="text-sm text-[#808080]">工作流页面加载失败，请重试或浏览器打开。</p>
