@@ -162,8 +162,15 @@ export function HotelDetailPage() {
   } = useHotelDetailSections(Boolean(data));
 
   const mapUrl = useMemo(
-    () => buildHotelMapUrl(data?.HotelName ?? "", data?.Lat, data?.Lng),
-    [data?.HotelName, data?.Lat, data?.Lng],
+    () =>
+      buildHotelMapUrl(
+        data?.HotelName ?? "",
+        data?.Lat,
+        data?.Lng,
+        data?.Address,
+        detailReturnTo,
+      ),
+    [data?.Address, data?.HotelName, data?.Lat, data?.Lng, detailReturnTo],
   );
 
   usePageHeader({ visible: false });

@@ -125,9 +125,22 @@ export function buildHotelShowImagesUrl(
   return `/hotel/${encodeURIComponent(hotelId)}/images?${params.toString()}`;
 }
 
-export function buildHotelMapUrl(name: string, lat?: number, lng?: number): string | undefined {
+export function buildHotelMapUrl(
+  name: string,
+  lat?: number,
+  lng?: number,
+  address?: string,
+  returnTo?: string,
+): string | undefined {
   if (lat == null || lng == null || !Number.isFinite(lat) || !Number.isFinite(lng)) {
     return undefined;
   }
-  return `https://uri.amap.com/marker?position=${lng},${lat}&name=${encodeURIComponent(name)}`;
+  const params = new URLSearchParams({
+    name,
+    lat: String(lat),
+    lng: String(lng),
+  });
+  if (address) params.set("address", address);
+  if (returnTo) params.set("returnTo", returnTo);
+  return `/hotel/map?${params.toString()}`;
 }

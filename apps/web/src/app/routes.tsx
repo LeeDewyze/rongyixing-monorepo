@@ -108,6 +108,7 @@ const HotelKeywordSearchPage = lazyPage(
   () => import("@/pages/hotel/HotelKeywordSearchPage"),
   "HotelKeywordSearchPage",
 );
+const HotelMapPage = lazyPage(() => import("@/pages/hotel/HotelMapPage"), "HotelMapPage");
 const HotelDetailPage = lazyPage(() => import("@/pages/hotel/HotelDetailPage"), "HotelDetailPage");
 const HotelShowImagesPage = lazyPage(
   () => import("@/pages/hotel/HotelShowImagesPage"),
@@ -250,6 +251,7 @@ export const router = createBrowserRouter(
                 { index: true, element: <Navigate to="/?product=flight" replace /> },
                 { path: "list", element: <HotelListPage /> },
                 { path: "keyword", element: <HotelKeywordSearchPage /> },
+                { path: "map", element: <HotelMapPage /> },
                 { path: ":hotelId/images", element: <HotelShowImagesPage /> },
                 { path: ":hotelId/room/:roomId", element: <HotelRoomDetailPage /> },
                 { path: ":hotelId/book", element: <HotelBookPage /> },

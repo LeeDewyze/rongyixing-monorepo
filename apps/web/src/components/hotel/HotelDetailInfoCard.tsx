@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 
 import { HOTEL_DETAIL_FONT } from "@/components/hotel/hotel-detail-chrome";
 import { dialPhone } from "@/lib/dial-phone";
-import { openExternalHttpFromBrowser } from "@/lib/open-external-http";
+import { buildHotelMapUrl } from "@/utils/hotel-detail";
 
 function StarRating({ count }: { count: number }) {
   return (
@@ -17,10 +17,6 @@ function StarRating({ count }: { count: number }) {
       ))}
     </div>
   );
-}
-
-function buildMapUrl(name: string, lat: number, lng: number): string {
-  return `https://uri.amap.com/marker?position=${lng},${lat}&name=${encodeURIComponent(name)}`;
 }
 
 function PinIcon() {
@@ -120,7 +116,10 @@ export function HotelDetailInfoCard({
               className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-white px-3 py-2.5 text-[13px] font-medium text-[#333333] ring-1 ring-[#E8ECF3] active:bg-[#F5F6F9]"
               onClick={() => {
                 if (lat == null || lng == null) return;
-                openExternalHttpFromBrowser(buildMapUrl(name, lat, lng), "地图", navigate);
+                const mapUrl = buildHotelMapUrl(name, lat, lng, address);
+                if (mapUrl) {
+                  navigate(mapUrl);
+                }
               }}
             >
               <MapIcon />

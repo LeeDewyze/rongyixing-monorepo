@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 
 import { HOTEL_DETAIL_FONT } from "@/components/hotel/hotel-detail-chrome";
-import { openExternalHttpFromBrowser } from "@/lib/open-external-http";
 
 function ChevronRightIcon() {
   return (
@@ -77,7 +76,7 @@ export function HotelDetailTrafficSection({ address, mapUrl }: HotelDetailTraffi
           <button
             type="button"
             className="block w-full overflow-hidden rounded-xl text-left ring-1 ring-[#E8ECF3] active:bg-[#FAFBFC]"
-            onClick={() => openExternalHttpFromBrowser(mapUrl, "地图", navigate)}
+            onClick={() => navigate(mapUrl)}
           >
             {cardBody}
           </button>
