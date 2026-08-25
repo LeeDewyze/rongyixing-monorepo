@@ -92,11 +92,14 @@ sync_dist_dir() {
   local source_dir="$1"
   local target_dir="$2"
 
+  log "clean ${target_dir}"
+  run_sudo rm -rf "${target_dir}"
+
   if command -v rsync >/dev/null 2>&1; then
     run_sudo install -d "${target_dir}"
     run_sudo rsync -a --delete "${source_dir}/" "${target_dir}/"
   else
-    run_sudo rm -rf "${target_dir}"
+    run_sudo install -d "$(dirname "${target_dir}")"
     run_sudo cp -a "${source_dir}" "${target_dir}"
   fi
 }
