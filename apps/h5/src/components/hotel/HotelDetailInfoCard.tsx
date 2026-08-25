@@ -1,4 +1,5 @@
 import { HOTEL_DETAIL_FONT } from "@/components/hotel/hotel-detail-chrome";
+import { dialPhone } from "@/lib/dial-phone";
 
 function StarRating({ count }: { count: number }) {
   return (
@@ -100,13 +101,14 @@ export function HotelDetailInfoCard({
       {hasActions ? (
         <div className="flex gap-2 border-t border-[#F0F2F5] bg-[#FAFBFC] px-3 py-2.5">
           {phone ? (
-            <a
-              href={`tel:${phone}`}
+            <button
+              type="button"
               className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-white px-3 py-2.5 text-[13px] font-medium text-[#333333] ring-1 ring-[#E8ECF3] active:bg-[#F5F6F9]"
+              onClick={() => dialPhone(phone)}
             >
               <PhoneIcon />
               电话
-            </a>
+            </button>
           ) : null}
           {showMap ? (
             <a

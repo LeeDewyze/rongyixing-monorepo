@@ -5,6 +5,7 @@ import {
   HOTEL_ORDER_SECTION_TITLE,
 } from "@/components/hotel/hotel-detail-chrome";
 import { OrderDetailInsetCell } from "@/components/order/OrderDetailInsetCell";
+import { dialPhone } from "@/lib/dial-phone";
 import {
   computeStayNights,
   formatActualStayRange,
@@ -70,9 +71,13 @@ export function HotelOrderHotelInfoCard({ room }: HotelOrderHotelInfoCardProps) 
           label="酒店电话"
           value={
             room.HotelContact ? (
-              <a href={`tel:${room.HotelContact}`} className="text-brand-primary">
+              <button
+                type="button"
+                className="text-brand-primary"
+                onClick={() => dialPhone(room.HotelContact ?? "")}
+              >
                 {room.HotelContact}
-              </a>
+              </button>
             ) : (
               "—"
             )

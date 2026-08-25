@@ -2,6 +2,7 @@ import type { TmcData } from "@ryx/shared-types";
 
 import { getApi } from "@/lib/api";
 import { showAppAlertDialog } from "@/lib/app-confirm-dialog";
+import { dialPhone } from "@/lib/dial-phone";
 import { getDomain } from "@/lib/domain";
 
 /** Legacy `CONFIG.contactus.phone` fallback. */
@@ -120,5 +121,5 @@ export function dialContactPhone(phone: string): void {
     void showAppAlertDialog("请联系贵公司客服！");
     return;
   }
-  window.location.href = `tel:${phone.trim()}`;
+  dialPhone(phone);
 }
