@@ -4,17 +4,22 @@ import { getApi } from "@/lib/api";
 
 const WECHAT_PAY_RESULT_NUMBER_KEY = "wechatPayResultNumber";
 const PENDING_PAY_CONTEXT_KEY = "ryx_pending_pay_context";
+export const PENDING_PAY_CONTEXT_TTL_MS = 15 * 60 * 1000;
 
 export interface PendingPayContext {
   payType: string;
   channel?: ProductChannel;
   productType?: OrderDetailProductType;
+  createdAt?: number;
 }
 
 /** Remember the selected pay channel before a whole-page /home/Pay redirect. */
 export function savePendingPayContext(context: PendingPayContext): void {
   try {
-    sessionStorage.setItem(PENDING_PAY_CONTEXT_KEY, JSON.stringify(context));
+    sessionStorage.setItem(
+      PENDING_PAY_CONTEXT_KEY,
+      JSON.stringify({ ...context, createdAt: Date.now() }),
+    );
   } catch {
     // Ignore storage restrictions in embedded WebViews.
   }
@@ -33,7 +38,20 @@ function readPendingPayContext(): PendingPayContext | null {
     const raw = sessionStorage.getItem(PENDING_PAY_CONTEXT_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as PendingPayContext;
-    if (!parsed || typeof parsed !== "object" || typeof parsed.payType !== "string") {
+    const createdAt = parsed?.createdAt;
+    if (
+      !parsed ||
+      typeof parsed !== "object" ||
+      typeof parsed.payType !== "string" ||
+      typeof createdAt !== "number" ||
+      !Number.isFinite(createdAt) ||
+      createdAt <= 0
+    ) {
+      sessionStorage.removeItem(PENDING_PAY_CONTEXT_KEY);
+      return null;
+    }
+    if (Date.now() - createdAt >= PENDING_PAY_CONTEXT_TTL_MS) {
+      sessionStorage.removeItem(PENDING_PAY_CONTEXT_KEY);
       return null;
     }
     return parsed;

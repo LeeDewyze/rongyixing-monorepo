@@ -1,1 +1,0 @@
-import{u as e}from"./routes-CGMb-5l3.js";import{E as r}from"./index-CKucLlE3.js";function u(){return e({queryKey:["member","profile"],queryFn:()=>r().member.getProfile(),staleTime:300*1e3})}export{u};

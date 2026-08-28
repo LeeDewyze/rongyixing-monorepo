@@ -111,6 +111,7 @@ export function HotelBookPage() {
   const [agreed, setAgreed] = useState(false);
   const [authorizedContacts, setAuthorizedContacts] = useState<FlightAuthorizedContact[]>([]);
   const [checkingPay, setCheckingPay] = useState(false);
+  const [isLeavingAfterSubmit, setIsLeavingAfterSubmit] = useState(false);
   const [creditCard, setCreditCard] = useState<HotelCreditCardForm>(() =>
     createEmptyHotelCreditCardForm(),
   );
@@ -302,6 +303,7 @@ export function HotelBookPage() {
   }
 
   function finishBookNavigation(orderId?: string) {
+    setIsLeavingAfterSubmit(true);
     leavingAfterSubmitRef.current = true;
     clearPassengerSelection(ProductType.Hotel);
     clearHotelBookSelection();
@@ -356,6 +358,7 @@ export function HotelBookPage() {
             productType: "Hotel",
           });
           if (shouldNavigateToPay({ travelPayType: payType, checkPayReady })) {
+            setIsLeavingAfterSubmit(true);
             leavingAfterSubmitRef.current = true;
             clearPassengerSelection(ProductType.Hotel);
             clearHotelBookSelection();
@@ -375,6 +378,14 @@ export function HotelBookPage() {
     } catch (error) {
       setAlertMessage(formatApiError(error));
     }
+  }
+
+  if (isLeavingAfterSubmit) {
+    return (
+      <div className={`${WEB_PAGE_ROOT} flex items-center justify-center bg-[#F5F6F9] text-sm text-[#666666]`}>
+        提交成功，正在进入订单详情…
+      </div>
+    );
   }
 
   if (redirecting || !selection) {

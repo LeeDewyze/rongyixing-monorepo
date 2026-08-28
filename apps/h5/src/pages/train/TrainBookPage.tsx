@@ -159,6 +159,7 @@ export function TrainBookPage() {
     field: FlightOutNumberField;
   } | null>(null);
   const [checkingPay, setCheckingPay] = useState(false);
+  const [isLeavingAfterSubmit, setIsLeavingAfterSubmit] = useState(false);
   const [submitConfirmOpen, setSubmitConfirmOpen] = useState(false);
   const [removePassengerTarget, setRemovePassengerTarget] = useState<PassengerBookInfo | null>(
     null,
@@ -513,6 +514,7 @@ export function TrainBookPage() {
     try {
       const response = await submitMutation.mutateAsync(bookDto);
       const orderId = resolveTrainBookOrderId(response);
+      setIsLeavingAfterSubmit(true);
       leavingAfterSubmitRef.current = true;
 
       if (response.IsCheckPay && response.TradeNo) {
@@ -526,6 +528,7 @@ export function TrainBookPage() {
           shouldNavigateToPay({ travelPayType: resolvedPayType, checkPayReady }) &&
           orderId
         ) {
+          setIsLeavingAfterSubmit(true);
           clearTrainBookSelection();
           clearPassengerSelection(ProductType.Train);
           if (isExchange) {
@@ -561,6 +564,14 @@ export function TrainBookPage() {
     } finally {
       setCheckingPay(false);
     }
+  }
+
+  if (isLeavingAfterSubmit) {
+    return (
+      <div className="ryx-viewport-h flex items-center justify-center bg-[#F5F6F9] text-sm text-[#666666]">
+        提交成功，正在进入订单详情…
+      </div>
+    );
   }
 
   if (!selection) return null;

@@ -158,6 +158,7 @@ export function FlightBookPage() {
   const [agentId, setAgentId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkingPay, setCheckingPay] = useState(false);
+  const [isLeavingAfterSubmit, setIsLeavingAfterSubmit] = useState(false);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [agreed, setAgreed] = useState(false);
   const [rulesOpen, setRulesOpen] = useState(false);
@@ -326,6 +327,7 @@ export function FlightBookPage() {
     path: string,
     state?: { bookedOrderId: string; product: "flight" },
   ) {
+    setIsLeavingAfterSubmit(true);
     skipEmptySelectionRedirectRef.current = true;
     markFlightBookExitToHome();
     navigate(path, { replace: true, state });
@@ -457,6 +459,15 @@ export function FlightBookPage() {
   ]);
 
   if (!selection) {
+    if (isLeavingAfterSubmit) {
+      return (
+        <div
+          className="ryx-viewport-h flex items-center justify-center bg-[#F5F6F9] text-sm text-[#666666]"
+        >
+          提交成功，正在进入订单详情…
+        </div>
+      );
+    }
     return null;
   }
 

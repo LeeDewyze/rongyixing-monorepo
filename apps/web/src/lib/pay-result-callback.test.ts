@@ -17,6 +17,7 @@ vi.mock("@/lib/api", () => ({
 import {
   bootstrapWechatPayResultCallback,
   clearPendingPayContext,
+  PENDING_PAY_CONTEXT_TTL_MS,
   savePendingPayContext,
 } from "./pay-result-callback";
 
@@ -53,13 +54,17 @@ describe("savePendingPayContext / clearPendingPayContext", () => {
   it("round-trips the pending pay context", () => {
     const storage = createStorageMock();
     vi.stubGlobal("sessionStorage", storage);
+    vi.spyOn(Date, "now").mockReturnValue(1_000_000);
     savePendingPayContext({ payType: "Wechatpay", channel: "tourist", productType: "Flight" });
-    expect(storage.setItem).toHaveBeenCalledWith(
-      "ryx_pending_pay_context",
-      JSON.stringify({ payType: "Wechatpay", channel: "tourist", productType: "Flight" }),
-    );
+    expect(JSON.parse(storage.setItem.mock.calls[0][1])).toEqual({
+      payType: "Wechatpay",
+      channel: "tourist",
+      productType: "Flight",
+      createdAt: 1_000_000,
+    });
     clearPendingPayContext();
     expect(storage.removeItem).toHaveBeenCalledWith("ryx_pending_pay_context");
+    vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
 });
@@ -67,6 +72,7 @@ describe("savePendingPayContext / clearPendingPayContext", () => {
 describe("bootstrapWechatPayResultCallback", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
     apiMocks.getApi.mockClear();
     apiMocks.process.mockReset();
   });
@@ -83,7 +89,12 @@ describe("bootstrapWechatPayResultCallback", () => {
     apiMocks.process.mockResolvedValue({ Success: true });
     storage.setItem(
       "ryx_pending_pay_context",
-      JSON.stringify({ payType: "Wechatpay", channel: "tourist", productType: "Flight" }),
+      JSON.stringify({
+        payType: "Wechatpay",
+        channel: "tourist",
+        productType: "Flight",
+        createdAt: Date.now(),
+      }),
     );
     const { replaceState } = stubBrowser(
       "https://web.ryx.com/orders?wechatPayResultNumber=PAY-1&ticket=t1",
@@ -117,7 +128,10 @@ describe("bootstrapWechatPayResultCallback", () => {
   it("keeps the marker when confirmation throws so a refresh can retry", async () => {
     const storage = createStorageMock();
     apiMocks.process.mockRejectedValue(new Error("boom"));
-    storage.setItem("ryx_pending_pay_context", JSON.stringify({ payType: "3" }));
+    storage.setItem(
+      "ryx_pending_pay_context",
+      JSON.stringify({ payType: "3", createdAt: Date.now() }),
+    );
     const { replaceState } = stubBrowser(
       "https://web.ryx.com/orders?wechatPayResultNumber=PAY-3",
       storage,
@@ -130,7 +144,10 @@ describe("bootstrapWechatPayResultCallback", () => {
   it("keeps the marker when the server reports failure", async () => {
     const storage = createStorageMock();
     apiMocks.process.mockResolvedValue({ Success: false, Message: "订单不存在" });
-    storage.setItem("ryx_pending_pay_context", JSON.stringify({ payType: "3" }));
+    storage.setItem(
+      "ryx_pending_pay_context",
+      JSON.stringify({ payType: "3", createdAt: Date.now() }),
+    );
     const { replaceState } = stubBrowser(
       "https://web.ryx.com/orders?wechatPayResultNumber=PAY-4",
       storage,
@@ -138,5 +155,23 @@ describe("bootstrapWechatPayResultCallback", () => {
     await expect(bootstrapWechatPayResultCallback()).resolves.toBe(true);
     expect(replaceState).not.toHaveBeenCalled();
     expect(storage.removeItem).not.toHaveBeenCalledWith("ryx_pending_pay_context");
+  });
+
+  it("clears a pending context after fifteen minutes", async () => {
+    const storage = createStorageMock();
+    apiMocks.process.mockResolvedValue({ Success: true });
+    storage.setItem(
+      "ryx_pending_pay_context",
+      JSON.stringify({ payType: "3", createdAt: 1_000_000 }),
+    );
+    vi.spyOn(Date, "now").mockReturnValue(1_000_000 + PENDING_PAY_CONTEXT_TTL_MS);
+    stubBrowser("https://web.ryx.com/orders?wechatPayResultNumber=PAY-5", storage);
+
+    await expect(bootstrapWechatPayResultCallback()).resolves.toBe(true);
+    expect(storage.removeItem).toHaveBeenCalledWith("ryx_pending_pay_context");
+    expect(apiMocks.process).toHaveBeenCalledWith({
+      OutTradeNo: "PAY-5",
+      Type: "3",
+    });
   });
 });
