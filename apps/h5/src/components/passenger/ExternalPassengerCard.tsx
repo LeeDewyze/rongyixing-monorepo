@@ -48,7 +48,8 @@ export function ExternalPassengerCard({
   if (!passenger.Name) return null;
 
   const cred = memberToCredential(passenger);
-  const selectable = isCredentialAllowed(cred, forType);
+  const missingCredential = !cred.Number && !cred.HideNumber;
+  const selectable = isCredentialAllowed(cred, forType) && !missingCredential;
   const checked = isSelected(selected, cred);
 
   function handleToggle(next: boolean) {
@@ -74,6 +75,11 @@ export function ExternalPassengerCard({
             {passenger.Name}
           </button>
           <PassengerMeta credential={cred} mobile={passenger.Mobile} />
+          {missingCredential ? (
+            <p className="mt-1 text-xs font-medium leading-4 text-brand-primary">
+              证件信息缺失，请完善后再进行人员选择
+            </p>
+          ) : null}
         </div>
         <div className="flex shrink-0 items-start gap-1.5">
           <PassengerCredentialActionButton

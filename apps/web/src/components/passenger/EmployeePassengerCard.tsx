@@ -82,6 +82,7 @@ function CredentialRow({
   const disabled = !credential.Number && !credential.HideNumber;
   const checked = isSelected(selected, credential);
   const title = isPrimary ? staff.Name : credentialDisplayType(credential);
+  const missingCredential = disabled;
 
   function handleToggle(next: boolean) {
     onToggle(createBookInfo(staff, credential), next);
@@ -111,6 +112,11 @@ function CredentialRow({
           mobile={isPrimary ? staff.Mobile : credential.Mobile}
           showType={isPrimary}
         />
+        {missingCredential ? (
+          <p className="mt-1 text-xs font-medium leading-4 text-brand-primary">
+            证件信息缺失，请完善后再进行人员选择
+          </p>
+        ) : null}
       </div>
       {showActions && onEdit && onRemove ? (
         <CredentialActions onEdit={onEdit} onRemove={onRemove} />
