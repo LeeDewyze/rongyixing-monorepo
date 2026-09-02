@@ -1,0 +1,1 @@
+import{q as e}from"./index-BTTJJT_F.js";function p({children:t}){return e.jsx("p",{className:"px-4 pb-2 pt-1 text-[13px] font-medium tracking-[0.04em] text-[#8A94A6]",children:t})}export{p as S};

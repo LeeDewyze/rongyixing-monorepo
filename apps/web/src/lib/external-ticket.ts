@@ -94,6 +94,10 @@ function buildInternalPath(url: URL): string {
 }
 
 function resolveTicketTargetPath(url: URL, fallbackPath: string): string {
+  const legacyPath = `${url.searchParams.get("path") ?? ""}`.trim();
+  if (legacyPath === "pay/result" || legacyPath.startsWith("pay/result?")) {
+    return `/${legacyPath}`;
+  }
   const returnTo = url.searchParams.get("returnTo");
   if (returnTo) {
     return resolveInternalReturnTo(returnTo, fallbackPath);

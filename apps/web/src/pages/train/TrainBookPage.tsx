@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { BookingSubmitTransition } from "@ryx/ui/components/booking/booking-submit-transition";
 import {
   credentialKey,
   maxPassengersForProduct,
@@ -556,9 +557,7 @@ export function TrainBookPage() {
 
   if (isLeavingAfterSubmit) {
     return (
-      <div className="ryx-viewport-h flex items-center justify-center bg-[#F5F6F9] text-sm text-[#666666]">
-        提交成功，正在进入订单详情…
-      </div>
+      <BookingSubmitTransition />
     );
   }
 

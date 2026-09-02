@@ -16,6 +16,7 @@ import {
   buildLegacyPayCreatePayload,
   buildLegacyPayProcessPayload,
   isLegacyIcbcPayType,
+  isSupportedPayType,
   normalizeOrderPayChannels,
   normalizePayTotalAmount,
   normalizePayCreateResponse,
@@ -70,14 +71,15 @@ export function createPayApi(proxy: ProxyClient): PayApi {
       return normalizeOrderPayChannels(result);
     },
     async create(params) {
+      if (!isSupportedPayType(params.PayType)) {
+        throw new Error("暂不支持该支付方式");
+      }
       const result = await proxy.send<unknown>({
         method: isTouristHotelPay(params)
           ? TOURIST_HOTEL_FLOW_METHODS.PAY_CREATE
           : orderPayMethods(params).PAY_CREATE,
         version:
-          isLegacyIcbcPayType(params.PayType) || params.CreateType === "JsSdk"
-            ? "2.0"
-            : undefined,
+          isLegacyIcbcPayType(params.PayType) || params.CreateType === "JsSdk" ? "2.0" : undefined,
         data: buildLegacyPayCreatePayload({
           orderId: params.OrderId,
           payType: params.PayType,
@@ -87,6 +89,10 @@ export function createPayApi(proxy: ProxyClient): PayApi {
           openId: params.OpenId,
           wechatAppId: params.WechatAppId,
         }),
+        requestFields: {
+          ...(params.TmcId ? { TmcId: params.TmcId } : {}),
+          ...(params.MmsId ? { MmsId: params.MmsId } : {}),
+        },
         ...(params.IsShowLoading ? { isShowLoading: true } : {}),
       });
       return normalizePayCreateResponse(result);

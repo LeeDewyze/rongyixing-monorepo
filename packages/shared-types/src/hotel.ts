@@ -588,6 +588,8 @@ export interface PayCreateParams {
   DataType?: string;
   OpenId?: string;
   WechatAppId?: string;
+  TmcId?: string;
+  MmsId?: string;
   IsShowLoading?: boolean;
 }
 

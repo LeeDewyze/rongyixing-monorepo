@@ -85,6 +85,7 @@ const WebOrderHotelDetailPage = lazyPage(
   "WebOrderHotelDetailPage",
 );
 const WebOrderPayPage = lazyPage(() => import("@/pages/order/WebOrderPayPage"), "WebOrderPayPage");
+const PayResultPage = lazyPage(() => import("@/pages/order/PayResultPage"), "PayResultPage");
 const FlightListPage = lazyPage(() => import("@/pages/flight/FlightListPage"), "FlightListPage");
 const FlightCabinsPage = lazyPage(
   () => import("@/pages/flight/FlightCabinsPage"),
@@ -189,6 +190,7 @@ export const router = createBrowserRouter(
                 { path: "hotel/:orderId/pay", element: <WebOrderPayPage productType="Hotel" /> },
               ],
             },
+            { path: "pay/result", element: <PayResultPage /> },
             { path: "mine", element: <WebProfilePage /> },
             {
               path: "profile",

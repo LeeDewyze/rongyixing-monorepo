@@ -22,10 +22,7 @@ import {
 } from "@/lib/order-pay";
 import { getApi } from "@/lib/api";
 import { getApiMode, getAppId, getLegacyAppBaseUrl, getWechatAppId } from "@/lib/env";
-import {
-  clearPendingPayContext,
-  savePendingPayContext,
-} from "@/lib/pay-result-callback";
+import { clearPendingPayContext, savePendingPayContext } from "@/lib/pay-result-callback";
 import { getRequestDomain, getRequestLanguage, getTicketName } from "@/lib/request-context";
 import { getTicket } from "@/lib/session";
 import { resolveTouristContext } from "@/lib/tourist-context";
@@ -37,6 +34,7 @@ export interface OrderPayPageProps {
   orderId: string;
   successPath: string;
   productType: OrderDetailProductType;
+  channel?: "tmc" | "tourist";
   subtitle?: string;
   /** If set, overrides the API-derived amount — for testing. */
   amountOverride?: number;
@@ -80,6 +78,7 @@ export function OrderPayPage({
   orderId,
   successPath,
   productType,
+  channel: channelProp,
   subtitle,
   amountOverride,
 }: OrderPayPageProps) {
@@ -88,11 +87,12 @@ export function OrderPayPage({
   const headerRef = useRef<HTMLDivElement>(null);
   const [headerHeight, setHeaderHeight] = useState(ORDER_PAY_HEADER_FALLBACK_HEIGHT);
   const channel: ProductChannel | undefined =
-    searchParams.get("channel") === "tourist"
+    channelProp ??
+    (searchParams.get("channel") === "tourist"
       ? "tourist"
       : searchParams.get("channel") === "tmc"
         ? "tmc"
-        : undefined;
+        : undefined);
   const { data: order } = useOrderDetail(orderId, 0, channel);
   const { data: payTotal, isLoading: totalLoading } = usePayTotalAmount(orderId, {
     channel,
@@ -182,7 +182,7 @@ export function OrderPayPage({
         const failureMessage = resolvePayFailureMessage(created);
         if (failureMessage) throw new Error(failureMessage);
         await payWithWechatJsSdk(created);
-        const outTradeNo = resolvePayCreateOutTradeNo(created);
+        const outTradeNo = resolvePayCreateOutTradeNo(created, { channel, payType: selected });
         if (!outTradeNo) throw new Error("微信支付未返回支付订单号");
         await payProcess.mutateAsync({
           OutTradeNo: outTradeNo,
@@ -212,7 +212,7 @@ export function OrderPayPage({
         appId: getAppId(),
         sender: api.proxy,
       });
-      savePendingPayContext({ payType: selected, channel, productType });
+      savePendingPayContext({ orderId, payType: selected, channel, productType });
       window.location.assign(
         buildLegacyH5PayUrl({
           appBaseUrl: getLegacyAppBaseUrl(),
@@ -226,14 +226,16 @@ export function OrderPayPage({
           tmcId: context.TouristTmcId,
           mmsId: context.TouristMmsId,
           openid,
+          returnPath: `pay/result?orderId=${encodeURIComponent(orderId)}&channel=${encodeURIComponent(channel ?? "")}&productType=${encodeURIComponent(productType)}`,
         }),
       );
       return;
     }
-    savePendingPayContext({ payType: selected, channel, productType });
+    savePendingPayContext({ orderId, payType: selected, channel, productType });
     const result = await executeOrderPayFlow({
       orderId,
       payType: selected,
+      channel,
       createPay: (params) =>
         payCreate.mutateAsync({ ...params, channel, ProductType: productType }),
       processPay: (params) =>

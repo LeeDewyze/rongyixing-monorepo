@@ -83,7 +83,11 @@ function readExternalTicket(url: URL): string {
   );
 }
 
-export function resolveTicketEntryTargetPath(_url: URL): string {
+export function resolveTicketEntryTargetPath(url: URL): string {
+  const path = `${url.searchParams.get("path") ?? ""}`.trim();
+  if (path === "pay/result" || path.startsWith("pay/result?")) {
+    return `/${path}`;
+  }
   return TICKET_ENTRY_HOME_PATH;
 }
 

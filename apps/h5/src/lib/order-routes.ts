@@ -53,6 +53,8 @@ export function getOrderListPath(
   return `/home/orders?${params.toString()}`;
 }
 
-export function getOrderResultPath(productType: "Flight" | "Hotel", orderId: string): string {
-  return productType === "Flight" ? `/flight/result/${orderId}` : `/hotel/result/${orderId}`;
+export function getOrderResultPath(productType: "Flight" | "Train" | "Hotel", orderId: string): string {
+  if (productType === "Flight") return `/flight/result/${orderId}`;
+  if (productType === "Hotel") return `/hotel/result/${orderId}`;
+  return `/orders/train/${orderId}`;
 }

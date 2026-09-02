@@ -355,6 +355,7 @@ Before creating any new dialog, sheet, toast, or modal-like surface, first check
 
 ## Components
 
+- `BookingSubmitTransition` (`packages/ui/src/components/booking/booking-submit-transition.tsx`) - shared H5/Web booking handoff state with RYX blue gradient and accessible loading status.
 - `apps/h5/src/components/H5Shell.tsx` - base H5 shell with page background and scroll container.
 - `apps/h5/src/components/ConfirmDialog.tsx` - shared confirmation modal with compact icon/title header and left-aligned body copy.
 - `apps/h5/src/components/passenger/PassengerSelectAlertDialog.tsx` - shared one-action blocking prompt for passenger selection, booking validation, and backend business messages.

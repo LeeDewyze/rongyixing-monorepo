@@ -40,7 +40,13 @@ export function resolveCheckoutSuccessMessage(input: {
   return "您的订单正在预订，稍后请至订单列表查询";
 }
 
-export function resolvePayCreateOutTradeNo(response: PayCreateResponse): string | undefined {
+export function resolvePayCreateOutTradeNo(
+  response: PayCreateResponse,
+  options: { channel?: string; payType?: string } = {},
+): string | undefined {
+  if (options.channel === "tourist" && resolveLegacyH5PayType(options.payType ?? "") === "2") {
+    return response.Number ?? response.OutTradeNo ?? response.PayOrderId;
+  }
   return response.OutTradeNo ?? response.PayOrderId ?? response.Number;
 }
 
@@ -87,6 +93,7 @@ export function buildLegacyH5PayUrl(input: {
   openid?: string;
   wechatAppId?: string;
   createType?: "Mobile" | "JsSdk";
+  returnPath?: string;
 }): string {
   const type = resolveLegacyH5PayType(input.payType);
   if (!type) {
@@ -119,7 +126,7 @@ export function buildLegacyH5PayUrl(input: {
 
   const params = new URLSearchParams();
   params.set(ticketName, input.ticket);
-  params.set("path", input.path ?? "");
+  params.set("path", input.returnPath ?? input.path ?? "");
   params.set("openid", input.openid ?? "");
 
   for (const [key, value] of Object.entries(req)) {
@@ -139,6 +146,7 @@ export function buildLegacyH5PayUrl(input: {
 export async function executeOrderPayFlow(input: {
   orderId: string;
   payType: string;
+  channel?: string;
   createPay: (params: { OrderId: string; PayType: string }) => Promise<PayCreateResponse>;
   processPay: (params: {
     OutTradeNo: string;
@@ -160,7 +168,7 @@ export async function executeOrderPayFlow(input: {
     return { redirected: true, processed: false };
   }
 
-  const outTradeNo = resolvePayCreateOutTradeNo(createResult);
+  const outTradeNo = resolvePayCreateOutTradeNo(createResult, input);
   if (!outTradeNo) {
     return { redirected: false, processed: false, message: "支付已提交，请稍后在订单中查看状态" };
   }

@@ -1,1 +1,0 @@
-import{u as e}from"./routes-DZHhBIq0.js";import{E as r}from"./index-CeohBtVx.js";function u(){return e({queryKey:["member","profile"],queryFn:()=>r().member.getProfile(),staleTime:300*1e3})}export{u};

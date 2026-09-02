@@ -7,6 +7,7 @@ const PENDING_PAY_CONTEXT_KEY = "ryx_pending_pay_context";
 export const PENDING_PAY_CONTEXT_TTL_MS = 15 * 60 * 1000;
 
 export interface PendingPayContext {
+  orderId?: string;
   payType: string;
   channel?: ProductChannel;
   productType?: OrderDetailProductType;
@@ -33,7 +34,7 @@ export function clearPendingPayContext(): void {
   }
 }
 
-function readPendingPayContext(): PendingPayContext | null {
+export function readPendingPayContext(): PendingPayContext | null {
   try {
     const raw = sessionStorage.getItem(PENDING_PAY_CONTEXT_KEY);
     if (!raw) return null;

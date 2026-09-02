@@ -102,6 +102,7 @@ export function WebOrderPayPage({ productType }: WebOrderPayPageProps) {
           sender: api.proxy,
         });
         savePendingPayContext({
+          orderId,
           payType: selected,
           channel,
           productType,
@@ -119,13 +120,16 @@ export function WebOrderPayPage({ productType }: WebOrderPayPageProps) {
             tmcId: context.TouristTmcId,
             mmsId: context.TouristMmsId,
             createType: "Mobile",
+            returnPath: `pay/result?orderId=${encodeURIComponent(orderId)}&channel=${encodeURIComponent(channel ?? "")}&productType=${encodeURIComponent(productType)}`,
           }),
         );
         return;
       }
+      savePendingPayContext({ orderId, payType: selected, channel, productType });
       const result = await executeOrderPayFlow({
         orderId,
         payType: selected,
+        channel,
         createPay: (params) =>
           payCreate.mutateAsync({ ...params, channel, ProductType: productType }),
         processPay: (params) =>

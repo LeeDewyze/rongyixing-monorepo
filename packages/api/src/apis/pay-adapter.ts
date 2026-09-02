@@ -1,8 +1,4 @@
-import type {
-  OrderPayChannel,
-  PayCreateResponse,
-  PayTotalAmountResponse,
-} from "@ryx/shared-types";
+import type { OrderPayChannel, PayCreateResponse, PayTotalAmountResponse } from "@ryx/shared-types";
 
 /** Legacy PaylineType used by H5 personal pay: 2=支付宝, 3=微信, 7=工行。 */
 export function resolveLegacyPayType(payType: string): string {
@@ -18,16 +14,20 @@ export function isLegacyIcbcPayType(payType: string): boolean {
   return resolveLegacyPayType(payType) === "7";
 }
 
+const SUPPORTED_PAY_TYPES = new Set(["2", "3", "7"]);
+
+export function isSupportedPayType(payType: string): boolean {
+  return SUPPORTED_PAY_TYPES.has(resolveLegacyPayType(payType));
+}
+
 export function normalizeOrderPayChannels(raw: unknown): OrderPayChannel[] {
   if (Array.isArray(raw)) {
     return raw.flatMap((item) => {
       if (!item || typeof item !== "object") return [];
       const channel = item as Record<string, unknown>;
       const payType = String(channel.PayType ?? channel.value ?? channel.Type ?? "");
-      const payTypeName = String(
-        channel.PayTypeName ?? channel.label ?? channel.Name ?? payType,
-      );
-      if (!payType) return [];
+      const payTypeName = String(channel.PayTypeName ?? channel.label ?? channel.Name ?? payType);
+      if (!payType || !isSupportedPayType(payType)) return [];
       const normalized: OrderPayChannel = {
         PayType: payType,
         PayTypeName: payTypeName,
@@ -40,10 +40,9 @@ export function normalizeOrderPayChannels(raw: unknown): OrderPayChannel[] {
   }
 
   if (raw && typeof raw === "object") {
-    return Object.entries(raw as Record<string, string>).map(([payType, payTypeName]) => ({
-      PayType: payType,
-      PayTypeName: payTypeName,
-    }));
+    return Object.entries(raw as Record<string, string>)
+      .filter(([payType]) => isSupportedPayType(payType))
+      .map(([payType, payTypeName]) => ({ PayType: payType, PayTypeName: payTypeName }));
   }
 
   return [];
@@ -77,22 +76,19 @@ export function normalizePayTotalAmount(raw: unknown): PayTotalAmountResponse {
     return { TotalPayAmount: 0 };
   }
   const data = raw as Record<string, unknown>;
-  const totalPayAmount = readAmountByAliases(data, [
-    "TotalPayAmount",
-    "PayAmount",
-    "TotalAmount",
-    "Amount",
-    "PayMoney",
-    "OrderAmount",
-    "NeedPayAmount",
-    "ActualAmount",
-    "PaymentAmount",
-  ]) ?? 0;
-  const payHoldTime = readAmountByAliases(data, [
-    "PayHoldTime",
-    "OrderPayHoldTime",
-    "HoldMinute",
-  ]);
+  const totalPayAmount =
+    readAmountByAliases(data, [
+      "TotalPayAmount",
+      "PayAmount",
+      "TotalAmount",
+      "Amount",
+      "PayMoney",
+      "OrderAmount",
+      "NeedPayAmount",
+      "ActualAmount",
+      "PaymentAmount",
+    ]) ?? 0;
+  const payHoldTime = readAmountByAliases(data, ["PayHoldTime", "OrderPayHoldTime", "HoldMinute"]);
   return {
     ...(data as unknown as Partial<PayTotalAmountResponse>),
     TotalPayAmount: totalPayAmount,
@@ -109,6 +105,9 @@ export function buildLegacyPayCreatePayload(input: {
   openId?: string;
   wechatAppId?: string;
 }): Record<string, unknown> {
+  if (!isSupportedPayType(input.payType)) {
+    throw new Error("暂不支持该支付方式");
+  }
   if (isLegacyIcbcPayType(input.payType)) {
     return {
       Channel: "App",
@@ -124,7 +123,9 @@ export function buildLegacyPayCreatePayload(input: {
     OrderId: input.orderId,
     IsApp: false,
     CreateType: input.createType ?? "Mobile",
-    DataType: input.dataType ?? "json",
+    ...(input.dataType || input.createType === "JsSdk"
+      ? { DataType: input.dataType ?? "json" }
+      : {}),
     ...(input.key ? { Key: input.key } : {}),
     ...(input.openId ? { OpenId: input.openId } : {}),
     ...(input.wechatAppId ? { WechatAppId: input.wechatAppId } : {}),
@@ -157,6 +158,9 @@ export function buildLegacyPayProcessPayload(input: {
   outTradeNo: string;
   payType: string;
 }): Record<string, unknown> {
+  if (!isSupportedPayType(input.payType)) {
+    throw new Error("暂不支持该支付方式");
+  }
   return {
     OutTradeNo: input.outTradeNo,
     Type: resolveLegacyPayType(input.payType),

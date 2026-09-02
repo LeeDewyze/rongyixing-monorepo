@@ -1,4 +1,5 @@
 import { getAppBaseDomain } from "@/lib/env";
+import { getTmcId } from "@/lib/session";
 
 const DEVICE_ID_KEY = "ryx_device_id";
 
@@ -23,6 +24,7 @@ export function getApiRoot(): string {
   if (fromEnv) {
     return fromEnv;
   }
+
   const fromQuery = readQueryParams().get("root");
   if (fromQuery) {
     return fromQuery;
@@ -94,6 +96,15 @@ export function getRequestExtraFields(): Record<string, string> {
       }
     }
   }
+
+  const tmcId = extras.tmcid ?? extras.tmcId ?? getTmcId() ?? undefined;
+  const mmsId = extras.mmsid ?? extras.mmsId;
+  delete extras.tmcid;
+  delete extras.tmcId;
+  delete extras.mmsid;
+  delete extras.mmsId;
+  if (tmcId && !extras.TmcId) extras.TmcId = tmcId;
+  if (mmsId && !extras.MmsId) extras.MmsId = mmsId;
 
   if (!extras.root) {
     extras.root = getApiRoot();

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  isSupportedPayType,
   buildLegacyPayCreatePayload,
   buildLegacyPayProcessPayload,
   normalizeOrderPayChannels,
@@ -32,9 +33,9 @@ describe("normalizeOrderPayChannels", () => {
   });
 
   it("keeps array response", () => {
-    expect(
-      normalizeOrderPayChannels([{ PayType: "Wechat", PayTypeName: "微信支付" }]),
-    ).toEqual([{ PayType: "Wechat", PayTypeName: "微信支付", Icon: undefined }]);
+    expect(normalizeOrderPayChannels([{ PayType: "Wechat", PayTypeName: "微信支付" }])).toEqual([
+      { PayType: "Wechat", PayTypeName: "微信支付", Icon: undefined },
+    ]);
   });
 });
 
@@ -52,6 +53,16 @@ describe("resolveLegacyPayType", () => {
   });
 });
 
+describe("supported payment channels", () => {
+  it("only supports Alipay, WeChat, and ICBC", () => {
+    expect(isSupportedPayType("Alipay")).toBe(true);
+    expect(isSupportedPayType("Wechatpay")).toBe(true);
+    expect(isSupportedPayType("Icbcpay")).toBe(true);
+    expect(isSupportedPayType("GatPay")).toBe(false);
+    expect(isSupportedPayType("QuickExpress")).toBe(false);
+  });
+});
+
 describe("buildLegacyPayCreatePayload", () => {
   it("uses mobile H5 create params for WeChat", () => {
     expect(buildLegacyPayCreatePayload({ orderId: "ORD-1", payType: "wechat" })).toEqual({
@@ -60,7 +71,6 @@ describe("buildLegacyPayCreatePayload", () => {
       OrderId: "ORD-1",
       IsApp: false,
       CreateType: "Mobile",
-      DataType: "json",
     });
   });
 
@@ -117,9 +127,7 @@ describe("normalizePayCreateResponse", () => {
 
 describe("buildLegacyPayProcessPayload", () => {
   it("builds process payload", () => {
-    expect(
-      buildLegacyPayProcessPayload({ outTradeNo: "PAY-001", payType: "ali" }),
-    ).toEqual({
+    expect(buildLegacyPayProcessPayload({ outTradeNo: "PAY-001", payType: "ali" })).toEqual({
       OutTradeNo: "PAY-001",
       Type: "2",
     });

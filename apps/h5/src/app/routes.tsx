@@ -40,6 +40,7 @@ const OrderTrainDetailPage = lazyPage(
   "OrderTrainDetailPage",
 );
 const OrderListPage = lazyPage(() => import("@/pages/order/OrderListPage"), "OrderListPage");
+const PayResultPage = lazyPage(() => import("@/pages/order/PayResultPage"), "PayResultPage");
 const HotelBookPage = lazyPage(() => import("@/pages/hotel/HotelBookPage"), "HotelBookPage");
 const HotelDetailPage = lazyPage(() => import("@/pages/hotel/HotelDetailPage"), "HotelDetailPage");
 const HotelListPage = lazyPage(() => import("@/pages/hotel/HotelListPage"), "HotelListPage");
@@ -195,6 +196,7 @@ export const router = createBrowserRouter(
             { path: "train/:orderId", element: <OrderTrainDetailPage /> },
           ],
         },
+        { path: "/pay/result", element: <PayResultPage /> },
         {
           path: "/flight/select-city",
           element: <FlightSelectCityPage />,
