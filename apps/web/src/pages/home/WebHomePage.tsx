@@ -34,6 +34,7 @@ import { loadHomeTravelMode, saveHomeTravelMode } from "@/lib/flight-travel-mode
 import { clearPassengerSelection } from "@/lib/passenger-selection";
 import { displayHotelCity, hotelCityPickerAdapter } from "@/lib/hotel-search";
 import { trainStationPickerAdapter } from "@/lib/train-search";
+import { preloadHomeRouteChunks } from "@/lib/route-preload";
 
 function SearchPanelError({ error }: { error: unknown }) {
   return <p className="text-center text-sm text-destructive">{formatApiError(error)}</p>;
@@ -66,6 +67,11 @@ export function WebHomePage() {
     staleTime: 5 * 60 * 1000,
     retry: false,
   });
+
+  useEffect(() => {
+    if (showProductsLoading || !visibleProducts.includes(activeProduct)) return;
+    preloadHomeRouteChunks(activeProduct);
+  }, [activeProduct, showProductsLoading, visibleProducts]);
 
   useEffect(() => {
     setActiveProduct(parseHomeProduct(searchParams));

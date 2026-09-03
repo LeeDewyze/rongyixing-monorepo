@@ -34,6 +34,7 @@ import { resolveHotelCityByLocation } from "@/lib/geolocation";
 import { saveHomeTravelMode } from "@/lib/flight-travel-mode";
 import { clearPassengerSelection } from "@/lib/passenger-selection";
 import { trainStationPickerAdapter } from "@/lib/train-search";
+import { preloadHomeRouteChunks } from "@/lib/route-preload";
 
 function HomeSearchPanelError({ error }: { error: unknown }) {
   return (
@@ -74,6 +75,11 @@ export function HomeTabPage() {
   useEffect(() => {
     saveHomeTravelMode("business");
   }, []);
+
+  useEffect(() => {
+    if (showProductsLoading || !visibleProducts.includes(activeProduct)) return;
+    preloadHomeRouteChunks(activeProduct);
+  }, [activeProduct, showProductsLoading, visibleProducts]);
 
   useEffect(() => {
     setActiveProduct(parseHomeProduct(searchParams));
