@@ -193,7 +193,7 @@ export function buildFlightInitBookDto(input: {
   channel?: "tmc" | "tourist";
 }): FlightOrderBookDto {
   const { selection, passengers, travelFormId, agentId, travelMode, channel } = input;
-  const includeTravelForm = isBusinessTravelMode(travelMode);
+  const includeTravelForm = isBusinessTravelMode(travelMode) && !selection.isExchange;
   const policy = selection.flightPolicy;
   const flightCabin = prepareInitFlightCabinDto({
     flightPolicy: policy,
@@ -313,7 +313,7 @@ export function buildFlightOrderBookDto(input: {
   const policiesByPassenger = flightPoliciesByPassenger ?? selection.flightPoliciesByPassengerId;
   const detailSnapshot = selection.detailSnapshot;
   const resolvedTravelType = travelType ?? resolveFlightTravelType(travelMode);
-  const includeTravelForm = isBusinessTravelMode(travelMode);
+  const includeTravelForm = isBusinessTravelMode(travelMode) && !selection.isExchange;
   const normalizedOrderLinkman = normalizeFlightOrderLinkman(orderLinkman);
   const sharedTravelNumber = includeTravelForm
     ? (travelNumber ?? passengers.map(resolvePassengerTravelNumber).find(Boolean))

@@ -79,6 +79,18 @@ describe("buildTrainInitBookDto", () => {
     expect(dto.Passengers[0]?.travelFormId).toBeUndefined();
   });
 
+  it("omits initialize travel form fields in business exchange mode", () => {
+    const dto = buildTrainInitBookDto({
+      selection: { ...selection, isExchange: true },
+      passengers: passengers as never,
+      travelMode: "business",
+      travelFormId: "tf-001",
+      ticketId: "207600000001",
+    });
+    expect(dto.TravelFormId).toBeUndefined();
+    expect(dto.Passengers[0]?.travelFormId).toBeUndefined();
+  });
+
   it("can initialize personal train booking with train-only passenger before traveler selection", () => {
     const dto = buildTrainInitBookDto({
       selection,
@@ -264,6 +276,25 @@ describe("buildTrainOrderBookDto seat preferences", () => {
     expect(dto.TravelFormId).toBeUndefined();
     expect(dto.Passengers[0]?.travelFormId).toBeUndefined();
     expect(dto.Passengers[0]?.TravelType).toBe(2);
+  });
+
+  it("omits travel form fields in business exchange mode", () => {
+    const dto = buildTrainOrderBookDto({
+      selection,
+      passengers: passengers as never,
+      travelMode: "business",
+      travelFormId: "tf-001",
+      isExchangeBook: true,
+      exchangeTicketId: "207600000001",
+    });
+    const passenger = dto.Passengers[0];
+    expect(dto.TravelFormId).toBeUndefined();
+    expect(passenger?.travelFormId).toBeUndefined();
+    expect(passenger?.ExpenseType).toBeUndefined();
+    expect(passenger?.ApprovalId).toBeUndefined();
+    expect(passenger?.CostCenterCode).toBeUndefined();
+    expect(passenger?.OrganizationName).toBeUndefined();
+    expect(passenger?.OutNumbers).toBeNull();
   });
 
   it("adds manual order linkman for personal train booking", () => {

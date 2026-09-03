@@ -321,7 +321,7 @@ export function buildTrainInitBookDto(input: {
     includeTrainOnlyPassenger,
     ticketId,
   } = input;
-  const includeTravelForm = isBusinessTravelMode(travelMode);
+  const includeTravelForm = isBusinessTravelMode(travelMode) && !selection.isExchange && !ticketId;
   const trainEntity = buildTrainBookEntity(selection);
 
   const passengerDtos: TrainBookPassengerDto[] = passengers.map((info) => {
@@ -409,7 +409,7 @@ export function buildTrainOrderBookDto(input: {
     init,
     isExchangeBook,
   } = input;
-  const includeTravelForm = isBusinessTravelMode(travelMode);
+  const includeTravelForm = isBusinessTravelMode(travelMode) && !isExchangeBook;
   const policy = selection.policy;
   const normalizedOrderLinkman = normalizeOrderLinkman(orderLinkman);
 
@@ -616,14 +616,21 @@ export function validateTrainBookForms(input: {
       }
     }
 
-    if (requireIllegalReason && !form.illegalReason?.trim() && !form.otherIllegalReason?.trim()) {
+    if (
+      !isExchangeBook &&
+      requireIllegalReason &&
+      !form.illegalReason?.trim() &&
+      !form.otherIllegalReason?.trim()
+    ) {
       return "请填写超标原因";
     }
-    const outError = validatePassengerOutNumbers(
-      outNumberFieldsByPassenger[passenger.id] ?? [],
-      form.outNumbers,
-    );
-    if (outError) return outError;
+    if (!isExchangeBook) {
+      const outError = validatePassengerOutNumbers(
+        outNumberFieldsByPassenger[passenger.id] ?? [],
+        form.outNumbers,
+      );
+      if (outError) return outError;
+    }
   }
 
   if (requireOrderLinkman) {
@@ -633,7 +640,7 @@ export function validateTrainBookForms(input: {
     for (const item of splitTrainContactMobiles(normalizedLinkman?.Mobile ?? "")) {
       if (passengerMobileOwners.has(item)) return "联系人手机号不能与乘车人联系电话重复";
     }
-  } else {
+  } else if (!isExchangeBook) {
     const contactError = validateAuthorizedContacts(authorizedContacts);
     if (contactError) return contactError;
   }

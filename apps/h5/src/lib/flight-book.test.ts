@@ -640,6 +640,32 @@ describe("buildFlightOrderBookDto", () => {
     expect(dto.Passengers[0]?.travelNumber).toBeUndefined();
   });
 
+  it("omits initialize travel form fields in business exchange mode", () => {
+    const dto = buildFlightInitBookDto({
+      selection: { ...selection, isExchange: true, exchangeTicketId: "FL-TICKET-1" },
+      passengers,
+      travelMode: "business",
+      travelFormId: "tf-001",
+    });
+    expect(dto.TravelFormId).toBeUndefined();
+    expect(dto.Passengers[0]?.travelFormId).toBeUndefined();
+    expect(dto.Passengers[0]?.travelNumber).toBeUndefined();
+  });
+
+  it("omits order travel form fields in business exchange mode", () => {
+    const dto = buildFlightOrderBookDto({
+      selection: { ...selection, isExchange: true, exchangeTicketId: "FL-TICKET-1" },
+      passengers,
+      travelMode: "business",
+      travelFormId: "tf-001",
+      travelNumber: "TN-001",
+    });
+    expect(dto.TravelFormId).toBeUndefined();
+    expect(dto.Passengers[0]?.travelFormId).toBeUndefined();
+    expect(dto.Passengers[0]?.travelNumber).toBeUndefined();
+    expect(dto.Passengers[0]?.OutNumbers).toBeNull();
+  });
+
   it("aligns legacy empty card/ticket fields and explicit illegal strings", () => {
     const dto = buildFlightOrderBookDto({ selection, passengers });
     const passenger = dto.Passengers[0];

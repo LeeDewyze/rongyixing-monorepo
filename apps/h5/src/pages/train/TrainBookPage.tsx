@@ -399,7 +399,7 @@ export function TrainBookPage() {
     [initBook.data?.ExpenseTypes],
   );
 
-  const requiresIllegalReason = Boolean(selection?.policy?.Rules?.length);
+  const requiresIllegalReason = !isExchangeBook && Boolean(selection?.policy?.Rules?.length);
   const showPayTypes = isBusinessMode && !isExchangeBook;
   const isInitBlocking = initBook.isFetching && !initBook.data;
   const isSubmitDisabled =
