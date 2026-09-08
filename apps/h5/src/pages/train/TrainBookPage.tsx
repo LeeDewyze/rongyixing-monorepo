@@ -658,11 +658,6 @@ export function TrainBookPage() {
   }
 
   if (isLeavingAfterSubmit) {
-    logTrainBook("render-transition", {
-      path: window.location.pathname,
-      redirecting,
-      checkingPay,
-    });
     return (
       <BookingSubmitTransition />
     );
