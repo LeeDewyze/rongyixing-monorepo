@@ -106,6 +106,7 @@ import {
 const FALLBACK_HEADER_HEIGHT = 56;
 const TRAIN_PASSENGER_LIMIT = maxPassengersForProduct(ProductType.Train);
 const TRAIN_BOOK_PAGE_BACKGROUND = { background: "var(--brand-form-header-gradient)" };
+const TRAIN_BOOK_LOG_PREFIX = "[ryx][train-book]";
 
 export function TrainBookPage() {
   const navigate = useNavigate();
@@ -168,7 +169,26 @@ export function TrainBookPage() {
   /** Skip guard redirect when leaving after a successful submit. */
   const leavingAfterSubmitRef = useRef(false);
 
+  function logTrainBook(step: string, payload?: Record<string, unknown>) {
+    if (payload) {
+      console.log(`${TRAIN_BOOK_LOG_PREFIX} ${step}`, payload);
+      return;
+    }
+    console.log(`${TRAIN_BOOK_LOG_PREFIX} ${step}`);
+  }
+
   usePageHeader({ visible: false });
+
+  useEffect(() => {
+    logTrainBook("mount", {
+      path: window.location.pathname,
+      selectionLoaded: Boolean(selection),
+      isBusinessMode,
+      isExchangeBook,
+      travelPayType,
+      exchangeTicketId,
+    });
+  }, []);
 
   useEffect(() => {
     function syncExchangeSession() {
@@ -180,12 +200,20 @@ export function TrainBookPage() {
 
   useEffect(() => {
     if (!exchangeTicketId || selection?.isExchange || !selection) return;
+    logTrainBook("sync-exchange-selection", {
+      exchangeTicketId,
+      selectionLoaded: Boolean(selection),
+    });
     saveTrainBookSelection({ ...selection, isExchange: true });
   }, [exchangeTicketId, selection]);
 
   useEffect(() => {
     if (leavingAfterSubmitRef.current) return;
     if (!selection && !redirecting) {
+      logTrainBook("missing-selection-redirect", {
+        path: window.location.pathname,
+        redirecting,
+      });
       setRedirecting(true);
       navigate("/home?product=train", { replace: true });
     }
@@ -212,6 +240,12 @@ export function TrainBookPage() {
     target: string,
     state?: { bookedOrderId: string; product: "train" },
   ) {
+    logTrainBook("finish-navigation-start", {
+      target,
+      state,
+      exchangeTicketId,
+      currentPath: window.location.pathname,
+    });
     setIsLeavingAfterSubmit(true);
     leavingAfterSubmitRef.current = true;
     navigate(target, { replace: true, state });
@@ -220,6 +254,10 @@ export function TrainBookPage() {
     if (exchangeSession?.ticketId) {
       clearTrainExchangeSession();
     }
+    logTrainBook("finish-navigation-cleared", {
+      target,
+      currentPath: window.location.pathname,
+    });
   }
 
   useEffect(() => {
@@ -501,6 +539,15 @@ export function TrainBookPage() {
 
   async function executeSubmit() {
     if (!selection) return;
+    logTrainBook("submit-click", {
+      selectedPassengers: bookPassengers.length,
+      travelMode,
+      productChannel,
+      isBusinessMode,
+      isExchangeBook,
+      resolvedPayType,
+      exchangeTicketId,
+    });
     const touristAgentId =
       productChannel === "tourist" ? initBook.data?.TmcServices?.[0]?.Id : undefined;
 
@@ -527,22 +574,51 @@ export function TrainBookPage() {
     const submitMutation = isExchange ? submitExchangeBook : submitBook;
 
     try {
+      logTrainBook("submit-request-start", {
+        passengerCount: bookPassengers.length,
+        resolvedPayType,
+        touristAgentId,
+        exchangeTicketId,
+      });
       const response = await submitMutation.mutateAsync(bookDto);
       const orderId = resolveTrainBookOrderId(response);
+      logTrainBook("submit-response", {
+        orderId,
+        tradeNo: response.TradeNo,
+        isCheckPay: response.IsCheckPay,
+        hasTasks: response.HasTasks,
+        responseKeys: Object.keys(response ?? {}),
+      });
       setIsLeavingAfterSubmit(true);
       leavingAfterSubmitRef.current = true;
 
       if (response.IsCheckPay && response.TradeNo) {
         setCheckingPay(true);
+        logTrainBook("check-pay-start", {
+          tradeNo: response.TradeNo,
+          orderId,
+          productChannel,
+          resolvedPayType,
+        });
         const checkPayReady = await pollTrainCheckPay(response.TradeNo, {
           channel: productChannel,
           productType: "Train",
+        });
+        logTrainBook("check-pay-result", {
+          tradeNo: response.TradeNo,
+          checkPayReady,
+          orderId,
+          resolvedPayType,
         });
         if (
           productChannel !== "tourist" &&
           shouldNavigateToPay({ travelPayType: resolvedPayType, checkPayReady }) &&
           orderId
         ) {
+          logTrainBook("navigate-pay", {
+            orderId,
+            productChannel,
+          });
           finishBookNavigation(`/train/pay/${encodeURIComponent(orderId)}`);
           return;
         }
@@ -553,6 +629,11 @@ export function TrainBookPage() {
           productChannel === "tourist"
             ? `/orders/train/${encodeURIComponent(orderId)}?channel=tourist`
             : `/orders/train/${encodeURIComponent(orderId)}`;
+        logTrainBook("navigate-detail", {
+          orderId,
+          detailPath,
+          productChannel,
+        });
         finishBookNavigation(detailPath, {
           bookedOrderId: orderId,
           product: "train",
@@ -560,15 +641,28 @@ export function TrainBookPage() {
         return;
       }
 
+      logTrainBook("navigate-list-fallback", {
+        productChannel,
+        orderId,
+      });
       finishBookNavigation(`/home/orders?tab=${TAB_ID_TO_PARAM.train}`);
     } catch (error) {
+      console.log(`${TRAIN_BOOK_LOG_PREFIX} submit-error`, error);
       setAlertMessage(formatApiError(error, "train"));
     } finally {
+      logTrainBook("submit-finished", {
+        checkingPay,
+      });
       setCheckingPay(false);
     }
   }
 
   if (isLeavingAfterSubmit) {
+    logTrainBook("render-transition", {
+      path: window.location.pathname,
+      redirecting,
+      checkingPay,
+    });
     return (
       <BookingSubmitTransition />
     );
