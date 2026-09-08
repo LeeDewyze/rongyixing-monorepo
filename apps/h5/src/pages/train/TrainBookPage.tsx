@@ -208,6 +208,20 @@ export function TrainBookPage() {
     }
   }, [bookPassengers, setSelected]);
 
+  function finishBookNavigation(
+    target: string,
+    state?: { bookedOrderId: string; product: "train" },
+  ) {
+    setIsLeavingAfterSubmit(true);
+    leavingAfterSubmitRef.current = true;
+    navigate(target, { replace: true, state });
+    clearTrainBookSelection();
+    clearPassengerSelection(ProductType.Train);
+    if (exchangeSession?.ticketId) {
+      clearTrainExchangeSession();
+    }
+  }
+
   useEffect(() => {
     if (!isExchangeBook || !exchangeTicketId) return;
 
@@ -515,6 +529,8 @@ export function TrainBookPage() {
     try {
       const response = await submitMutation.mutateAsync(bookDto);
       const orderId = resolveTrainBookOrderId(response);
+      setIsLeavingAfterSubmit(true);
+      leavingAfterSubmitRef.current = true;
 
       if (response.IsCheckPay && response.TradeNo) {
         setCheckingPay(true);
@@ -527,23 +543,9 @@ export function TrainBookPage() {
           shouldNavigateToPay({ travelPayType: resolvedPayType, checkPayReady }) &&
           orderId
         ) {
-          setIsLeavingAfterSubmit(true);
-          leavingAfterSubmitRef.current = true;
-          clearTrainBookSelection();
-          clearPassengerSelection(ProductType.Train);
-          if (isExchange) {
-            clearTrainExchangeSession();
-          }
-          const payPath = `/train/pay/${encodeURIComponent(orderId)}`;
-          navigate(payPath, { replace: true });
+          finishBookNavigation(`/train/pay/${encodeURIComponent(orderId)}`);
           return;
         }
-      }
-
-      clearTrainBookSelection();
-      clearPassengerSelection(ProductType.Train);
-      if (isExchange) {
-        clearTrainExchangeSession();
       }
 
       if (orderId) {
@@ -551,14 +553,14 @@ export function TrainBookPage() {
           productChannel === "tourist"
             ? `/orders/train/${encodeURIComponent(orderId)}?channel=tourist`
             : `/orders/train/${encodeURIComponent(orderId)}`;
-        navigate(detailPath, {
-          replace: true,
-          state: { bookedOrderId: orderId, product: "train" },
+        finishBookNavigation(detailPath, {
+          bookedOrderId: orderId,
+          product: "train",
         });
         return;
       }
 
-      navigate(`/home/orders?tab=${TAB_ID_TO_PARAM.train}`, { replace: true });
+      finishBookNavigation(`/home/orders?tab=${TAB_ID_TO_PARAM.train}`);
     } catch (error) {
       setAlertMessage(formatApiError(error, "train"));
     } finally {
