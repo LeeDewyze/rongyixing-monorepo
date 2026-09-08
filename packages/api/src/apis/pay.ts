@@ -15,7 +15,6 @@ import type { ProxyClient } from "../proxy/proxy-client.js";
 import {
   buildLegacyPayCreatePayload,
   buildLegacyPayProcessPayload,
-  isLegacyIcbcPayType,
   isSupportedPayType,
   normalizeOrderPayChannels,
   normalizePayTotalAmount,
@@ -78,8 +77,7 @@ export function createPayApi(proxy: ProxyClient): PayApi {
         method: isTouristHotelPay(params)
           ? TOURIST_HOTEL_FLOW_METHODS.PAY_CREATE
           : orderPayMethods(params).PAY_CREATE,
-        version:
-          isLegacyIcbcPayType(params.PayType) || params.CreateType === "JsSdk" ? "2.0" : undefined,
+        version: "2.0",
         data: buildLegacyPayCreatePayload({
           orderId: params.OrderId,
           payType: params.PayType,

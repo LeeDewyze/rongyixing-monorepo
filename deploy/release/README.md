@@ -23,6 +23,18 @@
 pnpm release:all
 ```
 
+也可以使用一键脚本。脚本会自动优先使用本机 Node 24，并输出构建耗时：
+
+```bash
+deploy/scripts/build-release.sh                 # 完整 release
+deploy/scripts/build-release.sh --business-only # 只构建业务方包
+deploy/scripts/build-release.sh --internal-only # 只构建内部验证包
+deploy/scripts/build-release.sh --all --archive # 完整 release，同时生成压缩包
+```
+
+对应的 pnpm 快捷命令是 `pnpm release`。完整发布仍然使用现有的
+`deploy/release/release-all.sh`，不会改变产物目录和部署方式。
+
 这是推荐的一键 release 入口。默认一次性生成六类产物：
 
 ```text

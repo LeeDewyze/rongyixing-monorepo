@@ -1,8 +1,8 @@
 name=rongyixing-h5-web-dist-test
-build_time=2026-09-03T14:25:15Z
-build_timestamp=20260903222511
+build_time=2026-09-08T11:23:08Z
+build_timestamp=20260908192303
 deploy_env=test
-git_commit=be574c9f276d0be44fc2e8cee61c7345b513c589
+git_commit=0318887530df1d81630116142d599732b7831240
 git_branch=main
 api_base_url=http://app.rtesp.com
 api_domain=rtesp.com

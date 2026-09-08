@@ -85,6 +85,8 @@ export function createBookApi(proxy: ProxyClient): BookApi {
       const result = await proxy.send<boolean | { Result?: boolean }>({
         method,
         data: { OrderId: orderId },
+        requestTimeout: 60,
+        timeoutMs: 60_000,
       });
       if (typeof result === "boolean") return result;
       return Boolean(result?.Result);

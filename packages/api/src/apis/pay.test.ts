@@ -63,13 +63,14 @@ describe("createPayApi", () => {
 
     expect(send).toHaveBeenNthCalledWith(1, {
       method: "TmcTouristHotelUrl-Pay-Create",
+      version: "2.0",
+      requestFields: {},
       data: {
         Channel: "App",
         Type: "3",
         OrderId: "ord-2",
         IsApp: false,
         CreateType: "Mobile",
-        DataType: "json",
       },
     });
     expect(send).toHaveBeenNthCalledWith(2, {
@@ -92,6 +93,7 @@ describe("createPayApi", () => {
     expect(send).toHaveBeenCalledWith({
       method: "TmcTouristOrderUrl-Pay-Create",
       version: "2.0",
+      requestFields: {},
       data: {
         Channel: "App",
         Type: 7,

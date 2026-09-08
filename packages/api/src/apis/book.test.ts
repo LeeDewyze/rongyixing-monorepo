@@ -12,6 +12,8 @@ describe("createBookApi", () => {
     expect(send).toHaveBeenCalledWith({
       method: "TmcApiBookUrl-Home-CheckPay",
       data: { OrderId: "trade-1" },
+      requestTimeout: 60,
+      timeoutMs: 60_000,
     });
   });
 
@@ -26,6 +28,8 @@ describe("createBookApi", () => {
     expect(send).toHaveBeenCalledWith({
       method: "TmcTouristBookUrl-Hotel-CheckPay",
       data: { OrderId: "trade-2" },
+      requestTimeout: 60,
+      timeoutMs: 60_000,
     });
   });
 

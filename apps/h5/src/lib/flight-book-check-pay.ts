@@ -5,7 +5,7 @@ import {
 } from "@/lib/flight-book-pay";
 
 const POLL_INTERVAL_MS = 3000;
-const MAX_ATTEMPTS = 5;
+const MAX_ATTEMPTS = 3;
 
 export async function pollFlightCheckPay(
   tradeNo: string,
