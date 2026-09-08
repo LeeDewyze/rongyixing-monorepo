@@ -515,8 +515,6 @@ export function TrainBookPage() {
     try {
       const response = await submitMutation.mutateAsync(bookDto);
       const orderId = resolveTrainBookOrderId(response);
-      setIsLeavingAfterSubmit(true);
-      leavingAfterSubmitRef.current = true;
 
       if (response.IsCheckPay && response.TradeNo) {
         setCheckingPay(true);
@@ -530,6 +528,7 @@ export function TrainBookPage() {
           orderId
         ) {
           setIsLeavingAfterSubmit(true);
+          leavingAfterSubmitRef.current = true;
           clearTrainBookSelection();
           clearPassengerSelection(ProductType.Train);
           if (isExchange) {
