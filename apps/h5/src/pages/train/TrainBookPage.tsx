@@ -621,10 +621,8 @@ export function TrainBookPage() {
       }
 
       if (orderId) {
-        const detailPath =
-          productChannel === "tourist"
-            ? `/orders/train/${encodeURIComponent(orderId)}?channel=tourist`
-            : `/orders/train/${encodeURIComponent(orderId)}`;
+        const channelQuery = productChannel ? `?channel=${productChannel}` : "";
+        const detailPath = `/orders/train/${encodeURIComponent(orderId)}${channelQuery}`;
         logTrainBook("navigate-detail", {
           orderId,
           detailPath,

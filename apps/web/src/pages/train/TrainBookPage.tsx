@@ -526,10 +526,8 @@ export function TrainBookPage() {
       }
 
       if (orderId) {
-        const detailPath =
-          productChannel === "tourist"
-            ? `/orders/train/${encodeURIComponent(orderId)}?channel=tourist`
-            : `/orders/train/${encodeURIComponent(orderId)}`;
+        const channelQuery = productChannel ? `?channel=${productChannel}` : "";
+        const detailPath = `/orders/train/${encodeURIComponent(orderId)}${channelQuery}`;
         navigate(detailPath, {
           replace: true,
           flushSync: true,
@@ -762,8 +760,7 @@ export function TrainBookPage() {
                 );
                 return travelFields.map((field) => {
                   const form = forms[passenger.id];
-                  const selected =
-                    form?.outNumbers[field.key]?.trim() || field.value?.trim() || "";
+                  const selected = form?.outNumbers[field.key]?.trim() || field.value?.trim() || "";
                   return (
                     <HotelBookOptionRow
                       key={`${passenger.id}-${field.key}`}

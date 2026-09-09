@@ -92,6 +92,8 @@ describe("legacy H5 tourist pay", () => {
   it("redirects Alipay and WeChat for tourist train/flight/hotel H5 pay", () => {
     expect(resolveLegacyH5PayType("Alipay")).toBe("2");
     expect(resolveLegacyH5PayType("Wechatpay")).toBe("3");
+    expect(resolveLegacyH5PayType("支付宝")).toBe("2");
+    expect(resolveLegacyH5PayType("微信支付")).toBe("3");
     expect(resolveLegacyH5PayType("Icbcpay")).toBeUndefined();
     expect(
       shouldUseLegacyH5PayRedirect({
@@ -121,6 +123,14 @@ describe("legacy H5 tourist pay", () => {
         payType: "Icbcpay",
       }),
     ).toBe(false);
+    expect(
+      shouldUseLegacyH5PayRedirect({
+        channel: "tmc",
+        productType: "Train",
+        payType: "wechat",
+        payTypeName: "微信支付",
+      }),
+    ).toBe(true);
   });
 
   it("uses JS-SDK for WeChat channel inside the WeChat browser regardless of channel", () => {

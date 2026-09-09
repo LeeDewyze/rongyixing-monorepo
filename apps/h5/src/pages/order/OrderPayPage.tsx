@@ -97,7 +97,7 @@ export function OrderPayPage({
       ? "tourist"
       : searchParams.get("channel") === "tmc"
         ? "tmc"
-        : undefined);
+        : "tmc");
   const { data: order } = useOrderDetail(orderId, 0, channel);
   const { data: payTotal, isLoading: totalLoading } = usePayTotalAmount(orderId, {
     channel,
@@ -153,11 +153,28 @@ export function OrderPayPage({
   async function handlePay() {
     if (!selected) return;
     setPaymentError(null);
+    const selectedPayTypeName = selectedChannel?.PayTypeName;
     const openid = getWechatOpenId();
     const wechatH5 = isWechatH5();
     const wechatJsSdk = shouldUseWechatJsSdk({
       isWechatBrowser: wechatH5,
       payType: selected,
+    });
+    const useLegacyRedirect = shouldUseLegacyH5PayRedirect({
+      channel,
+      productType,
+      payType: selected,
+      payTypeName: selectedPayTypeName,
+    });
+    console.log("[ryx][order-pay] submit", {
+      orderId,
+      channel,
+      productType,
+      payType: selected,
+      payTypeName: selectedPayTypeName,
+      wechatH5,
+      wechatJsSdk,
+      useLegacyRedirect,
     });
     if (wechatJsSdk) {
       if (!openid) {
@@ -210,7 +227,7 @@ export function OrderPayPage({
       }
       return;
     }
-    if (shouldUseLegacyH5PayRedirect({ channel, productType, payType: selected })) {
+    if (useLegacyRedirect) {
       const api = getApi();
       const apiConfig = api.proxy.getApiConfig() ?? (await api.proxy.loadApiConfig());
       const touristContext =
@@ -227,15 +244,14 @@ export function OrderPayPage({
           appBaseUrl: getLegacyAppBaseUrl(),
           orderId,
           payType: selected,
+          payTypeName: selectedPayTypeName,
           ticket: getTicket() ?? "",
           ticketName: getTicketName(),
           domain: getRequestDomain(),
           language: getRequestLanguage(),
           token: apiConfig.Token ?? "",
           method:
-            channel === "tourist"
-              ? "TmcTouristOrderUrl-Pay-Create"
-              : "TmcApiOrderUrl-Pay-Create",
+            channel === "tourist" ? "TmcTouristOrderUrl-Pay-Create" : "TmcApiOrderUrl-Pay-Create",
           tmcId: touristContext?.TouristTmcId ?? requestFields.TmcId?.toString(),
           mmsId: touristContext?.TouristMmsId ?? requestFields.MmsId?.toString(),
           openid,

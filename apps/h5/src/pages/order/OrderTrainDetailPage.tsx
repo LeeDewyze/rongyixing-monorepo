@@ -46,7 +46,7 @@ import {
 } from "@/lib/train-order-detail";
 import { buildTrainScheduleParamsFromTrip } from "@/lib/train-schedule";
 import { parseOrderListScope } from "@/lib/order-list-params";
-import { getOrderListPath } from "@/lib/order-routes";
+import { buildOrderPayPath, getOrderListPath } from "@/lib/order-routes";
 import { scrollH5MainToTopAfterLayout } from "@/lib/scroll-h5-main";
 
 const FOOTER_OFFSET = "calc(4.5rem + env(safe-area-inset-bottom))";
@@ -68,7 +68,7 @@ export function OrderTrainDetailPage() {
       ? "tourist"
       : searchParams.get("channel") === "tmc"
         ? "tmc"
-        : undefined;
+        : "tmc";
   const listScope = parseOrderListScope(searchParams.get("scope"));
   const location = useLocation();
   const openCancelOnMountRef = useRef(
@@ -204,11 +204,16 @@ export function OrderTrainDetailPage() {
   }, []);
 
   const handlePay = useCallback(() => {
-    const payPath = `/train/pay/${encodeURIComponent(orderId)}${
-      channel ? `?channel=${channel}` : ""
-    }`;
+    const payPath = buildOrderPayPath("train", orderId, channel, listScope);
+    console.log("[ryx][order-detail] pay-click", {
+      product: "train",
+      orderId,
+      channel,
+      listScope,
+      payPath,
+    });
     navigate(payPath);
-  }, [channel, navigate, orderId]);
+  }, [channel, listScope, navigate, orderId]);
 
   const runCancel = useCallback(async () => {
     if (!detail) return;

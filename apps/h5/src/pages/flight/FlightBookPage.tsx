@@ -538,10 +538,8 @@ export function FlightBookPage() {
         const result = await submitBook.mutateAsync(exchangeDto);
         const orderId = resolveFlightBookOrderId(result);
         if (orderId) {
-          const detailPath =
-            productChannel === "tourist"
-              ? `/orders/flight/${orderId}?channel=tourist`
-              : `/orders/flight/${orderId}`;
+          const channelQuery = productChannel ? `?channel=${productChannel}` : "";
+          const detailPath = `/orders/flight/${orderId}${channelQuery}`;
           finishBookNavigation(detailPath, {
             bookedOrderId: orderId,
             product: "flight",
@@ -680,10 +678,8 @@ export function FlightBookPage() {
       }
 
       if (orderId) {
-        const detailPath =
-          productChannel === "tourist"
-            ? `/orders/flight/${orderId}?channel=tourist`
-            : `/orders/flight/${orderId}`;
+        const channelQuery = productChannel ? `?channel=${productChannel}` : "";
+        const detailPath = `/orders/flight/${orderId}${channelQuery}`;
         finishBookNavigation(detailPath, {
           bookedOrderId: orderId,
           product: "flight",

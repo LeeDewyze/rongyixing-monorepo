@@ -41,6 +41,14 @@ describe("shouldUseLegacyH5PayRedirect", () => {
     ).toBe(true);
     expect(
       shouldUseLegacyH5PayRedirect({
+        channel: "tmc",
+        productType: "Train",
+        payType: "wechat",
+        payTypeName: "微信支付",
+      }),
+    ).toBe(true);
+    expect(
+      shouldUseLegacyH5PayRedirect({
         channel: "tourist",
         productType: "Hotel",
         payType: "Icbcpay",

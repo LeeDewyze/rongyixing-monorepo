@@ -39,7 +39,7 @@ import {
   suppressFlightTicketActions,
 } from "@/lib/flight-order-detail";
 import { parseOrderListScope } from "@/lib/order-list-params";
-import { getOrderListPath } from "@/lib/order-routes";
+import { buildOrderPayPath, getOrderListPath } from "@/lib/order-routes";
 import { consumeFlightBookExitToHome } from "@/lib/flight-book-session";
 import { scrollH5MainToTop } from "@/lib/scroll-h5-main";
 
@@ -64,7 +64,7 @@ export function OrderFlightDetailPage() {
       ? "tourist"
       : searchParams.get("channel") === "tmc"
         ? "tmc"
-        : undefined;
+        : "tmc";
   const listScope = parseOrderListScope(searchParams.get("scope"));
   const location = useLocation();
   const openCancelOnMountRef = useRef(
@@ -275,11 +275,16 @@ export function OrderFlightDetailPage() {
   }, [detail, selectedTicket]);
 
   const handlePay = useCallback(() => {
-    const payPath = `/flight/pay/${encodeURIComponent(orderId)}${
-      channel ? `?channel=${channel}` : ""
-    }`;
+    const payPath = buildOrderPayPath("flight", orderId, channel, listScope);
+    console.log("[ryx][order-detail] pay-click", {
+      product: "flight",
+      orderId,
+      channel,
+      listScope,
+      payPath,
+    });
     navigate(payPath);
-  }, [channel, navigate, orderId]);
+  }, [channel, listScope, navigate, orderId]);
 
   const runCancel = useCallback(async () => {
     if (!detail) return;

@@ -1,0 +1,1 @@
+function i(e){const n=e.get("channel");return n==="tourist"||n==="tmc"?n:"tmc"}function a(e,n,r){const[s=e,c=""]=e.split("?"),t=new URLSearchParams(c);n&&t.set("channel",n),r!=null&&r.scope&&t.set("scope",r.scope);const o=t.toString();return o?`${s}?${o}`:s}function u(e,n,r,s){return a(`/orders/${e}/${encodeURIComponent(n)}/pay`,r,{scope:s})}export{u as b,i as p,a as w};

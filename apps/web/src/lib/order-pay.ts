@@ -59,8 +59,16 @@ export function resolvePayFailureMessage(response: PayCreateResponse): string | 
 
 export function resolveLegacyH5PayType(payType: string): "2" | "3" | undefined {
   const value = payType.trim().toLowerCase();
-  if (value === "2" || value.includes("ali")) return "2";
-  if (value === "3" || value.includes("wechat") || value.includes("weixin")) return "3";
+  if (value === "2" || value.includes("ali") || value.includes("支付宝")) return "2";
+  if (
+    value === "3" ||
+    value.includes("wechat") ||
+    value.includes("weixin") ||
+    value.includes("wxpay") ||
+    value.includes("微信")
+  ) {
+    return "3";
+  }
   return undefined;
 }
 
@@ -68,13 +76,15 @@ export function shouldUseLegacyH5PayRedirect(input: {
   channel?: string;
   productType?: string;
   payType: string;
+  payTypeName?: string;
 }): boolean {
   return (
     (input.channel === "tourist" || input.channel === "tmc") &&
     (input.productType === "Train" ||
       input.productType === "Flight" ||
       input.productType === "Hotel") &&
-    resolveLegacyH5PayType(input.payType) != null
+    (resolveLegacyH5PayType(input.payType) ?? resolveLegacyH5PayType(input.payTypeName ?? "")) !=
+      null
   );
 }
 
@@ -82,6 +92,7 @@ export function buildLegacyH5PayUrl(input: {
   appBaseUrl: string;
   orderId: string;
   payType: string;
+  payTypeName?: string;
   ticket: string;
   ticketName: string;
   domain: string;
@@ -96,7 +107,8 @@ export function buildLegacyH5PayUrl(input: {
   createType?: "Mobile" | "JsSdk";
   returnPath?: string;
 }): string {
-  const type = resolveLegacyH5PayType(input.payType);
+  const type =
+    resolveLegacyH5PayType(input.payType) ?? resolveLegacyH5PayType(input.payTypeName ?? "");
   if (!type) {
     throw new Error("错误的支付方式");
   }

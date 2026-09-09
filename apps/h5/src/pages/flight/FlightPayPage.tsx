@@ -11,7 +11,7 @@ export function FlightPayPage() {
       ? "tourist"
       : searchParams.get("channel") === "tmc"
         ? "tmc"
-        : undefined;
+        : "tmc";
   const { data: order } = useOrderDetail(orderId, 0, channel);
 
   return (

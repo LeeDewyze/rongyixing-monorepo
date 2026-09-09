@@ -11,7 +11,7 @@ export function TrainPayPage() {
       ? "tourist"
       : searchParams.get("channel") === "tmc"
         ? "tmc"
-        : undefined;
+        : "tmc";
   const { data: order } = useTrainOrderDetail(orderId, channel);
 
   return (

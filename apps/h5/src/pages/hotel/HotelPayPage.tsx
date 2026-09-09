@@ -10,7 +10,7 @@ export function HotelPayPage() {
       ? "tourist"
       : searchParams.get("channel") === "tmc"
         ? "tmc"
-        : undefined;
+        : "tmc";
 
   return (
     <OrderPayPage

@@ -35,13 +35,13 @@ describe("order-routes", () => {
 
   it("routes flight detail and pay paths", () => {
     expect(getOrderDetailPath(flightItem)).toBe("/orders/flight/ORD-FLT-001");
-    expect(getOrderPayPath(flightItem)).toBe("/flight/pay/ORD-FLT-001");
+    expect(getOrderPayPath(flightItem)).toBe("/orders/flight/ORD-FLT-001/pay");
     expect(getOrderResultPath("Flight", "ORD-FLT-001")).toBe("/flight/result/ORD-FLT-001");
   });
 
   it("routes train detail and pay paths", () => {
     expect(getOrderDetailPath(trainItem)).toBe("/orders/train/ORD-TRN-001");
-    expect(getOrderPayPath(trainItem)).toBe("/train/pay/ORD-TRN-001");
+    expect(getOrderPayPath(trainItem)).toBe("/orders/train/ORD-TRN-001/pay");
   });
 
   it("builds order list path with channel and scope", () => {

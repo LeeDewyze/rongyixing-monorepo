@@ -300,10 +300,8 @@ export function HotelBookPage() {
 
   function finishBookNavigation(orderId?: string) {
     if (orderId) {
-      const detailPath =
-        productChannel === "tourist"
-          ? `/orders/hotel/${encodeURIComponent(orderId)}?channel=tourist`
-          : `/orders/hotel/${encodeURIComponent(orderId)}`;
+      const channelQuery = productChannel ? `?channel=${productChannel}` : "";
+      const detailPath = `/orders/hotel/${encodeURIComponent(orderId)}${channelQuery}`;
       navigate(detailPath, {
         replace: true,
         flushSync: true,

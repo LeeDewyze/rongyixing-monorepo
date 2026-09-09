@@ -1,4 +1,4 @@
-# RongYiXing Business Same-Origin H5 test Build 20260909114217
+# RongYiXing Business Same-Origin H5 test Build 20260909122809
 
 这个包用于交付业务方部署到 legacy 同源站点。
 
@@ -29,6 +29,6 @@
 
 构建信息：
 
-- build_time: 2026-09-09T03:42:20Z
+- build_time: 2026-09-09T04:28:12Z
 - git_branch: main
-- git_commit: b5c9910132fb9f23a091be0a9ef1efcd7f49067f
+- git_commit: 50e1edc468fffa37916d2bf3df8096ddf68da6aa

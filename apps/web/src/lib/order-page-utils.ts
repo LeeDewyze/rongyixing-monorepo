@@ -5,7 +5,7 @@ export function parseProductChannel(searchParams: URLSearchParams): ProductChann
   if (raw === "tourist" || raw === "tmc") {
     return raw;
   }
-  return undefined;
+  return "tmc";
 }
 
 export function withOrderChannel(

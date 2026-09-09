@@ -52,7 +52,7 @@ export function WebOrderHotelDetailPage() {
       ? "tourist"
       : searchParams.get("channel") === "tmc"
         ? "tmc"
-        : undefined;
+        : "tmc";
   const listScope = parseOrderListScope(searchParams.get("scope"));
   const location = useLocation();
   const openCancelOnMountRef = useRef(

@@ -17,7 +17,7 @@ export function FlightResultPage() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const rawChannel = searchParams.get("channel");
-  const channel = rawChannel === "tourist" || rawChannel === "tmc" ? rawChannel : undefined;
+  const channel = rawChannel === "tourist" || rawChannel === "tmc" ? rawChannel : "tmc";
   const channelQuery = channel ? `?channel=${encodeURIComponent(channel)}` : "";
   const state = (location.state ?? {}) as FlightResultLocationState;
   const { data, isLoading, error } = useOrderDetail(orderId, 0, channel);

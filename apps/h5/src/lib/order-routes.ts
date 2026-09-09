@@ -28,14 +28,31 @@ export function getOrderDetailPath(item: OrderListItem): string {
 export function getOrderPayPath(item: OrderListItem): string {
   switch (item.tabId) {
     case OrderListTabId.Flight:
-      return `/flight/pay/${item.OrderId}`;
+      return `/orders/flight/${item.OrderId}/pay`;
     case OrderListTabId.Train:
-      return `/train/pay/${item.OrderId}`;
+      return `/orders/train/${item.OrderId}/pay`;
     case OrderListTabId.Hotel:
-      return `/hotel/pay/${item.OrderId}`;
+      return `/orders/hotel/${item.OrderId}/pay`;
     default:
-      return `/hotel/pay/${item.OrderId}`;
+      return `/orders/hotel/${item.OrderId}/pay`;
   }
+}
+
+export function buildOrderPayPath(
+  product: "flight" | "train" | "hotel",
+  orderId: string,
+  channel?: ProductChannel,
+  scope?: OrderListScope,
+): string {
+  const params = new URLSearchParams();
+  if (channel) {
+    params.set("channel", channel);
+  }
+  if (scope) {
+    params.set("scope", scope);
+  }
+  const query = params.toString();
+  return `/orders/${product}/${encodeURIComponent(orderId)}/pay${query ? `?${query}` : ""}`;
 }
 
 export function getOrderListPath(

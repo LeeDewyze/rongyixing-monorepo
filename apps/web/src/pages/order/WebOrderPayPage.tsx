@@ -99,7 +99,22 @@ export function WebOrderPayPage({ productType }: WebOrderPayPageProps) {
     if (!selected) return;
     setErrorMessage(null);
     try {
-      if (shouldUseLegacyH5PayRedirect({ channel, productType, payType: selected })) {
+      const selectedPayTypeName = selectedChannel?.PayTypeName;
+      const useLegacyRedirect = shouldUseLegacyH5PayRedirect({
+        channel,
+        productType,
+        payType: selected,
+        payTypeName: selectedPayTypeName,
+      });
+      console.log("[ryx][order-pay] submit", {
+        orderId,
+        channel,
+        productType,
+        payType: selected,
+        payTypeName: selectedPayTypeName,
+        useLegacyRedirect,
+      });
+      if (useLegacyRedirect) {
         const api = getApi();
         const apiConfig = api.proxy.getApiConfig() ?? (await api.proxy.loadApiConfig());
         const touristContext =
@@ -121,6 +136,7 @@ export function WebOrderPayPage({ productType }: WebOrderPayPageProps) {
             appBaseUrl: getLegacyAppBaseUrl(),
             orderId,
             payType: selected,
+            payTypeName: selectedPayTypeName,
             ticket: getTicket() ?? "",
             ticketName: getTicketName(),
             domain: getRequestDomain(),
