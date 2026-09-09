@@ -1,0 +1,1 @@
+import{u as e}from"./routes-DEVTOc_6.js";import{K as r}from"./index-CpU3MaDE.js";function u(){return e({queryKey:["member","profile"],queryFn:()=>r().member.getProfile(),staleTime:300*1e3})}export{u};

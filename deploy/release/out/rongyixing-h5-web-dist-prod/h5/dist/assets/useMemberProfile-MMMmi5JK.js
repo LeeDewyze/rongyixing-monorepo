@@ -1,0 +1,1 @@
+import{u as e}from"./routes-C1OU7xrf.js";import{K as r}from"./index-oyJaWUml.js";function u(){return e({queryKey:["member","profile"],queryFn:()=>r().member.getProfile(),staleTime:300*1e3})}export{u};

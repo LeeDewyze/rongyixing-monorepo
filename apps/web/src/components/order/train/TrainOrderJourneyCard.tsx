@@ -186,7 +186,9 @@ export function TrainOrderJourneyCard({
     >
       <div className="mb-3 flex items-center justify-between gap-2">
         <RouteTitle fromStation={trip?.FromStationName} toStation={trip?.ToStationName} />
-        {ticketStatusLabel ? <OrderStatusBadge label={ticketStatusLabel} variant="ticket" /> : null}
+        {ticketStatusLabel ? (
+          <OrderStatusBadge label={ticketStatusLabel} variant="ticket" showBookingSpinner />
+        ) : null}
       </div>
 
       <p className="mb-3 text-[14px] font-normal leading-none text-[#010101]">

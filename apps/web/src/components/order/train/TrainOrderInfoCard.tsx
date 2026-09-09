@@ -33,7 +33,9 @@ export function TrainOrderInfoCard({
     >
       <div className="mb-3 flex items-start justify-between gap-2">
         <h2 className={HOTEL_ORDER_SECTION_TITLE}>订单信息</h2>
-        {detail.StatusName ? <OrderStatusBadge label={detail.StatusName} variant="order" /> : null}
+        {detail.StatusName ? (
+          <OrderStatusBadge label={detail.StatusName} variant="order" showBookingSpinner />
+        ) : null}
       </div>
 
       <div className="grid grid-cols-2 gap-3">
