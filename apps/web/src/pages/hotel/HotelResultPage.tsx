@@ -1,4 +1,5 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
+import type { ProductChannel } from "@ryx/shared-types";
 import { Button } from "@ryx/ui/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@ryx/ui/components/ui/card";
 
@@ -7,7 +8,12 @@ import { usePageHeader } from "@/components/layout";
 
 export function HotelResultPage() {
   const { orderId = "" } = useParams();
-  const { data, isLoading, error } = useOrderDetail(orderId);
+  const [searchParams] = useSearchParams();
+  const rawChannel = searchParams.get("channel");
+  const channel: ProductChannel | undefined =
+    rawChannel === "tourist" || rawChannel === "tmc" ? rawChannel : undefined;
+  const channelQuery = channel ? `?channel=${encodeURIComponent(channel)}` : "";
+  const { data, isLoading, error } = useOrderDetail(orderId, 0, channel);
 
   usePageHeader({ title: "订单结果", showBack: true });
 
@@ -17,9 +23,7 @@ export function HotelResultPage() {
 
   if (error) {
     return (
-      <p className="p-4 text-destructive">
-        {error instanceof Error ? error.message : "加载失败"}
-      </p>
+      <p className="p-4 text-destructive">{error instanceof Error ? error.message : "加载失败"}</p>
     );
   }
 
@@ -27,7 +31,6 @@ export function HotelResultPage() {
 
   return (
     <div className="space-y-4 p-4 pb-24">
-
       <Card>
         <CardHeader>
           <CardTitle className="text-base">{data.HotelName ?? "酒店订单"}</CardTitle>
@@ -47,7 +50,7 @@ export function HotelResultPage() {
 
       {data.isShowPayButton ? (
         <Button asChild className="fixed bottom-4 left-4 right-4">
-          <Link to={`/hotel/pay/${orderId}`}>去支付</Link>
+          <Link to={`/hotel/pay/${orderId}${channelQuery}`}>去支付</Link>
         </Button>
       ) : (
         <p className="text-center text-sm text-muted-foreground">正在确认订单，请稍候…</p>

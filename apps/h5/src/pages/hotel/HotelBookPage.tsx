@@ -380,10 +380,8 @@ export function HotelBookPage() {
             productType: "Hotel",
           });
           if (shouldNavigateToPay({ travelPayType: payType, checkPayReady })) {
-            const payPath =
-              productChannel === "tourist"
-                ? `/hotel/pay/${encodeURIComponent(orderId)}?channel=tourist`
-                : `/hotel/pay/${encodeURIComponent(orderId)}`;
+            const channelQuery = productChannel ? `?channel=${productChannel}` : "";
+            const payPath = `/hotel/pay/${encodeURIComponent(orderId)}${channelQuery}`;
             navigate(payPath, {
               replace: true,
               flushSync: true,

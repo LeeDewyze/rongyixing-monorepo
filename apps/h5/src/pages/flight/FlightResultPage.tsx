@@ -16,11 +16,11 @@ export function FlightResultPage() {
   const { orderId = "" } = useParams();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  const channelQuery = searchParams.get("channel")
-    ? `?channel=${searchParams.get("channel")}`
-    : "";
+  const rawChannel = searchParams.get("channel");
+  const channel = rawChannel === "tourist" || rawChannel === "tmc" ? rawChannel : undefined;
+  const channelQuery = channel ? `?channel=${encodeURIComponent(channel)}` : "";
   const state = (location.state ?? {}) as FlightResultLocationState;
-  const { data, isLoading, error } = useOrderDetail(orderId);
+  const { data, isLoading, error } = useOrderDetail(orderId, 0, channel);
 
   usePageHeader({ title: "订单结果", showBack: true });
 

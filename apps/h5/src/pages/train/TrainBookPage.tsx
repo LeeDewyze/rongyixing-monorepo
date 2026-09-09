@@ -614,7 +614,8 @@ export function TrainBookPage() {
             orderId,
             productChannel,
           });
-          finishBookNavigation(`/train/pay/${encodeURIComponent(orderId)}`);
+          const channelQuery = productChannel ? `?channel=${productChannel}` : "";
+          finishBookNavigation(`/train/pay/${encodeURIComponent(orderId)}${channelQuery}`);
           return;
         }
       }

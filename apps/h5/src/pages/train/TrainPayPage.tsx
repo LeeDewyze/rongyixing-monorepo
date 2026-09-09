@@ -6,7 +6,12 @@ import { useTrainOrderDetail } from "@/hooks/useTrainOrderDetail";
 export function TrainPayPage() {
   const { orderId = "" } = useParams();
   const [searchParams] = useSearchParams();
-  const channel = searchParams.get("channel") === "tourist" ? "tourist" : undefined;
+  const channel =
+    searchParams.get("channel") === "tourist"
+      ? "tourist"
+      : searchParams.get("channel") === "tmc"
+        ? "tmc"
+        : undefined;
   const { data: order } = useTrainOrderDetail(orderId, channel);
 
   return (
@@ -14,6 +19,7 @@ export function TrainPayPage() {
       title="火车票支付"
       orderId={orderId}
       productType="Train"
+      {...(channel ? { channel } : {})}
       successPath={`/orders/train/${orderId}`}
       subtitle={order?.RouteTitle}
     />

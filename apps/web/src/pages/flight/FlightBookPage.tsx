@@ -621,7 +621,7 @@ export function FlightBookPage() {
           productType: "Flight",
         });
         if (shouldNavigateToPay({ travelPayType: resolvedPayType, checkPayReady }) && orderId) {
-          const channelQuery = productChannel === "tourist" ? "?channel=tourist" : "";
+          const channelQuery = productChannel ? `?channel=${productChannel}` : "";
           finishBookNavigation(`/flight/pay/${encodeURIComponent(orderId)}${channelQuery}`, {
             bookedOrderId: orderId,
             product: "flight",

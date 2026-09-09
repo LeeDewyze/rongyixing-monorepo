@@ -508,7 +508,8 @@ export function TrainBookPage() {
           shouldNavigateToPay({ travelPayType: resolvedPayType, checkPayReady }) &&
           orderId
         ) {
-          const payPath = `/train/pay/${encodeURIComponent(orderId)}`;
+          const channelQuery = productChannel ? `?channel=${productChannel}` : "";
+          const payPath = `/train/pay/${encodeURIComponent(orderId)}${channelQuery}`;
           navigate(payPath, {
             replace: true,
             flushSync: true,

@@ -8,10 +8,10 @@ import { usePageHeader } from "@/components/layout";
 export function HotelResultPage() {
   const { orderId = "" } = useParams();
   const [searchParams] = useSearchParams();
-  const channelQuery = searchParams.get("channel")
-    ? `?channel=${searchParams.get("channel")}`
-    : "";
-  const { data, isLoading, error } = useOrderDetail(orderId);
+  const rawChannel = searchParams.get("channel");
+  const channel = rawChannel === "tourist" || rawChannel === "tmc" ? rawChannel : undefined;
+  const channelQuery = channel ? `?channel=${encodeURIComponent(channel)}` : "";
+  const { data, isLoading, error } = useOrderDetail(orderId, 0, channel);
 
   usePageHeader({ title: "订单结果", showBack: true });
 
@@ -21,9 +21,7 @@ export function HotelResultPage() {
 
   if (error) {
     return (
-      <p className="p-4 text-destructive">
-        {error instanceof Error ? error.message : "加载失败"}
-      </p>
+      <p className="p-4 text-destructive">{error instanceof Error ? error.message : "加载失败"}</p>
     );
   }
 
@@ -31,7 +29,6 @@ export function HotelResultPage() {
 
   return (
     <div className="space-y-4 p-4 pb-24">
-
       <Card>
         <CardHeader>
           <CardTitle className="text-base">{data.HotelName ?? "酒店订单"}</CardTitle>

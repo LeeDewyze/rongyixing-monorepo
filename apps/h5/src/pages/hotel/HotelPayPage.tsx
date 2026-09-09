@@ -5,7 +5,12 @@ import { OrderPayPage } from "@/pages/order/OrderPayPage";
 export function HotelPayPage() {
   const { orderId = "" } = useParams();
   const [searchParams] = useSearchParams();
-  const channel = searchParams.get("channel") === "tourist" ? "tourist" : undefined;
+  const channel =
+    searchParams.get("channel") === "tourist"
+      ? "tourist"
+      : searchParams.get("channel") === "tmc"
+        ? "tmc"
+        : undefined;
 
   return (
     <OrderPayPage

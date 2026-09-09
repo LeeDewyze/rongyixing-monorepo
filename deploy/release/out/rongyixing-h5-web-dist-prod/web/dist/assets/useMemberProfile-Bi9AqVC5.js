@@ -1,0 +1,1 @@
+import{u as e}from"./useQuery-Ci-sNNsN.js";import{p as r}from"./index-DwSzY7qW.js";function u(){return e({queryKey:["member","profile"],queryFn:()=>r().member.getProfile(),staleTime:300*1e3})}export{u};
