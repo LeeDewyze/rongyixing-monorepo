@@ -175,6 +175,34 @@ describe("legacy H5 tourist pay", () => {
     expect(url.searchParams.get("wechatAppId")).toBeNull();
   });
 
+  it("builds the TMC /home/Pay url without switching to tourist methods", () => {
+    const url = new URL(
+      buildLegacyH5PayUrl({
+        appBaseUrl: "https://app.rongtrip.cn",
+        orderId: "20380000000403",
+        payType: "Wechatpay",
+        ticket: "ticket-1",
+        ticketName: "ticket",
+        domain: "rongtrip.cn",
+        language: "cn",
+        token: "token-1",
+        tmcId: "10000",
+        mmsId: "1",
+        method: "TmcApiOrderUrl-Pay-Create",
+        createType: "Mobile",
+        returnPath: "pay/result?orderId=20380000000403&channel=tmc&productType=Train",
+      }),
+    );
+    expect(url.searchParams.get("Method")).toBe("TmcApiOrderUrl-Pay-Create");
+    expect(url.searchParams.get("TmcId")).toBe("10000");
+    expect(url.searchParams.get("MmsId")).toBe("1");
+    expect(JSON.parse(url.searchParams.get("Data") ?? "{}")).toMatchObject({
+      Type: "3",
+      OrderId: "20380000000403",
+      CreateType: "Mobile",
+    });
+  });
+
   it("keeps Mobile for non-WeChat H5", () => {
     const url = new URL(
       buildLegacyH5PayUrl({

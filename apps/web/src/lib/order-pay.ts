@@ -70,7 +70,7 @@ export function shouldUseLegacyH5PayRedirect(input: {
   payType: string;
 }): boolean {
   return (
-    input.channel === "tourist" &&
+    (input.channel === "tourist" || input.channel === "tmc") &&
     (input.productType === "Train" ||
       input.productType === "Flight" ||
       input.productType === "Hotel") &&
@@ -87,8 +87,9 @@ export function buildLegacyH5PayUrl(input: {
   domain: string;
   language: string;
   token: string;
-  tmcId: string;
-  mmsId: string;
+  tmcId?: string;
+  mmsId?: string;
+  method?: "TmcTouristOrderUrl-Pay-Create" | "TmcApiOrderUrl-Pay-Create";
   path?: string;
   openid?: string;
   wechatAppId?: string;
@@ -101,7 +102,7 @@ export function buildLegacyH5PayUrl(input: {
   }
   const ticketName = input.ticketName || "ticket";
   const req = createRequestEntity(
-    "TmcTouristOrderUrl-Pay-Create",
+    input.method ?? "TmcTouristOrderUrl-Pay-Create",
     {
       Channel: "App",
       Type: type,
@@ -121,8 +122,8 @@ export function buildLegacyH5PayUrl(input: {
     },
   );
   req.Version = "2.0";
-  req.TmcId = input.tmcId;
-  req.MmsId = input.mmsId;
+  if (input.tmcId) req.TmcId = input.tmcId;
+  if (input.mmsId) req.MmsId = input.mmsId;
 
   const params = new URLSearchParams();
   params.set(ticketName, input.ticket);

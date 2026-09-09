@@ -22,7 +22,12 @@ import {
 import { parseProductChannel } from "@/lib/order-page-utils";
 import { savePendingPayContext } from "@/lib/pay-result-callback";
 import { getOrderResultPath } from "@/lib/order-routes";
-import { getRequestDomain, getRequestLanguage, getTicketName } from "@/lib/request-context";
+import {
+  getRequestDomain,
+  getRequestExtraFields,
+  getRequestLanguage,
+  getTicketName,
+} from "@/lib/request-context";
 import { getTicket } from "@/lib/session";
 import { resolveTouristContext } from "@/lib/tourist-context";
 
@@ -97,17 +102,21 @@ export function WebOrderPayPage({ productType }: WebOrderPayPageProps) {
       if (shouldUseLegacyH5PayRedirect({ channel, productType, payType: selected })) {
         const api = getApi();
         const apiConfig = api.proxy.getApiConfig() ?? (await api.proxy.loadApiConfig());
-        const context = await resolveTouristContext({
-          appId: getAppId(),
-          sender: api.proxy,
-        });
+        const touristContext =
+          channel === "tourist"
+            ? await resolveTouristContext({
+                appId: getAppId(),
+                sender: api.proxy,
+              })
+            : undefined;
+        const requestFields = getRequestExtraFields();
         savePendingPayContext({
           orderId,
           payType: selected,
           channel,
           productType,
         });
-        window.location.assign(
+        window.location.replace(
           buildLegacyH5PayUrl({
             appBaseUrl: getLegacyAppBaseUrl(),
             orderId,
@@ -117,8 +126,12 @@ export function WebOrderPayPage({ productType }: WebOrderPayPageProps) {
             domain: getRequestDomain(),
             language: getRequestLanguage(),
             token: apiConfig.Token ?? "",
-            tmcId: context.TouristTmcId,
-            mmsId: context.TouristMmsId,
+            method:
+              channel === "tourist"
+                ? "TmcTouristOrderUrl-Pay-Create"
+                : "TmcApiOrderUrl-Pay-Create",
+            tmcId: touristContext?.TouristTmcId ?? requestFields.TmcId?.toString(),
+            mmsId: touristContext?.TouristMmsId ?? requestFields.MmsId?.toString(),
             createType: "Mobile",
             returnPath: `pay/result?orderId=${encodeURIComponent(orderId)}&channel=${encodeURIComponent(channel ?? "")}&productType=${encodeURIComponent(productType)}`,
           }),

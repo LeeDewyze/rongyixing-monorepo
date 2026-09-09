@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { shouldUseLegacyH5PayRedirect } from "@/lib/order-pay";
 
 describe("shouldUseLegacyH5PayRedirect", () => {
-  it("redirects Alipay and WeChat for tourist train/flight/hotel pay", () => {
+  it("redirects Alipay and WeChat for tourist and TMC train/flight/hotel pay", () => {
     expect(
       shouldUseLegacyH5PayRedirect({
         channel: "tourist",
@@ -31,7 +31,14 @@ describe("shouldUseLegacyH5PayRedirect", () => {
         productType: "Hotel",
         payType: "Alipay",
       }),
-    ).toBe(false);
+    ).toBe(true);
+    expect(
+      shouldUseLegacyH5PayRedirect({
+        channel: "tmc",
+        productType: "Train",
+        payType: "Wechatpay",
+      }),
+    ).toBe(true);
     expect(
       shouldUseLegacyH5PayRedirect({
         channel: "tourist",
