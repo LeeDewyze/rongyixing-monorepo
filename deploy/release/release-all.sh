@@ -20,6 +20,57 @@ log() {
   printf '[ryx-release-all] %s\n' "$*"
 }
 
+find_node_bin() {
+  local candidate major
+
+  if [[ -n "${RYX_NODE_BIN:-}" && -x "${RYX_NODE_BIN}/node" ]]; then
+    major="$("${RYX_NODE_BIN}/node" -p 'Number(process.versions.node.split(".")[0])')"
+    if (( major >= 24 )); then
+      printf '%s' "${RYX_NODE_BIN}"
+      return
+    fi
+  fi
+
+  for candidate in \
+    "${HOME}/.nvm/versions/node/v24.11.1/bin" \
+    "${HOME}/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin"; do
+    if [[ -x "${candidate}/node" ]] && (( "$("${candidate}/node" -p 'Number(process.versions.node.split(".")[0])')" >= 24 )); then
+      printf '%s' "${candidate}"
+      return
+    fi
+  done
+
+  if command -v node >/dev/null 2>&1; then
+    major="$(node -p 'Number(process.versions.node.split(".")[0])')"
+    if (( major >= 24 )); then
+      dirname "$(command -v node)"
+      return
+    fi
+  fi
+
+  for candidate in "${HOME}"/.nvm/versions/node/*/bin; do
+    [[ -x "${candidate}/node" ]] || continue
+    major="$(${candidate}/node -p 'Number(process.versions.node.split(".")[0])')"
+    if (( major >= 24 )); then
+      printf '%s' "${candidate}"
+      return
+    fi
+  done
+
+  log "Node.js >= 24 is required for release builds; set RYX_NODE_BIN to override"
+  exit 1
+}
+
+NODE_BIN="$(find_node_bin)"
+export PATH="${NODE_BIN}:${PATH}"
+
+if ! command -v pnpm >/dev/null 2>&1; then
+  log "pnpm is not installed or not in PATH"
+  exit 1
+fi
+
+log "using Node $(node --version), pnpm $(pnpm --version)"
+
 usage() {
   cat <<'EOF'
 Usage:
@@ -66,13 +117,13 @@ if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
   exit 0
 fi
 
-if ! command -v pnpm >/dev/null 2>&1; then
-  log "pnpm is not installed or not in PATH"
-  exit 1
-fi
-
 cd "${ROOT_DIR}"
 mkdir -p "${OUT_ROOT}"
+
+if [[ "$(uname -s)" == "Darwin" ]] && ! node -e "require.resolve('@rollup/rollup-darwin-x64')" >/dev/null 2>&1; then
+  log "Rollup native optional dependency is missing; reinstalling from lockfile"
+  pnpm install --frozen-lockfile --prefer-offline
+fi
 
 business_package_name() {
   local app_name="$1"

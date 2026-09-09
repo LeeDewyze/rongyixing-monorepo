@@ -32,18 +32,25 @@ find_node_bin() {
   local candidate major
 
   if [[ -n "${RYX_NODE_BIN:-}" && -x "${RYX_NODE_BIN}/node" ]]; then
-    printf '%s' "${RYX_NODE_BIN}"
-    return
+    major="$("${RYX_NODE_BIN}/node" -p 'Number(process.versions.node.split(".")[0])')"
+    if (( major >= 24 )); then
+      printf '%s' "${RYX_NODE_BIN}"
+      return
+    fi
   fi
 
-  if [[ -x "${HOME}/.nvm/versions/node/v24.11.1/bin/node" ]]; then
-    printf '%s' "${HOME}/.nvm/versions/node/v24.11.1/bin"
-    return
-  fi
+  for candidate in \
+    "${HOME}/.nvm/versions/node/v24.11.1/bin" \
+    "${HOME}/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin"; do
+    if [[ -x "${candidate}/node" ]] && (( "$("${candidate}/node" -p 'Number(process.versions.node.split(".")[0])')" >= 24 )); then
+      printf '%s' "${candidate}"
+      return
+    fi
+  done
 
   if command -v node >/dev/null 2>&1; then
     major="$(node -p 'Number(process.versions.node.split(".")[0])')"
-    if (( major >= 20 )); then
+    if (( major >= 24 )); then
       dirname "$(command -v node)"
       return
     fi
@@ -52,13 +59,13 @@ find_node_bin() {
   for candidate in "${HOME}"/.nvm/versions/node/*/bin; do
     [[ -x "${candidate}/node" ]] || continue
     major="$(${candidate}/node -p 'Number(process.versions.node.split(".")[0])')"
-    if (( major >= 20 )); then
+    if (( major >= 24 )); then
       printf '%s' "${candidate}"
       return
     fi
   done
 
-  log "Node.js >= 20 is required; set RYX_NODE_BIN to override"
+  log "Node.js >= 24 is required for release builds; set RYX_NODE_BIN to override"
   exit 1
 }
 
