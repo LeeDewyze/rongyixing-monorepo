@@ -1,5 +1,6 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 
+import { BookingRouteHandoffHost } from "@/components/BookingRouteHandoffHost";
 import { buildLoginPath, isAuthenticated } from "@/lib/auth";
 
 /** Redirect unauthenticated users to password login with returnTo. */
@@ -11,5 +12,10 @@ export function RequireAuth() {
     return <Navigate to={buildLoginPath(returnTo)} replace />;
   }
 
-  return <Outlet />;
+  return (
+    <>
+      <BookingRouteHandoffHost />
+      <Outlet />
+    </>
+  );
 }

@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { BookingSubmitTransition } from "@ryx/ui/components/booking/booking-submit-transition";
 import {
   credentialKey,
   maxPassengersForProduct,
@@ -89,14 +88,13 @@ import {
   TRAIN_PAY_TYPE_PERSON,
 } from "@/lib/train-book-pay";
 import { pollTrainCheckPay, shouldNavigateToPay } from "@/lib/train-book-check-pay";
-import { clearTrainBookSelection, saveTrainBookSelection } from "@/lib/train-book-session";
+import { saveTrainBookSelection } from "@/lib/train-book-session";
 import {
-  clearTrainExchangeSession,
   loadTrainExchangeSession,
   saveTrainExchangeSession,
   TRAIN_EXCHANGE_SESSION_EVENT,
 } from "@/lib/train-exchange-session";
-import { buildPassengerSelectPath, clearPassengerSelection } from "@/lib/passenger-selection";
+import { buildPassengerSelectPath } from "@/lib/passenger-selection";
 import {
   isBusinessTravelMode,
   loadHomeTravelMode,
@@ -158,13 +156,10 @@ export function TrainBookPage() {
     field: FlightOutNumberField;
   } | null>(null);
   const [checkingPay, setCheckingPay] = useState(false);
-  const [isLeavingAfterSubmit, setIsLeavingAfterSubmit] = useState(false);
   const [submitConfirmOpen, setSubmitConfirmOpen] = useState(false);
   const [removePassengerTarget, setRemovePassengerTarget] = useState<PassengerBookInfo | null>(
     null,
   );
-  /** Skip guard redirect when leaving after a successful submit. */
-  const leavingAfterSubmitRef = useRef(false);
 
   usePageHeader({ visible: false });
 
@@ -182,7 +177,6 @@ export function TrainBookPage() {
   }, [exchangeTicketId, selection]);
 
   useEffect(() => {
-    if (leavingAfterSubmitRef.current) return;
     if (!selection && !redirecting) {
       setRedirecting(true);
       navigate("/home?product=train", { replace: true });
@@ -503,9 +497,6 @@ export function TrainBookPage() {
     try {
       const response = await submitMutation.mutateAsync(bookDto);
       const orderId = resolveTrainBookOrderId(response);
-      setIsLeavingAfterSubmit(true);
-      leavingAfterSubmitRef.current = true;
-
       if (response.IsCheckPay && response.TradeNo) {
         setCheckingPay(true);
         const checkPayReady = await pollTrainCheckPay(response.TradeNo, {
@@ -517,22 +508,20 @@ export function TrainBookPage() {
           shouldNavigateToPay({ travelPayType: resolvedPayType, checkPayReady }) &&
           orderId
         ) {
-          setIsLeavingAfterSubmit(true);
-          clearTrainBookSelection();
-          clearPassengerSelection(ProductType.Train);
-          if (isExchange) {
-            clearTrainExchangeSession();
-          }
           const payPath = `/train/pay/${encodeURIComponent(orderId)}`;
-          navigate(payPath, { replace: true });
+          navigate(payPath, {
+            replace: true,
+            flushSync: true,
+            state: {
+              bookingHandoff: {
+                product: "train",
+                target: payPath,
+                clearExchangeSession: isExchange,
+              },
+            },
+          });
           return;
         }
-      }
-
-      clearTrainBookSelection();
-      clearPassengerSelection(ProductType.Train);
-      if (isExchange) {
-        clearTrainExchangeSession();
       }
 
       if (orderId) {
@@ -542,23 +531,37 @@ export function TrainBookPage() {
             : `/orders/train/${encodeURIComponent(orderId)}`;
         navigate(detailPath, {
           replace: true,
-          state: { bookedOrderId: orderId, product: "train" },
+          flushSync: true,
+          state: {
+            bookedOrderId: orderId,
+            product: "train",
+            bookingHandoff: {
+              product: "train",
+              target: detailPath,
+              clearExchangeSession: isExchange,
+            },
+          },
         });
         return;
       }
 
-      navigate(`/home/orders?tab=${TAB_ID_TO_PARAM.train}`, { replace: true });
+      const target = `/home/orders?tab=${TAB_ID_TO_PARAM.train}`;
+      navigate(target, {
+        replace: true,
+        flushSync: true,
+        state: {
+          bookingHandoff: {
+            product: "train",
+            target,
+            clearExchangeSession: isExchange,
+          },
+        },
+      });
     } catch (error) {
       setAlertMessage(formatApiError(error, "train"));
     } finally {
       setCheckingPay(false);
     }
-  }
-
-  if (isLeavingAfterSubmit) {
-    return (
-      <BookingSubmitTransition />
-    );
   }
 
   if (!selection) return null;

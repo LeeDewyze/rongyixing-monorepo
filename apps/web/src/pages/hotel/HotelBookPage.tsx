@@ -1,6 +1,5 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { BookingSubmitTransition } from "@ryx/ui/components/booking/booking-submit-transition";
 import {
   ProductType,
   credentialDisplayNumber,
@@ -69,13 +68,13 @@ import {
   resolveHotelHoldMinutes,
   resolveTotalServiceFee,
 } from "@/lib/hotel-book-pay";
-import { clearHotelBookSelection, buildHotelBookDetailUrl } from "@/lib/hotel-book-session";
+import { buildHotelBookDetailUrl } from "@/lib/hotel-book-session";
 import { navigateBack } from "@/lib/navigation";
 import { TAB_ID_TO_PARAM } from "@/lib/order-list-params";
 import { formatApiError } from "@/lib/formatApiError";
 import { FLIGHT_NOTIFY_LANGUAGE_OPTIONS } from "@/lib/flight-book-notify";
 import { replacePassengerCredential } from "@/lib/passenger-select-logic";
-import { buildPassengerSelectPath, clearPassengerSelection } from "@/lib/passenger-selection";
+import { buildPassengerSelectPath } from "@/lib/passenger-selection";
 import { scrollH5MainToTop } from "@/lib/scroll-h5-main";
 import {
   isBusinessTravelMode,
@@ -112,7 +111,6 @@ export function HotelBookPage() {
   const [agreed, setAgreed] = useState(false);
   const [authorizedContacts, setAuthorizedContacts] = useState<FlightAuthorizedContact[]>([]);
   const [checkingPay, setCheckingPay] = useState(false);
-  const [isLeavingAfterSubmit, setIsLeavingAfterSubmit] = useState(false);
   const [creditCard, setCreditCard] = useState<HotelCreditCardForm>(() =>
     createEmptyHotelCreditCardForm(),
   );
@@ -137,8 +135,6 @@ export function HotelBookPage() {
   const [costSheetPassengerId, setCostSheetPassengerId] = useState<string | null>(null);
   const [credentialSheetPassenger, setCredentialSheetPassenger] =
     useState<PassengerBookInfo | null>(null);
-  /** Skip guard redirect when leaving after a successful submit. */
-  const leavingAfterSubmitRef = useRef(false);
   const travelMode = useMemo(
     () =>
       searchParams.get("channel") === "tourist"
@@ -158,7 +154,6 @@ export function HotelBookPage() {
   }, [hotelId]);
 
   useEffect(() => {
-    if (leavingAfterSubmitRef.current) return;
     if (isBusinessMode && passengerContext.isLoading) return;
     if (!selection || (isBusinessMode && passengers.length === 0)) {
       setRedirecting(true);
@@ -304,11 +299,6 @@ export function HotelBookPage() {
   }
 
   function finishBookNavigation(orderId?: string) {
-    setIsLeavingAfterSubmit(true);
-    leavingAfterSubmitRef.current = true;
-    clearPassengerSelection(ProductType.Hotel);
-    clearHotelBookSelection();
-
     if (orderId) {
       const detailPath =
         productChannel === "tourist"
@@ -316,12 +306,24 @@ export function HotelBookPage() {
           : `/orders/hotel/${encodeURIComponent(orderId)}`;
       navigate(detailPath, {
         replace: true,
-        state: { bookedOrderId: orderId, product: "hotel" },
+        flushSync: true,
+        state: {
+          bookedOrderId: orderId,
+          product: "hotel",
+          bookingHandoff: {
+            product: "hotel",
+            target: detailPath,
+          },
+        },
       });
-      return;
+    } else {
+      const target = `/home/orders?tab=${TAB_ID_TO_PARAM.hotel}`;
+      navigate(target, {
+        replace: true,
+        flushSync: true,
+        state: { bookingHandoff: { product: "hotel", target } },
+      });
     }
-
-    navigate(`/home/orders?tab=${TAB_ID_TO_PARAM.hotel}`, { replace: true });
   }
 
   async function executeSubmit() {
@@ -359,15 +361,15 @@ export function HotelBookPage() {
             productType: "Hotel",
           });
           if (shouldNavigateToPay({ travelPayType: payType, checkPayReady })) {
-            setIsLeavingAfterSubmit(true);
-            leavingAfterSubmitRef.current = true;
-            clearPassengerSelection(ProductType.Hotel);
-            clearHotelBookSelection();
             const payPath =
               productChannel === "tourist"
                 ? `/hotel/pay/${encodeURIComponent(orderId)}?channel=tourist`
                 : `/hotel/pay/${encodeURIComponent(orderId)}`;
-            navigate(payPath, { replace: true });
+            navigate(payPath, {
+              replace: true,
+              flushSync: true,
+              state: { bookingHandoff: { product: "hotel", target: payPath } },
+            });
             return;
           }
         } finally {
@@ -379,12 +381,6 @@ export function HotelBookPage() {
     } catch (error) {
       setAlertMessage(formatApiError(error));
     }
-  }
-
-  if (isLeavingAfterSubmit) {
-    return (
-      <BookingSubmitTransition className={WEB_PAGE_ROOT} />
-    );
   }
 
   if (redirecting || !selection) {

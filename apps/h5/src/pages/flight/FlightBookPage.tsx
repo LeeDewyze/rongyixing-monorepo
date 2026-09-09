@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { BookingSubmitTransition } from "@ryx/ui/components/booking/booking-submit-transition";
 import {
   ProductType,
   type FlightAuthorizedContact,
@@ -117,9 +116,7 @@ import {
 } from "@/lib/flight-book-passenger-form";
 import { isFlightListTimedOut, buildFlightListRefreshHref } from "@/lib/flight-list-refresh";
 import { formatApiError } from "@/lib/formatApiError";
-import { clearPassengerSelection } from "@/lib/passenger-selection";
 import { pollFlightCheckPay, shouldNavigateToPay } from "@/lib/flight-book-check-pay";
-import { clearFlightExchangeSession } from "@/lib/flight-exchange-session";
 import {
   isBusinessTravelMode,
   loadHomeTravelMode,
@@ -148,7 +145,6 @@ function shouldValidateTouristFlightBook(selection: FlightBookSelection): boolea
 
 export function FlightBookPage() {
   const navigate = useNavigate();
-  const skipEmptySelectionRedirectRef = useRef(false);
   const headerRef = useRef<HTMLDivElement>(null);
   const [headerHeight, setHeaderHeight] = useState(FALLBACK_BOOK_HEADER_HEIGHT);
   const { selection } = useFlightBookSelection();
@@ -159,7 +155,6 @@ export function FlightBookPage() {
   const [agentId, setAgentId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkingPay, setCheckingPay] = useState(false);
-  const [isLeavingAfterSubmit, setIsLeavingAfterSubmit] = useState(false);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [agreed, setAgreed] = useState(false);
   const [rulesOpen, setRulesOpen] = useState(false);
@@ -307,7 +302,7 @@ export function FlightBookPage() {
     agentId ?? (tmcAgents.length === 1 ? String(tmcAgents[0]?.Id ?? "") : undefined);
 
   useEffect(() => {
-    if (!selection && !skipEmptySelectionRedirectRef.current) {
+    if (!selection) {
       navigate("/flight/list", { replace: true });
     }
   }, [navigate, selection]);
@@ -328,13 +323,19 @@ export function FlightBookPage() {
     path: string,
     state?: { bookedOrderId: string; product: "flight" },
   ) {
-    setIsLeavingAfterSubmit(true);
-    skipEmptySelectionRedirectRef.current = true;
     markFlightBookExitToHome();
-    navigate(path, { replace: true, state });
-    clearFlightBookSelection();
-    clearFlightExchangeSession();
-    clearPassengerSelection(ProductType.Flight);
+    navigate(path, {
+      replace: true,
+      flushSync: true,
+      state: {
+        ...state,
+        bookingHandoff: {
+          product: "flight",
+          target: path,
+          clearExchangeSession: true,
+        },
+      },
+    });
   }
 
   useEffect(() => {
@@ -460,11 +461,6 @@ export function FlightBookPage() {
   ]);
 
   if (!selection) {
-    if (isLeavingAfterSubmit) {
-      return (
-        <BookingSubmitTransition />
-      );
-    }
     return null;
   }
 
