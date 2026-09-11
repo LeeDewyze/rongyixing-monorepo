@@ -413,6 +413,10 @@ function hasTripHint(hints: TravelFormTripHint[]): boolean {
   return hints.some((hint) => hint.fromCity || hint.toCity || hint.startDate || hint.endDate);
 }
 
+function isApprovedTravelFormStatus(statusName?: string): boolean {
+  return /审批通过/.test(statusName?.trim() ?? "");
+}
+
 /** Legacy workflow `Form/List?FlowTag=Travel` — applications submitted by current user. */
 export function parseTravelFormListItems(
   html: string,
@@ -483,19 +487,23 @@ export async function fetchMyTravelApplications(ticket: string): Promise<Approva
   return parseTravelFormListHtml(html, ticket);
 }
 
-/** Picker rows: list HTML first, Form/Detail when city/date are missing from form-data. */
+/** Picker rows: list HTML first, Form/Detail when city/date or approved status are missing. */
 export async function fetchMyTravelApplicationPickerItems(
   ticket: string,
 ): Promise<TravelApplicationListItem[]> {
   const html = await fetchTravelFormListHtml(ticket);
   const items = parseTravelFormListItems(html, ticket);
-  const missing = items.filter((item) => !hasTripHint(item.trips)).slice(0, TRAVEL_FORM_TRIP_ENRICH_LIMIT);
+  const need = items
+    .filter((item) => !hasTripHint(item.trips) || !isApprovedTravelFormStatus(item.statusName))
+    .slice(0, TRAVEL_FORM_TRIP_ENRICH_LIMIT);
   await Promise.all(
-    missing.map(async (item) => {
+    need.map(async (item) => {
       try {
         const detailHtml = await fetchTravelFormDetailHtml(ticket, item.id);
         const trips = parseTravelFormTripHintsFromDetailHtml(detailHtml);
         if (hasTripHint(trips)) item.trips = trips;
+        const status = parseTravelFormStatusFromDetailHtml(detailHtml);
+        if (status) item.statusName = status;
       } catch {
         // Keep list-only row when Form/Detail is unavailable.
       }

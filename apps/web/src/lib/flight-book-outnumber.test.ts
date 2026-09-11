@@ -225,7 +225,7 @@ describe("buildPassengerOutNumberFields", () => {
     expect(apiMocks.getTravelUrl).not.toHaveBeenCalled();
   });
 
-  it("lists 我的申请 travel numbers when GetTravelUrl has no rows", async () => {
+  it("lists only 审批通过 travel numbers from 我的申请 when GetTravelUrl has no rows", async () => {
     apiMocks.getTravelUrl.mockResolvedValue({ Data: {} });
     applicationMocks.fetchMyTravelApplicationPickerItems.mockResolvedValue([
       {
@@ -238,6 +238,15 @@ describe("buildPassengerOutNumberFields", () => {
         ],
       },
       { id: "2", name: "草稿", number: "TravelDraft", statusName: "草稿", trips: [] },
+      {
+        id: "3",
+        name: "出差申请",
+        number: "TravelPending",
+        statusName: "待审核",
+        trips: [
+          { fromCity: "上海", toCity: "深圳", startDate: "2026-10-01", endDate: "2026-10-01" },
+        ],
+      },
     ]);
 
     const rows = await fetchTravelUrlOptions({

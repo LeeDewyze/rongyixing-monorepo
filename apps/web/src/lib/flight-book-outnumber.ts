@@ -342,8 +342,8 @@ export async function fetchTravelUrlOptions(field: FlightOutNumberField): Promis
   return fetchApplicationTravelUrlRows();
 }
 
-function isClosedTravelForm(statusName?: string): boolean {
-  return /草稿|驳回|关闭|撤销|取消/.test(statusName?.trim() ?? "");
+function isApprovedTravelForm(statusName?: string): boolean {
+  return /审批通过/.test(statusName?.trim() ?? "");
 }
 
 function toTravelUrlRowFromApplication(item: {
@@ -387,7 +387,7 @@ async function fetchApplicationTravelUrlRows(): Promise<TravelUrlRow[]> {
   try {
     const items = await fetchMyTravelApplicationPickerItems(ticket);
     return items
-      .filter((item) => Boolean(item.number?.trim()) && !isClosedTravelForm(item.statusName))
+      .filter((item) => Boolean(item.number?.trim()) && isApprovedTravelForm(item.statusName))
       .map(toTravelUrlRowFromApplication);
   } catch {
     return [];
