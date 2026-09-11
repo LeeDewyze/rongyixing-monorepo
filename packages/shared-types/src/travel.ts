@@ -8,6 +8,8 @@ export interface GetTravelUrlParams {
   name?: string | null;
   travelType?: TravelUrlTravelType | null;
   outNumberName?: string;
+  /** Legacy book page sends credential Account.Id as AccountId. */
+  accountId?: string | null;
 }
 
 /** DingTalk itinerary segment in GetTravelUrl rows (legacy TravelUrlInfo). */

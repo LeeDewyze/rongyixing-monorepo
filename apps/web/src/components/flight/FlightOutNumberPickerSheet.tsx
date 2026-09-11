@@ -6,7 +6,8 @@ import {
   fetchTravelUrlOptions,
   filterTravelUrlRows,
   formatTravelOutNumberLabel,
-  formatTravelUrlRowSubtitle,
+  formatTravelUrlRowReason,
+  formatTravelUrlRowTripItems,
   resolveOutNumberValueFromTravelUrlRow,
 } from "@/lib/flight-book-outnumber";
 import { formatApiError } from "@/lib/formatApiError";
@@ -23,6 +24,43 @@ function formatTravelUrlRowLabel(row: TravelUrlRow, isTravelNumber?: boolean): s
   const number = row.TravelNumber?.trim();
   if (!number) return row.Subject?.trim() ?? "—";
   return isTravelNumber ? `单号 ${number}` : number;
+}
+
+function TravelUrlRowMeta({ row }: { row: TravelUrlRow }) {
+  const trips = formatTravelUrlRowTripItems(row);
+  const reason = formatTravelUrlRowReason(row.Subject);
+  const partner = row.Partner?.trim();
+  const sharedDate =
+    trips.length > 1 && trips.every((trip) => trip.date && trip.date === trips[0]?.date)
+      ? trips[0]!.date
+      : "";
+
+  return (
+    <>
+      {sharedDate
+        ? trips.map((trip, index) =>
+            trip.route ? (
+              <span key={`route-${index}`} className="text-[13px] leading-5">
+                {trip.route}
+              </span>
+            ) : null,
+          )
+        : trips.map((trip, index) => (
+            <span
+              key={`trip-${index}`}
+              className="flex w-full items-baseline justify-between gap-3 text-[13px] leading-5"
+            >
+              <span className="min-w-0 truncate">{trip.route}</span>
+              {trip.date ? (
+                <span className="shrink-0 text-[12px] font-normal text-[#808080]">{trip.date}</span>
+              ) : null}
+            </span>
+          ))}
+      {sharedDate ? <span className="text-[12px] text-[#808080]">{sharedDate}</span> : null}
+      {reason ? <span className="text-[12px] text-[#808080]">{reason}</span> : null}
+      {partner ? <span className="text-[12px] text-[#808080]">出行人：{partner}</span> : null}
+    </>
+  );
 }
 
 export function FlightOutNumberPickerSheet({
@@ -45,6 +83,7 @@ export function FlightOutNumberPickerSheet({
       field?.key,
       field?.staffNumber,
       field?.staffOutNumber,
+      field?.accountId,
       field?.travelType,
     ],
     queryFn: () => fetchTravelUrlOptions(field!),
@@ -97,22 +136,22 @@ export function FlightOutNumberPickerSheet({
             visibleRows.map((row, index) => {
               const value = resolveOutNumberValueFromTravelUrlRow(row);
               const rowKey = `${row.TravelFormId ?? row.TravelNumber ?? index}`;
-              const subtitle = formatTravelUrlRowSubtitle(row);
+              const isSelected = selected === value;
               return (
                 <li key={rowKey} className="border-b border-[#eeeeee] last:border-b-0">
                   <button
                     type="button"
-                    className={`flex w-full flex-col gap-1 px-4 py-3 text-left ${
-                      selected === value ? "text-[#5099fe]" : "text-[#333333]"
+                    className={`flex w-full flex-col gap-0.5 border-l-[3px] py-3 pr-4 text-left ${
+                      isSelected
+                        ? "border-l-[#5099fe] bg-[#e8f2ff] pl-[13px] text-[#5099fe]"
+                        : "border-l-transparent pl-[13px] text-[#333333]"
                     }`}
                     onClick={() => onSelect(value, row)}
                   >
                     <span className="text-[14px] font-medium">
                       {formatTravelUrlRowLabel(row, field.isTravelNumber)}
                     </span>
-                    {subtitle ? (
-                      <span className="text-[12px] text-[#808080]">{subtitle}</span>
-                    ) : null}
+                    <TravelUrlRowMeta row={row} />
                   </button>
                 </li>
               );

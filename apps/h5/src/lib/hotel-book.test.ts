@@ -441,6 +441,7 @@ describe("buildHotelPassengerOutNumberFieldsMap", () => {
     expect(field?.required).toBe(true);
     expect(field?.canSelect).toBe(true);
     expect(field?.staffNumber).toBe("113");
+    expect(field?.accountId).toBe("68050000000037");
     expect(field?.travelType).toBe("Hotel");
   });
 

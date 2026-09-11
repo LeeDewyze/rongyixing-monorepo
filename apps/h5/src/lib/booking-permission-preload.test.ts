@@ -31,6 +31,8 @@ vi.mock("@/lib/session-guard", () => ({
 
 import {
   IDENTITY_QUERY_KEY,
+  bookingPermissionStaffQueryKey,
+  cachedStaffPermissionQueryOptions,
   preloadBusinessStaffPermission,
   preloadBusinessIdentityPermission,
   restoreBusinessIdentityPermission,
@@ -150,5 +152,21 @@ describe("booking identity permission preload", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it("gives staff permission observers a cache-only queryFn", async () => {
+    const queryClient = new QueryClient();
+    const staff = { AccountId: "account-1", BookType: "Self", Name: "测试用户" };
+    queryClient.setQueryData(bookingPermissionStaffQueryKey("observer-ticket"), staff);
+    const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const options = cachedStaffPermissionQueryOptions(queryClient, "observer-ticket");
+    queryClient.defaultQueryOptions(options);
+
+    await expect(options.queryFn()).resolves.toEqual(staff);
+    expect(
+      errorSpy.mock.calls.some((args) => String(args[0]).includes("No queryFn")),
+    ).toBe(false);
+    errorSpy.mockRestore();
   });
 });

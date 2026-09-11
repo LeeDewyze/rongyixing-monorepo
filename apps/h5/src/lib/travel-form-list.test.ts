@@ -6,7 +6,10 @@ import {
   fetchTravelNumberByFormId,
   parseFormIdFromWorkflowHtml,
   parseTravelFormListHtml,
+  parseTravelFormListItems,
   parseTravelFormStatusFromDetailHtml,
+  parseTravelFormTripHintsFromDetailHtml,
+  parseTravelFormTripHintsFromForm,
   parseTravelNumberFromWorkflowHtml,
 } from "./travel-form-list";
 
@@ -222,6 +225,54 @@ Travel202608121111523157173                                </div>
     expect(tasks).toHaveLength(1);
     expect(tasks[0]?.id).toBe("24080000000517");
     expect(tasks[0]?.number).toBe("Travel202608061114233157173");
+  });
+
+  it("reads departure city, arrival city, and dates from list form-data", () => {
+    const html = `
+      <div class="mytask-task" form-data='{"Name":"出差申请","Tag":"Travel","Status":3,"FormDetails":[{"Name":"差旅单号","Content":"Travel202609111640363157173"},{"Name":"出发城市","Content":"北京","SlaveRow":0},{"Name":"目的城市","Content":"杭州","SlaveRow":0}],"FormTimes":[{"Name":"开始日期","Tag":"StartDate","Time":"2026-09-21 00:00","SlaveRow":0},{"Name":"结束日期","Tag":"EndDate","Time":"2026-09-22 00:00","SlaveRow":0}]}'>
+        <a href="http://workflow.rtesp.com/Form/Detail?Id=23540000000004&amp;opentype=&amp;ticket=old">查看详情</a>
+      </div>
+    `;
+
+    const items = parseTravelFormListItems(html, "mock-ticket");
+    expect(items[0]?.trips).toEqual([
+      { fromCity: "北京", toCity: "杭州", startDate: "2026-09-21", endDate: "2026-09-22" },
+    ]);
+  });
+});
+
+describe("parseTravelFormTripHints", () => {
+  it("reads cities from FormDetails tags and dates from FormTimes", () => {
+    expect(
+      parseTravelFormTripHintsFromForm({
+        FormDetails: [
+          { Tag: "FromCityName", Content: "上海", SlaveRow: 0 },
+          { Tag: "ToCityName", Content: "深圳", SlaveRow: 0 },
+        ],
+        FormTimes: [{ Tag: "StartDate", Time: "2026-10-01 00:00", SlaveRow: 0 }],
+      }),
+    ).toEqual([{ fromCity: "上海", toCity: "深圳", startDate: "2026-10-01", endDate: "" }]);
+  });
+
+  it("reads cities and dates from Form/Detail html", () => {
+    const html = `
+      <span class="formDetail-title">TravelDetail1</span>
+      <div class="element">
+        <div class="element-tip">出发城市</div>
+        <div class="element-content">北京</div>
+      </div>
+      <div class="element">
+        <div class="element-tip">目的城市</div>
+        <div class="element-content">杭州</div>
+      </div>
+      <div class="element">
+        <div class="element-tip">开始日期</div>
+        <div class="element-content">2026-09-21 00:00</div>
+      </div>
+    `;
+    expect(parseTravelFormTripHintsFromDetailHtml(html)).toEqual([
+      { fromCity: "北京", toCity: "杭州", startDate: "2026-09-21", endDate: "" },
+    ]);
   });
 });
 

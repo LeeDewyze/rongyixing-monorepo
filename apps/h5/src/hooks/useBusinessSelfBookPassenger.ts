@@ -19,8 +19,8 @@ import {
   markAutoSelfBookSelection,
 } from "@/lib/passenger-selection";
 import {
-  bookingPermissionStaffQueryKey,
   bookingPermissionSelfCredentialsQueryKey,
+  cachedStaffPermissionQueryOptions,
   isSelfBookTypeValue,
   preloadBusinessStaffPermission,
   present,
@@ -87,11 +87,9 @@ export function useBusinessSelfBookPassenger(forType: ProductType, enabled: bool
   const { selected, setSelected } = usePassengerSelection(forType);
   const identityQuery = useIdentity();
 
-  const staffQuery = useQuery<StaffDto | null>({
-    queryKey: bookingPermissionStaffQueryKey(getTicket()),
-    enabled: false,
-    staleTime: 60 * 60 * 1000,
-  });
+  const staffQuery = useQuery<StaffDto | null>(
+    cachedStaffPermissionQueryOptions(queryClient, getTicket()),
+  );
 
   useEffect(() => {
     if (enabled) {
@@ -152,10 +150,15 @@ export function useBusinessSelfBookPassenger(forType: ProductType, enabled: bool
     clearAutoSelfBookSelectionIfMatches(forType, selected);
   }, [enabled, forType, isSelfBookOnly, selected, staff, staffQuery.isLoading]);
 
+  const passengers = useMemo(
+    () => (isSelfBookOnly && selfPassenger ? [selfPassenger] : selected),
+    [isSelfBookOnly, selected, selfPassenger],
+  );
+
   return {
     selected,
     setSelected,
-    passengers: isSelfBookOnly && selfPassenger ? [selfPassenger] : selected,
+    passengers,
     isSelfBookOnly,
     isLoading:
       staffQuery.isLoading ||

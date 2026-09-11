@@ -16,6 +16,7 @@ import {
 } from "@/lib/flight-book-approval";
 import {
   buildPassengerOutNumberFields,
+  formatTravelOutNumberLabel,
   isTravelOutNumberField,
   resolvePrefillTravelNumber,
 } from "@/lib/flight-book-outnumber";
@@ -149,7 +150,7 @@ export function FlightBookTravelSection({
                 onClick={() => onOpenOutNumber(field)}
               >
                 <span className="w-[5.5rem] shrink-0 whitespace-nowrap text-[14px] text-[#808080]">
-                  {field.label}
+                  {formatTravelOutNumberLabel(field)}
                   {field.required ? <span className="text-[#ff4d4f]"> *</span> : null}
                 </span>
                 <span className="min-w-0 flex-1 truncate text-right text-[14px] text-[#333333]">
@@ -163,13 +164,13 @@ export function FlightBookTravelSection({
                 className="flex items-center gap-3 border-b border-[#f0f0f0] py-3"
               >
                 <span className="w-[5.5rem] shrink-0 whitespace-nowrap text-[14px] text-[#808080]">
-                  {field.label}
+                  {formatTravelOutNumberLabel(field)}
                   {field.required ? <span className="text-[#ff4d4f]"> *</span> : null}
                 </span>
                 <input
                   type="text"
                   value={form.outNumbers[field.key] ?? field.value ?? ""}
-                  placeholder={`请输入${field.label}`}
+                  placeholder={`请输入${formatTravelOutNumberLabel(field)}`}
                   className="min-w-0 flex-1 bg-transparent text-[14px] text-[#333333] outline-none"
                   onChange={(event) =>
                     onUpdate({

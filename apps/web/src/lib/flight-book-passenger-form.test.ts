@@ -4,7 +4,9 @@ import type { FlightInitStaff, PassengerBookInfo } from "@ryx/shared-types";
 import {
   createPassengerBookForm,
   findInitStaffForPassenger,
+  mergeInitStaffIntoForm,
   resolvePassengerFormMobile,
+  syncPassengerBookForms,
   validatePassengerBookForms,
 } from "./flight-book-passenger-form";
 
@@ -52,5 +54,22 @@ describe("validatePassengerBookForms", () => {
     form.otherMobile = "13800138000";
     expect(validatePassengerBookForms([passenger], { p1: form })).toBeNull();
     expect(resolvePassengerFormMobile(form)).toBe("13800138000");
+  });
+});
+
+describe("mergeInitStaffIntoForm", () => {
+  it("returns the same form when staff fields are already filled", () => {
+    const form = createPassengerBookForm(passenger, staff);
+    expect(mergeInitStaffIntoForm(form, passenger, staff)).toBe(form);
+  });
+});
+
+describe("syncPassengerBookForms", () => {
+  it("keeps the previous forms object when passengers is a new array of the same people", () => {
+    const form = createPassengerBookForm(passenger, staff);
+    const prev = { p1: form };
+    const nextPassengers = [{ ...passenger }];
+
+    expect(syncPassengerBookForms(prev, nextPassengers, [staff])).toBe(prev);
   });
 });

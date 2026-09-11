@@ -49,6 +49,7 @@ export function createTravelApi(proxy: ProxyClient): TravelApi {
           name: params.name ?? null,
           travelType: params.travelType ?? null,
           outNumberName: params.outNumberName ?? "TravelNumber",
+          ...(params.accountId ? { AccountId: params.accountId } : {}),
         },
       });
     },

@@ -4,7 +4,7 @@ import type { MemberProfile, StaffDto } from "@ryx/shared-types";
 
 import { getApi } from "@/lib/api";
 import {
-  bookingPermissionStaffQueryKey,
+  cachedStaffPermissionQueryOptions,
   preloadBusinessStaffPermission,
 } from "@/lib/booking-permission-preload";
 import { queryClient } from "@/lib/query";
@@ -31,13 +31,7 @@ function mergeProfile(member: MemberProfile, staff: StaffDto | null): ProfileCen
 
 export function useProfileCenter() {
   const ticket = getTicket();
-  const staffQuery = useQuery({
-    queryKey: bookingPermissionStaffQueryKey(ticket),
-    queryFn: async () =>
-      queryClient.getQueryData<StaffDto>(bookingPermissionStaffQueryKey(ticket)) ?? null,
-    enabled: false,
-    staleTime: 60 * 60 * 1000,
-  });
+  const staffQuery = useQuery(cachedStaffPermissionQueryOptions(queryClient, ticket));
 
   useEffect(() => {
     void preloadBusinessStaffPermission(queryClient, { preloadCredentials: false });

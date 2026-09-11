@@ -11,6 +11,11 @@ import type {
 
 import { getApi } from "@/lib/api";
 import { isBusinessTravelMode, shouldEnableTravelForm } from "@/lib/flight-travel-mode";
+import { getTicket } from "@/lib/session";
+import {
+  fetchMyTravelApplicationPickerItems,
+  type TravelFormTripHint,
+} from "@/lib/travel-form-list";
 import type { HomeTravelMode } from "@/config/home-assets";
 
 function parseTmcStringArray(raw: unknown): string[] {
@@ -58,9 +63,10 @@ function buildDefaultTravelNumberField(input: {
   canSelect: boolean;
   hintMap: Record<string, string[]>;
   staff?: FlightInitStaff;
+  accountId: string;
   travelType: TravelUrlTravelType;
 }): FlightOutNumberField {
-  const { travelNumber, required, canSelect, hintMap, staff, travelType } = input;
+  const { travelNumber, required, canSelect, hintMap, staff, accountId, travelType } = input;
   return {
     key: "TravelNumber",
     label: "TravelNumber",
@@ -71,6 +77,7 @@ function buildDefaultTravelNumberField(input: {
     labelDataList: hintMap.TravelNumber ?? [],
     staffNumber: staff?.Number ?? "",
     staffOutNumber: staff?.OutNumber ?? "",
+    accountId,
     travelType,
   };
 }
@@ -117,21 +124,55 @@ export function buildTravelUrlRowSearchText(row: TravelUrlRow): string {
   return parts.join(" ").toLowerCase();
 }
 
-export function formatTravelUrlRowSubtitle(row: TravelUrlRow): string {
-  const parts: string[] = [];
-  if (row.Subject?.trim()) parts.push(row.Subject.trim());
-  if (row.StartDate || row.EndDate) {
-    parts.push([row.StartDate, row.EndDate].filter(Boolean).join(" ~ "));
-  }
+function normalizeTripDate(value?: string): string {
+  const trimmed = value?.trim() ?? "";
+  if (!trimmed) return "";
+  return trimmed.match(/^(\d{4}-\d{2}-\d{2})/)?.[1] ?? trimmed;
+}
+
+function formatTripDateRange(start?: string, end?: string): string {
+  const from = normalizeTripDate(start);
+  const to = normalizeTripDate(end);
+  if (from && to && to !== from) return `${from} ~ ${to}`;
+  return from || to;
+}
+
+export interface TravelUrlTripDisplay {
+  route: string;
+  date: string;
+}
+
+/** Split a flattened "北京 → 杭州  2026-09-21 ~ 2026-09-22" trip string. */
+function splitEmbeddedTrip(value: string): TravelUrlTripDisplay | null {
+  const match = value.match(/^(.*?)\s+(\d{4}-\d{2}-\d{2}(?:\s*~\s*\d{4}-\d{2}-\d{2})?)$/);
+  if (!match) return null;
+  return { route: match[1]!.trim(), date: match[2]!.replace(/\s+/g, " ") };
+}
+
+export function formatTravelUrlRowTripItems(row: TravelUrlRow): TravelUrlTripDisplay[] {
+  const dingItems = (row.DingTalkTravels ?? [])
+    .map((trip) => ({
+      route: [trip.Departure, trip.Arrival].filter(Boolean).join(" → "),
+      date: formatTripDateRange(trip.StartTime, trip.EndTime),
+    }))
+    .filter((item) => item.route || item.date);
+  if (dingItems.length) return dingItems;
+
   const trips = normalizeTravelUrlTrips(row.Trips);
-  if (trips.length) parts.push(trips.join(" / "));
-  for (const trip of row.DingTalkTravels ?? []) {
-    const route = [trip.Departure, trip.Arrival].filter(Boolean).join("-");
-    const meta = [route, trip.Vehicle, trip.SingleOrReturn].filter(Boolean).join(" ");
-    if (meta.trim()) parts.push(meta.trim());
+  const sharedDate = formatTripDateRange(row.StartDate, row.EndDate);
+  if (trips.length) {
+    return trips.map((trip) => splitEmbeddedTrip(trip) ?? { route: trip, date: sharedDate });
   }
-  if (row.Partner?.trim()) parts.push(`出行人：${row.Partner.trim()}`);
-  return parts.join(" · ");
+
+  return sharedDate ? [{ route: "", date: sharedDate }] : [];
+}
+
+/** Drop the generic form title so only a real travel reason remains. */
+export function formatTravelUrlRowReason(subject?: string): string {
+  const value = subject?.trim() ?? "";
+  if (!value) return "";
+  const stripped = value.replace(/^出差申请(?:\s*[·•、]\s*)?/, "").trim();
+  return stripped === "出差申请" ? "" : stripped;
 }
 
 export function unwrapTravelUrlRows(result: unknown): TravelUrlRow[] {
@@ -139,14 +180,36 @@ export function unwrapTravelUrlRows(result: unknown): TravelUrlRow[] {
   if (Array.isArray(result)) return result as TravelUrlRow[];
 
   const record = result as Record<string, unknown>;
-  const nestedValue = record.value;
-  if (nestedValue && typeof nestedValue === "object") {
-    const data = (nestedValue as Record<string, unknown>).Data;
-    if (Array.isArray(data)) return data as TravelUrlRow[];
+  const candidates: unknown[] = [
+    record.value,
+    record.Data,
+    record.data,
+    record.Result,
+    record.result,
+  ];
+  for (const candidate of candidates) {
+    const rows = unwrapTravelUrlRowsFromValue(candidate);
+    if (rows.length) return rows;
   }
-  const directData = record.Data;
-  if (Array.isArray(directData)) return directData as TravelUrlRow[];
   return [];
+}
+
+function unwrapTravelUrlRowsFromValue(value: unknown): TravelUrlRow[] {
+  if (Array.isArray(value)) return value as TravelUrlRow[];
+  if (!value || typeof value !== "object") return [];
+  const record = value as Record<string, unknown>;
+  const nested = record.Data ?? record.data;
+  if (Array.isArray(nested)) return nested as TravelUrlRow[];
+  return [];
+}
+
+/** Legacy hotel/flight book page sends `credential.Account.Id`. */
+function resolveOutNumberAccountId(passenger: PassengerBookInfo, staff?: FlightInitStaff): string {
+  if (passenger.credential.AccountId) return String(passenger.credential.AccountId);
+  const fromPassenger =
+    "AccountId" in passenger.passenger ? passenger.passenger.AccountId : undefined;
+  if (fromPassenger) return String(fromPassenger);
+  return staff?.Account?.Id != null ? String(staff.Account.Id) : "";
 }
 
 export function buildPassengerOutNumberFields(input: {
@@ -157,7 +220,8 @@ export function buildPassengerOutNumberFields(input: {
   travelMode?: HomeTravelMode;
   travelType?: TravelUrlTravelType;
 }): FlightOutNumberField[] {
-  const { staff, init, travelNumber, travelMode, travelType = "Flight" } = input;
+  const { passenger, staff, init, travelNumber, travelMode, travelType = "Flight" } = input;
+  const accountId = resolveOutNumberAccountId(passenger, staff);
   const tmc = resolveTmcBookingConfig(init?.Tmc as Record<string, unknown> | undefined);
   const labels =
     parseTmcStringArray(tmc.OutNumberNameArray) || parseTmcStringArray(tmc.OutNumberName);
@@ -194,6 +258,7 @@ export function buildPassengerOutNumberFields(input: {
         labelDataList: hintMap[key] ?? hintMap[label] ?? [],
         staffNumber: staff?.Number ?? "",
         staffOutNumber: staff?.OutNumber ?? "",
+        accountId,
         travelType,
       };
     });
@@ -208,6 +273,7 @@ export function buildPassengerOutNumberFields(input: {
           canSelect: canSelectFromTravelUrl,
           hintMap,
           staff,
+          accountId,
           travelType,
         }),
       ];
@@ -219,6 +285,7 @@ export function buildPassengerOutNumberFields(input: {
           canSelect: true,
           hintMap,
           staff,
+          accountId,
           travelType,
         }),
       ];
@@ -245,22 +312,86 @@ export function buildPassengerOutNumberFields(input: {
       labelDataList: hintMap[key] ?? hintMap[label] ?? [],
       staffNumber: staff?.Number ?? "",
       staffOutNumber: staff?.OutNumber ?? "",
+      accountId,
       travelType,
     };
   });
 }
 
+/** Legacy sends null, not "", for unknown staff identifiers. */
+function nullableParam(value: string | undefined): string | null {
+  const trimmed = value?.trim() ?? "";
+  return trimmed || null;
+}
+
 export async function fetchTravelUrlOptions(field: FlightOutNumberField): Promise<TravelUrlRow[]> {
   if (!field.canSelect) return [];
+  const staffNumber = nullableParam(field.staffNumber) ?? nullableParam(field.staffOutNumber);
   const params: GetTravelUrlParams = {
-    staffNumber: field.staffNumber ?? null,
-    staffOutNumber: field.staffOutNumber ?? null,
-    name: field.label,
+    staffNumber,
+    staffOutNumber: nullableParam(field.staffOutNumber),
+    // Empty name is sent as null so the TMC forward does not treat "" as a keyword filter.
+    name: nullableParam(field.value ?? undefined),
     travelType: field.travelType ?? "Flight",
     outNumberName: field.key,
+    ...(field.accountId ? { accountId: field.accountId } : {}),
   };
   const result = await getApi().travel.getTravelUrl(params);
-  return unwrapTravelUrlRows(result);
+  const rows = unwrapTravelUrlRows(result);
+  if (rows.length) return rows;
+  return fetchApplicationTravelUrlRows();
+}
+
+function isClosedTravelForm(statusName?: string): boolean {
+  return /草稿|驳回|关闭|撤销|取消/.test(statusName?.trim() ?? "");
+}
+
+function toTravelUrlRowFromApplication(item: {
+  id: string;
+  number?: string;
+  name: string;
+  statusName?: string;
+  trips?: TravelFormTripHint[];
+}): TravelUrlRow {
+  const hints = item.trips ?? [];
+  const routes = hints
+    .map((hint) => [hint.fromCity, hint.toCity].filter(Boolean).join(" → "))
+    .filter(Boolean);
+  const startDate = hints.find((trip) => trip.startDate)?.startDate;
+  const endDate = [...hints].reverse().find((trip) => trip.endDate)?.endDate;
+  const dingTalkTravels = hints
+    .map((hint) => ({
+      ...(hint.fromCity ? { Departure: hint.fromCity } : {}),
+      ...(hint.toCity ? { Arrival: hint.toCity } : {}),
+      ...(hint.startDate ? { StartTime: hint.startDate } : {}),
+      ...(hint.endDate ? { EndTime: hint.endDate } : {}),
+    }))
+    .filter((trip) => trip.Departure || trip.Arrival || trip.StartTime);
+
+  return {
+    TravelFormId: item.id,
+    TravelNumber: item.number,
+    Subject: item.name,
+    Status: item.statusName,
+    ...(startDate ? { StartDate: startDate } : {}),
+    ...(endDate ? { EndDate: endDate } : {}),
+    ...(routes.length ? { Trips: routes } : {}),
+    ...(dingTalkTravels.length ? { DingTalkTravels: dingTalkTravels } : {}),
+  };
+}
+
+/** TMC GetTravelUrl is often empty even when 我的申请 has usable travel numbers. */
+async function fetchApplicationTravelUrlRows(): Promise<TravelUrlRow[]> {
+  const ticket = getTicket();
+  if (!ticket) return [];
+  try {
+    const items = await fetchMyTravelApplicationPickerItems(ticket);
+    return items
+      .filter((item) => Boolean(item.number?.trim()) && !isClosedTravelForm(item.statusName))
+      .map(toTravelUrlRowFromApplication);
+  } catch {
+    return [];
+  }
 }
 
 export function filterTravelUrlRows(rows: TravelUrlRow[], keyword: string): TravelUrlRow[] {

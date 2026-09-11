@@ -8,6 +8,7 @@ import { fetchWorkflowEmbedSrcdoc, isWorkflowEmbedUrl } from "@/lib/workflow-emb
 import {
   fetchTravelFormData,
   fetchTravelFormDetailHtml,
+  parseTravelFormDetailHtml,
   readTravelNumberFromFormGet,
 } from "@/lib/travel-apply";
 
@@ -25,7 +26,17 @@ type FormDetailRow = {
   Content?: string;
   Number?: string;
   Tag?: string;
+  Slave?: string;
+  SlaveRow?: number | string;
   Id?: number | string;
+};
+
+type FormTimeRow = {
+  Name?: string;
+  Tag?: string;
+  Time?: string;
+  Slave?: string;
+  SlaveRow?: number | string;
 };
 
 type TravelFormRow = {
@@ -35,7 +46,21 @@ type TravelFormRow = {
   Number?: string;
   OutNumber?: string;
   FormDetails?: FormDetailRow[];
+  FormTimes?: FormTimeRow[];
 };
+
+export interface TravelFormTripHint {
+  fromCity: string;
+  toCity: string;
+  startDate: string;
+  endDate: string;
+}
+
+export type TravelApplicationListItem = ApprovalTask & {
+  trips: TravelFormTripHint[];
+};
+
+const TRAVEL_FORM_TRIP_ENRICH_LIMIT = 20;
 
 function isInternalWorkflowNumber(value: string): boolean {
   return /^[0-9a-f]{32}$/i.test(value.trim());
@@ -312,9 +337,88 @@ export async function fetchTravelNumberByApprovalTask(
   return undefined;
 }
 
+function tripFieldKind(name?: string, tag?: string): "from" | "to" | "start" | "end" | "" {
+  const n = name?.trim() ?? "";
+  const t = tag?.trim() ?? "";
+  if (n === "出发城市" || t === "FromCityName") return "from";
+  if (n === "目的城市" || n === "到达城市" || t === "ToCityName") return "to";
+  if (n === "开始日期" || t === "StartDate") return "start";
+  if (n === "结束日期" || t === "EndDate") return "end";
+  return "";
+}
+
+function normalizeTripDate(value: string): string {
+  const trimmed = value.trim();
+  return trimmed ? trimmed.slice(0, 10) : "";
+}
+
+function emptyTripHint(): TravelFormTripHint {
+  return { fromCity: "", toCity: "", startDate: "", endDate: "" };
+}
+
+function assignTripField(hint: TravelFormTripHint, kind: "from" | "to" | "start" | "end", value: string) {
+  if (kind === "from") hint.fromCity = value;
+  else if (kind === "to") hint.toCity = value;
+  else if (kind === "start") hint.startDate = normalizeTripDate(value);
+  else hint.endDate = normalizeTripDate(value);
+}
+
+export function parseTravelFormTripHintsFromForm(form: {
+  FormDetails?: FormDetailRow[];
+  FormTimes?: FormTimeRow[];
+}): TravelFormTripHint[] {
+  const byRow = new Map<string, TravelFormTripHint>();
+  const ensure = (key: string) => {
+    const existing = byRow.get(key);
+    if (existing) return existing;
+    const created = emptyTripHint();
+    byRow.set(key, created);
+    return created;
+  };
+
+  for (const row of form.FormDetails ?? []) {
+    const kind = tripFieldKind(row.Name, row.Tag);
+    if (!kind) continue;
+    const value = (row.Content ?? row.Number ?? "").trim();
+    if (!value) continue;
+    assignTripField(ensure(String(row.SlaveRow ?? "0")), kind, value);
+  }
+
+  for (const row of form.FormTimes ?? []) {
+    const kind = tripFieldKind(row.Name, row.Tag);
+    if (kind !== "start" && kind !== "end") continue;
+    const value = (row.Time ?? "").trim();
+    if (!value) continue;
+    assignTripField(ensure(String(row.SlaveRow ?? "0")), kind, value);
+  }
+
+  return [...byRow.values()].filter(
+    (hint) => hint.fromCity || hint.toCity || hint.startDate || hint.endDate,
+  );
+}
+
+export function parseTravelFormTripHintsFromDetailHtml(html: string): TravelFormTripHint[] {
+  const { details } = parseTravelFormDetailHtml(html);
+  return details
+    .map((row) => ({
+      fromCity: row["出发城市"]?.trim() ?? "",
+      toCity: (row["目的城市"] ?? row["到达城市"] ?? "").trim(),
+      startDate: normalizeTripDate(row["开始日期"] ?? ""),
+      endDate: normalizeTripDate(row["结束日期"] ?? ""),
+    }))
+    .filter((hint) => hint.fromCity || hint.toCity || hint.startDate || hint.endDate);
+}
+
+function hasTripHint(hints: TravelFormTripHint[]): boolean {
+  return hints.some((hint) => hint.fromCity || hint.toCity || hint.startDate || hint.endDate);
+}
+
 /** Legacy workflow `Form/List?FlowTag=Travel` — applications submitted by current user. */
-export function parseTravelFormListHtml(html: string, ticket: string): ApprovalTask[] {
-  const tasks: ApprovalTask[] = [];
+export function parseTravelFormListItems(
+  html: string,
+  ticket: string,
+): TravelApplicationListItem[] {
+  const items: TravelApplicationListItem[] = [];
   const formDataMatches = Array.from(html.matchAll(/\bform-data\s*=\s*(['"])([\s\S]*?)\1/gi));
 
   for (const [index, formDataMatch] of formDataMatches.entries()) {
@@ -339,7 +443,7 @@ export function parseTravelFormListHtml(html: string, ticket: string): ApprovalT
     const status = form.Status;
     const statusName = resolveTravelFormStatusName(form);
 
-    tasks.push({
+    items.push({
       id,
       name: reason ? `${form.Name ?? "出差申请"} · ${reason}` : (form.Name ?? "出差申请"),
       number: travelNumber || undefined,
@@ -347,13 +451,21 @@ export function parseTravelFormListHtml(html: string, ticket: string): ApprovalT
       statusName,
       tag: "Travel",
       url: buildTravelFormDetailUrl(ticket, id),
+      trips: parseTravelFormTripHintsFromForm(form),
     });
   }
 
-  return tasks;
+  return items;
 }
 
-export async function fetchMyTravelApplications(ticket: string): Promise<ApprovalTask[]> {
+export function parseTravelFormListHtml(html: string, ticket: string): ApprovalTask[] {
+  return parseTravelFormListItems(html, ticket).map((item) => {
+    const { trips: _trips, ...task } = item;
+    return task;
+  });
+}
+
+async function fetchTravelFormListHtml(ticket: string): Promise<string> {
   const params = new URLSearchParams({
     ticket,
     CheckFlowType: "",
@@ -363,6 +475,31 @@ export async function fetchMyTravelApplications(ticket: string): Promise<Approva
   if (!response.ok) {
     throw new Error(`加载我的申请失败：HTTP ${response.status}`);
   }
-  const html = await response.text();
+  return response.text();
+}
+
+export async function fetchMyTravelApplications(ticket: string): Promise<ApprovalTask[]> {
+  const html = await fetchTravelFormListHtml(ticket);
   return parseTravelFormListHtml(html, ticket);
+}
+
+/** Picker rows: list HTML first, Form/Detail when city/date are missing from form-data. */
+export async function fetchMyTravelApplicationPickerItems(
+  ticket: string,
+): Promise<TravelApplicationListItem[]> {
+  const html = await fetchTravelFormListHtml(ticket);
+  const items = parseTravelFormListItems(html, ticket);
+  const missing = items.filter((item) => !hasTripHint(item.trips)).slice(0, TRAVEL_FORM_TRIP_ENRICH_LIMIT);
+  await Promise.all(
+    missing.map(async (item) => {
+      try {
+        const detailHtml = await fetchTravelFormDetailHtml(ticket, item.id);
+        const trips = parseTravelFormTripHintsFromDetailHtml(detailHtml);
+        if (hasTripHint(trips)) item.trips = trips;
+      } catch {
+        // Keep list-only row when Form/Detail is unavailable.
+      }
+    }),
+  );
+  return items;
 }

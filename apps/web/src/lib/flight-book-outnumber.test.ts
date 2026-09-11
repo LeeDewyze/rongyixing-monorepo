@@ -11,8 +11,21 @@ const apiMocks = vi.hoisted(() => {
   };
 });
 
+const applicationMocks = vi.hoisted(() => ({
+  getTicket: vi.fn(() => "ticket-1"),
+  fetchMyTravelApplicationPickerItems: vi.fn(),
+}));
+
 vi.mock("@/lib/api", () => ({
   getApi: apiMocks.getApi,
+}));
+
+vi.mock("@/lib/session", () => ({
+  getTicket: applicationMocks.getTicket,
+}));
+
+vi.mock("@/lib/travel-form-list", () => ({
+  fetchMyTravelApplicationPickerItems: applicationMocks.fetchMyTravelApplicationPickerItems,
 }));
 
 import {
@@ -20,6 +33,8 @@ import {
   buildTravelUrlRowSearchText,
   fetchTravelUrlOptions,
   filterTravelUrlRows,
+  formatTravelUrlRowReason,
+  formatTravelUrlRowTripItems,
   pickSoleTravelUrlNumber,
   resolveOutNumberValueFromTravelUrlRow,
   resolvePrefillTravelNumber,
@@ -31,6 +46,9 @@ describe("buildPassengerOutNumberFields", () => {
   afterEach(() => {
     apiMocks.getApi.mockClear();
     apiMocks.getTravelUrl.mockReset();
+    applicationMocks.getTicket.mockClear();
+    applicationMocks.getTicket.mockReturnValue("ticket-1");
+    applicationMocks.fetchMyTravelApplicationPickerItems.mockReset();
   });
 
   it("enables canSelect only for TravelNumber when GetTravelUrl is on", () => {
@@ -132,6 +150,65 @@ describe("buildPassengerOutNumberFields", () => {
     expect(config.GetTravelUrl).toBe(true);
     expect(config.OutNumberNameArray).toEqual(["TravelNumber"]);
   });
+  it("sends the legacy book-page GetTravelUrl payload", async () => {
+    apiMocks.getTravelUrl.mockResolvedValue({
+      value: { Data: [{ TravelNumber: "TravelTmc" }] },
+    });
+    const fields = buildPassengerOutNumberFields({
+      passenger: {
+        id: "p1",
+        passenger: { Id: "p1", Name: "孙雪", AccountId: "staff-account" },
+        credential: {
+          Id: "c1",
+          AccountId: "72530000000029",
+          Name: "孙雪",
+          Number: "411521198811171528",
+          CredentialsType: 1,
+        },
+      },
+      staff: { Number: "3157173", OutNumber: "", Account: { Id: "operator-account" } },
+      init: { Tmc: { GetTravelUrl: true, OutNumberNameArray: ["TravelNumber"] } },
+      travelMode: "business",
+      travelType: "Hotel",
+    });
+
+    await fetchTravelUrlOptions(fields[0]!);
+
+    expect(apiMocks.getTravelUrl).toHaveBeenCalledWith({
+      staffNumber: "3157173",
+      staffOutNumber: null,
+      name: null,
+      travelType: "Hotel",
+      outNumberName: "TravelNumber",
+      accountId: "72530000000029",
+    });
+  });
+
+  it("falls back staffNumber to staffOutNumber like legacy hotel book", async () => {
+    apiMocks.getTravelUrl.mockResolvedValue({ value: { Data: [] } });
+
+    await fetchTravelUrlOptions({
+      key: "TravelNumber",
+      label: "TravelNumber",
+      value: "",
+      required: true,
+      canSelect: true,
+      isTravelNumber: true,
+      staffNumber: "",
+      staffOutNumber: "OUT-113",
+      accountId: "72530000000029",
+      travelType: "Hotel",
+    });
+
+    expect(apiMocks.getTravelUrl).toHaveBeenCalledWith(
+      expect.objectContaining({
+        staffNumber: "OUT-113",
+        staffOutNumber: "OUT-113",
+        name: null,
+        accountId: "72530000000029",
+      }),
+    );
+  });
 
   it("does not call GetTravelUrl when the field cannot select a business travel form", async () => {
     const rows = await fetchTravelUrlOptions({
@@ -146,6 +223,53 @@ describe("buildPassengerOutNumberFields", () => {
     expect(rows).toEqual([]);
     expect(apiMocks.getApi).not.toHaveBeenCalled();
     expect(apiMocks.getTravelUrl).not.toHaveBeenCalled();
+  });
+
+  it("lists 我的申请 travel numbers when GetTravelUrl has no rows", async () => {
+    apiMocks.getTravelUrl.mockResolvedValue({ Data: {} });
+    applicationMocks.fetchMyTravelApplicationPickerItems.mockResolvedValue([
+      {
+        id: "1",
+        name: "出差申请",
+        number: "Travel202609111640363157173",
+        statusName: "审批通过",
+        trips: [
+          { fromCity: "北京", toCity: "杭州", startDate: "2026-09-21", endDate: "2026-09-21" },
+        ],
+      },
+      { id: "2", name: "草稿", number: "TravelDraft", statusName: "草稿", trips: [] },
+    ]);
+
+    const rows = await fetchTravelUrlOptions({
+      key: "TravelNumber",
+      label: "TravelNumber",
+      value: "",
+      required: true,
+      canSelect: true,
+      isTravelNumber: true,
+      staffNumber: "3157173",
+      travelType: "Flight",
+    });
+
+    expect(rows).toEqual([
+      {
+        TravelFormId: "1",
+        TravelNumber: "Travel202609111640363157173",
+        Subject: "出差申请",
+        Status: "审批通过",
+        StartDate: "2026-09-21",
+        EndDate: "2026-09-21",
+        Trips: ["北京 → 杭州"],
+        DingTalkTravels: [
+          {
+            Departure: "北京",
+            Arrival: "杭州",
+            StartTime: "2026-09-21",
+            EndTime: "2026-09-21",
+          },
+        ],
+      },
+    ]);
   });
 });
 
@@ -188,6 +312,9 @@ describe("unwrapTravelUrlRows", () => {
     expect(unwrapTravelUrlRows({ value: { Data: [row] } })).toEqual([row]);
     expect(unwrapTravelUrlRows({ Data: [row] })).toEqual([row]);
     expect(unwrapTravelUrlRows([row])).toEqual([row]);
+    expect(unwrapTravelUrlRows({ value: [row] })).toEqual([row]);
+    expect(unwrapTravelUrlRows({ data: [row] })).toEqual([row]);
+    expect(unwrapTravelUrlRows({})).toEqual([]);
   });
 });
 
@@ -247,5 +374,37 @@ describe("pickSoleTravelUrlNumber", () => {
     expect(pickSoleTravelUrlNumber([{ TravelNumber: "Travel202608141132303157173" }])).toBe(
       "Travel202608141132303157173",
     );
+  });
+});
+
+describe("formatTravelUrlRowTripItems", () => {
+  it("keeps each trip's route and date separate", () => {
+    expect(
+      formatTravelUrlRowTripItems({
+        TravelNumber: "Travel1",
+        DingTalkTravels: [
+          { Departure: "北京", Arrival: "杭州", StartTime: "2026-09-21", EndTime: "2026-09-22" },
+        ],
+      }),
+    ).toEqual([{ route: "北京 → 杭州", date: "2026-09-21 ~ 2026-09-22" }]);
+    expect(
+      formatTravelUrlRowTripItems({
+        TravelNumber: "Travel2",
+        DingTalkTravels: [
+          { Departure: "南京", Arrival: "长沙", StartTime: "2026-08-05", EndTime: "2026-08-06" },
+          { Departure: "武汉", Arrival: "厦门", StartTime: "2026-08-05", EndTime: "2026-08-06" },
+        ],
+      }),
+    ).toEqual([
+      { route: "南京 → 长沙", date: "2026-08-05 ~ 2026-08-06" },
+      { route: "武汉 → 厦门", date: "2026-08-05 ~ 2026-08-06" },
+    ]);
+  });
+});
+
+describe("formatTravelUrlRowReason", () => {
+  it("hides the generic travel form title", () => {
+    expect(formatTravelUrlRowReason("出差申请")).toBe("");
+    expect(formatTravelUrlRowReason("出差申请 · 项目出差")).toBe("项目出差");
   });
 });

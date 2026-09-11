@@ -33,6 +33,7 @@ export interface FlightOutNumberField {
   labelDataList?: string[];
   staffNumber?: string;
   staffOutNumber?: string;
+  accountId?: string;
   travelType?: TravelUrlTravelType;
 }
 

@@ -91,23 +91,56 @@ export function mergeInitStaffIntoForm(
   staff?: FlightInitStaff,
 ): FlightPassengerBookForm {
   if (!staff) return form;
-  const next = { ...form };
-  if (!next.mobileOptions.length) {
-    next.mobileOptions = createPassengerBookForm(passenger, staff).mobileOptions;
+  const created = createPassengerBookForm(passenger, staff);
+  const mobileOptions = form.mobileOptions.length ? form.mobileOptions : created.mobileOptions;
+  const emailOptions =
+    form.emailOptions.length || !staff.Account?.Email
+      ? form.emailOptions
+      : splitContactOptions(staff.Account.Email);
+  const organization = form.organization.name ? form.organization : created.organization;
+  const costCenter = form.costCenter.name ? form.costCenter : created.costCenter;
+  const otherMobile =
+    form.otherMobile || form.mobileOptions.length ? form.otherMobile : created.otherMobile;
+
+  if (
+    mobileOptions === form.mobileOptions &&
+    emailOptions === form.emailOptions &&
+    organization === form.organization &&
+    costCenter === form.costCenter &&
+    otherMobile === form.otherMobile
+  ) {
+    return form;
   }
-  if (!next.emailOptions.length && staff.Account?.Email) {
-    next.emailOptions = splitContactOptions(staff.Account.Email);
+
+  return {
+    ...form,
+    mobileOptions,
+    emailOptions,
+    organization,
+    costCenter,
+    otherMobile,
+  };
+}
+
+export function syncPassengerBookForms(
+  prev: Record<string, FlightPassengerBookForm>,
+  passengers: PassengerBookInfo[],
+  staffs: FlightInitStaff[] | undefined,
+): Record<string, FlightPassengerBookForm> {
+  const next: Record<string, FlightPassengerBookForm> = {};
+  let changed = Object.keys(prev).length !== passengers.length;
+
+  for (const passenger of passengers) {
+    const staff = findInitStaffForPassenger(passenger, staffs);
+    const existing = prev[passenger.id];
+    const form = existing
+      ? mergeInitStaffIntoForm(existing, passenger, staff)
+      : createPassengerBookForm(passenger, staff);
+    next[passenger.id] = form;
+    if (form !== existing) changed = true;
   }
-  if (!next.organization.name) {
-    next.organization = createPassengerBookForm(passenger, staff).organization;
-  }
-  if (!next.costCenter.name) {
-    next.costCenter = createPassengerBookForm(passenger, staff).costCenter;
-  }
-  if (!next.otherMobile && !next.mobileOptions.length) {
-    next.otherMobile = createPassengerBookForm(passenger, staff).otherMobile;
-  }
-  return next;
+
+  return changed ? next : prev;
 }
 
 export function resolvePassengerFormMobile(form: FlightPassengerBookForm): string {

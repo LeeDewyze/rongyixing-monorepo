@@ -87,6 +87,21 @@ export function bookingPermissionStaffQueryKey(ticket: string | null = getTicket
   return ["booking-permission", "staff", ticket ?? ""] as const;
 }
 
+/** Cache-only observer options. Staff/Get is fetched by preloadBusinessStaffPermission. */
+export function cachedStaffPermissionQueryOptions(
+  queryClient: QueryClient,
+  ticket: string | null = getTicket(),
+) {
+  const queryKey = bookingPermissionStaffQueryKey(ticket);
+  return {
+    queryKey,
+    queryFn: async (): Promise<StaffDto | null> =>
+      queryClient.getQueryData<StaffDto>(queryKey) ?? null,
+    enabled: false as const,
+    staleTime: STAFF_PERMISSION_CACHE_TTL,
+  };
+}
+
 export function restoreBusinessStaffPermission(
   queryClient: QueryClient,
   ticket: string | null = getTicket(),

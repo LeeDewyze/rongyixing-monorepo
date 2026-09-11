@@ -1,11 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { FlightInitStaff, FlightPassengerBookForm, PassengerBookInfo } from "@ryx/shared-types";
 
-import {
-  createPassengerBookForm,
-  findInitStaffForPassenger,
-  mergeInitStaffIntoForm,
-} from "@/lib/flight-book-passenger-form";
+import { syncPassengerBookForms } from "@/lib/flight-book-passenger-form";
 
 export function useFlightBookPassengerForms(
   passengers: PassengerBookInfo[],
@@ -14,19 +10,7 @@ export function useFlightBookPassengerForms(
   const [forms, setForms] = useState<Record<string, FlightPassengerBookForm>>({});
 
   useEffect(() => {
-    setForms((prev) => {
-      const next: Record<string, FlightPassengerBookForm> = {};
-      for (const passenger of passengers) {
-        const staff = findInitStaffForPassenger(passenger, staffs);
-        const existing = prev[passenger.id];
-        if (!existing) {
-          next[passenger.id] = createPassengerBookForm(passenger, staff);
-        } else {
-          next[passenger.id] = mergeInitStaffIntoForm(existing, passenger, staff);
-        }
-      }
-      return next;
-    });
+    setForms((prev) => syncPassengerBookForms(prev, passengers, staffs));
   }, [passengers, staffs]);
 
   const orderedForms = useMemo(
