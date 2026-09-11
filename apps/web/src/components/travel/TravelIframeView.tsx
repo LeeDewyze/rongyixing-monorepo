@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   fetchWorkflowEmbedSrcdoc,
   isWorkflowBackMessage,
+  isWorkflowEmbedOverlayMessage,
   isWorkflowEmbedUrl,
 } from "@/lib/workflow-embed";
 
@@ -19,9 +20,14 @@ function measureEmbedHeight(doc: Document): number {
 /** Legacy `OpenUrlComponent` / workflow embed — iframe with external fallback link. */
 export function TravelIframeView({ title, url, onWorkflowBack }: TravelIframeViewProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const overlayOpenRef = useRef(false);
   const [srcdoc, setSrcdoc] = useState<string | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [frameHeight, setFrameHeight] = useState<number | null>(null);
+  const [overlayOpen, setOverlayOpen] = useState(false);
+
+  overlayOpenRef.current = overlayOpen;
 
   useEffect(() => {
     let cancelled = false;
@@ -30,12 +36,14 @@ export function TravelIframeView({ title, url, onWorkflowBack }: TravelIframeVie
       setSrcdoc(null);
       setLoadError(false);
       setFrameHeight(null);
+      setOverlayOpen(false);
       return;
     }
 
     setSrcdoc(null);
     setLoadError(false);
     setFrameHeight(null);
+    setOverlayOpen(false);
 
     void fetchWorkflowEmbedSrcdoc(url)
       .then((doc) => {
@@ -62,6 +70,13 @@ export function TravelIframeView({ title, url, onWorkflowBack }: TravelIframeVie
     function onMessage(event: MessageEvent) {
       if (isWorkflowBackMessage(event.data)) {
         onWorkflowBack?.();
+        return;
+      }
+      const overlay = isWorkflowEmbedOverlayMessage(event.data);
+      if (!overlay) return;
+      setOverlayOpen(overlay.open);
+      if (overlay.open) {
+        scrollRef.current?.scrollTo({ top: 0 });
       }
     }
     window.addEventListener("message", onMessage);
@@ -77,6 +92,7 @@ export function TravelIframeView({ title, url, onWorkflowBack }: TravelIframeVie
     let resizeObserver: ResizeObserver | undefined;
 
     function measure() {
+      if (overlayOpenRef.current) return;
       const doc = iframeRef.current?.contentDocument;
       if (!doc || cancelled) return;
       const height = measureEmbedHeight(doc);
@@ -111,12 +127,13 @@ export function TravelIframeView({ title, url, onWorkflowBack }: TravelIframeVie
       mutationObserver?.disconnect();
       resizeObserver?.disconnect();
     };
-  }, [srcdoc]);
+  }, [srcdoc, overlayOpen]);
 
   const isWorkflowEmbed = isWorkflowEmbedUrl(url);
   const useDirectSrc = !isWorkflowEmbed;
   const iframeSrc = useDirectSrc ? url : undefined;
   const canRenderIframe = useDirectSrc ? Boolean(url) : Boolean(srcdoc);
+  const fillViewport = useDirectSrc || overlayOpen;
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-white">
@@ -132,15 +149,22 @@ export function TravelIframeView({ title, url, onWorkflowBack }: TravelIframeVie
         <p className="p-4 text-sm text-[#808080]">正在加载详情…</p>
       ) : null}
       {canRenderIframe ? (
-        <div className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain touch-pan-y [-webkit-overflow-scrolling:touch]">
+        <div
+          ref={scrollRef}
+          className={
+            overlayOpen
+              ? "min-h-0 flex-1 overflow-hidden"
+              : "min-h-0 flex-1 overflow-x-hidden overflow-y-auto overscroll-y-contain touch-pan-y [-webkit-overflow-scrolling:touch]"
+          }
+        >
           <iframe
             ref={iframeRef}
             title={title}
             src={iframeSrc}
             srcDoc={srcdoc ?? undefined}
             allow="geolocation"
-            className={useDirectSrc ? "min-h-0 h-full w-full border-0" : "block w-full border-0"}
-            style={useDirectSrc ? undefined : { height: frameHeight ? `${frameHeight}px` : "100%" }}
+            className={fillViewport ? "min-h-0 h-full w-full border-0" : "block w-full border-0"}
+            style={fillViewport ? undefined : { height: frameHeight ? `${frameHeight}px` : "100%" }}
           />
         </div>
       ) : null}

@@ -60,6 +60,15 @@ export function isWorkflowBackMessage(data: unknown): boolean {
   return false;
 }
 
+/** Full-size workflow layer (task.showHandleContent / 处理) — parent must shrink iframe to the viewport. */
+export function isWorkflowEmbedOverlayMessage(data: unknown): { open: boolean } | null {
+  const msg = normalizeWorkflowMessage(data);
+  if (!msg || msg.type !== "ryxEmbedOverlay") {
+    return null;
+  }
+  return { open: isTruthyWorkflowFlag(msg.open) };
+}
+
 /** srcdoc loses `window.location.search`; shim common workflow query helpers. */
 export function injectWorkflowIframeQueryShim(html: string, search: string): string {
   const query = search.startsWith("?") ? search.slice(1) : search;
@@ -105,6 +114,18 @@ export function injectWorkflowEmbedBridge(html: string): string {
       window.parent.postMessage({ type: "appCheckGoBack", payload: true, isBack: true }, "*");
       window.parent.postMessage({ type: "back", isBack: true, payload: true }, "*");
     } catch (e) {}
+  }
+  function notifyOverlay(open) {
+    if (!window.parent || window.parent === window) return;
+    try {
+      window.parent.postMessage({ type: "ryxEmbedOverlay", open: open }, "*");
+    } catch (e) {}
+  }
+  function isFullLayerArea(area) {
+    if (area == null) return false;
+    if (typeof area === "string") return String(area).indexOf("100%") >= 0;
+    if (area.length) return area[0] === "100%" || area[1] === "100%";
+    return false;
   }
   function isSuccessMessage(message) {
     if (message == null) return false;
@@ -215,6 +236,27 @@ export function injectWorkflowEmbedBridge(html: string): string {
           };
         }
         return result;
+      };
+    }
+    if (typeof layer.open === "function") {
+      var originalOpen = layer.open;
+      layer.open = function (options) {
+        var source = options && typeof options === "object" ? options : {};
+        var full = isFullLayerArea(source.area);
+        var opts = source;
+        if (full) {
+          notifyOverlay(true);
+          opts = {};
+          for (var key in source) {
+            if (Object.prototype.hasOwnProperty.call(source, key)) opts[key] = source[key];
+          }
+          var origEnd = source.end;
+          opts.end = function () {
+            notifyOverlay(false);
+            if (typeof origEnd === "function") return origEnd.apply(this, arguments);
+          };
+        }
+        return originalOpen.call(layer, opts);
       };
     }
     layer.__ryxEmbedHooked = true;

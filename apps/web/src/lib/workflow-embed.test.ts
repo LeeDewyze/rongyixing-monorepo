@@ -6,6 +6,7 @@ import {
   injectWorkflowIframeQueryShim,
   injectWorkflowPageTicket,
   isWorkflowBackMessage,
+  isWorkflowEmbedOverlayMessage,
   isWorkflowEmbedUrl,
   prepareWorkflowSrcdoc,
 } from "./workflow-embed";
@@ -110,6 +111,26 @@ describe("injectWorkflowEmbedBridge", () => {
     expect(result).toContain("showEmbedAlert");
     expect(result).toContain("data-ryx-embed-alert");
     expect(result).toContain("patchLocationReload");
+  });
+
+  it("notifies the parent when a full-size layer such as 处理 opens", () => {
+    const result = injectWorkflowEmbedBridge("<head></head><body></body>");
+    expect(result).toContain('type: "ryxEmbedOverlay"');
+    expect(result).toContain("isFullLayerArea");
+    expect(result).toContain("layer.open");
+  });
+});
+
+describe("isWorkflowEmbedOverlayMessage", () => {
+  it("reads full-screen layer open and close flags", () => {
+    expect(isWorkflowEmbedOverlayMessage({ type: "ryxEmbedOverlay", open: true })).toEqual({
+      open: true,
+    });
+    expect(isWorkflowEmbedOverlayMessage({ type: "ryxEmbedOverlay", open: false })).toEqual({
+      open: false,
+    });
+    expect(isWorkflowEmbedOverlayMessage({ type: "windowclose" })).toBeNull();
+    expect(isWorkflowEmbedOverlayMessage(null)).toBeNull();
   });
 });
 
