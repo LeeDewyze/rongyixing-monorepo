@@ -39,6 +39,8 @@ export { canSelectTrainSeatType as canSelectTrainSeat };
 /** Aligned with hotel book passenger detail fields (minus arrival time). */
 export interface TrainPassengerBookForm {
   passengerId: string;
+  travelFormId?: string;
+  travelNumber?: string;
   expanded: boolean;
   notifyLanguage: "" | "cn" | "en";
   illegalReason: string;
@@ -488,9 +490,14 @@ export function buildTrainOrderBookDto(input: {
     };
     if (includeTravelForm) {
       const passengerTravelFormId =
+        form?.travelFormId ??
         travelFormId ??
         ("travelFormId" in info.passenger ? info.passenger.travelFormId : undefined);
       if (passengerTravelFormId) passengerDto.travelFormId = passengerTravelFormId;
+      const passengerTravelNumber =
+        form?.travelNumber ??
+        ("travelNumber" in info.passenger ? info.passenger.travelNumber : undefined);
+      if (passengerTravelNumber) passengerDto.travelNumber = passengerTravelNumber;
     }
     return passengerDto;
   });
@@ -508,7 +515,8 @@ export function buildTrainOrderBookDto(input: {
   };
   if (includeTravelForm) {
     dto.TravelFormId =
-      travelFormId ?? passengerDtos.find((passenger) => passenger.travelFormId)?.travelFormId;
+      travelFormId ??
+      passengerDtos.find((passenger) => passenger.travelFormId)?.travelFormId;
   }
 
   if (agentId) dto.AgentId = agentId;

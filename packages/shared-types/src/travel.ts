@@ -31,7 +31,10 @@ export interface TravelUrlRow {
   EndDate?: string;
   Status?: string;
   StatusType?: string;
+  OrganizationCode?: string;
   OrganizationName?: string;
+  CostCenterCode?: string;
+  CostCenterName?: string;
   Trips?: string[] | string;
   Partner?: string;
   DingTalkTravels?: DingTalkTravelRow[];

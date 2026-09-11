@@ -389,10 +389,11 @@ export function buildFlightOrderBookDto(input: {
 
     if (includeTravelForm) {
       const passengerTravelFormId =
+        travelForm?.travelFormId ??
         travelFormId ??
         ("travelFormId" in info.passenger ? info.passenger.travelFormId : undefined);
       if (passengerTravelFormId) passenger.travelFormId = passengerTravelFormId;
-      const passengerTravelNumber = resolvePassengerTravelNumber(info);
+      const passengerTravelNumber = travelForm?.travelNumber ?? resolvePassengerTravelNumber(info);
       if (passengerTravelNumber) passenger.travelNumber = passengerTravelNumber;
     }
 

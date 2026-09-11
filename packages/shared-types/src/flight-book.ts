@@ -129,6 +129,8 @@ export interface FlightPassengerContactOption {
 /** Per-passenger book form state (Legacy combindInfo credential detail). */
 export interface FlightPassengerBookForm {
   passengerId: string;
+  travelFormId?: string;
+  travelNumber?: string;
   mobileOptions: FlightPassengerContactOption[];
   emailOptions: FlightPassengerContactOption[];
   otherMobile: string;

@@ -352,6 +352,10 @@ function toTravelUrlRowFromApplication(item: {
   name: string;
   statusName?: string;
   trips?: TravelFormTripHint[];
+  organizationCode?: string;
+  organizationName?: string;
+  costCenterCode?: string;
+  costCenterName?: string;
 }): TravelUrlRow {
   const hints = item.trips ?? [];
   const routes = hints
@@ -373,6 +377,10 @@ function toTravelUrlRowFromApplication(item: {
     TravelNumber: item.number,
     Subject: item.name,
     Status: item.statusName,
+    ...(item.organizationCode ? { OrganizationCode: item.organizationCode } : {}),
+    ...(item.organizationName ? { OrganizationName: item.organizationName } : {}),
+    ...(item.costCenterCode ? { CostCenterCode: item.costCenterCode } : {}),
+    ...(item.costCenterName ? { CostCenterName: item.costCenterName } : {}),
     ...(startDate ? { StartDate: startDate } : {}),
     ...(endDate ? { EndDate: endDate } : {}),
     ...(routes.length ? { Trips: routes } : {}),

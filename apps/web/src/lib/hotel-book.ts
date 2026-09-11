@@ -44,6 +44,8 @@ export type HotelNotifyLanguage = "" | "cn" | "en";
 
 export interface HotelPassengerBookForm {
   passengerId: string;
+  travelFormId?: string;
+  travelNumber?: string;
   expanded: boolean;
   arrivalTime: string;
   notifyLanguage: HotelNotifyLanguage;
@@ -404,7 +406,10 @@ export function buildHotelInitBookDto(input: {
     Passengers: passengerDtos,
   };
   if (includeTravelForm) {
-    dto.TravelFormId = travelFormId ?? "";
+    dto.TravelFormId =
+      travelFormId ??
+      passengerDtos.find((passenger) => passenger.travelFormId)?.travelFormId ??
+      "";
   }
 
   if (agentId) {
@@ -510,6 +515,18 @@ export function buildHotelOrderBookDto(input: {
       OrganizationCode: form.otherOrganizationName ? "" : form.organization.code || "",
       OutNumbers: Object.keys(outNumbers).length ? outNumbers : null,
     };
+
+    if (includeTravelForm) {
+      const passengerTravelFormId =
+        form.travelFormId ??
+        input.travelFormId ??
+        ("travelFormId" in passenger.passenger ? passenger.passenger.travelFormId : undefined);
+      if (passengerTravelFormId) passengerDto.travelFormId = passengerTravelFormId;
+      const passengerTravelNumber =
+        form.travelNumber ??
+        ("travelNumber" in passenger.passenger ? passenger.passenger.travelNumber : undefined);
+      if (passengerTravelNumber) passengerDto.travelNumber = passengerTravelNumber;
+    }
 
     if (!includeTravelForm) {
       delete passengerDto.travelFormId;

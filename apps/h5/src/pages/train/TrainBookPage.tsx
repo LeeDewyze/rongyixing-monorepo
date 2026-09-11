@@ -1072,11 +1072,30 @@ export function TrainBookPage() {
             : undefined
         }
         onClose={() => setOutNumberPicker(null)}
-        onSelect={(value) => {
+        onSelect={(value, row) => {
           if (!outNumberPicker) return;
+          const current = forms[outNumberPicker.passengerId];
           updateForm(outNumberPicker.passengerId, {
+            ...(row.TravelFormId ? { travelFormId: row.TravelFormId } : {}),
+            ...(value ? { travelNumber: value } : {}),
+            ...(row.CostCenterCode || row.CostCenterName
+              ? {
+                  costCenter: {
+                    code: row.CostCenterCode ?? current?.costCenter.code ?? "",
+                    name: row.CostCenterName ?? current?.costCenter.name ?? "",
+                  },
+                }
+              : {}),
+            ...(row.OrganizationCode || row.OrganizationName
+              ? {
+                  organization: {
+                    code: row.OrganizationCode ?? current?.organization.code ?? "",
+                    name: row.OrganizationName ?? current?.organization.name ?? "",
+                  },
+                }
+              : {}),
             outNumbers: {
-              ...forms[outNumberPicker.passengerId]!.outNumbers,
+              ...current!.outNumbers,
               [outNumberPicker.field.key]: value,
             },
           });

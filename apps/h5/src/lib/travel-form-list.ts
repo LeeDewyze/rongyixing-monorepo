@@ -58,6 +58,10 @@ export interface TravelFormTripHint {
 
 export type TravelApplicationListItem = ApprovalTask & {
   trips: TravelFormTripHint[];
+  organizationCode?: string;
+  organizationName?: string;
+  costCenterCode?: string;
+  costCenterName?: string;
 };
 
 const TRAVEL_FORM_TRIP_ENRICH_LIMIT = 20;
@@ -81,6 +85,17 @@ function isTravelDisplayNumber(value: string): boolean {
 function readFormDetail(form: TravelFormRow, name: string): string {
   for (const row of form.FormDetails ?? []) {
     if (row.Name?.trim() !== name) continue;
+    const value = row.Content?.trim() || row.Number?.trim() || "";
+    if (value) return value;
+  }
+  return "";
+}
+
+function readFirstFormDetail(form: TravelFormRow, names: string[], tags: string[]): string {
+  for (const row of form.FormDetails ?? []) {
+    const name = row.Name?.trim() ?? "";
+    const tag = row.Tag?.trim() ?? "";
+    if (!names.includes(name) && !tags.includes(tag)) continue;
     const value = row.Content?.trim() || row.Number?.trim() || "";
     if (value) return value;
   }
@@ -456,6 +471,22 @@ export function parseTravelFormListItems(
       tag: "Travel",
       url: buildTravelFormDetailUrl(ticket, id),
       trips: parseTravelFormTripHintsFromForm(form),
+      organizationCode: readFirstFormDetail(
+        form,
+        ["组织编码", "组织代码", "所属组织编码", "部门编码"],
+        ["OrganizationCode"],
+      ),
+      organizationName: readFirstFormDetail(
+        form,
+        ["组织机构", "所属组织", "所属部门", "部门"],
+        ["OrganizationName"],
+      ),
+      costCenterCode: readFirstFormDetail(
+        form,
+        ["成本中心代码", "成本中心编码"],
+        ["CostCenterCode"],
+      ),
+      costCenterName: readFirstFormDetail(form, ["成本中心"], ["CostCenterName"]),
     });
   }
 

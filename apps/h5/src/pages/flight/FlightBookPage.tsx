@@ -1057,12 +1057,31 @@ export function FlightBookPage() {
             : undefined
         }
         onClose={() => setOutNumberPicker(null)}
-        onSelect={(value) => {
+        onSelect={(value, row) => {
           if (!outNumberPicker) return;
           const { passengerId, field } = outNumberPicker;
+          const current = forms[passengerId];
           updateForm(passengerId, {
+            ...(row.TravelFormId ? { travelFormId: row.TravelFormId } : {}),
+            ...(value ? { travelNumber: value } : {}),
+            ...(row.CostCenterCode || row.CostCenterName
+              ? {
+                  costCenter: {
+                    code: row.CostCenterCode ?? current?.costCenter.code ?? "",
+                    name: row.CostCenterName ?? current?.costCenter.name ?? "",
+                  },
+                }
+              : {}),
+            ...(row.OrganizationCode || row.OrganizationName
+              ? {
+                  organization: {
+                    code: row.OrganizationCode ?? current?.organization.code ?? "",
+                    name: row.OrganizationName ?? current?.organization.name ?? "",
+                  },
+                }
+              : {}),
             outNumbers: {
-              ...forms[passengerId]?.outNumbers,
+              ...current?.outNumbers,
               [field.key]: value,
             },
           });
