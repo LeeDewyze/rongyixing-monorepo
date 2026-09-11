@@ -29,7 +29,7 @@ export function useAutoFillTravelOutNumber(input: UseAutoFillTravelOutNumberInpu
       field?.accountId,
       field?.travelType,
     ],
-    queryFn: () => fetchTravelUrlOptions(field!),
+    queryFn: () => fetchTravelUrlOptions(field!, "prefetch"),
     enabled: shouldFetch && field != null,
     staleTime: 30_000,
   });

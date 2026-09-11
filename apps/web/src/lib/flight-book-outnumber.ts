@@ -324,17 +324,21 @@ function nullableParam(value: string | undefined): string | null {
   return trimmed || null;
 }
 
-export async function fetchTravelUrlOptions(field: FlightOutNumberField): Promise<TravelUrlRow[]> {
+export async function fetchTravelUrlOptions(
+  field: FlightOutNumberField,
+  mode: "picker" | "prefetch" = "picker",
+): Promise<TravelUrlRow[]> {
   if (!field.canSelect) return [];
   const staffNumber = nullableParam(field.staffNumber) ?? nullableParam(field.staffOutNumber);
   const params: GetTravelUrlParams = {
     staffNumber,
     staffOutNumber: nullableParam(field.staffOutNumber),
-    // Empty name is sent as null so the TMC forward does not treat "" as a keyword filter.
-    name: nullableParam(field.value ?? undefined),
+    // Legacy uses the field label for an opened selector and the current value
+    // (normally empty) for the book-page prefetch.
+    name: mode === "picker" ? field.label : (field.value ?? ""),
     travelType: field.travelType ?? "Flight",
     outNumberName: field.key,
-    ...(field.accountId ? { accountId: field.accountId } : {}),
+    ...(mode === "prefetch" && field.accountId ? { accountId: field.accountId } : {}),
   };
   const result = await getApi().travel.getTravelUrl(params);
   const rows = unwrapTravelUrlRows(result);

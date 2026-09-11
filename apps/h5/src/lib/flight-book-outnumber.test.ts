@@ -150,7 +150,7 @@ describe("buildPassengerOutNumberFields", () => {
     expect(config.GetTravelUrl).toBe(true);
     expect(config.OutNumberNameArray).toEqual(["TravelNumber"]);
   });
-  it("sends the legacy book-page GetTravelUrl payload", async () => {
+  it("sends the legacy selector GetTravelUrl payload", async () => {
     apiMocks.getTravelUrl.mockResolvedValue({
       value: { Data: [{ TravelNumber: "TravelTmc" }] },
     });
@@ -177,8 +177,36 @@ describe("buildPassengerOutNumberFields", () => {
     expect(apiMocks.getTravelUrl).toHaveBeenCalledWith({
       staffNumber: "3157173",
       staffOutNumber: null,
-      name: null,
+      name: "TravelNumber",
       travelType: "Hotel",
+      outNumberName: "TravelNumber",
+    });
+  });
+
+  it("sends the legacy book-page prefetch payload", async () => {
+    apiMocks.getTravelUrl.mockResolvedValue({ value: { Data: [] } });
+
+    await fetchTravelUrlOptions(
+      {
+        key: "TravelNumber",
+        label: "TravelNumber",
+        value: "",
+        required: true,
+        canSelect: true,
+        isTravelNumber: true,
+        staffNumber: "3157173",
+        staffOutNumber: "",
+        accountId: "72530000000029",
+        travelType: "Flight",
+      },
+      "prefetch",
+    );
+
+    expect(apiMocks.getTravelUrl).toHaveBeenCalledWith({
+      staffNumber: "3157173",
+      staffOutNumber: null,
+      name: "",
+      travelType: "Flight",
       outNumberName: "TravelNumber",
       accountId: "72530000000029",
     });
@@ -204,8 +232,7 @@ describe("buildPassengerOutNumberFields", () => {
       expect.objectContaining({
         staffNumber: "OUT-113",
         staffOutNumber: "OUT-113",
-        name: null,
-        accountId: "72530000000029",
+        name: "TravelNumber",
       }),
     );
   });
