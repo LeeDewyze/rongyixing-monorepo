@@ -21,6 +21,7 @@
     "native:android:sync": "pnpm build:workspace && pnpm --filter @ryx/android-pad run sync",
     "native:android:open": "pnpm --filter @ryx/android-pad run open",
     "native:android:apk": "pnpm build:workspace && pnpm --filter @ryx/android-pad run apk:debug",
+    "native:android:remote-apks": "deploy/scripts/build-android-remote-apks.sh",
     "native:windows:dev": "pnpm --filter @ryx/windows run dev",
     "native:windows:pack": "pnpm build:workspace && pnpm --filter @ryx/web build && pnpm --filter @ryx/windows run pack",
     "native:windows:dist": "pnpm build:workspace && pnpm --filter @ryx/web build && pnpm --filter @ryx/windows run dist",

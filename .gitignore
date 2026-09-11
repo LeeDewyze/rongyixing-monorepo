@@ -24,6 +24,14 @@ deploy/release/out/*
 !deploy/release/out/rongyixing-h5-web-dist-prod/**
 deploy/release/out/*.tar.gz
 
+# Android signing material
+*.keystore
+*.jks
+release-signing.properties
+!apps/android-pad/android/app/signing/
+!apps/android-pad/android/app/signing/rongyixing-release.keystore
+!apps/android-pad/android/app/signing/release-signing.properties
+
 # Vite
 .vite/
 
