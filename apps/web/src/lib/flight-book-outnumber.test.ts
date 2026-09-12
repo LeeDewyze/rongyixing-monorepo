@@ -11,21 +11,8 @@ const apiMocks = vi.hoisted(() => {
   };
 });
 
-const applicationMocks = vi.hoisted(() => ({
-  getTicket: vi.fn(() => "ticket-1"),
-  fetchMyTravelApplicationPickerItems: vi.fn(),
-}));
-
 vi.mock("@/lib/api", () => ({
   getApi: apiMocks.getApi,
-}));
-
-vi.mock("@/lib/session", () => ({
-  getTicket: applicationMocks.getTicket,
-}));
-
-vi.mock("@/lib/travel-form-list", () => ({
-  fetchMyTravelApplicationPickerItems: applicationMocks.fetchMyTravelApplicationPickerItems,
 }));
 
 import {
@@ -46,9 +33,6 @@ describe("buildPassengerOutNumberFields", () => {
   afterEach(() => {
     apiMocks.getApi.mockClear();
     apiMocks.getTravelUrl.mockReset();
-    applicationMocks.getTicket.mockClear();
-    applicationMocks.getTicket.mockReturnValue("ticket-1");
-    applicationMocks.fetchMyTravelApplicationPickerItems.mockReset();
   });
 
   it("enables canSelect only for TravelNumber when GetTravelUrl is on", () => {
@@ -150,7 +134,7 @@ describe("buildPassengerOutNumberFields", () => {
     expect(config.GetTravelUrl).toBe(true);
     expect(config.OutNumberNameArray).toEqual(["TravelNumber"]);
   });
-  it("sends the legacy selector GetTravelUrl payload", async () => {
+  it("sends the legacy GetTravelUrl payload", async () => {
     apiMocks.getTravelUrl.mockResolvedValue({
       value: { Data: [{ TravelNumber: "TravelTmc" }] },
     });
@@ -177,13 +161,14 @@ describe("buildPassengerOutNumberFields", () => {
     expect(apiMocks.getTravelUrl).toHaveBeenCalledWith({
       staffNumber: "3157173",
       staffOutNumber: null,
-      name: "TravelNumber",
+      name: "",
       travelType: "Hotel",
       outNumberName: "TravelNumber",
+      accountId: "72530000000029",
     });
   });
 
-  it("sends the legacy book-page prefetch payload", async () => {
+  it("sends the same legacy GetTravelUrl payload for prefill", async () => {
     apiMocks.getTravelUrl.mockResolvedValue({ value: { Data: [] } });
 
     await fetchTravelUrlOptions(
@@ -199,7 +184,6 @@ describe("buildPassengerOutNumberFields", () => {
         accountId: "72530000000029",
         travelType: "Flight",
       },
-      "prefetch",
     );
 
     expect(apiMocks.getTravelUrl).toHaveBeenCalledWith({
@@ -232,7 +216,8 @@ describe("buildPassengerOutNumberFields", () => {
       expect.objectContaining({
         staffNumber: "OUT-113",
         staffOutNumber: "OUT-113",
-        name: "TravelNumber",
+        name: "",
+        accountId: "72530000000029",
       }),
     );
   });
@@ -252,29 +237,8 @@ describe("buildPassengerOutNumberFields", () => {
     expect(apiMocks.getTravelUrl).not.toHaveBeenCalled();
   });
 
-  it("lists only 审批通过 travel numbers from 我的申请 when GetTravelUrl has no rows", async () => {
+  it("returns no rows when GetTravelUrl has no rows", async () => {
     apiMocks.getTravelUrl.mockResolvedValue({ Data: {} });
-    applicationMocks.fetchMyTravelApplicationPickerItems.mockResolvedValue([
-      {
-        id: "1",
-        name: "出差申请",
-        number: "Travel202609111640363157173",
-        statusName: "审批通过",
-        trips: [
-          { fromCity: "北京", toCity: "杭州", startDate: "2026-09-21", endDate: "2026-09-21" },
-        ],
-      },
-      { id: "2", name: "草稿", number: "TravelDraft", statusName: "草稿", trips: [] },
-      {
-        id: "3",
-        name: "出差申请",
-        number: "TravelPending",
-        statusName: "待审核",
-        trips: [
-          { fromCity: "上海", toCity: "深圳", startDate: "2026-10-01", endDate: "2026-10-01" },
-        ],
-      },
-    ]);
 
     const rows = await fetchTravelUrlOptions({
       key: "TravelNumber",
@@ -287,25 +251,8 @@ describe("buildPassengerOutNumberFields", () => {
       travelType: "Flight",
     });
 
-    expect(rows).toEqual([
-      {
-        TravelFormId: "1",
-        TravelNumber: "Travel202609111640363157173",
-        Subject: "出差申请",
-        Status: "审批通过",
-        StartDate: "2026-09-21",
-        EndDate: "2026-09-21",
-        Trips: ["北京 → 杭州"],
-        DingTalkTravels: [
-          {
-            Departure: "北京",
-            Arrival: "杭州",
-            StartTime: "2026-09-21",
-            EndTime: "2026-09-21",
-          },
-        ],
-      },
-    ]);
+    expect(rows).toEqual([]);
+    expect(apiMocks.getTravelUrl).toHaveBeenCalledOnce();
   });
 });
 

@@ -11,11 +11,6 @@ import type {
 
 import { getApi } from "@/lib/api";
 import { isBusinessTravelMode, shouldEnableTravelForm } from "@/lib/flight-travel-mode";
-import { getTicket } from "@/lib/session";
-import {
-  fetchMyTravelApplicationPickerItems,
-  type TravelFormTripHint,
-} from "@/lib/travel-form-list";
 import type { HomeTravelMode } from "@/config/home-assets";
 
 function parseTmcStringArray(raw: unknown): string[] {
@@ -326,84 +321,20 @@ function nullableParam(value: string | undefined): string | null {
 
 export async function fetchTravelUrlOptions(
   field: FlightOutNumberField,
-  mode: "picker" | "prefetch" = "picker",
 ): Promise<TravelUrlRow[]> {
   if (!field.canSelect) return [];
   const staffNumber = nullableParam(field.staffNumber) ?? nullableParam(field.staffOutNumber);
   const params: GetTravelUrlParams = {
     staffNumber,
     staffOutNumber: nullableParam(field.staffOutNumber),
-    // Legacy uses the field label for an opened selector and the current value
-    // (normally empty) for the book-page prefetch.
-    name: mode === "picker" ? field.label : (field.value ?? ""),
+    // Legacy sends the current out-number value, not the display label.
+    name: field.value ?? "",
     travelType: field.travelType ?? "Flight",
     outNumberName: field.key,
-    ...(mode === "prefetch" && field.accountId ? { accountId: field.accountId } : {}),
+    ...(field.accountId ? { accountId: field.accountId } : {}),
   };
   const result = await getApi().travel.getTravelUrl(params);
-  const rows = unwrapTravelUrlRows(result);
-  if (rows.length) return rows;
-  return fetchApplicationTravelUrlRows();
-}
-
-function isApprovedTravelForm(statusName?: string): boolean {
-  return /审批通过/.test(statusName?.trim() ?? "");
-}
-
-function toTravelUrlRowFromApplication(item: {
-  id: string;
-  number?: string;
-  name: string;
-  statusName?: string;
-  trips?: TravelFormTripHint[];
-  organizationCode?: string;
-  organizationName?: string;
-  costCenterCode?: string;
-  costCenterName?: string;
-}): TravelUrlRow {
-  const hints = item.trips ?? [];
-  const routes = hints
-    .map((hint) => [hint.fromCity, hint.toCity].filter(Boolean).join(" → "))
-    .filter(Boolean);
-  const startDate = hints.find((trip) => trip.startDate)?.startDate;
-  const endDate = [...hints].reverse().find((trip) => trip.endDate)?.endDate;
-  const dingTalkTravels = hints
-    .map((hint) => ({
-      ...(hint.fromCity ? { Departure: hint.fromCity } : {}),
-      ...(hint.toCity ? { Arrival: hint.toCity } : {}),
-      ...(hint.startDate ? { StartTime: hint.startDate } : {}),
-      ...(hint.endDate ? { EndTime: hint.endDate } : {}),
-    }))
-    .filter((trip) => trip.Departure || trip.Arrival || trip.StartTime);
-
-  return {
-    TravelFormId: item.id,
-    TravelNumber: item.number,
-    Subject: item.name,
-    Status: item.statusName,
-    ...(item.organizationCode ? { OrganizationCode: item.organizationCode } : {}),
-    ...(item.organizationName ? { OrganizationName: item.organizationName } : {}),
-    ...(item.costCenterCode ? { CostCenterCode: item.costCenterCode } : {}),
-    ...(item.costCenterName ? { CostCenterName: item.costCenterName } : {}),
-    ...(startDate ? { StartDate: startDate } : {}),
-    ...(endDate ? { EndDate: endDate } : {}),
-    ...(routes.length ? { Trips: routes } : {}),
-    ...(dingTalkTravels.length ? { DingTalkTravels: dingTalkTravels } : {}),
-  };
-}
-
-/** TMC GetTravelUrl is often empty even when 我的申请 has usable travel numbers. */
-async function fetchApplicationTravelUrlRows(): Promise<TravelUrlRow[]> {
-  const ticket = getTicket();
-  if (!ticket) return [];
-  try {
-    const items = await fetchMyTravelApplicationPickerItems(ticket);
-    return items
-      .filter((item) => Boolean(item.number?.trim()) && isApprovedTravelForm(item.statusName))
-      .map(toTravelUrlRowFromApplication);
-  } catch {
-    return [];
-  }
+  return unwrapTravelUrlRows(result);
 }
 
 export function filterTravelUrlRows(rows: TravelUrlRow[], keyword: string): TravelUrlRow[] {
