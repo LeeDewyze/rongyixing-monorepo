@@ -623,7 +623,15 @@ export function buildTravelApplyBody(
         appendDetail(control, meta.travelNumber.label || meta.travelNumber.value);
         return;
       case "TravelType":
-        appendDetail(control, values.travelTypes.join(","));
+        appendDetail(
+          control,
+          values.travelTypes
+            .map(
+              (value) =>
+                meta.travelTypes.find((option) => option.value === value)?.label ?? value,
+            )
+            .join(","),
+        );
         return;
       default:
         break;
@@ -935,7 +943,7 @@ export function readTravelNumberFromFormGet(
 
 /** 从 Form/Get 响应中提取主表字段（出差类型、事由）。 */
 export function parseFormDataToValues(
-  _meta: TravelApplyMeta,
+  meta: TravelApplyMeta,
   controls: FormGetResponse,
 ): { travelTypes: string[]; reason: string } | null {
   if (!Array.isArray(controls) || controls.length === 0) return null;
@@ -946,6 +954,12 @@ export function parseFormDataToValues(
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean)
+        .map(
+          (value) =>
+            meta.travelTypes.find(
+              (option) => option.value === value || option.label === value,
+            )?.value ?? value,
+        )
     : [];
 
   const reasonCtrl = controls.find((c) => c.label === "出差事由" && !c.slaves);

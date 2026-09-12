@@ -12,6 +12,7 @@ import {
   isTravelFormSendable,
   isTravelFormWaitingSubmit,
   parseTravelFormDetailHtml,
+  parseFormDataToValues,
   resolveTravelApplyCityByLabel,
   sendTravelApplyForApproval,
   sendTravelApplyForApprovalByTicket,
@@ -75,6 +76,26 @@ const meta: TravelApplyMeta = {
 };
 
 describe("travel apply form submit", () => {
+  it("submits TravelType labels in FormDetails content like Legacy", () => {
+    const body = buildTravelApplyBody(
+      {
+        ...meta,
+        travelTypes: [
+          { label: "国内机票", value: "1" },
+          { label: "国内酒店", value: "2" },
+        ],
+      },
+      {
+        travelTypes: ["1", "2"],
+        reason: "客户拜访",
+        travelers: [{ account: meta.defaultAccount, policyId: "policy-1" }],
+        segments: [defaultTravelApplySegment(meta.cities)],
+      },
+    );
+
+    expect(body.get("FormDetails[4].Content")).toBe("国内机票,国内酒店");
+  });
+
   it("encodes single traveler and segment as FormDetails and FormTimes", () => {
     const body = buildTravelApplyBody(meta, {
       travelTypes: ["国内机票"],
@@ -243,6 +264,31 @@ describe("travel apply form submit", () => {
         segments: [segment],
       }),
     ).toBe("请选择行程出发城市");
+  });
+});
+
+describe("travel apply form edit", () => {
+  it("normalizes Legacy TravelType labels back to option values", () => {
+    expect(
+      parseFormDataToValues(
+        {
+          ...meta,
+          travelTypes: [
+            { label: "国内机票", value: "1" },
+            { label: "国内酒店", value: "2" },
+          ],
+        },
+        [
+          {
+            id: null,
+            label: "出差类型",
+            tag: "TravelType",
+            controlType: "Check",
+            defaultValue: "国内机票,国内酒店",
+          } as never,
+        ],
+      ),
+    ).toEqual({ travelTypes: ["1", "2"], reason: "" });
   });
 });
 
