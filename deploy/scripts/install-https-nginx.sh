@@ -12,6 +12,7 @@ NGINX_TARGET="${NGINX_TARGET:-/etc/nginx/conf.d/rongyixing-prod-domains.conf}"
 ACME_WEBROOT="${ACME_WEBROOT:-/var/www/rongyixing-acme}"
 H5_UPSTREAM="${H5_UPSTREAM:-http://127.0.0.1:18088}"
 WEB_UPSTREAM="${WEB_UPSTREAM:-http://127.0.0.1:18089}"
+LEGACY_ROOT="${LEGACY_ROOT:-/opt/rongyixing-legacy}"
 FORCE_REISSUE="${FORCE_REISSUE:-0}"
 STAGING="${STAGING:-0}"
 
@@ -33,6 +34,8 @@ Environment:
                                    H5 upstream for proxy_pass.
   WEB_UPSTREAM=http://127.0.0.1:18089
                                    Web upstream for proxy_pass.
+  LEGACY_ROOT=/opt/rongyixing-legacy
+                                   Legacy /www/ static package root.
   FORCE_REISSUE=1                  Re-issue certificate even if one exists.
   STAGING=1                        Use Let's Encrypt staging environment.
 EOF
@@ -110,6 +113,20 @@ server {
   ssl_certificate_key ${cert_dir}/privkey.pem;
   ssl_protocols TLSv1.2 TLSv1.3;
   ssl_prefer_server_ciphers on;
+
+  location = /www {
+    return 301 /www/;
+  }
+
+  location = /www/index.html {
+    root ${LEGACY_ROOT};
+    add_header Cache-Control "no-cache, no-store, must-revalidate";
+  }
+
+  location ^~ /www/ {
+    root ${LEGACY_ROOT};
+    try_files \$uri \$uri/ /www/index.html;
+  }
 
   location / {
     proxy_http_version 1.1;

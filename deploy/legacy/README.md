@@ -54,9 +54,16 @@ static files. It does not modify or reload Nginx.
 
 ## Nginx
 
-Add `nginx/rongyixing-legacy-www.conf.snippet` inside the existing HTTPS
-`server` block for `h5.songguoren.site`. Do not create another standalone
-server block with the same domain.
+The repository's `deploy/scripts/install-https-nginx.sh` now generates this
+`/www/` location inside the existing H5 HTTPS `server` block. After pulling
+the repository, rerun that script once to apply the route. The default
+location root is `/opt/rongyixing-legacy`; override it with `LEGACY_ROOT` if
+needed.
+
+If Nginx was configured manually, add
+`nginx/rongyixing-legacy-www.conf.snippet` inside the existing HTTPS `server`
+block for `h5.songguoren.site`. Do not create another standalone server block
+with the same domain.
 
 Then validate and reload:
 
