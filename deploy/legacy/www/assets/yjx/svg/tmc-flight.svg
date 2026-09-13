@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="96" height="96" viewBox="0 0 96 96" fill="none">
+    <defs>
+        <linearGradient id="linear_0" x1="50%" y1="0%" x2="51%" y2="100%" gradientUnits="objectBoundingBox">
+            <stop offset="0" stop-color="#93ABFC" stop-opacity="1" />
+            <stop offset="1" stop-color="#1B4FFD" stop-opacity="1" />
+        </linearGradient>
+        <filter id="filter_2" x="0" y="0" width="95.99999999999999" height="95.99999999999999" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"></filter>
+        <filter id="filter_3" x="-7.719354838709678" y="-7.719354838709678" width="111.43870967741934" height="111.43870967741934" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feGaussianBlur in="BackgroundImage" stdDeviation="3.859677419354839" />
+            <feComposite in2="SourceAlpha" operator="in" result="effect1_backgroundBlur" />
+            <feBlend mode="normal" in="SourceGraphic" in2="effect1_backgroundBlur" result="shape" />
+        </filter>
+        <filter id="filter_9" x="-1.8906971784423336" y="-1.8906971784423336" width="22.9453460700434" height="36.697791256641786" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feGaussianBlur in="BackgroundImage" stdDeviation="0.9453485892211668" />
+            <feComposite in2="SourceAlpha" operator="in" result="effect1_backgroundBlur" />
+            <feBlend mode="normal" in="SourceGraphic" in2="effect1_backgroundBlur" result="shape" />
+        </filter>
+    </defs>
+    <g opacity="1" transform="translate(0 0)  rotate(0 47.99999999999999 47.99999999999999)">
+        <g id="矩形" filter="url(#filter_3)">
+            <path id="矩形" fill-rule="evenodd" fill="url(#linear_0)" transform="translate(0 0)  rotate(0 47.99999999999999 47.99999999999999)" opacity="0.7" d="M33.97,96L62.03,96C71.04,96 79.68,92.42 86.05,86.05C92.42,79.68 96,71.04 96,62.03L96,33.97C96,24.96 92.42,16.32 86.05,9.95C79.68,3.58 71.04,0 62.03,0L33.97,0C24.96,0 16.32,3.58 9.95,9.95C3.58,16.32 0,24.96 0,33.97L0,62.03C0,71.04 3.58,79.68 9.95,86.05C16.32,92.42 24.96,96 33.97,96Z " />
+        </g>
+        <g opacity="1" transform="translate(17.03225806451613 17.03225806451613)  rotate(0 30.96774193548388 30.96774193548388)">
+            <path id="路径 2" fill-rule="evenodd" style="fill:#FFFFFF" transform="translate(0 0)  rotate(0 30.967741935483886 30.967741935483886)" opacity="1" d="M0.53,15.38C2.5,17.37 24.11,28.99 24.11,28.99L15.76,37.84C15.76,37.84 3.26,39.19 1.9,39.19C0.53,39.19 0.53,41.58 0.53,41.58L13.29,49.2C13.29,49.2 19.9,61.94 21.05,61.94C22.19,61.94 22.79,60.55 22.79,60.55L24.5,46.69L59.25,13.4C59.25,13.4 64.62,7.86 59.25,2.62C53.87,-2.62 48.8,2.62 48.8,2.62L37.41,14.75C37.41,14.75 7.74,9.88 5.17,9.88C2.6,9.88 -1.45,13.38 0.53,15.38Z " />
+            <path id="路径 3" fill-rule="evenodd" style="fill:#FFFFFF" transform="translate(33.04749957167667 28.40825333883971)  rotate(0 9.581975856579366 16.45819844987856)" opacity="0.5" d="M15.31,32.92C19.04,32.92 19.72,27.22 18.79,25.6C18.48,23.58 14.8,0 14.8,0L0,8.84C0,8.84 10.34,32.92 15.31,32.92Z " />
+            <g id="路径 3" filter="url(#filter_9)">
+            </g>
+        </g>
+    </g>
+</svg>

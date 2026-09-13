@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="750" height="460" viewBox="0 0 750 460" fill="none"><defs><filter id="filter_2" x="-6" y="-6" width="762" height="472" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"><feFlood flood-opacity="0" result="BackgroundImageFix"/>
+          <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/>
+          <feOffset dx="0" dy="6"/>
+          <feGaussianBlur stdDeviation="3"/>
+          <feColorMatrix type="matrix" values="0 0 0 0 0.8705882352941177 0 0 0 0 0.8705882352941177 0 0 0 0 0.8705882352941177 0 0 0 1 0"/>
+          <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_Shadow"/>
+          <feBlend mode="normal" in="SourceGraphic" in2="effect1_Shadow" result="shape"/></filter></defs><g opacity="1" transform="translate(0 0)  rotate(0 375 230)"><g id="矩形 2" filter="url(#filter_2)"><path id="矩形 2" fill-rule="evenodd" style="fill:#FFFFFF" transform="translate(0 0)  rotate(0 375 230)" opacity="1" d="M24,460L726,460C739.25,460 750,449.25 750,436L750,0C750,0 562,49.41 371.5,49.41C181,49.41 0,0 0,0L0,436C0,449.25 10.75,460 24,460Z " /></g></g></svg>

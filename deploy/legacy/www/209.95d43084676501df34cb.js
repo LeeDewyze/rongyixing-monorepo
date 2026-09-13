@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkear=self.webpackChunkear||[]).push([[209],{40209:(a,l,o)=>{o.r(l),o.d(l,{MyBrowserWeb:()=>u});var n=o(8239),r=o(46552);class u extends r.Uw{showWebPage(e){return(0,n.Z)(function*(){var s;(null==e?void 0:e.url)&&window.open(e.url,null===(s=null==e?void 0:e.features)||void 0===s?void 0:s.target)})()}}}}]);

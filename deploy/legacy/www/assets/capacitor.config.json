@@ -1,0 +1,32 @@
+{
+	"appId": "com.ronglvonline.app",
+	"appName": "融易行",
+	"baseHref": "www",
+	"versionCode": 0,
+	"guid": "4f65ffa0-906e-4cdb-a158-e257959ce927",
+	"webDir": "www_com.ronglvonline.app",
+	"bundledWebRuntime": false,
+	"loggingBehavior": null,
+	"overrideUserAgent": null,
+	"appendUserAgent": null,
+	"backgroundColor": null,
+	"android": {
+		"path": "android_com.ronglvonline.app",
+		"overrideUserAgent": null,
+		"appendUserAgent": null,
+		"backgroundColor": null,
+		"allowMixedContent": false,
+		"captureInput": false,
+		"webContentsDebuggingEnabled": false,
+		"loggingBehavior": null,
+		"includePlugins": null,
+		"flavor": null
+	},
+	"ios": {
+		"path": "ios_com.ronglvonline.app"
+	},
+	"server": null,
+	"cordova": null,
+	"plugins": null,
+	"includePlugins": null
+}

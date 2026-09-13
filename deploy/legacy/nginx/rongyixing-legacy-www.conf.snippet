@@ -1,0 +1,16 @@
+# Include this snippet inside the existing HTTPS server block for
+# server_name h5.songguoren.site.
+
+location = /www {
+    return 301 /www/;
+}
+
+location = /www/index.html {
+    root /opt/rongyixing-legacy;
+    add_header Cache-Control "no-cache, no-store, must-revalidate";
+}
+
+location ^~ /www/ {
+    root /opt/rongyixing-legacy;
+    try_files $uri $uri/ /www/index.html;
+}
