@@ -6,6 +6,7 @@ export interface TravelApplyRawControl {
   label: string | null;
   tag: string | null;
   controlType: string;
+  isReadOnly?: boolean;
   defaultUrl?: string;
   dataUrl?: string;
   slaves?: TravelApplyRawControl[] | null;
@@ -518,11 +519,27 @@ async function resolveTravelersWithPolicy(
 export function buildTravelApplyBody(
   meta: TravelApplyMeta,
   values: TravelApplyFormValues,
-): URLSearchParams {
-  const body = new URLSearchParams();
-  body.append("Workflow.Id", meta.workflowId);
+): FormData {
+  const body = new FormData();
+
+  // Legacy Winner.ClassBase.GetForm serializes empty ordinary controls as one space.
+  function appendFormField(name: string, value: string | number | null | undefined) {
+    const text = value == null ? "" : String(value);
+    body.append(name, text || " ");
+  }
+
+  // Legacy FormData.append converts null control metadata to the literal string "null".
+  function legacyControlValue(value: string | number | null | undefined): string {
+    return value == null ? "null" : String(value);
+  }
+
+  body.append("Id", " ");
   body.append("Tag", "Travel");
   body.append("Name", "出差申请");
+  body.append("OutNumber", " ");
+  // Keep the existing workflow metadata for servers that validate it even though
+  // the current Legacy browser request derives it from the ticket.
+  body.append("Workflow.Id", meta.workflowId);
   body.append("formvalues", String(meta.controls.length));
   body.append("LastId", "");
   body.append("LastDateTime", "");
@@ -532,8 +549,107 @@ export function buildTravelApplyBody(
   let timeIndex = 0;
   let sequence = 0;
 
-  const accountSlave = findControl(meta.controls, (c) => c.tag === "TravelAccount");
-  const detailSlave = findControl(meta.controls, (c) => c.tag === "TravelDetail");
+  const travelNumberControl = findControl(
+    meta.controls,
+    (control) => control.tag === "TravelNumber" && !control.slaves,
+  );
+  const applicantControl = findControl(
+    meta.controls,
+    (control) => control.label === "申请人" && !control.slaves,
+  );
+  const organizationControl = findControl(
+    meta.controls,
+    (control) => control.label === "所属部门" && !control.slaves,
+  );
+  const positionControl = findControl(
+    meta.controls,
+    (control) => control.label === "所属职位" && !control.slaves,
+  );
+  const travelTypeControl = findControl(
+    meta.controls,
+    (control) => control.tag === "TravelType" && !control.slaves,
+  );
+  const reasonControl = findControl(
+    meta.controls,
+    (control) => control.label === "出差事由" && !control.slaves,
+  );
+
+  // Read-only controls are disabled by Legacy's Bee controls and therefore are not
+  // included in the top-level GetForm payload. They still appear in FormDetails.
+  if (travelNumberControl && !travelNumberControl.isReadOnly) {
+    appendFormField(
+      travelNumberControl.label ?? "差旅单号",
+      meta.travelNumber.label || meta.travelNumber.value,
+    );
+  }
+  if (applicantControl && !applicantControl.isReadOnly) {
+    appendFormField(applicantControl.label ?? "申请人", meta.applicant.label);
+    appendFormField(`${applicantControl.label ?? "申请人"}_value`, meta.applicant.value);
+  }
+  if (organizationControl && !organizationControl.isReadOnly) {
+    appendFormField(organizationControl.label ?? "所属部门", meta.organization.label);
+    appendFormField(`${organizationControl.label ?? "所属部门"}_value`, meta.organization.value);
+  }
+  if (positionControl && !positionControl.isReadOnly) {
+    appendFormField(positionControl.label ?? "所属职位", meta.position.label);
+    appendFormField(`${positionControl.label ?? "所属职位"}_value`, meta.position.value);
+  }
+  if (reasonControl) {
+    appendFormField(reasonControl.label ?? "出差事由", values.reason.trim());
+  }
+
+  // GetForm walks ordinary controls first, then serializes checkbox controls.
+  for (const control of meta.controls) {
+    if (control.controlType === "Slave" && control.tag === "TravelAccount") {
+      for (const traveler of values.travelers) {
+        for (const child of control.slaves ?? []) {
+          if (child.tag === "AccountId") {
+            appendFormField(child.label ?? "出差人", traveler.account.label);
+            appendFormField(`${child.label ?? "出差人"}_value`, traveler.account.value);
+          } else if (child.tag === "PolicyId") {
+            appendFormField(child.label ?? "PolicyId", traveler.policyId ?? "");
+          }
+        }
+      }
+    }
+    if (control.controlType === "Slave" && control.tag === "TravelDetail") {
+      for (const segment of values.segments) {
+        for (const child of control.slaves ?? []) {
+          switch (child.tag) {
+            case "StartDate":
+              appendFormField(child.label ?? "开始日期", segment.startDate);
+              break;
+            case "EndDate":
+              appendFormField(child.label ?? "结束日期", segment.endDate);
+              break;
+            case "FromCityName":
+              appendFormField(child.label ?? "出发城市", segment.fromCity.label);
+              appendFormField(`${child.label ?? "出发城市"}_value`, segment.fromCity.value);
+              break;
+            case "ToCityName":
+              appendFormField(child.label ?? "目的城市", segment.toCity.label);
+              appendFormField(`${child.label ?? "目的城市"}_value`, segment.toCity.value);
+              break;
+            default:
+              break;
+          }
+        }
+      }
+    }
+  }
+
+  if (travelTypeControl) {
+    const travelTypeLabel = values.travelTypes
+      .map(
+        (value) =>
+          meta.travelTypes.find((option) => option.value === value || option.label === value)
+            ?.label ?? value,
+      )
+      .map((value) => value.trim())
+      .filter(Boolean)
+      .join(",");
+    appendFormField(travelTypeControl.label ?? "出差类型", travelTypeLabel);
+  }
 
   function appendDetail(
     control: TravelApplyRawControl,
@@ -542,11 +658,11 @@ export function buildTravelApplyBody(
     slave = "",
     slaveRow = 0,
   ) {
-    body.append(`FormDetails[${detailIndex}].Id`, control.id ?? "");
+    body.append(`FormDetails[${detailIndex}].Id`, legacyControlValue(control.id));
     body.append(`FormDetails[${detailIndex}].Slave`, slave);
     body.append(`FormDetails[${detailIndex}].SlaveRow`, String(slaveRow));
-    body.append(`FormDetails[${detailIndex}].Name`, control.label ?? "");
-    body.append(`FormDetails[${detailIndex}].Tag`, control.tag ?? "");
+    body.append(`FormDetails[${detailIndex}].Name`, legacyControlValue(control.label));
+    body.append(`FormDetails[${detailIndex}].Tag`, legacyControlValue(control.tag));
     body.append(`FormDetails[${detailIndex}].Content`, content);
     body.append(`FormDetails[${detailIndex}].Sequence`, String(sequence++));
     body.append(`FormDetails[${detailIndex}].Number`, number);
@@ -554,11 +670,11 @@ export function buildTravelApplyBody(
   }
 
   function appendTime(control: TravelApplyRawControl, time: string, slave = "", slaveRow = 0) {
-    body.append(`FormTimes[${timeIndex}].Id`, control.id ?? "");
+    body.append(`FormTimes[${timeIndex}].Id`, legacyControlValue(control.id));
     body.append(`FormTimes[${timeIndex}].Slave`, slave);
     body.append(`FormTimes[${timeIndex}].SlaveRow`, String(slaveRow));
-    body.append(`FormTimes[${timeIndex}].Name`, control.label ?? "");
-    body.append(`FormTimes[${timeIndex}].Tag`, control.tag ?? "");
+    body.append(`FormTimes[${timeIndex}].Name`, legacyControlValue(control.label));
+    body.append(`FormTimes[${timeIndex}].Tag`, legacyControlValue(control.tag));
     body.append(`FormTimes[${timeIndex}].Time`, time);
     body.append(`FormTimes[${timeIndex}].Sequence`, String(sequence++));
     body.append(`FormTimes[${timeIndex}].Number`, "");
@@ -569,19 +685,14 @@ export function buildTravelApplyBody(
     control: TravelApplyRawControl,
     traveler: TravelApplyTraveler,
     slaveRow: number,
+    slaveName: string,
   ) {
     switch (control.tag) {
       case "AccountId":
-        appendDetail(
-          control,
-          traveler.account.label,
-          traveler.account.value,
-          "TravelAccount",
-          slaveRow,
-        );
+        appendDetail(control, traveler.account.label, traveler.account.value, slaveName, slaveRow);
         return;
       case "PolicyId":
-        appendDetail(control, traveler.policyId ?? "", "", "TravelAccount", slaveRow);
+        appendDetail(control, traveler.policyId ?? "", "", slaveName, slaveRow);
         return;
       default:
         break;
@@ -592,25 +703,20 @@ export function buildTravelApplyBody(
     control: TravelApplyRawControl,
     segment: TravelApplySegment,
     slaveRow: number,
+    slaveName: string,
   ) {
     switch (control.tag) {
       case "StartDate":
-        appendTime(control, segment.startDate, "TravelDetail", slaveRow);
+        appendTime(control, segment.startDate, slaveName, slaveRow);
         return;
       case "EndDate":
-        appendTime(control, segment.endDate, "TravelDetail", slaveRow);
+        appendTime(control, segment.endDate, slaveName, slaveRow);
         return;
       case "FromCityName":
-        appendDetail(
-          control,
-          segment.fromCity.label,
-          segment.fromCity.value,
-          "TravelDetail",
-          slaveRow,
-        );
+        appendDetail(control, segment.fromCity.label, segment.fromCity.value, slaveName, slaveRow);
         return;
       case "ToCityName":
-        appendDetail(control, segment.toCity.label, segment.toCity.value, "TravelDetail", slaveRow);
+        appendDetail(control, segment.toCity.label, segment.toCity.value, slaveName, slaveRow);
         return;
       default:
         break;
@@ -624,11 +730,15 @@ export function buildTravelApplyBody(
         return;
       case "TravelType":
         {
-          const travelType = values.travelTypes.find((value) => value.trim()) ?? "";
-          const travelTypeLabel =
-            meta.travelTypes.find(
-              (option) => option.value === travelType || option.label === travelType,
-            )?.label ?? travelType;
+          const travelTypeLabel = values.travelTypes
+            .map(
+              (value) =>
+                meta.travelTypes.find((option) => option.value === value || option.label === value)
+                  ?.label ?? value,
+            )
+            .map((value) => value.trim())
+            .filter(Boolean)
+            .join(",");
           appendDetail(control, travelTypeLabel);
         }
         return;
@@ -657,14 +767,14 @@ export function buildTravelApplyBody(
     if (control.controlType === "Slave") {
       if (control.tag === "TravelAccount") {
         values.travelers.forEach((traveler, row) => {
-          for (const child of accountSlave?.slaves ?? control.slaves ?? []) {
-            fillTravelAccountField(child, traveler, row);
+          for (const child of control.slaves ?? []) {
+            fillTravelAccountField(child, traveler, row, control.label ?? "");
           }
         });
       } else if (control.tag === "TravelDetail") {
         values.segments.forEach((segment, row) => {
-          for (const child of detailSlave?.slaves ?? control.slaves ?? []) {
-            fillTravelDetailField(child, segment, row);
+          for (const child of control.slaves ?? []) {
+            fillTravelDetailField(child, segment, row, control.label ?? "");
           }
         });
       }
@@ -740,14 +850,13 @@ export async function sendTravelApplyForApprovalByTicket(
 async function saveAndMaybeSendTravelApply(
   meta: TravelApplyMeta,
   saveUrl: string,
-  body: URLSearchParams,
+  body: FormData,
   options: TravelApplySubmitOptions,
   formIdForSend?: string | number,
 ): Promise<TravelApplySubmitResult> {
   const submitForApproval = options.submitForApproval ?? true;
   const saveResult = await fetchJson<TravelApplySubmitResult>(saveUrl, {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body,
   });
 
@@ -953,12 +1062,10 @@ export function parseFormDataToValues(
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean)
-        .slice(0, 1)
         .map(
           (value) =>
-            meta.travelTypes.find(
-              (option) => option.value === value || option.label === value,
-            )?.value ?? value,
+            meta.travelTypes.find((option) => option.value === value || option.label === value)
+              ?.value ?? value,
         )
     : [];
 
@@ -980,7 +1087,7 @@ export async function modifyTravelApply(
   const modifyUrl = meta.addUrl.replace("/Form/Add?", "/Form/Modify?");
   const travelers = await resolveTravelersWithPolicy(meta, values.travelers);
   const body = buildTravelApplyBody(meta, { ...values, travelers });
-  body.append("Id", String(formId));
+  body.set("Id", String(formId));
   return saveAndMaybeSendTravelApply(meta, modifyUrl, body, options, formId);
 }
 
@@ -1063,7 +1170,6 @@ export function isTravelFormEditable(status?: string | number): boolean {
 
 export function validateTravelApply(values: TravelApplyFormValues): string | null {
   if (values.travelTypes.length === 0) return "请选择出差类型";
-  if (values.travelTypes.length > 1) return "只能选择一个出差类型";
   if (!values.reason.trim()) return "请填写出差事由";
   if (values.travelers.length === 0) return "请添加出差人";
   const travelerIds = values.travelers.map((item) => item.account.value).filter(Boolean);

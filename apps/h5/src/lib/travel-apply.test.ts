@@ -44,10 +44,10 @@ const meta: TravelApplyMeta = {
     { label: "广州", value: "4401" },
   ],
   controls: [
-    { id: null, label: "差旅单号", tag: "TravelNumber", controlType: "Input" },
-    { id: null, label: "申请人", tag: null, controlType: "Combo" },
-    { id: null, label: "所属部门", tag: null, controlType: "Combo" },
-    { id: null, label: "所属职位", tag: null, controlType: "Combo" },
+    { id: null, label: "差旅单号", tag: "TravelNumber", controlType: "Input", isReadOnly: true },
+    { id: null, label: "申请人", tag: null, controlType: "Combo", isReadOnly: true },
+    { id: null, label: "所属部门", tag: null, controlType: "Combo", isReadOnly: true },
+    { id: null, label: "所属职位", tag: null, controlType: "Combo", isReadOnly: true },
     { id: null, label: "出差类型", tag: "TravelType", controlType: "Check" },
     { id: null, label: "出差事由", tag: null, controlType: "Textarea" },
     {
@@ -76,7 +76,7 @@ const meta: TravelApplyMeta = {
 };
 
 describe("travel apply form submit", () => {
-  it("submits only one TravelType label like Legacy", () => {
+  it("submits all selected TravelType labels like Legacy", () => {
     const body = buildTravelApplyBody(
       {
         ...meta,
@@ -93,7 +93,8 @@ describe("travel apply form submit", () => {
       },
     );
 
-    expect(body.get("FormDetails[4].Content")).toBe("国内机票");
+    expect(body.get("出差类型")).toBe("国内机票,国内酒店");
+    expect(body.get("FormDetails[4].Content")).toBe("国内机票,国内酒店");
   });
 
   it("encodes single traveler and segment as FormDetails and FormTimes", () => {
@@ -111,17 +112,30 @@ describe("travel apply form submit", () => {
       ],
     });
 
-    expect(body.get("Workflow.Id")).toBe("318");
-    expect(body.get("formvalues")).toBe("8");
+    expect(body).toBeInstanceOf(FormData);
+    expect(body.get("Id")).toBe(" ");
+    expect(body.get("OutNumber")).toBe(" ");
+    expect(body.get("出差事由")).toBe("客户拜访");
+    expect(body.get("出差人")).toBe("1611558-姜茗豪");
+    expect(body.get("出差人_value")).toBe("40390000000011");
+    expect(body.get("PolicyId")).toBe("policy-1");
+    expect(body.get("开始日期")).toBe("2026-06-25");
+    expect(body.get("结束日期")).toBe("2026-06-30");
+    expect(body.get("出发城市")).toBe("北京");
+    expect(body.get("出发城市_value")).toBe("1101");
+    expect(body.get("目的城市")).toBe("上海");
+    expect(body.get("目的城市_value")).toBe("3101");
+    expect(body.get("出差类型")).toBe("国内机票");
     expect(body.get("FormDetails[4].Tag")).toBe("TravelType");
     expect(body.get("FormDetails[4].Content")).toBe("国内机票");
-    expect(body.get("FormDetails[6].Slave")).toBe("TravelAccount");
+    expect(body.get("FormDetails[6].Slave")).toBe("人员信息");
     expect(body.get("FormDetails[6].SlaveRow")).toBe("0");
     expect(body.get("FormDetails[6].Tag")).toBe("AccountId");
     expect(body.get("FormDetails[6].Number")).toBe("40390000000011");
+    expect(body.get("FormDetails[1].Tag")).toBe("null");
     expect(body.get("FormDetails[7].Tag")).toBe("PolicyId");
     expect(body.get("FormDetails[7].Content")).toBe("policy-1");
-    expect(body.get("FormTimes[0].Slave")).toBe("TravelDetail");
+    expect(body.get("FormTimes[0].Slave")).toBe("行程信息");
     expect(body.get("FormTimes[0].SlaveRow")).toBe("0");
     expect(body.get("FormTimes[0].Tag")).toBe("StartDate");
     expect(body.get("FormTimes[0].Time")).toBe("2026-06-25");
@@ -169,6 +183,8 @@ describe("travel apply form submit", () => {
     expect(body.get("FormDetails[12].Number")).toBe("3101");
     expect(body.get("FormDetails[13].Tag")).toBe("ToCityName");
     expect(body.get("FormDetails[13].Number")).toBe("4401");
+    expect(body.getAll("出差人")).toEqual(["1611558-姜茗豪", "007-范梦杭"]);
+    expect(body.getAll("出发城市")).toEqual(["北京", "上海"]);
   });
 
   it("validates required business fields", () => {
@@ -288,7 +304,7 @@ describe("travel apply form edit", () => {
           } as never,
         ],
       ),
-    ).toEqual({ travelTypes: ["1"], reason: "" });
+    ).toEqual({ travelTypes: ["1", "2"], reason: "" });
   });
 });
 
