@@ -426,9 +426,8 @@ export function TravelApplyPage() {
   }, [meta, editId]);
 
   function toggleTravelType(value: string) {
-    setTravelTypes((prev) =>
-      prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value],
-    );
+    // Legacy TravelType is a single-value field, even though its workflow control is named Check.
+    setTravelTypes([value]);
   }
 
   function updateSegment(index: number, patch: Partial<TravelApplySegment>) {

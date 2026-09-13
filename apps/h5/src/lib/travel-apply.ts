@@ -623,15 +623,14 @@ export function buildTravelApplyBody(
         appendDetail(control, meta.travelNumber.label || meta.travelNumber.value);
         return;
       case "TravelType":
-        appendDetail(
-          control,
-          values.travelTypes
-            .map(
-              (value) =>
-                meta.travelTypes.find((option) => option.value === value)?.label ?? value,
-            )
-            .join(","),
-        );
+        {
+          const travelType = values.travelTypes.find((value) => value.trim()) ?? "";
+          const travelTypeLabel =
+            meta.travelTypes.find(
+              (option) => option.value === travelType || option.label === travelType,
+            )?.label ?? travelType;
+          appendDetail(control, travelTypeLabel);
+        }
         return;
       default:
         break;
@@ -954,6 +953,7 @@ export function parseFormDataToValues(
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean)
+        .slice(0, 1)
         .map(
           (value) =>
             meta.travelTypes.find(
@@ -1063,6 +1063,7 @@ export function isTravelFormEditable(status?: string | number): boolean {
 
 export function validateTravelApply(values: TravelApplyFormValues): string | null {
   if (values.travelTypes.length === 0) return "请选择出差类型";
+  if (values.travelTypes.length > 1) return "只能选择一个出差类型";
   if (!values.reason.trim()) return "请填写出差事由";
   if (values.travelers.length === 0) return "请添加出差人";
   const travelerIds = values.travelers.map((item) => item.account.value).filter(Boolean);

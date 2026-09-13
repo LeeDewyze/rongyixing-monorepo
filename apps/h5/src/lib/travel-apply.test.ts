@@ -76,7 +76,7 @@ const meta: TravelApplyMeta = {
 };
 
 describe("travel apply form submit", () => {
-  it("submits TravelType labels in FormDetails content like Legacy", () => {
+  it("submits only one TravelType label like Legacy", () => {
     const body = buildTravelApplyBody(
       {
         ...meta,
@@ -93,7 +93,7 @@ describe("travel apply form submit", () => {
       },
     );
 
-    expect(body.get("FormDetails[4].Content")).toBe("国内机票,国内酒店");
+    expect(body.get("FormDetails[4].Content")).toBe("国内机票");
   });
 
   it("encodes single traveler and segment as FormDetails and FormTimes", () => {
@@ -288,7 +288,7 @@ describe("travel apply form edit", () => {
           } as never,
         ],
       ),
-    ).toEqual({ travelTypes: ["1", "2"], reason: "" });
+    ).toEqual({ travelTypes: ["1"], reason: "" });
   });
 });
 
