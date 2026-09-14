@@ -16,6 +16,11 @@ and migration edge cases. The legacy project is an Angular/Ionic/Capacitor
 application and is reference-only: do not copy its stack, large services, or UI
 implementation directly into this monorepo.
 
+The Legacy and current mobile clients use the same Capacitor container approach.
+The detailed comparison, including Capacitor versions, native plugin coverage,
+and remote-H5 versus bundled-page loading modes, is documented in
+[docs/ryx/移动端技术栈对照.md](docs/ryx/移动端技术栈对照.md).
+
 ## Why This Monorepo Exists
 
 `rongyixing-monorepo` is the modernization and incremental migration project for
