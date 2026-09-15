@@ -142,7 +142,7 @@ build_variant() {
   local apk_name="$5"
 
   log "sync $env_name -> $h5_url"
-  RYX_PAD_SERVER_URL="$h5_url" pnpm --filter @ryx/android-pad exec capacitor sync android
+  RYX_ANDROID_SERVER_URL="$h5_url" pnpm --filter @ryx/android-pad exec capacitor sync android
 
   log "build $env_name ${gradle_task}"
   (

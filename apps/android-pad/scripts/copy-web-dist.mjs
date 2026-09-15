@@ -12,4 +12,4 @@ await rm(target, { recursive: true, force: true });
 await mkdir(target, { recursive: true });
 await cp(source, target, { recursive: true });
 
-console.log(`[android-pad] copied ${path.relative(repoRoot, source)} -> ${path.relative(repoRoot, target)}`);
+console.log(`[android] copied ${path.relative(repoRoot, source)} -> ${path.relative(repoRoot, target)}`);

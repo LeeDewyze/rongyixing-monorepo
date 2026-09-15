@@ -59,7 +59,7 @@ Windows 也保留内置静态包模式：
 ```text
 apps/
   web/             # Windows PC 业务应用
-  android-pad/     # Capacitor Android H5 壳
+  android-pad/     # Capacitor Android 手机 H5 壳
   windows/         # Electron Windows PC 壳
 ```
 
@@ -91,10 +91,10 @@ pnpm native:android:apk
 远程壳构建时指定：
 
 ```bash
-RYX_PAD_SERVER_URL=https://<domain>/ pnpm native:android:sync
+RYX_ANDROID_SERVER_URL=https://<domain>/ pnpm native:android:sync
 ```
 
-若 `RYX_PAD_SERVER_URL` 为空，则使用内置 `web-dist`。
+若 `RYX_ANDROID_SERVER_URL` 为空，则使用内置 `web-dist`。
 
 ### 待补原生项
 

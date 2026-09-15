@@ -157,10 +157,10 @@ for (const entry of entries) {
   await writeFile(file, result.css, "utf8");
   changedFiles += 1;
   console.log(
-    `[android-pad] CSS compat ${entry.name}: unwrapped ${result.unwrapped} layer blocks, removed ${result.removedStatements} layer statements`,
+    `[android] CSS compat ${entry.name}: unwrapped ${result.unwrapped} layer blocks, removed ${result.removedStatements} layer statements`,
   );
 }
 
 if (changedFiles === 0) {
-  console.log("[android-pad] CSS compat: no cascade layers found");
+  console.log("[android] CSS compat: no cascade layers found");
 }

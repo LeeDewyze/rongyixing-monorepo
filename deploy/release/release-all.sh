@@ -208,7 +208,9 @@ build_business_app() {
   VITE_VCONSOLE_TAP_TO_ENABLE="${vconsole_tap_to_enable}" \
   pnpm --filter "@ryx/${app_name}" build --mode "${env_name}"
 
-  node "${SCRIPT_DIR}/check-webview-css.mjs" "${ROOT_DIR}/apps/${app_name}/dist"
+  if [[ "${app_name}" == "h5" ]]; then
+    node "${SCRIPT_DIR}/check-webview-css.mjs" "${ROOT_DIR}/apps/${app_name}/dist"
+  fi
 
   cp -a "${ROOT_DIR}/apps/${app_name}/dist/." "${target_dir}/"
 

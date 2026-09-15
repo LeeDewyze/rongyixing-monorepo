@@ -1,6 +1,6 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
-const remoteUrl = process.env.RYX_PAD_SERVER_URL?.trim();
+const remoteUrl = process.env.RYX_ANDROID_SERVER_URL?.trim();
 
 const config: CapacitorConfig = {
   appId: process.env.RYX_ANDROID_APP_ID?.trim() || "com.ronglvonline.rongyixing.pad",
