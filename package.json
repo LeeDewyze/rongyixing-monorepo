@@ -17,7 +17,7 @@
     "dev:web:prod": "VITE_BASE_PATH=/ VITE_DEV_PORT=5176 pnpm --filter @ryx/web dev --mode prod",
     "local:prod": "deploy/scripts/start-local-prod-servers.sh",
     "local:prod:stop": "deploy/scripts/stop-local-prod-servers.sh",
-    "native:android:init": "pnpm build:workspace && pnpm --filter @ryx/web build && pnpm --filter @ryx/android-pad run init:android",
+    "native:android:init": "pnpm build:workspace && pnpm --filter @ryx/h5 build && pnpm --filter @ryx/android-pad run init:android",
     "native:android:sync": "pnpm build:workspace && pnpm --filter @ryx/android-pad run sync",
     "native:android:open": "pnpm --filter @ryx/android-pad run open",
     "native:android:apk": "pnpm build:workspace && pnpm --filter @ryx/android-pad run apk:debug",

@@ -1,12 +1,14 @@
 import type { HotelType } from "@ryx/shared-types";
 
+import { designMobileVw } from "@/config/design";
+
 const HOTEL_TYPE_TABS: { value: HotelType; label: string }[] = [
   { value: "Normal", label: "非协议酒店" },
   { value: "Tmc", label: "协议酒店" },
 ];
 
 /** Design artboard: 670×66 track, 335×66 active segment, 12px radius (2×). */
-const TRACK_RADIUS = "calc(100cqw * 12 / 670)";
+const TRACK_RADIUS = designMobileVw(12);
 
 const TRACK_STYLE = {
   background: "rgba(39, 104, 250, 0.1)",

@@ -1,23 +1,24 @@
-# Pad / Windows Native Packaging Plan
+# Android / Windows Native Packaging Plan
 
 ## 目标
 
-将现有 `apps/web` 打包为两类原生客户端：
+将 H5 与 Web 分别用于移动端和 PC 原生客户端：
 
 | 平台 | 壳技术 | 业务入口 | 交付物 |
 | --- | --- | --- | --- |
-| Android Pad | Capacitor | `@ryx/web` | APK / AAB |
+| Android | Capacitor | `@ryx/h5` | APK / AAB |
 | Windows PC | Electron | `@ryx/web` | `.exe` 安装包 |
 
-业务 UI、接口调用与路由继续只维护 `apps/web`。`apps/h5` 仍作为手机 H5，不参与 Pad / PC 客户端打包。
+Android 复用 `apps/h5`，Windows 复用 `apps/web`。两端继续共享 API、
+DTO 和 UI 基础能力，但页面入口和移动端交互保持独立。
 
 ## 推荐运行模式
 
-Android Pad 当前采用“内置静态包 + direct 接口”：
+Android 当前采用“内置 H5 静态包 + direct 接口”：
 
 ```text
-Android Pad 原生壳
-  -> 加载 APK 内置 apps/web/dist
+Android 原生壳
+  -> 加载 APK 内置 apps/h5/dist
   -> VITE_API_MODE=direct
   -> VITE_FORCE_API_MODE=direct
   -> VITE_API_BASE_URL=http://app.rtesp.com
@@ -57,17 +58,17 @@ Windows 也保留内置静态包模式：
 
 ```text
 apps/
-  web/             # Pad + PC 业务应用
-  android-pad/     # Capacitor Android Pad 壳
+  web/             # Windows PC 业务应用
+  android-pad/     # Capacitor Android H5 壳
   windows/         # Electron Windows PC 壳
 ```
 
-## Android Pad
+## Android
 
 ### 关键配置
 
 - AppId：默认 `com.ronglvonline.rongyixing.pad`
-- AppName：默认 `融易行 Pad`
+- AppName：默认 `融易行`
 - Web 产物目录：`apps/android-pad/web-dist`
 - Native 工程目录：`apps/android-pad/android`
 
@@ -77,7 +78,7 @@ apps/
 # 首次生成 Android 原生工程
 pnpm native:android:init
 
-# 构建 web 并同步到 Android 工程
+# 构建 H5 并同步到 Android 工程
 pnpm native:android:sync
 
 # 打开 Android Studio
@@ -90,15 +91,14 @@ pnpm native:android:apk
 远程壳构建时指定：
 
 ```bash
-RYX_PAD_SERVER_URL=https://<domain>/web/ pnpm native:android:sync
+RYX_PAD_SERVER_URL=https://<domain>/ pnpm native:android:sync
 ```
 
 若 `RYX_PAD_SERVER_URL` 为空，则使用内置 `web-dist`。
 
 ### 待补原生项
 
-- 应用图标与启动页资源。
-- 横竖屏策略：Pad 建议先支持横竖屏，再按验收反馈限制。
+- 应用图标资源；Android 原生品牌 Splash 与 H5 `SplashPage` 采用两层启动流程。
 - Android 返回键：Web 内有历史栈时返回上一页，无历史栈时二次确认退出。
 - 权限：定位、相册/文件上传、下载目录。
 - 签名：测试 keystore 与生产 keystore 分离。
@@ -150,5 +150,5 @@ RYX_WINDOWS_SERVER_URL=https://<domain>/web/ pnpm native:windows:dist
 - 支付跳转与返回。
 - 外部工作流页面 `/open-url`。
 - 文件上传、头像上传、图片预览。
-- Android Pad 横屏、竖屏、返回键。
+- Android 竖屏、返回键。
 - Windows 安装、卸载、快捷方式、窗口缩放、刷新。

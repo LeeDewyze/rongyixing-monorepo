@@ -5,19 +5,32 @@ import splashLogo from "@/assets/splash/logo.png";
 import { designHeightPercent, designMobileVw } from "@/config/design";
 import { SPLASH_SLOGAN } from "@/config/splash";
 import { isAuthenticated } from "@/lib/auth";
+import { isNativeCapacitorRuntime } from "@/lib/runtime";
 
 const SPLASH_DURATION_MS = 1500;
 
 export function SplashPage() {
   const navigate = useNavigate();
+  const isNativeRuntime = isNativeCapacitorRuntime();
 
   useEffect(() => {
+    const target = isAuthenticated() ? "/home" : "/login/password";
+
+    if (isNativeRuntime) {
+      navigate(target, { replace: true });
+      return;
+    }
+
     const timer = window.setTimeout(() => {
-      navigate(isAuthenticated() ? "/home" : "/login/password", { replace: true });
+      navigate(target, { replace: true });
     }, SPLASH_DURATION_MS);
 
     return () => window.clearTimeout(timer);
-  }, [navigate]);
+  }, [isNativeRuntime, navigate]);
+
+  // Android already owns the branded launch screen. Avoid painting a second
+  // H5 splash while the immediate route replacement is being applied.
+  if (isNativeRuntime) return null;
 
   return (
     <div className="ryx-viewport-min flex justify-center bg-white">

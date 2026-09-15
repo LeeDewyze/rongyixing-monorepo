@@ -88,10 +88,10 @@
   }
 }
 
-/* Last resort: shrink the whole row only if content still overflows. */
+/* Last resort: shrink the whole row on very narrow screens. */
 @container (max-width: 20rem) {
   .train-seat-picker__track {
-    transform: scale(min(1, calc((100cqw - 0.75rem) / 17rem)));
+    transform: scale(0.92);
     transform-origin: center center;
   }
 }

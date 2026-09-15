@@ -1,0 +1,1 @@
+import{u as e}from"./useQuery-j5yhJOi_.js";import{p as r}from"./index-CizlTvUK.js";function u(){return e({queryKey:["member","profile"],queryFn:()=>r().member.getProfile(),staleTime:300*1e3})}export{u};

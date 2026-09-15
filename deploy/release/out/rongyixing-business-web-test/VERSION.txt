@@ -1,9 +1,9 @@
 name=rongyixing-business-web-test
-build_time=2026-09-13T22:54:57Z
-build_timestamp=20260914065451
+build_time=2026-09-15T02:13:07Z
+build_timestamp=20260915101301
 deploy_env=business-same-origin-test
 app=web
-git_commit=cedaf19395877caedfc4ab5975c19e802e1114e2
+git_commit=78968b6de816fa96d4a86710f32654c9e9412eab
 git_branch=main
 base_path=/web/
 static_dir=web

@@ -1,6 +1,20 @@
-# RongYiXing Android Pad
+# RongYiXing Android
 
-Capacitor shell for `@ryx/web`.
+Capacitor shell for `@ryx/h5`.
+
+The Android app supports Android 10 / API level 29 and above and is locked to
+portrait orientation.
+
+Android keeps a native branded splash for the process startup handoff. The
+Capacitor runtime skips the H5 `SplashPage` and immediately routes to the home
+or login page after the WebView is ready. Normal browser visits still show the
+H5 splash. Phone and Pad use the same Android resources and remain
+portrait-only.
+
+The shell keeps the remote H5 at a fixed 100% text scale and disables legacy
+WebView auto-zoom. The H5 production build also emits compatibility fallbacks
+for older Android WebViews such as Chrome 83; the APK remains a container and
+does not maintain a second copy of the business UI.
 
 ```bash
 pnpm native:android:init
@@ -11,16 +25,17 @@ pnpm native:android:open
 Remote shell:
 
 ```bash
-RYX_PAD_SERVER_URL=https://<domain>/web/ pnpm native:android:sync
+RYX_PAD_SERVER_URL=https://<domain>/ pnpm native:android:sync
 ```
 
-Without `RYX_PAD_SERVER_URL`, Capacitor loads the bundled `web-dist`.
+Without `RYX_PAD_SERVER_URL`, Capacitor loads the bundled H5 `web-dist`.
 
 Dev server shell:
 
 ```bash
-VITE_FORCE_API_MODE=proxy VITE_API_MODE=proxy pnpm --filter @ryx/web dev -- --host 0.0.0.0
-RYX_PAD_SERVER_URL=http://<computer-lan-ip>:5174 pnpm --filter @ryx/android-pad exec capacitor sync android
+VITE_FORCE_API_MODE=proxy VITE_API_MODE=proxy pnpm --filter @ryx/h5 dev -- --host 0.0.0.0
+RYX_PAD_SERVER_URL=http://<computer-lan-ip>:5173 pnpm --filter @ryx/android-pad exec capacitor sync android
+```
 
 Build four remote-H5 APKs:
 
