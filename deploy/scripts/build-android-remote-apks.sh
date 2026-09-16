@@ -15,7 +15,7 @@ KEYSTORE="$SIGNING_DIR/rongyixing-release.keystore"
 KEY_ALIAS="${RYX_ANDROID_KEY_ALIAS:-rongyixing-release}"
 
 TEST_URL="${RYX_ANDROID_TEST_H5_URL:-https://h5.songguoren.site/}"
-PROD_URL="${RYX_ANDROID_PROD_H5_URL:-https://app.rongtrip.cn/}"
+PROD_URL="${RYX_ANDROID_PROD_H5_URL:-https://app.rongtrip.cn/www/index.html?wechatopenid=&ticketname=ticket&root=www&ticket=}"
 
 log() {
   printf '[android remote apks] %s\n' "$*"
@@ -123,12 +123,18 @@ command -v pnpm >/dev/null 2>&1 || fail "未找到 pnpm"
 unset JAVA_OPTS
 unset GRADLE_OPTS
 
+ANDROID_VERSION_NAME="${RYX_ANDROID_VERSION_NAME:-$(node -p "require('./apps/h5/package.json').version")}"
+ANDROID_VERSION_CODE="${RYX_ANDROID_VERSION_CODE:-$(node -p "const [major, minor, patch] = require('./apps/h5/package.json').version.split('.').map(Number); major * 10000 + minor * 100 + patch")}"
+export RYX_ANDROID_VERSION_NAME="$ANDROID_VERSION_NAME"
+export RYX_ANDROID_VERSION_CODE="$ANDROID_VERSION_CODE"
+
 cd "$REPO_ROOT"
 mkdir -p "$OUTPUT_DIR"
 
 log "使用 JDK: $JAVA_HOME"
 log "使用 Android SDK: $ANDROID_HOME"
 log "使用 Node: $(node --version)"
+log "Android 版本: $RYX_ANDROID_VERSION_NAME ($RYX_ANDROID_VERSION_CODE)"
 log "测试 H5: $TEST_URL"
 log "生产 H5: $PROD_URL"
 log "输出目录: $OUTPUT_DIR"

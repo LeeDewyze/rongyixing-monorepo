@@ -36,6 +36,11 @@ export default defineConfig(({ mode }) => {
   return {
     base: appBase,
     plugins: [react(), tailwindcss(), ryxWebviewCompat()],
+    build: {
+      // The Android shell still runs on devices whose system WebView is
+      // Chromium 83. Keep the remote H5 JavaScript compatible with it.
+      target: "chrome83",
+    },
     define: {
       __APP_VERSION__: JSON.stringify(resolveAppVersion()),
     },

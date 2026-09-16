@@ -29,6 +29,10 @@ RYX_ANDROID_SERVER_URL=https://<domain>/ pnpm native:android:sync
 
 Without `RYX_ANDROID_SERVER_URL`, Capacitor loads the bundled H5 `web-dist`.
 
+The default production APK opens the final `/www/index.html` entry directly
+instead of relying on the production domain root redirect. The remote H5
+still needs to be deployed separately; the APK remains a WebView shell.
+
 Dev server shell:
 
 ```bash
