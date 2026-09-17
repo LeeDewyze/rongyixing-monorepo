@@ -46,8 +46,14 @@ Build four remote-H5 APKs:
 ./deploy/scripts/build-android-remote-apks.sh
 ```
 
-The reusable release keystore and `release-signing.properties` are stored under
-`apps/android-pad/android/app/signing/` so all developers in this private repository use
-the same release identity. Keep this directory restricted; changing the keystore prevents
-upgrades of already-installed release APKs.
+The APK version defaults to `apps/android-pad/package.json` and can still be
+overridden with `RYX_ANDROID_VERSION_NAME` / `RYX_ANDROID_VERSION_CODE`.
+
+The reusable Legacy-compatible release keystore and
+`release-signing.properties` are stored under
+`apps/android-pad/android/app/signing/`. The configured keystore is
+`rongtongRelease.keystore`, with alias `androiddebugkey` and password `android`.
+The release script validates this identity before building. Keep this directory
+restricted; changing the keystore prevents upgrades of already-installed
+release APKs.
 ```

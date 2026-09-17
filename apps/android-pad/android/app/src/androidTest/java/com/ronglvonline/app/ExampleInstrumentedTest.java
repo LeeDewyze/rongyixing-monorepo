@@ -1,4 +1,4 @@
-package com.ronglvonline.rongyixing.pad;
+package com.ronglvonline.app;
 
 import static org.junit.Assert.*;
 
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
-        assertEquals("com.ronglvonline.rongyixing.pad", appContext.getPackageName());
+        assertEquals("com.ronglvonline.app", appContext.getPackageName());
     }
 }

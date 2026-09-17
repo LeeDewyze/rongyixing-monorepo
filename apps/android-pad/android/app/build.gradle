@@ -7,14 +7,14 @@ def signingProperties = new Properties()
 if (signingPropertiesFile.exists()) {
     signingPropertiesFile.withInputStream { signingProperties.load(it) }
 }
-def appVersionName = System.getenv('RYX_ANDROID_VERSION_NAME') ?: "1.0.27"
-def appVersionCode = (System.getenv('RYX_ANDROID_VERSION_CODE') ?: "10027").toInteger()
+def appVersionName = System.getenv('RYX_ANDROID_VERSION_NAME') ?: "2.0.1"
+def appVersionCode = (System.getenv('RYX_ANDROID_VERSION_CODE') ?: "200001").toInteger()
 
 android {
-    namespace = "com.ronglvonline.rongyixing.pad"
+    namespace = "com.ronglvonline.app"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.ronglvonline.rongyixing.pad"
+        applicationId "com.ronglvonline.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode appVersionCode

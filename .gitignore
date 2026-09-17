@@ -29,8 +29,9 @@ deploy/release/out/*.tar.gz
 *.jks
 release-signing.properties
 !apps/android-pad/android/app/signing/
-!apps/android-pad/android/app/signing/rongyixing-release.keystore
+!apps/android-pad/android/app/signing/rongtongRelease.keystore
 !apps/android-pad/android/app/signing/release-signing.properties
+!apps/android-pad/android/app/signing/README.md
 
 # Vite
 .vite/

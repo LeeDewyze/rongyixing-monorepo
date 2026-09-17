@@ -1,4 +1,4 @@
-package com.ronglvonline.rongyixing.pad;
+package com.ronglvonline.app;
 
 import static org.junit.Assert.*;
 

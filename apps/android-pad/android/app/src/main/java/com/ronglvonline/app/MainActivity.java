@@ -1,4 +1,4 @@
-package com.ronglvonline.rongyixing.pad;
+package com.ronglvonline.app;
 
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;

@@ -3,7 +3,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 const remoteUrl = process.env.RYX_ANDROID_SERVER_URL?.trim();
 
 const config: CapacitorConfig = {
-  appId: process.env.RYX_ANDROID_APP_ID?.trim() || "com.ronglvonline.rongyixing.pad",
+  appId: process.env.RYX_ANDROID_APP_ID?.trim() || "com.ronglvonline.app",
   appName: process.env.RYX_ANDROID_APP_NAME?.trim() || "融易行",
   webDir: "web-dist",
   bundledWebRuntime: false,

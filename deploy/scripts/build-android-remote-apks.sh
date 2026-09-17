@@ -11,8 +11,8 @@ BUILD_STAMP=$(date '+%Y%m%d%H%M%S')
 OUTPUT_DIR="$OUTPUT_ROOT/$BUILD_STAMP"
 SIGNING_DIR="${RYX_ANDROID_SIGNING_DIR:-$REPO_ROOT/apps/android-pad/android/app/signing}"
 SIGNING_PROPERTIES="$SIGNING_DIR/release-signing.properties"
-KEYSTORE="$SIGNING_DIR/rongyixing-release.keystore"
-KEY_ALIAS="${RYX_ANDROID_KEY_ALIAS:-rongyixing-release}"
+KEYSTORE="$SIGNING_DIR/rongtongRelease.keystore"
+KEY_ALIAS="${RYX_ANDROID_KEY_ALIAS:-androiddebugkey}"
 
 TEST_URL="${RYX_ANDROID_TEST_H5_URL:-https://h5.songguoren.site/}"
 PROD_URL="${RYX_ANDROID_PROD_H5_URL:-https://app.rongtrip.cn/www/index.html?wechatopenid=&ticketname=ticket&root=www&ticket=}"
@@ -27,36 +27,34 @@ fail() {
 }
 
 ensure_release_signing() {
-  mkdir -p "$SIGNING_DIR"
-  chmod 700 "$SIGNING_DIR"
-
   if [[ ! -f "$KEYSTORE" ]]; then
-    command -v keytool >/dev/null 2>&1 || fail "未找到 keytool，无法生成 release 签名文件"
-    local store_password key_password
-    store_password="${RYX_ANDROID_KEYSTORE_PASSWORD:-$(openssl rand -hex 24)}"
-    key_password="${RYX_ANDROID_KEY_PASSWORD:-$store_password}"
-    log "首次生成 Android release 签名文件: $KEYSTORE"
-    keytool -genkeypair \
-      -alias "$KEY_ALIAS" \
-      -keyalg RSA \
-      -keysize 4096 \
-      -validity 10000 \
-      -keystore "$KEYSTORE" \
-      -storepass "$store_password" \
-      -keypass "$key_password" \
-      -dname "CN=RongYiXing, OU=RongYiXing, O=RongYiXing, L=Beijing, ST=Beijing, C=CN" \
-      >/dev/null
-    umask 077
-    printf 'storeFile=signing/rongyixing-release.keystore\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' \
-      "$store_password" "$KEY_ALIAS" "$key_password" > "$SIGNING_PROPERTIES"
-    chmod 600 "$KEYSTORE" "$SIGNING_PROPERTIES"
-  elif [[ ! -f "$SIGNING_PROPERTIES" ]]; then
-    fail "已有 keystore 但缺少签名配置: $SIGNING_PROPERTIES；不能安全猜测密码"
+    fail "缺少 Legacy release keystore: $KEYSTORE"
   fi
 
+  [[ -f "$SIGNING_PROPERTIES" ]] || \
+    fail "缺少签名配置: $SIGNING_PROPERTIES"
   [[ -r "$SIGNING_PROPERTIES" ]] || fail "签名配置不可读: $SIGNING_PROPERTIES"
+
+  local store_password key_alias key_password
+  store_password="$(sed -n 's/^storePassword=//p' "$SIGNING_PROPERTIES")"
+  key_alias="$(sed -n 's/^keyAlias=//p' "$SIGNING_PROPERTIES")"
+  key_password="$(sed -n 's/^keyPassword=//p' "$SIGNING_PROPERTIES")"
+  [[ -n "$store_password" && -n "$key_alias" && -n "$key_password" ]] || \
+    fail "签名配置不完整: $SIGNING_PROPERTIES"
+  [[ "$key_alias" == "$KEY_ALIAS" ]] || \
+    fail "签名别名不匹配: expected $KEY_ALIAS, got $key_alias"
+
+  command -v keytool >/dev/null 2>&1 || fail "未找到 keytool，无法验证 release 签名文件"
+  keytool -list \
+    -keystore "$KEYSTORE" \
+    -storepass "$store_password" \
+    -alias "$key_alias" \
+    -keypass "$key_password" \
+    >/dev/null 2>&1 || fail "release 签名文件或密码验证失败: $KEYSTORE"
+
   export RYX_ANDROID_SIGNING_PROPERTIES="$SIGNING_PROPERTIES"
   log "使用 release 签名文件: $KEYSTORE"
+  log "release 签名别名: $key_alias"
 }
 
 java_major_version() {
@@ -123,8 +121,8 @@ command -v pnpm >/dev/null 2>&1 || fail "未找到 pnpm"
 unset JAVA_OPTS
 unset GRADLE_OPTS
 
-ANDROID_VERSION_NAME="${RYX_ANDROID_VERSION_NAME:-$(node -p "require('./apps/h5/package.json').version")}"
-ANDROID_VERSION_CODE="${RYX_ANDROID_VERSION_CODE:-$(node -p "const [major, minor, patch] = require('./apps/h5/package.json').version.split('.').map(Number); major * 10000 + minor * 100 + patch")}"
+ANDROID_VERSION_NAME="${RYX_ANDROID_VERSION_NAME:-$(node -p "require('./apps/android-pad/package.json').version")}"
+ANDROID_VERSION_CODE="${RYX_ANDROID_VERSION_CODE:-$(node -p "const [major, minor, patch] = require('./apps/android-pad/package.json').version.split('.').map(Number); major * 100000 + minor * 1000 + patch")}"
 export RYX_ANDROID_VERSION_NAME="$ANDROID_VERSION_NAME"
 export RYX_ANDROID_VERSION_CODE="$ANDROID_VERSION_CODE"
 
