@@ -223,6 +223,7 @@ export function ProfileCenterPage() {
         baseUrl: getApiBaseUrl(),
         method: AVATAR_UPLOAD_METHOD,
         apiConfig,
+        mode: getApiMode() === "direct" ? "direct" : "proxy",
       });
       console.info("[avatar-upload] start", {
         url: uploadUrl,

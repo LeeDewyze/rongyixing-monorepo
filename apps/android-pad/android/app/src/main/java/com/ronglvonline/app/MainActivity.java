@@ -10,6 +10,8 @@ import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
+import androidx.activity.OnBackPressedCallback;
+
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
@@ -24,6 +26,20 @@ public class MainActivity extends BridgeActivity {
         }
 
         WebView webView = getBridge().getWebView();
+        getOnBackPressedDispatcher().addCallback(
+            this,
+            new OnBackPressedCallback(true) {
+                @Override
+                public void handleOnBackPressed() {
+                    if (webView.canGoBack()) {
+                        webView.goBack();
+                    } else {
+                        finish();
+                    }
+                }
+            }
+        );
+
         WebSettings settings = webView.getSettings();
 
         // Keep the remote H5 at its CSS viewport size. Do not let the old

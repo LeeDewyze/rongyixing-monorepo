@@ -54,6 +54,20 @@ describe("resolveUrl", () => {
     ).toBe("https://member-api.rongtrip.cn/Passenger/Add");
   });
 
+  it("resolves the Legacy avatar upload URL in direct mode", () => {
+    expect(
+      resolveUrl({
+        baseUrl: "",
+        method: "ApiMemberUrl-Home-UploadHeadImage",
+        mode: "direct",
+        apiConfig: {
+          Token: "t",
+          Urls: { ApiMemberUrl: "https://member-api.rongtrip.cn" },
+        },
+      }),
+    ).toBe("https://member-api.rongtrip.cn/Home/UploadHeadImage");
+  });
+
   it("keeps method query when routing through vite dev proxy", () => {
     expect(
       resolveUrl({
