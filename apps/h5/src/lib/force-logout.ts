@@ -1,4 +1,4 @@
-import { stripAppBasePath, withAppBasePath } from "@/lib/base-path";
+import { getCurrentAppUrl, stripAppBasePath, withAppHashPath } from "@/lib/base-path";
 import { showAppAlertDialog } from "@/lib/app-confirm-dialog";
 import { clearSession, getTicket } from "@/lib/session";
 import { queryClient } from "@/lib/query";
@@ -38,7 +38,8 @@ export async function performForceLogout(options: ForceLogoutOptions = {}): Prom
   const { stopSessionGuard } = await import("@/lib/session-guard");
   stopSessionGuard();
 
-  const path = `${window.location.pathname}${window.location.search}`;
+  const currentUrl = getCurrentAppUrl();
+  const path = `${currentUrl.pathname}${currentUrl.search}`;
   const routerPath = stripAppBasePath(path);
   const onLoginPage = routerPath.startsWith("/login");
   const hadTicket = Boolean(getTicket());
@@ -63,5 +64,5 @@ export async function performForceLogout(options: ForceLogoutOptions = {}): Prom
     return;
   }
 
-  window.location.replace(withAppBasePath(buildLoginRedirectPath(options)));
+  window.location.replace(withAppHashPath(buildLoginRedirectPath(options)));
 }

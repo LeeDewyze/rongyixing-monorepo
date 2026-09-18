@@ -14,8 +14,10 @@ import { bootstrapWechatPayResultCallback } from "@/lib/pay-result-callback";
 import { queryClient } from "@/lib/query";
 import { setupVConsoleFromUrl } from "@/lib/vconsole";
 import { setupViewportCompatibilityVars } from "@/lib/viewport-compat";
+import { normalizeLegacyHistoryUrlToHash } from "@/lib/base-path";
 
 async function main() {
+  normalizeLegacyHistoryUrlToHash();
   setupViewportCompatibilityVars();
   await setupVConsoleFromUrl();
   await bootstrapApi();

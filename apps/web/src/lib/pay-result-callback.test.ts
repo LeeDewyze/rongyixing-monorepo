@@ -108,7 +108,7 @@ describe("bootstrapWechatPayResultCallback", () => {
       ProductType: "Flight",
     });
     expect(storage.removeItem).toHaveBeenCalledWith("ryx_pending_pay_context");
-    expect(replaceState).toHaveBeenCalledWith(null, "", "/orders?ticket=t1");
+    expect(replaceState).toHaveBeenCalledWith(null, "", "#/orders?ticket=t1");
   });
 
   it("falls back to WeChat Type 3 when no context was saved", async () => {

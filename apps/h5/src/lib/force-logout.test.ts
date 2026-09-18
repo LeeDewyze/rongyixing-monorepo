@@ -19,7 +19,12 @@ vi.mock("@/lib/query", () => ({ queryClient: { clear: mocks.queryClear } }));
 vi.mock("@/lib/app-confirm-dialog", () => ({ showAppAlertDialog: mocks.showAppAlertDialog }));
 vi.mock("@/lib/base-path", () => ({
   stripAppBasePath: (path: string) => path,
-  withAppBasePath: (path: string) => path,
+  getCurrentAppUrl: () => {
+    const location = (globalThis as { window?: { location?: { pathname?: string; search?: string } } })
+      .window?.location;
+    return new URL(`https://example.com${location?.pathname ?? "/"}${location?.search ?? ""}`);
+  },
+  withAppHashPath: (path: string) => path,
 }));
 
 function stubBrowser(pathname: string) {

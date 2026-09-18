@@ -1,10 +1,9 @@
 import { lazy, type ComponentType } from "react";
-import { Navigate, createBrowserRouter } from "react-router-dom";
+import { Navigate, createHashRouter } from "react-router-dom";
 
 import { RequireAuth } from "@/app/layouts/RequireAuth";
 import { RootLayout } from "@/app/layouts/RootLayout";
 import { isAuthenticated } from "@/lib/auth";
-import { getRouterBasename } from "@/lib/base-path";
 
 function lazyPage(loader: () => Promise<unknown>, exportName: string) {
   return lazy(async () => {
@@ -156,7 +155,7 @@ function LoginEntryRedirect() {
   return <Navigate to="/login/password" replace />;
 }
 
-export const router = createBrowserRouter(
+export const router = createHashRouter(
   [
     {
       path: "/login",
@@ -287,7 +286,4 @@ export const router = createBrowserRouter(
     },
     { path: "*", element: <NotFoundPage /> },
   ],
-  {
-    basename: getRouterBasename() || undefined,
-  },
 );

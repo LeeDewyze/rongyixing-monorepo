@@ -1,10 +1,11 @@
 import { getAppBaseDomain } from "@/lib/env";
+import { getCurrentAppUrl } from "@/lib/base-path";
 
 const DOMAIN_STORAGE_KEY = "ryx_domain";
 
 /** Legacy `AppHelper.getDomain()` — tenant for Proxy RPC. */
 export function getDomain(): string {
-  const fromUrl = new URLSearchParams(window.location.search).get("domain");
+  const fromUrl = getCurrentAppUrl().searchParams.get("domain");
   if (fromUrl?.trim()) {
     return fromUrl.trim();
   }

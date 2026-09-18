@@ -1,5 +1,5 @@
 import { lazy, type ComponentType } from "react";
-import { Navigate, createBrowserRouter } from "react-router-dom";
+import { Navigate, createHashRouter } from "react-router-dom";
 
 import { RootLayout } from "@/app/layouts/RootLayout";
 import { RequireAuth } from "@/app/layouts/RequireAuth";
@@ -8,7 +8,6 @@ import { HomeTabPage } from "@/pages/home/HomeTabPage";
 import { OrderListRedirect } from "@/app/routes/OrderListRedirect";
 import { PasswordLoginPage } from "@/pages/PasswordLoginPage";
 import { SplashPage } from "@/pages/SplashPage";
-import { getRouterBasename } from "@/lib/base-path";
 
 function lazyPage(loader: () => Promise<unknown>, exportName: string) {
   return lazy(async () => {
@@ -144,7 +143,7 @@ const FlightSelectCityPage = lazyPage(
   "FlightSelectCityPage",
 );
 
-export const router = createBrowserRouter(
+export const router = createHashRouter(
   [
     {
       path: "/",
@@ -318,7 +317,4 @@ export const router = createBrowserRouter(
       ],
     },
   ],
-  {
-    basename: getRouterBasename() || undefined,
-  },
 );

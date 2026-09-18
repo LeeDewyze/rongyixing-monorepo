@@ -1,7 +1,7 @@
 import { isDingTalkUserAgent } from "@ryx/shared-types";
 
 import { getApi } from "@/lib/api";
-import { withAppBasePath } from "@/lib/base-path";
+import { getCurrentAppUrl, withAppHashPath } from "@/lib/base-path";
 import { getDomain } from "@/lib/domain";
 import { getLegacyAppBaseUrl } from "@/lib/env";
 import { getTmcId, getTicket, setTmcId } from "@/lib/session";
@@ -49,16 +49,16 @@ export async function isDingTalkEntryEnabled(entry: DingTalkEntry): Promise<bool
 
 function removeCodeFromUrl(): void {
   if (typeof window === "undefined" || !window.history?.replaceState) return;
-  const url = new URL(window.location.href);
+  const url = getCurrentAppUrl();
   for (const key of [...url.searchParams.keys()]) {
     if (key.toLowerCase() === "dingtalkcode") url.searchParams.delete(key);
   }
-  window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+  window.history.replaceState(window.history.state, "", `#${url.pathname}${url.search}`);
 }
 
 export function consumeDingTalkCode(): string | null {
   if (typeof window === "undefined") return null;
-  const params = new URLSearchParams(window.location.search);
+  const params = getCurrentAppUrl().searchParams;
   const callback = readDingTalkCode(params);
   if (!callback) {
     console.info("[ryx][dingtalk] no callback code on current page");
@@ -75,7 +75,7 @@ function normalizeTmcId(value: unknown): string | null {
 }
 
 function readUrlTmcId(): string | null {
-  const params = new URLSearchParams(window.location.search);
+  const params = getCurrentAppUrl().searchParams;
   for (const key of ["tmcid", "TmcId", "tmcId", "TMCId"]) {
     const value = normalizeTmcId(params.get(key));
     if (value) return value;
@@ -121,7 +121,7 @@ export function buildDingTalkRedirectUrl(
   url.searchParams.set("domain", getDomain());
   url.searchParams.set("path", entry === "login" ? "login" : "account-dingtalk");
   if (entry === "login") {
-    url.searchParams.set("returnTo", withAppBasePath(returnTo));
+    url.searchParams.set("returnTo", withAppHashPath(returnTo));
   }
   url.searchParams.set("root", getApiRoot());
   const tmcId = normalizeTmcId(requiredTmcId) ?? resolveRequiredTmcId();
@@ -142,7 +142,7 @@ export function buildDingTalkRedirectUrl(
     "tmcid",
     ticketName,
   ]);
-  for (const [key, value] of new URLSearchParams(window.location.search)) {
+  for (const [key, value] of getCurrentAppUrl().searchParams) {
     if (value && !excludedParams.has(key.toLowerCase()) && !url.searchParams.has(key)) {
       url.searchParams.set(key, value);
     }

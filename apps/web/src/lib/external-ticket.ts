@@ -1,5 +1,10 @@
 import { getApi } from "@/lib/api";
-import { resolveInternalReturnTo, stripAppBasePath, withAppBasePath } from "@/lib/base-path";
+import {
+  getCurrentAppUrl,
+  resolveInternalReturnTo,
+  stripAppBasePath,
+  withAppHashPath,
+} from "@/lib/base-path";
 import { hasDingTalkCode, readDingTalkCode } from "@/lib/dingtalk";
 import {
   clearSession,
@@ -112,7 +117,7 @@ function resolveTicketTargetPath(url: URL, fallbackPath: string): string {
 }
 
 function replaceLocation(path: string): void {
-  window.history.replaceState(window.history.state, "", withAppBasePath(path));
+  window.history.replaceState(window.history.state, "", withAppHashPath(path));
 }
 
 function replaceToLogin(returnTo: string): void {
@@ -172,7 +177,7 @@ function persistExternalTmcId(url: URL): void {
 
 /** Exchange SSO-style `?ticket=...` for the normal RongYiXing local session. */
 export async function bootstrapExternalTicket(fallbackPath = "/"): Promise<void> {
-  const url = new URL(window.location.href);
+  const url = getCurrentAppUrl();
   persistExternalTmcId(url);
   const ticket = readExternalTicket(url);
   if (isDingTalkTicketFlow(url)) {

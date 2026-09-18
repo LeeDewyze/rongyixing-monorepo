@@ -1,0 +1,1 @@
+import{u as e}from"./useQuery-BJ4cuori.js";import{o as r}from"./index-D7jPbVVD.js";function u(){return e({queryKey:["member","profile"],queryFn:()=>r().member.getProfile(),staleTime:300*1e3})}export{u};

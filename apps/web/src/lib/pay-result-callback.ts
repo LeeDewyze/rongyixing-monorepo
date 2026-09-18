@@ -1,6 +1,7 @@
 import type { OrderDetailProductType, ProductChannel } from "@ryx/shared-types";
 
 import { getApi } from "@/lib/api";
+import { getCurrentAppUrl } from "@/lib/base-path";
 
 const WECHAT_PAY_RESULT_NUMBER_KEY = "wechatPayResultNumber";
 const PENDING_PAY_CONTEXT_KEY = "ryx_pending_pay_context";
@@ -63,19 +64,17 @@ export function readPendingPayContext(): PendingPayContext | null {
 
 function readPayResultNumber(): string {
   if (typeof window === "undefined") return "";
-  return (
-    new URLSearchParams(window.location.search).get(WECHAT_PAY_RESULT_NUMBER_KEY) ?? ""
-  );
+  return getCurrentAppUrl().searchParams.get(WECHAT_PAY_RESULT_NUMBER_KEY) ?? "";
 }
 
 function cleanPayResultNumber(): void {
   if (typeof window === "undefined") return;
-  const url = new URL(window.location.href);
+  const url = getCurrentAppUrl();
   url.searchParams.delete(WECHAT_PAY_RESULT_NUMBER_KEY);
   window.history.replaceState(
     window.history.state,
     "",
-    `${url.pathname}${url.search}${url.hash}`,
+    `#${url.pathname}${url.search}`,
   );
 }
 

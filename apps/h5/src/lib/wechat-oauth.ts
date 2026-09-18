@@ -1,4 +1,4 @@
-import { stripAppBasePath } from "@/lib/base-path";
+import { getCurrentAppUrl, stripAppBasePath } from "@/lib/base-path";
 
 const WECHAT_OPEN_ID_KEY = "wechatopenid";
 const PENDING_PAY_URL_KEY = "ryx_wechat_pending_pay_url";
@@ -11,7 +11,7 @@ function normalizeOpenId(value: string | null | undefined): string {
 
 function currentUrl(): URL | null {
   if (typeof window === "undefined" || !window.location?.href) return null;
-  return new URL(window.location.href);
+  return getCurrentAppUrl();
 }
 
 function readCookie(name: string): string {
@@ -69,7 +69,7 @@ function removeSearchKeys(params: URLSearchParams, keys: string[]): void {
 }
 
 function relativeLocation(url: URL): string {
-  return `${url.pathname}${url.search}${url.hash}`;
+  return `#${url.pathname}${url.search}`;
 }
 
 function readPendingPayUrl(): string {
