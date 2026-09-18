@@ -84,7 +84,7 @@ export function HotelShowImagesPage() {
       <button
         type="button"
         onClick={handleBack}
-        className="absolute left-4 top-[calc(env(safe-area-inset-top)+2rem)] z-10 flex size-8 items-center justify-center rounded-full bg-black/50 text-white active:opacity-80"
+        className="absolute left-4 top-[calc(env(safe-area-inset-top)+2rem)] z-10 flex size-8 items-center justify-center rounded-full bg-white/85 text-[#333333] shadow-[0_2px_8px_rgba(0,0,0,0.18)] backdrop-blur-sm active:opacity-80"
         aria-label="返回"
       >
         <BackIcon />
