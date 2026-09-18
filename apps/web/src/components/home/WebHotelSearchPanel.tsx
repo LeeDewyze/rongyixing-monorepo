@@ -4,7 +4,14 @@ import type { HotelCity } from "@ryx/shared-types";
 import { WebCalendarIcon, WebSearchButton } from "@/components/home/WebSearchField";
 import { HotelStayDatePickerDialog } from "@/components/search/DatePickerDialog";
 import { HOME_ASSETS } from "@/config/home-assets";
-import { formatHotelDateShort, nightsBetween, relativeDayLabel } from "@/lib/date-search";
+import {
+  addDays,
+  formatHotelDateShort,
+  nightsBetween,
+  relativeDayLabel,
+  todayDateString,
+} from "@/lib/date-search";
+import { hotelCanSelectYesterday } from "@/lib/calendar-picker";
 import { displayHotelCity } from "@/lib/hotel-search";
 
 interface WebHotelSearchPanelProps {
@@ -55,6 +62,9 @@ export function WebHotelSearchPanel({
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const nights = nightsBetween(checkIn, checkOut);
   const destinationLabel = cityLabel ?? displayHotelCity(city);
+  const showYesterdayTip = hotelCanSelectYesterday();
+  const yesterday = addDays(todayDateString(), -1);
+  const yesterdayTip = `如需00:00-06:00入住，请选择${yesterday.slice(5, 7)}月${yesterday.slice(8, 10)}日入住`;
 
   return (
     <>
@@ -124,6 +134,10 @@ export function WebHotelSearchPanel({
           className="!h-16 !w-[172px] !min-w-[172px] min-h-0 shrink-0 px-3"
         />
       </div>
+
+      {showYesterdayTip ? (
+        <p className="mt-2 text-center text-xs text-[#666666]">{yesterdayTip}</p>
+      ) : null}
 
       {validationError ? (
         <p className="mt-3 text-center text-sm text-destructive">{validationError}</p>

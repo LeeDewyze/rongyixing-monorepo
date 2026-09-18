@@ -6,6 +6,21 @@ import { showAppAlertDialog } from "@/lib/app-confirm-dialog";
 import { navigateBack } from "@/lib/navigation";
 import { loadAmap } from "@/lib/amap";
 
+function BackIcon() {
+  return (
+    <svg viewBox="0 0 10 17" className="h-[17px] w-[10px]" aria-hidden>
+      <path
+        d="M9 1.5 2.5 8.5 9 15.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function PinIcon() {
   return (
     <svg viewBox="0 0 16 16" className="size-4 shrink-0 text-brand-primary" aria-hidden>
@@ -76,11 +91,7 @@ export function HotelMapPage() {
   const hasPoint = Number.isFinite(lat) && Number.isFinite(lng);
   const showAddress = Boolean(address);
 
-  usePageHeader({
-    title,
-    showBack: true,
-    onBack: () => navigateBack(navigate, returnTo || "/"),
-  });
+  usePageHeader({ visible: false });
 
   useEffect(() => {
     let destroyed = false;
@@ -142,6 +153,15 @@ export function HotelMapPage() {
   return (
     <div className="ryx-viewport-h relative overflow-hidden bg-[#F5F6F9]">
       <div ref={mapRef} className="absolute inset-0" />
+
+      <button
+        type="button"
+        onClick={() => navigateBack(navigate, returnTo || "/")}
+        className="absolute left-4 top-[calc(env(safe-area-inset-top)+2rem)] z-10 flex size-8 items-center justify-center rounded-full bg-black/50 text-white active:opacity-80"
+        aria-label="返回"
+      >
+        <BackIcon />
+      </button>
 
       {loading ? (
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-white/55">

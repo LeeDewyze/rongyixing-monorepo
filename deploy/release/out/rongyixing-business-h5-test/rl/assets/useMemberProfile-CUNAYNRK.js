@@ -1,1 +1,0 @@
-import{u as e}from"./routes-h0CDcEn0.js";import{K as r}from"./index-3RUMEZYT.js";function u(){return e({queryKey:["member","profile"],queryFn:()=>r().member.getProfile(),staleTime:300*1e3})}export{u};

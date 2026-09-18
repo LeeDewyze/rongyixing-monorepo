@@ -2,7 +2,14 @@ import { useState } from "react";
 import type { HotelCity } from "@ryx/shared-types";
 
 import { HotelStayDatePickerSheet } from "@/components/hotel/HotelStayDatePickerSheet";
-import { formatHotelDateShort, nightsBetween, relativeDayLabel } from "@/lib/date-search";
+import {
+  addDays,
+  formatHotelDateShort,
+  nightsBetween,
+  relativeDayLabel,
+  todayDateString,
+} from "@/lib/date-search";
+import { hotelCanSelectYesterday } from "@/lib/calendar-picker";
 import { displayHotelCity } from "@/lib/hotel-search";
 import { HOME_ASSETS } from "@/config/home-assets";
 
@@ -59,6 +66,9 @@ export function HomeHotelSearchPanel({
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const nights = nightsBetween(checkIn, checkOut);
   const destinationLabel = cityLabel ?? displayHotelCity(city);
+  const showYesterdayTip = hotelCanSelectYesterday();
+  const yesterday = addDays(todayDateString(), -1);
+  const yesterdayTip = `如需00:00-06:00入住，请选择${yesterday.slice(5, 7)}月${yesterday.slice(8, 10)}日入住`;
 
   function handleDateConfirm(nextCheckIn: string, nextCheckOut: string) {
     onCheckInChange(nextCheckIn);
@@ -119,6 +129,10 @@ export function HomeHotelSearchPanel({
           </span>
           <span className="ml-auto shrink-0 text-[11px] text-[#666666]">共{nights}晚</span>
         </button>
+
+        {showYesterdayTip ? (
+          <p className="pt-2 text-center text-xs text-[#666666]">{yesterdayTip}</p>
+        ) : null}
 
         {validationError ? (
           <p className="pt-2 text-center text-sm text-destructive">{validationError}</p>

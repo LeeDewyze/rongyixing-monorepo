@@ -1,11 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
-import {
-  HOTEL_CHROME,
-  HOTEL_DETAIL_FONT,
-  HOTEL_HEADER_GRADIENT,
-} from "@/components/hotel/hotel-detail-chrome";
+import { HOTEL_DETAIL_FONT } from "@/components/hotel/hotel-detail-chrome";
 import { usePageHeader } from "@/components/layout";
 import { loadHotelGalleryImages } from "@/lib/hotel-gallery-session";
 import { navigateBack } from "@/lib/navigation";
@@ -29,7 +25,6 @@ export function HotelShowImagesPage() {
   const navigate = useNavigate();
   const { hotelId = "" } = useParams();
   const [searchParams] = useSearchParams();
-  const hotelName = searchParams.get("hotelName")?.trim() ?? "酒店相册";
   const initPos = Math.max(0, Number.parseInt(searchParams.get("initPos") ?? "0", 10) || 0);
 
   const images = useMemo(() => loadHotelGalleryImages(), []);
@@ -86,25 +81,14 @@ export function HotelShowImagesPage() {
     <div
       className={`relative flex h-full min-h-0 flex-col overflow-hidden bg-black ${HOTEL_DETAIL_FONT}`}
     >
-      <header className="shrink-0" style={{ background: HOTEL_HEADER_GRADIENT }}>
-        <div className="flex h-12 items-center gap-2 px-3">
-          <button
-            type="button"
-            onClick={handleBack}
-            className="flex h-12 w-8 shrink-0 items-center justify-center active:opacity-70"
-            aria-label="返回"
-          >
-            <BackIcon />
-          </button>
-          <h1
-            className="min-w-0 flex-1 truncate text-center text-[16px] font-semibold leading-tight"
-            style={{ color: HOTEL_CHROME.title }}
-          >
-            {hotelName}
-          </h1>
-          <span className="w-8 shrink-0" aria-hidden />
-        </div>
-      </header>
+      <button
+        type="button"
+        onClick={handleBack}
+        className="absolute left-4 top-[calc(env(safe-area-inset-top)+2rem)] z-10 flex size-8 items-center justify-center rounded-full bg-black/50 text-white active:opacity-80"
+        aria-label="返回"
+      >
+        <BackIcon />
+      </button>
 
       <div className="relative min-h-0 flex-1">
         <div
