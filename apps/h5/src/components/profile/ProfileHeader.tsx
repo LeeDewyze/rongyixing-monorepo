@@ -1,20 +1,35 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import type { MemberProfile } from "@ryx/shared-types";
 
 import { PROFILE_ASSETS } from "@/config/profile-assets";
 import { withAvatarCacheBuster } from "@/lib/avatar";
+import { ProfileAvatarPreview } from "@/components/profile/ProfileAvatarPreview";
 
 /** Figma 23:2495 — sky-blue header fade into page background. */
 const PROFILE_PAGE_GRADIENT =
   "linear-gradient(180deg, #8EC8FF 0%, #B8DBFF 38%, #E1EEFC 72%, #F5F6F9 100%)";
 
 function ProfileAvatar({ src }: { src?: string }) {
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const avatarSrc = withAvatarCacheBuster(src || PROFILE_ASSETS.defaultAvatar);
+
   return (
-    <img
-      src={withAvatarCacheBuster(src || PROFILE_ASSETS.defaultAvatar)}
-      alt="头像"
-      className="box-border size-[72px] shrink-0 rounded-full border border-white object-cover"
-    />
+    <>
+      <button
+        type="button"
+        className="size-[72px] shrink-0 overflow-hidden rounded-full border border-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/50"
+        aria-label="查看头像"
+        onClick={() => setPreviewOpen(true)}
+      >
+        <img src={avatarSrc} alt="头像" className="size-full object-cover" />
+      </button>
+      <ProfileAvatarPreview
+        open={previewOpen}
+        src={avatarSrc}
+        onClose={() => setPreviewOpen(false)}
+      />
+    </>
   );
 }
 
