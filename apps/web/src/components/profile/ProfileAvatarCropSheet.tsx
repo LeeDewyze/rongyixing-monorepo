@@ -152,11 +152,11 @@ async function cropImage(source: PendingAvatarSource, metrics: CropMetrics): Pro
     throw new Error("头像裁剪失败");
   }
 
-  const coverScale = Math.max(
-    metrics.cropSize / image.naturalWidth,
-    metrics.cropSize / image.naturalHeight,
+  const outputScale = Math.max(
+    OUTPUT_SIZE / image.naturalWidth,
+    OUTPUT_SIZE / image.naturalHeight,
   );
-  const scale = coverScale * metrics.zoom;
+  const scale = outputScale * metrics.zoom;
   const drawWidth = image.naturalWidth * scale;
   const drawHeight = image.naturalHeight * scale;
   const centerX = OUTPUT_SIZE / 2 + (metrics.offsetX / metrics.cropSize) * OUTPUT_SIZE;

@@ -9,6 +9,7 @@ import { SettingsMenuCard, SettingsMenuRow } from "@/components/settings/Setting
 import { SettingsPageChrome } from "@/components/settings/SettingsPageChrome";
 import { PROFILE_ASSETS } from "@/config/profile-assets";
 import { ProfileAvatarCropSheet } from "@/components/profile/ProfileAvatarCropSheet";
+import { ProfileAvatarPreview } from "@/components/profile/ProfileAvatarPreview";
 import { bumpAvatarCacheBuster, withAvatarCacheBuster } from "@/lib/avatar";
 import { getApi } from "@/lib/api";
 import { getDomain } from "@/lib/domain";
@@ -179,6 +180,7 @@ export function ProfileCenterPage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [avatarSheetOpen, setAvatarSheetOpen] = useState(false);
   const [avatarCropOpen, setAvatarCropOpen] = useState(false);
+  const [avatarPreviewOpen, setAvatarPreviewOpen] = useState(false);
   const [avatarSource, setAvatarSource] = useState<PendingAvatarSource | null>(null);
   const [avatarError, setAvatarError] = useState("");
   const [avatarUrlOverride, setAvatarUrlOverride] = useState<string | null>(null);
@@ -362,8 +364,8 @@ export function ProfileCenterPage() {
                 <button
                   type="button"
                   className="relative size-16 shrink-0 overflow-hidden rounded-full border border-white bg-[#EEF0F4] shadow-sm transition active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-primary/30"
-                  aria-label="更换头像"
-                  onClick={handleAvatarClick}
+                  aria-label="查看头像"
+                  onClick={() => setAvatarPreviewOpen(true)}
                 >
                   <img src={displayAvatar} alt="头像" className="size-full object-cover" />
                   <span className="absolute inset-x-0 bottom-0 flex h-6 items-center justify-center bg-black/28 text-white">
@@ -474,6 +476,11 @@ export function ProfileCenterPage() {
           onConfirm={async (file) => {
             await uploadAvatar.mutateAsync(file);
           }}
+        />
+        <ProfileAvatarPreview
+          open={avatarPreviewOpen}
+          src={displayAvatar}
+          onClose={() => setAvatarPreviewOpen(false)}
         />
       </div>
     </SettingsPageChrome>

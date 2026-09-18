@@ -7,8 +7,8 @@ def signingProperties = new Properties()
 if (signingPropertiesFile.exists()) {
     signingPropertiesFile.withInputStream { signingProperties.load(it) }
 }
-def appVersionName = System.getenv('RYX_ANDROID_VERSION_NAME') ?: "2.0.1"
-def appVersionCode = (System.getenv('RYX_ANDROID_VERSION_CODE') ?: "200001").toInteger()
+def appVersionName = System.getenv('RYX_ANDROID_VERSION_NAME') ?: "2.0.2"
+def appVersionCode = (System.getenv('RYX_ANDROID_VERSION_CODE') ?: "200002").toInteger()
 
 android {
     namespace = "com.ronglvonline.app"
