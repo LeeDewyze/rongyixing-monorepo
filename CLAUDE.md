@@ -61,6 +61,29 @@ pnpm dev:h5:prod && pnpm dev:web:prod
 pnpm build && pnpm test && pnpm typecheck && pnpm audit
 ```
 
+## Build and Release Runtime
+
+Before running any build, test, or release command, do not trust the
+interactive shell's `node` or `pnpm` versions. The repository release tooling
+requires Node.js 24 and is responsible for repairing missing Rollup native
+optional dependencies.
+
+Use the repository entrypoints:
+
+```bash
+./deploy/scripts/build-release.sh --all
+```
+
+The script selects the bundled or local Node.js 24 runtime and, on macOS,
+reinstalls dependencies from `pnpm-lock.yaml` when
+`@rollup/rollup-darwin-x64` is missing. Never run release builds directly with
+Node 18 or a system pnpm after seeing the Rollup native-module error.
+
+For checks that do not build release artifacts, first use the same Node.js 24
+runtime selected by `deploy/scripts/build-release.sh`, then run the requested
+pnpm command. If the runtime cannot be located, stop and report that instead
+of falling back to an older system Node.js.
+
 ## Security
 
 Run `pnpm audit` before merging. Fix critical/high vulnerabilities.

@@ -28,7 +28,8 @@ function usesInternalViewportScroll(pathname: string): boolean {
     path === "/travel/apply" ||
     path === "/travel/approval" ||
     path === "/travel/task" ||
-    path === "/credentials"
+    path === "/credentials" ||
+    path === "/open-url"
   );
 }
 

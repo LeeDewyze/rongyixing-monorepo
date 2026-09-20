@@ -1,0 +1,48 @@
+---
+description: Required Node and pnpm runtime for build, test, and release commands
+alwaysApply: true
+---
+
+# Build and Release Tooling
+
+## Mandatory runtime rule
+
+Never run repository build, test, or release commands with the interactive
+shell's default Node.js or pnpm without checking the runtime first.
+
+This repository uses Node.js 24 for release tooling. Node 18 is not an
+acceptable fallback, even when TypeScript checks pass.
+
+## Release entrypoint
+
+For a complete release, always run:
+
+```bash
+./deploy/scripts/build-release.sh --all
+```
+
+This entrypoint:
+
+- selects the bundled or local Node.js 24 runtime;
+- runs the repository release flow;
+- detects a missing macOS Rollup native optional dependency;
+- repairs dependencies from `pnpm-lock.yaml` before rebuilding.
+
+Do not replace it with a direct `pnpm release:all` invocation when the task is
+to build or release all products.
+
+## Tests and type checks
+
+Before running `pnpm test`, `pnpm typecheck`, or an app build:
+
+1. Read `README.md` and `deploy/release/README.md` when the task involves
+   building or publishing.
+2. Select the same Node.js 24 runtime used by
+   `deploy/scripts/build-release.sh`.
+3. Verify `node --version` is `24.x` or newer.
+4. Verify the Rollup native optional dependency is available on macOS, or run
+   the repository dependency-repair path before starting Vitest/Vite.
+
+If `@rollup/rollup-darwin-x64` is missing, do not continue with Node 18 and do
+not report the failure as unrelated. Run the repository's Node 24 release
+entrypoint or reinstall using the frozen lockfile, then retry.
