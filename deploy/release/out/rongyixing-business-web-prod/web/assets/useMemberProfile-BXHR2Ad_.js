@@ -1,0 +1,1 @@
+import{u as e}from"./useQuery-BaJs_GA9.js";import{o as r}from"./index-CUMN-L4j.js";function u(){return e({queryKey:["member","profile"],queryFn:()=>r().member.getProfile(),staleTime:300*1e3})}export{u};
