@@ -127,9 +127,6 @@ async function handleHttpUrl(
 ): Promise<boolean> {
   mergeUrlQueryIntoProps(url, props);
   props.url = url;
-  if (props.isHideTitle == null) {
-    props.isHideTitle = true;
-  }
 
   const openUrl = url.includes("workflow.") ? buildWorkflowOpenUrl(url) : url;
 

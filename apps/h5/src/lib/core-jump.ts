@@ -127,9 +127,6 @@ async function handleHttpUrl(
 ): Promise<boolean> {
   mergeUrlQueryIntoProps(url, props);
   props.url = url;
-  if (props.isHideTitle == null) {
-    props.isHideTitle = true;
-  }
 
   if (props.isOpenInAppBrowser || props.isBlank) {
     window.open(url, props.isBlank ? "_blank" : "_self");

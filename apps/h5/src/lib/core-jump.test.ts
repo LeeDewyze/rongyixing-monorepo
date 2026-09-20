@@ -42,7 +42,9 @@ describe("coreJump http branch", () => {
     const navigate = vi.fn();
     const ok = await coreJump(navigate, "https://example.com/page");
     expect(ok).toBe(true);
-    expect(navigate).toHaveBeenCalledWith(expect.stringContaining("/open-url?url="));
+    const target = navigate.mock.calls[0]?.[0] as string;
+    expect(target).toContain("/open-url?url=");
+    expect(new URLSearchParams(target.slice(target.indexOf("?") + 1)).get("isHideTitle")).toBeNull();
   });
 });
 
