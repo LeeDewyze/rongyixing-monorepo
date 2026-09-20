@@ -42,6 +42,24 @@ describe("tourist-context", () => {
     expect(sender.send).not.toHaveBeenCalled();
   });
 
+  it("reads tourist ids from the current hash route query", () => {
+    vi.stubGlobal("window", {
+      location: {
+        href: "https://h5.example.com/#/home?TouristTmcId=tmc-hash&TouristMmsId=mms-hash",
+      },
+    });
+    vi.stubGlobal("location", {
+      href: "https://h5.example.com/#/home?TouristTmcId=tmc-hash&TouristMmsId=mms-hash",
+      search: "",
+      hash: "#/home?TouristTmcId=tmc-hash&TouristMmsId=mms-hash",
+    });
+
+    expect(readTouristContextFromSearch()).toEqual({
+      TouristTmcId: "tmc-hash",
+      TouristMmsId: "mms-hash",
+    });
+  });
+
   it("fetches Home-Tourist when query ids are missing", async () => {
     let captured: ProxySendOptions | undefined;
     const sender: TouristContextSender = {

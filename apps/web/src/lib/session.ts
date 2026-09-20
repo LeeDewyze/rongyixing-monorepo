@@ -1,3 +1,5 @@
+import { getCurrentAppSearchParams } from "@/lib/base-path";
+
 const TICKET_KEY = "ticket";
 const LOGIN_TOKEN_KEY = "loginToken";
 const ACCESS_TOKEN_KEY = "accessToken";
@@ -11,7 +13,7 @@ const TMC_ID_KEY = "ryx_tmcid";
 export const SESSION_CHANGED_EVENT = "ryx:session-changed";
 
 function getTicketNameFromContext(): string {
-  const params = new URLSearchParams(globalThis.location?.search ?? "");
+  const params = getCurrentAppSearchParams();
   const fromUrl = params.get(TICKET_NAME_KEY)?.trim();
   const fromStorage = localStorage.getItem(TICKET_NAME_KEY)?.trim();
   return fromUrl || fromStorage || TICKET_KEY;
@@ -22,7 +24,7 @@ function emitSessionChanged(): void {
 }
 
 export function getTicket(): string | null {
-  const params = new URLSearchParams(globalThis.location?.search ?? "");
+  const params = getCurrentAppSearchParams();
   const ticketName = getTicketNameFromContext();
   const fromUrl = params.get(ticketName)?.trim();
   if (fromUrl) return fromUrl;

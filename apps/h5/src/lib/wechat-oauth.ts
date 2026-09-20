@@ -96,6 +96,17 @@ function savePendingPayUrl(url: URL): void {
   }
 }
 
+function resolvePendingPayUrl(value: string, origin: string): URL | null {
+  try {
+    if (value.startsWith("#/")) {
+      return new URL(`${origin}${value.slice(1)}`);
+    }
+    return new URL(value, origin);
+  } catch {
+    return null;
+  }
+}
+
 export function isWechatH5(
   userAgent = typeof navigator === "undefined" ? "" : navigator.userAgent,
 ): boolean {
@@ -158,8 +169,8 @@ export function bootstrapWechatOAuthCallback(): boolean {
 
   const pending = readPendingPayUrl();
   clearPendingPayUrl();
-  const target = pending ? new URL(pending, url.origin) : url;
-  if (pending && target.origin !== url.origin) return false;
+  const target = pending ? resolvePendingPayUrl(pending, url.origin) : url;
+  if (!target || target.origin !== url.origin) return false;
   target.searchParams.delete(WECHAT_OPEN_ID_KEY);
   window.history.replaceState(window.history.state, "", relativeLocation(target));
   return true;

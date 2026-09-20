@@ -1,6 +1,8 @@
 import type { ProxySendOptions } from "@ryx/shared-types";
 import { TMC_METHODS } from "@ryx/api";
 
+import { getCurrentAppSearchParams } from "@/lib/base-path";
+
 export interface TouristContext {
   TouristTmcId: string;
   TouristMmsId: string;
@@ -47,7 +49,7 @@ function readQueryParams(search?: string): URLSearchParams {
   if (search != null) {
     return new URLSearchParams(search.startsWith("?") ? search : `?${search}`);
   }
-  return new URLSearchParams(globalThis.location?.search ?? "");
+  return getCurrentAppSearchParams();
 }
 
 function firstQueryValue(params: URLSearchParams, keys: readonly string[]): string {

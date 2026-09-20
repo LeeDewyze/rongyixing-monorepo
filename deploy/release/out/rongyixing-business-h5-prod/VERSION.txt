@@ -1,9 +1,9 @@
 name=rongyixing-business-h5-prod
-build_time=2026-09-18T09:48:39Z
-build_timestamp=20260918174830
+build_time=2026-09-20T13:26:32Z
+build_timestamp=20260920212624
 deploy_env=business-same-origin-prod
 app=h5
-git_commit=8d8d5ebf3edfe37765f4f7db6f8bbe412f1d999e
+git_commit=df0af881a7f5884dfbe229fae98979fcb357c20f
 git_branch=main
 base_path=/www/
 static_dir=www

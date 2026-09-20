@@ -51,6 +51,13 @@ export function getCurrentAppUrl(): URL {
   return current;
 }
 
+export function getCurrentAppSearchParams(): URLSearchParams {
+  if (typeof window === "undefined" || !window.location?.href) {
+    return new URLSearchParams(globalThis.location?.search ?? "");
+  }
+  return getCurrentAppUrl().searchParams;
+}
+
 export function withAppHashPath(path: string): string {
   const base = getStaticBasePath();
   const normalized = path.startsWith("/") ? path : `/${path}`;

@@ -1,1 +1,0 @@
-import{a3 as t,z as e,j as o,N as n}from"./index-D9K-SFK1.js";function i(){const{orderId:r=""}=t(),[s]=e(),a=s.toString();return o.jsx(n,{to:`/orders/train/${r}/pay${a?`?${a}`:""}`,replace:!0})}export{i as TrainPayPage};

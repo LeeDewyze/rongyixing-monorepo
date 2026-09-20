@@ -24,4 +24,22 @@ describe("getTicket", () => {
 
     expect(getTicket()).toBe("url-ticket");
   });
+
+  it("reads the ticket from a hash route query", () => {
+    vi.stubGlobal("window", {
+      location: {
+        href: "https://web.example.com/#/login?ticket=hash-ticket",
+      },
+    });
+    vi.stubGlobal("location", {
+      href: "https://web.example.com/#/login?ticket=hash-ticket",
+      search: "",
+      hash: "#/login?ticket=hash-ticket",
+    });
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => (key === "ticket" ? "stored-ticket" : null),
+    });
+
+    expect(getTicket()).toBe("hash-ticket");
+  });
 });

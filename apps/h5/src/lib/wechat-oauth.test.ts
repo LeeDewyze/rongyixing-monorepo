@@ -1,6 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { buildWechatOAuthUrl, isWechatH5 } from "./wechat-oauth";
+import {
+  bootstrapWechatOAuthCallback,
+  buildWechatOAuthUrl,
+  isWechatH5,
+} from "./wechat-oauth";
 
 describe("wechat OAuth", () => {
   it("builds the legacy GetWechatCode URL without losing payment context", () => {
@@ -27,5 +31,44 @@ describe("wechat OAuth", () => {
   it("recognizes WeChat H5 but excludes mini programs", () => {
     expect(isWechatH5("Mozilla/5.0 MicroMessenger/8.0")).toBe(true);
     expect(isWechatH5("Mozilla/5.0 Chrome/151.0")).toBe(false);
+  });
+
+  it("restores a hash payment route after the OAuth callback", () => {
+    const storage = new Map<string, string>([
+      ["ryx_wechat_pending_pay_url", "#/orders/train/ORD-1/pay?channel=tourist"],
+    ]);
+    const replaceState = vi.fn();
+    vi.stubGlobal("sessionStorage", {
+      getItem: (key: string) => storage.get(key) ?? null,
+      setItem: (key: string, value: string) => storage.set(key, value),
+      removeItem: (key: string) => storage.delete(key),
+    });
+    vi.stubGlobal("localStorage", {
+      setItem: vi.fn(),
+      getItem: vi.fn(() => null),
+    });
+    vi.stubGlobal("document", { cookie: "" });
+    vi.stubGlobal("window", {
+      location: {
+        href: "https://app.rongtrip.cn/www/#/home?wechatopenid=openid-1",
+        pathname: "/www/",
+        search: "",
+        hash: "#/home?wechatopenid=openid-1",
+      },
+      history: {
+        state: null,
+        replaceState,
+      },
+    });
+
+    expect(bootstrapWechatOAuthCallback()).toBe(true);
+    expect(replaceState).toHaveBeenCalledWith(
+      null,
+      "",
+      "#/orders/train/ORD-1/pay?channel=tourist",
+    );
+    expect(storage.has("ryx_wechat_pending_pay_url")).toBe(false);
+
+    vi.unstubAllGlobals();
   });
 });

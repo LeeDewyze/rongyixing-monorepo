@@ -1,3 +1,4 @@
+import { getCurrentAppSearchParams } from "@/lib/base-path";
 import { getAppBaseDomain } from "@/lib/env";
 import { getTmcId } from "@/lib/session";
 
@@ -33,7 +34,7 @@ export function getApiRoot(): string {
 }
 
 function readQueryParams(): URLSearchParams {
-  return new URLSearchParams(globalThis.location?.search ?? "");
+  return getCurrentAppSearchParams();
 }
 
 /** Stable H5 device id (beeant Device field). */
